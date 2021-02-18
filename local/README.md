@@ -1,0 +1,1 @@
+The dash/local folder may contain settings information that is global to Dash or local to your machine
