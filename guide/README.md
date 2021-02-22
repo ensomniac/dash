@@ -1,1 +1,0 @@
-Dash Guide is a managed Dash portal that contains the code that servers https://dash.guide
