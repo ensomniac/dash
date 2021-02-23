@@ -1,9 +1,6 @@
 #!/usr/bin/python
 
 import os
-# from Dash.Paths import server_paths
-
-# Server pathing info, and more
 
 class DashContext:
     def __init__(self, asset_path, display_name=None, domain=None):

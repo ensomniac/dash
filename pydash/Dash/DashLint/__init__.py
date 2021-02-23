@@ -10,6 +10,7 @@
 # + Put a comment next to imports that aren't being used
 # + Time the compilation / read time for each file and flag time consuming imports
 # + How about a quick check to make sure no asset_paths leak from one package to another?
+# + Create a format for comment / description (like this) and force it to exist - for docs?
 
 import sys
 import os

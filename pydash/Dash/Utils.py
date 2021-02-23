@@ -8,25 +8,18 @@ import sys
 
 class __Utils:
     def __init__(self):
-        self.rar_timeout = 30  # Seconds before we kill a RAR request
+        pass
 
-        # Andrew - this should be replaced with
-        # the property Paths - leaving for legacy
-        # self.paths = _paths
-        # self.paths = self.Paths
+    def GetContext(self, asset_path):
+        if self.IsServer:
+            return None
+        else:
+            # Make a request
+            return {}
 
-        # if local_paths.root_path is not None:
-        #     self.local_user = self.__get_local_user()
-        #     self.local_packages = self.__get_local_packages()
-
-    # @property
-    # def Paths(self):
-    #     # Convenience function
-    #     if not hasattr(self, "_paths"):
-    #         from Dash.Paths import Paths as _paths
-    #         self._paths = _paths
-
-    #     return self._paths
+    @property
+    def IsServer(self):
+        return os.path.exists("/var/www/vhosts/oapi.co/logs/")
 
     @property
     def Global(self):
@@ -164,3 +157,4 @@ class __Utils:
     #         )
 
 utils = __Utils()
+Utils = utils # Migrating away from utils

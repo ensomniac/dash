@@ -33,10 +33,6 @@ class DashSync:
         for package in self.packages:
             self.add_sync_thread(package)
 
-    # def check(self):
-    #     print("temp Checking main thread....")
-    #     threading.Timer(3, self.check).start()
-
     def add_sync_thread(self, package):
         # Expected to be at the top level of the
         # git repo but double check to make sure
@@ -67,4 +63,12 @@ class DashSync:
         pass
 
 if __name__ == "__main__":
-    DashSync()
+
+    from Dash.Utils import Utils
+    context = Utils.GetContext("altona")
+    print(context)
+
+    # print(dir(Utils))
+
+
+    # DashSync()
