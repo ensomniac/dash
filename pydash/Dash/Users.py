@@ -5,7 +5,7 @@ import json
 import os
 import traceback
 
-from Dash.Paths import server_paths
+# from Dash.Paths import server_paths
 from Dash import LocalStorage
 from Dash.Utils import utils
 
@@ -14,9 +14,9 @@ class Users:
         self.data = params
         self.dash_context = dash_context
 
-        self.dash_root_store = os.path.join(
-            server_paths.oapi_root, self.dash_context.AssetPath, "local", "users"
-        )
+        # self.dash_root_store = os.path.join(
+        #     server_paths.oapi_root, self.dash_context.AssetPath, "local", "users"
+        # )
 
     def Reset(self):
         email = str(self.data.get("email")).strip().lower()

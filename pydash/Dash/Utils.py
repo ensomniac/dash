@@ -13,20 +13,20 @@ class __Utils:
         # Andrew - this should be replaced with
         # the property Paths - leaving for legacy
         # self.paths = _paths
-        self.paths = self.Paths
+        # self.paths = self.Paths
 
         # if local_paths.root_path is not None:
         #     self.local_user = self.__get_local_user()
         #     self.local_packages = self.__get_local_packages()
 
-    @property
-    def Paths(self):
-        # Convenience function
-        if not hasattr(self, "_paths"):
-            from Dash.Paths import Paths as _paths
-            self._paths = _paths
+    # @property
+    # def Paths(self):
+    #     # Convenience function
+    #     if not hasattr(self, "_paths"):
+    #         from Dash.Paths import Paths as _paths
+    #         self._paths = _paths
 
-        return self._paths
+    #     return self._paths
 
     @property
     def Global(self):
