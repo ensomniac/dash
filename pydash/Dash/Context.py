@@ -1,15 +1,19 @@
 #!/usr/bin/python
 
 import os
-from Dash.Paths import server_paths
+# from Dash.Paths import server_paths
 
 # Server pathing info, and more
 
 class DashContext:
     def __init__(self, asset_path, display_name=None, domain=None):
+
+        # TODO: Migrate this when the context concept changes:
+        self.oapi_root = "/var/www/vhosts/oapi.co/"
+
         self.__asset_path = asset_path
         self.__root_store = os.path.join(
-            server_paths.oapi_root, self.__asset_path, "local"
+            self.oapi_root, self.__asset_path, "local"
         )
         self.__users_root_store = os.path.join(self.__root_store, "users")
         self.__domain = domain or f"{self.__asset_path}.io"
