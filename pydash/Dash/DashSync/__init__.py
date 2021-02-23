@@ -64,11 +64,20 @@ class DashSync:
 
 if __name__ == "__main__":
 
-    from Dash.Utils import Utils
-    context = Utils.GetContext("altona")
-    print(context)
+    # from Dash import PackageContext as Context
+    # dash_context = Context.Get("dash_guide")
+    # dash_context = Context.Get("authentic")
+
+    # print(dash_context)
+
+    # from Dash.Utils import Utils
+
+    # print(Utils.IsServer)
+
+    # context = Utils.GetContext("altona")
+    # print(context)
 
     # print(dir(Utils))
 
 
-    # DashSync()
+    DashSync()

@@ -98,6 +98,11 @@ class SyncThread:
     def check_timestamps(self):
         for filename in self.files:
             last_timestamp = self.files[filename]["last_timestamp"]
+
+            if not os.path.exists(self.files[filename]["abspath"]):
+                self.index_all()
+                break
+
             current_timestamp = os.path.getmtime(self.files[filename]["abspath"])
 
             if last_timestamp == current_timestamp:

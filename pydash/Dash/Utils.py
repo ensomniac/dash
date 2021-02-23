@@ -22,6 +22,10 @@ class __Utils:
         return os.path.exists("/var/www/vhosts/oapi.co/logs/")
 
     @property
+    def ServerLocalStorePath(self):
+        return "/var/www/vhosts/oapi.co/dash/local/packages/"
+
+    @property
     def Global(self):
         # This function is meant to return meaningful shared
         # data in the context of a single request
@@ -141,20 +145,20 @@ class __Utils:
     def IsRyansMachine(self):
         return os.path.exists("/Users/rmartin/")
 
-    # Andrew: we rarely want to return a string
-    # like this, as it requires a followup check
-    # Instead, have the module do the busywork for us
+    @property
+    def UserToken(self):
+        if not hasattr(self, "_usr_token"):
 
-    # def __get_local_user(self):
-    #     if os.path.exists(local_paths.root_ryan):
-    #         return "Ryan"
-    #     elif os.path.exists(local_paths.root_andrew):
-    #         return "Andrew"
-    #     else:
-    #         raise Exception(
-    #             "Unable to identify local user. Checked for "
-    #             f"{local_paths.root_ryan} and {local_paths.root_andrew}"
-    #         )
+            try:
+                from os.path import expanduser
+                import json
+                dash_data_path = os.path.join(expanduser("~"), ".dash")
+                dash_data = json.loads(open(dash_data_path, "r").read())
+                self._usr_token = dash_data["user"]["token"]
+            except:
+                return None
+
+        return self._usr_token
 
 utils = __Utils()
 Utils = utils # Migrating away from utils

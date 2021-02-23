@@ -21,7 +21,7 @@ class SyncUtils:
 
     def GetServerSyncPackages(self):
         # Get all active packages for the logged in user
-        dash_data_path = os.path.join(expanduser("~"), ".dash")
+        dash_data_path = os.path.join(expanduser("~"), ".dash") # TODO this is moved to dash.Utils
 
         if not os.path.exists(dash_data_path):
             print("\nNot Authenticated\n")
@@ -33,7 +33,16 @@ class SyncUtils:
         response = requests.post(
             "https://dash.guide/Packages",
             data={"f": "get_sync_manifest", "token": token}
-        ).json()
+        )
+
+        try:
+            response = json.loads(response.text)
+        except:
+            print("\n** SERVER ERROR **\n")
+            print(response)
+            print(response.text)
+            print()
+            sys.exit()
 
         if response.get("error"):
             print("\n**** SERVER ERROR ****\n")

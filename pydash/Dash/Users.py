@@ -7,17 +7,20 @@ import traceback
 
 # from Dash.Paths import server_paths
 from Dash import LocalStorage
-from Dash.Utils import utils
+from Dash.Utils import Utils
+from Dash import PackageContext as Context
 
 class Users:
-    def __init__(self, params, dash_context):
+    def __init__(self, params, dash_context=None):
         self.data = params
-        self.dash_context = dash_context
+        self.dash_context = dash_context or Context.Get(params["asset_path"])
 
-        # TODO: Migrate this when the context concept changes:
-        self.dash_root_store = "/var/www/vhosts/oapi.co/"
-        self.dash_root_store += self.dash_context.AssetPath + "/"
-        self.dash_root_store += "local/users/"
+    @property
+    def UsersPath(self):
+        return os.path.join(
+            self.dash_context["srv_path_local"],
+            "users/"
+        )
 
     def Reset(self):
         email = str(self.data.get("email")).strip().lower()
@@ -25,7 +28,7 @@ class Users:
         if "@" not in email:
             return {"error": "Enter a valid email address."}
 
-        user_root = os.path.join(self.dash_context.UsersRootStore, email)
+        user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
         account_exists = True
 
@@ -55,20 +58,20 @@ class Users:
 
         return_data = {"email": email, "t": uri_data_64}
 
-        link = f"https://{self.dash_context.Domain}/Users?f=r&t={uri_data_64}"
+        link = "https://" + self.dash_context["domain"] + "/Users?f=r&t=" + uri_data_64
         body_text = f"Use <a href='{link}'>this link</a> to reset the password for your account."
-        subject = f"Create Your {self.dash_context.DisplayName} Account: {email}"
+        subject = "Create Your " + self.dash_context["display_name"] + " Account: " + email
 
         if account_exists:
-            subject = f"Reset Your {self.dash_context.DisplayName} Account: {email}"
+            subject = "Reset Your " + self.dash_context["display_name"] + " Account: " + email
 
         import Mail
 
-        message = Mail.create(self.dash_context.AdminFromEmail)
-        message.set_sender_name(f"Reset Login <{self.dash_context.AdminFromEmail}>")
+        message = Mail.create(self.dash_context["admin_from_email"])
+        message.set_sender_name("Reset Login <" + self.dash_context["admin_from_email"] + ">")
 
         message.add_recipient(f"{email.split('@')[0].strip().title()} <{email}>")
-        message.add_bcc_recipient(self.dash_context.AdminFromEmail)
+        message.add_bcc_recipient(self.dash_context["admin_from_email"])
 
         message.set_subject(subject)
         message.set_body_html(body_text)
@@ -95,7 +98,7 @@ class Users:
 
         uri_data = json.loads(uri_str)
         email = uri_data["email"]
-        user_root = os.path.join(self.dash_context.UsersRootStore, email)
+        user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
         reset_path = os.path.join(user_reset_root, uri_data_64)
 
@@ -118,7 +121,8 @@ class Users:
                 """<body style='font-family: sans-serif;'>""",
             ]
 
-            link = f"<a href='https://{self.dash_context.Domain}'>https://{self.dash_context.Domain}</a>"
+            link = "<a href='https://" + self.dash_context["domain"]
+            link += "'>https://" + self.dash_context["domain"] + "</a>"
 
             html.append(
                 f"""Your password reset link has expired. Visit {link} to request a new reset link.<br><br>"""
@@ -153,7 +157,8 @@ class Users:
             """<body style='font-family: sans-serif;'>""",
         ]
 
-        link = f"<a href='https://{self.dash_context.Domain}'>https://{self.dash_context.Domain}</a>"
+        link = "<a href='https://" + self.dash_context["domain"]
+        link += "'>https://" + self.dash_context["domain"] + "</a>"
 
         html.append(f"""Hello, {email}, <br><br>""")
         html.append(
@@ -190,7 +195,7 @@ class Users:
         from passlib.apps import custom_app_context as pwd_context
 
         hashed_password = pwd_context.hash(new_password)
-        user_root = os.path.join(self.dash_root_store, user["email"])
+        user_root = os.path.join(self.UsersPath, user["email"])
         pass_path = os.path.join(user_root, "phash")
 
         open(pass_path, "w").write(hashed_password)
@@ -229,12 +234,14 @@ class Users:
         if not email or not password:
             return {"error": "Invalid login credentials x1943"}
 
-        user_root = os.path.join(self.dash_root_store, email)
+        # raise Exception(self.dash_context["srv_path_local"])
+
+        user_root = os.path.join(self.UsersPath, email)
         sessions_path = os.path.join(user_root, "sessions")
         pass_path = os.path.join(user_root, "phash")
 
         if not os.path.exists(pass_path):
-            return {"error": "Account does not exist x7832"}
+            return {"error": "Account does not exist x7832 | PP: " + pass_path}
 
         from passlib.apps import custom_app_context as pwd_context
         import base64
@@ -285,9 +292,9 @@ class Users:
 
         # raise Exception(">> " + user_data_path)
 
-        if not utils.Global.RequestUser:
-            utils.Global.RequestUser = {}
-            utils.Global.RequestUser["email"] = email
+        if not Utils.Global.RequestUser:
+            Utils.Global.RequestUser = {}
+            Utils.Global.RequestUser["email"] = email
 
         if os.path.exists(user_data_path):
             user_data = LocalStorage.GetData(
@@ -330,7 +337,7 @@ class Users:
         email = token_data.split(b"_|_")[-1].strip()
         # HTTP_USER_AGENT = token_data.split(b"_|_")[0].strip()
 
-        user_root = os.path.join(self.dash_root_store, email.decode())
+        user_root = os.path.join(self.UsersPath, email.decode())
         sessions_path = os.path.join(user_root, "sessions")
         token_path = os.path.join(sessions_path, token_str)
 

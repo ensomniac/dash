@@ -11,6 +11,8 @@
 # + Time the compilation / read time for each file and flag time consuming imports
 # + How about a quick check to make sure no asset_paths leak from one package to another?
 # + Create a format for comment / description (like this) and force it to exist - for docs?
+# + Consider a formatting ability to specify that the name of a function had changed so that we can auto migrate other code
+# + Possible auto formatting idea: make sure that @propertys are grouped together
 
 import sys
 import os

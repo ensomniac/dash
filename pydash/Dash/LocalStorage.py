@@ -4,16 +4,16 @@ import os
 import sys
 import datetime
 
-from Dash.Utils import utils
+from Dash.Utils import Utils
 
 # DashLocalStorage is a utility for reading, writing and maintaining common data
 
 class DashLocalStorage:
-    def __init__(self, dash_ctx, store_path):
+    def __init__(self, dash_context, store_path):
         # store_path examples: users / packages / jobs
         # obj_id examples: 326783762323 / ryan@ensomniac.com
 
-        self.ctx = dash_ctx
+        self.dash_context = dash_context
         self.store_path = store_path
 
     def New(self, additional_data, obj_id=None):
@@ -21,16 +21,16 @@ class DashLocalStorage:
 
         import json
 
-        record_id = utils.get_random_id()
+        record_id = Utils.get_random_id()
 
         if self.store_path == "users" and obj_id:
             record_id = obj_id
 
         data = {}
         data["id"] = record_id
-        data["created_by"] = utils.Global.RequestUser["email"]
+        data["created_by"] = Utils.Global.RequestUser["email"]
         data["created_on"] = datetime.datetime.now().isoformat()
-        data["modified_by"] = utils.Global.RequestUser["email"]
+        data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
 
         if additional_data:
@@ -69,8 +69,6 @@ class DashLocalStorage:
     def GetData(self, obj_id):
         import json
 
-        # store_root = os.path.join(self.ctx.RootStore, self.store_path + "/")
-        # record_path = os.path.join(store_root, obj_id)
         record_path = self.get_record_path(obj_id)
 
         if not os.path.exists(record_path):
@@ -84,13 +82,13 @@ class DashLocalStorage:
 
         if self.store_path == "users":
             store_root = os.path.join(
-                self.ctx.RootStore,
+                self.dash_context["srv_path_local"],
                 self.store_path,
                 obj_id_email + "/", # Email address
             )
         else:
             store_root = os.path.join(
-                self.ctx.RootStore,
+                self.dash_context["srv_path_local"],
                 self.store_path + "/"
             )
 
@@ -118,14 +116,14 @@ class DashLocalStorage:
         import json
 
         response = {}
-        response["key"] = utils.Global.RequestData["key"]
-        response["value"] = utils.Global.RequestData["value"]
-        response["obj_id"] = utils.Global.RequestData["obj_id"]
+        response["key"] = Utils.Global.RequestData["key"]
+        response["value"] = Utils.Global.RequestData.get("value")
+        response["obj_id"] = Utils.Global.RequestData["obj_id"]
         response["record_path"] = self.get_record_path(obj_id)
 
         data = self.GetData(obj_id)
-        data[utils.Global.RequestData["key"]] = utils.Global.RequestData["value"]
-        data["modified_by"] = utils.Global.RequestUser["email"]
+        data[Utils.Global.RequestData["key"]] = Utils.Global.RequestData.get("value")
+        data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
 
         json_str = json.dumps(data)
