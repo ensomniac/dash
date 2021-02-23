@@ -12,81 +12,59 @@ import json
 import getpass
 import requests
 import site
+import threading
 
-from os.path import expanduser
+try:
+    from .utils import SyncUtils
+    from .sync_thread import SyncThread
+except:
+    from utils import SyncUtils
+    from sync_thread import SyncThread
 
 class DashSync:
     def __init__(self):
         print("\nDash Sync\n")
-        self.packages = self.get_packages()
+        SyncUtils.CheckForRunningProcess("dashsync")
+        self.packages = SyncUtils.GetServerSyncPackages()
+        self.sync_threads = []
 
-        # self.dash_data_path = os.path.join(expanduser("~"), ".dash")
-        # self.preflight()
-        # self.user = self.authenticate()
+        self.add_pydash()
 
-        print(self.packages)
+        for package in self.packages:
+            self.add_sync_thread(package)
 
-    # @property
-    # def dash_creds(self):
-    #     if not os.path.exists(self.dash_data_path):
-    #         return None
+    # def check(self):
+    #     print("temp Checking main thread....")
+    #     threading.Timer(3, self.check).start()
 
-    #     if not hasattr(self, "_dash_data"):
-    #         self._dash_data = json.loads(open(self.dash_data_path, "r").read())
+    def add_sync_thread(self, package):
+        # Expected to be at the top level of the
+        # git repo but double check to make sure
+        server_root, client_root = SyncUtils.FindServerClientRoots(package)
 
-    #     return self._dash_data
+        if server_root:
+            # print("server_root: " + server_root)
+            self.sync_threads.append(SyncThread(
+                package,
+                server_root,
+                is_client=False
+            ))
+        else:
+            print("Failed to find a local server path for " + package["display_name"])
 
-    def get_packages(self):
-        import json
+        # if client_root:
+        #     print("client_root: " + client_root)
+        #     self.sync_threads.append(SyncThread(
+        #         package,
+        #         client_root,
+        #         is_client=True
+        #     ))
 
-        dash_data_path = os.path.join(expanduser("~"), ".dash")
-
-        if not os.path.exists(dash_data_path):
-            print("\nNot Authenticated\n")
-            sys.exit()
-
-        dash_data = json.loads(open(dash_data_path, "r").read())
-        token = dash_data["user"]["token"]
-
-        response = requests.post(
-            "https://dash.guide/Packages",
-            data={"f": "get_sync_manifest", "token": token}
-        ).json()
-
-        if response.get("error"):
-            print("\n**** SERVER ERROR ****\n")
-            print(response["error"])
-            sys.exit()
-
-        for package_data in response["packages"]:
-            print(package_data["display_name"])
-
-            for key in package_data:
-                print("\t" + key + ": " + str(package_data[key]))
-
-            print()
-
-            # print(package_data)
-            # print()
-
-        # if response.get("error"):
-        #     print("\nUnable to authenticate @ https://dash.guide/")
-        #     print("\tReason: " + response["error"] + "\n")
-        #     sys.exit()
-
-        # if not response.get("token"):
-        #     print("\nUnable to authenticate @ https://dash.guide/")
-        #     print("\tReason: Unknown\n")
-        #     sys.exit()
-
-        # dash_data = {}
-        # dash_data["user"] = response
-
-        # open(self.dash_data_path, "w").write(json.dumps(dash_data))
-        # self._dash_data = dash_data
-
-        # print("\nSuccessfully authenticated!\n")
-
+    def add_pydash(self):
+        # Add pydash to the packages to sync. This syncing setup
+        # works a little differently since changes to the pydash
+        # need to be made in a specific place on the server
+        pass
 
 if __name__ == "__main__":
     DashSync()
