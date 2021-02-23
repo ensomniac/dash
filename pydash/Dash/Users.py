@@ -14,9 +14,10 @@ class Users:
         self.data = params
         self.dash_context = dash_context
 
-        # self.dash_root_store = os.path.join(
-        #     server_paths.oapi_root, self.dash_context.AssetPath, "local", "users"
-        # )
+        # TODO: Migrate this when the context concept changes:
+        self.dash_root_store = "/var/www/vhosts/oapi.co/"
+        self.dash_root_store += self.dash_context.AssetPath + "/"
+        self.dash_root_store += "local/users/"
 
     def Reset(self):
         email = str(self.data.get("email")).strip().lower()
