@@ -141,12 +141,12 @@ class SyncThread:
         try:
             response = json.loads(response.text)
         except:
-            print("== SERVER ERROR ==")
+            print("== SERVER ERROR == x43")
             print(response.text)
             return
 
         if response.get("error"):
-            print("== SERVER ERROR ==")
+            print("== SERVER ERROR == x87")
             print(response)
             return
 
