@@ -171,6 +171,9 @@ def New(dash_context, store_path, additional_data={}, obj_id=None):
 def CreateOrUpdate(dash_context, store_path, additional_data, obj_id):
     return DashLocalStorage(dash_context, store_path).CreateOrUpdate(additional_data, obj_id)
 
+def SetData(dash_context, store_path, obj_id, data):
+    return DashLocalStorage(dash_context, store_path).WriteData(obj_id, data)
+
 def Delete(dash_context, store_path, obj_id):
     return DashLocalStorage(dash_context, store_path).Delete(obj_id)
 
