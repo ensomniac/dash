@@ -2,6 +2,12 @@
 
 import json
 
+# NOTE: When setting up a new repo, you likely have to run this on the server:
+# https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
+#
+# git config core.fileMode false
+# or set it globally
+# git config --global core.fileMode false
 
 class PathSet:
     def __init__(self):
