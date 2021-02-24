@@ -103,6 +103,9 @@ class SyncThread:
 
     def broadcast_git_status(self):
         if not self.context.get("usr_path_git"): return
+
+        if "/dash/" not in self.context["usr_path_git"]: return
+
         # print("\n== BROADCAST GIT STATUS ==\n")
 
         # print(self.context["usr_path_git"])
