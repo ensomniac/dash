@@ -105,7 +105,7 @@ class SyncThread:
 
     def broadcast_git_status(self):
         if not self.context.get("usr_path_git"): return
-        if "/dash/" not in self.context["usr_path_git"]: return
+        # if "/dash/" not in self.context["usr_path_git"]: return
 
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
@@ -199,8 +199,6 @@ class SyncThread:
         print("\nRESULT:\n")
         print(git_result)
 
-        # print("*************************\n\n\n")
-
         params = {}
         params["f"] = "set_livesync_git_result"
         params["token"] = Utils.UserToken
@@ -212,6 +210,7 @@ class SyncThread:
             data=params
         )
 
+        print("Server response:")
         print(response.text)
 
         print("*************************\n\n\n")
