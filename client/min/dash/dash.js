@@ -193,14 +193,33 @@ function DashUser(){
 
 
 function DashColor(){
+    // this.DarkBackground = "#e6e6e6";
+    // this.LightBackground = "#e6e6e6";
     this.Background = "#e6e6e6";
-    this.Text = "rgba(0, 0, 0, 0.8)";
+    this.Text = "#333";
+    // this.DarkText = "#333";
+    // this.LightText = "#e3d5ca";
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.Warning = "#fab964";
     this.Button = new DashColorSet(
+        "#4d505f",   // Background color
+        "#565e83", // Background color on hover
+        "#95ae6c", // Background color while selected
+        "#a5c582", // Background color while selected and hovering
+        "rgba(255, 255, 255, 0.9)"   // Text color
+    );
+    // NEW
+    this.Dark = new DashColorSet(
+        "#4d505f", // Background color
+        "#565e83", // Background color on hover
+        "#95ae6c", // Background color while selected
+        "#a5c582", // Background color while selected and hovering
+        "rgba(255, 255, 255, 0.9)"   // Text color
+    );
+    this.Light = new DashColorSet(
         "#4d505f",   // Background color
         "#565e83", // Background color on hover
         "#95ae6c", // Background color while selected
@@ -533,6 +552,35 @@ function DashColorSet(background, background_hover, background_selected, backgro
     this.BackgroundSelected = this.background_selected;
     this.BackgroundSelectedHover = this.background_selected_hover;
     this.Text = this.text;
+    // this.ButtonBackground = "red";
+    // this.ButtonText = "white";
+    // COLOR INTERFACE - PAGE / ELEMENT
+    //
+    // d.Color.Light
+    // d.Color.Dark
+    // d.Color.WarningLight
+    // d.Color.WarningDark
+    // d.Color.ErrorLight
+    // d.Color.ErrorDark
+    // d.Color.AccentLight
+    // d.Color.AccentDark
+    //
+    //           ▽ - Color of the page/element background
+    //           |
+    // d.Color.Light.Background.Main
+    // d.Color.Light.Background.Hover
+    // d.Color.Light.Background.Selected
+    // d.Color.Light.Background.SelectedHover
+    //
+    // COLOR INTERFACE - BUTTON
+    //
+    //           ▽ - Color of the page/element background
+    //           |
+    // d.Color.Dark.Button.Background.Main
+    // d.Color.Dark.Button.Background.Hover
+    // d.Color.Dark.Button.Background.Selected
+    // d.Color.Dark.Button.Background.SelectedHover
+    //
 };
 
 
@@ -1468,7 +1516,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.input = new d.Gui.Input(this.placeholder_text);
         this.input.SetTransparent(true);
         this.input.SetText(this.initial_value);
-        // this.input.SetHeight(this.height, "95%");
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
         this.input.OnChange(this.input_changed, this);
         this.html.append(this.label);
@@ -1476,12 +1523,10 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         var highlight_color = d.Color.Primary;
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
-            this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
-            this.html.append(this.button.html);
+            this.create_save_button();
         }
         else {
             this.input.SetLocked(true);
-            // highlight_color = d.Color.Primary;
             highlight_color = "orange";
         };
         this.html.css({
@@ -1519,20 +1564,47 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "font-family": "sans_serif_bold",
             "font-size": "80%",
         });
-        if (this.button) {
-            this.button.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "margin": 0,
-                "width": d.Size.ColumnWidth*0.33,
-                "opacity": 0,
-            });
-        };
+        // if (this.button) {
+        //     this.button.html.css({
+        //         "position": "absolute",
+        //         "right": 0,
+        //         "top": 0,
+        //         "margin": 0,
+        //         "width": d.Size.ColumnWidth*0.33,
+        //         "opacity": 0,
+        //     });
+        // };
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         };
         this.setup_connections();
+    };
+    this.create_save_button = function(){
+        this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
+        this.html.append(this.button.html);
+        this.button.html.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "margin": 0,
+            "height": Dash.Size.RowHeight,
+            "width": d.Size.ColumnWidth,
+            "background": "none",
+            // "opacity": 0,
+        });
+        console.log(Dash.Color.Text);
+        this.button.label.css({
+            "text-align": "right",
+            "line-height": Dash.Size.RowHeight + "px",
+            "color": Dash.Color.Dark.Text,
+            // "position": "absolute",
+            // "right": 0,
+            // "top": 0,
+            // "margin": 0,
+            // "width": 200,
+            // "width": d.Size.ColumnWidth,
+            // "opacity": 0,
+        });
     };
     this.FlashSave = function(){
         (function(self){
@@ -1867,7 +1939,7 @@ function DashGuiLayoutTabs(Binder){
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": "red",
+            // "background": "red",
         });
         this.list.css({
             "position": "absolute",

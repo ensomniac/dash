@@ -26,7 +26,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.input = new d.Gui.Input(this.placeholder_text);
         this.input.SetTransparent(true);
         this.input.SetText(this.initial_value);
-        // this.input.SetHeight(this.height, "95%");
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
         this.input.OnChange(this.input_changed, this);
 
@@ -36,12 +35,10 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         var highlight_color = d.Color.Primary;
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
-            this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
-            this.html.append(this.button.html);
+            this.create_save_button();
         }
         else {
             this.input.SetLocked(true);
-            // highlight_color = d.Color.Primary;
             highlight_color = "orange";
         };
 
@@ -85,24 +82,56 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "font-size": "80%",
         });
 
-        if (this.button) {
+        // if (this.button) {
 
-            this.button.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "margin": 0,
-                "width": d.Size.ColumnWidth*0.33,
-                "opacity": 0,
-            });
+        //     this.button.html.css({
+        //         "position": "absolute",
+        //         "right": 0,
+        //         "top": 0,
+        //         "margin": 0,
+        //         "width": d.Size.ColumnWidth*0.33,
+        //         "opacity": 0,
+        //     });
 
-        };
+        // };
 
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         };
 
         this.setup_connections();
+
+    };
+
+    this.create_save_button = function(){
+        this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
+        this.html.append(this.button.html);
+
+        this.button.html.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "margin": 0,
+            "height": Dash.Size.RowHeight,
+            "width": d.Size.ColumnWidth,
+            "background": "none",
+            // "opacity": 0,
+        });
+
+        console.log(Dash.Color.Text);
+
+        this.button.label.css({
+            "text-align": "right",
+            "line-height": Dash.Size.RowHeight + "px",
+            "color": Dash.Color.Dark.Text,
+            // "position": "absolute",
+            // "right": 0,
+            // "top": 0,
+            // "margin": 0,
+            // "width": 200,
+            // "width": d.Size.ColumnWidth,
+            // "opacity": 0,
+        });
 
     };
 

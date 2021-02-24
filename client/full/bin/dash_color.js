@@ -1,8 +1,15 @@
 
 function DashColor(){
 
+    // this.DarkBackground = "#e6e6e6";
+    // this.LightBackground = "#e6e6e6";
+
     this.Background = "#e6e6e6";
-    this.Text = "rgba(0, 0, 0, 0.8)";
+    this.Text = "#333";
+
+    // this.DarkText = "#333";
+    // this.LightText = "#e3d5ca";
+
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
@@ -10,6 +17,23 @@ function DashColor(){
     this.Warning = "#fab964";
 
     this.Button = new DashColorSet(
+        "#4d505f",   // Background color
+        "#565e83", // Background color on hover
+        "#95ae6c", // Background color while selected
+        "#a5c582", // Background color while selected and hovering
+        "rgba(255, 255, 255, 0.9)"   // Text color
+    );
+
+    // NEW
+    this.Dark = new DashColorSet(
+        "#4d505f", // Background color
+        "#565e83", // Background color on hover
+        "#95ae6c", // Background color while selected
+        "#a5c582", // Background color while selected and hovering
+        "rgba(255, 255, 255, 0.9)"   // Text color
+    );
+
+    this.Light = new DashColorSet(
         "#4d505f",   // Background color
         "#565e83", // Background color on hover
         "#95ae6c", // Background color while selected

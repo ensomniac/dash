@@ -18,8 +18,6 @@ class ApiUsers:
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
 
-        self.Fish = "Food"
-
         self.Add(self.reset,           requires_authentication=False)
         self.Add(self.r,               requires_authentication=False)
         self.Add(self.login,           requires_authentication=False)
@@ -44,7 +42,7 @@ class ApiUsers:
 
     def set_property(self):
         return self.SetResponse(LocalStorage.SetProperty(
-            dash_context=self.dash_context,
+            dash_context=self.DashContext,
             store_path="users",
             obj_id=self.Params["obj_id"]
         ))
