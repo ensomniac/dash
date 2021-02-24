@@ -52,10 +52,7 @@ class Setup:
         os.system("chmod +x " + cli_path)
         print("\tDash cli tool 'dashsync' installed!")
 
-    # doc
-    # dfioj
-    # sdfok
-    def get_cli_content(self, something):
+    def get_cli_content(self):
         cmd = "import Dash;Dash.Sync()"
 
         lines = []
@@ -74,7 +71,11 @@ class Setup:
             else:
                 os.remove(self.pydash_module_dest)
 
-        os.symlink(self.pydash_module_root, self.pydash_module_dest)
+        try:
+            os.symlink(self.pydash_module_root, self.pydash_module_dest)
+        except FileExistsError:
+            os.remove(self.pydash_module_dest)
+            os.symlink(self.pydash_module_root, self.pydash_module_dest)
 
         if not os.path.exists(self.pydash_module_dest):
             print("\nError: Unable to install pydash!\n")
@@ -162,7 +163,7 @@ class Setup:
         password = getpass.getpass(prompt="Enter your password: ")
         if not password: return
 
-        api = "https://dash.guide/Users"
+        # api = "https://dash.guide/Users"
 
         response = requests.post(
             "https://dash.guide/Users",
@@ -187,7 +188,8 @@ class Setup:
 
         print("\nSuccessfully authenticated!\n")
 
+        return dash_data["user"]
+
 
 if __name__ == "__main__":
     Setup()
-
