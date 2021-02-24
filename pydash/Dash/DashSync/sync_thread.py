@@ -182,12 +182,11 @@ class SyncThread:
                 # Don't attempt again for another 30 seconds
                 return
 
-        print("\n\n\n*************************")
-        print("*********** COMMIT ATTEMPT **************")
-        print(commit_request)
+        print("\n\n\n********* SERVER GIT COMMIT REQUEST ************")
+        print("Initiated by: " + commit_request["initiated_by"])
+        print("Commit msg: '" + commit_request["commit_msg"] + "'\n")
 
         self.last_commit_attempt = datetime.datetime.now()
-        print(self.context["usr_path_git"])
 
         git_cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         git_cmd += "git add .;"
@@ -195,9 +194,6 @@ class SyncThread:
         git_cmd += "git push;"
 
         git_result = subprocess.check_output([git_cmd], shell=True).decode()
-
-        print("\nRESULT:\n")
-        print(git_result)
 
         params = {}
         params["f"] = "set_livesync_git_result"
@@ -210,11 +206,22 @@ class SyncThread:
             data=params
         )
 
-        print("Server response:")
-        print(response.text)
+        try:
+            response = json.loads(response.text)
+        except:
+            print("== SERVER ERROR == x81")
+            print(response.text)
+            print("*************************\n\n\n")
+            return
 
+        if response.get("error"):
+            print("== SERVER ERROR == x82")
+            print(response.text)
+            print("*************************\n\n\n")
+            return
+
+        print("Success!")
         print("*************************\n\n\n")
-
 
     def check_timestamps(self):
         for filename in self.files:
