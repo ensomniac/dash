@@ -122,10 +122,13 @@ class SyncThread:
         if "nothing to commit, working tree clean" not in result.lower():
             has_changes = True
 
+        if "to publish your local commits" not in result.lower():
+            has_changes = True
+
         if has_changes:
             print("* GitHub > Needs commit/push -> " + self.context.get("usr_path_git"))
-        # else:
-            # print("Clean")
+        else:
+            print("* GitHub > Clean")
 
         # print("------- GIT -------")
         # print(result)
