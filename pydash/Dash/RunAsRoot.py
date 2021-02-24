@@ -68,7 +68,6 @@ class RunAsRoot:
             return
 
         # The file has been changed / written to. We can move it and complete
-        # print("\n\n== COMPLETE ==\n\n")
         self.state = json.loads(open(self.cmd_path, "r").read())
         self.state["complete"] = True
         os.remove(self.cmd_path)
