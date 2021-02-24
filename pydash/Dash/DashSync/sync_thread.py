@@ -152,8 +152,8 @@ class SyncThread:
 
         if not response.get("success"):
             print("\n\n*** SERVER ERROR set_sync_state() ***\n\n")
-        else:
-            print("\tServer notified!")
+        # else:
+        #     print("\tServer notified!")
 
         if has_changes:
             msg = "* " + self.context.get("asset_path") + " > "
