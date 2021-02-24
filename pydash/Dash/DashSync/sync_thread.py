@@ -9,17 +9,19 @@ import random
 import threading
 import requests
 import gzip
+import subprocess
 
 from os.path import expanduser
 
 from Dash.DashLint import DashLint as Lint
 
 class SyncThread:
-    def __init__(self, package, root_path, is_client):
+    def __init__(self, package, root_path, is_client, on_change_cb=None):
         self.context = package
         self.root_path = root_path
         self.is_client = is_client
         self.needs_git_push = False
+        self.on_change_cb = on_change_cb
 
         self.seconds_before_reindex = 5
 
@@ -76,6 +78,8 @@ class SyncThread:
             msg += str(len(list(self.files.keys()))) + " files..."
             print(msg)
 
+            self.broadcast_git_status()
+
             return
 
         print(f"\t[{self.Name}] Re-indexed complete")
@@ -91,9 +95,36 @@ class SyncThread:
 
         if time_since_index >= self.seconds_before_reindex:
             self.index_all()
+            self.broadcast_git_status()
             return
 
         self.check_timestamps()
+
+    def broadcast_git_status(self):
+        if not self.context.get("usr_path_git"): return
+        print("\n== BROADCAST GIT STATUS ==\n")
+
+        print(self.context["usr_path_git"])
+
+        cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
+        cmd += "git status;"
+
+        result = subprocess.check_output([cmd], shell=True).decode()
+
+        has_changes = False
+
+        if "changes not staged for commit" in result.lower():
+            has_changes = True
+
+        if "untracked files" in result.lower():
+            has_changes = True
+
+        if has_changes:
+            print("NEEDS MERGE / COMMIT")
+
+        print("------- GIT -------")
+        print(result)
+        print("------- GIT -------")
 
     def check_timestamps(self):
         for filename in self.files:
@@ -110,18 +141,28 @@ class SyncThread:
 
             self.files[filename]["last_timestamp"] = current_timestamp
 
-            print(f"\n\t[{self.Name}] *** -> {filename} was updated")
+            if self.on_change_cb:
 
-            lint_succeeded = Lint.Process(
-                is_client=self.is_client,
-                context=self.context,
-                file_path=self.files[filename]["abspath"]
-            )
+                print(f"\n\t[{self.Name}] *** -> {filename} updated -> Custom Callback...")
 
-            if lint_succeeded:
-                threading.Timer(0.0, self.upload_change, args=[filename]).start()
+                self.on_change_cb()
+
             else:
-                print("\t\t * Fatal lint error: This must be resolved before this file can be sync'd")
+
+                print(f"\n\t[{self.Name}] *** -> {filename} updated -> Lint & Sync...")
+
+                lint_succeeded = Lint.Process(
+                    is_client=self.is_client,
+                    context=self.context,
+                    file_path=self.files[filename]["abspath"]
+                )
+
+                if lint_succeeded:
+                    threading.Timer(0.0, self.upload_change, args=[filename]).start()
+                else:
+                    print("\t\t * Fatal lint error: This must be resolved before this file can be sync'd")
+
+            self.broadcast_git_status()
 
     def upload_change(self, filename):
 

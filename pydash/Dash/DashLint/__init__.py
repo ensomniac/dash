@@ -13,6 +13,7 @@
 # + Create a format for comment / description (like this) and force it to exist - for docs?
 # + Consider a formatting ability to specify that the name of a function had changed so that we can auto migrate other code
 # + Possible auto formatting idea: make sure that @propertys are grouped together
+# + Search the code for instances of TODO - where we can add that in comments to flag important things
 
 import sys
 import os

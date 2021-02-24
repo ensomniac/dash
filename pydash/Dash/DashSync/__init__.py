@@ -28,10 +28,10 @@ class DashSync:
         self.packages = SyncUtils.GetServerSyncPackages()
         self.sync_threads = []
 
-        self.add_pydash()
+        self.add_dash_client()
 
-        for package in self.packages:
-            self.add_sync_thread(package)
+        # for package in self.packages:
+            # self.add_sync_thread(package)
 
     def add_sync_thread(self, package):
         # Expected to be at the top level of the
@@ -56,28 +56,48 @@ class DashSync:
         #         is_client=True
         #     ))
 
-    def add_pydash(self):
-        # Add pydash to the packages to sync. This syncing setup
-        # works a little differently since changes to the pydash
-        # need to be made in a specific place on the server
-        pass
+    def add_dash_client(self):
+        # Add the dash client code to monitor for changes
+        # But we don't actually want to live sync the chanes
+        # Instead, if changes occur in a dash js file,
+        # we want to recompile dash.js and distribute it
+        # to any local dash packages on this machine.
+
+        full_pth, min_pth, pkg = SyncUtils.FindDashClientPaths(self.packages)
+        client_path_full = full_pth
+        client_path_min = min_pth
+        pydash_package = pkg
+
+        if not os.path.exists(client_path_full):
+            print("\nWarning: Did Dash client code missing. Expected: '" + client_path_full + "'\n")
+            return
+
+        if not os.path.exists(client_path_min):
+            print("\nWarning: Did Dash client code missing. Expected: '" + client_path_min + "'\n")
+            return
+
+        self.sync_threads.append(SyncThread(
+            pydash_package,
+            client_path_full,
+            is_client=True,
+            on_change_cb=self.on_dash_client_changed
+        ))
+
+    def on_dash_client_changed(self):
+        # Called when there is a change to the /client/full/ Dash code
+        # We want to re-compile the package into /client/full/ then
+        # distribute the new version to all local clients
+        from Dash.ClientCompiler import ClientCompiler
+
+        # Since we have local packages, we can set them
+        # like this to make things faster. Without this, it
+        # will pull them from the server as this code does on startup
+        ClientCompiler.SetPackages(self.packages)
+        ClientCompiler.CompileAndDistribute()
 
 if __name__ == "__main__":
-
     # from Dash import PackageContext as Context
-    # dash_context = Context.Get("dash_guide")
     # dash_context = Context.Get("authentic")
-
-    # print(dash_context)
-
     # from Dash.Utils import Utils
-
     # print(Utils.IsServer)
-
-    # context = Utils.GetContext("altona")
-    # print(context)
-
-    # print(dir(Utils))
-
-
     DashSync()
