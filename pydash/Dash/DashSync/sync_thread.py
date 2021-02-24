@@ -102,9 +102,9 @@ class SyncThread:
 
     def broadcast_git_status(self):
         if not self.context.get("usr_path_git"): return
-        print("\n== BROADCAST GIT STATUS ==\n")
+        # print("\n== BROADCAST GIT STATUS ==\n")
 
-        print(self.context["usr_path_git"])
+        # print(self.context["usr_path_git"])
 
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
@@ -119,12 +119,17 @@ class SyncThread:
         if "untracked files" in result.lower():
             has_changes = True
 
-        if has_changes:
-            print("NEEDS MERGE / COMMIT")
+        if "nothing to commit, working tree clean" not in result.lower():
+            has_changes = True
 
-        print("------- GIT -------")
-        print(result)
-        print("------- GIT -------")
+        if has_changes:
+            print("* GitHub > Needs commit/push -> " + self.context.get("usr_path_git"))
+        # else:
+            # print("Clean")
+
+        # print("------- GIT -------")
+        # print(result)
+        # print("------- GIT -------")
 
     def check_timestamps(self):
         for filename in self.files:
