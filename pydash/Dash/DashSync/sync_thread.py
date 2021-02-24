@@ -194,12 +194,28 @@ class SyncThread:
         git_cmd += "git commit . -m '" + commit_request["commit_msg"] + "';"
         git_cmd += "git push;"
 
-        git_status = subprocess.check_output([git_cmd], shell=True).decode()
+        git_result = subprocess.check_output([git_cmd], shell=True).decode()
 
         print("\nRESULT:\n")
-        print(git_status)
+        print(git_result)
+
+        # print("*************************\n\n\n")
+
+        params = {}
+        params["f"] = "set_livesync_git_result"
+        params["token"] = Utils.UserToken
+        params["asset_path"] = self.context["asset_path"]
+        params["git_result"] = git_result
+
+        response = requests.post(
+            "https://dash.guide/Users",
+            data=params
+        )
+
+        print(response.text)
 
         print("*************************\n\n\n")
+
 
     def check_timestamps(self):
         for filename in self.files:
