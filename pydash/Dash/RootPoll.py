@@ -9,18 +9,16 @@ import json
 import datetime
 import pathlib
 from Dash.Utils import utils
-from Dash.Paths import server_paths, local_paths
+# from Dash.Paths import server_paths, local_paths
 
 
 class PollRequests:
     def __init__(self):
-        self.request_path = server_paths.oapi_request_path
-
-        if os.path.exists(local_paths.request_path_ryan):
-            self.request_path = local_paths.request_path_ryan
+        # TODO: Put this path in dash guide
+        self.request_path = "/var/www/vhosts/oapi.co/dash/local/rar/active/"
 
         self.check_process_running()
-
+        self.fail_timeout = 10 # In seconds
         self.checks = 0
         self.periodic_check()
 
@@ -90,7 +88,7 @@ class PollRequests:
             )
             age = int((datetime.datetime.now() - timestamp_now).total_seconds())
 
-            if age > utils.rar_timeout * 2:
+            if age > self.fail_timeout * 2:
                 # Give it slightly more time since it's more likely that
                 # the source task will kill it
                 self.fail(task_path, "Task timed out", force_move=True)
@@ -106,6 +104,8 @@ class PollRequests:
             # os.remove(os.path.join(self.request_path, task_id))
 
     def fail(self, task_path, error, force_move=False):
+        # print(">> " + task_path)
+
         task_state = json.loads(open(task_path, "r").read())
         task_state["complete"] = True
         task_state["error"] = True

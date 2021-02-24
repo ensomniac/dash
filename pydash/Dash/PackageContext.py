@@ -39,7 +39,8 @@ class PackageContext:
                 break
 
         if not package_data:
-            raise Exception("Failed to locate package data for '" + self.asset_path + "'")
+            # raise Exception("Failed to locate package data for '" + self.asset_path + "'")
+            return None
 
         return package_data
 
@@ -67,6 +68,9 @@ class PackageContext:
 
     def ToDict(self):
 
+        if not self.PackageData:
+            return None
+
         required_keys = [
             "asset_path",
             "email_access_csv",
@@ -76,7 +80,8 @@ class PackageContext:
             "srv_path_git_oapi",
             "srv_path_local",
             "srv_path_http_root",
-            "code_copyright_text"
+            "code_copyright_text",
+            "email_git_webhook_csv",
         ]
 
         data = {}

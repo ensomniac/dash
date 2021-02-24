@@ -8,21 +8,17 @@ import threading
 import time
 
 from Dash.Utils import utils
-from Dash.Paths import local_paths, server_paths
-
 
 class RunAsRoot:
     def __init__(self):
-        self.request_path = server_paths.oapi_request_path
-
-        if os.path.exists(local_paths.request_path_ryan):
-            self.request_path = local_paths.request_path_ryan
+        # TODO: Put this path in dash guide
+        self.request_path = "/var/www/vhosts/oapi.co/dash/local/rar/active/"
 
         self.task_id = None
         self.cmd = None
         self.cmd_path = None
         self.start_time = None
-        self.fail_timeout = utils.rar_timeout  # In seconds
+        self.fail_timeout = 10 # In seconds
         self.state = None
         self.timestamp = ""
 

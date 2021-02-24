@@ -112,17 +112,20 @@ class DashLocalStorage:
 
         return record_path
 
-    def SetProperty(self, obj_id):
+    def SetProperty(self, obj_id, key=None, value=None):
         import json
 
+        key = key or Utils.Global.RequestData["key"]
+        value = value or Utils.Global.RequestData.get("value")
+
         response = {}
-        response["key"] = Utils.Global.RequestData["key"]
-        response["value"] = Utils.Global.RequestData.get("value")
+        response["key"] = key
+        response["value"] = value
         response["obj_id"] = Utils.Global.RequestData["obj_id"]
         response["record_path"] = self.get_record_path(obj_id)
 
         data = self.GetData(obj_id)
-        data[Utils.Global.RequestData["key"]] = Utils.Global.RequestData.get("value")
+        data[key] = value
         data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
 
@@ -152,8 +155,8 @@ def GetData(dash_context, store_path, obj_id):
 def GetAll(dash_context, store_path):
     return DashLocalStorage(dash_context, store_path).GetAll()
 
-def SetProperty(dash_context, store_path, obj_id):
-    return DashLocalStorage(dash_context, store_path).SetProperty(obj_id)
+def SetProperty(dash_context, store_path, obj_id, key=None, value=None):
+    return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value)
 
 def GetRecordPath(dash_context, store_path, obj_id):
     return DashLocalStorage(dash_context, store_path).get_record_path(obj_id)
