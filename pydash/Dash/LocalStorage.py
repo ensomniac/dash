@@ -135,6 +135,7 @@ class DashLocalStorage:
         import json
         json_str = json.dumps(data)
         open(self.get_record_path(obj_id), "w").write(json_str)
+        return data
 
     def SetProperty(self, obj_id, key=None, value=None):
         import json
