@@ -103,12 +103,7 @@ class SyncThread:
 
     def broadcast_git_status(self):
         if not self.context.get("usr_path_git"): return
-
-        if "/dash/" not in self.context["usr_path_git"]: return
-
-        # print("\n== BROADCAST GIT STATUS ==\n")
-
-        # print(self.context["usr_path_git"])
+        # if "/dash/" not in self.context["usr_path_git"]: return
 
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
@@ -154,9 +149,10 @@ class SyncThread:
             return
 
         if has_changes:
-            print("* GitHub > Needs commit/push -> " + self.context.get("usr_path_git"))
-        # else:
-            # print("* GitHub > Clean")
+            msg = "* " + self.context.get("asset_path") + " > "
+            msg += "GitHub > Needs commit/push ("
+            msg += self.context.get("usr_path_git") + ")"
+            print(msg)
 
     def check_timestamps(self):
         for filename in self.files:
