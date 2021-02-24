@@ -30,8 +30,8 @@ class DashSync:
 
         self.add_dash_client()
 
-        # for package in self.packages:
-            # self.add_sync_thread(package)
+        for package in self.packages:
+            self.add_sync_thread(package)
 
     def add_sync_thread(self, package):
         # Expected to be at the top level of the

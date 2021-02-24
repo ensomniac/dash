@@ -14,6 +14,7 @@ import subprocess
 from os.path import expanduser
 
 from Dash.DashLint import DashLint as Lint
+from Dash.Utils import Utils
 
 class SyncThread:
     def __init__(self, package, root_path, is_client, on_change_cb=None):
@@ -109,30 +110,50 @@ class SyncThread:
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
 
-        result = subprocess.check_output([cmd], shell=True).decode()
+        git_status = subprocess.check_output([cmd], shell=True).decode()
 
         has_changes = False
 
-        if "changes not staged for commit" in result.lower():
+        if "changes not staged for commit" in git_status.lower():
             has_changes = True
 
-        if "untracked files" in result.lower():
+        if "untracked files" in git_status.lower():
             has_changes = True
 
-        if "nothing to commit, working tree clean" not in result.lower():
+        if "nothing to commit, working tree clean" not in git_status.lower():
             has_changes = True
 
-        if "to publish your local commits" not in result.lower():
+        if "to publish your local commits" not in git_status.lower():
             has_changes = True
+
+        params = {}
+        params["f"] = "set_sync_state"
+        params["token"] = Utils.UserToken
+        params["asset_path"] = self.context["asset_path"]
+        params["git_status"] = git_status
+        params["has_changes"] = has_changes
+
+        response = requests.post(
+            "https://dash.guide/Users",
+            data=params
+        )
+
+        try:
+            response = json.loads(response.text)
+        except:
+            print("== SERVER ERROR ==")
+            print(response.text)
+            return
+
+        if response.get("error"):
+            print("== SERVER ERROR ==")
+            print(response)
+            return
 
         if has_changes:
             print("* GitHub > Needs commit/push -> " + self.context.get("usr_path_git"))
-        else:
-            print("* GitHub > Clean")
-
-        # print("------- GIT -------")
-        # print(result)
-        # print("------- GIT -------")
+        # else:
+            # print("* GitHub > Clean")
 
     def check_timestamps(self):
         for filename in self.files:

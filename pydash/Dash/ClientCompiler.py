@@ -409,7 +409,6 @@ class ClientCompiler:
         tail = line.split(extension)[-1].split(quote_type)[-1]
         head = f"{line.split(extension)[0]}{extension}"
         vstring = f"?v={str(self.VersionInfo['version'])}"
-
         return f"{head}{vstring}{quote_type}{tail}"
 
 if __name__ == "__main__":

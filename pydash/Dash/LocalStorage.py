@@ -21,10 +21,10 @@ class DashLocalStorage:
 
         import json
 
-        record_id = Utils.get_random_id()
+        record_id = obj_id or Utils.get_random_id()
 
-        if self.store_path == "users" and obj_id:
-            record_id = obj_id
+        # if self.store_path == "users" and obj_id:
+            # record_id = obj_id
 
         data = {}
         data["id"] = record_id
@@ -157,6 +157,9 @@ def GetAll(dash_context, store_path):
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None):
     return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value)
+
+def GetRecordRoot(dash_context, store_path, obj_id=None):
+    return DashLocalStorage(dash_context, store_path).get_store_root(obj_id)
 
 def GetRecordPath(dash_context, store_path, obj_id):
     return DashLocalStorage(dash_context, store_path).get_record_path(obj_id)
