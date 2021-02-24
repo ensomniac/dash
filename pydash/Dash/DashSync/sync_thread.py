@@ -119,15 +119,19 @@ class SyncThread:
 
         if "changes not staged for commit" in git_status.lower():
             has_changes = True
+            print(11)
 
         if "untracked files" in git_status.lower():
             has_changes = True
+            print(22)
 
         if "nothing to commit, working tree clean" not in git_status.lower():
             has_changes = True
+            print(33)
 
         if "to publish your local commits" not in git_status.lower():
             has_changes = True
+            print(44)
 
         params = {}
         params["f"] = "set_sync_state"
