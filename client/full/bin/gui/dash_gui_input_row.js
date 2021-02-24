@@ -269,6 +269,10 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.request_callback = callback;
         this.request_callback_binder = callback_binder;
 
+        if (!server_data["token"]) {
+            server_data["token"] = d.Local.Get("token");
+        };
+
         (function(self){
             request = self.button.Request(api, server_data, function(response_json){
                 self.on_request_response(response_json);

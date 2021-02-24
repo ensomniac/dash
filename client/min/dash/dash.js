@@ -195,12 +195,11 @@ function DashUser(){
 function DashColor(){
     this.Background = "#e6e6e6";
     this.Text = "rgba(0, 0, 0, 0.8)";
-    // this.ButtonColor = "#4d505f";
-    // this.ButtonHoverColor = "#565e83";
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
+    this.Warning = "#fab964";
     this.Button = new DashColorSet(
         "#4d505f",   // Background color
         "#565e83", // Background color on hover
@@ -654,6 +653,7 @@ function DashGui(){
         var html = $("<div>" + optional_label_text + "</div>");
         var css = {
             "color": Dash.Color.Text,
+            "font-family": "sans_serif_normal",
         };
         for (var key in optional_style_css) {
             css[key] = optional_style_css[key];
@@ -1649,6 +1649,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         var request = null;
         this.request_callback = callback;
         this.request_callback_binder = callback_binder;
+        if (!server_data["token"]) {
+            server_data["token"] = d.Local.Get("token");
+        };
         (function(self){
             request = self.button.Request(api, server_data, function(response_json){
                 self.on_request_response(response_json);

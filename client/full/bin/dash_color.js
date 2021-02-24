@@ -3,12 +3,11 @@ function DashColor(){
 
     this.Background = "#e6e6e6";
     this.Text = "rgba(0, 0, 0, 0.8)";
-    // this.ButtonColor = "#4d505f";
-    // this.ButtonHoverColor = "#565e83";
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
+    this.Warning = "#fab964";
 
     this.Button = new DashColorSet(
         "#4d505f",   // Background color

@@ -19,6 +19,7 @@ function DashGui(){
 
         var css = {
             "color": Dash.Color.Text,
+            "font-family": "sans_serif_normal",
         };
 
         for (var key in optional_style_css) {

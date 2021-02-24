@@ -16,6 +16,25 @@ class DashLocalStorage:
         self.dash_context = dash_context
         self.store_path = store_path
 
+    def CreateOrUpdate(self, additional_data, obj_id):
+        record_path = self.get_record_path(obj_id)
+
+        if not os.path.exists(record_path):
+            return self.New(additional_data, obj_id)
+
+        # Get existing data and modify
+        data = self.GetData(obj_id)
+
+        for key in additional_data:
+            data[key] = additional_data[key]
+
+        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_on"] = datetime.datetime.now().isoformat()
+
+        self.WriteData(obj_id, data)
+
+        return data
+
     def New(self, additional_data, obj_id=None):
         # Creates and saves a standard user record
 
@@ -112,6 +131,11 @@ class DashLocalStorage:
 
         return record_path
 
+    def WriteData(self, obj_id, data):
+        import json
+        json_str = json.dumps(data)
+        open(self.get_record_path(obj_id), "w").write(json_str)
+
     def SetProperty(self, obj_id, key=None, value=None):
         import json
 
@@ -129,8 +153,7 @@ class DashLocalStorage:
         data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
 
-        json_str = json.dumps(data)
-        open(self.get_record_path(obj_id), "w").write(json_str)
+        self.WriteData(obj_id, data)
 
         response["updated_data"] = data
 
@@ -142,9 +165,11 @@ class DashLocalStorage:
         if os.path.exists(record_path):
             os.remove(record_path)
 
-
 def New(dash_context, store_path, additional_data={}, obj_id=None):
     return DashLocalStorage(dash_context, store_path).New(additional_data, obj_id=obj_id)
+
+def CreateOrUpdate(dash_context, store_path, additional_data, obj_id):
+    return DashLocalStorage(dash_context, store_path).CreateOrUpdate(additional_data, obj_id)
 
 def Delete(dash_context, store_path, obj_id):
     return DashLocalStorage(dash_context, store_path).Delete(obj_id)

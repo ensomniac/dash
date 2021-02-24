@@ -28,6 +28,8 @@ class SyncThread:
 
         self.files = {}
         self.last_reindex_time = datetime.datetime.now()
+        self.start_time = datetime.datetime.now()
+        self.last_commit_attempt = None
         self.check_timeout = random.randint(100, 150) * 0.01
 
         self.index_all()
@@ -103,7 +105,7 @@ class SyncThread:
 
     def broadcast_git_status(self):
         if not self.context.get("usr_path_git"): return
-        # if "/dash/" not in self.context["usr_path_git"]: return
+        if "/dash/" not in self.context["usr_path_git"]: return
 
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
@@ -148,11 +150,56 @@ class SyncThread:
             print(response)
             return
 
+        if not response.get("success"):
+            print("\n\n*** SERVER ERROR set_sync_state() ***\n\n")
+        else:
+            print("\tServer notified!")
+
         if has_changes:
             msg = "* " + self.context.get("asset_path") + " > "
             msg += "GitHub > Needs commit/push ("
             msg += self.context.get("usr_path_git") + ")"
             print(msg)
+
+        if response.get("livesync_git_commit_request"):
+            self.attempt_git_commit(response["livesync_git_commit_request"])
+
+    def attempt_git_commit(self, commit_request):
+        # A request to commit and
+        if self.on_change_cb and self.context["asset_path"] == "pydash":
+            # TODO: Fix this garbage hack
+            # There is a slightly strange thing in that we monitor pydash
+            # and dash differently but they are in the same package.
+            # This hook says "this is dash client code, not pydash"
+            return
+
+        seconds_since_start = (datetime.datetime.now()-self.start_time).total_seconds()
+        if seconds_since_start < 3: return
+
+        if self.last_commit_attempt:
+            seconds_since_attempt = (datetime.datetime.now()-self.last_commit_attempt).total_seconds()
+            if seconds_since_attempt < 30:
+                # Don't attempt again for another 30 seconds
+                return
+
+        print("\n\n\n*************************")
+        print("*********** COMMIT ATTEMPT **************")
+        print(commit_request)
+
+        self.last_commit_attempt = datetime.datetime.now()
+        print(self.context["usr_path_git"])
+
+        git_cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
+        git_cmd += "git add .;"
+        git_cmd += "git commit . -m '" + commit_request["commit_msg"] + "';"
+        git_cmd += "git push;"
+
+        git_status = subprocess.check_output([git_cmd], shell=True).decode()
+
+        print("\nRESULT:\n")
+        print(git_status)
+
+        print("*************************\n\n\n")
 
     def check_timestamps(self):
         for filename in self.files:
