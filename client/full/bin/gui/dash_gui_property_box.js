@@ -37,24 +37,15 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.Update = function(){
         // Do we have new data?
-        console.log("UPDATE");
-        console.log(this.property_set_data);
-
-        console.log(this.update_inputs);
 
         for (var data_key in this.update_inputs) {
             var row_input = this.update_inputs[data_key];
             row_input.SetText(this.property_set_data[data_key]);
-            console.log(data_key);
-            console.log(row_input);
         };
-
 
     };
 
     this.on_server_property_set = function(property_set_data){
-
-        console.log(property_set_data);
 
         if (property_set_data["error"]) {
             alert("There was a problem accessing data");
@@ -155,19 +146,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             return;
         };
 
-        console.log("Updated?");
-        console.log(row_input);
-        console.log(row_details);
-
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "set_property";
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
-
-        console.log(url);
-        console.log(params);
 
         (function(self, row_input, row_details){
 

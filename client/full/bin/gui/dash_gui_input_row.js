@@ -118,7 +118,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "opacity": 0,
         });
 
-        console.log(Dash.Color.Text);
+        // console.log(Dash.Color.Text);
 
         this.button.highlight.css({
             "background": "none",

@@ -23,6 +23,7 @@ class ApiUsers:
         self.Add(self.validate,        requires_authentication=False)
         self.Add(self.update_password, requires_authentication=True)
         self.Add(self.set_property,    requires_authentication=True)
+        self.Add(self.get_all,         requires_authentication=True)
 
     def reset(self):
         return self.SetResponse(DashUsers(self.Params, self.DashContext).Reset())
@@ -46,5 +47,28 @@ class ApiUsers:
             obj_id=self.Params["obj_id"]
         ))
 
+    def get_all(self):
+        response = {}
+        response["users"] = []
+
+        users_root = os.path.join(self.DashContext["srv_path_local"], "users/")
+
+        for email in os.listdir(users_root):
+            user_path = os.path.join(users_root, email, "usr.data")
+            user_data = self.conform_user_data(LocalStorage.Read(user_path))
+            response["users"].append(user_data)
+
+        response["record_path"] = self.DashContext["srv_path_local"]
+
+        return self.SetResponse(response)
+
+    def conform_user_data(self, user_data):
+        # Light wrapper to make sure certain
+        # things exist in returned user data
+        # TODO: Evaluate whether or not this is useful/needed
+
+        user_data["conformed"] = True
+
+        return user_data
 
 

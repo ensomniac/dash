@@ -1,16 +1,14 @@
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile(){
+function DashGuiLayoutUserProfile(user_data){
 
-    this.user_data = Dash.User.Data;
+    this.user_data = user_data || Dash.User.Data;
     this.as_overview = false;
 
     this.property_box = null;
     this.html = null;
 
     this.setup_styles = function(){
-
-        // d.Local.Get("token")
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
@@ -22,10 +20,16 @@ function DashGuiLayoutUserProfile(){
 
         this.html = this.property_box.html;
 
-        this.property_box.AddHeader("User Settings");
+        var header_title = "User Settings";
+        if (this.user_data["first_name"]) {
+            header_title = this.user_data["first_name"] + "'s User Settings";
+        };
+
+        this.property_box.AddHeader(header_title);
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
         this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
+        this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
 
         this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
 
@@ -42,13 +46,10 @@ function DashGuiLayoutUserProfile(){
 
         this.property_box.AddButton("Log Out", this.log_out);
 
-
     };
 
     this.get_data = function(){
-        console.log(Dash.User.Data);
-        // return this.packages.data["data"][this.package_id];
-        return Dash.User.Data;
+        return this.user_data;
     };
 
     this.set_data = function(){

@@ -698,6 +698,10 @@ function DashSiteSettingsView(){
     this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
     this.property_box = null;
     this.setup_styles = function(){
+        this.add_site_settings_box();
+        this.add_user_groups_box();
+    };
+    this.add_site_settings_box = function(){
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             null,  // Function to return live data
@@ -711,15 +715,23 @@ function DashSiteSettingsView(){
         this.property_box.AddInput("open_account_creation_bool", "Open Account Creation", "", null, true);
         this.property_box.Load();
     };
-    // this.get_data = function(){
-    //     var fake_data = {};
-    //     fake_data["created_by"] = "Ryan";
-    //     return fake_data;
-    //     return {};
-    // };
-    // this.set_data = function(data){
-    //     // return {};
-    // };
+    this.add_user_groups_box = function(){
+        this.user_groups_box = new Dash.Gui.PropertyBox(
+            this,           // For binding
+            null,           // Function to return live data
+            null,           // Function to set saved data locally
+            "Properties",   // Endpoint
+            "user_groups"    // Dash object ID
+        );
+        this.html.append(this.user_groups_box.html);
+        this.user_groups_box.AddHeader("User Groups");
+        this.user_groups_box.AddInput("admin", "Admin", "", null, false);
+        this.user_groups_box.AddButton("Create Group", this.create_group);
+        this.user_groups_box.Load();
+    };
+    this.create_group = function(){
+        console.log("Create Group");
+    };
     this.setup_styles();
 };
 
@@ -1637,7 +1649,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "background": "none",
             "opacity": 0,
         });
-        console.log(Dash.Color.Text);
+        // console.log(Dash.Color.Text);
         this.button.highlight.css({
             "background": "none",
         });
@@ -1864,19 +1876,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     };
     this.Update = function(){
         // Do we have new data?
-        console.log("UPDATE");
-        console.log(this.property_set_data);
-        console.log(this.update_inputs);
         for (var data_key in this.update_inputs) {
             var row_input = this.update_inputs[data_key];
             row_input.SetText(this.property_set_data[data_key]);
-            console.log(data_key);
-            console.log(row_input);
         };
-
     };
     this.on_server_property_set = function(property_set_data){
-        console.log(property_set_data);
         if (property_set_data["error"]) {
             alert("There was a problem accessing data");
             return;
@@ -1946,17 +1951,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             console.log("The data didn't change");
             return;
         };
-        console.log("Updated?");
-        console.log(row_input);
-        console.log(row_details);
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "set_property";
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
-        console.log(url);
-        console.log(params);
         (function(self, row_input, row_details){
             row_input.Request(url, params, function(response){
                 self.on_server_response(response, row_details);
@@ -2207,7 +2207,7 @@ function DashGuiLayoutTabs(Binder){
             "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
-            // "background-position": "center",
+            "background-position": "center",
         });
         this.list_top.append(image);
     };
@@ -2245,13 +2245,12 @@ function DashGuiLayoutTabs(Binder){
 
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile(){
-    this.user_data = Dash.User.Data;
+function DashGuiLayoutUserProfile(user_data){
+    this.user_data = user_data || Dash.User.Data;
     this.as_overview = false;
     this.property_box = null;
     this.html = null;
     this.setup_styles = function(){
-        // d.Local.Get("token")
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
@@ -2260,10 +2259,15 @@ function DashGuiLayoutUserProfile(){
             this.user_data["email"] // Dash obj_id (unique for users)
         );
         this.html = this.property_box.html;
-        this.property_box.AddHeader("User Settings");
+        var header_title = "User Settings";
+        if (this.user_data["first_name"]) {
+            header_title = this.user_data["first_name"] + "'s User Settings";
+        };
+        this.property_box.AddHeader(header_title);
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
         this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
+        this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
         this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
         // if (this.user_data["admin"]) {
         //     this.is_admin = new d.Gui.InputRow("Admin", "Yes", "Admin", "Revoke", function(b){this.set_group(b, "admin", false)}, this);
@@ -2274,12 +2278,9 @@ function DashGuiLayoutUserProfile(){
         this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
         this.property_box.html.append(this.new_password_row.html);
         this.property_box.AddButton("Log Out", this.log_out);
-
     };
     this.get_data = function(){
-        console.log(Dash.User.Data);
-        // return this.packages.data["data"][this.package_id];
-        return Dash.User.Data;
+        return this.user_data;
     };
     this.set_data = function(){
         console.log("set data");

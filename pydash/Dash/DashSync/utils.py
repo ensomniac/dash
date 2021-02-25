@@ -149,6 +149,13 @@ class SyncUtils:
     def FindServerClientRoots(self, package):
         server_root, client_root = "", ""
 
+        if not package["usr_path_git"]:
+            print("\nERROR: You haven't set your 'usr_path_git' for package: " + package["asset_path"] +  "\n")
+            sys.exit()
+
+        print(package["usr_path_git"])
+        print(os.path.expanduser(package["usr_path_git"]))
+
         all_files = [
             os.path.join(dp, f)
             for dp, dn, fn in os.walk(os.path.expanduser(package["usr_path_git"]))

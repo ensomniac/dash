@@ -258,7 +258,7 @@ function DashGuiLayoutTabs(Binder){
             "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
-            // "background-position": "center",
+            "background-position": "center",
         });
 
         this.list_top.append(image);

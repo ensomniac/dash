@@ -3,6 +3,7 @@
 import os
 import sys
 import datetime
+import json
 
 from Dash.Utils import Utils
 
@@ -170,6 +171,9 @@ class DashLocalStorage:
         if os.path.exists(record_path):
             os.remove(record_path)
 
+    def Read(self, full_path):
+        return json.loads(open(full_path, "r").read())
+
 def New(dash_context, store_path, additional_data={}, obj_id=None):
     return DashLocalStorage(dash_context, store_path).New(additional_data, obj_id=obj_id)
 
@@ -196,3 +200,6 @@ def GetRecordRoot(dash_context, store_path, obj_id=None):
 
 def GetRecordPath(dash_context, store_path, obj_id):
     return DashLocalStorage(dash_context, store_path).get_record_path(obj_id)
+
+def Read(full_path):
+    return DashLocalStorage(None, None).Read(full_path)
