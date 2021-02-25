@@ -53,6 +53,22 @@ function Dash(){
         var time_ago = timeago.format(date);
         return time_ago;
     };
+    this.ValidateResponse = function(response){
+        // TODO: doc
+        if (!response) {
+            console.log("Dash.ValidateResponse(1)");
+            console.log(response);
+            alert("There was a server problem with this request");
+            return null;
+        };
+        if (response["error"]) {
+            console.log("Dash.ValidateResponse(2)");
+            console.log(response);
+            alert(response["error"]);
+            return null;
+        };
+        return response;
+    };
     this.GetFormContainer = function(){
         var container = $("<div></div>");
         container.css({

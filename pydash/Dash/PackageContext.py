@@ -73,6 +73,7 @@ class PackageContext:
 
         required_keys = [
             "asset_path",
+            "display_name",
             "email_access_csv",
             "domain",
             "id",

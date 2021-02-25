@@ -15,6 +15,7 @@
 # + Possible auto formatting idea: make sure that @propertys are grouped together
 # + Search the code for instances of TODO - where we can add that in comments to flag important things
 # + Look in cgi-bin files for an htaccess key value pair and auto generate .htaccess mapping
+# + For js lint: Find print( and change to console.log(!
 
 import sys
 import os
