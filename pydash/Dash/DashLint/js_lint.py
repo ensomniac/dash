@@ -1,8 +1,8 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import sys
 import os
+import sys
 
 from .lint_utils import LintUtils
 

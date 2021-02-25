@@ -70,14 +70,6 @@ class Lint:
         # self.add_flag_comments()
         # self.write_linted_file()
         #
-        # # testing
-        # print("-"*100)
-        # print(*self.source_code, sep="\n")
-        # print("-"*100)
-        # print("\nFINAL: ", self.source_code)
-        #
-        # if len(self.debug):
-        #     print(f"\n\nDEBUG:\n{self.debug}")
 
         return self.compile_to_check_for_errors()
 
@@ -85,7 +77,12 @@ class Lint:
         # file = open(self.code_path, "w")
         # file.write("\n".join(self.source_code))
         # file.close()
-        pass
+
+        # While testing
+        print(f"{'-'*100}\n" + '\n'.join(self.source_code) + f"{'-'*100}\n")
+
+        if len(self.debug):
+            print(f"\n\nDEBUG:\n{self.debug}")
 
     def compile_to_check_for_errors(self):
         try:

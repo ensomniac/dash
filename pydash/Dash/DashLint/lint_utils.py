@@ -1,48 +1,53 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
-import datetime
 
 
 class LintUtils:
     def __init__(self):
         pass
 
-    def GetCodeHeader(self, comment_tkn, context, file_path):
-        # comment_tkn = # or //
+    # def GetCodeHeader(self, comment_token, dash_context, code_path):
+    #     from datetime import datetime
+    #
+    #     lines = []
+    #     lines.append(f"{comment_token} {datetime.today().year} {dash_context['code_copyright_text']}")
+    #     lines.append(f"{comment_token} Author(s): {', '.join(self.GetFileAuthors(code_path))}")
+    #     lines.append(f"{comment_token} {datetime.now()}")  # This may need to be a different type of timestamp
+    #     lines.append("")
+    #
+    #     return "\n".join(lines)
 
-        # print(context["code_copyright_text"])
+    def GetCodeLineListFromFile(self, code_path):
+        return open(code_path).read().split("\n")
 
-        today = datetime.datetime.today()
+    def WriteCodeListToFile(self, code_path, code_lines_list):
+        file = open(code_path, "w")
+        file.write("\n".join(code_lines_list))
+        file.close()
 
-        header_line = comment_tkn + " " + str(today.year) + " "
-        header_line += context["code_copyright_text"]
-
-        authors_line = comment_tkn + " " + self.get_file_authors(file_path)
-
-        lines = []
-        lines.append(header_line)
-        lines.append(authors_line)
-        lines.append(comment_tkn + " Last Checked TS")  # TODO
-        lines.append("")
-
-        return "\n".join(lines)
-
-    def get_file_authors(self, file_path):
+    def GetFileAuthors(self):
         # Ryan Martin ryan@ensomniac.com, Andrew Stet stetandrew@gmail.com
-        #
+
         # Andrew - I'm not sure what the best way to gather these names
         # are but it seems like git log would be a good start
         # and then making sure that whoever is currently logged
         # in and running this linter should be included if they
         # triggered the change and do not already exist in git's history?
-        #
+
         # https://www.commandlinefu.com/commands/view/4519/list-all-authors-of-a-particular-git-project
         # git shortlog -s # This is project specific, not file specific
         # git shortlog -s <relative file path> # file specific
-        return "Authors: ..."
+
+        # return "Authors: ..."
+
+        # Short term:
+        return [
+            "Ryan Martin, ryan@ensomniac.com",
+            "Andrew Stet, stetandrew@gmail.com",
+        ]
 
 
 LintUtils = LintUtils()
