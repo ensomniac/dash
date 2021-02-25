@@ -1,9 +1,10 @@
 # 2021 Ensomniac
 # Ryan Martin ryan@ensomniac.com
 
-import sys
 import os
+import sys
 import datetime
+
 
 class LintUtils:
     def __init__(self):
@@ -24,7 +25,7 @@ class LintUtils:
         lines = []
         lines.append(header_line)
         lines.append(authors_line)
-        lines.append(comment_tkn + " Last Checked TS") # TODO
+        lines.append(comment_tkn + " Last Checked TS")  # TODO
         lines.append("")
 
         return "\n".join(lines)

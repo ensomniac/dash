@@ -16,15 +16,13 @@
 # + Search the code for instances of TODO - where we can add that in comments to flag important things
 # + Look in cgi-bin files for an htaccess key value pair and auto generate .htaccess mapping
 
-import sys
 import os
-import json
-import getpass
-import requests
+import sys
 
-from .lint_utils import LintUtils
 from .js_lint    import JSLinter
 from .py_lint    import PyLinter
+from .lint_utils import LintUtils
+
 
 class DashLint:
     def __init__(self):
@@ -32,12 +30,14 @@ class DashLint:
 
     def Process(self, is_client, context, file_path):
         lint_succeeded = True
+        msg = ""
 
         if file_path.endswith(".py"):
-            lint_succeeded = PyLinter.Process(is_client, context, file_path)
+            lint_succeeded, msg = PyLinter.Process(is_client, context, file_path)
         elif file_path.endswith(".js"):
-            lint_succeeded = JSLinter.Process(is_client, context, file_path)
+            lint_succeeded, msg = JSLinter.Process(is_client, context, file_path)
 
-        return lint_succeeded
+        return lint_succeeded, msg
+
 
 DashLint = DashLint()
