@@ -45,6 +45,19 @@ class PyLinter:
         self.all_comment_options = self.get_all_current_comment_options()
 
     def Process(self, is_client, dash_context, code_path):
+        self.update_init_attrs(is_client, dash_context, code_path)
+
+        self.run_core()
+        self.run_extras()
+
+        # self.add_flag_comments()
+        LintUtils.WriteCodeListToFile(self.code_path, self.source_code)
+
+        return CompileToCheckForErrors(self.code_path)
+        # return CompileToCheckForErrors(self.code_path, debug_text=dash_context)
+        # return CompileToCheckForErrors(self.code_path, linted_code_line_list_to_print=self.source_code)
+
+    def update_init_attrs(self, is_client, dash_context, code_path):
         self.is_client = is_client
         self.dash_context = dash_context
         self.code_path = code_path
@@ -56,9 +69,25 @@ class PyLinter:
         if "/cgi-bin/" in code_path:
             self.include_shebang = True
 
-        return CompileToCheckForErrors(self.code_path)
-        # return CompileToCheckForErrors(self.code_path, debug_text=dash_context)
-        # return CompileToCheckForErrors(self.code_path, linted_code_line_list_to_print=self.source_code)
+    def run_core(self):
+        # self.cleanup_comments_before_evaluating()
+        # self.remove_extra_lines_at_start_of_file()
+        # self.remove_extra_lines_at_end_of_file()
+        # self.remove_blank_lines_at_start_of_blocks()
+        # self.check_class_spacing()
+        # self.check_function_spacing()
+        # self.check_name_main_spacing()
+        # self.validate_shebang()
+        # self.validate_copyright()
+        # self.check_import_spacing()
+        pass
+
+    def run_extras(self):
+        # self.conform_dict_creation()
+        # self.conform_list_creation()
+        # self.drop_one_line_ifs()
+        # self.format_block_spacing_into_columns()
+        pass
 
     def get_all_current_comment_options(self):
         comment_options = []

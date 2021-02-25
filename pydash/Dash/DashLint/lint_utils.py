@@ -40,8 +40,12 @@ class LintUtils:
         # https://www.commandlinefu.com/commands/view/4519/list-all-authors-of-a-particular-git-project
         # git shortlog -s # This is project specific, not file specific
         # git shortlog -s <relative file path> # file specific
-
         # return "Authors: ..."
+
+        # (Andrew) Looking into git solution, but I think we should actually leave this as a hard-coded global list.
+        # We'd have to pick somewhere for it to live, maybe in the dash context
+        # and we add it on Dash Guide, but each project may have different contributors
+        # that could easily be globally specified.
 
         # Short term:
         return [
