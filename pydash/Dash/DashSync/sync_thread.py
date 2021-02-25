@@ -248,16 +248,17 @@ class SyncThread:
 
                 print(f"\n\t[{self.Name}] *** -> {filename} updated -> Lint & Sync...")
 
-                lint_succeeded = Lint.Process(
+                lint_succeeded, msg = Lint.Process(
                     is_client=self.is_client,
-                    context=self.context,
-                    file_path=self.files[filename]["abspath"]
+                    dash_context=self.context,
+                    code_path=self.files[filename]["abspath"]
                 )
 
                 if lint_succeeded:
                     threading.Timer(0.0, self.upload_change, args=[filename]).start()
+                    print(f"\t\t\t{msg}")
                 else:
-                    print("\t\t * Fatal lint error: This must be resolved before this file can be sync'd")
+                    print(f"\t\t * Fatal DashLint ERROR: This must be resolved before this file can be synced\n\t\t\t{msg}")
 
             self.broadcast_git_status()
 
@@ -309,7 +310,7 @@ class SyncThread:
             return
 
         if response["success"]:
-            print("\t\t\tSuccess!")
+            print("\t\t\t(Upload) Success!")
 
             if not self.needs_git_push:
                 self.needs_git_push = True
