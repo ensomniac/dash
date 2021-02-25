@@ -3,6 +3,7 @@ function DashView(){
 
     this.User = DashUserView;
     this.Style = DashStyleView;
-    this.SiteSettings = DashSiteSettingsView;
+    this.SiteSettings = DashAdminView;
+    this.Admin = DashAdminView;
 
 };

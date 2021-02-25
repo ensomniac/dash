@@ -613,7 +613,8 @@ function DashSize(){
 function DashView(){
     this.User = DashUserView;
     this.Style = DashStyleView;
-    this.SiteSettings = DashSiteSettingsView;
+    this.SiteSettings = DashAdminView;
+    this.Admin = DashAdminView;
 };
 
 
@@ -679,38 +680,6 @@ function DashRequest(){
 
 
 function DashAdminView(){
-    this.layout = new Dash.Gui.Layout.SideTabs(this);
-    this.html = this.layout.html;
-    this.tmp_style = $("<div>Styles</div>");
-    this.tmp_size = $("<div>Sizes</div>");
-    this.setup_styles = function(){
-        // this.html.css({
-        //     "position": "absolute",
-        //     "left": 0,
-        //     "top": 0,
-        //     "right": 0,
-        //     "bottom": 0,
-        //     "background": d.Color.Background,
-        // });
-        this.layout.Append("Style", this.tmp_style);
-        this.layout.Append("Size", this.tmp_size);
-    };
-    this.setup_styles();
-};
-
-// Profile page layout for the currently logged in user
-function DashUserView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
-    this.html.append(new Dash.Gui.Layout.UserProfile().html);
-};
-// Profile page layout for the currently logged in user
-function DashStyleView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
-    this.html.append(new Dash.Gui.Layout.UserProfile().html);
-    console.log("in");
-};
-
-function DashSiteSettingsView(){
     this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
     this.property_box = null;
     this.setup_styles = function(){
@@ -751,6 +720,17 @@ function DashSiteSettingsView(){
     this.setup_styles();
 };
 
+// Profile page layout for the currently logged in user
+function DashUserView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+};
+// Profile page layout for the currently logged in user
+function DashStyleView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+    console.log("in");
+};
 
 function DashGui(){
     this.Layout = new DashGuiLayout();

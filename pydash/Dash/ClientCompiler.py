@@ -123,7 +123,9 @@ class ClientCompiler:
                     css_anchor_found = True
                     index_content.append(css_anchor)
 
-                css_source_paths.append(self.parse_source_path(line))
+                path = self.parse_source_path(line)
+                if path: css_source_paths.append(path)
+
                 continue
 
             if ".js" in line:
@@ -131,7 +133,9 @@ class ClientCompiler:
                     js_anchor_found = True
                     index_content.append(js_anchor)
 
-                js_source_paths.append(self.parse_source_path(line))
+                path = self.parse_source_path(line)
+                if path: js_source_paths.append(path)
+
                 continue
 
             index_content.append(line)
@@ -163,8 +167,12 @@ class ClientCompiler:
         full_path = os.path.join(self.ClientPathFull, line)
 
         if not os.path.exists(full_path):
-            print(f"\nFailed to parse source path: {line}\n")
-            sys.exit()
+            msg = "\n\nWARNING: Failed to parse source path '"
+            msg += line + "' in dash/index.html "
+            msg += "\nRemove the line containing '"
+            msg += line + "' in index.html\n\n"
+            print(msg)
+            return None
 
         return full_path
 
