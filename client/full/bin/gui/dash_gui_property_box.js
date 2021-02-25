@@ -1,16 +1,69 @@
 
 function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id){
     this.binder = binder;
-    this.get_data_cb = get_data_cb.bind(binder);
-    this.set_data_cb = set_data_cb.bind(binder);
+
+    this.get_data_cb = null;
+    this.set_data_cb = null;
+
+    if (get_data_cb && set_data_cb) {
+        this.get_data_cb = get_data_cb.bind(binder);
+        this.set_data_cb = set_data_cb.bind(binder);
+    };
+
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
+    this.property_set_data = null; // Managed Dash data
 
     this.num_headers = 0;
 
+    this.update_inputs = {};
+
     this.setup_styles = function(){
+    };
+
+    this.Load = function(){
+
+        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+        var params = {};
+        params["f"] = "get_property_set";
+        params["obj_id"] = this.dash_obj_id;
+
+        // binder, callback, endpoint, params
+        Dash.Request(this, this.on_server_property_set, this.endpoint, params);
+
+    };
+
+    this.Update = function(){
+        // Do we have new data?
+        console.log("UPDATE");
+        console.log(this.property_set_data);
+
+        console.log(this.update_inputs);
+
+        for (var data_key in this.update_inputs) {
+            var row_input = this.update_inputs[data_key];
+            row_input.SetText(this.property_set_data[data_key]);
+            console.log(data_key);
+            console.log(row_input);
+        };
+
+
+    };
+
+    this.on_server_property_set = function(property_set_data){
+
+        console.log(property_set_data);
+
+        if (property_set_data["error"]) {
+            alert("There was a problem accessing data");
+            return;
+        };
+
+        this.property_set_data = property_set_data;
+        this.Update();
+
     };
 
     this.AddHeader = function(label_text){
@@ -44,7 +97,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
 
-        this.data = this.get_data_cb();
+        if (this.get_data_cb) {
+            this.data = this.get_data_cb();
+        }
+        else {
+            this.data = {};
+        };
 
         var row_details = {};
         row_details["key"] = data_key;
@@ -64,6 +122,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 function(row_input){self.on_row_updated(row_input, row_details)},
                 self
             );
+
+            self.update_inputs[data_key] = row;
 
             var indent_px = 0;
             var indent_row = false;

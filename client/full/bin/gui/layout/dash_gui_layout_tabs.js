@@ -5,7 +5,10 @@ function DashGuiLayoutTabs(Binder){
     this.binder = Binder;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
-    this.list = $("<div></div>");
+    this.list_backing = $("<div></div>");
+    this.list_top = $("<div></div>");
+    this.list_bottom = $("<div></div>");
+
     this.content = $("<div></div>");
 
     this.all_content = [];
@@ -20,25 +23,43 @@ function DashGuiLayoutTabs(Binder){
 
     this.setup_styles = function(){
 
-        this.html.append(this.list);
+        this.html.append(this.list_backing);
+        this.html.append(this.list_top);
+        this.html.append(this.list_bottom);
         this.html.append(this.content);
 
         this.html.css({
             "position": "absolute",
+            "display": "flex",
             "left": 0,
             "top": 0,
             "right": 0,
             "bottom": 0,
-            // "background": "red",
         });
 
-        this.list.css({
+        this.list_backing.css({
             "position": "absolute",
             "left": 0,
             "top": 0,
             "bottom": 0,
+            // "background": "orange",
         });
 
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            // "bottom": 0,
+        });
+
+        this.list_bottom.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+            // "bottom": 0,
+        });
+
+        // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
             "left": this.width,
@@ -65,6 +86,8 @@ function DashGuiLayoutTabs(Binder){
         var sub_border = "none";
         var box_shadow = "none";
 
+        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
+
         this.color_selected = Dash.Color.Primary;
         this.color_default = Dash.Color.ButtonColor;
         this.width = Dash.Size.ColumnWidth;
@@ -79,15 +102,25 @@ function DashGuiLayoutTabs(Binder){
             box_shadow = "inset -20px -10px 20px 0px rgba(0, 0, 0, 0.11)";
         };
 
-        this.list.css({
+
+        this.list_backing.css({
             "width": this.width,
             "background": this.background_color,
-            "border-left": sub_border,
-            "box-shadow": box_shadow,
+            // "border-left": sub_border,
+            // "box-shadow": box_shadow,
+        });
+
+        this.list_top.css({
+            "width": this.width,
+        });
+
+        this.list_bottom.css({
+            "width": this.width,
         });
 
         this.content.css({
             "left": this.width,
+            "box-shadow": box_shadow,
         });
 
         for (var i in this.all_content) {
@@ -170,6 +203,14 @@ function DashGuiLayoutTabs(Binder){
 
     this.style_button_content = function(content_data){
 
+        var optional_params = content_data["optional_params"] || {};
+
+        var indent = 0;
+
+        if (optional_params["indent"]) {
+            indent = Dash.Size.Padding;
+        };
+
         content_data["button"].SetTextAlign("left");
         content_data["button"].html.css({
             // "margin": 0,
@@ -178,12 +219,14 @@ function DashGuiLayoutTabs(Binder){
             // "padding-top": d.Size.Padding*0.5,
             // "padding-bottom": d.Size.Padding*0.5,
             "margin-bottom": 1,
+            "flex-grow": 1,
         });
 
         content_data["button"].SetBorderRadius(0);
 
         content_data["button"].label.css({
             "font-size": "85%",
+            "padding-left": indent,
             // "font-family": "sans_serif_bold",
         });
 
@@ -199,12 +242,46 @@ function DashGuiLayoutTabs(Binder){
 
     };
 
-    this.Add = function(label_text, content_div_html_class){
+    this.AppendImage = function(img_url){
+
+        // TODO: Move the concept of an 'Image' into dash as a light
+        // abstraction for managing aspect ratios
+
+        // TODO: This AppendImage is a hack. We need to revise the
+        // stack of objects in this container so they derive from
+        // some abstraction to simplify append/prepend
+
+        var image = $("<div></div>");
+
+        image.css({
+            "height": Dash.Size.RowHeight*2,
+            "background-image": "url(" + img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            // "background-position": "center",
+        });
+
+        this.list_top.append(image);
+
+    };
+
+    this.Append = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+    };
+
+    this.Prepend = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
+    };
+
+    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
+
+        optional_params = optional_params || {};
 
         var content_data = {};
         content_data["label_text"] = label_text;
         content_data["content_div_html_class"] = content_div_html_class;
         content_data["button"] = null;
+        content_data["optional_params"] = optional_params;
 
         (function(self, index){
             content_data["button"] = new d.Gui.Button(label_text, function(){
@@ -212,7 +289,15 @@ function DashGuiLayoutTabs(Binder){
             }, self);
         })(this, this.all_content.length);
 
-        this.list.append(content_data["button"].html);
+        anchor_div = anchor_div || this.list_top;
+
+        // console.log("--");
+        // console.log(this.list_top);
+        // console.log(this.list_bottom);
+        // console.log(anchor_div);
+        // console.log(typeof(anchor_div));
+        anchor_div.append(content_data["button"].html);
+
         this.style_button_content(content_data);
         this.all_content.push(content_data);
 

@@ -8,7 +8,6 @@ import cgi
 import json
 import traceback
 
-# import Dash
 from Dash import LocalStorage
 from Dash.Utils import Utils
 from Dash.Users import Users as DashUsers

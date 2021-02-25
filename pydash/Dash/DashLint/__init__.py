@@ -14,6 +14,7 @@
 # + Consider a formatting ability to specify that the name of a function had changed so that we can auto migrate other code
 # + Possible auto formatting idea: make sure that @propertys are grouped together
 # + Search the code for instances of TODO - where we can add that in comments to flag important things
+# + Look in cgi-bin files for an htaccess key value pair and auto generate .htaccess mapping
 
 import sys
 import os

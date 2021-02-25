@@ -115,15 +115,21 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "height": Dash.Size.RowHeight,
             "width": d.Size.ColumnWidth,
             "background": "none",
-            // "opacity": 0,
+            "opacity": 0,
         });
 
         console.log(Dash.Color.Text);
 
+        this.button.highlight.css({
+            "background": "none",
+        });
+
+
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
-            "color": Dash.Color.Dark.Text,
+            // "color": Dash.Color.Dark.Text,
+            "color": "rgba(0, 0, 0, 0.9)",
             // "position": "absolute",
             // "right": 0,
             // "top": 0,

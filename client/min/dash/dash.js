@@ -596,6 +596,8 @@ function DashSize(){
 
 function DashView(){
     this.User = DashUserView;
+    this.Style = DashStyleView;
+    this.SiteSettings = DashSiteSettingsView;
 };
 
 
@@ -674,8 +676,8 @@ function DashAdminView(){
         //     "bottom": 0,
         //     "background": d.Color.Background,
         // });
-        this.layout.Add("Style", this.tmp_style);
-        this.layout.Add("Size", this.tmp_size);
+        this.layout.Append("Style", this.tmp_style);
+        this.layout.Append("Size", this.tmp_size);
     };
     this.setup_styles();
 };
@@ -685,6 +687,42 @@ function DashUserView(){
     this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
     this.html.append(new Dash.Gui.Layout.UserProfile().html);
 };
+// Profile page layout for the currently logged in user
+function DashStyleView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+    console.log("in");
+};
+
+function DashSiteSettingsView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.property_box = null;
+    this.setup_styles = function(){
+        this.property_box = new Dash.Gui.PropertyBox(
+            this,           // For binding
+            null,  // Function to return live data
+            null,  // Function to set saved data locally
+            "Properties",   // Endpoint
+            "site_settings" // Dash object ID
+        );
+        this.html.append(this.property_box.html);
+        this.property_box.AddHeader("Site Settings");
+        this.property_box.AddInput("created_by", "Created By", "", null, false);
+        this.property_box.AddInput("open_account_creation_bool", "Open Account Creation", "", null, true);
+        this.property_box.Load();
+    };
+    // this.get_data = function(){
+    //     var fake_data = {};
+    //     fake_data["created_by"] = "Ryan";
+    //     return fake_data;
+    //     return {};
+    // };
+    // this.set_data = function(data){
+    //     // return {};
+    // };
+    this.setup_styles();
+};
+
 
 function DashGui(){
     this.Layout = new DashGuiLayout();
@@ -786,6 +824,12 @@ function DashGuiLogin(on_login_binder, on_login_callback){
         this.reset_button   = new d.Gui.Button("Create / Reset Login", this.ResetLogin, this);
         this.email_input    = new d.Gui.Input("email@" + d.Context["domain"]);
         this.password_input = new d.Gui.Input("Password");
+        this.email_input.html.css({
+            "padding": Dash.Size.Padding*0.5,
+        });
+        this.password_input.html.css({
+            "padding": Dash.Size.Padding*0.5,
+        });
         this.email_input.OnSubmit(this.Submit, this);
         this.password_input.OnSubmit(this.Submit, this);
         this.email_input.OnChange(this.store_input, this);
@@ -832,6 +876,7 @@ function DashGuiLogin(on_login_binder, on_login_callback){
             "font-family": "sans_serif_bold",
             "height": d.Size.RowHeight,
             "line-height": d.Size.RowHeight + "px",
+            "padding": d.Size.Padding,
         });
         this.button_bar.css({
             "display": "flex",
@@ -846,18 +891,18 @@ function DashGuiLogin(on_login_binder, on_login_callback){
             "margin-top": 0,
         });
         this.login_button.html.css({
-            "margin": d.Size.Padding,
-            "margin-top": 0,
-            "padding": d.Size.Padding*0.5,
-            "width": login_box_width*0.5,
-            "background": d.Color.Primary,
+            "margin-left": d.Size.Padding,
+            // "margin-top": 0,
+            // "padding": d.Size.Padding*0.5,
+            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
+            // "background": d.Color.Primary,
         });
         this.reset_button.html.css({
-            "margin": d.Size.Padding,
-            "margin-top": 0,
-            "margin-right": 0,
-            "padding": d.Size.Padding*0.5,
-            "width": login_box_width*0.5,
+            // "margin": d.Size.Padding,
+            "margin-left": d.Size.Padding,
+            // "margin-right": 0,
+            // "padding": d.Size.Padding*0.5,
+            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
         });
         this.email_input.SetText(d.Local.Get("email") || "");
         this.show_login_box();
@@ -1590,13 +1635,18 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "height": Dash.Size.RowHeight,
             "width": d.Size.ColumnWidth,
             "background": "none",
-            // "opacity": 0,
+            "opacity": 0,
         });
         console.log(Dash.Color.Text);
+        this.button.highlight.css({
+            "background": "none",
+        });
+
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
-            "color": Dash.Color.Dark.Text,
+            // "color": Dash.Color.Dark.Text,
+            "color": "rgba(0, 0, 0, 0.9)",
             // "position": "absolute",
             // "right": 0,
             // "top": 0,
@@ -1789,14 +1839,50 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
 function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id){
     this.binder = binder;
-    this.get_data_cb = get_data_cb.bind(binder);
-    this.set_data_cb = set_data_cb.bind(binder);
+    this.get_data_cb = null;
+    this.set_data_cb = null;
+    if (get_data_cb && set_data_cb) {
+        this.get_data_cb = get_data_cb.bind(binder);
+        this.set_data_cb = set_data_cb.bind(binder);
+    };
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
+    this.property_set_data = null; // Managed Dash data
     this.num_headers = 0;
+    this.update_inputs = {};
     this.setup_styles = function(){
+    };
+    this.Load = function(){
+        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+        var params = {};
+        params["f"] = "get_property_set";
+        params["obj_id"] = this.dash_obj_id;
+        // binder, callback, endpoint, params
+        Dash.Request(this, this.on_server_property_set, this.endpoint, params);
+    };
+    this.Update = function(){
+        // Do we have new data?
+        console.log("UPDATE");
+        console.log(this.property_set_data);
+        console.log(this.update_inputs);
+        for (var data_key in this.update_inputs) {
+            var row_input = this.update_inputs[data_key];
+            row_input.SetText(this.property_set_data[data_key]);
+            console.log(data_key);
+            console.log(row_input);
+        };
+
+    };
+    this.on_server_property_set = function(property_set_data){
+        console.log(property_set_data);
+        if (property_set_data["error"]) {
+            alert("There was a problem accessing data");
+            return;
+        };
+        this.property_set_data = property_set_data;
+        this.Update();
     };
     this.AddHeader = function(label_text){
         var header = new d.Gui.Header(label_text).html;
@@ -1817,7 +1903,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, callback);
     };
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
-        this.data = this.get_data_cb();
+        if (this.get_data_cb) {
+            this.data = this.get_data_cb();
+        }
+        else {
+            this.data = {};
+        };
         var row_details = {};
         row_details["key"] = data_key;
         row_details["label_text"] = label_text;
@@ -1834,6 +1925,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 function(row_input){self.on_row_updated(row_input, row_details)},
                 self
             );
+            self.update_inputs[data_key] = row;
             var indent_px = 0;
             var indent_row = false;
             if (self.num_headers > 0) {
@@ -1921,7 +2013,9 @@ function DashGuiLayoutTabs(Binder){
     this.html = $("<div></div>");
     this.binder = Binder;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
-    this.list = $("<div></div>");
+    this.list_backing = $("<div></div>");
+    this.list_top = $("<div></div>");
+    this.list_bottom = $("<div></div>");
     this.content = $("<div></div>");
     this.all_content = [];
     this.selected_index = -1;
@@ -1931,22 +2025,38 @@ function DashGuiLayoutTabs(Binder){
     this.color_selected = Dash.Color.Primary;
     this.color_default = Dash.Color.ButtonColor;
     this.setup_styles = function(){
-        this.html.append(this.list);
+        this.html.append(this.list_backing);
+        this.html.append(this.list_top);
+        this.html.append(this.list_bottom);
         this.html.append(this.content);
         this.html.css({
             "position": "absolute",
+            "display": "flex",
             "left": 0,
             "top": 0,
             "right": 0,
             "bottom": 0,
-            // "background": "red",
         });
-        this.list.css({
+        this.list_backing.css({
             "position": "absolute",
             "left": 0,
             "top": 0,
             "bottom": 0,
+            // "background": "orange",
         });
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            // "bottom": 0,
+        });
+        this.list_bottom.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+            // "bottom": 0,
+        });
+        // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
             "left": this.width,
@@ -1967,6 +2077,7 @@ function DashGuiLayoutTabs(Binder){
         // Called to style anything that might change between the default behavior and the sub style
         var sub_border = "none";
         var box_shadow = "none";
+        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
         this.color_selected = Dash.Color.Primary;
         this.color_default = Dash.Color.ButtonColor;
         this.width = Dash.Size.ColumnWidth;
@@ -1979,14 +2090,22 @@ function DashGuiLayoutTabs(Binder){
             sub_border =  "1px solid " + "rgba(255, 255, 255, 0.1)";
             box_shadow = "inset -20px -10px 20px 0px rgba(0, 0, 0, 0.11)";
         };
-        this.list.css({
+
+        this.list_backing.css({
             "width": this.width,
             "background": this.background_color,
-            "border-left": sub_border,
-            "box-shadow": box_shadow,
+            // "border-left": sub_border,
+            // "box-shadow": box_shadow,
+        });
+        this.list_top.css({
+            "width": this.width,
+        });
+        this.list_bottom.css({
+            "width": this.width,
         });
         this.content.css({
             "left": this.width,
+            "box-shadow": box_shadow,
         });
         for (var i in this.all_content) {
             this.style_button_content(this.all_content[i]);
@@ -2046,6 +2165,11 @@ function DashGuiLayoutTabs(Binder){
         this.content.append(content_html);
     };
     this.style_button_content = function(content_data){
+        var optional_params = content_data["optional_params"] || {};
+        var indent = 0;
+        if (optional_params["indent"]) {
+            indent = Dash.Size.Padding;
+        };
         content_data["button"].SetTextAlign("left");
         content_data["button"].html.css({
             // "margin": 0,
@@ -2054,10 +2178,12 @@ function DashGuiLayoutTabs(Binder){
             // "padding-top": d.Size.Padding*0.5,
             // "padding-bottom": d.Size.Padding*0.5,
             "margin-bottom": 1,
+            "flex-grow": 1,
         });
         content_data["button"].SetBorderRadius(0);
         content_data["button"].label.css({
             "font-size": "85%",
+            "padding-left": indent,
             // "font-family": "sans_serif_bold",
         });
         if (this.is_sub) {
@@ -2069,17 +2195,47 @@ function DashGuiLayoutTabs(Binder){
             // });
         };
     };
-    this.Add = function(label_text, content_div_html_class){
+    this.AppendImage = function(img_url){
+        // TODO: Move the concept of an 'Image' into dash as a light
+        // abstraction for managing aspect ratios
+        // TODO: This AppendImage is a hack. We need to revise the
+        // stack of objects in this container so they derive from
+        // some abstraction to simplify append/prepend
+        var image = $("<div></div>");
+        image.css({
+            "height": Dash.Size.RowHeight*2,
+            "background-image": "url(" + img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            // "background-position": "center",
+        });
+        this.list_top.append(image);
+    };
+    this.Append = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+    };
+    this.Prepend = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
+    };
+    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
+        optional_params = optional_params || {};
         var content_data = {};
         content_data["label_text"] = label_text;
         content_data["content_div_html_class"] = content_div_html_class;
         content_data["button"] = null;
+        content_data["optional_params"] = optional_params;
         (function(self, index){
             content_data["button"] = new d.Gui.Button(label_text, function(){
                 self.LoadIndex(index);
             }, self);
         })(this, this.all_content.length);
-        this.list.append(content_data["button"].html);
+        anchor_div = anchor_div || this.list_top;
+        // console.log("--");
+        // console.log(this.list_top);
+        // console.log(this.list_bottom);
+        // console.log(anchor_div);
+        // console.log(typeof(anchor_div));
+        anchor_div.append(content_data["button"].html);
         this.style_button_content(content_data);
         this.all_content.push(content_data);
         return content_data["button"];

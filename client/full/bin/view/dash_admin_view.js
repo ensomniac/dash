@@ -18,8 +18,8 @@ function DashAdminView(){
         //     "background": d.Color.Background,
         // });
 
-        this.layout.Add("Style", this.tmp_style);
-        this.layout.Add("Size", this.tmp_size);
+        this.layout.Append("Style", this.tmp_style);
+        this.layout.Append("Size", this.tmp_size);
 
     };
 

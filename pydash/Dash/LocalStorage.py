@@ -85,13 +85,17 @@ class DashLocalStorage:
 
         return all_data
 
-    def GetData(self, obj_id):
+    def GetData(self, obj_id, create=False):
         import json
 
         record_path = self.get_record_path(obj_id)
 
         if not os.path.exists(record_path):
-            raise Exception("Expected record does not exist. x9483 Expected " + record_path + " / " + obj_id)
+
+            if create:
+                return self.New({}, obj_id=obj_id)
+            else:
+                raise Exception("Expected record does not exist. x9483 Expected " + record_path + " / " + obj_id)
 
         return json.loads(open(record_path, "r").read())
 
@@ -137,7 +141,7 @@ class DashLocalStorage:
         open(self.get_record_path(obj_id), "w").write(json_str)
         return data
 
-    def SetProperty(self, obj_id, key=None, value=None):
+    def SetProperty(self, obj_id, key=None, value=None, create=False):
         import json
 
         key = key or Utils.Global.RequestData["key"]
@@ -149,7 +153,7 @@ class DashLocalStorage:
         response["obj_id"] = Utils.Global.RequestData["obj_id"]
         response["record_path"] = self.get_record_path(obj_id)
 
-        data = self.GetData(obj_id)
+        data = self.GetData(obj_id, create=create)
         data[key] = value
         data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
@@ -184,8 +188,8 @@ def GetData(dash_context, store_path, obj_id):
 def GetAll(dash_context, store_path):
     return DashLocalStorage(dash_context, store_path).GetAll()
 
-def SetProperty(dash_context, store_path, obj_id, key=None, value=None):
-    return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value)
+def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False):
+    return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value, create=create)
 
 def GetRecordRoot(dash_context, store_path, obj_id=None):
     return DashLocalStorage(dash_context, store_path).get_store_root(obj_id)

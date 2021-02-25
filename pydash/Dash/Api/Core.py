@@ -34,9 +34,7 @@ class ApiCore:
                 "self._fs": str(self._fs),
             }
 
-            # self.StopExecutionOnError("CGI Form Error")
-            # sys.exit()
-
+            self.StopExecutionOnError("CGI Form Error")
             return
 
         self.set_dash_globals()

@@ -20,6 +20,14 @@ function DashGuiLogin(on_login_binder, on_login_callback){
         this.email_input    = new d.Gui.Input("email@" + d.Context["domain"]);
         this.password_input = new d.Gui.Input("Password");
 
+        this.email_input.html.css({
+            "padding": Dash.Size.Padding*0.5,
+        });
+
+        this.password_input.html.css({
+            "padding": Dash.Size.Padding*0.5,
+        });
+
         this.email_input.OnSubmit(this.Submit, this);
         this.password_input.OnSubmit(this.Submit, this);
 
@@ -75,6 +83,7 @@ function DashGuiLogin(on_login_binder, on_login_callback){
             "font-family": "sans_serif_bold",
             "height": d.Size.RowHeight,
             "line-height": d.Size.RowHeight + "px",
+            "padding": d.Size.Padding,
         });
 
         this.button_bar.css({
@@ -93,19 +102,19 @@ function DashGuiLogin(on_login_binder, on_login_callback){
         });
 
         this.login_button.html.css({
-            "margin": d.Size.Padding,
-            "margin-top": 0,
-            "padding": d.Size.Padding*0.5,
-            "width": login_box_width*0.5,
-            "background": d.Color.Primary,
+            "margin-left": d.Size.Padding,
+            // "margin-top": 0,
+            // "padding": d.Size.Padding*0.5,
+            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
+            // "background": d.Color.Primary,
         });
 
         this.reset_button.html.css({
-            "margin": d.Size.Padding,
-            "margin-top": 0,
-            "margin-right": 0,
-            "padding": d.Size.Padding*0.5,
-            "width": login_box_width*0.5,
+            // "margin": d.Size.Padding,
+            "margin-left": d.Size.Padding,
+            // "margin-right": 0,
+            // "padding": d.Size.Padding*0.5,
+            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
         });
 
         this.email_input.SetText(d.Local.Get("email") || "");
