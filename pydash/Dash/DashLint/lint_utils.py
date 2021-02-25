@@ -28,30 +28,39 @@ class LintUtils:
         file.write("\n".join(code_lines_list))
         file.close()
 
-    def GetFileAuthors(self):
-        # Ryan Martin ryan@ensomniac.com, Andrew Stet stetandrew@gmail.com
+    def GetFileAuthors(self, code_path, uploader_email):
+        from subprocess import check_output
 
-        # Andrew - I'm not sure what the best way to gather these names
-        # are but it seems like git log would be a good start
-        # and then making sure that whoever is currently logged
-        # in and running this linter should be included if they
-        # triggered the change and do not already exist in git's history?
+        add_uploader_email = True
+        authors = []
+        orig_dir = os.getcwd()
 
-        # https://www.commandlinefu.com/commands/view/4519/list-all-authors-of-a-particular-git-project
-        # git shortlog -s # This is project specific, not file specific
-        # git shortlog -s <relative file path> # file specific
-        # return "Authors: ..."
+        if not os.path.isdir(code_path):
+            code_path = f"/{'/'.join([f for f in code_path.split('/')[:-1] if len(f)])}/"
 
-        # (Andrew) Looking into git solution, but I think we should actually leave this as a hard-coded global list.
-        # We'd have to pick somewhere for it to live, maybe in the dash context
-        # and we add it on Dash Guide, but each project may have different contributors
-        # that could easily be globally specified.
+        os.chdir(code_path)
 
-        # Short term:
-        return [
-            "Ryan Martin, ryan@ensomniac.com",
-            "Andrew Stet, stetandrew@gmail.com",
-        ]
+        for author in check_output("git log --all --format='%aN <%cE>' | sort -u", shell=True).decode().split("\n"):
+            if len(author) and "aifoundation" not in author and "noreply@github" not in author and author not in authors:
+                authors.append(author.replace("<", "(").replace(">", ")"))
+
+        os.chdir(orig_dir)
+
+        if "Ryan" not in authors[0]:
+            for author in authors:
+                if "Ryan" in author:
+                    authors.insert(0, authors.pop(authors.index(author)))
+                    break
+
+        for author in authors:
+            if uploader_email in author:
+                add_uploader_email = False
+                break
+
+        if add_uploader_email:
+            authors.append(uploader_email)
+
+        return authors
 
 
 LintUtils = LintUtils()
