@@ -17,6 +17,10 @@ function Dash(){
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
 
+    //window.history.pushState({"html":"html","pageTitle":"some page"},"title", "https://...");
+
+
+
     // window.RowHeight = 32;
     // window.ColumnWidth = window.RowHeight*5;
     // window.Padding = 10;

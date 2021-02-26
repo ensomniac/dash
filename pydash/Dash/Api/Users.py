@@ -48,6 +48,8 @@ class ApiUsers:
         ))
 
     def get_all(self):
+        # TODO - get rid of this code - it's been moved to Admin.py
+
         response = {}
         response["users"] = []
 

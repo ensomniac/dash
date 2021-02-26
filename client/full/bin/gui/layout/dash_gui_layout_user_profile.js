@@ -29,7 +29,7 @@ function DashGuiLayoutUserProfile(user_data){
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
         this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
-        this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
+        // this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
 
         this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
 

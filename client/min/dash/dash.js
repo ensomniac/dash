@@ -21,6 +21,8 @@ function Dash(){
     this.View = new DashView();
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
+    //window.history.pushState({"html":"html","pageTitle":"some page"},"title", "https://...");
+
     // window.RowHeight = 32;
     // window.ColumnWidth = window.RowHeight*5;
     // window.Padding = 10;
@@ -680,11 +682,19 @@ function DashRequest(){
 
 
 function DashAdminView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": d.Size.Padding});
     this.property_box = null;
+    this.data = null;
     this.setup_styles = function(){
+    };
+    this.SetData = function(response){
+        if (!Dash.ValidateResponse(response)) {return};
+        this.html.empty();
+        this.data = response;
         this.add_site_settings_box();
         this.add_user_groups_box();
+        this.add_users_box();
+        console.log(response);
     };
     this.add_site_settings_box = function(){
         this.property_box = new Dash.Gui.PropertyBox(
@@ -695,10 +705,10 @@ function DashAdminView(){
             "site_settings" // Dash object ID
         );
         this.html.append(this.property_box.html);
-        this.property_box.AddHeader("Site Settings");
+        this.property_box.AddHeader("Admin Settings");
         this.property_box.AddInput("created_by", "Created By", "", null, false);
         this.property_box.AddInput("open_account_creation_bool", "Open Account Creation", "", null, true);
-        this.property_box.Load();
+        // this.property_box.Load();
     };
     this.add_user_groups_box = function(){
         this.user_groups_box = new Dash.Gui.PropertyBox(
@@ -712,12 +722,31 @@ function DashAdminView(){
         this.user_groups_box.AddHeader("User Groups");
         this.user_groups_box.AddInput("admin", "Admin", "", null, false);
         this.user_groups_box.AddButton("Create Group", this.create_group);
-        this.user_groups_box.Load();
+        // this.user_groups_box.Load();
+    };
+    this.add_users_box = function(){
+        this.users_box = Dash.Gui.GetHTMLBoxContext({});
+        this.html.append(this.users_box);
+        var users_header = new d.Gui.Header("Users").html;
+        this.users_box.append(users_header);
+        for (var i in this.data["users"]["order"]) {
+            var email = this.data["users"]["order"][i];
+            var user_data = this.data["users"]["data"][email];
+            var user_box = new Dash.Gui.Layout.UserProfile(user_data);
+            this.users_box.append(user_box.html);
+            user_box.html.css({
+                "margin": Dash.Size.Padding*2,
+            });
+        };
     };
     this.create_group = function(){
         console.log("Create Group");
     };
+    this.reload_data = function(){
+        Dash.Request(this, this.SetData, "Admin", {"f": "get"});
+    };
     this.setup_styles();
+    this.reload_data();
 };
 
 // Profile page layout for the currently logged in user
@@ -2001,10 +2030,14 @@ function DashGuiHeader(label_text){
 
 function DashGuiLayout(){
     this.SideTabs = DashGuiLayoutTabs;
+    this.TopTabs = DashGuiLayoutTabs;
     this.UserProfile = DashGuiLayoutUserProfile;
 };
 
-
+// function DashGuiLayoutTopTabs(Binder){
+// };
+// function DashGuiLayoutSideTabs(Binder){
+// };
 function DashGuiLayoutTabs(Binder){
     this.html = $("<div></div>");
     this.binder = Binder;
@@ -2263,7 +2296,7 @@ function DashGuiLayoutUserProfile(user_data){
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
         this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
-        this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
+        // this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
         this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
         // if (this.user_data["admin"]) {
         //     this.is_admin = new d.Gui.InputRow("Admin", "Yes", "Admin", "Revoke", function(b){this.set_group(b, "admin", false)}, this);

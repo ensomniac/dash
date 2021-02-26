@@ -1,3 +1,10 @@
+// function DashGuiLayoutTopTabs(Binder){
+
+// };
+
+// function DashGuiLayoutSideTabs(Binder){
+
+// };
 
 function DashGuiLayoutTabs(Binder){
 
