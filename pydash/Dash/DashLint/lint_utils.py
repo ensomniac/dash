@@ -9,16 +9,17 @@ class LintUtils:
     def __init__(self):
         pass
 
-    # def GetCodeHeader(self, comment_token, dash_context, code_path):
-    #     from datetime import datetime
-    #
-    #     lines = []
-    #     lines.append(f"{comment_token} {datetime.today().year} {dash_context['code_copyright_text']}")
-    #     lines.append(f"{comment_token} Author(s): {', '.join(self.GetFileAuthors(code_path))}")
-    #     lines.append(f"{comment_token} {datetime.now()}")  # This may need to be a different type of timestamp
-    #     lines.append("")
-    #
-    #     return "\n".join(lines)
+    def GetCodeHeader(self, comment_token, dash_context, code_path):
+        from datetime import datetime
+
+        code_authors = self.get_file_authors(code_path, dash_context['modified_by'])
+        company_name = dash_context['code_copyright_text']
+        copyright_lines = [f"{comment_token} {company_name} {datetime.now().year} {code_authors[0]}"]
+
+        for person in code_authors[1:]:
+            copyright_lines.append(f"{comment_token} {' ' * (len(company_name) + 5)} {person}")
+
+        return copyright_lines
 
     def GetCodeLineListFromFile(self, code_path):
         return open(code_path).read().split("\n")
@@ -28,7 +29,7 @@ class LintUtils:
         file.write("\n".join(code_lines_list))
         file.close()
 
-    def GetFileAuthors(self, code_path, uploader_email):
+    def get_file_authors(self, code_path, uploader_email):
         from subprocess import check_output
 
         add_uploader_email = True

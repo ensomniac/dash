@@ -5,7 +5,7 @@ import os
 import sys
 
 from .lint_utils import LintUtils
-from .py_compile_check import CompileToCheckForErrors
+from .py_lint_helpers.compile_check import CompileToCheckForErrors
 
 
 class PyLinter:
@@ -14,7 +14,7 @@ class PyLinter:
         self.dash_context = None
         self.code_path = ""
         self.comment_token = "#"
-        # self.header = ""
+        self.header_lines = []
 
         self.source_code = []
         self.iter_limit_range = range(0, 101)
@@ -27,7 +27,6 @@ class PyLinter:
         self.include_shebang = False
         self.comment_prefix = "(Dash Lint)"
         self.line_length_flag_suffix = "(excluding comments)"
-        self.code_authors = []
 
         # These are a bit arbitrary/undecided for now
         self.total_line_length_max = 500
@@ -53,8 +52,8 @@ class PyLinter:
         # self.add_flag_comments()
         # LintUtils.WriteCodeListToFile(self.code_path, self.source_code)  # Leave off til the end
 
-        # return CompileToCheckForErrors(self.code_path)
-        return CompileToCheckForErrors(self.code_path, debug_text=self.code_authors)
+        return CompileToCheckForErrors(self.code_path)
+        # return CompileToCheckForErrors(self.code_path, debug_text=self.header_lines)
         # return CompileToCheckForErrors(self.code_path, linted_code_line_list_to_print=self.source_code)
 
     def update_init_attrs(self, is_client, dash_context, code_path):
@@ -63,8 +62,7 @@ class PyLinter:
         self.code_path = code_path
         self.source_code = LintUtils.GetCodeLineListFromFile(code_path)
         self.company_name = dash_context["code_copyright_text"]
-        self.code_authors = LintUtils.GetFileAuthors(code_path, dash_context["modified_by"])
-        # self.header = LintUtils.GetCodeHeader(self.comment_token, dash_context, code_path)
+        self.header_lines = LintUtils.GetCodeHeader(self.comment_token, dash_context, code_path)
 
         if "/cgi-bin/" in code_path:
             self.include_shebang = True
