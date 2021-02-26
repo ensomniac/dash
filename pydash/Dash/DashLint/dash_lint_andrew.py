@@ -40,9 +40,9 @@ class Lint:
         self.include_shebang = True  # This needs to be determined from dash context somehow, maybe see if cgi is in path etc
         self.company_name = "Altona"  # This needs to come from dash context (display name I think)
 
-        self.copyright_persons = [  # This also will come from dash context in some form now
-            "Ryan Martin, ryan@ensomniac.com",
-            "Andrew Stet, stetandrew@gmail.com",
+        self.code_authors = [  # This also will come from dash context in some form now
+            "Ryan Martin (ryan@ensomniac.com)",
+            "Andrew Stet (stetandrew@gmail.com)",
         ]
 
         self.debug = ""
@@ -389,12 +389,12 @@ class Lint:
             self.source_code.pop(shebang_index)
 
     def validate_copyright(self):
-        copyright_lines = [f"# {self.company_name} {datetime.now().year} {self.copyright_persons[0]}"]
+        copyright_lines = [f"# {self.company_name} {datetime.now().year} {self.code_authors[0]}"]
         existing_copyright_indexes = []
         new_copyright_full = ""
         existing_copyright_full = ""
 
-        for person in self.copyright_persons[1:]:
+        for person in self.code_authors[1:]:
             copyright_lines.append(f"# {' ' * (len(self.company_name) + 5)} {person}")
 
         for index, line in enumerate(self.source_code):

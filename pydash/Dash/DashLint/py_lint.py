@@ -5,7 +5,7 @@ import os
 import sys
 
 from .lint_utils import LintUtils
-from .py_compile_check import CompileToCheckForErrors
+from .py_lint_helpers.compile_check import CompileToCheckForErrors
 
 
 class PyLinter:
@@ -14,7 +14,7 @@ class PyLinter:
         self.dash_context = None
         self.code_path = ""
         self.comment_token = "#"
-        # self.header = ""
+        self.header_lines = []
 
         self.source_code = []
         self.iter_limit_range = range(0, 101)
@@ -27,7 +27,6 @@ class PyLinter:
         self.include_shebang = False
         self.comment_prefix = "(Dash Lint)"
         self.line_length_flag_suffix = "(excluding comments)"
-        self.copyright_persons = []
 
         # These are a bit arbitrary/undecided for now
         self.total_line_length_max = 500
@@ -45,20 +44,48 @@ class PyLinter:
         self.all_comment_options = self.get_all_current_comment_options()
 
     def Process(self, is_client, dash_context, code_path):
+        self.update_init_attrs(is_client, dash_context, code_path)
+
+        self.run_core()
+        self.run_extras()
+
+        # self.add_flag_comments()
+        # LintUtils.WriteCodeListToFile(self.code_path, self.source_code)  # Leave off til the end
+
+        return CompileToCheckForErrors(self.code_path)
+        # return CompileToCheckForErrors(self.code_path, debug_text=self.header_lines)
+        # return CompileToCheckForErrors(self.code_path, linted_code_line_list_to_print=self.source_code)
+
+    def update_init_attrs(self, is_client, dash_context, code_path):
         self.is_client = is_client
         self.dash_context = dash_context
         self.code_path = code_path
         self.source_code = LintUtils.GetCodeLineListFromFile(code_path)
         self.company_name = dash_context["code_copyright_text"]
-        self.copyright_persons = LintUtils.GetFileAuthors()
-        # self.header = LintUtils.GetCodeHeader(self.comment_token, dash_context, code_path)
+        self.header_lines = LintUtils.GetCodeHeader(self.comment_token, dash_context, code_path)
 
         if "/cgi-bin/" in code_path:
             self.include_shebang = True
 
-        return CompileToCheckForErrors(self.code_path)
-        # return CompileToCheckForErrors(self.code_path, debug_text=dash_context)
-        # return CompileToCheckForErrors(self.code_path, linted_code_line_list_to_print=self.source_code)
+    def run_core(self):
+        # self.cleanup_comments_before_evaluating()
+        # self.remove_extra_lines_at_start_of_file()
+        # self.remove_extra_lines_at_end_of_file()
+        # self.remove_blank_lines_at_start_of_blocks()
+        # self.check_class_spacing()
+        # self.check_function_spacing()
+        # self.check_name_main_spacing()
+        # self.validate_shebang()
+        # self.validate_copyright()
+        # self.check_import_spacing()
+        pass
+
+    def run_extras(self):
+        # self.conform_dict_creation()
+        # self.conform_list_creation()
+        # self.drop_one_line_ifs()
+        # self.format_block_spacing_into_columns()
+        pass
 
     def get_all_current_comment_options(self):
         comment_options = []
