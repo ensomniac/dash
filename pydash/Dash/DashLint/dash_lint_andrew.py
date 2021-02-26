@@ -49,27 +49,26 @@ class Lint:
 
     def Run(self):
         # CORE
-        # self.cleanup_comments_before_evaluating()
-        # self.remove_extra_lines_at_start_of_file()
-        # self.remove_extra_lines_at_end_of_file()
-        # self.remove_blank_lines_at_start_of_blocks()
-        # self.check_class_spacing()
-        # self.check_function_spacing()
-        # self.check_name_main_spacing()
-        # self.validate_shebang()
-        # self.validate_copyright()
-        # self.check_import_spacing()
-        #
-        # # EXTRAS
-        # self.conform_dict_creation()
-        # self.conform_list_creation()
-        # self.drop_one_line_ifs()
-        # self.format_block_spacing_into_columns()
-        #
-        # # FINAL / LAST
-        # self.add_flag_comments()
-        # self.write_linted_file()
-        #
+        self.cleanup_comments_before_evaluating()
+        self.remove_extra_lines_at_start_of_file()
+        self.remove_extra_lines_at_end_of_file()
+        self.remove_blank_lines_at_start_of_blocks()
+        self.check_class_spacing()
+        self.check_function_spacing()
+        self.check_name_main_spacing()
+        self.validate_shebang()
+        self.validate_copyright()
+        self.check_import_spacing()
+
+        # EXTRAS
+        self.conform_dict_creation()
+        self.conform_list_creation()
+        self.drop_one_line_ifs()
+        self.format_block_spacing_into_columns()
+
+        # FINAL / LAST
+        self.add_flag_comments()
+        self.write_linted_file()
 
         return self.compile_to_check_for_errors()
 

@@ -5,23 +5,22 @@ import os
 import sys
 
 from .lint_utils import LintUtils
+from .copyright import Copyright
 
 
-class JSLinter:
+class JSLinter(LintUtils, Copyright):
     def __init__(self):
-        self.is_client = False
-        self.dash_context = None
-        self.code_path = ""
-        self.header = ""
+        super().__init__()
+
         self.comment_token = "//"
-        # self.lint_succeeded = True
-        # self.error = ""
 
     def Process(self, is_client, dash_context, code_path):
         self.is_client = is_client
         self.dash_context = dash_context
         self.code_path = code_path
-        self.header = LintUtils.GetCodeHeader(self.comment_token, dash_context, code_path)
+        self.source_code = self.GetCodeLineListFromFile()
+        self.company_name = dash_context["code_copyright_text"]
+        self.copyright_lines = self.GetCopyright()
 
         return self.compile_to_check_for_errors()
 
