@@ -27,9 +27,9 @@ class PyLinter(LintUtils, Copyright, PreCompile, Flags):
         # self.AddFlagComments()
         # self.WriteCodeListToFile()  # Leave off til the end
 
-        # return self.CompileToCheckForErrors()
+        return self.CompileToCheckForErrors()
         # return self.CompileToCheckForErrors(debug_text=f"{self.group}, {self.shebang}, {self.line_length_flag_suffix}")
-        return self.CompileToCheckForErrors(print_linted_code_line_list=True)
+        # return self.CompileToCheckForErrors(print_linted_code_line_list=True)
 
     def update_init_attrs(self, is_client, dash_context, code_path):
         self.is_client = is_client
