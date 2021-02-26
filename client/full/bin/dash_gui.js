@@ -18,8 +18,9 @@ function DashGui(){
         var html = $("<div>" + optional_label_text + "</div>");
 
         var css = {
-            "color": Dash.Color.Text,
+            "color": Dash.Color.Light.Text,
             "font-family": "sans_serif_normal",
+            "background": Dash.Color.Light.Background,
         };
 
         for (var key in optional_style_css) {
@@ -46,6 +47,7 @@ function DashGui(){
             "bottom": 0,
             "overflow-y": "auto",
             "color": "black",
+            "background": Dash.Color.Light.Background,
         });
 
         return html;

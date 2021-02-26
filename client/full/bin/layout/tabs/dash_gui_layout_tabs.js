@@ -1,16 +1,19 @@
-// function DashGuiLayoutTopTabs(Binder){
+class DashGuiLayoutTabs {
 
-// };
-
-// function DashGuiLayoutSideTabs(Binder){
-
-// };
-
-function DashGuiLayoutTabs(Binder){
+    // TODO - convert this to a proper class
+    constructor(Binder, side_tabs) {
 
     this.html = $("<div></div>");
     this.binder = Binder;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+    this.side_tabs = side_tabs;
+
+    if (this.side_tabs) {
+        this.color = Dash.Color.Dark;
+    }
+    else {
+        this.color = Dash.Color.Light;
+    };
 
     this.list_backing = $("<div></div>");
     this.list_top = $("<div></div>");
@@ -21,12 +24,7 @@ function DashGuiLayoutTabs(Binder){
     this.all_content = [];
     this.selected_index = -1;
 
-    this.width = Dash.Size.ColumnWidth;
-    this.background_color = Dash.Color.Dark;
-    this.is_sub = false;
-
-    this.color_selected = Dash.Color.Primary;
-    this.color_default = Dash.Color.ButtonColor;
+    this.size = Dash.Size.ColumnWidth; // Thickness
 
     this.setup_styles = function(){
 
@@ -37,45 +35,18 @@ function DashGuiLayoutTabs(Binder){
 
         this.html.css({
             "position": "absolute",
-            "display": "flex",
             "left": 0,
             "top": 0,
             "right": 0,
             "bottom": 0,
         });
 
-        this.list_backing.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "bottom": 0,
-            // "background": "orange",
-        });
-
-        this.list_top.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            // "bottom": 0,
-        });
-
-        this.list_bottom.css({
-            "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            // "bottom": 0,
-        });
-
-        // The right side / non-tab area / content
-        this.content.css({
-            "position": "absolute",
-            "left": this.width,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
-            "background": Dash.Color.Light,
-            "overflow-y": "auto",
-        });
+        if (this.side_tabs) {
+            this.set_styles_for_side_tabs();
+        }
+        else {
+            this.set_styles_for_top_tabs();
+        };
 
         this.update_styles();
 
@@ -87,46 +58,101 @@ function DashGuiLayoutTabs(Binder){
 
     };
 
-    this.update_styles = function(){
-        // Called to style anything that might change between the default behavior and the sub style
+    this.set_styles_for_side_tabs = function(){
+
+        this.list_backing.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "bottom": 0,
+        });
+
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+        });
+
+        this.list_bottom.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+        });
+
+        // The right side / non-tab area / content
+        this.content.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "overflow-y": "auto",
+            "background": Dash.Color.Light.Background,
+        });
+
+    };
+
+    this.set_styles_for_top_tabs = function(){
+
+        this.list_backing.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+        });
+
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "display": "flex",
+        });
+
+        this.list_bottom.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "display": "flex",
+        });
+
+        // The right side / non-tab area / content
+        this.content.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "overflow-y": "auto",
+            "background": Dash.Color.Light.Background,
+        });
+
+    };
+
+    this.update_styles_for_side_tabs = function(){
 
         var sub_border = "none";
         var box_shadow = "none";
 
         box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
 
-        this.color_selected = Dash.Color.Primary;
-        this.color_default = Dash.Color.ButtonColor;
-        this.width = Dash.Size.ColumnWidth;
-        this.background_color = Dash.Color.Dark;
-
-        if (this.is_sub) {
-            this.width = Dash.Size.ColumnWidth*0.5;
-            // this.background_color = "rgba(0, 0, 0, 0)";
-            // this.color_selected = LightBackgroundColor;
-            // this.color_default = DarkPanelColor;
-            sub_border =  "1px solid " + "rgba(255, 255, 255, 0.1)";
-            box_shadow = "inset -20px -10px 20px 0px rgba(0, 0, 0, 0.11)";
-        };
-
+        this.size = Dash.Size.ColumnWidth;
 
         this.list_backing.css({
-            "width": this.width,
-            "background": this.background_color,
-            // "border-left": sub_border,
-            // "box-shadow": box_shadow,
+            "width": this.size,
+            "background": this.color.Background,
         });
 
         this.list_top.css({
-            "width": this.width,
+            "width": this.size,
         });
 
         this.list_bottom.css({
-            "width": this.width,
+            "width": this.size,
         });
 
         this.content.css({
-            "left": this.width,
+            "left": this.size,
             "box-shadow": box_shadow,
         });
 
@@ -136,9 +162,49 @@ function DashGuiLayoutTabs(Binder){
 
     };
 
-    this.SetSubMenu = function(is_sub){
-        this.is_sub = is_sub;
-        this.update_styles();
+    this.update_styles_for_top_tabs = function(){
+
+        var sub_border = "none";
+        var box_shadow = "none";
+
+        box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
+        this.size = Dash.Size.RowHeight+(Dash.Size.Padding);
+
+        this.list_backing.css({
+            "height": this.size,
+            "background": this.color.TabBackground,
+            "box-shadow": box_shadow,
+        });
+
+        this.list_top.css({
+            "height": this.size,
+        });
+
+        this.list_bottom.css({
+            "height": this.size,
+        });
+
+        this.content.css({
+            "top": this.size,
+        });
+
+        for (var i in this.all_content) {
+            this.style_button_content(this.all_content[i]);
+        };
+
+    };
+
+    this.update_styles = function(){
+        // Called to style anything that might change between
+        // the default behavior and the sub style
+
+        if (this.side_tabs) {
+            this.update_styles_for_side_tabs();
+        }
+        else {
+            this.update_styles_for_top_tabs();
+        };
+
     };
 
     this.load_last_selection = function(){
@@ -176,12 +242,10 @@ function DashGuiLayoutTabs(Binder){
 
             if (i == index) {
                 content_data["button"].SetSelected(true);
-                // content_data["button"].SetColor(this.color_selected);
                 button = content_data["button"];
             }
             else {
                 content_data["button"].SetSelected(false);
-                // content_data["button"].SetColor(this.color_default);
             };
 
         };
@@ -218,35 +282,41 @@ function DashGuiLayoutTabs(Binder){
             indent = Dash.Size.Padding;
         };
 
-        content_data["button"].SetTextAlign("left");
-        content_data["button"].html.css({
-            // "margin": 0,
-            // "padding-left": d.Size.Padding,
-            // "padding-right": d.Size.Padding,
-            // "padding-top": d.Size.Padding*0.5,
-            // "padding-bottom": d.Size.Padding*0.5,
-            "margin-bottom": 1,
-            "flex-grow": 1,
-        });
+        if (this.side_tabs) {
+
+            content_data["button"].SetTextAlign("left");
+            content_data["button"].html.css({
+                "margin-bottom": 1,
+                "flex-grow": 1,
+            });
+
+            content_data["button"].label.css({
+                "font-size": "85%",
+                "padding-left": indent,
+            });
+
+        }
+        else {
+
+            content_data["button"].SetTextAlign("center");
+            content_data["button"].html.css({
+                "margin-right": 1,
+                "width": Dash.Size.ColumnWidth,
+            });
+
+            content_data["button"].label.css({
+                "font-size": "85%",
+                "padding-left": indent,
+            });
+
+        };
 
         content_data["button"].SetBorderRadius(0);
 
-        content_data["button"].label.css({
-            "font-size": "85%",
-            "padding-left": indent,
-            // "font-family": "sans_serif_bold",
-        });
+    };
 
-        if (this.is_sub) {
-            // content_data["button"].html.css({
-            //     "background": "black",
-            // });
-
-            // content_data["button"].highlight.css({
-            //     "background": "orange",
-            // });
-        };
-
+    this.AppendHTML = function(html){
+        this.list_top.append(html);
     };
 
     this.AppendImage = function(img_url){
@@ -293,16 +363,11 @@ function DashGuiLayoutTabs(Binder){
         (function(self, index){
             content_data["button"] = new d.Gui.Button(label_text, function(){
                 self.LoadIndex(index);
-            }, self);
+            }, self, self.color.Tab);
         })(this, this.all_content.length);
 
         anchor_div = anchor_div || this.list_top;
 
-        // console.log("--");
-        // console.log(this.list_top);
-        // console.log(this.list_bottom);
-        // console.log(anchor_div);
-        // console.log(typeof(anchor_div));
         anchor_div.append(content_data["button"].html);
 
         this.style_button_content(content_data);
@@ -314,4 +379,5 @@ function DashGuiLayoutTabs(Binder){
 
     this.setup_styles();
 
+    };
 };

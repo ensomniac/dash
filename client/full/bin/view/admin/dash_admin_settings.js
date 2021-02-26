@@ -1,5 +1,5 @@
 
-function DashAdminView(){
+function DashAdminSettings(){
 
     this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": d.Size.Padding});
     this.property_box = null;

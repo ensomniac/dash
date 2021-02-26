@@ -1,5 +1,5 @@
 
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id){
+function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, extra_params){
     this.binder = binder;
 
     this.get_data_cb = null;
@@ -15,6 +15,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
     this.property_set_data = null; // Managed Dash data
+    this.extra_params = extra_params || {};
 
     this.num_headers = 0;
 
@@ -152,6 +153,10 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
+
+        for (var key in this.extra_params) {
+            params[key] = this.extra_params[key];
+        };
 
         (function(self, row_input, row_details){
 

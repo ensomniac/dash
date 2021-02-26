@@ -4,8 +4,8 @@ function DashColor(){
     // this.DarkBackground = "#e6e6e6";
     // this.LightBackground = "#e6e6e6";
 
-    this.Background = "#e6e6e6";
-    this.Text = "#333";
+    // this.Background = "#e6e6e6";
+    // this.Text = "#333";
 
     // this.DarkText = "#333";
     // this.LightText = "#e3d5ca";
@@ -16,30 +16,139 @@ function DashColor(){
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.Warning = "#fab964";
 
-    this.Button = new DashColorSet(
-        "#4d505f",   // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
+    this.Light = null;
+    this.Dark = null;
 
-    // NEW
-    this.Dark = new DashColorSet(
-        "#4d505f", // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
+    // this.SetFromJson = function(light_theme_json, dark_theme_json){
 
-    this.Light = new DashColorSet(
-        "#4d505f",   // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
+    // };
+
+    // this.Set = function(light_theme, dark_theme){
+    //     console.log("SET");
+    // };
+
+    // this.fill_set = function(color_set){
+    //     // color_set = object
+    //     console.log(color_set);
+
+    //     // color_set["background"] = color_set["background"] || "";
+
+
+    // };
+
+    this.setup_color_sets = function(){
+
+        // var dark_bg = "rgb(30, 30, 30)";
+        // var dark_bg_text = "rgb(200, 200, 200)";
+        // var light_bg = "#e6e6e6";
+        // var light_bg_text = "rgb(30, 30, 30)";
+        // var button_color = "#3e9bb7";
+        // var button_hover_color = "#4dc1e4";
+        // var button_text_color = "rgb(230, 230, 230)";
+        // var button_selected = "#ac4ac6";
+        // var button_selected_hover = "#d468f0";
+        // var text_header = "#5e448a";
+
+        var min_light = {};
+        min_light["background"]      = "#e6e6e6";
+        min_light["text"]            = "rgb(80, 80, 80)";
+        min_light["button"]          = "blue";
+        min_light["button_selected"] = "red";
+
+        var min_dark = {};
+        min_dark["background"]       = "rgb(50, 50, 50)";
+        min_dark["text"]             = "rgb(200, 200, 200)";
+        min_dark["button"]           = "pink";
+        min_dark["button_selected"]  = "orange";
+
+        // var light = this.fill_set(min_light);
+        // var dark  = this.fill_set(min_dark);
+
+        var dark_bg = "rgb(50, 50, 50)";
+        var dark_bg_text = "rgb(200, 200, 200)";
+        var light_bg = "#e6e6e6";
+        var light_bg_text = "rgb(30, 30, 30)";
+
+        var button_color = "#4d505f";
+        var button_hover_color = this.Lighten(button_color);
+        var button_text_color = "rgb(230, 230, 230)";
+
+        var button_selected = "#95ae6c";
+        var button_selected_hover = this.Lighten(button_selected);
+
+        var text_header = "#95ae6c";
+
+        this.Light = new DashColorSet(
+            light_bg, // Background color
+            "green", // Tab area background
+            light_bg_text, // Text color
+            text_header, // Text header color
+            new DashColorButtonSet( // Button
+                new DashColorStateSet(
+                    button_color,    // Button.Background.Base
+                    button_selected,    // Button.Background.Selected
+                    button_hover_color, // Button.Background.BaseHover
+                    button_selected_hover, // Button.Background.SelectedHover
+                ),
+                new DashColorStateSet(
+                    button_text_color,   // Button.Text.Base
+                    button_text_color,  // Button.Text.Selected
+                    button_text_color,  // Button.Text.BaseHover
+                    button_text_color, // Button.Text.SelectedHover
+                ),
+            ),
+            new DashColorButtonSet(    // Tab
+                new DashColorStateSet( // Tab Background
+                    button_color,    // Tab.Background.Base
+                    button_selected,    // Tab.Background.Selected
+                    button_hover_color, // Tab.Background.BaseHover
+                    button_selected_hover, // Tab.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Tab Text
+                    button_text_color,   // Tab.Text.Base
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color, // Tab.Text.SelectedHover
+                ),
+            ),
+        );
+
+        this.Dark = new DashColorSet(
+            dark_bg, // Background color
+            "pink", // Tab area background
+            dark_bg_text, // Text color
+            text_header, // Text header color
+            new DashColorButtonSet( // Button
+                new DashColorStateSet(
+                    button_color, // Button.Background.Base
+                    button_selected, // Button.Background.Selected
+                    button_hover_color, // Button.Background.BaseHover
+                    button_selected_hover, // Button.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Button Text
+                    button_text_color, // Button.Text.Base
+                    button_text_color, // Button.Text.Selected
+                    button_text_color, // Button.Text.BaseHover
+                    button_text_color, // Button.Text.SelectedHover
+                ),
+            ),
+            new DashColorButtonSet(    // Tab
+                new DashColorStateSet( // Tab Background
+                    button_color,    // Tab.Background.Base
+                    button_selected,    // Tab.Background.Selected
+                    button_hover_color, // Tab.Background.BaseHover
+                    button_selected_hover, // Tab.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Tab Text
+                    button_text_color,   // Tab.Text.Base
+                    button_text_color,  // Tab.Text.Selected
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color, // Tab.Text.SelectedHover
+                ),
+            ),
+        );
+
+    };
 
     this.GetHorizontalGradient = function(color_1, color_2, color_3, color_4){
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
@@ -240,6 +349,32 @@ function DashColor(){
         return this.to_rgba(this.Parse(cstr));
     };
 
+    this.Lighten = function(cstr, lighten_rgb){
+
+        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
+
+        var pcolor = this.Parse(cstr);
+        pcolor[0] += lighten_rgb;
+        pcolor[1] += lighten_rgb;
+        pcolor[2] += lighten_rgb;
+
+        return this.to_rgb(pcolor);
+
+    };
+
+    this.Darken = function(cstr, darken_rgb){
+
+        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
+
+        var pcolor = this.Parse(cstr);
+        pcolor[0] -= darken_rgb;
+        pcolor[1] -= darken_rgb;
+        pcolor[2] -= darken_rgb;
+
+        return this.to_rgb(pcolor);
+
+    };
+
     this.Parse = function(cstr) {
 
         var m = null;
@@ -383,5 +518,7 @@ function DashColor(){
         return [parts[0], parts[1], parts[2], alpha, space]
 
     };
+
+    this.setup_color_sets();
 
 };

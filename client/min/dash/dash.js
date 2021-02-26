@@ -210,11 +210,29 @@ function DashUser(){
 };
 
 
+function DashSize(){
+    this.Padding = 10;
+    this.Stroke = 3;
+    this.RowHeight = 20;
+    this.ButtonHeight = this.RowHeight + (this.Padding);
+    this.ColumnWidth = 150;
+    this.BorderRadius = 3;
+};
+
+
+function DashView(){
+    this.User = DashUserView;
+    this.Style = DashStyleView;
+    this.SiteSettings = DashAdminView;
+    this.Admin = DashAdminView;
+};
+
+
 function DashColor(){
     // this.DarkBackground = "#e6e6e6";
     // this.LightBackground = "#e6e6e6";
-    this.Background = "#e6e6e6";
-    this.Text = "#333";
+    // this.Background = "#e6e6e6";
+    // this.Text = "#333";
     // this.DarkText = "#333";
     // this.LightText = "#e3d5ca";
     this.Primary = "#95ae6c";
@@ -222,28 +240,121 @@ function DashColor(){
     this.Light = "rgb(230, 230, 230)";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.Warning = "#fab964";
-    this.Button = new DashColorSet(
-        "#4d505f",   // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
-    // NEW
-    this.Dark = new DashColorSet(
-        "#4d505f", // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
-    this.Light = new DashColorSet(
-        "#4d505f",   // Background color
-        "#565e83", // Background color on hover
-        "#95ae6c", // Background color while selected
-        "#a5c582", // Background color while selected and hovering
-        "rgba(255, 255, 255, 0.9)"   // Text color
-    );
+    this.Light = null;
+    this.Dark = null;
+    // this.SetFromJson = function(light_theme_json, dark_theme_json){
+    // };
+    // this.Set = function(light_theme, dark_theme){
+    //     console.log("SET");
+    // };
+    // this.fill_set = function(color_set){
+    //     // color_set = object
+    //     console.log(color_set);
+    //     // color_set["background"] = color_set["background"] || "";
+
+    // };
+    this.setup_color_sets = function(){
+        // var dark_bg = "rgb(30, 30, 30)";
+        // var dark_bg_text = "rgb(200, 200, 200)";
+        // var light_bg = "#e6e6e6";
+        // var light_bg_text = "rgb(30, 30, 30)";
+        // var button_color = "#3e9bb7";
+        // var button_hover_color = "#4dc1e4";
+        // var button_text_color = "rgb(230, 230, 230)";
+        // var button_selected = "#ac4ac6";
+        // var button_selected_hover = "#d468f0";
+        // var text_header = "#5e448a";
+        var min_light = {};
+        min_light["background"]      = "#e6e6e6";
+        min_light["text"]            = "rgb(80, 80, 80)";
+        min_light["button"]          = "blue";
+        min_light["button_selected"] = "red";
+        var min_dark = {};
+        min_dark["background"]       = "rgb(50, 50, 50)";
+        min_dark["text"]             = "rgb(200, 200, 200)";
+        min_dark["button"]           = "pink";
+        min_dark["button_selected"]  = "orange";
+        // var light = this.fill_set(min_light);
+        // var dark  = this.fill_set(min_dark);
+        var dark_bg = "rgb(50, 50, 50)";
+        var dark_bg_text = "rgb(200, 200, 200)";
+        var light_bg = "#e6e6e6";
+        var light_bg_text = "rgb(30, 30, 30)";
+        var button_color = "#4d505f";
+        var button_hover_color = this.Lighten(button_color);
+        var button_text_color = "rgb(230, 230, 230)";
+        var button_selected = "#95ae6c";
+        var button_selected_hover = this.Lighten(button_selected);
+        var text_header = "#95ae6c";
+        this.Light = new DashColorSet(
+            light_bg, // Background color
+            "green", // Tab area background
+            light_bg_text, // Text color
+            text_header, // Text header color
+            new DashColorButtonSet( // Button
+                new DashColorStateSet(
+                    button_color,    // Button.Background.Base
+                    button_selected,    // Button.Background.Selected
+                    button_hover_color, // Button.Background.BaseHover
+                    button_selected_hover, // Button.Background.SelectedHover
+                ),
+                new DashColorStateSet(
+                    button_text_color,   // Button.Text.Base
+                    button_text_color,  // Button.Text.Selected
+                    button_text_color,  // Button.Text.BaseHover
+                    button_text_color, // Button.Text.SelectedHover
+                ),
+            ),
+            new DashColorButtonSet(    // Tab
+                new DashColorStateSet( // Tab Background
+                    button_color,    // Tab.Background.Base
+                    button_selected,    // Tab.Background.Selected
+                    button_hover_color, // Tab.Background.BaseHover
+                    button_selected_hover, // Tab.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Tab Text
+                    button_text_color,   // Tab.Text.Base
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color, // Tab.Text.SelectedHover
+                ),
+            ),
+        );
+        this.Dark = new DashColorSet(
+            dark_bg, // Background color
+            "pink", // Tab area background
+            dark_bg_text, // Text color
+            text_header, // Text header color
+            new DashColorButtonSet( // Button
+                new DashColorStateSet(
+                    button_color, // Button.Background.Base
+                    button_selected, // Button.Background.Selected
+                    button_hover_color, // Button.Background.BaseHover
+                    button_selected_hover, // Button.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Button Text
+                    button_text_color, // Button.Text.Base
+                    button_text_color, // Button.Text.Selected
+                    button_text_color, // Button.Text.BaseHover
+                    button_text_color, // Button.Text.SelectedHover
+                ),
+            ),
+            new DashColorButtonSet(    // Tab
+                new DashColorStateSet( // Tab Background
+                    button_color,    // Tab.Background.Base
+                    button_selected,    // Tab.Background.Selected
+                    button_hover_color, // Tab.Background.BaseHover
+                    button_selected_hover, // Tab.Background.SelectedHover
+                ),
+                new DashColorStateSet( // Tab Text
+                    button_text_color,   // Tab.Text.Base
+                    button_text_color,  // Tab.Text.Selected
+                    button_text_color,  // Tab.Text.BaseHover
+                    button_text_color, // Tab.Text.SelectedHover
+                ),
+            ),
+        );
+    };
     this.GetHorizontalGradient = function(color_1, color_2, color_3, color_4){
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
     };
@@ -431,6 +542,22 @@ function DashColor(){
     this.ParseToRGBA = function(cstr){
         return this.to_rgba(this.Parse(cstr));
     };
+    this.Lighten = function(cstr, lighten_rgb){
+        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
+        var pcolor = this.Parse(cstr);
+        pcolor[0] += lighten_rgb;
+        pcolor[1] += lighten_rgb;
+        pcolor[2] += lighten_rgb;
+        return this.to_rgb(pcolor);
+    };
+    this.Darken = function(cstr, darken_rgb){
+        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
+        var pcolor = this.Parse(cstr);
+        pcolor[0] -= darken_rgb;
+        pcolor[1] -= darken_rgb;
+        pcolor[2] -= darken_rgb;
+        return this.to_rgb(pcolor);
+    };
     this.Parse = function(cstr) {
         var m = null;
         var parts = [];
@@ -556,67 +683,117 @@ function DashColor(){
         };
         return [parts[0], parts[1], parts[2], alpha, space]
     };
+    this.setup_color_sets();
 };
 
-
-function DashColorSet(background, background_hover, background_selected, background_selected_hover, text){
-    this.background = background;
-    this.background_hover = background_hover;
-    this.background_selected = background_selected;
-    this.background_selected_hover = background_selected_hover;
-    this.text = text;
-    this.Background = this.background;
-    this.BackgroundHover = this.background_hover;
-    this.BackgroundSelected = this.background_selected;
-    this.BackgroundSelectedHover = this.background_selected_hover;
-    this.Text = this.text;
-    // this.ButtonBackground = "red";
-    // this.ButtonText = "white";
-    // COLOR INTERFACE - PAGE / ELEMENT
-    //
-    // d.Color.Light
-    // d.Color.Dark
-    // d.Color.WarningLight
-    // d.Color.WarningDark
-    // d.Color.ErrorLight
-    // d.Color.ErrorDark
-    // d.Color.AccentLight
-    // d.Color.AccentDark
-    //
-    //           ▽ - Color of the page/element background
-    //           |
-    // d.Color.Light.Background.Main
-    // d.Color.Light.Background.Hover
-    // d.Color.Light.Background.Selected
-    // d.Color.Light.Background.SelectedHover
-    //
-    // COLOR INTERFACE - BUTTON
-    //
-    //           ▽ - Color of the page/element background
-    //           |
-    // d.Color.Dark.Button.Background.Main
-    // d.Color.Dark.Button.Background.Hover
-    // d.Color.Dark.Button.Background.Selected
-    // d.Color.Dark.Button.Background.SelectedHover
-    //
+class DashColorSet {
+    constructor(background, tab_background, text, text_header, button, tab) {
+        this._background  = background;  // HTML Color
+        this._tab_background = tab_background // HTML Color
+        this._text        = text;        // HTML Color
+        this._text_header = text_header; // HTML Color
+        this._button      = button;      // DashColorButtonSet()
+        this._tab         = tab;         // DashColorButtonSet()
+    };
+    get Background() {
+        return this._background;
+    };
+    get TabBackground() {
+        return this._tab_background;
+    };
+    get Text() {
+        return this._text;
+    };
+    get TextHeader() {
+        return this._text_header;
+    };
+    get Button() {
+        return this._button;
+    };
+    get Tab() {
+        return this._tab;
+    };
+    //////////////////////////
+    set Background(color) {
+        this._background = color;
+    };
+    set TabBackground(color) {
+        this._tab_background = color;
+    };
+    set Text(color) {
+        this._text = color;
+    };
+    set TextHeader(color) {
+        this._text_header = color;
+    };
+    set Button(color_button_set) {
+        this._button = color_button_set;
+    };
+    set Tab(color_button_set) {
+        this._tab = color_button_set;
+    };
 };
 
-
-function DashSize(){
-    this.Padding = 10;
-    this.Stroke = 3;
-    this.RowHeight = 20;
-    this.ButtonHeight = this.RowHeight + (this.Padding);
-    this.ColumnWidth = 150;
-    this.BorderRadius = 3;
+class DashColorButtonSet {
+    constructor(background, text) {
+        this._background = background; // DashColorStateSet()
+        this._text       = text;       // DashColorStateSet()
+    };
+    get Background() {
+        return this._background;
+    };
+    get Text() {
+        return this._text;
+    };
+    //////////////////////////
+    set Background(state_set) {
+        this._background = state_set;
+        this._background.FillStates();
+    };
+    set Text(state_set) {
+        this._text = state_set;
+        this._text.FillStates();
+    };
+    AssertButtonSet() {
+        // DOC: This is a dummy function to force an
+        // error if an object does not have this method
+        return this._selected_hover;
+    };
 };
 
-
-function DashView(){
-    this.User = DashUserView;
-    this.Style = DashStyleView;
-    this.SiteSettings = DashAdminView;
-    this.Admin = DashAdminView;
+class DashColorStateSet {
+    constructor(base, selected, base_hover, selected_hover) {
+        this._base           = base;
+        this._selected       = selected;
+        this._base_hover     = base_hover;
+        this._selected_hover = selected_hover;
+    };
+    get Base() {
+        return this._base;
+    };
+    get BaseHover() {
+        return this._base_hover;
+    };
+    get Selected() {
+        return this._selected;
+    };
+    get SelectedHover() {
+        return this._selected_hover;
+    };
+    FillStates() {
+        // Doc: Since it's possible to only use one color, this function
+        //makes sure to auto-fill missing colors
+        if (!this._base) {
+            console.log("ERROR: DashColorStateSet() Requires at least one color");
+            return;
+        };
+        if (!this._selected) {
+            console.log("Warning: Set a color for the 'Selected' property");
+            this._selected = "red";
+        };
+        this._base_hover = this._base_hover || d.Color.Lighten(this._base, 50);
+        this._selected_hover = this._selected_hover || d.Color.Lighten(this._selected, 50);
+    };
 };
 
 
@@ -680,8 +857,30 @@ function DashRequest(){
     };
 };
 
+// Profile page layout for the currently logged in user
+function DashUserView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+};
+// Profile page layout for the currently logged in user
+function DashStyleView(){
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+    console.log("in");
+};
 
 function DashAdminView(){
+    this.layout = new Dash.Gui.Layout.Tabs.Top(this);
+    this.html = this.layout.html;
+    this.setup_styles = function(){
+        this.layout.Append("Settings", DashAdminSettings);
+        this.layout.Append("Color", DashAdminColor);
+    };
+    this.setup_styles();
+};
+
+
+function DashAdminSettings(){
     this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": d.Size.Padding});
     this.property_box = null;
     this.data = null;
@@ -749,17 +948,40 @@ function DashAdminView(){
     this.reload_data();
 };
 
-// Profile page layout for the currently logged in user
-function DashUserView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
-    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+
+function DashAdminColor(){
+    this.html = Dash.Gui.GetHTMLContext("Coming soon...", {"margin": d.Size.Padding});
+    this.property_box = null;
+    this.data = null;
+    this.setup_styles = function(){
+        this.draw_color_section(Dash.Color.Light);
+        this.draw_color_section(Dash.Color.Dark);
+    };
+    this.draw_color_section = function(color_set){
+        // COLOR INTERFACE - BUTTON
+        //
+        //           ▽ - Color of the page/element background
+        //           |
+        // d.Color.Dark.Button.Background.Main
+        // d.Color.Dark.Button.Background.Hover
+        // d.Color.Dark.Button.Background.Selected
+        // d.Color.Dark.Button.Background.SelectedHover
+        console.log(color_set);
+        console.log(color_set.Background);
+        console.log(color_set.Text);
+        console.log(color_set.Button);
+        console.log(color_set.Tab); // DashColorButtonSet
+        console.log(color_set.Tab.Background); // DashColorStateSet
+        console.log(color_set.Tab.Text); // DashColorStateSet
+
+        // for (var color_set_name in color_root) {
+        //     console.log(color_set_name + ":");
+        //     console.log(color_root[color_set_name]);
+        // };
+    };
+    this.setup_styles();
 };
-// Profile page layout for the currently logged in user
-function DashStyleView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
-    this.html.append(new Dash.Gui.Layout.UserProfile().html);
-    console.log("in");
-};
+
 
 function DashGui(){
     this.Layout = new DashGuiLayout();
@@ -775,8 +997,9 @@ function DashGui(){
         optional_style_css = optional_style_css || {};
         var html = $("<div>" + optional_label_text + "</div>");
         var css = {
-            "color": Dash.Color.Text,
+            "color": Dash.Color.Light.Text,
             "font-family": "sans_serif_normal",
+            "background": Dash.Color.Light.Background,
         };
         for (var key in optional_style_css) {
             css[key] = optional_style_css[key];
@@ -795,6 +1018,7 @@ function DashGui(){
             "bottom": 0,
             "overflow-y": "auto",
             "color": "black",
+            "background": Dash.Color.Light.Background,
         });
         return html;
     };
@@ -1010,10 +1234,11 @@ function DashGuiLogin(on_login_binder, on_login_callback){
 };
 
 
-function DashGuiButton(Label, Callback, Bind){
+function DashGuiButton(Label, Callback, Bind, color_set){
     this.label = Label;
     this.callback = Callback;
     this.bind = Bind;
+    this.color_set = color_set || Dash.Color.Light.Button;
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.click_highlight = $("<div></div>");
@@ -1030,7 +1255,7 @@ function DashGuiButton(Label, Callback, Bind){
         this.html.append(this.click_highlight);
         this.html.append(this.label);
         this.html.css({
-            "background": d.Color.Button.Background,
+            "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": d.Size.ButtonHeight,
             "border-radius": d.Size.BorderRadius,
@@ -1045,7 +1270,8 @@ function DashGuiButton(Label, Callback, Bind){
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": d.Color.Button.BackgroundHover,
+            "background": this.color_set.Background.BaseHover,
+            // "background": "pink",
             "opacity": 0,
             "border-radius": d.Size.BorderRadius,
         });
@@ -1079,14 +1305,9 @@ function DashGuiButton(Label, Callback, Bind){
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": d.Color.Button.Text,
+            "color": this.color_set.Text.Base,
         });
     };
-    // this.SetTextAlign = function(text_alignment){
-    //     this.label.css({
-    //         "text-align": text_alignment,
-    //     });
-    // };
     this.SetBorderRadius = function(border_radius){
         this.html.css({
             "border-radius": border_radius,
@@ -1117,12 +1338,31 @@ function DashGuiButton(Label, Callback, Bind){
         };
         this.is_selected = is_selected;
         if (this.is_selected) {
-            this.html.css({"background": d.Color.Button.BackgroundSelected});
-            this.highlight.css({"background": d.Color.Button.BackgroundSelectedHover});
+            this.html.css({"background": this.color_set.Background.Selected});
+            this.highlight.css({"background": this.color_set.Background.SelectedHover});
         }
         else {
-            this.html.css({"background": d.Color.Button.Background});
-            this.highlight.css({"background": d.Color.Button.BackgroundHover});
+            this.html.css({"background": this.color_set.Background.Base});
+            this.highlight.css({"background": this.color_set.Background.BaseHover});
+        };
+        this.on_hover_out();
+    };
+    this.on_hover_in = function(){
+        this.highlight.stop().animate({"opacity": 1}, 50);
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.SelectedHover);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.BaseHover);
+        };
+    };
+    this.on_hover_out = function(){
+        this.highlight.stop().animate({"opacity": 0}, 100);
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.Selected);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.Base);
         };
     };
     this.SetButtonVisibility = function(button_visible){
@@ -1235,10 +1475,10 @@ function DashGuiButton(Label, Callback, Bind){
     this.setup_connections = function(){
         (function(self){
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 1}, 50);
+                self.on_hover_in();
             });
             self.html.mouseleave(function(){
-                self.highlight.stop().animate({"opacity": 0}, 100);
+                self.on_hover_out();
             });
             self.html.click(function(event){
                 self.highlight.stop().animate({"opacity": 0}, 50);
@@ -1874,7 +2114,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 };
 
 
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id){
+function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, extra_params){
     this.binder = binder;
     this.get_data_cb = null;
     this.set_data_cb = null;
@@ -1887,6 +2127,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
     this.property_set_data = null; // Managed Dash data
+    this.extra_params = extra_params || {};
     this.num_headers = 0;
     this.update_inputs = {};
     this.setup_styles = function(){
@@ -1982,6 +2223,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
+        for (var key in this.extra_params) {
+            params[key] = this.extra_params[key];
+        };
         (function(self, row_input, row_details){
             row_input.Request(url, params, function(response){
                 self.on_server_response(response, row_details);
@@ -2011,7 +2255,7 @@ function DashGuiHeader(label_text){
         });
         this.label.css({
             "text-align": "left",
-            "color": Dash.Color.Primary,
+            "color": Dash.Color.Light.TextHeader,
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
@@ -2022,254 +2266,17 @@ function DashGuiHeader(label_text){
             "top": 0,
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
-            "background": Dash.Color.Primary,
+            "background": Dash.Color.Light.TextHeader,
         });
     };
     this.setup_styles();
 };
 
 function DashGuiLayout(){
-    this.SideTabs = DashGuiLayoutTabs;
-    this.TopTabs = DashGuiLayoutTabs;
     this.UserProfile = DashGuiLayoutUserProfile;
-};
-
-// function DashGuiLayoutTopTabs(Binder){
-// };
-// function DashGuiLayoutSideTabs(Binder){
-// };
-function DashGuiLayoutTabs(Binder){
-    this.html = $("<div></div>");
-    this.binder = Binder;
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
-    this.list_backing = $("<div></div>");
-    this.list_top = $("<div></div>");
-    this.list_bottom = $("<div></div>");
-    this.content = $("<div></div>");
-    this.all_content = [];
-    this.selected_index = -1;
-    this.width = Dash.Size.ColumnWidth;
-    this.background_color = Dash.Color.Dark;
-    this.is_sub = false;
-    this.color_selected = Dash.Color.Primary;
-    this.color_default = Dash.Color.ButtonColor;
-    this.setup_styles = function(){
-        this.html.append(this.list_backing);
-        this.html.append(this.list_top);
-        this.html.append(this.list_bottom);
-        this.html.append(this.content);
-        this.html.css({
-            "position": "absolute",
-            "display": "flex",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-        });
-        this.list_backing.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "bottom": 0,
-            // "background": "orange",
-        });
-        this.list_top.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            // "bottom": 0,
-        });
-        this.list_bottom.css({
-            "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            // "bottom": 0,
-        });
-        // The right side / non-tab area / content
-        this.content.css({
-            "position": "absolute",
-            "left": this.width,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
-            "background": Dash.Color.Light,
-            "overflow-y": "auto",
-        });
-        this.update_styles();
-        (function(self){
-            requestAnimationFrame(function(){
-                self.load_last_selection();
-            });
-        })(this);
-    };
-    this.update_styles = function(){
-        // Called to style anything that might change between the default behavior and the sub style
-        var sub_border = "none";
-        var box_shadow = "none";
-        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
-        this.color_selected = Dash.Color.Primary;
-        this.color_default = Dash.Color.ButtonColor;
-        this.width = Dash.Size.ColumnWidth;
-        this.background_color = Dash.Color.Dark;
-        if (this.is_sub) {
-            this.width = Dash.Size.ColumnWidth*0.5;
-            // this.background_color = "rgba(0, 0, 0, 0)";
-            // this.color_selected = LightBackgroundColor;
-            // this.color_default = DarkPanelColor;
-            sub_border =  "1px solid " + "rgba(255, 255, 255, 0.1)";
-            box_shadow = "inset -20px -10px 20px 0px rgba(0, 0, 0, 0.11)";
-        };
-
-        this.list_backing.css({
-            "width": this.width,
-            "background": this.background_color,
-            // "border-left": sub_border,
-            // "box-shadow": box_shadow,
-        });
-        this.list_top.css({
-            "width": this.width,
-        });
-        this.list_bottom.css({
-            "width": this.width,
-        });
-        this.content.css({
-            "left": this.width,
-            "box-shadow": box_shadow,
-        });
-        for (var i in this.all_content) {
-            this.style_button_content(this.all_content[i]);
-        };
-    };
-    this.SetSubMenu = function(is_sub){
-        this.is_sub = is_sub;
-        this.update_styles();
-    };
-    this.load_last_selection = function(){
-        if (this.selected_index != -1) {
-            // A selection was already made externally
-            return;
-        };
-        if (this.all_content.length == 0) {
-            return;
-        };
-        var last_index = parseInt(d.Local.Get("sidebar_index_" + this.recall_id)) || 0;
-        if (last_index > this.all_content.length-1) {
-            last_index = 0;
-        };
-        this.LoadIndex(last_index);
-    };
-    this.LoadIndex = function(index){
-        if (index > this.all_content.length-1) {
-            return;
-        };
-        d.Local.Set("sidebar_index_" + this.recall_id, index);
-        var button = null;
-        for (var i in this.all_content) {
-            var content_data = this.all_content[i];
-            if (i == index) {
-                content_data["button"].SetSelected(true);
-                // content_data["button"].SetColor(this.color_selected);
-                button = content_data["button"];
-            }
-            else {
-                content_data["button"].SetSelected(false);
-                // content_data["button"].SetColor(this.color_default);
-            };
-        };
-        this.content.empty();
-        var content_html = null;
-        if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
-            content_html = this.all_content[index]["content_div_html_class"];
-        }
-        else if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "function") {
-            content_html = new this.all_content[index]["content_div_html_class"]().html;
-        }
-        else {
-            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        };
-        if (!content_html) {
-            console.log("ERROR: Unknown content!");
-            content_html = $("<div>Error Loading Content</div>");
-        };
-        this.content.append(content_html);
-    };
-    this.style_button_content = function(content_data){
-        var optional_params = content_data["optional_params"] || {};
-        var indent = 0;
-        if (optional_params["indent"]) {
-            indent = Dash.Size.Padding;
-        };
-        content_data["button"].SetTextAlign("left");
-        content_data["button"].html.css({
-            // "margin": 0,
-            // "padding-left": d.Size.Padding,
-            // "padding-right": d.Size.Padding,
-            // "padding-top": d.Size.Padding*0.5,
-            // "padding-bottom": d.Size.Padding*0.5,
-            "margin-bottom": 1,
-            "flex-grow": 1,
-        });
-        content_data["button"].SetBorderRadius(0);
-        content_data["button"].label.css({
-            "font-size": "85%",
-            "padding-left": indent,
-            // "font-family": "sans_serif_bold",
-        });
-        if (this.is_sub) {
-            // content_data["button"].html.css({
-            //     "background": "black",
-            // });
-            // content_data["button"].highlight.css({
-            //     "background": "orange",
-            // });
-        };
-    };
-    this.AppendImage = function(img_url){
-        // TODO: Move the concept of an 'Image' into dash as a light
-        // abstraction for managing aspect ratios
-        // TODO: This AppendImage is a hack. We need to revise the
-        // stack of objects in this container so they derive from
-        // some abstraction to simplify append/prepend
-        var image = $("<div></div>");
-        image.css({
-            "height": Dash.Size.RowHeight*2,
-            "background-image": "url(" + img_url + ")",
-            "background-repeat": "no-repeat",
-            "background-size": "contain",
-            "background-position": "center",
-        });
-        this.list_top.append(image);
-    };
-    this.Append = function(label_text, content_div_html_class, optional_params){
-        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
-    };
-    this.Prepend = function(label_text, content_div_html_class, optional_params){
-        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
-    };
-    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
-        optional_params = optional_params || {};
-        var content_data = {};
-        content_data["label_text"] = label_text;
-        content_data["content_div_html_class"] = content_div_html_class;
-        content_data["button"] = null;
-        content_data["optional_params"] = optional_params;
-        (function(self, index){
-            content_data["button"] = new d.Gui.Button(label_text, function(){
-                self.LoadIndex(index);
-            }, self);
-        })(this, this.all_content.length);
-        anchor_div = anchor_div || this.list_top;
-        // console.log("--");
-        // console.log(this.list_top);
-        // console.log(this.list_bottom);
-        // console.log(anchor_div);
-        // console.log(typeof(anchor_div));
-        anchor_div.append(content_data["button"].html);
-        this.style_button_content(content_data);
-        this.all_content.push(content_data);
-        return content_data["button"];
-    };
-    this.setup_styles();
+    this.Tabs = {};
+    this.Tabs.Top = DashGuiLayoutTabsTop;
+    this.Tabs.Side = DashGuiLayoutTabsSide;
 };
 
 
@@ -2380,4 +2387,300 @@ function DashGuiLayoutUserProfile(user_data){
         input_row.FlashSave();
     };
     this.setup_styles();
+};
+
+class DashGuiLayoutTabs {
+    // TODO - convert this to a proper class
+    constructor(Binder, side_tabs) {
+    this.html = $("<div></div>");
+    this.binder = Binder;
+    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+    this.side_tabs = side_tabs;
+    if (this.side_tabs) {
+        this.color = Dash.Color.Dark;
+    }
+    else {
+        this.color = Dash.Color.Light;
+    };
+    this.list_backing = $("<div></div>");
+    this.list_top = $("<div></div>");
+    this.list_bottom = $("<div></div>");
+    this.content = $("<div></div>");
+    this.all_content = [];
+    this.selected_index = -1;
+    this.size = Dash.Size.ColumnWidth; // Thickness
+    this.setup_styles = function(){
+        this.html.append(this.list_backing);
+        this.html.append(this.list_top);
+        this.html.append(this.list_bottom);
+        this.html.append(this.content);
+        this.html.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+        });
+        if (this.side_tabs) {
+            this.set_styles_for_side_tabs();
+        }
+        else {
+            this.set_styles_for_top_tabs();
+        };
+        this.update_styles();
+        (function(self){
+            requestAnimationFrame(function(){
+                self.load_last_selection();
+            });
+        })(this);
+    };
+    this.set_styles_for_side_tabs = function(){
+        this.list_backing.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "bottom": 0,
+        });
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+        });
+        this.list_bottom.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+        });
+        // The right side / non-tab area / content
+        this.content.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "overflow-y": "auto",
+            "background": Dash.Color.Light.Background,
+        });
+    };
+    this.set_styles_for_top_tabs = function(){
+        this.list_backing.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+        });
+        this.list_top.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "display": "flex",
+        });
+        this.list_bottom.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "display": "flex",
+        });
+        // The right side / non-tab area / content
+        this.content.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "overflow-y": "auto",
+            "background": Dash.Color.Light.Background,
+        });
+    };
+    this.update_styles_for_side_tabs = function(){
+        var sub_border = "none";
+        var box_shadow = "none";
+        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
+        this.size = Dash.Size.ColumnWidth;
+        this.list_backing.css({
+            "width": this.size,
+            "background": this.color.Background,
+        });
+        this.list_top.css({
+            "width": this.size,
+        });
+        this.list_bottom.css({
+            "width": this.size,
+        });
+        this.content.css({
+            "left": this.size,
+            "box-shadow": box_shadow,
+        });
+        for (var i in this.all_content) {
+            this.style_button_content(this.all_content[i]);
+        };
+    };
+    this.update_styles_for_top_tabs = function(){
+        var sub_border = "none";
+        var box_shadow = "none";
+        box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
+        this.size = Dash.Size.RowHeight+(Dash.Size.Padding);
+        this.list_backing.css({
+            "height": this.size,
+            "background": this.color.TabBackground,
+            "box-shadow": box_shadow,
+        });
+        this.list_top.css({
+            "height": this.size,
+        });
+        this.list_bottom.css({
+            "height": this.size,
+        });
+        this.content.css({
+            "top": this.size,
+        });
+        for (var i in this.all_content) {
+            this.style_button_content(this.all_content[i]);
+        };
+    };
+    this.update_styles = function(){
+        // Called to style anything that might change between
+        // the default behavior and the sub style
+        if (this.side_tabs) {
+            this.update_styles_for_side_tabs();
+        }
+        else {
+            this.update_styles_for_top_tabs();
+        };
+    };
+    this.load_last_selection = function(){
+        if (this.selected_index != -1) {
+            // A selection was already made externally
+            return;
+        };
+        if (this.all_content.length == 0) {
+            return;
+        };
+        var last_index = parseInt(d.Local.Get("sidebar_index_" + this.recall_id)) || 0;
+        if (last_index > this.all_content.length-1) {
+            last_index = 0;
+        };
+        this.LoadIndex(last_index);
+    };
+    this.LoadIndex = function(index){
+        if (index > this.all_content.length-1) {
+            return;
+        };
+        d.Local.Set("sidebar_index_" + this.recall_id, index);
+        var button = null;
+        for (var i in this.all_content) {
+            var content_data = this.all_content[i];
+            if (i == index) {
+                content_data["button"].SetSelected(true);
+                button = content_data["button"];
+            }
+            else {
+                content_data["button"].SetSelected(false);
+            };
+        };
+        this.content.empty();
+        var content_html = null;
+        if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
+            content_html = this.all_content[index]["content_div_html_class"];
+        }
+        else if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "function") {
+            content_html = new this.all_content[index]["content_div_html_class"]().html;
+        }
+        else {
+            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+        };
+        if (!content_html) {
+            console.log("ERROR: Unknown content!");
+            content_html = $("<div>Error Loading Content</div>");
+        };
+        this.content.append(content_html);
+    };
+    this.style_button_content = function(content_data){
+        var optional_params = content_data["optional_params"] || {};
+        var indent = 0;
+        if (optional_params["indent"]) {
+            indent = Dash.Size.Padding;
+        };
+        if (this.side_tabs) {
+            content_data["button"].SetTextAlign("left");
+            content_data["button"].html.css({
+                "margin-bottom": 1,
+                "flex-grow": 1,
+            });
+            content_data["button"].label.css({
+                "font-size": "85%",
+                "padding-left": indent,
+            });
+        }
+        else {
+            content_data["button"].SetTextAlign("center");
+            content_data["button"].html.css({
+                "margin-right": 1,
+                "width": Dash.Size.ColumnWidth,
+            });
+            content_data["button"].label.css({
+                "font-size": "85%",
+                "padding-left": indent,
+            });
+        };
+        content_data["button"].SetBorderRadius(0);
+    };
+    this.AppendHTML = function(html){
+        this.list_top.append(html);
+    };
+    this.AppendImage = function(img_url){
+        // TODO: Move the concept of an 'Image' into dash as a light
+        // abstraction for managing aspect ratios
+        // TODO: This AppendImage is a hack. We need to revise the
+        // stack of objects in this container so they derive from
+        // some abstraction to simplify append/prepend
+        var image = $("<div></div>");
+        image.css({
+            "height": Dash.Size.RowHeight*2,
+            "background-image": "url(" + img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center",
+        });
+        this.list_top.append(image);
+    };
+    this.Append = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+    };
+    this.Prepend = function(label_text, content_div_html_class, optional_params){
+        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
+    };
+    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
+        optional_params = optional_params || {};
+        var content_data = {};
+        content_data["label_text"] = label_text;
+        content_data["content_div_html_class"] = content_div_html_class;
+        content_data["button"] = null;
+        content_data["optional_params"] = optional_params;
+        (function(self, index){
+            content_data["button"] = new d.Gui.Button(label_text, function(){
+                self.LoadIndex(index);
+            }, self, self.color.Tab);
+        })(this, this.all_content.length);
+        anchor_div = anchor_div || this.list_top;
+        anchor_div.append(content_data["button"].html);
+        this.style_button_content(content_data);
+        this.all_content.push(content_data);
+        return content_data["button"];
+    };
+    this.setup_styles();
+    };
+};
+
+class DashGuiLayoutTabsSide extends DashGuiLayoutTabs {
+    constructor(Binder) {
+        super(Binder, true);
+    };
+};
+
+class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
+    constructor(Binder) {
+        super(Binder, false);
+    };
 };

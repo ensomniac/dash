@@ -168,8 +168,15 @@ class DashLocalStorage:
     def Delete(self, obj_id):
         record_path = self.get_record_path(obj_id)
 
-        if os.path.exists(record_path):
+        result = {}
+        result["existed"] = os.path.exists(record_path)
+        result["record_path"] = record_path
+
+        if result["existed"]:
             os.remove(record_path)
+
+        result["exists_now"] = os.path.exists(record_path)
+        return result
 
     def Read(self, full_path):
         return json.loads(open(full_path, "r").read())

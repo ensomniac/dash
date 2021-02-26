@@ -1,10 +1,11 @@
 
-function DashGuiButton(Label, Callback, Bind){
+function DashGuiButton(Label, Callback, Bind, color_set){
 
     this.label = Label;
     this.callback = Callback;
     this.bind = Bind;
 
+    this.color_set = color_set || Dash.Color.Light.Button;
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.click_highlight = $("<div></div>");
@@ -24,7 +25,7 @@ function DashGuiButton(Label, Callback, Bind){
         this.html.append(this.label);
 
         this.html.css({
-            "background": d.Color.Button.Background,
+            "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": d.Size.ButtonHeight,
             "border-radius": d.Size.BorderRadius,
@@ -40,7 +41,8 @@ function DashGuiButton(Label, Callback, Bind){
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": d.Color.Button.BackgroundHover,
+            "background": this.color_set.Background.BaseHover,
+            // "background": "pink",
             "opacity": 0,
             "border-radius": d.Size.BorderRadius,
         });
@@ -77,17 +79,9 @@ function DashGuiButton(Label, Callback, Bind){
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": d.Color.Button.Text,
+            "color": this.color_set.Text.Base,
         });
     };
-
-    // this.SetTextAlign = function(text_alignment){
-
-    //     this.label.css({
-    //         "text-align": text_alignment,
-    //     });
-
-    // };
 
     this.SetBorderRadius = function(border_radius){
 
@@ -134,12 +128,38 @@ function DashGuiButton(Label, Callback, Bind){
         this.is_selected = is_selected;
 
         if (this.is_selected) {
-            this.html.css({"background": d.Color.Button.BackgroundSelected});
-            this.highlight.css({"background": d.Color.Button.BackgroundSelectedHover});
+            this.html.css({"background": this.color_set.Background.Selected});
+            this.highlight.css({"background": this.color_set.Background.SelectedHover});
         }
         else {
-            this.html.css({"background": d.Color.Button.Background});
-            this.highlight.css({"background": d.Color.Button.BackgroundHover});
+            this.html.css({"background": this.color_set.Background.Base});
+            this.highlight.css({"background": this.color_set.Background.BaseHover});
+        };
+
+        this.on_hover_out();
+
+    };
+
+    this.on_hover_in = function(){
+        this.highlight.stop().animate({"opacity": 1}, 50);
+
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.SelectedHover);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.BaseHover);
+        };
+
+    };
+
+    this.on_hover_out = function(){
+        this.highlight.stop().animate({"opacity": 0}, 100);
+
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.Selected);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.Base);
         };
 
     };
@@ -300,11 +320,11 @@ function DashGuiButton(Label, Callback, Bind){
         (function(self){
 
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 1}, 50);
+                self.on_hover_in();
             });
 
             self.html.mouseleave(function(){
-                self.highlight.stop().animate({"opacity": 0}, 100);
+                self.on_hover_out();
             });
 
             self.html.click(function(event){

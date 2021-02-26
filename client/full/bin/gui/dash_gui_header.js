@@ -19,7 +19,7 @@ function DashGuiHeader(label_text){
 
         this.label.css({
             "text-align": "left",
-            "color": Dash.Color.Primary,
+            "color": Dash.Color.Light.TextHeader,
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
@@ -31,7 +31,7 @@ function DashGuiHeader(label_text){
             "top": 0,
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
-            "background": Dash.Color.Primary,
+            "background": Dash.Color.Light.TextHeader,
         });
 
     };
