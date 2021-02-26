@@ -34,23 +34,23 @@ class LintUtils:
         file.close()
 
     def GetFormattedCommentedLine(self, line, without_original=False):
-        if "#" in line:
+        if self.comment_token in line:
             if self.comment_prefix in line:
                 formatted_line = f"{line},"
             else:
                 formatted_line = f"{line}, {self.comment_prefix}"
         else:
             if without_original:
-                formatted_line = f"# {self.comment_prefix}"
+                formatted_line = f"{self.comment_token} {self.comment_prefix}"
             else:
-                formatted_line = f"{line}  # {self.comment_prefix}"
+                formatted_line = f"{line}  {self.comment_token} {self.comment_prefix}"
 
         return formatted_line
 
     def GetAllCommentOptions(self):
         """
-        # Comment options throughout the module are compiled in to a list
-        # used when checking for invalid/outdated comments
+        Comment options throughout the module are compiled in to a
+        list used when checking for invalid/outdated comments
         :return: List of comment strings used for flags
         """
         comment_options = []

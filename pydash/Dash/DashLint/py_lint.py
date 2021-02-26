@@ -4,13 +4,26 @@
 import os
 import sys
 
-from .lint_utils import LintUtils
+from .cleanup import Cleanup
 from .copyright import Copyright
-from .py_lint_helpers.pre_compile import PreCompile
+from .lint_utils import LintUtils
+from .spacing import GlobalSpacing
 from .py_lint_helpers.flags import Flags
+from .py_lint_helpers.py_spacing import PySpacing
+from .py_lint_helpers.pre_compile import PreCompile
+from .py_lint_helpers.style_formatting import FormatStyle
 
 
-class PyLinter(LintUtils, Copyright, PreCompile, Flags):
+class PyLinter(
+    LintUtils,
+    Copyright,
+    PreCompile,
+    Flags,
+    Cleanup,
+    GlobalSpacing,
+    PySpacing,
+    FormatStyle,
+):
     def __init__(self):
         super().__init__()
 
@@ -28,8 +41,8 @@ class PyLinter(LintUtils, Copyright, PreCompile, Flags):
         # self.WriteCodeListToFile()  # Leave off til the end
 
         return self.CompileToCheckForErrors()
-        # return self.CompileToCheckForErrors(debug_text=f"{self.group}, {self.shebang}, {self.line_length_flag_suffix}")
         # return self.CompileToCheckForErrors(print_linted_code_line_list=True)
+        # return self.CompileToCheckForErrors(debug_text=self.dash_context")
 
     def update_init_attrs(self, is_client, dash_context, code_path):
         self.is_client = is_client
@@ -43,24 +56,23 @@ class PyLinter(LintUtils, Copyright, PreCompile, Flags):
             self.include_shebang = True
 
     def run_core(self):
-        # self.cleanup_comments_before_evaluating()
-        # self.remove_extra_lines_at_start_of_file()
-        # self.remove_extra_lines_at_end_of_file()
-        # self.remove_blank_lines_at_start_of_blocks()
-        # self.check_class_spacing()
-        # self.check_function_spacing()
-        # self.check_name_main_spacing()
+        # self.CleanupCommentsBeforeEval()
+        # self.RemoveExtraLinesAtStartOfFile()
+        # self.RemoveExtraLinesAtEndOfFile()
+        # self.RemoveBlankLinesAtStartOfBlocks()
+        # self.CheckClassSpacing()
+        # self.CheckFunctionSpacing()
+        # self.CheckNameMainSpacing()
         self.ValidateShebang()
         self.ValidateCopyright()
-        # self.check_import_spacing()
-        pass
+        # self.CheckImportSpacing()
 
     def run_extras(self):
-        # self.conform_dict_creation()
-        # self.conform_list_creation()
-        # self.drop_one_line_ifs()
-        # self.format_block_spacing_into_columns()
-        pass
+        # TODO: Write these extra style formatting functions
+        self.DropOneLineIfs()
+        self.ConformDictCreation()
+        self.ConformListCreation()
+        self.FormatBlockSpacingIntoColumns()
 
 
 PyLinter = PyLinter()
