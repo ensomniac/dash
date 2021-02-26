@@ -7,61 +7,70 @@ import sys
 
 class LintUtils:
     def __init__(self):
-        pass
+        # These default attribute values are shared between PyLinter and
+        # JSLinter before being set in each respective Linter
+        self.group = False
+        self.exception = ""
+        self.code_path = ""
+        self.source_code = []
+        self.is_client = False
+        self.company_name = ""
+        self.comment_token = ""
+        self.dash_context = None
+        self.copyright_lines = []
+        self.line_break_quantity = 1
+        self.starts_with_keyword = ""
+        self.comment_prefix = "(Dash Lint)"
+        self.iter_limit_range = range(0, 101)
 
-    def GetCodeHeader(self, comment_token, dash_context, code_path):
-        from datetime import datetime
+        super().__init__()
 
-        code_authors = self.get_file_authors(code_path, dash_context['modified_by'])
-        company_name = dash_context['code_copyright_text']
-        copyright_lines = [f"{comment_token} {company_name} {datetime.now().year} {code_authors[0]}"]
+    def GetCodeLineListFromFile(self):
+        return open(self.code_path).read().split("\n")
 
-        for person in code_authors[1:]:
-            copyright_lines.append(f"{comment_token} {' ' * (len(company_name) + 5)} {person}")
-
-        return copyright_lines
-
-    def GetCodeLineListFromFile(self, code_path):
-        return open(code_path).read().split("\n")
-
-    def WriteCodeListToFile(self, code_path, code_lines_list):
-        file = open(code_path, "w")
-        file.write("\n".join(code_lines_list))
+    def WriteCodeListToFile(self):
+        file = open(self.code_path, "w")
+        file.write("\n".join(self.source_code))
         file.close()
 
-    def get_file_authors(self, code_path, uploader_email):
-        from subprocess import check_output
+    def GetFormattedCommentedLine(self, line, without_original=False):
+        if "#" in line:
+            if self.comment_prefix in line:
+                formatted_line = f"{line},"
+            else:
+                formatted_line = f"{line}, {self.comment_prefix}"
+        else:
+            if without_original:
+                formatted_line = f"# {self.comment_prefix}"
+            else:
+                formatted_line = f"{line}  # {self.comment_prefix}"
 
-        add_uploader_email = True
-        authors = []
-        orig_dir = os.getcwd()
+        return formatted_line
 
-        if not os.path.isdir(code_path):
-            code_path = f"/{'/'.join([f for f in code_path.split('/')[:-1] if len(f)])}/"
+    def GetAllCommentOptions(self):
+        """
+        # Comment options throughout the module are compiled in to a list
+        # used when checking for invalid/outdated comments
+        :return: List of comment strings used for flags
+        """
+        comment_options = []
 
-        os.chdir(code_path)
+        for attr in self.__dict__:
+            if attr.endswith("_comment"):
+                comment_options.append(self.__dict__[attr])
 
-        for author in check_output("git log --all --format='%aN <%cE>' | sort -u", shell=True).decode().split("\n"):
-            if len(author) and "aifoundation" not in author and "noreply@github" not in author and author not in authors:
-                authors.append(author.replace("<", "(").replace(">", ")"))
+        return comment_options
 
-        os.chdir(orig_dir)
+    def GetIndentSpaces(self, line):
+        spaces = 0
 
-        if "Ryan" not in authors[0]:
-            for author in authors:
-                if "Ryan" in author:
-                    authors.insert(0, authors.pop(authors.index(author)))
-                    break
-
-        for author in authors:
-            if uploader_email in author:
-                add_uploader_email = False
+        for char in [c for c in line]:
+            if char == " ":
+                spaces += 1
+            else:
                 break
 
-        if add_uploader_email:
-            authors.append(uploader_email)
+        return spaces
 
-        return authors
-
-
-LintUtils = LintUtils()
+# Disabling below interface to be able to use this class within super() call
+# LintUtils = LintUtils()
