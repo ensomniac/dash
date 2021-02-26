@@ -72,5 +72,13 @@ class LintUtils:
 
         return spaces
 
+    def GatherToDos(self):
+        # TODO: Find all TODOs in the code and add it to TODO data.json file
+        # We'll need to create a data.json to store a dump of these
+        # items. The key could be the file name, and the value is
+        # the found comment, with line number at the end in parentheses
+
+        pass
+
 # Disabling below interface to be able to use this class within super() call
 # LintUtils = LintUtils()

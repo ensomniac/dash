@@ -68,7 +68,9 @@ class PyLinter(
         # self.CheckImportSpacing()
 
     def run_extras(self):
-        # TODO: Write these extra style formatting functions
+        # TODO: Write these extra functions
+        self.GatherToDos()
+        self.CheckForOsAndSys()
         self.DropOneLineIfs()
         self.ConformDictCreation()
         self.ConformListCreation()

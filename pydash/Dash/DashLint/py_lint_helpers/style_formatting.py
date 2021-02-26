@@ -28,8 +28,9 @@ class FormatStyle:
         pass
 
     def DropOneLineIfs(self):
-        # (Only if Ryan is on board with this)
         # TODO: Should check if there's anything following the colon on a line that starts with 'if'
+        # (Only if Ryan is on board with this)
+
         pass
 
     def FormatBlockSpacingIntoColumns(self):
@@ -45,5 +46,10 @@ class FormatStyle:
         # from .lint_utils import LintUtils
 
         # Alternatively, we could cascade blocks like these
+
+        pass
+
+    def CheckForOsAndSys(self):
+        # TODO: Should add import os and import sys if not present already
 
         pass
