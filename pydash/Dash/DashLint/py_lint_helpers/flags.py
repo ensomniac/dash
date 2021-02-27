@@ -8,11 +8,13 @@ from typing import Callable
 
 
 class Flags:
-    GetFormattedCommentedLine: Callable
-    AddDocStringFlags: Callable
     source_code: list
     comment_token: str
     comment_prefix: str
+    AddDocStringFlags: Callable
+    RemoveEmptyComments: Callable
+    GetFormattedCommentedLine: Callable
+    RemoveExtraLinesAtEndOfFile: Callable
 
     def __init__(self):
         self.line_length_flag_suffix = "(excluding comments)"
@@ -46,7 +48,7 @@ class Flags:
             # This should always be the last line in this for loop
             self.AddDocStringFlags(index, line)
 
-            # TODO: convert line to self variable and create func to set line and set line in self.source_code?      <<<<<<<<<<
+            # TODO: convert line to self variable and create func to set line and set line in self.source_code? <<<
 
         self.add_total_line_length_flag()
 
@@ -70,8 +72,8 @@ class Flags:
         comment = self.individual_line_length_comment
 
         if len(line) > self.individual_line_length_max and comment not in line:
-            if "#" in formatted_line:
-                if len(line.split("#")[0].rstrip()) < self.individual_line_length_max:
+            if self.comment_token in formatted_line:
+                if len(line.split(self.comment_token)[0].rstrip()) < self.individual_line_length_max:
                     return line
                 else:
                     comment += f" {self.line_length_flag_suffix}"
@@ -84,7 +86,7 @@ class Flags:
     def add_total_line_length_flag(self):
         self.update_line_total_comment()
 
-        full_comment = f"# {self.comment_prefix} {self.total_line_length_comment}"
+        full_comment = f"{self.comment_token} {self.comment_prefix} {self.total_line_length_comment}"
 
         if len(self.source_code) > self.total_line_length_max and full_comment not in self.source_code:
             self.source_code.insert(-1, "")
@@ -93,14 +95,21 @@ class Flags:
     def update_line_total_comment(self):
         index = -2
         line = self.source_code[index]
-        total_line_length_comment_base = self.total_line_length_comment.split(str(self.total_line_length_max))[0].strip()
+        total_line_length_comment_base = self.total_line_length_comment.split(
+                                         str(self.total_line_length_max))[0].strip()
 
         if total_line_length_comment_base in line:
-            existing_line_total_max = line.split(total_line_length_comment_base)[1].strip().split(" ")[0].strip()
+            existing_line_total_max = line.split(total_line_length_comment_base)[1]\
+                                          .strip().split(" ")[0].strip()
 
-            if not existing_line_total_max.startswith(str(self.total_line_length_max)) or len(self.source_code) < self.total_line_length_max:
-                line = line.replace(total_line_length_comment_base, "").replace(existing_line_total_max, "").replace(self.line_length_flag_suffix, "")
+            if not existing_line_total_max.startswith(str(self.total_line_length_max)) \
+                    or len(self.source_code) < self.total_line_length_max:
+
+                line = line.replace(total_line_length_comment_base, "")\
+                           .replace(existing_line_total_max, "")\
+                           .replace(self.line_length_flag_suffix, "")
+
                 self.source_code[index] = line
 
-        self.remove_empty_comments(index, line)
-        self.remove_extra_lines_at_end_of_file()
+        self.RemoveEmptyComments(index, line)
+        self.RemoveExtraLinesAtEndOfFile()

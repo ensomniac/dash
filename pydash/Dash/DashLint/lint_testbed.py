@@ -3,7 +3,7 @@
 
 
 
-#!/usr/bin/pytho
+#!/usr/bin/pyth
 #
 # Authentic 2022 Ryan Martin, ryan@ensomniac.com
 #             John Stet, stetandrew@gmail.com
@@ -24,7 +24,7 @@ from shutil import move
 from datetime import datetime
 
 from Dash.Utils import utils
-from Dash.Api import Core
+
 
 
 
@@ -34,11 +34,10 @@ from Dash.Api import Core
 
 
 class Test:
-    def __init__(self): pass
+    def __init__(self):
+        pass
 class Jobs:
     def __init__(self, as_module=False):
-        if not Core.Init(self, as_module, PackageContext.Get("altona")):
-            return
 
         self.open_jobs_root = os.path.join(self.dash_context.RootStore, "jobs", "open")
         self.closed_jobs_root = os.path.join(self.dash_context.RootStore, "jobs", "closed")
@@ -178,6 +177,7 @@ def test():  # this is another custom comment
     """
     this is a test docstring for test
     """
+
 
 
     tester1 = {"test1": 1, "test2": 2}

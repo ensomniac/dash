@@ -6,13 +6,13 @@ import sys
 
 
 class Copyright:
+    code_path: str
     source_code: list
     comment_token: str
     dash_context: dict
-    code_path: str
+    include_shebang: bool
     copyright_lines: list
     iter_limit_range: range
-    include_shebang: bool
 
     def __init__(self):
         self.shebang = "#!/usr/bin/python"

@@ -8,10 +8,10 @@ from typing import Callable
 
 
 class DocString:
-    GetFormattedCommentedLine: Callable
-    GetIndentSpaces: Callable
     source_code: list
     iter_limit_range: range
+    GetIndentSpaces: Callable
+    GetFormattedCommentedLine: Callable
 
     def __init__(self):
         # Any comment string variable names like these MUST end in '_comment'
@@ -150,7 +150,7 @@ class DocString:
                         final_comment += f"Incomplete: {', '.join(incomplete_docstring_components)}"
 
             if len(final_comment):
-                if comment_line.strip().startswith("#"):
+                if comment_line.strip().startswith(self.comment_token):
                     self.source_code[comment_index] = f"{formatted_line} {final_comment}"
 
                     if add_line_break_before_comment:

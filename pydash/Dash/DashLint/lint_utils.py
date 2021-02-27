@@ -10,7 +10,7 @@ class LintUtils:
         # These default attribute values are shared between PyLinter and
         # JSLinter before being set in each respective Linter
         self.group = False
-        self.exception = ""
+        self.ignore = ""
         self.code_path = ""
         self.source_code = []
         self.is_client = False
@@ -20,6 +20,7 @@ class LintUtils:
         self.copyright_lines = []
         self.line_break_quantity = 1
         self.starts_with_keyword = ""
+        self.line_end_keyword_strings = []
         self.comment_prefix = "(Dash Lint)"
         self.iter_limit_range = range(0, 101)
 
@@ -34,25 +35,26 @@ class LintUtils:
         file.close()
 
     def GetFormattedCommentedLine(self, line, without_original=False):
-        if "#" in line:
+        if self.comment_token in line:
             if self.comment_prefix in line:
                 formatted_line = f"{line},"
             else:
                 formatted_line = f"{line}, {self.comment_prefix}"
         else:
             if without_original:
-                formatted_line = f"# {self.comment_prefix}"
+                formatted_line = f"{self.comment_token} {self.comment_prefix}"
             else:
-                formatted_line = f"{line}  # {self.comment_prefix}"
+                formatted_line = f"{line}  {self.comment_token} {self.comment_prefix}"
 
         return formatted_line
 
     def GetAllCommentOptions(self):
         """
-        # Comment options throughout the module are compiled in to a list
-        # used when checking for invalid/outdated comments
+        Comment options throughout the module are compiled in to a
+        list used when checking for invalid/outdated comments
         :return: List of comment strings used for flags
         """
+
         comment_options = []
 
         for attr in self.__dict__:
@@ -71,6 +73,14 @@ class LintUtils:
                 break
 
         return spaces
+
+    def GatherToDos(self):
+        # TODO: Find all TODOs in the code and add it to TODO data.json file
+        # We'll need to create a data.json to store a dump of these
+        # items. The key could be the file name, and the value is
+        # the found comment, with line number at the end in parentheses
+
+        pass
 
 # Disabling below interface to be able to use this class within super() call
 # LintUtils = LintUtils()
