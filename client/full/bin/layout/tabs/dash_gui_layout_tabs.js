@@ -291,8 +291,11 @@ class DashGuiLayoutTabs {
             });
 
             content_data["button"].label.css({
-                "font-size": "85%",
+                // "font-size": "85%",
                 "padding-left": indent,
+                // "font-family": "aa_bold",
+                // "font-family": "aa_normal",
+                // "font-family": "aa_headline",
             });
 
         }

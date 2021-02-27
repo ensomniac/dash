@@ -242,7 +242,7 @@ function DashGuiButton(Label, Callback, Bind, color_set){
         this.file_uploader = null;
 
         (function(self){
-            self.file_uploader = new GuiButtonFileUploader(self, api, params, function(response){
+            self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function(response){
                 self.on_file_upload_response(response);
             }, function(){
 
