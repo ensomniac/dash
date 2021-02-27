@@ -10,7 +10,7 @@ class LintUtils:
         # These default attribute values are shared between PyLinter and
         # JSLinter before being set in each respective Linter
         self.group = False
-        self.exception = ""
+        self.ignore = ""
         self.code_path = ""
         self.source_code = []
         self.is_client = False
@@ -20,6 +20,7 @@ class LintUtils:
         self.copyright_lines = []
         self.line_break_quantity = 1
         self.starts_with_keyword = ""
+        self.line_end_keyword_strings = []
         self.comment_prefix = "(Dash Lint)"
         self.iter_limit_range = range(0, 101)
 
@@ -53,6 +54,7 @@ class LintUtils:
         list used when checking for invalid/outdated comments
         :return: List of comment strings used for flags
         """
+
         comment_options = []
 
         for attr in self.__dict__:

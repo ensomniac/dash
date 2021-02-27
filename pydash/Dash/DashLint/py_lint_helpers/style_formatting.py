@@ -11,6 +11,7 @@ class FormatStyle:
 
     def ConformListCreation(self):
         # TODO: Should reformat lists that don't match the below format
+        # Alternatively, just flag them instead if that's preferred
 
         # test_list = []
         # test_list.append("item 1")
@@ -20,6 +21,7 @@ class FormatStyle:
 
     def ConformDictCreation(self):
         # TODO: Should reformat dicts that don't match the below format
+        # Alternatively, just flag them instead if that's preferred
 
         # test_dict = {}
         # test_dict["key 1"] = "value 1"

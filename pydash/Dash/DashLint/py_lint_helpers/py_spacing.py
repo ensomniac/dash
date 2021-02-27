@@ -33,7 +33,7 @@ class PySpacing:
         self.CheckSpecificSpacing("from ", group=True)
 
     def CheckFunctionSpacing(self):
-        self.CheckSpecificSpacing("def ", exception="__init__")
+        self.CheckSpecificSpacing("def ", ignore="__init__")
 
     def CheckNameMainSpacing(self):
         self.CheckSpecificSpacing('if __name__ == "__main__"', 2)

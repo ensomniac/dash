@@ -5,6 +5,7 @@ import os
 import sys
 
 from .cleanup import Cleanup
+from .docstring import DocString
 from .copyright import Copyright
 from .lint_utils import LintUtils
 from .spacing import GlobalSpacing
@@ -15,20 +16,22 @@ from .py_lint_helpers.style_formatting import FormatStyle
 
 
 class PyLinter(
-    LintUtils,
-    Copyright,
-    PreCompile,
     Flags,
     Cleanup,
-    GlobalSpacing,
+    LintUtils,
+    Copyright,
+    DocString,
     PySpacing,
+    PreCompile,
     FormatStyle,
+    GlobalSpacing,
 ):
     def __init__(self):
         super().__init__()
 
         self.comment_token = "#"
         self.include_shebang = False
+        self.line_end_keyword_strings = ["'''", '"""']
         self.all_comment_options = self.GetAllCommentOptions()
 
     def Process(self, is_client, dash_context, code_path):
@@ -37,8 +40,8 @@ class PyLinter(
         self.run_core()
         self.run_extras()
 
-        # self.AddFlagComments()
-        # self.WriteCodeListToFile()  # Leave off til the end
+        self.AddFlagComments()
+        # self.WriteCodeListToFile()  # Pending Ryan's approval of example
 
         return self.CompileToCheckForErrors()
         # return self.CompileToCheckForErrors(print_linted_code_line_list=True)
@@ -56,16 +59,18 @@ class PyLinter(
             self.include_shebang = True
 
     def run_core(self):
-        # self.CleanupCommentsBeforeEval()
-        # self.RemoveExtraLinesAtStartOfFile()
-        # self.RemoveExtraLinesAtEndOfFile()
-        # self.RemoveBlankLinesAtStartOfBlocks()
-        # self.CheckClassSpacing()
-        # self.CheckFunctionSpacing()
-        # self.CheckNameMainSpacing()
+        self.CleanupCommentsBeforeEval()
+        self.RemoveExtraLinesAtStartOfFile()
+        self.RemoveExtraLinesAtEndOfFile()
+        self.RemoveBlankLinesAtStartOfBlocks()
+        self.RemoveExtraLinesBetweenStatements()
+        self.AddNeededLineBreaks()
+        self.CheckClassSpacing()
+        self.CheckFunctionSpacing()
+        self.CheckNameMainSpacing()
         self.ValidateShebang()
         self.ValidateCopyright()
-        # self.CheckImportSpacing()
+        self.CheckImportSpacing()
 
     def run_extras(self):
         # TODO: Write these extra functions
