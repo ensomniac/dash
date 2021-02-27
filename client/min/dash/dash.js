@@ -2558,13 +2558,12 @@ function DashPDFView(options){
         // this.upload_button.html.css({"margin-bottom": Dash.Size.Padding});
         this.params = {}
         this.params["f"] = "upload";
-        this.params["key"] = "upload";
-        this.params["token"] = localStorage.getItem("login_token");
+        this.params["key"] = this.content_key;
+        this.params["token"] = d.Local.Get("token");
         this.upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Artist",
             this.params
         );
-
         this.html.append(this.upload_button.html);
         this.html.append(this.pages_area);
     };
