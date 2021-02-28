@@ -86,7 +86,7 @@ class DashLocalStorage:
 
         return all_data
 
-    def GetData(self, obj_id, create=False):
+    def GetData(self, obj_id, create=False, additional_data={}):
         import json
 
         record_path = self.get_record_path(obj_id)
@@ -94,7 +94,7 @@ class DashLocalStorage:
         if not os.path.exists(record_path):
 
             if create:
-                return self.New({}, obj_id=obj_id)
+                return self.New(additional_data, obj_id=obj_id)
             else:
                 raise Exception("Expected record does not exist. x9483 Expected " + record_path + " / " + obj_id)
 

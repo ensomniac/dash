@@ -39,8 +39,12 @@ class ApiCore:
 
         self.set_dash_globals()
 
-    @property
+    # TODO: Deprecate this function in favor of @property > RandomID
     def GetRandomID(self):
+        return self.RandomID
+
+    @property
+    def RandomID(self):
         return Utils.get_random_id()
 
     @property
