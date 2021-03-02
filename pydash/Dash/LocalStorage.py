@@ -145,13 +145,17 @@ class DashLocalStorage:
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         import json
 
+        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
         key = key or Utils.Global.RequestData["key"]
         value = value or Utils.Global.RequestData.get("value")
+
+        if not obj_id:
+            raise Exception("Missing 'obj_id' error x8932")
 
         response = {}
         response["key"] = key
         response["value"] = value
-        response["obj_id"] = Utils.Global.RequestData["obj_id"]
+        response["obj_id"] = obj_id
         response["record_path"] = self.get_record_path(obj_id)
 
         data = self.GetData(obj_id, create=create)

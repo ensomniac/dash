@@ -147,6 +147,19 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             return;
         };
 
+        if (this.dash_obj_id == null) {
+
+            if (this.set_data_cb) {
+                this.set_data_cb(row_details["key"], new_value);
+            }
+            else {
+                console.log("Error: Property Box has no callback and no endpoint information!");
+            };
+
+            return;
+
+        };
+
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "set_property";

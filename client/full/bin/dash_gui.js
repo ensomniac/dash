@@ -9,6 +9,7 @@ function DashGui(){
     this.LoadDots = DashGuiLoadDots;
     this.InputRow = DashGuiInputRow;
     this.Header = DashGuiHeader;
+    this.Combo = DashGuiCombo;
 
     this.GetHTMLContext = function(optional_label_text, optional_style_css){
 

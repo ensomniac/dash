@@ -309,9 +309,18 @@ class SyncThread:
             print(response)
             return
 
-        if response["success"]:
+        if response.get("success"):
             print("\t\t\t(Upload) Success!")
 
             if not self.needs_git_push:
                 self.needs_git_push = True
                 print("\t\t\t * Don't forget to commit your changes to GitHub! *")
+        else:
+            print("== SERVER ERROR ==")
+            print(response)
+
+
+
+
+
+

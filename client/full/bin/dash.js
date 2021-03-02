@@ -134,8 +134,20 @@ function Dash(){
 
     };
 
+    this.extend_js = function(){
+        // TODO: Move this into utils
+
+        String.prototype.Title = function(){
+            var first = this.slice(0, 1);
+            var rest = this.slice(1, this.length);
+            return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
+        };
+
+    };
+
     this.Initialize = function(){
         // Called once when document ready
+        this.extend_js();
         this.setup_styles();
     };
 
