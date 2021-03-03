@@ -87,6 +87,55 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
+    this.AddCombo = function(label_text, combo_options, property_key){
+
+        var row = new d.Gui.InputRow(
+            label_text,
+            "",
+            "",
+            "",
+            function(row_input){console.log("Do nothing, dummy row")},
+            self
+        );
+
+        row.input.input.css("pointer-events", "none");
+        this.html.append(row.html);
+
+        var selected_key = this.get_data_cb()[property_key];
+
+        (function(self, row, selected_key, property_key, combo_options){
+
+            var callback = function(selected_option){
+                self.on_combo_updated(property_key, selected_option["id"]);
+            };
+
+            var combo = new Dash.Gui.Combo (
+                selected_key,     // Label
+                callback,         // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_key,     // Selected
+                null,             // Color set
+            );
+
+            row.input.html.append(combo.html);
+
+            combo.html.css({
+                "position": "absolute",
+                "left": Dash.Size.Padding,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+            });
+
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px",
+            });
+
+        })(this, row, selected_key, property_key, combo_options);
+
+    };
+
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
 
         if (this.get_data_cb) {
@@ -101,7 +150,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["label_text"] = label_text;
         row_details["default_value"] = default_value || null;
         row_details["combo_options"] = combo_options || null;
-        row_details["value"] = this.data[data_key] || default_value;
+        row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
 
         (function(self, row_details){
@@ -135,6 +184,27 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             self.html.append(row.html);
 
         })(this, row_details);
+
+    };
+
+    this.on_combo_updated = function(property_key, selected_option){
+
+        if (this.dash_obj_id) {
+            var params = {};
+            params["f"] = "set_property";
+            params["key"] = property_key;
+            params["value"] = selected_option;
+            params["obj_id"] = this.dash_obj_id;
+            Dash.Request(this, this.on_server_response, this.endpoint, params);
+            return;
+        };
+
+        if (this.set_data_cb) {
+            this.set_data_cb(property_key, selected_option);
+            return;
+        };
+
+        console.log("Error: Property Box has no callback and no endpoint information!");
 
     };
 

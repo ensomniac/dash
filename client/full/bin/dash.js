@@ -9,6 +9,7 @@ function Dash(){
 
     this.Context = DASH_CONTEXT;
     this.Local = new DashLocal();
+    this.Math = new DashMath();
     this.Color = new DashColor();
     this.Size = new DashSize();
     this.User = new DashUser();

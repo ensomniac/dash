@@ -201,7 +201,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.rows.css({
             "background": this.color_set.Background.Base,
             // "box-shadow": "0px 0px 1000px 100px " + "rgb(200, 200, 200)",
-            "box-shadow": "0px 0px 1000px 100px " + Dash.Color.Light.Button.Background.Selected,
+            "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
         });
 

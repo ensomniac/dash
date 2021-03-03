@@ -1686,6 +1686,7 @@ function Dash(){
     };
     this.Context = DASH_CONTEXT;
     this.Local = new DashLocal();
+    this.Math = new DashMath();
     this.Color = new DashColor();
     this.Size = new DashSize();
     this.User = new DashUser();
@@ -1907,6 +1908,16 @@ function DashView(){
     this.SiteSettings = DashAdminView;
     this.Admin = DashAdminView;
     this.PDF = DashPDFView;
+};
+
+
+function DashMath(){
+    this.InverseLerp = function(min, max, val){
+        return (val - min) / (max - min);
+    };
+    this.Lerp = function(a, b, t){
+        return a + Math.min(Math.max(t, 0), 1) * (b - a);
+    };
 };
 
 
@@ -3697,7 +3708,7 @@ function DashGuiLoadDots(size){
         if (this.t >= 1) {
             this.iteration += 1;
         };
-        this.t = this.inverse_lerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
+        this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
         if (this.t > 1) {this.t = 1};
         if (!this.is_active) {
             return;
@@ -3710,12 +3721,6 @@ function DashGuiLoadDots(size){
             this.dots[x].Update(this.t);
         };
     };
-    this.inverse_lerp = function(min, max, val){
-        return (val - min) / (max - min);
-    };
-    this.lerp = function(a, b, t){
-        return a + Math.min(Math.max(t, 0), 1) * (b - a);
-    };
     this.setup_styles();
     this.update(0);
 };
@@ -3726,14 +3731,14 @@ function LoadDot(dots){
     this.hold_t = 0.25;
     this.Update = function(cycle_t){
         var t = 0;
-        var cycle_offset = this.dots.lerp(0, 0.5, 1-this.dots.inverse_lerp(0, this.dots.dots.length, this.index));
+        var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
         cycle_t += cycle_offset;
         if (cycle_t > 1) {cycle_t = cycle_t-1;};
         if (cycle_t < this.hold_t) {
-            t = this.dots.inverse_lerp(0, this.hold_t, cycle_t);
+            t = Dash.Math.InverseLerp(0, this.hold_t, cycle_t);
         }
         else if (cycle_t > 1-this.hold_t) {
-            t = 1-this.dots.inverse_lerp(1-this.hold_t, 1, cycle_t);
+            t = 1-Dash.Math.InverseLerp(1-this.hold_t, 1, cycle_t);
         }
         else {
             t = 1;
@@ -4149,6 +4154,43 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             self.html.append(button.html);
         })(this, callback);
     };
+    this.AddCombo = function(label_text, combo_options, property_key){
+        var row = new d.Gui.InputRow(
+            label_text,
+            "",
+            "",
+            "",
+            function(row_input){console.log("Do nothing, dummy row")},
+            self
+        );
+        row.input.input.css("pointer-events", "none");
+        this.html.append(row.html);
+        var selected_key = this.get_data_cb()[property_key];
+        (function(self, row, selected_key, property_key, combo_options){
+            var callback = function(selected_option){
+                self.on_combo_updated(property_key, selected_option["id"]);
+            };
+            var combo = new Dash.Gui.Combo (
+                selected_key,     // Label
+                callback,         // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_key,     // Selected
+                null,             // Color set
+            );
+            row.input.html.append(combo.html);
+            combo.html.css({
+                "position": "absolute",
+                "left": Dash.Size.Padding,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+            });
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px",
+            });
+        })(this, row, selected_key, property_key, combo_options);
+    };
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
@@ -4161,7 +4203,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["label_text"] = label_text;
         row_details["default_value"] = default_value || null;
         row_details["combo_options"] = combo_options || null;
-        row_details["value"] = this.data[data_key] || default_value;
+        row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
         (function(self, row_details){
             var row = new d.Gui.InputRow(
@@ -4186,6 +4228,22 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             };
             self.html.append(row.html);
         })(this, row_details);
+    };
+    this.on_combo_updated = function(property_key, selected_option){
+        if (this.dash_obj_id) {
+            var params = {};
+            params["f"] = "set_property";
+            params["key"] = property_key;
+            params["value"] = selected_option;
+            params["obj_id"] = this.dash_obj_id;
+            Dash.Request(this, this.on_server_response, this.endpoint, params);
+            return;
+        };
+        if (this.set_data_cb) {
+            this.set_data_cb(property_key, selected_option);
+            return;
+        };
+        console.log("Error: Property Box has no callback and no endpoint information!");
     };
     this.on_row_updated = function(row_input, row_details){
         var new_value = row_input.Text();
@@ -4414,7 +4472,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.rows.css({
             "background": this.color_set.Background.Base,
             // "box-shadow": "0px 0px 1000px 100px " + "rgb(200, 200, 200)",
-            "box-shadow": "0px 0px 1000px 100px " + Dash.Color.Light.Button.Background.Selected,
+            "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
         });
         console.log("TODO: Make this.rows grab focus while active");

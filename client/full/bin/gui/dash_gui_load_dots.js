@@ -79,7 +79,7 @@ function DashGuiLoadDots(size){
             this.iteration += 1;
         };
 
-        this.t = this.inverse_lerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
+        this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
         if (this.t > 1) {this.t = 1};
 
         if (!this.is_active) {
@@ -95,14 +95,6 @@ function DashGuiLoadDots(size){
             this.dots[x].Update(this.t);
         };
 
-    };
-
-    this.inverse_lerp = function(min, max, val){
-        return (val - min) / (max - min);
-    };
-
-    this.lerp = function(a, b, t){
-        return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
 
     this.setup_styles();
@@ -121,16 +113,16 @@ function LoadDot(dots){
     this.Update = function(cycle_t){
 
         var t = 0;
-        var cycle_offset = this.dots.lerp(0, 0.5, 1-this.dots.inverse_lerp(0, this.dots.dots.length, this.index));
+        var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
 
         cycle_t += cycle_offset;
         if (cycle_t > 1) {cycle_t = cycle_t-1;};
 
         if (cycle_t < this.hold_t) {
-            t = this.dots.inverse_lerp(0, this.hold_t, cycle_t);
+            t = Dash.Math.InverseLerp(0, this.hold_t, cycle_t);
         }
         else if (cycle_t > 1-this.hold_t) {
-            t = 1-this.dots.inverse_lerp(1-this.hold_t, 1, cycle_t);
+            t = 1-Dash.Math.InverseLerp(1-this.hold_t, 1, cycle_t);
         }
         else {
             t = 1;
