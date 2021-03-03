@@ -78,6 +78,12 @@ function DashColor(){
 
         var text_header = "#95ae6c";
 
+        this.Random = function(cstr, lighten_rgb){
+            var tmp_colors = ["red", "blue", "green", "orange"];
+            return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
+            // return "#" + Math.floor(Math.random()*16777215).toString(16);
+        };
+
         this.Light = new DashColorSet(
             light_bg, // Background color
             "green", // Tab area background

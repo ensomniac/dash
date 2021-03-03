@@ -71,6 +71,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
         this.input.html.css({
             "flex-grow": 2,
+            "margin-right": Dash.Size.Padding,
         });
 
         this.label.css({
@@ -82,24 +83,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "font-size": "80%",
         });
 
-        // if (this.button) {
-
-        //     this.button.html.css({
-        //         "position": "absolute",
-        //         "right": 0,
-        //         "top": 0,
-        //         "margin": 0,
-        //         "width": d.Size.ColumnWidth*0.33,
-        //         "opacity": 0,
-        //     });
-
-        // };
-
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         };
-
-        this.setup_connections();
 
     };
 
@@ -191,9 +177,23 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     };
 
+    this.on_label_clicked = function(){
+
+        var active_text = this.input.Text();
+
+        if (active_text.slice(0, 8) == "https://") {
+            window.open(active_text, "_blank");
+        };
+
+    };
+
     this.setup_connections = function(){
 
         (function(self){
+
+            self.label.click(function(){
+                self.on_label_clicked();
+            });
 
             self.html.mouseenter(function(){
                 self.highlight.stop().animate({"opacity": 0.3}, 50);
@@ -390,5 +390,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.setup_styles();
+    this.setup_connections();
 
 };

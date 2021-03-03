@@ -1968,6 +1968,11 @@ function DashColor(){
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
         var text_header = "#95ae6c";
+        this.Random = function(cstr, lighten_rgb){
+            var tmp_colors = ["red", "blue", "green", "orange"];
+            return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
+            // return "#" + Math.floor(Math.random()*16777215).toString(16);
+        };
         this.Light = new DashColorSet(
             light_bg, // Background color
             "green", // Tab area background
@@ -3848,6 +3853,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
         this.input.html.css({
             "flex-grow": 2,
+            "margin-right": Dash.Size.Padding,
         });
         this.label.css({
             "height": Dash.Size.RowHeight,
@@ -3857,20 +3863,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "font-family": "sans_serif_bold",
             "font-size": "80%",
         });
-        // if (this.button) {
-        //     this.button.html.css({
-        //         "position": "absolute",
-        //         "right": 0,
-        //         "top": 0,
-        //         "margin": 0,
-        //         "width": d.Size.ColumnWidth*0.33,
-        //         "opacity": 0,
-        //     });
-        // };
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         };
-        this.setup_connections();
     };
     this.create_save_button = function(){
         this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
@@ -3938,8 +3933,17 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             this.on_submit();
         };
     };
+    this.on_label_clicked = function(){
+        var active_text = this.input.Text();
+        if (active_text.slice(0, 8) == "https://") {
+            window.open(active_text, "_blank");
+        };
+    };
     this.setup_connections = function(){
         (function(self){
+            self.label.click(function(){
+                self.on_label_clicked();
+            });
             self.html.mouseenter(function(){
                 self.highlight.stop().animate({"opacity": 0.3}, 50);
             });
@@ -4082,6 +4086,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         response_callback(this);
     };
     this.setup_styles();
+    this.setup_connections();
 };
 
 
@@ -4408,7 +4413,11 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.setup_label_list = function(){
         this.rows.css({
             "background": this.color_set.Background.Base,
+            // "box-shadow": "0px 0px 1000px 100px " + "rgb(200, 200, 200)",
+            "box-shadow": "0px 0px 1000px 100px " + Dash.Color.Light.Button.Background.Selected,
+            "opacity": 1,
         });
+        console.log("TODO: Make this.rows grab focus while active");
         this.rows.empty();
         this.row_buttons = [];
         for (var i in this.option_list) {
@@ -4491,7 +4500,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.hide = function(){
         this.expanded = false;
         this.rows.stop();
-        this.rows.animate({"height": 0}, 250, function(){$(this).css({"z-index": 10})});
+        this.rows.animate({"height": 0, "opacity": 0}, 250, function(){$(this).css({"z-index": 10})});
     };
     this.setup_connections = function(){
         (function(self){

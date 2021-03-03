@@ -118,6 +118,13 @@ class DashLocalStorage:
 
         return store_root
 
+    def get_record_count(self):
+        store_root = self.get_store_root()
+        if os.path.exists(store_root):
+            return len(os.listdir(store_root))
+        else:
+            return 0
+
     def get_record_path(self, obj_id):
 
         if self.store_path == "users":
@@ -205,6 +212,9 @@ def GetAll(dash_context, store_path):
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False):
     return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value, create=create)
+
+def GetRecordCount(dash_context, store_path):
+    return DashLocalStorage(dash_context, store_path).get_record_count()
 
 def GetRecordRoot(dash_context, store_path, obj_id=None):
     return DashLocalStorage(dash_context, store_path).get_store_root(obj_id)

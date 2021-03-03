@@ -200,7 +200,12 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         this.rows.css({
             "background": this.color_set.Background.Base,
+            // "box-shadow": "0px 0px 1000px 100px " + "rgb(200, 200, 200)",
+            "box-shadow": "0px 0px 1000px 100px " + Dash.Color.Light.Button.Background.Selected,
+            "opacity": 1,
         });
+
+        console.log("TODO: Make this.rows grab focus while active");
 
         this.rows.empty();
         this.row_buttons = [];
@@ -317,7 +322,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.hide = function(){
         this.expanded = false;
         this.rows.stop();
-        this.rows.animate({"height": 0}, 250, function(){$(this).css({"z-index": 10})});
+        this.rows.animate({"height": 0, "opacity": 0}, 250, function(){$(this).css({"z-index": 10})});
     };
 
     this.setup_connections = function(){
