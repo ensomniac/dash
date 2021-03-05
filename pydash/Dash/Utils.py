@@ -10,13 +10,6 @@ class __Utils:
     def __init__(self):
         pass
 
-    def GetContext(self, asset_path):
-        if self.IsServer:
-            return None
-        else:
-            # Make a request
-            return {}
-
     @property
     def IsServer(self):
         return os.path.exists("/var/www/vhosts/oapi.co/logs/")
@@ -42,7 +35,7 @@ class __Utils:
 
         return self._global
 
-    def get_random_id(self):
+    def get_random_id(self):  # Need to re-conform this name
         from random import randint
         from datetime import datetime
 
@@ -59,15 +52,26 @@ class __Utils:
             + str(randint(0, 99))
         )
 
-    def write_to_server(self, path, data):
+    def write_to_server(self, path, data):  # Need to re-conform this name
         from json import dumps
 
         open(path, "w").write(dumps(data))
 
-    def read_from_server(self, path):
+    def read_from_server(self, path):  # Need to re-conform this name
         from json import loads
 
         return loads(open(path, "r").read())
+
+    def OSListDirCleaned(self, path):
+        cleaned_list = []
+
+        for file in os.listdir(path):
+            if file.startswith(".") or file.endswith(".meta"):
+                continue
+
+            cleaned_list.append(file)
+
+        return cleaned_list
 
     @property
     def LocalPackages(self):
