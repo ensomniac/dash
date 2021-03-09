@@ -18,6 +18,10 @@ function Dash(){
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
 
+    this.Utils = new DashUtils();
+    this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
+    this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
+
     //window.history.pushState({"html":"html","pageTitle":"some page"},"title", "https://...");
 
 

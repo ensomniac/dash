@@ -63,6 +63,7 @@ class ApiCore:
 
         self.dash_global.RequestData = self._params
         self.dash_global.RequestUser = self.User
+        self.dash_global.Context = self.DashContext
 
     @property
     def User(self):
@@ -182,4 +183,5 @@ class ApiCore:
             error = {"error": traceback.format_exc(), "script_execution_failed": True}
             print("Content-type: text/plain\n")
             print(str(json.dumps(error)))
+            sys.exit()
 

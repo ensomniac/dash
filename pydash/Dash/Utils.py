@@ -33,6 +33,9 @@ class __Utils:
         if not hasattr(self._global, "RequestUser"):
             self._global.RequestUser = None
 
+        if not hasattr(self._global, "Context"):
+            self._global.Context = None
+
         return self._global
 
     def get_random_id(self):  # Need to re-conform this name

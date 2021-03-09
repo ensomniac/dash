@@ -10,6 +10,7 @@ function DashGui(){
     this.InputRow = DashGuiInputRow;
     this.Header = DashGuiHeader;
     this.Combo = DashGuiCombo;
+    this.PaneSlider = DashGuiPaneSlider;
 
     this.GetHTMLContext = function(optional_label_text, optional_style_css){
 
