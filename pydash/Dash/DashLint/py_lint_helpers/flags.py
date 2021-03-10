@@ -45,12 +45,19 @@ class Flags:
             line = self.add_path_flags(index, line, self.GetFormattedCommentedLine(line))
             line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
-            # This should always be the last line in this for loop
+            # This should always be the last line in this loop
             self.AddDocStringFlags(index, line)
 
-            # TODO: convert line to self variable and create func to set line and set line in self.source_code? <<<
+            # TODO: (maybe) Convert line to self variable and create func to set line and set line in self.source_code
 
         self.add_total_line_length_flag()
+
+    def FlagUnusedImports(self):
+        # TODO: Search entire script for each import to make sure it's used, flag unused
+        #  Ignore 'os' and 'sys'
+        #  This may or may not make sense to be called as part of the 'AddFlagComments' section above
+
+        pass
 
     def add_flags_by_keyword(self, index, line, formatted_line, comment, keyword):
         if keyword in line and comment not in line:

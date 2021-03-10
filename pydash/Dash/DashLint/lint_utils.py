@@ -76,9 +76,23 @@ class LintUtils:
 
     def GatherToDos(self):
         # TODO: Find all TODOs in the code and add it to TODO data.json file
-        # We'll need to create a data.json to store a dump of these
-        # items. The key could be the file name, and the value is
-        # the found comment, with line number at the end in parentheses
+        #  We'll need to create a data.json to store a dump of these items
+        #  The key could be the file name, value the found comment, with line number at the end in parentheses
+
+        pass
+
+    def CheckForAlreadyUsedAssetPaths(self):
+        # TODO: Find any instances of 'asset_path = ' in a line and validate that value
+        #  It can be compared against a full list of in-use asset paths (of which we may need a new function to get)
+
+        pass
+
+    def RebuildHtAccess(self):
+        # TODO: Look for a comment that matches a specific format, like '# Site = htaccess', where Site is the filename
+        #  Only check for this when linting cgi-bin files
+        #  Unclear about the rest:
+        #  When found, rebuild the htaccess file, adding the desired line (Site)?
+        #  After rebuilding, remove the comment so it doesn't rebuild it every time?
 
         pass
 

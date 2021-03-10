@@ -2,20 +2,13 @@
 #                Andrew Stet, stetandrew@gmail.com
 
 """
-Stub for a module to run whenever a python (or .js?) file is saved
+Stub for a module to run whenever a python or javascript file is saved
 
-Notes / Thoughts for Python:
+Unresolved Notes / Thoughts for Python:
 
-+ Modify python headers with authors / timestamp
-+ Compile the code to check for syntax issues
-+ Put a comment next to imports that aren't being used
 + Time the compilation / read time for each file and flag time consuming imports
-+ How about a quick check to make sure no asset_paths leak from one package to another?
 + Create a format for comment / description (like this) and force it to exist - for docs?
 + Consider a formatting ability to specify that the name of a function had changed so that we can auto migrate other code
-+ Possible auto formatting idea: make sure that @propertys are grouped together
-+ Search the code for instances of TODOs - where we can add that in comments to flag important things
-+ Look in cgi-bin files for an htaccess key value pair and auto generate .htaccess mapping
 + For js lint: Find print( and change to console.log(!
 """
 
@@ -27,7 +20,7 @@ from .py_lint    import PyLinter
 from .lint_utils import LintUtils
 
 
-class DashLint:
+class __DashLint:
     def __init__(self):
         pass
 
@@ -43,4 +36,4 @@ class DashLint:
         return lint_succeeded, msg
 
 
-DashLint = DashLint()
+DashLint = __DashLint()

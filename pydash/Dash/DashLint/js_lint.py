@@ -8,7 +8,7 @@ from .lint_utils import LintUtils
 from .copyright import Copyright
 
 
-class JSLinter(LintUtils, Copyright):
+class __JSLinter(LintUtils, Copyright):
     def __init__(self):
         super().__init__()
 
@@ -35,4 +35,4 @@ class JSLinter(LintUtils, Copyright):
             return False, e
 
 
-JSLinter = JSLinter()
+JSLinter = __JSLinter()

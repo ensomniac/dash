@@ -315,12 +315,9 @@ class SyncThread:
             if not self.needs_git_push:
                 self.needs_git_push = True
                 print("\t\t\t * Don't forget to commit your changes to GitHub! *")
+
+            print()
+
         else:
             print("== SERVER ERROR ==")
             print(response)
-
-
-
-
-
-
