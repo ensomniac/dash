@@ -29,15 +29,9 @@ function DashUtils(){
 
         var still_active = true;
 
-        console.log(timer);
-
         if (timer.iterations && timer.iterations >= 1) {
 
             if (timer.source.html && !timer.source.html.is(":visible")) {
-                // var html_visible = timer.source.html.is(":visible");
-                console.log(timer.source);
-                console.log(timer.source.html);
-                console.log("html is no longer visible");
                 still_active = false;
             };
 
