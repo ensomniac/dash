@@ -58,10 +58,12 @@ class SyncThread:
         ]
 
         for abspath in all_files:
+
             if "/.git/" in abspath or ".pyc" in abspath or "/.D" in abspath:
                 continue
 
-            files[abspath.split("/")[-1]] = {"abspath": abspath}
+            # files[abspath.split("/")[-1]] = {"abspath": abspath}
+            files[abspath] = {"abspath": abspath}
 
         if len(list(self.files.keys())) == len(list(files.keys())):
             # The number of files is the same, nothing to do
@@ -225,9 +227,11 @@ class SyncThread:
 
     def check_timestamps(self):
         for filename in self.files:
+
             last_timestamp = self.files[filename]["last_timestamp"]
 
             if not os.path.exists(self.files[filename]["abspath"]):
+                print("\tRE-INDEX...")
                 self.index_all()
                 break
 

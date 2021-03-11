@@ -1,7 +1,10 @@
 function DashGuiLayout(){
 
     this.UserProfile = DashGuiLayoutUserProfile;
+
     this.List = DashGuiList;
+    this.List.ColumnConfig = DashGuiListColumnConfig;
+
     this.PaneSlider = DashGuiPaneSlider;
 
     this.Tabs = {};

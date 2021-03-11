@@ -95,6 +95,7 @@ class DashSync:
         ClientCompiler.SetPackages(self.packages)
         ClientCompiler.CompileAndDistribute()
 
+
 if __name__ == "__main__":
     # from Dash import PackageContext as Context
     # dash_context = Context.Get("authentic")
