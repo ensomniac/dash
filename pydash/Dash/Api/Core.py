@@ -133,7 +133,7 @@ class ApiCore:
                 data[key] = mini_field_storage.value
             except:
                 mini_field_storage = self._fs[key][0]
-                raise Exception("? -> key: " + str(mini_field_storage))
+                # raise Exception("? -> key: " + str(mini_field_storage))
 
         return data
 
