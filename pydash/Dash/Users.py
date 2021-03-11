@@ -275,6 +275,7 @@ class Users:
         open(token_path, "w").write(json.dumps(session_data))
 
         return_data = {"token": token, "user": self.get_user_info(email)}
+        return_data["init"] = self.get_user_init(email)
 
         return return_data
 
@@ -346,7 +347,43 @@ class Users:
 
         return_data = {"valid_login": True, "user": self.get_user_info(email)}
 
+        if self.data.get("init"):
+            # Return additional information for this user
+            return_data["init"] = self.get_user_init(email)
+
         return return_data
+
+    def get_user_init(self, email):
+        if type(email) == bytes: email = email.decode()
+
+        init = {}
+        init["team"] = self.get_team()
+        init["email"] = email
+
+        return init
+
+    def get_team(self):
+        # TODO - get rid of this code - it's been moved to Admin.py
+
+        team = {}
+
+        users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
+
+        for user_email in os.listdir(users_root):
+            user_path = os.path.join(users_root, user_email, "usr.data")
+            user_data = LocalStorage.Read(user_path)
+
+            if user_data.get("first_name") and user_data.get("last_name"):
+                user_data["display_name"] = user_data["first_name"] + " "
+                user_data["display_name"] += user_data["last_name"]
+            elif user_data.get("first_name"):
+                user_data["display_name"] = user_data["first_name"]
+            else:
+                user_data["display_name"] = user_email
+
+            team[user_email] = user_data
+
+        return team
 
     def get_token_data(self, token):
         import base64

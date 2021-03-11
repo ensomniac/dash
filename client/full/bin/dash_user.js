@@ -5,6 +5,7 @@ function DashUser(){
     this.__auth_not_authenticated_cb = null;
 
     this.Data = null;
+    this.Init = null;
 
     this.Authenticate = function(bind, on_user_authenticated, on_user_not_authenticated){
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
@@ -19,6 +20,7 @@ function DashUser(){
             var params = {};
             params["f"] = "validate";
             params["token"] = token;
+            params["init"] = true;
 
             d.Request(this, this.on_auth_response, "Users", params);
 
@@ -33,12 +35,14 @@ function DashUser(){
 
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
+            this.Init = server_response["init"];
             d.Local.Set("email", email);
             d.Local.Set("token", server_response["token"]);
             d.Local.Set("user_json", JSON.stringify(server_response["user"]));
         }
         else {
             this.Data = null;
+            this.Init = null;
             d.Local.Set("email", "");
             d.Local.Set("token", "");
             d.Local.Set("user_json", "");
