@@ -11,7 +11,11 @@ import traceback
 import Dash
 from Dash.Utils import Utils
 
+
 class ApiCore:
+    _dash_context: dict
+    _user: str
+
     def __init__(self, execute_as_module, asset_path):
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
@@ -129,6 +133,10 @@ class ApiCore:
 
             mini_field_storage = self._fs[key]
 
+            # This catches Github Webhook param issues
+            if type(mini_field_storage) == list:
+                mini_field_storage = mini_field_storage[0]
+
             try:
                 data[key] = mini_field_storage.value
             except:
@@ -171,10 +179,10 @@ class ApiCore:
             self.SetResponse({"error": "There was a scripting problem: " + str(tb)})
 
     def Execute(uninstantiated_class_ref):
-        '''
-        This function exists as a wraper to cgi scripts using ApiCore
+        """
+        This function exists as a wrapper to cgi scripts using ApiCore
         and helps to catch common errors more flexibly
-        '''
+        """
 
         try:
             uninstantiated_class_ref()
@@ -184,4 +192,3 @@ class ApiCore:
             print("Content-type: text/plain\n")
             print(str(json.dumps(error)))
             sys.exit()
-
