@@ -10,12 +10,14 @@ from .copyright import Copyright
 from .lint_utils import LintUtils
 from .spacing import GlobalSpacing
 from .py_lint_helpers.flags import Flags
+from .py_lint_helpers.documentation import PyDoc
 from .py_lint_helpers.py_spacing import PySpacing
 from .py_lint_helpers.pre_compile import PreCompile
 from .py_lint_helpers.style_formatting import FormatStyle
 
 
-class PyLinter(
+class __PyLinter(
+    PyDoc,
     Flags,
     Cleanup,
     LintUtils,
@@ -45,7 +47,7 @@ class PyLinter(
 
         return self.CompileToCheckForErrors()
         # return self.CompileToCheckForErrors(print_linted_code_line_list=True)
-        # return self.CompileToCheckForErrors(debug_text=self.dash_context")
+        # return self.CompileToCheckForErrors(debug_text=self.dash_context)
 
     def update_init_attrs(self, is_client, dash_context, code_path):
         self.is_client = is_client
@@ -73,13 +75,16 @@ class PyLinter(
         self.CheckImportSpacing()
 
     def run_extras(self):
-        # TODO: Write these extra functions
+        # TODO: Write these extra functions, exists currently as interface only
         self.GatherToDos()
+        self.DropOneLiners()
+        self.RebuildHtAccess()
         self.CheckForOsAndSys()
-        self.DropOneLineIfs()
+        self.FlagUnusedImports()
         self.ConformDictCreation()
         self.ConformListCreation()
         self.FormatBlockSpacingIntoColumns()
+        self.CheckForAlreadyUsedAssetPaths()
 
 
-PyLinter = PyLinter()
+PyLinter = __PyLinter()
