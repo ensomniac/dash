@@ -76,6 +76,31 @@ class __Utils:
 
         return cleaned_list
 
+    def SendEmail(self, subject, notify_email_list, msg=None):
+        # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
+        if not os.path.exists("/var/www/vhosts/oapi.co/"):
+            return {"error": "The Mail Module can currently only run directly from the server, this is temporary."}
+
+        import Mail
+
+        if not msg:
+            msg = subject
+
+        sender = "ryan@ensomniac.com"
+
+        if sender not in notify_email_list:
+            notify_email_list.append(sender)
+
+        message = Mail.create(sender)
+        message.set_sender_name(f"GSheet Jobs CRON <{sender}>")
+
+        for email_address in notify_email_list:
+            message.add_recipient(f"{email_address.split('@')[0].strip().title()} <{email_address}>")
+
+        message.set_subject(subject)
+        message.set_body_html(msg)
+        message.send()
+
     @property
     def LocalPackages(self):
         # Andrew - I'm going to be moving these config objects
