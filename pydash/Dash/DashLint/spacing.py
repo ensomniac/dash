@@ -141,7 +141,9 @@ class GlobalSpacing:
                     finished = True
                     break
 
-                if line.strip().startswith("#"):
+                if line.strip().startswith("#") \
+                        and not self.source_code[index - 1].strip().startswith("#") \
+                        and not self.source_code[index + 1].strip().startswith("#"):
                     if two_strip.startswith("def ") or two_strip.startswith("class "):
                         self.source_code.pop(index + 1)
                         break
@@ -171,9 +173,7 @@ class GlobalSpacing:
                     prev1_line_strip = self.source_code[index - 1].strip()
                     prev2_line_strip = self.source_code[index - 2].strip()
 
-                    if (next_line_strip.startswith("class ")
-                        or (next_line_strip.startswith("def ") and self.GetIndentSpaces(line) == 0)) \
-                            and (len(prev1_line_strip) or len(prev2_line_strip)):
+                    if (next_line_strip.startswith("class ") or (next_line_strip.startswith("def ") and self.GetIndentSpaces(line) == 0)) and (len(prev1_line_strip) or len(prev2_line_strip)):
                         self.source_code.insert(index, "")
                         break
 
