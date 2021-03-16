@@ -31,6 +31,31 @@ class PyDoc:
         # Any comment string variable names like these MUST end in '_comment'
         self.incomplete_docstring_comment = "TODO: Finish Docstring"
 
+    # noinspection PyUnusedLocal
+    def DocstringExample(self, param1, param2=0):
+        """
+        | This is an ideal docstring example for a function.
+        | All guidelines mentioned are illustrated in the code of this docstring example.
+        |
+        | ------ Description Guidelines ------
+        | - All docstrings should include a description, of one line or more, first.
+        | - If desired, description lines can be separated by line breaks by adding "|" followed by a space,
+          to the front of the description line, preceding any of the main description line's text.
+        | - The main description (this block) should be separated from the params etc by a single line break.
+        | - Descriptions should be followed by params and return descriptions, if applicable.
+        | - Return descriptions can be an explainer, or simply state the variable being returned.
+        |
+        | ------ Declaration Guidelines ------
+        | - In addition to a param description, you must also specify the param type.
+        | - Lastly, if applicable, the default param value must also be included at the end of the param description.
+
+        :param str param1: test string, can be empty, doesn't do anything
+        :param int param2: test int, can be nothing, doesn't do anything (default=0)
+        :return: Example1 - docstring for this function | Example2 - self.DocstringExample.__doc__
+        """
+
+        return self.DocstringExample.__doc__
+
     # TODO: Break this function up
     def AddDocstringsAndFlags(self, index, line):
         index_buffer = 1
@@ -48,6 +73,12 @@ class PyDoc:
         generated_docstring_lines = []
         missing_docstring_components = []
         incomplete_docstring_components = []
+
+        if stripped.startswith("'''") or stripped.endswith("'''"):
+            line = line.replace("'''", '"""')
+            stripped = line.strip()
+            self.source_code[index] = line
+
         endswith = stripped.endswith("'''") or stripped.endswith('"""')
         startswith = stripped.startswith("'''") or stripped.startswith('"""')
 
@@ -67,6 +98,7 @@ class PyDoc:
             return line
 
         prev_stripped = previous_line.strip()
+        com_stripped = comment_line.strip()
 
         if prev_stripped.startswith("def "):
             is_function = True
@@ -76,11 +108,7 @@ class PyDoc:
         if not is_function and not is_class:
             return line
 
-        # print(f"LINE: {line}")
-        # print(f"PREVIOUS LINE: {previous_line}")
-        # print(f"COMMENT LINE: {comment_line}")
-
-        if len(comment_line.strip()) and comment_line.startswith(self.comment_token):
+        if len(com_stripped) and com_stripped.startswith(self.comment_token):
             formatted_line = self.GetFormattedCommentedLine(comment_line)
         else:
             formatted_line = self.GetFormattedCommentedLine("", without_original=True)
@@ -117,8 +145,6 @@ class PyDoc:
                                      for bp in self.current_block_params if "=" in bp}
         self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
                                      for p in self.current_block_params if len(p)]
-
-        if "class Test:" in previous_line and "def __init__(self):" in line: print(f"\nCURRENT BLOCK PARAMS: {self.current_block_params}")
 
         # Get docstring end index
         if startswith and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')) \
@@ -176,18 +202,15 @@ class PyDoc:
 
         # Determine missing/incomplete components
         if len(generated_docstring_lines):
-            iterate_lines = generated_docstring_lines
+            iterate_docstring_lines = generated_docstring_lines
         else:
-            iterate_lines = self.source_code[index:(docstring_end_index + index_buffer)]
+            iterate_docstring_lines = self.source_code[index:(docstring_end_index + index_buffer)]
 
-        # print(f"\nEXISTING DOCSTRING: {iterate_lines}")
-
-        for docstring_line in iterate_lines:
+        for docstring_line in iterate_docstring_lines:
             cleaned_line = docstring_line.replace("'''", "").replace('"""', "")\
                 .replace(self.doc_auto_gen_tag, "").strip()
 
             if len(cleaned_line) and not cleaned_line.startswith(":"):
-                # print(f"\tCLEANED: {cleaned_line}")
                 includes_description = True
 
             if len(self.block_return) and ":return:" in cleaned_line:
@@ -200,8 +223,13 @@ class PyDoc:
                 for param in self.current_block_params:
                     if f"{param}:" in cleaned_line and param not in included_params:
                         included_params.append(param)
+                        split = cleaned_line.split(f"{param}:")
 
-                        if not len(cleaned_line.split(f"{param}:")[1].strip()):
+                        # Param missing description or missing type declaration
+                        if not len(split[1].strip()) \
+                                or ("(default=" in split[1].strip()
+                                    and not len(split[1].split("(default=")[0].strip())) \
+                                or not len(split[0].split(":param")[1].strip()):
                             incomplete_docstring_components.append(param)
 
         for param in self.current_block_params:
@@ -251,6 +279,12 @@ class PyDoc:
                                 and component not in incomplete_docstring_components:
                             incomplete_docstring_components.append(component)
 
+        # Move description and return strings to front of final comment lists
+        for component_list in [missing_docstring_components, incomplete_docstring_components]:
+            for component_str in ["return", "description"]:
+                if component_str in component_list:
+                    component_list.insert(0, component_list.pop(component_list.index(component_str)))
+
         # Compose final comment
         if len(missing_docstring_components) or len(incomplete_docstring_components):
             final_comment = f"{self.incomplete_docstring_comment} - "
@@ -270,25 +304,33 @@ class PyDoc:
 
                 final_comment += f": {', '.join(incomplete_docstring_components)}"
 
-        # TODO: Add another portion to the incomplete docstring checks that makes sure params have type
-        #  declarations and default value tags if they have default values,
-        #  and that each line like param and return and var have a description
-        #  (accounting for extra text such as the default value declaration and not counting that as part of the description)
-        #  and that there's a line break after the main description
+        # TODO: add missing return or params to existing docstrings
 
-        # TODO: (Maybe) replace any instance of ''' docstring syntax with """ ?
+        # Add missing default value tags
+        if len(self.params_with_defaults) and iterate_docstring_lines != generated_docstring_lines:
+            for source_index, source_line in enumerate(self.source_code):
+                if source_line in iterate_docstring_lines \
+                        and source_line.strip().startswith(":param") \
+                        and "(default=" not in source_line:
 
-        # TODO: (Maybe) add missing return or params to existing docstrings if possible?
+                    param = source_line.strip().replace(":param", "").split(":")[0].split(" ")[-1].strip()
+
+                    if param in self.params_with_defaults and self.params_with_defaults.get(param):
+                        default_tag = f" (default={self.params_with_defaults[param]})"
+
+                        self.source_code[source_index] += default_tag
+                        iterate_docstring_lines[iterate_docstring_lines.index(source_line)] += default_tag
 
         # Insert newly synthesized lines
         if len(generated_docstring_lines):
             for docstring_line in generated_docstring_lines:
                 self.source_code.insert(index, docstring_line)
 
+            docstring_end_index = index + len(generated_docstring_lines)
+
         # Insert final comment
         if len(final_comment):
-            # print(f"FINAL: {previous_line}")
-            if comment_line.strip().startswith(self.comment_token):
+            if com_stripped.startswith(self.comment_token):
                 self.source_code[comment_index] = f"{formatted_line} {final_comment}"
 
             else:
@@ -296,18 +338,31 @@ class PyDoc:
                                         f"{' ' * self.GetIndentSpaces(previous_line)}"
                                         f"{formatted_line.lstrip()} {final_comment}")
 
-        # Add line break after existing single-line docstring if missing
-        if docstring_end_index == index and len(stripped) > 6 and startswith and endswith:
-            if len(self.source_code[index + 1].strip()):
+        # Insert line break after existing single-line docstring, if missing
+        if docstring_end_index == index:
+            if len(stripped) > 6 and startswith and endswith and len(self.source_code[index + 1].strip()):
                 self.source_code.insert(index + 1, "")
+
+        # Insert line break after existing multi-line docstring description, if missing
+        else:
+            for source_index, source_line in enumerate(self.source_code):
+                source_prev = self.source_code[source_index - 1].replace("'''", "").replace('"""', "").strip()
+
+                if source_line in iterate_docstring_lines and source_line.strip().startswith(":param") \
+                        and len(source_prev) and not source_prev.startswith(":"):
+
+                    self.source_code.insert(source_index, "")
+                    docstring_end_index += 1
+                    break
 
         return line
 
-    def synthesize_docstring(self):
-        # """
-        # Creates a list of newly synthesized docstring lines, in order.
-        # :return: list of docstring lines
-        # """
+    def synthesize_docstring(self, test=None):
+        """
+        Creates a list of newly synthesized docstring lines, in order.
+        :param str test: testing
+        :return: list of synthesized docstring lines
+        """
 
         self.synthesized_docstring = []
         self.synthesized_docstring.append('"""')
@@ -386,17 +441,3 @@ class PyDoc:
                 param_type = "bool"
 
         return param_type
-
-    def docstring_example(self, param1, param2=None):
-        """
-        This is an ideal function docstring example.
-        All docstrings should include a description first, like this,
-        followed by params and return descriptions, if applicable.
-        For each param, you must also specify the type, as seen below.
-
-        :param str param1: any test variable
-        :param int param2: any test variable (Default value = None)
-        :return: Tuple of param1, param2    <- return is not applicable in this example function
-        """
-
-        pass

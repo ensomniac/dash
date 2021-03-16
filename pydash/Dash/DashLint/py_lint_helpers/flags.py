@@ -20,8 +20,8 @@ class Flags:
         self.line_length_flag_suffix = "(excluding comments)"
 
         # These are a bit arbitrary/undecided for now
-        self.total_line_length_max = 500
-        self.individual_line_length_max = 100
+        self.total_line_length_max = 600
+        self.individual_line_length_max = 120
 
         # Any comment string variable names like these MUST end in '_comment'
         self.super_comment = "TODO: Convert to super()"
