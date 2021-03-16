@@ -11,7 +11,7 @@ class Flags:
     source_code: list
     comment_token: str
     comment_prefix: str
-    AddDocStringFlags: Callable
+    AddDocstringsAndFlags: Callable
     RemoveEmptyComments: Callable
     GetFormattedCommentedLine: Callable
     RemoveExtraLinesAtEndOfFile: Callable
@@ -47,7 +47,7 @@ class Flags:
                 line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
             # This should always be the last line in this loop
-            self.AddDocStringFlags(index, line)
+            self.AddDocstringsAndFlags(index, line)
 
             # TODO: (maybe) Convert 'line' to 'self' variable and create func to set line and set line in self.source_code
 

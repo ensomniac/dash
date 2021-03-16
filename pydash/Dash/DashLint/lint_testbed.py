@@ -3,7 +3,7 @@
 
 
 
-#!/usr/bin/pyth
+#!/usr/bin/pyth  
 #
 # Authentic 2022 Ryan Martin, ryan@ensomniac.com
 #             John Stet, stetandrew@gmail.com
