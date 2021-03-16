@@ -5,7 +5,6 @@ import os
 import sys
 
 from .cleanup import Cleanup
-from .docstring import DocString
 from .copyright import Copyright
 from .lint_utils import LintUtils
 from .spacing import GlobalSpacing
@@ -22,7 +21,6 @@ class __PyLinter(
     Cleanup,
     LintUtils,
     Copyright,
-    DocString,
     PySpacing,
     PreCompile,
     FormatStyle,
@@ -45,8 +43,8 @@ class __PyLinter(
         self.AddFlagComments()
         # self.WriteCodeListToFile()  # Pending Ryan's approval of example
 
-        return self.CompileToCheckForErrors()
-        # return self.CompileToCheckForErrors(print_linted_code_line_list=True)
+        # return self.CompileToCheckForErrors()
+        return self.CompileToCheckForErrors(print_linted_code_line_list=True)
         # return self.CompileToCheckForErrors(debug_text=self.dash_context)
 
     def update_init_attrs(self, is_client, dash_context, code_path):

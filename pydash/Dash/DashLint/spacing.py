@@ -48,6 +48,8 @@ class GlobalSpacing:
 
             finished = self.fix_specific_spacing()
 
+        self.fix_comments_separated_from_top_of_blocks()
+
     def AddNeededLineBreaks(self):
         finished = False
 
@@ -120,6 +122,29 @@ class GlobalSpacing:
 
                 if index == len(self.source_code) - 1:
                     finished = True
+
+    def fix_comments_separated_from_top_of_blocks(self):
+        finished = False
+
+        for _ in self.iter_limit_range:
+            if finished:
+                break
+
+            for index, line in enumerate(self.source_code):
+                if index == len(self.source_code) - 1:
+                    finished = True
+                    break
+
+                try:
+                    strip = self.source_code[index + 2].strip()
+                except:
+                    finished = True
+                    break
+
+                if line.strip().startswith("#") \
+                        and (strip.startswith("def ") or strip.startswith("class ")):
+                    self.source_code.pop(index + 1)
+                    break
 
     def fix_specific_spacing(self):
         last_index_before_line_breaks = 0
