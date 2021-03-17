@@ -279,6 +279,18 @@ class Users:
 
         return return_data
 
+    def GetUserDataPath(self, user_email):
+        email = email.lower().strip()
+
+        if type(email) == bytes:
+            email = email.decode()
+
+        return LocalStorage.GetRecordPath(
+            dash_context=self.dash_context,
+            store_path="users",
+            obj_id=email,
+        )
+
     def GetUserData(self, user_email):
         # Andrew - I wanted to expose this function externally and
         # changed the name I didn't have time to see if it would
@@ -292,11 +304,7 @@ class Users:
         if type(email) == bytes:
             email = email.decode()
 
-        user_data_path = LocalStorage.GetRecordPath(
-            dash_context=self.dash_context,
-            store_path="users",
-            obj_id=email,
-        )
+        user_data_path = self.GetUserDataPath(email)
 
         # raise Exception(">> " + user_data_path)
 
@@ -418,6 +426,13 @@ class Users:
         return None, None
 
 
+def GetUserDataPath(user_email_to_get, admin_user_data=None):
+    from Dash.Utils import Utils as DashUtils
+    ctx = DashUtils.Global.Context
+    admin_user_data = admin_user_data or DashUtils.Global.RequestUser
+    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
+    return users.GetUserDataPath(user_email_to_get)
+
 def Get(user_email_to_get, admin_user_data=None):
     # This function allows an admin to quickly pull a user
     # But, for the moment, everyone is an admin...
@@ -426,12 +441,6 @@ def Get(user_email_to_get, admin_user_data=None):
     ctx = DashUtils.Global.Context
     admin_user_data = admin_user_data or DashUtils.Global.RequestUser
     users = Users(DashUtils.Global.RequestData, dash_context=ctx)
-    user = users.GetUserData(user_email_to_get)
-
-    # users = Users(self.Params, dash_context=self.DashContext)
-
-    # self.dash_context = dash_context or Context.Get(params["asset_path"])
-    # asset_path =
-    return user
+    return users.GetUserData(user_email_to_get)
 
 
