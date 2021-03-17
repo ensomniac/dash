@@ -56,21 +56,20 @@ class PyDoc:
 
         return self.DocstringExample.__doc__
 
-    # TODO: Break this function up
     def AddDocstringsAndFlags(self, index, line):
-        index_buffer = 1
+        # index_buffer = 1
+        is_class = False
         final_comment = ""
+        missing_params = []
+        is_function = False
+        included_params = []
         stripped = line.strip()
+        includes_return = False
         comment_index = index - 2
         previous_index = index - 1
-        docstring_end_index = index
-        is_class = False
-        is_function = False
-        includes_return = False
+        # docstring_end_index = index
         includes_description = False
-        missing_params = []
-        included_params = []
-        generated_docstring_lines = []
+        # generated_docstring_lines = []
         missing_docstring_components = []
         incomplete_docstring_components = []
 
@@ -83,11 +82,12 @@ class PyDoc:
         endswith = stripped.endswith("'''") or stripped.endswith('"""')
         startswith = stripped.startswith("'''") or stripped.startswith('"""')
 
-        self.block_return = ""
-        self.current_block_params = []
-        self.params_with_defaults = {}
-        self.current_docstring_index = index
-        self.current_block_end_index = index
+        self.reset_docstring_attrs(index)
+        # self.block_return = ""
+        # self.current_block_params = []
+        # self.params_with_defaults = {}
+        # self.current_docstring_index = index
+        # self.current_block_end_index = index
 
         try:
             previous_line = self.source_code[previous_index]
@@ -115,91 +115,99 @@ class PyDoc:
             formatted_line = self.GetFormattedCommentedLine("", without_original=True)
 
         # Get block params
-        if is_function:
-            self.current_block_params = prev_stripped.split("(")[1].split(")")[0].split(",")
-
-        elif is_class:
-            for num in self.iter_limit_range:
-                init = "def __init__("
-
-                if stripped.startswith(init):
-                    break
-
-                if num < 1:
-                    continue
-
-                next_index = index + num
-
-                try:
-                    next_line = self.source_code[next_index]
-                except:
-                    break
-
-                if next_line.strip().startswith(init):
-                    self.current_block_params = next_line.strip().split("(")[1].split(")")[0].split(",")
-                    break
-
-        if "self" in self.current_block_params:
-            self.current_block_params.remove("self")
-
-        self.params_with_defaults = {bp.split("=")[0].strip(): bp.split("=")[1].strip()
-                                     for bp in self.current_block_params if "=" in bp}
-        self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
-                                     for p in self.current_block_params if len(p)]
+        self.get_current_block_params(is_function, is_class, index, stripped, prev_stripped)
+        # if is_function:
+        #     self.current_block_params = prev_stripped.split("(")[1].split(")")[0].split(",")
+        #
+        # elif is_class:
+        #     for num in self.iter_limit_range:
+        #         init = "def __init__("
+        #
+        #         if stripped.startswith(init):
+        #             break
+        #
+        #         if num < 1:
+        #             continue
+        #
+        #         next_index = index + num
+        #
+        #         try:
+        #             next_line = self.source_code[next_index]
+        #         except:
+        #             break
+        #
+        #         if next_line.strip().startswith(init):
+        #             self.current_block_params = next_line.strip().split("(")[1].split(")")[0].split(",")
+        #             break
+        #
+        # if "self" in self.current_block_params:
+        #     self.current_block_params.remove("self")
+        #
+        # self.params_with_defaults = {bp.split("=")[0].strip(): bp.split("=")[1].strip()
+        #                              for bp in self.current_block_params if "=" in bp}
+        # self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
+        #                              for p in self.current_block_params if len(p)]
 
         # Get docstring end index
-        if startswith and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')) \
-                or (len(stripped) > 3 and startswith and not endswith):
-
-            for num in self.iter_limit_range:
-                if num < 1:
-                    continue
-
-                next_index = index + num
-                next_line = self.source_code[next_index]
-
-                if "'''" in next_line or '"""' in next_line:
-                    docstring_end_index = next_index
-                    break
-
-            if docstring_end_index == index:
-                index_buffer = 2
+        docstring_end_index, index_buffer = self.get_docstring_end_index(startswith, endswith, stripped, index)
+        # if startswith and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')) \
+        #         or (len(stripped) > 3 and startswith and not endswith):
+        #
+        #     for num in self.iter_limit_range:
+        #         if num < 1:
+        #             continue
+        #
+        #         next_index = index + num
+        #         next_line = self.source_code[next_index]
+        #
+        #         if "'''" in next_line or '"""' in next_line:
+        #             docstring_end_index = next_index
+        #             break
+        #
+        #     if docstring_end_index == index:
+        #         index_buffer = 2
 
         # Get current block end index
-        for num in self.iter_limit_range:
-            if num < 1:
-                continue
-
-            next_index = index + num
-
-            try:
-                next_line = self.source_code[next_index]
-            except:
-                break
-
-            strip = next_line.strip()
-
-            if strip.startswith("def ") or strip.startswith("class "):
-                break
-
-            if len(strip):
-                self.current_block_end_index = next_index
+        self.get_current_block_end_index(index)
+        # for num in self.iter_limit_range:
+        #     if num < 1:
+        #         continue
+        #
+        #     next_index = index + num
+        #
+        #     try:
+        #         next_line = self.source_code[next_index]
+        #     except:
+        #         break
+        #
+        #     strip = next_line.strip()
+        #
+        #     if strip.startswith("def ") or strip.startswith("class "):
+        #         break
+        #
+        #     if len(strip):
+        #         self.current_block_end_index = next_index
 
         # Get return value
-        for block_line in reversed(self.source_code[index:(self.current_block_end_index + 1)]):
-            if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
-                self.block_return = block_line.split("return ")[1].strip()
-                break
+        self.get_current_block_return_value(index)
+        # for block_line in reversed(self.source_code[index:(self.current_block_end_index + 1)]):
+        #     if block_line.strip().startswith("return ") and len(block_line.split("return ")[1].strip()):
+        #         try:
+        #             self.block_return = block_line.split("return ")[1].strip()
+        #             break
+        #         except:
+        #             pass
 
         # Synthesize docstring if missing
-        if not startswith:
-            indent = " " * self.GetIndentSpaceCount(line)
-
-            for docstring_line in reversed(self.synthesize_docstring()):
-                if len(docstring_line):
-                    generated_docstring_lines.append(f"{indent}{docstring_line}")
-                else:
-                    generated_docstring_lines.append(docstring_line)
+        generated_docstring_lines = self.get_missing_docstring(startswith, line)
+        # if not startswith:
+        #     indent = " " * self.GetIndentSpaceCount(line)
+        #
+        #     for docstring_line in reversed(self.synthesize_docstring()):
+        #         if len(docstring_line):
+        #             generated_docstring_lines.append(f"{indent}{docstring_line}")
+        #         else:
+        #             generated_docstring_lines.append(docstring_line)
 
         # Determine missing/incomplete components
         if len(generated_docstring_lines):
@@ -419,6 +427,113 @@ class PyDoc:
                     self.source_code.insert(docstring_end_index + 1, "")
 
         return line
+
+    def reset_docstring_attrs(self, line_index):
+        self.block_return = ""
+        self.current_block_params = []
+        self.params_with_defaults = {}
+        self.current_docstring_index = line_index
+        self.current_block_end_index = line_index
+
+    def get_current_block_params(self, is_function, is_class, line_index, strip_line, prev_strip_line):
+        if is_function:
+            self.current_block_params = prev_strip_line.split("(")[1].split(")")[0].split(",")
+
+        elif is_class:
+            for num in self.iter_limit_range:
+                init = "def __init__("
+
+                if strip_line.startswith(init):
+                    break
+
+                if num < 1:
+                    continue
+
+                next_index = line_index + num
+
+                try:
+                    next_line = self.source_code[next_index]
+                except:
+                    break
+
+                if next_line.strip().startswith(init):
+                    self.current_block_params = next_line.strip().split("(")[1].split(")")[0].split(",")
+                    break
+
+        if "self" in self.current_block_params:
+            self.current_block_params.remove("self")
+
+        self.params_with_defaults = {bp.split("=")[0].strip(): bp.split("=")[1].strip()
+                                     for bp in self.current_block_params if "=" in bp}
+        self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
+                                     for p in self.current_block_params if len(p)]
+
+    def get_docstring_end_index(self, startswith, endswith, strip_line, line_index):
+        index_buffer = 1
+        docstring_end_index = line_index
+
+        if startswith \
+                and (len(strip_line) == 3 and (strip_line == "'''" or strip_line == '"""')) \
+                or (len(strip_line) > 3 and startswith and not endswith):
+
+            for num in self.iter_limit_range:
+                if num < 1:
+                    continue
+
+                next_index = line_index + num
+                next_line = self.source_code[next_index]
+
+                if "'''" in next_line or '"""' in next_line:
+                    docstring_end_index = next_index
+                    break
+
+            if docstring_end_index == line_index:
+                index_buffer = 2
+
+        return docstring_end_index, index_buffer
+
+    def get_current_block_end_index(self, line_index):
+        for num in self.iter_limit_range:
+            if num < 1:
+                continue
+
+            next_index = line_index + num
+
+            try:
+                next_line = self.source_code[next_index]
+            except:
+                break
+
+            strip = next_line.strip()
+
+            if strip.startswith("def ") or strip.startswith("class "):
+                break
+
+            if len(strip):
+                self.current_block_end_index = next_index
+
+    def get_current_block_return_value(self, line_index):
+        for block_line in reversed(self.source_code[line_index:(self.current_block_end_index + 1)]):
+            if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
+                try:
+                    self.block_return = block_line.split("return ")[1].strip()
+                except:
+                    pass
+                break
+
+    def get_missing_docstring(self, startswith, line):
+        generated_docstring_lines = []
+
+        if not startswith:
+            indent = " " * self.GetIndentSpaceCount(line)
+
+            for docstring_line in reversed(self.synthesize_docstring()):
+                if len(docstring_line):
+                    generated_docstring_lines.append(f"{indent}{docstring_line}")
+                else:
+                    generated_docstring_lines.append(docstring_line)
+
+        return generated_docstring_lines
 
     def synthesize_docstring(self):
         """
