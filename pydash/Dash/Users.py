@@ -280,7 +280,7 @@ class Users:
         return return_data
 
     def GetUserDataPath(self, user_email):
-        email = email.lower().strip()
+        email = user_email.lower().strip()
 
         if type(email) == bytes:
             email = email.decode()
