@@ -1,11 +1,26 @@
 
-function DashGuiButton(Label, Callback, Bind, color_set){
+function DashGuiButton(Label, Callback, Bind, color){
 
     this.label = Label;
     this.callback = Callback;
     this.bind = Bind;
 
-    this.color_set = color_set || Dash.Color.Light.Button;
+    // This messy check is temporary. I went with the wrong path of
+    // passing in a color BUTTON set rather than the full color set
+    color = color || Dash.Color.Light;
+    if (color instanceof DashColorSet) {
+        // This is correct - the newer style
+    }
+    else {
+        console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+        color = color.Button;
+    };
+
+    this.color = color || Dash.Color.Light;
+    this.color_set = this.color.Button; // Temporary
+
+    console.log(this.color_set);
+
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.click_highlight = $("<div></div>");

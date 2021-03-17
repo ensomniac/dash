@@ -425,6 +425,9 @@ class Users:
         # self.set_return_data({"error": "Failed to validate user. Error x8329"})
         return None, None
 
+def GetUserDataRoot(user_email_to_get, admin_user_data=None):
+    data_path = GetUserDataPath(user_email_to_get, admin_user_data)
+    return "/".join(data_path.split("/")[:-1]) + "/"
 
 def GetUserDataPath(user_email_to_get, admin_user_data=None):
     from Dash.Utils import Utils as DashUtils

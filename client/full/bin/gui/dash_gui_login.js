@@ -1,5 +1,5 @@
 
-function DashGuiLogin(on_login_binder, on_login_callback){
+function DashGuiLogin(on_login_binder, on_login_callback, color){
 
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
@@ -7,6 +7,7 @@ function DashGuiLogin(on_login_binder, on_login_callback){
     this.email_row = $("<div></div>");
     this.password_row = $("<div></div>");
     this.button_bar = $("<div></div>");
+    this.color = color || Dash.Color.Dark;
 
     this.on_login_callback = null;
     if (on_login_binder && on_login_callback){
@@ -15,10 +16,10 @@ function DashGuiLogin(on_login_binder, on_login_callback){
 
     this.setup_styles = function(){
 
-        this.login_button   = new d.Gui.Button("Login", this.Login, this);
-        this.reset_button   = new d.Gui.Button("Create / Reset Login", this.ResetLogin, this);
-        this.email_input    = new d.Gui.Input("email@" + d.Context["domain"]);
-        this.password_input = new d.Gui.Input("Password");
+        this.login_button   = new d.Gui.Button("Login",                this.Login,      this, this.color);
+        this.reset_button   = new d.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input    = new d.Gui.Input("email@" + d.Context["domain"], this.color);
+        this.password_input = new d.Gui.Input("Password", this.color);
 
         this.email_input.html.css({
             "padding": Dash.Size.Padding*0.5,
@@ -54,25 +55,21 @@ function DashGuiLogin(on_login_binder, on_login_callback){
         var login_box_height = (d.Size.RowHeight*4)+(d.Size.Padding*3);
 
         this.html.css({
-            // "position": "fixed",
             "left": 0,
             "top": 0,
             "right": 0,
             "bottom": 0,
-            // "background": d.Color.Background,
             "text-align": "center",
         });
 
         this.login_box.css({
             "width": login_box_width,
-            // "height": login_box_height*2,
             "height": "auto",
             "margin-left": "auto",
             "margin-right": "auto",
             "margin-top": d.Size.Padding*2,
             "padding-bottom": d.Size.Padding*2,
-            "background": d.Color.Dark,
-            // "background": "rgba(0, 0, 0, 0.1)",
+            "background": this.color.BackgroundRaised,
             "border-radius": 4,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "opacity": 0,
