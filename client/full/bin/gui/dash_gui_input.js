@@ -1,8 +1,9 @@
 
-function DashGuiInput(placeholder_text){
+function DashGuiInput(placeholder_text, color){
 
     this.placeholder = placeholder_text;
     this.column_width = window.ColumnWidth || (d.Size.RowHeight*5);
+    this.color = color || Dash.Color.Light;
 
     this.html = $("<div></div>");
 
@@ -19,7 +20,7 @@ function DashGuiInput(placeholder_text){
 
         this.html.css({
             "height": d.Size.RowHeight,
-            "background": "rgba(255, 255, 255, 0.7)",
+            // "background": "rgba(255, 255, 255, 0.7)",
             "border-radius": 2,
             "padding-right": d.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -33,7 +34,7 @@ function DashGuiInput(placeholder_text){
             "width": "100%",
             "height": "100%",
             "padding-left": d.Size.Padding,
-            "color": "rgba(0, 0, 0, 0.9)",
+            "color": this.color.Text,
         });
 
     };
@@ -59,11 +60,11 @@ function DashGuiInput(placeholder_text){
     this.SetLocked = function(is_locked){
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
-            this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
+            // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
         }
         else {
             this.input.css({"pointer-events": "auto"});
-            this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
+            // this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
         };
     };
 

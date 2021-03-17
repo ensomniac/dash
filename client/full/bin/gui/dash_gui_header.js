@@ -1,10 +1,11 @@
 
-function DashGuiHeader(label_text){
+function DashGuiHeader(label_text, color){
 
     this.label_text = label_text;
     this.html = $("<div></div>");
     this.label = $("<div>" + this.label_text + "</div>");
     this.border = $("<div></div>");
+    this.color = color || Dash.Color.Light;
 
     this.setup_styles = function(){
 
@@ -12,14 +13,13 @@ function DashGuiHeader(label_text){
         this.html.append(this.border);
 
         this.html.css({
-            // "background": "rgba(0, 0, 0, 0.5)",
             "height": Dash.Size.RowHeight,
             "margin-bottom": Dash.Size.Padding,
         });
 
         this.label.css({
             "text-align": "left",
-            "color": Dash.Color.Light.TextHeader,
+            "color": this.color.TextHeader,
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
@@ -31,7 +31,7 @@ function DashGuiHeader(label_text){
             "top": 0,
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
-            "background": Dash.Color.Light.TextHeader,
+            "background": this.color.AccentGood,
         });
 
     };

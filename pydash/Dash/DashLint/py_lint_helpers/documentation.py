@@ -1,5 +1,5 @@
 # Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
-#                Andrew Stet, stetandrew@gmail.com 
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
@@ -187,7 +187,7 @@ class PyDoc:
         # Get return value
         for block_line in reversed(self.source_code[index:(self.current_block_end_index + 1)]):
             if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
-                self.block_return = block_line.split("return ")[1].strip()
+                self.block_return = block_line.split("return")[1].strip()
                 break
 
         # Synthesize docstring if missing

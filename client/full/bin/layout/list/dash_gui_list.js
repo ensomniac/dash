@@ -1,10 +1,11 @@
-function DashGuiList(binder, selected_callback, column_config){
+function DashGuiList(binder, selected_callback, column_config, color){
 
     this.html = $("<div></div>");
     this.binder = binder;
     this.column_config = column_config;
     this.selected_callback = selected_callback.bind(this.binder);
     this.last_selection_id = null;
+    this.color = color || Dash.Color.Light;
 
     if (!(column_config instanceof DashGuiListColumnConfig)) {
         console.log("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");

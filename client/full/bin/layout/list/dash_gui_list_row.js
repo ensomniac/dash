@@ -6,6 +6,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.expand_content = $("<div></div>");
     this.column_box = $("<div></div>");
     this.list = list;
+    this.color = this.list.color;
     this.id = arbitrary_id;
     this.columns = [];
     this.is_selected = false;
@@ -53,7 +54,7 @@ function DashGuiListRow(list, arbitrary_id){
             "top": 0,
             "right": 0,
             "height": Dash.Size.RowHeight,
-            "background": Dash.Color.Light.TabBackground, // Not correct
+            "background": this.color.AccentGood, // Not correct
             "pointer-events": "none",
             "opacity": 0,
             // "cursor": "pointer",
@@ -159,7 +160,7 @@ function DashGuiListRow(list, arbitrary_id){
         (function(self){
 
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 0.5}, 100);
+                self.highlight.stop().animate({"opacity": 1}, 100);
             });
 
             self.html.mouseleave(function(){

@@ -279,6 +279,13 @@ class Users:
 
         return return_data
 
+    def GetUserData(self, user_email):
+        # Andrew - I wanted to expose this function externally and
+        # changed the name I didn't have time to see if it would
+        # break anything to get rid of the snake case variation
+
+        return self.get_user_info(user_email)
+
     def get_user_info(self, email):
         email = email.lower().strip()
 
@@ -409,3 +416,22 @@ class Users:
 
         # self.set_return_data({"error": "Failed to validate user. Error x8329"})
         return None, None
+
+
+def Get(user_email_to_get, admin_user_data=None):
+    # This function allows an admin to quickly pull a user
+    # But, for the moment, everyone is an admin...
+
+    from Dash.Utils import Utils as DashUtils
+    ctx = DashUtils.Global.Context
+    admin_user_data = admin_user_data or DashUtils.Global.RequestUser
+    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
+    user = users.GetUserData(user_email_to_get)
+
+    # users = Users(self.Params, dash_context=self.DashContext)
+
+    # self.dash_context = dash_context or Context.Get(params["asset_path"])
+    # asset_path =
+    return user
+
+

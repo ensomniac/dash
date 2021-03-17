@@ -1927,7 +1927,6 @@ function DashMath(){
     };
 };
 
-
 function DashColor(){
     // this.DarkBackground = "#e6e6e6";
     // this.LightBackground = "#e6e6e6";
@@ -1976,7 +1975,7 @@ function DashColor(){
         min_dark["button_selected"]  = "orange";
         // var light = this.fill_set(min_light);
         // var dark  = this.fill_set(min_dark);
-        var dark_bg = "rgb(50, 50, 50)";
+        var dark_bg = "#23262b";
         var dark_bg_text = "rgb(200, 200, 200)";
         var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
@@ -1986,25 +1985,61 @@ function DashColor(){
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
         var text_header = "#95ae6c";
+        var text_header_dark = "#cfe1e7";
+        var light_accent_good = "green";
+        var light_accent_bad = "red";
+        var dark_accent_good = "#5b9fb7";
+        var dark_accent_bad = "#ff6144";
+        var dark_button = "#5ba0b8";
+
+
+
+
+
+
+        var light = new DashSiteColors({
+            "background": "#dcdbd9",
+            "background_raised": "#e3e8ea",
+            "button": "#659cba",
+            "button_text": "#141518",
+            "accent_good": "#e0ccb4",
+            "accent_bad": "#f9663c",
+        });
+        var dark = new DashSiteColors({
+            "background": "#23262b",
+            "background_raised": "#444b54",
+            "button": "#5c9fb7",
+            "button_text": "#141518",
+            "accent_good": "#ffc74d",
+            "accent_bad": "#ff624c",
+        });
+        console.log(light);
+        this.Raise = function(cstr, raise_steps){
+            raise_steps = raise_steps || 1;
+            return cstr;
+        };
         this.Random = function(cstr, lighten_rgb){
             var tmp_colors = ["red", "blue", "green", "orange"];
             return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
             // return "#" + Math.floor(Math.random()*16777215).toString(16);
         };
         this.Light = new DashColorSet(
-            light_bg, // Background color
-            "green", // Tab area background
+            light.Background, // Background color
+            light.BackgroundRaised, // Background color for raised boxes
+            light.TabBackground, // Tab area background
             light_bg_text, // Text color
             text_header, // Text header color
+            light.AccentGood,
+            light.AccentBad,
             new DashColorButtonSet( // Button
                 new DashColorStateSet(
-                    button_color,    // Button.Background.Base
+                    light.Button,    // Button.Background.Base
                     button_selected,    // Button.Background.Selected
                     button_hover_color, // Button.Background.BaseHover
                     button_selected_hover, // Button.Background.SelectedHover
                 ),
                 new DashColorStateSet(
-                    button_text_color,   // Button.Text.Base
+                    light.ButtonText,   // Button.Text.Base
                     button_text_color,  // Button.Text.Selected
                     button_text_color,  // Button.Text.BaseHover
                     button_text_color, // Button.Text.SelectedHover
@@ -2012,50 +2047,54 @@ function DashColor(){
             ),
             new DashColorButtonSet(    // Tab
                 new DashColorStateSet( // Tab Background
-                    button_color,    // Tab.Background.Base
+                    light.Button,    // Tab.Background.Base
                     button_selected,    // Tab.Background.Selected
                     button_hover_color, // Tab.Background.BaseHover
                     button_selected_hover, // Tab.Background.SelectedHover
                 ),
                 new DashColorStateSet( // Tab Text
-                    button_text_color,   // Tab.Text.Base
-                    button_text_color,  // Tab.Text.BaseHover
-                    button_text_color,  // Tab.Text.BaseHover
-                    button_text_color, // Tab.Text.SelectedHover
+                    light.ButtonText,   // Tab.Text.Base
+                    light.ButtonText,  // Tab.Text.BaseHover
+                    light.ButtonText,  // Tab.Text.BaseHover
+                    light.ButtonText, // Tab.Text.SelectedHover
                 ),
             ),
         );
+        console.log(dark.BackgroundRaised);
         this.Dark = new DashColorSet(
-            dark_bg, // Background color
-            "pink", // Tab area background
+            dark.Background, // Background color
+            dark.BackgroundRaised, // Background color for raised boxes
+            dark.TabBackground, // Tab area background
             dark_bg_text, // Text color
-            text_header, // Text header color
+            text_header_dark, // Text header color
+            dark.AccentGood,
+            dark.AccentBad,
             new DashColorButtonSet( // Button
                 new DashColorStateSet(
-                    button_color, // Button.Background.Base
+                    dark.Button, // Button.Background.Base
                     button_selected, // Button.Background.Selected
                     button_hover_color, // Button.Background.BaseHover
                     button_selected_hover, // Button.Background.SelectedHover
                 ),
                 new DashColorStateSet( // Button Text
-                    button_text_color, // Button.Text.Base
-                    button_text_color, // Button.Text.Selected
-                    button_text_color, // Button.Text.BaseHover
-                    button_text_color, // Button.Text.SelectedHover
+                    dark.ButtonText, // Button.Text.Base
+                    dark.ButtonText, // Button.Text.Selected
+                    dark.ButtonText, // Button.Text.BaseHover
+                    dark.ButtonText, // Button.Text.SelectedHover
                 ),
             ),
             new DashColorButtonSet(    // Tab
                 new DashColorStateSet( // Tab Background
-                    button_color,    // Tab.Background.Base
+                    dark.Button,    // Tab.Background.Base
                     button_selected,    // Tab.Background.Selected
                     button_hover_color, // Tab.Background.BaseHover
                     button_selected_hover, // Tab.Background.SelectedHover
                 ),
                 new DashColorStateSet( // Tab Text
-                    button_text_color,   // Tab.Text.Base
-                    button_text_color,  // Tab.Text.Selected
-                    button_text_color,  // Tab.Text.BaseHover
-                    button_text_color, // Tab.Text.SelectedHover
+                    dark.ButtonText,   // Tab.Text.Base
+                    dark.ButtonText,  // Tab.Text.Selected
+                    dark.ButtonText,  // Tab.Text.BaseHover
+                    dark.ButtonText, // Tab.Text.SelectedHover
                 ),
             ),
         );
@@ -2392,16 +2431,22 @@ function DashColor(){
 };
 
 class DashColorSet {
-    constructor(background, tab_background, text, text_header, button, tab) {
-        this._background  = background;  // HTML Color
+    constructor(background, background_raised, tab_background, text, text_header, accent_good, accent_bad, button, tab) {
+        this._background  = background;       // HTML Color
+        this._background_raised  = background_raised;       // HTML Color
         this._tab_background = tab_background // HTML Color
-        this._text        = text;        // HTML Color
-        this._text_header = text_header; // HTML Color
-        this._button      = button;      // DashColorButtonSet()
-        this._tab         = tab;         // DashColorButtonSet()
+        this._text        = text;             // HTML Color
+        this._text_header = text_header;      // HTML Color
+        this._accent_good = accent_good;      // HTML Color
+        this._accent_bad  = accent_bad;       // HTML Color
+        this._button      = button;           // DashColorButtonSet()
+        this._tab         = tab;              // DashColorButtonSet()
     };
     get Background() {
         return this._background;
+    };
+    get BackgroundRaised() {
+        return this._background_raised;
     };
     get TabBackground() {
         return this._tab_background;
@@ -2412,13 +2457,25 @@ class DashColorSet {
     get TextHeader() {
         return this._text_header;
     };
+    get AccentGood() {
+        return this._accent_good;
+    };
+    get AccentBad() {
+        return this._accent_bad;
+    };
     get Button() {
         return this._button;
     };
     get Tab() {
         return this._tab;
     };
-    //////////////////////////
+    /////////////////////////
+    ///// INTERMEDIATES /////
+    /////////////////////////
+    // get BackgroundRaised() {
+    //     return Dash.Color.Lighten(this._background, 20);
+    // };
+    /////////////////////////
     set Background(color) {
         this._background = color;
     };
@@ -2498,6 +2555,33 @@ class DashColorStateSet {
         };
         this._base_hover = this._base_hover || d.Color.Lighten(this._base, 50);
         this._selected_hover = this._selected_hover || d.Color.Lighten(this._selected, 50);
+    };
+};
+
+class DashSiteColors {
+    constructor(color_obj) {
+        this._col  = color_obj;
+    };
+    get Background() {
+        return this._col["background"] || "orange";
+    };
+    get BackgroundRaised() {
+        return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
+    };
+    get Button() {
+        return this._col["button"] || "orange";
+    };
+    get ButtonText() {
+        return this._col["button_text"] || "orange";
+    };
+    get AccentGood() {
+        return this._col["accent_good"] || "orange";
+    };
+    get AccentBad() {
+        return this._col["accent_bad"] || "orange";
+    };
+    get TabBackground() {
+        return this._col["tab_background"] || this._col["background"] || "orange";
     };
 };
 
@@ -2829,14 +2913,40 @@ function DashAdminSettings(){
 
 
 function DashAdminColor(){
-    this.html = Dash.Gui.GetHTMLContext("Coming soon...", {"margin": d.Size.Padding});
+    // this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    this.html = Dash.Gui.GetHTMLContext("");
     this.property_box = null;
     this.data = null;
+    this.display_theme = Dash.Local.Get("dash_admin_color_style") || "light";
+    this.color = null; // ex. Dash.Color.Light
+    ////// Objects
+    this.header = null;
+    this.property_box = null;
     this.setup_styles = function(){
-        this.draw_color_section(Dash.Color.Light);
-        this.draw_color_section(Dash.Color.Dark);
+        this.html.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "bottom": 0,
+            "top": 0,
+            "padding": Dash.Size.Padding,
+        });
+        this.draw_all();
     };
-    this.draw_color_section = function(color_set){
+    this.draw_all = function(){
+        if (this.display_theme == "light") {
+            this.color = Dash.Color.Light;
+        }
+        else {
+            this.color = Dash.Color.Dark;
+        };
+        this.html.empty();
+        this.html.css({
+            "background": this.color.Background,
+            // "background": Dash.Color.Light.Background,
+        });
+        this.draw_header();
+        this.draw_property_box();
         // COLOR INTERFACE - BUTTON
         //
         //           ▽ - Color of the page/element background
@@ -2845,18 +2955,92 @@ function DashAdminColor(){
         // d.Color.Dark.Button.Background.Hover
         // d.Color.Dark.Button.Background.Selected
         // d.Color.Dark.Button.Background.SelectedHover
-        console.log(color_set);
-        console.log(color_set.Background);
-        console.log(color_set.Text);
-        console.log(color_set.Button);
-        console.log(color_set.Tab); // DashColorButtonSet
-        console.log(color_set.Tab.Background); // DashColorStateSet
-        console.log(color_set.Tab.Text); // DashColorStateSet
-
+        // console.log(color_set);
+        // console.log(color_set.Background);
+        // console.log(color_set.Text);
+        // console.log(color_set.Button);
+        // console.log(color_set.Tab); // DashColorButtonSet
+        // console.log(color_set.Tab.Background); // DashColorStateSet
+        // console.log(color_set.Tab.Text); // DashColorStateSet
         // for (var color_set_name in color_root) {
         //     console.log(color_set_name + ":");
         //     console.log(color_root[color_set_name]);
         // };
+    };
+    this.draw_header = function(color_set){
+        var label = "Header - " + this.display_theme.Title() + " Style (Switch to Dark)";
+        if (this.display_theme != "light") {
+            label = "Header - " + this.display_theme.Title() + " Style (Switch to Light)";
+        };
+        this.header = new Dash.Gui.Header(label, this.color);
+        this.html.append(this.header.html);
+        this.header.html.css({
+            "cursor": "pointer",
+        });
+        (function(self){
+            self.header.html.click(function(){
+                if (self.display_theme == "light") {
+                    self.display_theme = "dark";
+                }
+                else {
+                    self.display_theme = "light";
+                };
+                Dash.Local.Set("dash_admin_color_style", self.display_theme);
+                console.log("switch to " + self.display_theme);
+                self.draw_all();
+            });
+        })(this);
+        var doc = new DashAdminColorDoc(this.color);
+        this.html.append(doc.html);
+    };
+    this.draw_property_box = function(color_set){
+        console.log("Adding property box");
+        var params = {};
+        params["color"] = this.color;
+        this.property_box = new Dash.Gui.PropertyBox(
+            this,           // For binding
+            this.get_data,  // Function to return live data
+            this.set_data,  // Function to set saved data locally
+            null,           // Endpoint
+            null,           // Dash obj_id (unique for users)
+            params
+        );
+        this.html.append(this.property_box.html);
+        var header_title = "Property Box";
+        this.property_box.AddHeader(header_title, this.color);
+        this.property_box.AddInput("email",       "E-mail Address", "", null, false);
+        this.property_box.AddInput("first_name",  "First Name",     "", null, true);
+        this.new_password_row = new d.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
+        this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
+        this.property_box.html.append(this.new_password_row.html);
+        this.property_box.AddButton("Property Box Button", this.dummy_cb);
+    };
+    this.get_data = function(){
+        return "";
+    };
+    this.set_data = function(){
+        return "";
+    };
+    this.dummy_cb = function(){
+        return "";
+    };
+
+    this.setup_styles();
+};
+
+
+function DashAdminColorDoc(color){
+    this.html = Dash.Gui.GetHTMLContext("--");
+    this.color = color || Dash.Color.Light;
+    this.setup_styles = function(){
+        this.html.css({
+            "background": this.color.BackgroundRaised,
+            "color": this.color.Text,
+            "margin-bottom": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "border": "2px solid " + this.color.AccentGood,
+            "border-radius": 5,
+        });
     };
     this.setup_styles();
 };
@@ -2903,15 +3087,16 @@ function DashGui(){
         });
         return html;
     };
-    this.GetHTMLBoxContext = function(optional_style_css){
+    this.GetHTMLBoxContext = function(optional_style_css, color){
+        color = color || Dash.Color.Light;
         // optional_label_text = optional_label_text || "";
         optional_style_css = optional_style_css || {};
         var html = $("<div></div>");
         var css = {
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "background": "rgba(255, 255, 255, 0.3)",
-            "color": "black",
+            "background": color.BackgroundRaised,
+            "color": color.Background,
             "border-radius": Dash.Size.Padding*0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         };
@@ -3572,9 +3757,10 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
 
 
 
-function DashGuiInput(placeholder_text){
+function DashGuiInput(placeholder_text, color){
     this.placeholder = placeholder_text;
     this.column_width = window.ColumnWidth || (d.Size.RowHeight*5);
+    this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
     if (this.placeholder.toLowerCase().includes("password")) {
         this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
@@ -3586,7 +3772,7 @@ function DashGuiInput(placeholder_text){
         this.html.append(this.input);
         this.html.css({
             "height": d.Size.RowHeight,
-            "background": "rgba(255, 255, 255, 0.7)",
+            // "background": "rgba(255, 255, 255, 0.7)",
             "border-radius": 2,
             "padding-right": d.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -3599,7 +3785,7 @@ function DashGuiInput(placeholder_text){
             "width": "100%",
             "height": "100%",
             "padding-left": d.Size.Padding,
-            "color": "rgba(0, 0, 0, 0.9)",
+            "color": this.color.Text,
         });
     };
     // this.SetHeight = function(height, optional_font_size){
@@ -3617,11 +3803,11 @@ function DashGuiInput(placeholder_text){
     this.SetLocked = function(is_locked){
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
-            this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
+            // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
         }
         else {
             this.input.css({"pointer-events": "auto"});
-            this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
+            // this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
         };
     };
     this.SetDarkMode = function(dark_mode_on){
@@ -3840,7 +4026,7 @@ function LoadDot(dots){
 };
 
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
 
     this.label_text = label_text;
     this.initial_value = initial_value;
@@ -3854,11 +4040,12 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.highlight = $("<div></div>");
     this.save_button_visible = false;
     this.autosave_timeout = null;
+    this.color = color || Dash.Color.Light;
     this.setup_styles = function(){
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
         this.label = $("<div>" + this.label_text + ": </div>");
-        this.input = new d.Gui.Input(this.placeholder_text);
+        this.input = new d.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
         this.input.SetText(this.initial_value);
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
@@ -3906,7 +4093,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "height": Dash.Size.RowHeight,
             "line-height": (Dash.Size.RowHeight) + "px",
             "text-align": "left",
-            "color": "rgba(0, 0, 0, 0.8)",
+            "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": "80%",
         });
@@ -4147,12 +4334,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     };
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
-    this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
     this.property_set_data = null; // Managed Dash data
     this.extra_params = extra_params || {};
+    this.color = this.extra_params["color"] || Dash.Color.Light;
     this.num_headers = 0;
     this.update_inputs = {};
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.setup_styles = function(){
     };
     this.Load = function(){
@@ -4179,7 +4367,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.Update();
     };
     this.AddHeader = function(label_text){
-        var header = new d.Gui.Header(label_text).html;
+        var header = new d.Gui.Header(label_text, this.color).html;
         if (this.num_headers > 0) {
             header.css("margin-top", Dash.Size.Padding*0.5);
         };
@@ -4191,7 +4379,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         (function(self, callback){
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
-            }, self);
+            }, self, self.color.Button);
             button.html.css("margin-top", Dash.Size.Padding);
             self.html.append(button.html);
         })(this, callback);
@@ -4254,7 +4442,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row_details["label_text"],
                 combo_options || "Save",
                 function(row_input){self.on_row_updated(row_input, row_details)},
-                self
+                self,
+                self.color
             );
             self.update_inputs[data_key] = row;
             var indent_px = 0;
@@ -4325,22 +4514,22 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 };
 
 
-function DashGuiHeader(label_text){
+function DashGuiHeader(label_text, color){
     this.label_text = label_text;
     this.html = $("<div></div>");
     this.label = $("<div>" + this.label_text + "</div>");
     this.border = $("<div></div>");
+    this.color = color || Dash.Color.Light;
     this.setup_styles = function(){
         this.html.append(this.label);
         this.html.append(this.border);
         this.html.css({
-            // "background": "rgba(0, 0, 0, 0.5)",
             "height": Dash.Size.RowHeight,
             "margin-bottom": Dash.Size.Padding,
         });
         this.label.css({
             "text-align": "left",
-            "color": Dash.Color.Light.TextHeader,
+            "color": this.color.TextHeader,
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
@@ -4351,7 +4540,7 @@ function DashGuiHeader(label_text){
             "top": 0,
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
-            "background": Dash.Color.Light.TextHeader,
+            "background": this.color.AccentGood,
         });
     };
     this.setup_styles();
@@ -5373,12 +5562,13 @@ class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
     };
 };
 
-function DashGuiList(binder, selected_callback, column_config){
+function DashGuiList(binder, selected_callback, column_config, color){
     this.html = $("<div></div>");
     this.binder = binder;
     this.column_config = column_config;
     this.selected_callback = selected_callback.bind(this.binder);
     this.last_selection_id = null;
+    this.color = color || Dash.Color.Light;
     if (!(column_config instanceof DashGuiListColumnConfig)) {
         console.log("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
         return;
@@ -5437,6 +5627,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.expand_content = $("<div></div>");
     this.column_box = $("<div></div>");
     this.list = list;
+    this.color = this.list.color;
     this.id = arbitrary_id;
     this.columns = [];
     this.is_selected = false;
@@ -5478,7 +5669,7 @@ function DashGuiListRow(list, arbitrary_id){
             "top": 0,
             "right": 0,
             "height": Dash.Size.RowHeight,
-            "background": Dash.Color.Light.TabBackground, // Not correct
+            "background": this.color.AccentGood, // Not correct
             "pointer-events": "none",
             "opacity": 0,
             // "cursor": "pointer",
@@ -5558,7 +5749,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.setup_connections = function(){
         (function(self){
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 0.5}, 100);
+                self.highlight.stop().animate({"opacity": 1}, 100);
             });
             self.html.mouseleave(function(){
                 self.highlight.stop().animate({"opacity": 0}, 250);

@@ -56,7 +56,9 @@ function DashGui(){
 
     };
 
-    this.GetHTMLBoxContext = function(optional_style_css){
+    this.GetHTMLBoxContext = function(optional_style_css, color){
+
+        color = color || Dash.Color.Light;
 
         // optional_label_text = optional_label_text || "";
         optional_style_css = optional_style_css || {};
@@ -66,8 +68,8 @@ function DashGui(){
         var css = {
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "background": "rgba(255, 255, 255, 0.3)",
-            "color": "black",
+            "background": color.BackgroundRaised,
+            "color": color.Background,
             "border-radius": Dash.Size.Padding*0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         };

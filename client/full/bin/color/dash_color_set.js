@@ -1,16 +1,23 @@
 class DashColorSet {
 
-    constructor(background, tab_background, text, text_header, button, tab) {
-        this._background  = background;  // HTML Color
+    constructor(background, background_raised, tab_background, text, text_header, accent_good, accent_bad, button, tab) {
+        this._background  = background;       // HTML Color
+        this._background_raised  = background_raised;       // HTML Color
         this._tab_background = tab_background // HTML Color
-        this._text        = text;        // HTML Color
-        this._text_header = text_header; // HTML Color
-        this._button      = button;      // DashColorButtonSet()
-        this._tab         = tab;         // DashColorButtonSet()
+        this._text        = text;             // HTML Color
+        this._text_header = text_header;      // HTML Color
+        this._accent_good = accent_good;      // HTML Color
+        this._accent_bad  = accent_bad;       // HTML Color
+        this._button      = button;           // DashColorButtonSet()
+        this._tab         = tab;              // DashColorButtonSet()
     };
 
     get Background() {
         return this._background;
+    };
+
+    get BackgroundRaised() {
+        return this._background_raised;
     };
 
     get TabBackground() {
@@ -25,6 +32,14 @@ class DashColorSet {
         return this._text_header;
     };
 
+    get AccentGood() {
+        return this._accent_good;
+    };
+
+    get AccentBad() {
+        return this._accent_bad;
+    };
+
     get Button() {
         return this._button;
     };
@@ -33,7 +48,15 @@ class DashColorSet {
         return this._tab;
     };
 
-    //////////////////////////
+    /////////////////////////
+    ///// INTERMEDIATES /////
+    /////////////////////////
+
+    // get BackgroundRaised() {
+    //     return Dash.Color.Lighten(this._background, 20);
+    // };
+
+    /////////////////////////
 
     set Background(color) {
         this._background = color;

@@ -12,14 +12,14 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
-    this.html = Dash.Gui.GetHTMLBoxContext({});
     this.data = {};
     this.property_set_data = null; // Managed Dash data
     this.extra_params = extra_params || {};
-
+    this.color = this.extra_params["color"] || Dash.Color.Light;
     this.num_headers = 0;
-
     this.update_inputs = {};
+
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
 
     this.setup_styles = function(){
     };
@@ -60,7 +60,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.AddHeader = function(label_text){
 
-        var header = new d.Gui.Header(label_text).html;
+        var header = new d.Gui.Header(label_text, this.color).html;
 
         if (this.num_headers > 0) {
             header.css("margin-top", Dash.Size.Padding*0.5);
@@ -77,7 +77,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
-            }, self);
+            }, self, self.color.Button);
 
             button.html.css("margin-top", Dash.Size.Padding);
 
@@ -161,7 +161,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row_details["label_text"],
                 combo_options || "Save",
                 function(row_input){self.on_row_updated(row_input, row_details)},
-                self
+                self,
+                self.color
             );
 
             self.update_inputs[data_key] = row;

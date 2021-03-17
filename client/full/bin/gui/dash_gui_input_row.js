@@ -1,5 +1,5 @@
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
 
 
     this.label_text = label_text;
@@ -17,13 +17,15 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.save_button_visible = false;
     this.autosave_timeout = null;
 
+    this.color = color || Dash.Color.Light;
+
     this.setup_styles = function(){
 
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
         this.label = $("<div>" + this.label_text + ": </div>");
 
-        this.input = new d.Gui.Input(this.placeholder_text);
+        this.input = new d.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
         this.input.SetText(this.initial_value);
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
@@ -78,7 +80,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "height": Dash.Size.RowHeight,
             "line-height": (Dash.Size.RowHeight) + "px",
             "text-align": "left",
-            "color": "rgba(0, 0, 0, 0.8)",
+            "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": "80%",
         });
