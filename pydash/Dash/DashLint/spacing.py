@@ -48,6 +48,8 @@ class GlobalSpacing:
 
             finished = self.fix_specific_spacing()
 
+        self.fix_comments_separated_from_top_of_blocks()
+
     def AddNeededLineBreaks(self):
         finished = False
 
@@ -121,6 +123,60 @@ class GlobalSpacing:
                 if index == len(self.source_code) - 1:
                     finished = True
 
+    def fix_comments_separated_from_top_of_blocks(self):
+        finished = False
+
+        for _ in self.iter_limit_range:
+            if finished:
+                break
+
+            for index, line in enumerate(self.source_code):
+                if index == len(self.source_code) - 1:
+                    finished = True
+                    break
+
+                try:
+                    two_strip = self.source_code[index + 2].strip()
+                except:
+                    finished = True
+                    break
+
+                if line.strip().startswith("#") \
+                        and not self.source_code[index - 1].strip().startswith("#") \
+                        and not self.source_code[index + 1].strip().startswith("#"):
+                    if two_strip.startswith("def ") or two_strip.startswith("class "):
+                        self.source_code.pop(index + 1)
+                        break
+
+                    elif not len(two_strip):
+                        for num in self.iter_limit_range:
+                            if num <= 2:
+                                continue
+
+                            try:
+                                next_strip = self.source_code[index + num].strip()
+                            except:
+                                break
+
+                            if not len(next_strip):
+                                continue
+                            elif next_strip.startswith("def ") or next_strip.startswith("class "):
+                                for n in range(0, num - 1):
+                                    self.source_code.pop(index + 1)
+
+                                break
+                            else:
+                                break
+
+                if line.strip().startswith("#"):
+                    next_line_strip = self.source_code[index + 1].strip()
+                    prev1_line_strip = self.source_code[index - 1].strip()
+                    prev2_line_strip = self.source_code[index - 2].strip()
+
+                    if (next_line_strip.startswith("class ") or (next_line_strip.startswith("def ") and self.GetIndentSpaces(line) == 0)) and (len(prev1_line_strip) or len(prev2_line_strip)):
+                        self.source_code.insert(index, "")
+                        break
+
     def fix_specific_spacing(self):
         last_index_before_line_breaks = 0
         altered = False
@@ -128,8 +184,16 @@ class GlobalSpacing:
         indented_keyword = ""
 
         for index, line in enumerate(self.source_code):
+            indent = self.GetIndentSpaces(line)
+
+            if self.starts_with_keyword == "def ":
+                if indent == 0:
+                    self.line_break_quantity = 2
+                else:
+                    self.line_break_quantity = 1
+
             if line.startswith(" ") and self.starts_with_keyword in line:
-                indented_keyword = f"{self.GetIndentSpaces(line) * ' '}{self.starts_with_keyword}"
+                indented_keyword = f"{indent * ' '}{self.starts_with_keyword}"
 
             if line.startswith(self.starts_with_keyword) or \
                     (len(indented_keyword) and line.startswith(indented_keyword)):

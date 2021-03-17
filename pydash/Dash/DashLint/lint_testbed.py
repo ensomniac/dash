@@ -3,7 +3,7 @@
 
 
 
-#!/usr/bin/pyth
+#!/usr/bin/pyth  
 #
 # Authentic 2022 Ryan Martin, ryan@ensomniac.com
 #             John Stet, stetandrew@gmail.com
@@ -191,7 +191,7 @@ def test():  # this is another custom comment
 
 
 
-# (Dash Lint) TODO: Missing Docstring
+# (Dash Lint) TODO: Finish Docstring
 class Test:  # Line length exceeds 100
     """this is a test docstring for Test"""
 

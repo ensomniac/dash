@@ -11,7 +11,7 @@ class Flags:
     source_code: list
     comment_token: str
     comment_prefix: str
-    AddDocStringFlags: Callable
+    AddDocstringsAndFlags: Callable
     RemoveEmptyComments: Callable
     GetFormattedCommentedLine: Callable
     RemoveExtraLinesAtEndOfFile: Callable
@@ -20,8 +20,8 @@ class Flags:
         self.line_length_flag_suffix = "(excluding comments)"
 
         # These are a bit arbitrary/undecided for now
-        self.total_line_length_max = 500
-        self.individual_line_length_max = 100
+        self.total_line_length_max = 600
+        self.individual_line_length_max = 120
 
         # Any comment string variable names like these MUST end in '_comment'
         self.super_comment = "TODO: Convert to super()"
@@ -33,22 +33,23 @@ class Flags:
 
     def AddFlagComments(self):
         for index, line in enumerate(self.source_code):
-            if line.strip().startswith(self.comment_token):
-                continue
+            # if line.strip().startswith(self.comment_token):
+            #     continue
 
             # This works for many different cases when wanting to add a trailing comment based on a keyword
             # While this example is no longer valid, it shows how this can function should be used
-            line = self.add_flags_by_keyword(index, line, self.GetFormattedCommentedLine(line),
-                                             self.super_comment, "ApiCore.Init(")
+            if not line.strip().startswith(self.comment_token):
+                line = self.add_flags_by_keyword(index, line, self.GetFormattedCommentedLine(line),
+                                                 self.super_comment, "ApiCore.Init(")
 
-            # This list of comment flag functions is flexible and should be added to as we go along
-            line = self.add_path_flags(index, line, self.GetFormattedCommentedLine(line))
-            line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
+                # This list of comment flag functions is flexible and should be added to as we go along
+                line = self.add_path_flags(index, line, self.GetFormattedCommentedLine(line))
+                line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
             # This should always be the last line in this loop
-            self.AddDocStringFlags(index, line)
+            self.AddDocstringsAndFlags(index, line)
 
-            # TODO: (maybe) Convert line to self variable and create func to set line and set line in self.source_code
+            # TODO: (maybe) Convert 'line' to 'self' variable and create func to set line and set line in self.source_code
 
         self.add_total_line_length_flag()
 
