@@ -1,7 +1,8 @@
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile(user_data){
+function DashGuiLayoutUserProfile(user_data, options){
 
+    this.options = options || {};
     this.user_data = user_data || Dash.User.Data;
     this.as_overview = false;
 
@@ -40,10 +41,28 @@ function DashGuiLayoutUserProfile(user_data){
         //     this.is_admin = new d.Gui.InputRow("Admin", "No", "Admin", "Promote", function(b){this.set_group(b, "admin", true)}, this);
         // };
 
+        if (this.options["property_box"] && this.options["property_box"]["properties"]) {
+            var additional_props = this.options["property_box"]["properties"];
+
+            for (var i in additional_props) {
+                var property_details = additional_props[i];
+
+                console.log(property_details);
+
+                this.property_box.AddInput(
+                    property_details["key"],
+                    property_details["label_text"],
+                    "",
+                    null,
+                    property_details["editable"]
+                );
+
+            };
+
+        };
+
         this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
-
         this.property_box.html.append(this.new_password_row.html);
-
         this.property_box.AddButton("Log Out", this.log_out);
 
     };
