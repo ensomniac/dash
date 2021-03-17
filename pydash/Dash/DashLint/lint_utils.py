@@ -63,7 +63,7 @@ class LintUtils:
 
         return comment_options
 
-    def GetIndentSpaces(self, line):
+    def GetIndentSpaceCount(self, line):
         spaces = 0
 
         for char in [c for c in line]:
