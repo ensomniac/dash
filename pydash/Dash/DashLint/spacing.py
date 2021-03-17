@@ -14,7 +14,7 @@ class GlobalSpacing:
     iter_limit_range: range
     starts_with_keyword: str
     line_break_quantity: int
-    GetIndentSpaces: Callable
+    GetIndentSpaceCount: Callable
     line_end_keyword_strings: list
 
     def __init__(self):
@@ -66,7 +66,7 @@ class GlobalSpacing:
                     if not line.strip().endswith(keyword) or not len(self.source_code[index + 1]):
                         continue
 
-                    if self.GetIndentSpaces(line) != self.GetIndentSpaces(self.source_code[index - 1]):
+                    if self.GetIndentSpaceCount(line) != self.GetIndentSpaceCount(self.source_code[index - 1]):
                         continue
 
                     self.source_code.insert(index + 1, "")
@@ -173,7 +173,7 @@ class GlobalSpacing:
                     prev1_line_strip = self.source_code[index - 1].strip()
                     prev2_line_strip = self.source_code[index - 2].strip()
 
-                    if (next_line_strip.startswith("class ") or (next_line_strip.startswith("def ") and self.GetIndentSpaces(line) == 0)) and (len(prev1_line_strip) or len(prev2_line_strip)):
+                    if (next_line_strip.startswith("class ") or (next_line_strip.startswith("def ") and self.GetIndentSpaceCount(line) == 0)) and (len(prev1_line_strip) or len(prev2_line_strip)):
                         self.source_code.insert(index, "")
                         break
 
@@ -184,7 +184,7 @@ class GlobalSpacing:
         indented_keyword = ""
 
         for index, line in enumerate(self.source_code):
-            indent = self.GetIndentSpaces(line)
+            indent = self.GetIndentSpaceCount(line)
 
             if self.starts_with_keyword == "def ":
                 if indent == 0:

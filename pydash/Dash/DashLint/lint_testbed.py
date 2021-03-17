@@ -165,15 +165,15 @@ class Jobs:
 
         return job_id, job_root, error
 def testing(who, what):
-    '''
-    this is a test docstring for testing
-    '''
+    '''this is a test docstring for testing'''
     for num in [1, 2, 3]:
         if num == 2: continue
 
+    return what + num
+
 
 # this is a custom comment
-def test():  # this is another custom comment
+def test(when):  # this is another custom comment
     """
     this is a test docstring for test
     """

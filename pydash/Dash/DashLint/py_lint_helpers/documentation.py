@@ -1,5 +1,5 @@
 # Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
-#                Andrew Stet, stetandrew@gmail.com
+#                Andrew Stet, stetandrew@gmail.com 
 
 import os
 import sys
@@ -14,7 +14,7 @@ class PyDoc:
     source_code: list
     comment_token: str
     iter_limit_range: range
-    GetIndentSpaces: Callable
+    GetIndentSpaceCount: Callable
     GetFormattedCommentedLine: Callable
 
     def __init__(self):
@@ -56,24 +56,115 @@ class PyDoc:
 
         return self.DocstringExample.__doc__
 
+    # def get_current_block_params(self, is_function, is_class, line_index, strip_line, prev_strip_line):
+    #     if is_function:
+    #         self.current_block_params = prev_strip_line.split("(")[1].split(")")[0].split(",")
+    #
+    #     elif is_class:
+    #         for num in self.iter_limit_range:
+    #             init = "def __init__("
+    #
+    #             if strip_line.startswith(init):
+    #                 break
+    #
+    #             if num < 1:
+    #                 continue
+    #
+    #             next_index = line_index + num
+    #
+    #             try:
+    #                 next_line = self.source_code[next_index]
+    #             except:
+    #                 break
+    #
+    #             if next_line.strip().startswith(init):
+    #                 self.current_block_params = next_line.strip().split("(")[1].split(")")[0].split(",")
+    #                 break
+    #
+    #     if "self" in self.current_block_params:
+    #         self.current_block_params.remove("self")
+    #
+    #     self.params_with_defaults = {bp.split("=")[0].strip(): bp.split("=")[1].strip()
+    #                                  for bp in self.current_block_params if "=" in bp}
+    #     self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
+    #                                  for p in self.current_block_params if len(p)]
+
+    # def get_docstring_end_index(self, startswith, endswith, strip_line, line_index):
+    #     index_buffer = 1
+    #     docstring_end_index = line_index
+    #
+    #     if startswith \
+    #             and (len(strip_line) == 3 and (strip_line == "'''" or strip_line == '"""')) \
+    #             or (len(strip_line) > 3 and startswith and not endswith):
+    #
+    #         for num in self.iter_limit_range:
+    #             if num < 1:
+    #                 continue
+    #
+    #             next_index = line_index + num
+    #             next_line = self.source_code[next_index]
+    #
+    #             if "'''" in next_line or '"""' in next_line:
+    #                 docstring_end_index = next_index
+    #                 break
+    #
+    #         if docstring_end_index == line_index:
+    #             index_buffer = 2
+    #
+    #     return docstring_end_index, index_buffer
+    #
+    # def get_current_block_end_index(self, line_index):
+    #     for num in self.iter_limit_range:
+    #         if num < 1:
+    #             continue
+    #
+    #         next_index = line_index + num
+    #
+    #         try:
+    #             next_line = self.source_code[next_index]
+    #         except:
+    #             break
+    #
+    #         strip = next_line.strip()
+    #
+    #         if strip.startswith("def ") or strip.startswith("class "):
+    #             break
+    #
+    #         if len(strip):
+    #             self.current_block_end_index = next_index
+    #
+    # def get_current_block_return_value(self, line_index):
+    #     for block_line in reversed(self.source_code[line_index:(self.current_block_end_index + 1)]):
+    #         if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
+    #             try:
+    #                 self.block_return = block_line.split("return ")[1].strip()
+    #             except:
+    #                 pass
+    #             break
+
+    # def get_missing_docstring(self, startswith):
+    #     if not startswith:
+    #         indent = " " * self.GetIndentSpaceCount(line)
+    #
+    #         for docstring_line in reversed(self.synthesize_docstring()):
+    #             if len(docstring_line):
+    #                 generated_docstring_lines.append(f"{indent}{docstring_line}")
+    #             else:
+    #                 generated_docstring_lines.append(docstring_line)
+
     # TODO: Break this function up
     def AddDocstringsAndFlags(self, index, line):
         index_buffer = 1
-        is_class = False
         final_comment = ""
-        missing_params = []
-        is_function = False
-        included_params = []
         stripped = line.strip()
-        includes_return = False
         comment_index = index - 2
         previous_index = index - 1
         docstring_end_index = index
-        includes_description = False
-        generated_docstring_lines = []
-        missing_docstring_components = []
-        incomplete_docstring_components = []
+        is_class = is_function = includes_return = includes_description = False
+        missing_params = included_params = generated_docstring_lines = \
+            missing_docstring_components = incomplete_docstring_components = []
 
+        # Convert ''' format to """
         if stripped.startswith("'''") or stripped.endswith("'''"):
             line = line.replace("'''", '"""')
             stripped = line.strip()
@@ -82,11 +173,7 @@ class PyDoc:
         endswith = stripped.endswith("'''") or stripped.endswith('"""')
         startswith = stripped.startswith("'''") or stripped.startswith('"""')
 
-        self.block_return = ""
-        self.current_block_params = []
-        self.params_with_defaults = {}
-        self.current_docstring_index = index
-        self.current_block_end_index = index
+        self.reset_docstring_attrs(index)
 
         try:
             previous_line = self.source_code[previous_index]
@@ -114,6 +201,7 @@ class PyDoc:
             formatted_line = self.GetFormattedCommentedLine("", without_original=True)
 
         # Get block params
+        # self.get_current_block_params(is_function, is_class, index, stripped, prev_stripped)
         if is_function:
             self.current_block_params = prev_stripped.split("(")[1].split(")")[0].split(",")
 
@@ -147,6 +235,7 @@ class PyDoc:
                                      for p in self.current_block_params if len(p)]
 
         # Get docstring end index
+        # docstring_end_index, index_buffer = self.get_docstring_end_index(startswith, endswith, stripped, index)
         if startswith and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')) \
                 or (len(stripped) > 3 and startswith and not endswith):
 
@@ -165,6 +254,7 @@ class PyDoc:
                 index_buffer = 2
 
         # Get current block end index
+        # self.get_current_block_end_index(index)
         for num in self.iter_limit_range:
             if num < 1:
                 continue
@@ -185,14 +275,19 @@ class PyDoc:
                 self.current_block_end_index = next_index
 
         # Get return value
+        # self.get_current_block_return_value(index)
         for block_line in reversed(self.source_code[index:(self.current_block_end_index + 1)]):
             if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
-                self.block_return = block_line.split("return")[1].strip()
+                try:
+                    self.block_return = block_line.split("return ")[1].strip()
+                except:
+                    pass
                 break
 
         # Synthesize docstring if missing
+        # self.get_missing_docstring()
         if not startswith:
-            indent = ' ' * self.GetIndentSpaces(line)
+            indent = " " * self.GetIndentSpaceCount(line)
 
             for docstring_line in reversed(self.synthesize_docstring()):
                 if len(docstring_line):
@@ -285,6 +380,68 @@ class PyDoc:
                 if component_str in component_list:
                     component_list.insert(0, component_list.pop(component_list.index(component_str)))
 
+        # Add missing default value tags
+        if len(self.params_with_defaults) and iterate_docstring_lines != generated_docstring_lines:
+            for source_index, source_line in enumerate(self.source_code):
+                if source_line in iterate_docstring_lines \
+                        and source_line.strip().startswith(":param") \
+                        and "(default=" not in source_line:
+
+                    param = source_line.strip().replace(":param", "").split(":")[0].split(" ")[-1].strip()
+
+                    if param in self.params_with_defaults and self.params_with_defaults.get(param):
+                        default_tag = f" (default={self.params_with_defaults[param]})"
+
+                        self.source_code[source_index] += default_tag
+                        iterate_docstring_lines[iterate_docstring_lines.index(source_line)] += default_tag
+
+        # Insert missing params and/or missing return to existing docstring
+        if len(missing_docstring_components) and not len(generated_docstring_lines):
+            ds_indent = " " * self.GetIndentSpaceCount(line)
+            missing_ds_components_adjusted = [c for c in missing_docstring_components if c != "description"]
+
+            if "return" in missing_ds_components_adjusted:
+                missing_ds_components_adjusted.append(missing_ds_components_adjusted
+                                                      .pop(missing_ds_components_adjusted.index("return")))
+            if len(missing_ds_components_adjusted):
+
+                # If single-line, convert it to multi-line
+                if docstring_end_index == index:
+                    self.source_code[index] = f'{ds_indent}"""'
+                    self.source_code.insert(index, ds_indent + stripped.replace('"""', ""))
+                    self.source_code.insert(index, f'{ds_indent}"""')
+                    docstring_end_index += 2
+
+                if len(self.source_code[docstring_end_index - 1].strip()):
+                    self.source_code.insert(docstring_end_index, "")
+                    docstring_end_index += 1
+
+                for m_component in missing_ds_components_adjusted:
+                    incomplete = True
+
+                    if m_component == "return":
+                        if len(self.block_return):
+                            new_line = f"{ds_indent}:return: {self.block_return}"
+                            incomplete = False
+                        else:
+                            new_line = f"{ds_indent}:return:"
+                    else:
+                        new_line = f"{ds_indent}:param {m_component}:"
+
+                    self.source_code.insert(docstring_end_index, new_line)
+                    docstring_end_index += 1
+                    missing_docstring_components.remove(m_component)
+
+                    if incomplete and m_component not in incomplete_docstring_components:
+                        incomplete_docstring_components.append(m_component)
+
+        # Insert newly synthesized lines
+        if len(generated_docstring_lines):
+            for docstring_line in generated_docstring_lines:
+                self.source_code.insert(index, docstring_line)
+
+            docstring_end_index = index + len(generated_docstring_lines)
+
         # Compose final comment
         if len(missing_docstring_components) or len(incomplete_docstring_components):
             final_comment = f"{self.incomplete_docstring_comment} - "
@@ -304,30 +461,6 @@ class PyDoc:
 
                 final_comment += f": {', '.join(incomplete_docstring_components)}"
 
-        # TODO: add missing return or params to existing docstrings
-
-        # Add missing default value tags
-        if len(self.params_with_defaults) and iterate_docstring_lines != generated_docstring_lines:
-            for source_index, source_line in enumerate(self.source_code):
-                if source_line in iterate_docstring_lines \
-                        and source_line.strip().startswith(":param") \
-                        and "(default=" not in source_line:
-
-                    param = source_line.strip().replace(":param", "").split(":")[0].split(" ")[-1].strip()
-
-                    if param in self.params_with_defaults and self.params_with_defaults.get(param):
-                        default_tag = f" (default={self.params_with_defaults[param]})"
-
-                        self.source_code[source_index] += default_tag
-                        iterate_docstring_lines[iterate_docstring_lines.index(source_line)] += default_tag
-
-        # Insert newly synthesized lines
-        if len(generated_docstring_lines):
-            for docstring_line in generated_docstring_lines:
-                self.source_code.insert(index, docstring_line)
-
-            docstring_end_index = index + len(generated_docstring_lines)
-
         # Insert final comment
         if len(final_comment):
             if com_stripped.startswith(self.comment_token):
@@ -335,32 +468,63 @@ class PyDoc:
 
             else:
                 self.source_code.insert(previous_index,
-                                        f"{' ' * self.GetIndentSpaces(previous_line)}"
+                                        f"{' ' * self.GetIndentSpaceCount(previous_line)}"
                                         f"{formatted_line.lstrip()} {final_comment}")
+                index += 1
+                docstring_end_index += 1
 
-        # Insert line break after existing single-line docstring, if missing
-        if docstring_end_index == index:
-            if len(stripped) > 6 and startswith and endswith and len(self.source_code[index + 1].strip()):
-                self.source_code.insert(index + 1, "")
+        # Final adjustments for existing docstrings
+        if not len(generated_docstring_lines):
 
-        # Insert line break after existing multi-line docstring description, if missing
-        else:
-            for source_index, source_line in enumerate(self.source_code):
-                source_prev = self.source_code[source_index - 1].replace("'''", "").replace('"""', "").strip()
+            # Single-line docstrings
+            if docstring_end_index == index:
 
-                if source_line in iterate_docstring_lines and source_line.strip().startswith(":param") \
-                        and len(source_prev) and not source_prev.startswith(":"):
+                # Insert line break after docstring, if missing
+                if len(stripped) > 6 and startswith and endswith and len(self.source_code[index + 1].strip()):
+                    for num in self.iter_limit_range:
+                        if num < 1:
+                            continue
 
-                    self.source_code.insert(source_index, "")
+                        try:
+                            if self.source_code[index + (num - 1)] == line:
+                                self.source_code.insert(index + num, "")
+                                index += (num - 1)
+                                break
+                        except:
+                            pass
+
+                # Convert to multi-line
+                if docstring_end_index == index:
+                    current_indent = " " * self.GetIndentSpaceCount(line)
+                    self.source_code[index] = f'{current_indent}"""'
+                    self.source_code.insert(index, current_indent + stripped.replace('"""', ""))
+                    self.source_code.insert(index, f'{current_indent}"""')
+                    docstring_end_index += 2
+
+            # Multi-line docstrings
+            else:
+                # Insert line break after description, if missing
+                if len(self.source_code[index + 2]) and (index + 2) != docstring_end_index:
+                    self.source_code.insert(index + 2, "")
                     docstring_end_index += 1
-                    break
+
+                # Insert line break after docstring, if missing
+                if len(self.source_code[docstring_end_index + 1].strip()):
+                    self.source_code.insert(docstring_end_index + 1, "")
 
         return line
+
+    def reset_docstring_attrs(self, line_index):
+        self.block_return = ""
+        self.current_block_params = []
+        self.params_with_defaults = {}
+        self.current_docstring_index = line_index
+        self.current_block_end_index = line_index
 
     def synthesize_docstring(self, test=None):
         """
         Creates a list of newly synthesized docstring lines, in order.
-        :param str test: testing
+        :param test: testing
         :return: list of synthesized docstring lines
         """
 
