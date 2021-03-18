@@ -1976,7 +1976,7 @@ function DashColor(){
             "background": "#dcdbd9",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
-            "button_text": "#141518",
+            "button_text": "rgb(234 239 255)",
             "accent_good": "#e0ccb4",
             "accent_bad": "#f9663c",
         });
@@ -1984,7 +1984,7 @@ function DashColor(){
             "background": "#23262b",
             "background_raised": "#444b54",
             "button": "#5c9fb7",
-            "button_text": "#141518",
+            "button_text": "rgb(234 239 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
         });
@@ -3284,11 +3284,12 @@ function DashGuiButton(Label, Callback, Bind, color){
     }
     else {
         console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+        console.log(arguments.callee.caller);
+        // console.log(DashGuiButton.caller);
         color = color.Button;
     };
     this.color = color || Dash.Color.Light;
     this.color_set = this.color.Button; // Temporary
-    console.log(this.color_set);
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.click_highlight = $("<div></div>");
@@ -3299,6 +3300,21 @@ function DashGuiButton(Label, Callback, Bind, color){
     this.label_shown = null;
     this.last_right_label_text = null;
     this.is_selected = false;
+    // this.who = function() {
+    //   try {
+    //     throw new Error();
+    //   } catch (e) {
+    //     console.log(e);
+    //     // matches this function, the caller and the parent
+    //     const allMatches = e.stack.match(/(\w+)@|at (\w+) \(/g);
+    //     // match parent function name
+    //     const parentMatches = allMatches[2].match(/(\w+)@|at (\w+) \(/);
+    //     // return only name
+    //     return parentMatches[1] || parentMatches[2];
+    //   }
+    // }
+    // console.log(this.who());
+
     this.setup_styles = function(){
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
@@ -4385,7 +4401,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         (function(self, callback){
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
-            }, self, self.color.Button);
+            }, self, self.color);
             button.html.css("margin-top", Dash.Size.Padding);
             self.html.append(button.html);
         })(this, callback);
@@ -5550,7 +5566,7 @@ class DashGuiLayoutTabs {
         (function(self, index){
             content_data["button"] = new d.Gui.Button(label_text, function(){
                 self.LoadIndex(index);
-            }, self, self.color.Tab);
+            }, self, self.color);
         })(this, this.all_content.length);
         anchor_div = anchor_div || this.list_top;
         anchor_div.append(content_data["button"].html);

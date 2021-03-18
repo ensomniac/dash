@@ -366,7 +366,7 @@ class DashGuiLayoutTabs {
         (function(self, index){
             content_data["button"] = new d.Gui.Button(label_text, function(){
                 self.LoadIndex(index);
-            }, self, self.color.Tab);
+            }, self, self.color);
         })(this, this.all_content.length);
 
         anchor_div = anchor_div || this.list_top;

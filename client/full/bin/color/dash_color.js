@@ -102,7 +102,7 @@ function DashColor(){
             "background": "#dcdbd9",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
-            "button_text": "#141518",
+            "button_text": "rgb(234 239 255)",
             "accent_good": "#e0ccb4",
             "accent_bad": "#f9663c",
         });
@@ -111,7 +111,7 @@ function DashColor(){
             "background": "#23262b",
             "background_raised": "#444b54",
             "button": "#5c9fb7",
-            "button_text": "#141518",
+            "button_text": "rgb(234 239 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
         });

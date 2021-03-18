@@ -77,7 +77,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
-            }, self, self.color.Button);
+            }, self, self.color);
 
             button.html.css("margin-top", Dash.Size.Padding);
 

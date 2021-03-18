@@ -13,13 +13,13 @@ function DashGuiButton(Label, Callback, Bind, color){
     }
     else {
         console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+        console.log(arguments.callee.caller);
+        // console.log(DashGuiButton.caller);
         color = color.Button;
     };
 
     this.color = color || Dash.Color.Light;
     this.color_set = this.color.Button; // Temporary
-
-    console.log(this.color_set);
 
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -31,6 +31,23 @@ function DashGuiButton(Label, Callback, Bind, color){
     this.label_shown = null;
     this.last_right_label_text = null;
     this.is_selected = false;
+
+    // this.who = function() {
+    //   try {
+    //     throw new Error();
+    //   } catch (e) {
+    //     console.log(e);
+    //     // matches this function, the caller and the parent
+    //     const allMatches = e.stack.match(/(\w+)@|at (\w+) \(/g);
+    //     // match parent function name
+    //     const parentMatches = allMatches[2].match(/(\w+)@|at (\w+) \(/);
+    //     // return only name
+    //     return parentMatches[1] || parentMatches[2];
+    //   }
+    // }
+
+    // console.log(this.who());
+
 
     this.setup_styles = function(){
 
