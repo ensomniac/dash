@@ -164,7 +164,7 @@ class Jobs:
             error = {"error": f"Job ID {job_id} does not exist"}
 
         return job_id, job_root, error
-def testing(who, what):
+def testing(who, what=0):
     '''this is a test docstring for testing'''
     for num in [1, 2, 3]:
         if num == 2: continue
@@ -173,7 +173,7 @@ def testing(who, what):
 
 
 # this is a custom comment
-def test(when):  # this is another custom comment
+def test(when):  # this is another custom comment 
     """
     this is a test docstring for test
     """

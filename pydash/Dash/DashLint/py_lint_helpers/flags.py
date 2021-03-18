@@ -47,9 +47,10 @@ class Flags:
                 line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
             # This should always be the last line in this loop
-            self.AddDocstringsAndFlags(index, line)
-
-            # TODO: (maybe) Convert 'line' to 'self' variable and create func to set line and set line in self.source_code
+            try:
+                self.AddDocstringsAndFlags(index, line)
+            except IndexError:  # TODO: This is most likely a temporary patch and should be replaced deeper in the code
+                pass
 
         self.add_total_line_length_flag()
 
