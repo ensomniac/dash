@@ -5,7 +5,6 @@ import json
 import os
 import traceback
 
-# from Dash.Paths import server_paths
 from Dash import LocalStorage
 from Dash.Utils import Utils
 from Dash import PackageContext as Context
@@ -279,6 +278,9 @@ class Users:
 
         return return_data
 
+    def GetAll(self):
+        return self.get_team()
+
     def GetUserDataPath(self, user_email):
         email = user_email.lower().strip()
 
@@ -445,5 +447,12 @@ def Get(user_email_to_get, admin_user_data=None):
     admin_user_data = admin_user_data or DashUtils.Global.RequestUser
     users = Users(DashUtils.Global.RequestData, dash_context=ctx)
     return users.GetUserData(user_email_to_get)
+
+def GetAll():
+    from Dash.Utils import Utils as DashUtils
+    users = Users(DashUtils.Global.RequestData, dash_context=DashUtils.Global.Context)
+    return users.GetAll()
+
+
 
 

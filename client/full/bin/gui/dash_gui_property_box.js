@@ -245,14 +245,23 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         (function(self, row_input, row_details){
 
             row_input.Request(url, params, function(response){
-                self.on_server_response(response, row_details);
+                self.on_server_response(response, row_details, row_input);
             }, self);
 
         })(this, row_input, row_details);
 
     };
 
-    this.on_server_response = function(response, row_details){
+    this.on_server_response = function(response, row_details, row_input){
+        if (!Dash.ValidateResponse(response)) {
+
+            if (row_input) {
+                row_input.SetInputValidity(false);
+            };
+
+            return;
+        };
+
         console.log("SERVER RESPONSE");
         console.log(response);
     };

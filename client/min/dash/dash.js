@@ -1697,34 +1697,9 @@ function Dash(){
     this.Utils = new DashUtils();
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
-    //window.history.pushState({"html":"html","pageTitle":"some page"},"title", "https://...");
-
-    // window.RowHeight = 32;
-    // window.ColumnWidth = window.RowHeight*5;
-    // window.Padding = 10;
-    // window.BarWidth = 6;
-    // window.ButtonColor = "#4d505f";
-    // window.ButtonBarBackingColor = "#3b3c42";
-    // window.ButtonHoverColor = "#565e83";
-    // window.DarkPanelColor = "#202229";
-    // window.DarkPanelColorAlt = "#25282f";
-    // window.LightestBackgroundColor = "rgb(240, 240, 240)";
-    // window.LightBackgroundColor = "rgb(230, 230, 230)";
-    // window.GrayBackgroundColor = "rgb(200, 200, 200)";
-    // window.GoodColor = "#95ae6c";
-    // window.GoodColorBlue = "#a8b6bd";
-    // window.GoodColorYellow = "rgb(255, 230, 141)";
-    // window.GoodColorPurple = "#8f79b1";
-    // window.BadColor = "#dabd62";
-    // window.ErrorColor = "#c56645";
-    // window.TextColor = "rgba(0, 0, 0, 0.9)";
-    // window.ContainerColor = "#ebebeb";
-    // window.ThinFontSize = "90%";
-    // window.MindtwinStripHeight = window.RowHeight;
-    // window.MindtwinStripWidth = window.ColumnWidth*1.25;
     this.width = 0;
     this.height = 0;
-    window.FormatTime = function(server_iso_string){
+    this.FormatTime = function(server_iso_string){
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
         date = date.setHours(date.getHours()-server_offset_hours);
@@ -4047,10 +4022,12 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
+    this.invalid_input_highlight = $("<div></div>");
     this.save_button_visible = false;
     this.autosave_timeout = null;
     this.color = color || Dash.Color.Light;
     this.setup_styles = function(){
+        this.html.append(this.invalid_input_highlight);
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
         this.label = $("<div>" + this.label_text + ": </div>");
@@ -4061,20 +4038,29 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.input.OnChange(this.input_changed, this);
         this.html.append(this.label);
         this.html.append(this.input.html);
-        var highlight_color = d.Color.Primary;
+        var highlight_color = this.color.AccentGood;
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
             this.create_save_button();
         }
         else {
             this.input.SetLocked(true);
-            highlight_color = "orange";
+            highlight_color = this.color.AccentBad;
         };
         this.html.css({
             "cursor": "pointer",
             "height": Dash.Size.RowHeight,
             "display": "flex",
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
+        });
+        this.invalid_input_highlight.css({
+            "position": "absolute",
+            "left": -d.Size.Padding,
+            "top": 0,
+            "bottom": 0,
+            "width": Dash.Size.Padding*0.5,
+            "background": this.color.AccentBad,
+            "opacity": 0,
         });
         this.highlight.css({
             "position": "absolute",
@@ -4142,6 +4128,16 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             // "opacity": 0,
         });
     };
+    this.SetInputValidity = function(input_is_valid){
+        console.log("input_is_valid: " + input_is_valid);
+        console.log(this.color);
+        if (input_is_valid) {
+            this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
+        }
+        else {
+            this.invalid_input_highlight.stop().animate({"opacity": 1}, 100);
+        };
+    };
     this.FlashSave = function(){
         (function(self){
             self.flash_save.stop().animate({"opacity": 1}, 100, function(){
@@ -4188,7 +4184,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
                 self.on_label_clicked();
             });
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 0.3}, 50);
+                self.highlight.stop().animate({"opacity": 0.5}, 50);
             });
             self.html.mouseleave(function(){
                 self.highlight.stop().animate({"opacity": 0}, 250);
@@ -4325,6 +4321,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
     this.on_submit = function(){
         this.highlight.stop().animate({"opacity": 0}, 100);
+        this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         var response_callback = this.on_click.bind(this.on_click_bind);
         response_callback(this);
     };
@@ -4511,11 +4508,17 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         };
         (function(self, row_input, row_details){
             row_input.Request(url, params, function(response){
-                self.on_server_response(response, row_details);
+                self.on_server_response(response, row_details, row_input);
             }, self);
         })(this, row_input, row_details);
     };
-    this.on_server_response = function(response, row_details){
+    this.on_server_response = function(response, row_details, row_input){
+        if (!Dash.ValidateResponse(response)) {
+            if (row_input) {
+                row_input.SetInputValidity(false);
+            };
+            return;
+        };
         console.log("SERVER RESPONSE");
         console.log(response);
     };

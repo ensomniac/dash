@@ -14,6 +14,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
+    this.invalid_input_highlight = $("<div></div>");
     this.save_button_visible = false;
     this.autosave_timeout = null;
 
@@ -21,6 +22,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     this.setup_styles = function(){
 
+        this.html.append(this.invalid_input_highlight);
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
         this.label = $("<div>" + this.label_text + ": </div>");
@@ -34,14 +36,14 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.html.append(this.label);
         this.html.append(this.input.html);
 
-        var highlight_color = d.Color.Primary;
+        var highlight_color = this.color.AccentGood;
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
             this.create_save_button();
         }
         else {
             this.input.SetLocked(true);
-            highlight_color = "orange";
+            highlight_color = this.color.AccentBad;
         };
 
         this.html.css({
@@ -49,6 +51,16 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "height": Dash.Size.RowHeight,
             "display": "flex",
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
+        });
+
+        this.invalid_input_highlight.css({
+            "position": "absolute",
+            "left": -d.Size.Padding,
+            "top": 0,
+            "bottom": 0,
+            "width": Dash.Size.Padding*0.5,
+            "background": this.color.AccentBad,
+            "opacity": 0,
         });
 
         this.highlight.css({
@@ -129,6 +141,19 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     };
 
+    this.SetInputValidity = function(input_is_valid){
+        console.log("input_is_valid: " + input_is_valid);
+        console.log(this.color);
+
+        if (input_is_valid) {
+            this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
+        }
+        else {
+            this.invalid_input_highlight.stop().animate({"opacity": 1}, 100);
+        };
+
+    };
+
     this.FlashSave = function(){
 
         (function(self){
@@ -198,7 +223,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             });
 
             self.html.mouseenter(function(){
-                self.highlight.stop().animate({"opacity": 0.3}, 50);
+                self.highlight.stop().animate({"opacity": 0.5}, 50);
             });
 
             self.html.mouseleave(function(){
@@ -387,6 +412,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     this.on_submit = function(){
         this.highlight.stop().animate({"opacity": 0}, 100);
+        this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         var response_callback = this.on_click.bind(this.on_click_bind);
         response_callback(this);
     };

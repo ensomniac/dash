@@ -192,5 +192,87 @@ class __Utils:
 
         return self._usr_token
 
+    def FormatTime(self, datetime_object, format=1):
+        import datetime
+
+        time_markup = datetime_object.strftime('%I:%M %p').lower()
+        if time_markup.startswith("0"): time_markup = time_markup[1:]
+
+        day = int(datetime_object.strftime('%d'))
+
+        if 4 <= day <= 20 or 24 <= day <= 30:
+            suffix = "th"
+        else:
+            suffix = ["st", "nd", "rd"][day % 10 - 1]
+
+        day_string = str(day) + suffix
+
+        date_markup = datetime_object.strftime('%A, %B ' + day_string + ' %Y')
+
+        if format == 0:
+            # Display just the date in a human readable format
+            formated_time = date_markup
+        elif format == 1:
+            # Display the time like this: 4/24/11 at 12:15pm
+            formated_time = datetime_object.strftime('%m/%d/%y at %I:%M %p')
+        elif format == 2:
+            # Format time like this: Sunday, July 17th 2011 at 12:15pm
+            day = int(datetime_object.strftime('%d'))
+            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
+            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formated_time = datetime_object.strftime('%A, %B ' + str(day) + suffix + ' %Y at %I:%M %p')
+        elif format == 3:
+            # Display the time like this: 4/24/2017
+            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day) + "/" + str(datetime_object.year)
+        elif format == 4:
+            # Display the time like this: 12:15pm
+            formated_time = datetime_object.strftime('%I:%M %p')
+            if formated_time[0] == "0": formated_time = formated_time[1:]
+        elif format == 5:
+            # Display the time like this: 12:15:01pm
+            formated_time = datetime_object.strftime('%I:%M:%S %p')
+        elif format == 6:
+            # Format time like this: July 17th 2011
+            day = int(datetime_object.strftime('%d'))
+            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
+            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formated_time = datetime_object.strftime('%B ' + str(day) + suffix + ' %Y')
+        elif format == 7:
+            # Display the time like this: 4_24_11
+            formated_time = datetime_object.strftime('%m_%d_%y')
+        elif format == 8:
+            # Format time like this: Monday, July 17th
+            day = int(datetime_object.strftime('%d'))
+            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
+            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formated_time = datetime_object.strftime('%A %B ' + str(day) + suffix)
+        elif format == 9:
+            # Format time like this: 12 days ago / 2 months ago
+            timesince = (datetime.datetime.now()-datetime_object)
+
+            if timesince.days == 0:
+                formated_time = "Today"
+            elif timesince.days == 1:
+                formated_time = "Yesterday"
+            elif timesince.days <= 30:
+                formated_time = str(timesince.days) + " days ago"
+            elif timesince.days <= 45:
+                formated_time = "A month ago"
+            elif timesince.days <= 75:
+                formated_time = str(timesince.days) + " days ago"
+            else:
+                # More than 75 days ago
+                formated_time = str(int(round(timesince.days/30.0))) + " months ago"
+        elif format == 10:
+            # Display the time like this: 4/24
+            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day)
+        else:
+            # Display the date and time in a human readable format
+            formated_time = date_markup + " at " + time_markup
+
+        return formated_time
+
+
+
 utils = __Utils()
 Utils = utils # Migrating away from utils

@@ -26,8 +26,11 @@ class DashLocalStorage:
         # Get existing data and modify
         data = self.GetData(obj_id)
 
-        for key in additional_data:
-            data[key] = additional_data[key]
+        try:
+            for key in additional_data:
+                data[key] = additional_data[key]
+        except:
+            raise Exception("--> " + str(type(data)) + "<--")
 
         data["modified_by"] = Utils.Global.RequestUser["email"]
         data["modified_on"] = datetime.datetime.now().isoformat()
@@ -60,8 +63,9 @@ class DashLocalStorage:
         if not os.path.exists(self.get_store_root(record_id)):
             os.makedirs(self.get_store_root(record_id))
 
-        json_data = json.dumps(data)
-        open(self.get_record_path(record_id), "w").write(json_data)
+        self.Write(self.get_record_path(record_id), data)
+        # json_data = json.dumps(data)
+        # open(self.get_record_path(record_id), "w").write(json_data)
 
         return data
 
@@ -143,12 +147,6 @@ class DashLocalStorage:
 
         return record_path
 
-    def WriteData(self, obj_id, data):
-        import json
-        json_str = json.dumps(data)
-        open(self.get_record_path(obj_id), "w").write(json_str)
-        return data
-
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         import json
 
@@ -189,8 +187,24 @@ class DashLocalStorage:
         result["exists_now"] = os.path.exists(record_path)
         return result
 
+    def WriteData(self, obj_id, data):
+        import json
+        self.Write(self.get_record_path(obj_id), data)
+        return data
+
+    def Write(self, full_path, data):
+        import json
+        json_str = json.dumps(data)
+        open(full_path, "w").write(json_str)
+        return data
+
     def Read(self, full_path):
+        import json
         return json.loads(open(full_path, "r").read())
+
+
+
+
 
 def New(dash_context, store_path, additional_data={}, obj_id=None):
     return DashLocalStorage(dash_context, store_path).New(additional_data, obj_id=obj_id)
@@ -224,3 +238,6 @@ def GetRecordPath(dash_context, store_path, obj_id):
 
 def Read(full_path):
     return DashLocalStorage(None, None).Read(full_path)
+
+def Write(full_path, data):
+    return DashLocalStorage(None, None).Write(full_path, data)

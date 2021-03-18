@@ -22,39 +22,10 @@ function Dash(){
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
 
-    //window.history.pushState({"html":"html","pageTitle":"some page"},"title", "https://...");
-
-
-
-    // window.RowHeight = 32;
-    // window.ColumnWidth = window.RowHeight*5;
-    // window.Padding = 10;
-    // window.BarWidth = 6;
-    // window.ButtonColor = "#4d505f";
-    // window.ButtonBarBackingColor = "#3b3c42";
-    // window.ButtonHoverColor = "#565e83";
-    // window.DarkPanelColor = "#202229";
-    // window.DarkPanelColorAlt = "#25282f";
-    // window.LightestBackgroundColor = "rgb(240, 240, 240)";
-    // window.LightBackgroundColor = "rgb(230, 230, 230)";
-    // window.GrayBackgroundColor = "rgb(200, 200, 200)";
-    // window.GoodColor = "#95ae6c";
-    // window.GoodColorBlue = "#a8b6bd";
-    // window.GoodColorYellow = "rgb(255, 230, 141)";
-    // window.GoodColorPurple = "#8f79b1";
-    // window.BadColor = "#dabd62";
-    // window.ErrorColor = "#c56645";
-    // window.TextColor = "rgba(0, 0, 0, 0.9)";
-    // window.ContainerColor = "#ebebeb";
-    // window.ThinFontSize = "90%";
-
-    // window.MindtwinStripHeight = window.RowHeight;
-    // window.MindtwinStripWidth = window.ColumnWidth*1.25;
-
     this.width = 0;
     this.height = 0;
 
-    window.FormatTime = function(server_iso_string){
+    this.FormatTime = function(server_iso_string){
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
         date = date.setHours(date.getHours()-server_offset_hours);
