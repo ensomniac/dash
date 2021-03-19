@@ -20,7 +20,7 @@ class Flags:
         self.line_length_flag_suffix = "(excluding comments)"
 
         # These are a bit arbitrary/undecided for now
-        self.total_line_length_max = 600
+        self.total_line_length_max = 1000
         self.individual_line_length_max = 120
 
         # Any comment string variable names like these MUST end in '_comment'
@@ -47,10 +47,8 @@ class Flags:
                 line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
             # This should always be the last line in this loop
-            try:
-                self.AddDocstringsAndFlags(index, line)
-            except IndexError:  # TODO: This is most likely a temporary patch and should be replaced deeper in the code
-                pass
+            # line = self.AddDocstringsAndFlags(index, line)
+            self.AddDocstringsAndFlags(index, line)
 
         self.add_total_line_length_flag()
 
