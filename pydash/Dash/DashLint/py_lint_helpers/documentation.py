@@ -661,6 +661,13 @@ class PyDoc:
         except:
             pass
 
+        if value.count(".") == 1 and not value.startswith(".") and not value.endswith("."):
+            try:
+                float(value)
+                return "float"
+            except:
+                pass
+
         if (value.startswith('"') or value.startswith("'")) \
                 and (value.endswith('"') or value.endswith("'")):
             param_type = "str"
