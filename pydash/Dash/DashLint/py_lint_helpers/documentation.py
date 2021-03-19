@@ -13,6 +13,7 @@ from typing import Callable
 class PyDoc:
     source_code: list
     comment_token: str
+    comment_prefix: str
     iter_limit_range: range
     GetIndentSpaceCount: Callable
     GetFormattedCommentedLine: Callable
@@ -36,12 +37,13 @@ class PyDoc:
         self.block_is_function = False
         self.synthesized_docstring = []
         self.missing_ds_components = []
-        self.current_docstring_index = 0
         self.current_block_end_index = 0
         self.incomplete_ds_components = []
+        self.add_multiple_return_possibilities_tag = False
         self.doc_auto_gen_tag = "(DashLint auto-generated docstring)"
+        self.multiple_return_possibilities_tag = "(more than one return possibility)"
 
-        # Any comment string variable names like these MUST end in '_comment'  
+        # Any comment string variable names like these MUST end in '_comment'
         self.incomplete_docstring_comment = "TODO: Finish Docstring"
 
     # noinspection PyUnusedLocal
@@ -75,6 +77,7 @@ class PyDoc:
         line, stripped = self.conform_docstring_quotation_format(line, index)
 
         self.reset_docstring_attrs(index)
+        self.conform_docstring_return_syntax()
 
         self.ds_ends_with = stripped.endswith("'''") or stripped.endswith('"""')
         self.ds_starts_with = stripped.startswith("'''") or stripped.startswith('"""')
@@ -104,7 +107,7 @@ class PyDoc:
         else:
             formatted_line = self.GetFormattedCommentedLine("", without_original=True)
 
-        self.set_current_block_params(index, stripped, prev_stripped)
+        self.get_current_block_params(index, stripped, prev_stripped)
 
         self.ds_end_index = index
 
@@ -113,16 +116,16 @@ class PyDoc:
                 or (len(stripped) > 3 and self.ds_starts_with and not self.ds_ends_with):
             self.get_docstring_end_index(index)
 
-        self.set_current_block_end_index(index)
-        self.set_current_block_return_value(index)
-        self.get_missing_docstring(line)
+        self.get_current_block_end_index(index)
+        self.get_current_block_return_value(index)
+        self.get_missing_docstring(line, index)
         self.determine_missing_incomplete_components(index)
         self.filter_out_generated_missing_incomplete_components()
 
         if len(self.params_with_defaults) and self.iterate_ds_lines != self.generated_ds_lines:
-            self.add_missing_default_value_tags()
+            self.add_missing_default_value_tags_to_existing_docstring()
 
-        if len(self.missing_ds_components) and not len(self.generated_ds_lines):
+        if len(self.missing_ds_components) and not len(self.generated_ds_lines):  # TODO: need to add default tag too
             self.insert_missing_components_to_existing_docstring(line, index)
 
         self.insert_newly_synthesized_docstring_lines(index)
@@ -141,10 +144,30 @@ class PyDoc:
                 self.ds_end_index += 1
 
         if not len(self.generated_ds_lines):
-            self.make_final_adjustments_to_existing_docstrings(index, line)
-            # index = self.make_final_adjustments_to_existing_docstrings(index, line)
+            index = self.make_final_adjustments_to_existing_docstrings(index, line)
+
+        self.make_final_adjustments_to_all_docstrings(index)
 
         return line
+
+    def make_final_adjustments_to_all_docstrings(self, index):
+        # Add multiple returns possibilities tag
+        if self.add_multiple_return_possibilities_tag:
+            for num in self.iter_limit_range:
+                prev_index = self.ds_end_index - num
+
+                if prev_index < index:
+                    break
+
+                if self.source_code[prev_index].strip().startswith(":return:"):
+                    self.source_code[prev_index] = f"{self.source_code[self.ds_end_index - num]} " \
+                                                                f"{self.multiple_return_possibilities_tag}"
+                    break
+
+    def conform_docstring_return_syntax(self):
+        for source_index, source_line in enumerate(self.source_code):
+            if source_line.strip().startswith(":returns:"):
+                self.source_code[source_index] = source_line.replace(":returns:", ":return:")
 
     def insert_newly_synthesized_docstring_lines(self, index):
         if len(self.generated_ds_lines):
@@ -154,30 +177,35 @@ class PyDoc:
             self.ds_end_index = index + len(self.generated_ds_lines)
 
     def compose_final_comment(self):
-        if len(self.missing_ds_components) or len(self.incomplete_ds_components):
-            self.final_comment = f"{self.incomplete_docstring_comment} - "
+        if not len(self.missing_ds_components) and not len(self.incomplete_ds_components):
+            return
 
-            if len(self.missing_ds_components):
-                self.final_comment += f"Missing: {', '.join(self.missing_ds_components)}"
+        self.final_comment = f"{self.incomplete_docstring_comment} - "
 
-            if len(self.incomplete_ds_components):
-                if "Missing: " in self.final_comment:
-                    self.final_comment += " | "
+        if len(self.missing_ds_components):
+            self.final_comment += f"Missing: {', '.join(self.missing_ds_components)}"
 
-                self.final_comment += "Incomplete"
+        if len(self.incomplete_ds_components):
+            if "Missing: " in self.final_comment:
+                self.final_comment += " | "
 
-                if "description" not in self.incomplete_ds_components \
-                        and "return" not in self.incomplete_ds_components:
-                    self.final_comment += " (needs type and/or desc)"
+            self.final_comment += "Incomplete"
 
-                self.final_comment += f": {', '.join(self.incomplete_ds_components)}"
+            if "description" not in self.incomplete_ds_components \
+                    and "return" not in self.incomplete_ds_components:
+                self.final_comment += " (needs type and/or desc)"
+
+            self.final_comment += f": {', '.join(self.incomplete_ds_components)}"
 
     def make_final_adjustments_to_existing_docstrings(self, index, line):
+        line_indent = " " * self.GetIndentSpaceCount(line)
+        strip = line.strip()
+
         # Single-line docstrings
         if self.ds_end_index == index:
 
             # Insert line break after docstring, if missing
-            if len(line.strip()) > 6 and self.ds_starts_with \
+            if len(strip) > 6 and self.ds_starts_with \
                     and self.ds_ends_with and len(self.source_code[index + 1].strip()):
                 for num in self.iter_limit_range:
                     if num < 1:
@@ -193,22 +221,33 @@ class PyDoc:
 
             # Convert to multi-line
             if self.ds_end_index == index:
-                current_indent = " " * self.GetIndentSpaceCount(line)
-                self.source_code[index] = f'{current_indent}"""'
-                self.source_code.insert(index, current_indent + line.strip().replace('"""', ""))
-                self.source_code.insert(index, f'{current_indent}"""')
+                self.source_code[index] = f'{line_indent}"""'
+                self.source_code.insert(index, line_indent + strip.replace('"""', ""))
+                self.source_code.insert(index, f'{line_indent}"""')
                 self.ds_end_index += 2
 
         # Multi-line docstrings
         else:
+            # Drop description if on same line as starting quotes
+            if strip.startswith('"""') and len(strip) > 3:
+                self.source_code[index] = f"{line_indent}{strip[:3]}"
+                self.source_code.insert(index + 1, f"{line_indent}{strip[3:].strip()}")
+                self.ds_end_index += 1
+
             # Insert line break after description, if missing
             if len(self.source_code[index + 2]) and (index + 2) != self.ds_end_index:
                 self.source_code.insert(index + 2, "")
                 self.ds_end_index += 1
 
+            # Remove line break inside end of docstring, if present
+            if not len(self.source_code[self.ds_end_index - 1].strip()):
+                self.source_code.pop(self.ds_end_index - 1)
+                self.ds_end_index -= 1
+
             # Insert line break after docstring, if missing
             if len(self.source_code[self.ds_end_index + 1].strip()):
                 self.source_code.insert(self.ds_end_index + 1, "")
+                # Don't +1 to self.ds_end_index here!
 
         return index
 
@@ -225,6 +264,7 @@ class PyDoc:
     def determine_missing_incomplete_components(self, index):
         includes_desc = False
         includes_return = False
+        includes_rtype = False
 
         if len(self.generated_ds_lines):
             self.iterate_ds_lines = self.generated_ds_lines
@@ -244,13 +284,19 @@ class PyDoc:
                 if not len(cleaned_line.split(":return:")[1].strip()):
                     self.incomplete_ds_components.append("return")
 
+            if len(self.block_return) and ":rtype:" in cleaned_line:
+                includes_rtype = True
+
+                if not len(cleaned_line.split(":rtype:")[1].strip()):
+                    self.incomplete_ds_components.append("rtype")
+
             if cleaned_line.startswith(":param"):
                 for param in self.current_block_params:
                     if f"{param}:" in cleaned_line and param not in self.included_ds_params:
                         self.included_ds_params.append(param)
                         split = cleaned_line.split(f"{param}:")
 
-                        # Param missing description or missing type declaration
+                        # Param missing description or missing type declaration 
                         if not len(split[1].strip()) \
                                 or ("(default=" in split[1].strip()
                                     and not len(split[1].split("(default=")[0].strip())) \
@@ -267,8 +313,11 @@ class PyDoc:
         for param in self.missing_ds_params:
             self.missing_ds_components.append(param)
 
-        if len(self.block_return) and not includes_return:
-            self.missing_ds_components.append("return")
+        if len(self.block_return):
+            if not includes_return:
+                self.missing_ds_components.append("return")
+            if not includes_rtype:
+                self.missing_ds_components.append("rtype")
 
     def reset_docstring_attrs(self, line_index):
         self.block_return = ""
@@ -288,10 +337,10 @@ class PyDoc:
         self.synthesized_docstring = []
         self.missing_ds_components = []
         self.incomplete_ds_components = []
-        self.current_docstring_index = line_index
         self.current_block_end_index = line_index
+        self.add_multiple_return_possibilities_tag = False
 
-    def set_current_block_params(self, line_index, strip_line, prev_strip_line):
+    def get_current_block_params(self, line_index, strip_line, prev_strip_line):
         if self.block_is_function:
             self.current_block_params = prev_strip_line.split("(")[1].split(")")[0].split(",")
 
@@ -339,7 +388,7 @@ class PyDoc:
         if self.ds_end_index == line_index:
             self.index_ds_buffer = 2
 
-    def set_current_block_end_index(self, line_index):
+    def get_current_block_end_index(self, line_index):
         for num in self.iter_limit_range:
             if num < 1:
                 continue
@@ -359,68 +408,92 @@ class PyDoc:
             if len(strip):
                 self.current_block_end_index = next_index
 
-    def set_current_block_return_value(self, line_index):
+    def get_current_block_return_value(self, line_index):
+        return_statements = 0
+        last_return_found = False
+
         for block_line in reversed(self.source_code[line_index:(self.current_block_end_index + 1)]):
-            if block_line.strip().startswith("return") and len(block_line.split("return")[1].strip()):
+
+            # Ryan - the space in "return " below is intentional, please don't change
+            # If it is triggering an error, please give me the details so I
+            # can debug that fringe case and rework this if needed, thanks!
+            if block_line.strip().startswith("return ") and len(block_line.split("return ")[1].strip()):
+                return_statements += 1
+
+                if last_return_found:
+                    continue
                 try:
                     self.block_return = block_line.split("return ")[1].strip()
+
+                    comment_stub = f"{self.comment_token} {self.comment_prefix}"
+
+                    if comment_stub in self.block_return:
+                        self.block_return = self.block_return.split(comment_stub)[0].rstrip()
+
+                    last_return_found = True
                 except:
                     pass
-                break
 
-    def get_missing_docstring(self, line):
+        if last_return_found and len(self.block_return) and return_statements > 1:
+            # self.block_return += f" {self.multiple_return_possibilities_tag}"
+            self.add_multiple_return_possibilities_tag = True
+
+    def get_missing_docstring(self, line, line_index):
         if not self.ds_starts_with:
             indent = " " * self.GetIndentSpaceCount(line)
 
-            for docstring_line in reversed(self.synthesize_docstring()):
+            for docstring_line in reversed(self.synthesize_docstring(line_index)):
                 if len(docstring_line):
                     self.generated_ds_lines.append(f"{indent}{docstring_line}")
                 else:
                     self.generated_ds_lines.append(docstring_line)
 
     def filter_out_generated_missing_incomplete_components(self):
-        if len(self.generated_ds_lines):
-            for generated_line in self.generated_ds_lines:
-                default = ": (default="
-                gen_strip = generated_line.strip()
+        if not len(self.generated_ds_lines):
+            self.prioritize_desc_return_in_final_comment_list()
+            return
 
-                if default in generated_line and gen_strip.endswith(")"):
-                    param = generated_line.split(default)[0].split(" ")[-1].strip()
+        for generated_line in self.generated_ds_lines:
+            default = ": (default="
+            gen_strip = generated_line.strip()
 
-                    if param not in self.incomplete_ds_components:
-                        self.incomplete_ds_components.append(param)
+            if default in generated_line and gen_strip.endswith(")"):
+                param = generated_line.split(default)[0].split(" ")[-1].strip()
 
-                for component in self.missing_ds_components:
-                    if component == "return" and gen_strip.startswith(":return"):
-                        self.missing_ds_components.remove("return")
+                if param not in self.incomplete_ds_components:
+                    self.incomplete_ds_components.append(param)
 
-                        if gen_strip == ":return:" and "return" not in self.incomplete_ds_components:
-                            self.incomplete_ds_components.append("return")
+            for component in self.missing_ds_components:
+                if component == "return" and gen_strip.startswith(":return"):
+                    self.missing_ds_components.remove("return")
 
-                    elif component == "description" and gen_strip == self.doc_auto_gen_tag:
-                        self.missing_ds_components.remove("description")
+                    if gen_strip == ":return:" and "return" not in self.incomplete_ds_components:
+                        self.incomplete_ds_components.append("return")
 
-                        if "description" not in self.incomplete_ds_components:
-                            self.incomplete_ds_components.append("description")
+                elif component == "description" and gen_strip == self.doc_auto_gen_tag:
+                    self.missing_ds_components.remove("description")
 
-                    elif f"{component}:" in generated_line:
-                        call = f":param {component}:"
+                    if "description" not in self.incomplete_ds_components:
+                        self.incomplete_ds_components.append("description")
 
-                        self.missing_ds_components.remove(component)
+                elif f"{component}:" in generated_line:
+                    call = f":param {component}:"
 
-                        if (call in generated_line or not len(generated_line.split(call)[-1].strip())) \
-                                and component not in self.incomplete_ds_components:
-                            self.incomplete_ds_components.append(component)
+                    self.missing_ds_components.remove(component)
+
+                    if (call in generated_line or not len(generated_line.split(call)[-1].strip())) \
+                            and component not in self.incomplete_ds_components:
+                        self.incomplete_ds_components.append(component)
 
         self.prioritize_desc_return_in_final_comment_list()
 
     def prioritize_desc_return_in_final_comment_list(self):
         for component_list in [self.missing_ds_components, self.incomplete_ds_components]:
-            for component_str in ["return", "description"]:
+            for component_str in ["rtype", "return", "description"]:
                 if component_str in component_list:
                     component_list.insert(0, component_list.pop(component_list.index(component_str)))
 
-    def add_missing_default_value_tags(self):
+    def add_missing_default_value_tags_to_existing_docstring(self):
         for source_index, source_line in enumerate(self.source_code):
             if source_line in self.iterate_ds_lines \
                     and source_line.strip().startswith(":param") \
@@ -436,47 +509,82 @@ class PyDoc:
 
     def insert_missing_components_to_existing_docstring(self, line, index):
         ds_indent = " " * self.GetIndentSpaceCount(line)
-        missing_ds_components_adjusted = [c for c in self.missing_ds_components if c != "description"]
+        missing_ds_comps_adj = [c for c in self.missing_ds_components if c != "description"]
 
-        if "return" in missing_ds_components_adjusted:
-            missing_ds_components_adjusted.append(missing_ds_components_adjusted
-                                                  .pop(missing_ds_components_adjusted.index("return")))
-        if len(missing_ds_components_adjusted):
+        for keyword in ["return", "rtype"]:
+            if keyword in missing_ds_comps_adj:
+                missing_ds_comps_adj.append(missing_ds_comps_adj.pop(missing_ds_comps_adj.index(keyword)))
 
-            # If single-line, convert it to multi-line
-            if self.ds_end_index == index:
-                self.source_code[index] = f'{ds_indent}"""'
-                self.source_code.insert(index, ds_indent + line.strip().replace('"""', ""))
-                self.source_code.insert(index, f'{ds_indent}"""')
-                self.ds_end_index += 2
+        if not len(missing_ds_comps_adj):
+            return
 
-            if len(self.source_code[self.ds_end_index - 1].strip()):
-                self.source_code.insert(self.ds_end_index, "")
-                self.ds_end_index += 1
+        self.convert_single_line_docstring_to_multi_line(line, index, ds_indent)
 
-            for m_component in missing_ds_components_adjusted:
-                incomplete = True
+        previous_ds_line = self.source_code[self.ds_end_index - 1].strip()
 
-                if m_component == "return":
-                    if len(self.block_return):
-                        new_line = f"{ds_indent}:return: {self.block_return}"
-                        incomplete = False
-                    else:
-                        new_line = f"{ds_indent}:return:"
+        if len(previous_ds_line) and not previous_ds_line.startswith(":"):
+            self.source_code.insert(self.ds_end_index, "")
+            self.ds_end_index += 1
+
+        for m_component in missing_ds_comps_adj:
+            incomplete = True
+
+            if m_component == "return":
+                if len(self.block_return):
+                    new_line = f"{ds_indent}:return: {self.block_return}"
+                    incomplete = False
                 else:
-                    new_line = f"{ds_indent}:param {m_component}:"
+                    new_line = f"{ds_indent}:return:"
 
+            elif m_component == "rtype":
+                param_type = self.attempt_to_determine_type(self.block_return, index, self.current_block_end_index)
+
+                if len(param_type):
+                    new_line = f"{ds_indent}:rtype: {param_type}"
+                    incomplete = False
+                else:
+                    new_line = f"{ds_indent}:rtype:"
+
+            else:
+                new_line = f"{ds_indent}:param {m_component}:"
+
+            if m_component in self.params_with_defaults and self.params_with_defaults.get(m_component):
+                new_line += f" (default={self.params_with_defaults[m_component]})"
+
+            if ":param" in new_line:
+                for num in self.iter_limit_range:
+                    if num < 1:
+                        continue
+
+                    prev_line = self.source_code[self.ds_end_index - num]
+
+                    if ":return:" in prev_line or ":rtype:" in prev_line:
+                        continue
+
+                    self.source_code.insert((self.ds_end_index - num) + 1, new_line)
+                    break
+            else:
+                # Might need a similar thing as above at some point to ensure return and rtype are inserted in order
                 self.source_code.insert(self.ds_end_index, new_line)
-                self.ds_end_index += 1
-                self.missing_ds_components.remove(m_component)
 
-                if incomplete and m_component not in self.incomplete_ds_components:
-                    self.incomplete_ds_components.append(m_component)
+            self.ds_end_index += 1
+            self.missing_ds_components.remove(m_component)
 
-    def synthesize_docstring(self):
+            if incomplete and m_component not in self.incomplete_ds_components:
+                self.incomplete_ds_components.append(m_component)
+
+    def convert_single_line_docstring_to_multi_line(self, line, index, indent):
+        if self.ds_end_index == index:
+            self.source_code[index] = f'{indent}"""'
+            self.source_code.insert(index, indent + line.strip().replace('"""', ""))
+            self.source_code.insert(index, f'{indent}"""')
+            self.ds_end_index += 2
+
+    def synthesize_docstring(self, current_line_index):
         """
         Creates a list of newly synthesized docstring lines, in order.
         :return: list of synthesized docstring lines
+        :rtype: list
         """
 
         self.synthesized_docstring = []
@@ -484,10 +592,18 @@ class PyDoc:
         self.synthesized_docstring.append(self.doc_auto_gen_tag)
         self.synthesized_docstring.append("")
 
-        self.evaluate_params()
+        self.evaluate_params(current_line_index)
 
         if len(self.block_return):
             self.synthesized_docstring.append(f":return: {self.block_return}")
+
+            print(f"TEST: {self.block_return}")
+            param_type = self.attempt_to_determine_type(self.block_return, current_line_index,
+                                                        self.current_block_end_index)
+            if len(param_type):
+                self.synthesized_docstring.append(f":rtype: {param_type}")
+            else:
+                self.synthesized_docstring.append(f":rtype:")
 
         self.synthesized_docstring.append('"""')
         self.synthesized_docstring.append("")
@@ -497,11 +613,11 @@ class PyDoc:
 
         return self.synthesized_docstring
 
-    def evaluate_params(self):
+    def evaluate_params(self, line_index):
         for param in self.current_block_params:
             line = ":param "
-            param_type = self.attempt_to_determine_param_type(param)
-
+            param_type = self.attempt_to_determine_type(param, line_index,
+                                                        self.current_block_end_index)
             if len(param_type):
                 line += f"{param_type} "
 
@@ -512,13 +628,10 @@ class PyDoc:
 
             self.synthesized_docstring.append(line)
 
-    def attempt_to_determine_param_type(self, param):
-        # This will only catch re-assignments of the params, given they are fairly simple assignments
-
+    def attempt_to_determine_type(self, param, start_index, end_index):
         value = ""
-        param_type = ""
 
-        for block_line in self.source_code[self.current_docstring_index:(self.current_block_end_index + 1)]:
+        for block_line in self.source_code[start_index:(end_index + 1)]:
             stripped = block_line.strip()
 
             if not stripped.startswith(f"{param} = "):
@@ -533,26 +646,36 @@ class PyDoc:
                 break
 
         if len(value):
-            try:
-                int(value)
-                return "int"
-            except:
-                pass
+            param_type = self.check_value_for_type(value)
+        else:
+            param_type = self.check_value_for_type(param)
 
-            if (value.startswith('"') or value.startswith("'")) \
-                    and (value.endswith('"') or value.endswith("'")):
-                param_type = "str"
+        return param_type
 
-            elif value.startswith("[") and value.endswith("]"):
-                param_type = "list"
+    def check_value_for_type(self, value):
+        value = str(value)
+        param_type = ""
 
-            elif value.startswith("{") and value.endswith("}"):
-                param_type = "dict"
+        try:
+            int(value)
+            return "int"
+        except:
+            pass
 
-            elif value.startswith("(") and value.endswith(")"):
-                param_type = "tuple"
+        if (value.startswith('"') or value.startswith("'")) \
+                and (value.endswith('"') or value.endswith("'")):
+            param_type = "str"
 
-            elif value == "False" or value == "True":
-                param_type = "bool"
+        elif value.startswith("[") and value.endswith("]"):
+            param_type = "list"
+
+        elif value.startswith("{") and value.endswith("}"):
+            param_type = "dict"
+
+        elif value.startswith("(") and value.endswith(")"):
+            param_type = "tuple"
+
+        elif value == "False" or value == "True":
+            param_type = "bool"
 
         return param_type
