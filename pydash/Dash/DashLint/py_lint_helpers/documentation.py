@@ -671,10 +671,14 @@ class PyDoc:
         elif value.startswith("{") and value.endswith("}"):
             param_type = "dict"
 
-        elif value.startswith("(") and value.endswith(")"):
-            param_type = "tuple"
-
         elif value == "False" or value == "True":
             param_type = "bool"
+
+        elif value == "None":
+            param_type = "NoneType"
+
+        # This check has to be last
+        elif value.startswith("(") and value.endswith(")") or value.count(", ") >= 1:
+            param_type = "tuple"
 
         return param_type
