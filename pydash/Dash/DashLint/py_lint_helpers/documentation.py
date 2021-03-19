@@ -296,7 +296,7 @@ class PyDoc:
                         self.included_ds_params.append(param)
                         split = cleaned_line.split(f"{param}:")
 
-                        # Param missing description or missing type declaration 
+                        # Param missing description or missing type declaration
                         if not len(split[1].strip()) \
                                 or ("(default=" in split[1].strip()
                                     and not len(split[1].split("(default=")[0].strip())) \
@@ -597,7 +597,6 @@ class PyDoc:
         if len(self.block_return):
             self.synthesized_docstring.append(f":return: {self.block_return}")
 
-            print(f"TEST: {self.block_return}")
             param_type = self.attempt_to_determine_type(self.block_return, current_line_index,
                                                         self.current_block_end_index)
             if len(param_type):
