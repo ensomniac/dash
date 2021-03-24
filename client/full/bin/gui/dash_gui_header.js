@@ -36,6 +36,10 @@ function DashGuiHeader(label_text, color){
 
     };
 
+    this.SetText = function(label_text){
+        this.label.text(label_text);
+    };
+
     this.setup_styles();
 
 };

@@ -4033,14 +4033,12 @@ function LoadDot(dots){
 
 
 function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
-
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
-    // this.height = d.Size.RowHeight-d.Size.Padding;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -4255,6 +4253,13 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "top": d.Size.Padding*0.5,
         });
     };
+    this.CanAutoUpdate = function(){
+        var highlight_opacity = parseFloat("" + this.highlight.css("opacity"));
+        if (highlight_opacity > 0.2) {
+            return false;
+        };
+        return !this.save_button_visible;
+    };
     this.show_save_button = function(){
         if (this.save_button_visible || !this.button) {return;}
         this.button.html.stop().animate({"opacity": 1});
@@ -4342,6 +4347,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
     };
     this.on_submit = function(){
+        this.hide_save_button();
         this.highlight.stop().animate({"opacity": 0}, 100);
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         var response_callback = this.on_click.bind(this.on_click_bind);
@@ -4383,7 +4389,16 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         // Do we have new data?
         for (var data_key in this.update_inputs) {
             var row_input = this.update_inputs[data_key];
-            row_input.SetText(this.property_set_data[data_key]);
+            if (!row_input.CanAutoUpdate()) {
+                console.log("(Currently being edited) Skipping update for " + data_key);
+                continue;
+            };
+            if (this.property_set_data) {
+                row_input.SetText(this.property_set_data[data_key]);
+            }
+            else {
+                row_input.SetText(this.get_data_cb()[data_key]);
+            };
         };
     };
     this.on_server_property_set = function(property_set_data){
@@ -4395,22 +4410,29 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.Update();
     };
     this.AddHeader = function(label_text){
-        var header = new d.Gui.Header(label_text, this.color).html;
+        var header_obj = new d.Gui.Header(label_text, this.color);
+        var header = header_obj.html;
         if (this.num_headers > 0) {
             header.css("margin-top", Dash.Size.Padding*0.5);
         };
         this.html.append(header);
         this.num_headers += 1;
+        return header_obj;
     };
     this.AddButton = function(label_text, callback){
         callback = callback.bind(this.binder);
+        if (!this.buttons) {
+            this.buttons = [];
+        };
         (function(self, callback){
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
             }, self, self.color);
+            self.buttons.push(button);
             button.html.css("margin-top", Dash.Size.Padding);
             self.html.append(button.html);
         })(this, callback);
+        return this.buttons[this.buttons.length-1];
     };
     this.AddCombo = function(label_text, combo_options, property_key){
         var row = new d.Gui.InputRow(
@@ -4576,6 +4598,9 @@ function DashGuiHeader(label_text, color){
             "width": Dash.Size.Padding*0.5,
             "background": this.color.AccentGood,
         });
+    };
+    this.SetText = function(label_text){
+        this.label.text(label_text);
     };
     this.setup_styles();
 };

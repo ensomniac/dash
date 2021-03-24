@@ -1,15 +1,12 @@
 
 function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
 
-
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
-
-    // this.height = d.Size.RowHeight-d.Size.Padding;
 
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
@@ -292,6 +289,18 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     };
 
+    this.CanAutoUpdate = function(){
+
+        var highlight_opacity = parseFloat("" + this.highlight.css("opacity"));
+
+        if (highlight_opacity > 0.2) {
+            return false;
+        };
+
+        return !this.save_button_visible;
+
+    };
+
     this.show_save_button = function(){
         if (this.save_button_visible || !this.button) {return;}
         this.button.html.stop().animate({"opacity": 1});
@@ -411,6 +420,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.on_submit = function(){
+        this.hide_save_button();
         this.highlight.stop().animate({"opacity": 0}, 100);
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         var response_callback = this.on_click.bind(this.on_click_bind);
