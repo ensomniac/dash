@@ -20,12 +20,12 @@ class Flags:
         self.line_length_flag_suffix = "(excluding comments)"
 
         # These are a bit arbitrary/undecided for now
-        self.total_line_length_max = 600
+        self.total_line_length_max = 1000
         self.individual_line_length_max = 120
 
         # Any comment string variable names like these MUST end in '_comment'
         self.super_comment = "TODO: Convert to super()"
-        self.path_comment = "This may include a hard-coded path - use 'os.path.join()' instead"
+        self.path_comment = "This may include a hard-coded path - if so, use 'os.path.join()' instead"
         self.individual_line_length_comment = f"Line length exceeds {self.individual_line_length_max}"
         self.total_line_length_comment = f"File's total line count exceeds {self.total_line_length_max}"
 
@@ -47,9 +47,8 @@ class Flags:
                 line = self.add_individual_line_length_flags(index, line, self.GetFormattedCommentedLine(line))
 
             # This should always be the last line in this loop
+            # line = self.AddDocstringsAndFlags(index, line)
             self.AddDocstringsAndFlags(index, line)
-
-            # TODO: (maybe) Convert 'line' to 'self' variable and create func to set line and set line in self.source_code
 
         self.add_total_line_length_flag()
 
@@ -69,7 +68,8 @@ class Flags:
 
     def add_path_flags(self, index, line, formatted_line):
         if (line.count("'") >= 2 or line.count('"') >= 2) and line.count("/") >= 2 \
-                and "os.path.join" not in line and self.path_comment not in line:
+                and ".join" not in line and self.path_comment not in line \
+                and (os.path.isabs(line.strip()) or os.path.exists(line.strip())):
 
             line = f"{formatted_line} {self.path_comment}"
             self.source_code[index] = line

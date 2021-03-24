@@ -452,7 +452,3 @@ def GetAll():
     from Dash.Utils import Utils as DashUtils
     users = Users(DashUtils.Global.RequestData, dash_context=DashUtils.Global.Context)
     return users.GetAll()
-
-
-
-

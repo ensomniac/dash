@@ -44,9 +44,12 @@ class PySpacing:
                 if keyword in line and line.rstrip().endswith(":"):
                     next_line = index + 1
 
-                    if not len(self.source_code[next_line]):
-                        self.source_code.pop(next_line)
-                        return False
+                    try:
+                        if not len(self.source_code[next_line]):
+                            self.source_code.pop(next_line)
+                            return False
+                    except IndexError:
+                        pass
 
                 if index == len(self.source_code) - 1:
                     return True
