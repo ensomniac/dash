@@ -5,6 +5,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.selected_highlight = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.column_box = $("<div></div>");
+    this.expanded_highlight = null;
     this.list = list;
     this.color = this.list.color;
     this.id = arbitrary_id;
@@ -61,7 +62,7 @@ function DashGuiListRow(list, arbitrary_id){
         });
 
         this.html.css({
-            "background": Dash.Color.Light.Background,
+            "background": this.color.Background,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
@@ -71,6 +72,27 @@ function DashGuiListRow(list, arbitrary_id){
 
         this.setup_columns();
         this.setup_connections();
+
+    };
+
+    this.create_expand_highlight = function(){
+        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
+
+        this.expanded_highlight.css({
+            "background": this.color.BackgroundRaised,
+            "pointer-events": "none",
+            "opacity": 0,
+            "top": -1,
+            "bottom": -1,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            // "z-index": 2000,
+        });
+
+        this.html.css({
+            // "border-bottom": "1px solid rgb(200, 200, 200)",
+        });
+
+        this.html.prepend(this.expanded_highlight);
 
     };
 
@@ -90,6 +112,15 @@ function DashGuiListRow(list, arbitrary_id){
             this.Collapse();
             return;
         };
+
+        this.is_expanded = true;
+        this.html.css("z-index", 2000);
+
+        if (!this.expanded_highlight) {
+            this.create_expand_highlight();
+        };
+
+        this.expanded_highlight.stop().animate({"opacity": 1}, 300);
 
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
 
@@ -112,7 +143,6 @@ function DashGuiListRow(list, arbitrary_id){
         (function(self){
             self.expand_content.animate({"height": target_size}, 200, function(){
                 self.expand_content.css({"overflow-y": "auto"});
-                self.is_expanded = true;
             });
         })(this);
 
@@ -122,6 +152,13 @@ function DashGuiListRow(list, arbitrary_id){
 
         if (!this.is_expanded) {
             return;
+        };
+
+        this.is_expanded = false;
+        this.html.css("z-index", "initial");
+
+        if (this.expanded_highlight) {
+            this.expanded_highlight.stop().animate({"opacity": 0}, 300);
         };
 
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
@@ -137,7 +174,7 @@ function DashGuiListRow(list, arbitrary_id){
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
-                self.is_expanded = false;
+                self.expanded_highlight.stop().animate({"opacity": 0}, 150);
                 self.expand_content.empty();
             });
         })(this);
@@ -164,7 +201,11 @@ function DashGuiListRow(list, arbitrary_id){
             });
 
             self.html.mouseleave(function(){
-                self.highlight.stop().animate({"opacity": 0}, 250);
+
+                if (!self.is_expanded) {
+                    self.highlight.stop().animate({"opacity": 0}, 250);
+                };
+
             });
 
             self.column_box.click(function(){

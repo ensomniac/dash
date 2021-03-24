@@ -32,4 +32,8 @@ class DashSiteColors {
         return this._col["tab_background"] || this._col["background"] || "orange";
     };
 
+    get TextHeader() {
+        return this._col["text_header"] || this._col["text"] || "red";
+    };
+
 };

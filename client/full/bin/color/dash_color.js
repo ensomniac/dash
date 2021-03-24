@@ -105,7 +105,10 @@ function DashColor(){
             "button_text": "rgb(234 239 255)",
             "accent_good": "#e0ccb4",
             "accent_bad": "#f9663c",
+            "text_header": "#2b323c",
         });
+
+        // 659cba
 
         var dark = new DashSiteColors({
             "background": "#23262b",
@@ -114,6 +117,7 @@ function DashColor(){
             "button_text": "rgb(234 239 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
+            "text_header": "#c4d4dd",
         });
 
         console.log(light);
@@ -136,7 +140,7 @@ function DashColor(){
             light.BackgroundRaised, // Background color for raised boxes
             light.TabBackground, // Tab area background
             light_bg_text, // Text color
-            text_header, // Text header color
+            light.TextHeader, // Text header color
             light.AccentGood,
             light.AccentBad,
             new DashColorButtonSet( // Button
@@ -176,7 +180,7 @@ function DashColor(){
             dark.BackgroundRaised, // Background color for raised boxes
             dark.TabBackground, // Tab area background
             dark_bg_text, // Text color
-            text_header_dark, // Text header color
+            dark.TextHeader, // Text header color
             dark.AccentGood,
             dark.AccentBad,
             new DashColorButtonSet( // Button

@@ -61,6 +61,17 @@ class Collection:
 
         return data
 
+    def SetProperty(self, obj_id, key, value):
+
+        result = LocalStorage.SetProperty(
+            self.Ctx,
+            self.store_path,
+            obj_id,
+            key,
+            value
+        )
+
+        return self.All
 
 
 

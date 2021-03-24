@@ -1979,7 +1979,9 @@ function DashColor(){
             "button_text": "rgb(234 239 255)",
             "accent_good": "#e0ccb4",
             "accent_bad": "#f9663c",
+            "text_header": "#2b323c",
         });
+        // 659cba
         var dark = new DashSiteColors({
             "background": "#23262b",
             "background_raised": "#444b54",
@@ -1987,6 +1989,7 @@ function DashColor(){
             "button_text": "rgb(234 239 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
+            "text_header": "#c4d4dd",
         });
         console.log(light);
         this.Raise = function(cstr, raise_steps){
@@ -2003,7 +2006,7 @@ function DashColor(){
             light.BackgroundRaised, // Background color for raised boxes
             light.TabBackground, // Tab area background
             light_bg_text, // Text color
-            text_header, // Text header color
+            light.TextHeader, // Text header color
             light.AccentGood,
             light.AccentBad,
             new DashColorButtonSet( // Button
@@ -2041,7 +2044,7 @@ function DashColor(){
             dark.BackgroundRaised, // Background color for raised boxes
             dark.TabBackground, // Tab area background
             dark_bg_text, // Text color
-            text_header_dark, // Text header color
+            dark.TextHeader, // Text header color
             dark.AccentGood,
             dark.AccentBad,
             new DashColorButtonSet( // Button
@@ -2557,6 +2560,9 @@ class DashSiteColors {
     };
     get TabBackground() {
         return this._col["tab_background"] || this._col["background"] || "orange";
+    };
+    get TextHeader() {
+        return this._col["text_header"] || this._col["text"] || "red";
     };
 };
 
@@ -5654,6 +5660,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.selected_highlight = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.column_box = $("<div></div>");
+    this.expanded_highlight = null;
     this.list = list;
     this.color = this.list.color;
     this.id = arbitrary_id;
@@ -5703,7 +5710,7 @@ function DashGuiListRow(list, arbitrary_id){
             // "cursor": "pointer",
         });
         this.html.css({
-            "background": Dash.Color.Light.Background,
+            "background": this.color.Background,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
@@ -5712,6 +5719,22 @@ function DashGuiListRow(list, arbitrary_id){
         });
         this.setup_columns();
         this.setup_connections();
+    };
+    this.create_expand_highlight = function(){
+        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
+        this.expanded_highlight.css({
+            "background": this.color.BackgroundRaised,
+            "pointer-events": "none",
+            "opacity": 0,
+            "top": -1,
+            "bottom": -1,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            // "z-index": 2000,
+        });
+        this.html.css({
+            // "border-bottom": "1px solid rgb(200, 200, 200)",
+        });
+        this.html.prepend(this.expanded_highlight);
     };
     this.Update = function(){
         for (var i in this.columns) {
@@ -5725,6 +5748,12 @@ function DashGuiListRow(list, arbitrary_id){
             this.Collapse();
             return;
         };
+        this.is_expanded = true;
+        this.html.css("z-index", 2000);
+        if (!this.expanded_highlight) {
+            this.create_expand_highlight();
+        };
+        this.expanded_highlight.stop().animate({"opacity": 1}, 300);
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
         this.expand_content.stop().css({
             "overflow-y": "auto",
@@ -5741,13 +5770,17 @@ function DashGuiListRow(list, arbitrary_id){
         (function(self){
             self.expand_content.animate({"height": target_size}, 200, function(){
                 self.expand_content.css({"overflow-y": "auto"});
-                self.is_expanded = true;
             });
         })(this);
     };
     this.Collapse = function(){
         if (!this.is_expanded) {
             return;
+        };
+        this.is_expanded = false;
+        this.html.css("z-index", "initial");
+        if (this.expanded_highlight) {
+            this.expanded_highlight.stop().animate({"opacity": 0}, 300);
         };
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
         var target_height = 0;
@@ -5760,7 +5793,7 @@ function DashGuiListRow(list, arbitrary_id){
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
-                self.is_expanded = false;
+                self.expanded_highlight.stop().animate({"opacity": 0}, 150);
                 self.expand_content.empty();
             });
         })(this);
@@ -5780,7 +5813,9 @@ function DashGuiListRow(list, arbitrary_id){
                 self.highlight.stop().animate({"opacity": 1}, 100);
             });
             self.html.mouseleave(function(){
-                self.highlight.stop().animate({"opacity": 0}, 250);
+                if (!self.is_expanded) {
+                    self.highlight.stop().animate({"opacity": 0}, 250);
+                };
             });
             self.column_box.click(function(){
                 self.list.SetSelection(self.id);
