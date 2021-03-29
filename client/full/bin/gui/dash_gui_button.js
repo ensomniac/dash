@@ -115,6 +115,16 @@ function DashGuiButton(Label, Callback, Bind, color){
         });
     };
 
+    this.ChangeLabel = function(label_text) {
+        this.html[0].innerText = "";
+        this.label = $("<div>" + label_text + "</div>");
+        this.setup_styles();
+    }
+
+    this.Disable = function () {
+        this.html.css({"opacity": 0.5, "pointer-events": "none"});
+    }
+
     this.SetBorderRadius = function(border_radius){
 
         this.html.css({
