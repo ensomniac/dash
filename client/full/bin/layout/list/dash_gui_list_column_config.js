@@ -2,11 +2,14 @@ function DashGuiListColumnConfig(){
 
     this.columns = [];
 
-    this.AddColumn = function(display_name, data_key, can_edit, width){
+    this.AddColumn = function(display_name, data_key, can_edit, width, options){
 
         if (typeof can_edit != "boolean") {
             can_edit = true;
         };
+
+        options = options || {};
+        var optional_css = options["css"] || null;
 
         var column_details = {};
         column_details["type"] = "input";
@@ -14,6 +17,8 @@ function DashGuiListColumnConfig(){
         column_details["data_key"] = data_key;
         column_details["can_edit"] = can_edit;
         column_details["width"] = width;
+        column_details["css"] = optional_css;
+        column_details["on_click_callback"] = options["on_click_callback"];
 
         this.columns.push(column_details);
 

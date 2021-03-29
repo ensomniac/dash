@@ -11,4 +11,6 @@ function DashGuiLayout(){
     this.Tabs.Top = DashGuiLayoutTabsTop;
     this.Tabs.Side = DashGuiLayoutTabsSide;
 
+    this.Toolbar = DashGuiLayoutToolbar;
+
 };

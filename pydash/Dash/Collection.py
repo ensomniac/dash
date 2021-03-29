@@ -49,11 +49,12 @@ class Collection:
 
         return data
 
-    def New(self):
+    def New(self, additional_data={}):
 
         new_obj = LocalStorage.New(
             self.Ctx,
-            self.store_path
+            self.store_path,
+            additional_data=additional_data
         )
 
         data = self.All
@@ -73,9 +74,13 @@ class Collection:
 
         return self.All
 
+    def Clear(self):
 
+        root = LocalStorage.GetRecordRoot(
+            self.Ctx,
+            self.store_path
+        )
 
-
-
-
+        import shutil
+        shutil.rmtree(root, True)
 

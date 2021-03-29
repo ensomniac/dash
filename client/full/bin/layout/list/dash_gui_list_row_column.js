@@ -29,6 +29,31 @@ function DashGuiListRowColumn(list_row, column_config_data){
             css["margin-left"] = Dash.Size.Padding;
         };
 
+        if (this.column_config_data["css"]) {
+
+            for (var key in this.column_config_data["css"]) {
+                css[key] = this.column_config_data["css"][key];
+            };
+
+        };
+
+        if (this.column_config_data["on_click_callback"]) {
+
+            var binder = this.list.binder;
+            this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
+
+            (function(self){
+                self.html.click(function(e){
+
+                    self.column_config_data["on_click_callback"](self.list_row.id);
+
+                    e.preventDefault();
+                    return false;
+                });
+            })(this);
+
+        };
+
         this.html.css(css);
 
     };
@@ -42,13 +67,13 @@ function DashGuiListRowColumn(list_row, column_config_data){
 
         if (column_value && column_value.length > 0) {
             this.html.css({
-                "color": Dash.Color.Light.Text,
+                // "color": Dash.Color.Light.Text,
                 "font-family": "sans_serif_normal",
             });
         }
         else {
             this.html.css({
-                "color": "rgba(0, 0, 0, 0.5)",
+                // "color": "rgba(0, 0, 0, 0.5)",
                 "font-family": "sans_serif_italic",
             });
         };

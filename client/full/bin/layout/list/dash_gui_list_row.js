@@ -12,6 +12,7 @@ function DashGuiListRow(list, arbitrary_id){
     this.columns = [];
     this.is_selected = false;
     this.is_expanded = false;
+    this.is_shown = true;
 
     this.setup_styles = function(){
 
@@ -94,6 +95,26 @@ function DashGuiListRow(list, arbitrary_id){
 
         this.html.prepend(this.expanded_highlight);
 
+    };
+
+    this.Hide = function(){
+
+        if (!this.is_shown) {
+            return;
+        };
+
+        this.is_shown = false;
+        this.html.css("display", "none");
+
+    };
+
+    this.Show = function(){
+        if (this.is_shown) {
+            return;
+        };
+
+        this.is_shown = true;
+        this.html.css("display", "block");
     };
 
     this.Update = function(){
