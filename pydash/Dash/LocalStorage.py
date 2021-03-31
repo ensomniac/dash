@@ -10,9 +10,10 @@ from Dash.Utils import Utils
 # DashLocalStorage is a utility for reading, writing and maintaining common data
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path, nested=False):
+    def __init__(self, dash_context, store_path, nested):
         # store_path examples: users / packages / jobs
-        # obj_id examples: 326783762323 / ryan@ensomniac.com
+        # If nested = True, core record is considered data.json in a
+        # directory named after the ID
 
         self.dash_context = dash_context
         self.store_path = store_path
@@ -47,9 +48,6 @@ class DashLocalStorage:
 
         record_id = obj_id or Utils.get_random_id()
 
-        # if self.store_path == "users" and obj_id:
-            # record_id = obj_id
-
         data = {}
         data["id"] = record_id
         data["created_by"] = Utils.Global.RequestUser["email"]
@@ -61,12 +59,10 @@ class DashLocalStorage:
             for key in additional_data:
                 data[key] = additional_data[key]
 
-        if not os.path.exists(self.get_store_root(record_id)):
-            os.makedirs(self.get_store_root(record_id))
+        if not os.path.exists(self.get_data_root(record_id)):
+            os.makedirs(self.get_data_root(record_id))
 
         self.Write(self.get_record_path(record_id), data)
-        # json_data = json.dumps(data)
-        # open(self.get_record_path(record_id), "w").write(json_data)
 
         return data
 
@@ -103,7 +99,18 @@ class DashLocalStorage:
             else:
                 raise Exception("Expected record does not exist. x9483 Expected " + record_path + " / " + obj_id)
 
-        return json.loads(open(record_path, "r").read())
+        return self.Read(record_path)
+
+    def get_data_root(self, obj_id_email):
+        # Nearly identical to self.get_store_root, but returns slightly different
+        # paths depending on whether or not the record is nested
+
+        if not self.nested:
+            # /local/store_path/202283291732434 <- This is the data
+            return self.get_store_root()
+        else:
+            # /local/store_path/202283291732434/data.json <- This is the data
+            return os.path.join(self.get_store_root(obj_id_email), obj_id_email + "/")
 
     def get_store_root(self, obj_id_email=None):
         # Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
@@ -141,11 +148,17 @@ class DashLocalStorage:
 
         else:
 
-            record_path = os.path.join(
-                self.get_store_root(obj_id),
-                obj_id
-            )
-
+            if self.nested:
+                record_path = os.path.join(
+                    self.get_store_root(obj_id),
+                    obj_id,
+                    "data.json"
+                )
+            else:
+                record_path = os.path.join(
+                    self.get_store_root(obj_id),
+                    obj_id
+                )
         return record_path
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
@@ -176,14 +189,23 @@ class DashLocalStorage:
         return response
 
     def Delete(self, obj_id):
-        record_path = self.get_record_path(obj_id)
+
+        if self.nested:
+            record_path = self.get_data_root(obj_id)
+        else:
+            record_path = self.get_record_path(obj_id)
 
         result = {}
         result["existed"] = os.path.exists(record_path)
         result["record_path"] = record_path
 
         if result["existed"]:
-            os.remove(record_path)
+
+            if self.nested:
+                import shutil
+                shutil.rmtree(record_path, True)
+            else:
+                os.remove(record_path)
 
         result["exists_now"] = os.path.exists(record_path)
         return result

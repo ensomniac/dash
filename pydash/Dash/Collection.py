@@ -48,7 +48,8 @@ class Collection:
 
         data = LocalStorage.GetAll(
             self.Ctx,
-            self.store_path
+            self.store_path,
+            nested=self.nested,
         )
 
         return data
@@ -58,11 +59,25 @@ class Collection:
         new_obj = LocalStorage.New(
             self.Ctx,
             self.store_path,
-            additional_data=additional_data
+            additional_data=additional_data,
+            nested=self.nested,
         )
 
         data = self.All
         data["new_object"] = new_obj["id"]
+
+        return data
+
+    def Delete(self, obj_id):
+
+        new_obj = LocalStorage.Delete(
+            self.Ctx,
+            self.store_path,
+            obj_id=obj_id,
+            nested=self.nested,
+        )
+
+        data = self.All
 
         return data
 
@@ -73,7 +88,8 @@ class Collection:
             self.store_path,
             obj_id,
             key,
-            value
+            value,
+            nested=self.nested,
         )
 
         return self.All
@@ -82,7 +98,8 @@ class Collection:
 
         root = LocalStorage.GetRecordRoot(
             self.Ctx,
-            self.store_path
+            self.store_path,
+            nested=self.nested,
         )
 
         import shutil
