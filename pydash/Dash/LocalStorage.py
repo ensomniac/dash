@@ -10,12 +10,13 @@ from Dash.Utils import Utils
 # DashLocalStorage is a utility for reading, writing and maintaining common data
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path):
+    def __init__(self, dash_context, store_path, nested=False):
         # store_path examples: users / packages / jobs
         # obj_id examples: 326783762323 / ryan@ensomniac.com
 
         self.dash_context = dash_context
         self.store_path = store_path
+        self.nested = nested
 
     def CreateOrUpdate(self, additional_data, obj_id):
         record_path = self.get_record_path(obj_id)
@@ -206,38 +207,38 @@ class DashLocalStorage:
 
 
 
-def New(dash_context, store_path, additional_data={}, obj_id=None):
-    return DashLocalStorage(dash_context, store_path).New(additional_data, obj_id=obj_id)
+def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id=obj_id)
 
-def CreateOrUpdate(dash_context, store_path, additional_data, obj_id):
-    return DashLocalStorage(dash_context, store_path).CreateOrUpdate(additional_data, obj_id)
+def CreateOrUpdate(dash_context, store_path, additional_data, obj_id, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).CreateOrUpdate(additional_data, obj_id)
 
-def SetData(dash_context, store_path, obj_id, data):
-    return DashLocalStorage(dash_context, store_path).WriteData(obj_id, data)
+def SetData(dash_context, store_path, obj_id, data, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).WriteData(obj_id, data)
 
-def Delete(dash_context, store_path, obj_id):
-    return DashLocalStorage(dash_context, store_path).Delete(obj_id)
+def Delete(dash_context, store_path, obj_id, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id)
 
-def GetData(dash_context, store_path, obj_id):
-    return DashLocalStorage(dash_context, store_path).GetData(obj_id)
+def GetData(dash_context, store_path, obj_id, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).GetData(obj_id)
 
-def GetAll(dash_context, store_path):
-    return DashLocalStorage(dash_context, store_path).GetAll()
+def GetAll(dash_context, store_path, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).GetAll()
 
-def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False):
-    return DashLocalStorage(dash_context, store_path).SetProperty(obj_id, key=key, value=value, create=create)
+def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).SetProperty(obj_id, key=key, value=value, create=create)
 
-def GetRecordCount(dash_context, store_path):
-    return DashLocalStorage(dash_context, store_path).get_record_count()
+def GetRecordCount(dash_context, store_path, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).get_record_count()
 
-def GetRecordRoot(dash_context, store_path, obj_id=None):
-    return DashLocalStorage(dash_context, store_path).get_store_root(obj_id)
+def GetRecordRoot(dash_context, store_path, obj_id=None, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).get_store_root(obj_id)
 
-def GetRecordPath(dash_context, store_path, obj_id):
-    return DashLocalStorage(dash_context, store_path).get_record_path(obj_id)
+def GetRecordPath(dash_context, store_path, obj_id, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).get_record_path(obj_id)
 
 def Read(full_path):
-    return DashLocalStorage(None, None).Read(full_path)
+    return DashLocalStorage(None, None, None).Read(full_path)
 
 def Write(full_path, data):
-    return DashLocalStorage(None, None).Write(full_path, data)
+    return DashLocalStorage(None, None, None).Write(full_path, data)

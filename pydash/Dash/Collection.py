@@ -17,10 +17,14 @@ from Dash import LocalStorage
 # Where each top level ID is a folder with a data.json
 # default store, but can be optionally used of other
 # types of data as well
+#
+# If nested == True, the collection will include a data.json file
+# at the top level of a folder named with the ID of the collection item
 
 class Collection:
-    def __init__(self, store_path, dash_context=None):
+    def __init__(self, store_path, nested=False, dash_context=None):
         self.store_path = store_path
+        self.nested = nested
         self._dash_context = dash_context
 
     @property
