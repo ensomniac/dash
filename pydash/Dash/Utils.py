@@ -79,7 +79,7 @@ class __Utils:
     def SendEmail(self, subject, notify_email_list, msg=None):
         # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
         if not os.path.exists("/var/www/vhosts/oapi.co/"):
-            return {"error": "The Mail Module can currently only run directly from the server, this is temporary."}
+            raise Exception("The Mail Module can currently only run directly from the server.")
 
         import Mail
 
@@ -92,7 +92,7 @@ class __Utils:
             notify_email_list.append(sender)
 
         message = Mail.create(sender)
-        message.set_sender_name(f"GSheet Jobs CRON <{sender}>")
+        message.set_sender_name(f"Dash <{sender}>")
 
         for email_address in notify_email_list:
             message.add_recipient(f"{email_address.split('@')[0].strip().title()} <{email_address}>")
