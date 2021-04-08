@@ -182,12 +182,6 @@ class Users:
 
         new_password = self.data.get("p")
 
-        # return_data = {
-        #     "user": user,
-        #     "new_password": new_password,
-        #     "email": user["email"],
-        # }
-
         if not new_password or len(new_password) < 5:
             return {"error": "Select a password with at least 6 characters - x72378"}
 
@@ -338,8 +332,8 @@ class Users:
         else:
             return None
 
-    def Validate(self):
-        token_str = self.data.get("token")
+    def Validate(self, token=None):
+        token_str = token or self.data.get("token")
 
         if not token_str:
             return {"error": "Missing token"}
@@ -447,6 +441,15 @@ def Get(user_email_to_get, admin_user_data=None):
     admin_user_data = admin_user_data or DashUtils.Global.RequestUser
     users = Users(DashUtils.Global.RequestData, dash_context=ctx)
     return users.GetUserData(user_email_to_get)
+
+def GetByToken(user_token):
+    # This function allows you to return a User object
+    # based on a valid token
+
+    from Dash.Utils import Utils as DashUtils
+    ctx = DashUtils.Global.Context
+    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
+    return users.Validate(token=user_token)
 
 def GetAll():
     from Dash.Utils import Utils as DashUtils

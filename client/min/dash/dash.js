@@ -4417,6 +4417,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.property_set_data = property_set_data;
         this.Update();
     };
+    this.AddHTML = function(html){
+        this.html.append(html);
+    };
     this.AddHeader = function(label_text){
         var header_obj = new d.Gui.Header(label_text, this.color);
         var header = header_obj.html;
@@ -4573,6 +4576,10 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         };
         console.log("SERVER RESPONSE");
         console.log(response);
+        if (this.set_data_cb) {
+            this.set_data_cb(response);
+            return;
+        };
     };
     this.setup_styles();
 };

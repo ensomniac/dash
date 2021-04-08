@@ -69,6 +69,13 @@ class ApiCore:
         self.dash_global.RequestUser = self.User
         self.dash_global.Context = self.DashContext
 
+    def SetUser(self, user_data):
+        if not user_data["email"]:
+            raise Exception("Invalid user_data format!")
+
+        self._user = user_data
+        self.set_dash_globals()
+
     @property
     def User(self):
         if not hasattr(self, "_user"):
