@@ -6,7 +6,11 @@
 import os
 import sys
 
+
 class __Utils:
+    _global: object
+    _usr_token: object
+
     def __init__(self):
         pass
 
@@ -38,32 +42,15 @@ class __Utils:
 
         return self._global
 
-    def get_random_id(self):  # Need to re-conform this name
+    def GetRandomID(self):
         from random import randint
         from datetime import datetime
 
         now = str(datetime.today())
 
-        return (
-            now.split(".")[0]
-            .strip()
-            .replace("-", "")
-            .replace(" ", "")
-            .replace(":", "")
-            .strip()
-            + now.split(".")[-1].strip()[:3]
-            + str(randint(0, 99))
-        )
-
-    def write_to_server(self, path, data):  # Need to re-conform this name
-        from json import dumps
-
-        open(path, "w").write(dumps(data))
-
-    def read_from_server(self, path):  # Need to re-conform this name
-        from json import loads
-
-        return loads(open(path, "r").read())
+        return f"{now.split('.')[0].strip().replace('-', '').replace(' ', '').replace(':', '').strip()}" \
+               f"{now.split('.')[-1].strip()[:3]}" \
+               f"{str(randint(0, 99))}"
 
     def OSListDirCleaned(self, path):
         cleaned_list = []
@@ -166,9 +153,7 @@ class __Utils:
 
         for package_context in pkg:
             if not os.path.exists(package_context.LocalGitRoot):
-                msg = "\nError: this path doesn't exist, but it should: '"
-                msg += package_context.LocalGitRoot + "'\n"
-                print(msg)
+                print(f"\nError: this path doesn't exist, but it should: '{package_context.LocalGitRoot}'\n")
                 sys.exit()
 
         return pkg
@@ -180,7 +165,6 @@ class __Utils:
     @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
-
             try:
                 from os.path import expanduser
                 import json
@@ -192,11 +176,12 @@ class __Utils:
 
         return self._usr_token
 
-    def FormatTime(self, datetime_object, format=1):
-        import datetime
+    def FormatTime(self, datetime_object, time_format=1):
+        from datetime import datetime
 
         time_markup = datetime_object.strftime('%I:%M %p').lower()
-        if time_markup.startswith("0"): time_markup = time_markup[1:]
+        if time_markup.startswith("0"):
+            time_markup = time_markup[1:]
 
         day = int(datetime_object.strftime('%d'))
 
@@ -209,70 +194,75 @@ class __Utils:
 
         date_markup = datetime_object.strftime('%A, %B ' + day_string + ' %Y')
 
-        if format == 0:
+        if time_format == 0:
             # Display just the date in a human readable format
-            formated_time = date_markup
-        elif format == 1:
+            formatted_time = date_markup
+        elif time_format == 1:
             # Display the time like this: 4/24/11 at 12:15pm
-            formated_time = datetime_object.strftime('%m/%d/%y at %I:%M %p')
-        elif format == 2:
+            formatted_time = datetime_object.strftime('%m/%d/%y at %I:%M %p')
+        elif time_format == 2:
             # Format time like this: Sunday, July 17th 2011 at 12:15pm
             day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%A, %B ' + str(day) + suffix + ' %Y at %I:%M %p')
-        elif format == 3:
+            if 4 <= day <= 20 or 24 <= day <= 30:
+                suffix = "th"
+            else:
+                suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formatted_time = datetime_object.strftime('%A, %B ' + str(day) + suffix + ' %Y at %I:%M %p')
+        elif time_format == 3:
             # Display the time like this: 4/24/2017
-            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day) + "/" + str(datetime_object.year)
-        elif format == 4:
+            formatted_time = str(datetime_object.month) + "/" + str(datetime_object.day) + "/" + str(datetime_object.year)
+        elif time_format == 4:
             # Display the time like this: 12:15pm
-            formated_time = datetime_object.strftime('%I:%M %p')
-            if formated_time[0] == "0": formated_time = formated_time[1:]
-        elif format == 5:
+            formatted_time = datetime_object.strftime('%I:%M %p')
+            if formatted_time[0] == "0":
+                formatted_time = formatted_time[1:]
+        elif time_format == 5:
             # Display the time like this: 12:15:01pm
-            formated_time = datetime_object.strftime('%I:%M:%S %p')
-        elif format == 6:
+            formatted_time = datetime_object.strftime('%I:%M:%S %p')
+        elif time_format == 6:
             # Format time like this: July 17th 2011
             day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%B ' + str(day) + suffix + ' %Y')
-        elif format == 7:
+            if 4 <= day <= 20 or 24 <= day <= 30:
+                suffix = "th"
+            else:
+                suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formatted_time = datetime_object.strftime('%B ' + str(day) + suffix + ' %Y')
+        elif time_format == 7:
             # Display the time like this: 4_24_11
-            formated_time = datetime_object.strftime('%m_%d_%y')
-        elif format == 8:
+            formatted_time = datetime_object.strftime('%m_%d_%y')
+        elif time_format == 8:
             # Format time like this: Monday, July 17th
             day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%A %B ' + str(day) + suffix)
-        elif format == 9:
+            if 4 <= day <= 20 or 24 <= day <= 30:
+                suffix = "th"
+            else:
+                suffix = ["st", "nd", "rd"][day % 10 - 1]
+            formatted_time = datetime_object.strftime('%A %B ' + str(day) + suffix)
+        elif time_format == 9:
             # Format time like this: 12 days ago / 2 months ago
-            timesince = (datetime.datetime.now()-datetime_object)
+            timesince = (datetime.now()-datetime_object)
 
             if timesince.days == 0:
-                formated_time = "Today"
+                formatted_time = "Today"
             elif timesince.days == 1:
-                formated_time = "Yesterday"
+                formatted_time = "Yesterday"
             elif timesince.days <= 30:
-                formated_time = str(timesince.days) + " days ago"
+                formatted_time = str(timesince.days) + " days ago"
             elif timesince.days <= 45:
-                formated_time = "A month ago"
+                formatted_time = "A month ago"
             elif timesince.days <= 75:
-                formated_time = str(timesince.days) + " days ago"
+                formatted_time = str(timesince.days) + " days ago"
             else:
                 # More than 75 days ago
-                formated_time = str(int(round(timesince.days/30.0))) + " months ago"
-        elif format == 10:
+                formatted_time = str(int(round(timesince.days/30.0))) + " months ago"
+        elif time_format == 10:
             # Display the time like this: 4/24
-            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day)
+            formatted_time = str(datetime_object.month) + "/" + str(datetime_object.day)
         else:
             # Display the date and time in a human readable format
-            formated_time = date_markup + " at " + time_markup
+            formatted_time = date_markup + " at " + time_markup
 
-        return formated_time
+        return formatted_time
 
 
-
-utils = __Utils()
-Utils = utils # Migrating away from utils
+Utils = __Utils()

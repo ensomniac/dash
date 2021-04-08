@@ -49,7 +49,7 @@ class ApiCore:
 
     @property
     def RandomID(self):
-        return Utils.get_random_id()
+        return Utils.GetRandomID()
 
     @property
     def DashContext(self):

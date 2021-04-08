@@ -8,7 +8,7 @@ import shutil
 import datetime
 import requests
 
-from Dash.Utils import utils
+from Dash.Utils import Utils
 
 # pip install https://ensomniac.io/src/pydash.tar.gz
 
@@ -18,7 +18,7 @@ class PublishDash:
 
     def __init__(self):
 
-        self.source_path = os.path.join(utils.Paths.Local.DashRoot, "pydash/")
+        self.source_path = os.path.join(Utils.Paths.Local.DashRoot, "pydash/")
 
         if not os.path.exists(self.source_path):
             raise Exception("Path doesn exist. Expected: " + self.source_path)
