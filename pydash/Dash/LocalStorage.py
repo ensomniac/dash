@@ -46,7 +46,7 @@ class DashLocalStorage:
 
         import json
 
-        record_id = obj_id or Utils.get_random_id()
+        record_id = obj_id or Utils.GetRandomID()
 
         data = {}
         data["id"] = record_id

@@ -6,7 +6,11 @@
 import os
 import sys
 
+
 class __Utils:
+    _global: object
+    _usr_token: object
+
     def __init__(self):
         pass
 
@@ -38,32 +42,15 @@ class __Utils:
 
         return self._global
 
-    def get_random_id(self):  # Need to re-conform this name
+    def GetRandomID(self):
         from random import randint
         from datetime import datetime
 
         now = str(datetime.today())
 
-        return (
-            now.split(".")[0]
-            .strip()
-            .replace("-", "")
-            .replace(" ", "")
-            .replace(":", "")
-            .strip()
-            + now.split(".")[-1].strip()[:3]
-            + str(randint(0, 99))
-        )
-
-    def write_to_server(self, path, data):  # Need to re-conform this name
-        from json import dumps
-
-        open(path, "w").write(dumps(data))
-
-    def read_from_server(self, path):  # Need to re-conform this name
-        from json import loads
-
-        return loads(open(path, "r").read())
+        return f"{now.split('.')[0].strip().replace('-', '').replace(' ', '').replace(':', '').strip()}" \
+               f"{now.split('.')[-1].strip()[:3]}" \
+               f"{str(randint(0, 99))}"
 
     def OSListDirCleaned(self, path):
         cleaned_list = []
@@ -76,17 +63,20 @@ class __Utils:
 
         return cleaned_list
 
-    def SendEmail(self, subject, notify_email_list, msg=None):
+    def SendEmail(self, subject, notify_email_list, msg=None, error=None):
         # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
         if not os.path.exists("/var/www/vhosts/oapi.co/"):
             raise Exception("The Mail Module can currently only run directly from the server.")
 
         import Mail
 
+        sender = "ryan@ensomniac.com"
+
         if not msg:
             msg = subject
 
-        sender = "ryan@ensomniac.com"
+        if error and len(error) and str(error) != "NoneType: None" and error != "None":
+            msg += f"<br><br>Exception/Traceback:<br><br>{error}"
 
         if sender not in notify_email_list:
             notify_email_list.append(sender)
@@ -166,9 +156,7 @@ class __Utils:
 
         for package_context in pkg:
             if not os.path.exists(package_context.LocalGitRoot):
-                msg = "\nError: this path doesn't exist, but it should: '"
-                msg += package_context.LocalGitRoot + "'\n"
-                print(msg)
+                print(f"\nError: this path doesn't exist, but it should: '{package_context.LocalGitRoot}'\n")
                 sys.exit()
 
         return pkg
@@ -180,7 +168,6 @@ class __Utils:
     @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
-
             try:
                 from os.path import expanduser
                 import json
@@ -192,87 +179,90 @@ class __Utils:
 
         return self._usr_token
 
-    def FormatTime(self, datetime_object, format=1):
-        import datetime
+    def FormatTime(self, datetime_object, time_format=1):
+        from datetime import datetime
 
-        time_markup = datetime_object.strftime('%I:%M %p').lower()
-        if time_markup.startswith("0"): time_markup = time_markup[1:]
+        time_markup = datetime_object.strftime("%I:%M %p").lower()
+        
+        if time_markup.startswith("0"):
+            time_markup = time_markup[1:]
 
-        day = int(datetime_object.strftime('%d'))
+        day = int(datetime_object.strftime("%d"))
 
         if 4 <= day <= 20 or 24 <= day <= 30:
             suffix = "th"
         else:
             suffix = ["st", "nd", "rd"][day % 10 - 1]
 
-        day_string = str(day) + suffix
+        day_string = f"{day}{suffix}"
+        date_markup = datetime_object.strftime(f"%A, %B {day_string} %Y")
 
-        date_markup = datetime_object.strftime('%A, %B ' + day_string + ' %Y')
+        # Display just the date
+        if time_format == 0:
+            return date_markup
 
-        if format == 0:
-            # Display just the date in a human readable format
-            formated_time = date_markup
-        elif format == 1:
-            # Display the time like this: 4/24/11 at 12:15pm
-            formated_time = datetime_object.strftime('%m/%d/%y at %I:%M %p')
-        elif format == 2:
-            # Format time like this: Sunday, July 17th 2011 at 12:15pm
-            day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%A, %B ' + str(day) + suffix + ' %Y at %I:%M %p')
-        elif format == 3:
-            # Display the time like this: 4/24/2017
-            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day) + "/" + str(datetime_object.year)
-        elif format == 4:
-            # Display the time like this: 12:15pm
-            formated_time = datetime_object.strftime('%I:%M %p')
-            if formated_time[0] == "0": formated_time = formated_time[1:]
-        elif format == 5:
-            # Display the time like this: 12:15:01pm
-            formated_time = datetime_object.strftime('%I:%M:%S %p')
-        elif format == 6:
-            # Format time like this: July 17th 2011
-            day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%B ' + str(day) + suffix + ' %Y')
-        elif format == 7:
-            # Display the time like this: 4_24_11
-            formated_time = datetime_object.strftime('%m_%d_%y')
-        elif format == 8:
-            # Format time like this: Monday, July 17th
-            day = int(datetime_object.strftime('%d'))
-            if 4 <= day <= 20 or 24 <= day <= 30: suffix = "th"
-            else: suffix = ["st", "nd", "rd"][day % 10 - 1]
-            formated_time = datetime_object.strftime('%A %B ' + str(day) + suffix)
-        elif format == 9:
-            # Format time like this: 12 days ago / 2 months ago
-            timesince = (datetime.datetime.now()-datetime_object)
+        # Display just the date in a human readable format
+        elif time_format == 1:
+            return datetime_object.strftime("%m/%d/%y at %I:%M %p")
+
+        # Format: Sunday, July 17th 2011 at 12:15pm
+        elif time_format == 2:
+            return datetime_object.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
+
+        # Format: 4/24/2017
+        elif time_format == 3:
+            return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
+
+        # Format: 12:15pm
+        elif time_format == 4:
+            formatted_time = datetime_object.strftime("%I:%M %p")
+
+            if formatted_time[0] == "0":
+                formatted_time = formatted_time[1:]
+
+            return formatted_time
+
+        # Format: 12:15:01pm
+        elif time_format == 5:
+            return datetime_object.strftime("%I:%M:%S %p")
+
+        # Format: July 17th 2011
+        elif time_format == 6:
+            return datetime_object.strftime(f"%B {day}{suffix} %Y")
+
+        # Format: 4_24_11
+        elif time_format == 7:
+            return datetime_object.strftime("%m_%d_%y")
+
+        # Format: Monday, July 17th
+        elif time_format == 8:
+            return datetime_object.strftime(f"%A %B {day}{suffix}")
+
+        # Format: 12 days ago / 2 months ago
+        elif time_format == 9:
+            timesince = (datetime.now() - datetime_object)
 
             if timesince.days == 0:
-                formated_time = "Today"
+                return "Today"
             elif timesince.days == 1:
-                formated_time = "Yesterday"
+                return "Yesterday"
             elif timesince.days <= 30:
-                formated_time = str(timesince.days) + " days ago"
+                return f"{timesince.days} days ago"
             elif timesince.days <= 45:
-                formated_time = "A month ago"
+                return "A month ago"
             elif timesince.days <= 75:
-                formated_time = str(timesince.days) + " days ago"
+                return f"{timesince.days} days ago"
             else:
                 # More than 75 days ago
-                formated_time = str(int(round(timesince.days/30.0))) + " months ago"
-        elif format == 10:
-            # Display the time like this: 4/24
-            formated_time = str(datetime_object.month) + "/" + str(datetime_object.day)
+                return f"{int(round(timesince.days / 30.0))} months ago"
+
+        # Format: 4/24
+        elif time_format == 10:
+            return f"{datetime_object.month}/{datetime_object.day}"
+
+        # Format date and time in a human readable format
         else:
-            # Display the date and time in a human readable format
-            formated_time = date_markup + " at " + time_markup
-
-        return formated_time
+            return f"{date_markup} at {time_markup}"
 
 
-
-utils = __Utils()
-Utils = utils # Migrating away from utils
+Utils = __Utils()

@@ -7,7 +7,7 @@ import pathlib
 import threading
 import time
 
-from Dash.Utils import utils
+from Dash.Utils import Utils
 
 class RunAsRoot:
     def __init__(self):
@@ -23,7 +23,7 @@ class RunAsRoot:
         self.timestamp = ""
 
     def Queue(self, command):
-        self.task_id = utils.get_random_id()
+        self.task_id = Utils.GetRandomID()
         self.cmd = command
         self.cmd_path = os.path.join(self.request_path, self.task_id)
         self.start_time = datetime.datetime.now()

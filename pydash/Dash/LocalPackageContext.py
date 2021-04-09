@@ -5,7 +5,7 @@
 
 import os
 import sys
-from Dash.Utils import utils as Utils
+from Dash.Utils import Utils
 
 class LocalPackageContext:
     def __init__(self, asset_path, display_name, domain, local_git_root):
@@ -108,6 +108,3 @@ class LocalPackageContext:
     @property
     def RemoteGitClientRoot(self):
         return Utils.Paths.Server.GetGitClientRoot(self.AssetPath)
-
-
-
