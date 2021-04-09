@@ -1,23 +1,34 @@
 #!/usr/bin/python
+#
+# 2021 Ryan Martin, ryan@ensomniac.com
+#      Andrew Stet, stetandrew@gmail.com
+
+"""
+Utility for reading, writing and maintaining common data
+"""
 
 import os
 import sys
-import datetime
-import json
 
 from Dash.Utils import Utils
+from datetime import datetime
 
-# DashLocalStorage is a utility for reading, writing and maintaining common data
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path, nested):
-        # store_path examples: users / packages / jobs
-        # If nested = True, core record is considered data.json in a
-        # directory named after the ID
+    def __init__(self, dash_context, store_path, nested, sort_by_key=""):
+        """
+        Utility for reading, writing and maintaining common data
 
-        self.dash_context = dash_context
-        self.store_path = store_path
+        :param dash_context: Dash Context
+        :param str store_path: users, packages, jobs, etc
+        :param bool nested: If True, core record is considered data.json in a directory named after the ID
+        :param str sort_by_key: dict key to sort the ordered data by
+        """
+
         self.nested = nested
+        self.store_path = store_path
+        self.sort_by_key = sort_by_key
+        self.dash_context = dash_context
 
     def CreateOrUpdate(self, additional_data, obj_id):
         record_path = self.get_record_path(obj_id)
@@ -35,25 +46,25 @@ class DashLocalStorage:
             raise Exception("--> " + str(type(data)) + "<--")
 
         data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.datetime.now().isoformat()
+        data["modified_on"] = datetime.now().isoformat()
 
         self.WriteData(obj_id, data)
 
         return data
 
     def New(self, additional_data, obj_id=None):
-        # Creates and saves a standard user record
-
-        import json
+        """
+        Creates and saves a standard user record
+        """
 
         record_id = obj_id or Utils.GetRandomID()
 
         data = {}
         data["id"] = record_id
         data["created_by"] = Utils.Global.RequestUser["email"]
-        data["created_on"] = datetime.datetime.now().isoformat()
+        data["created_on"] = datetime.now().isoformat()
         data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.datetime.now().isoformat()
+        data["modified_on"] = datetime.now().isoformat()
 
         if additional_data:
             for key in additional_data:
@@ -67,7 +78,9 @@ class DashLocalStorage:
         return data
 
     def GetAll(self):
-        # Returns a dictionary containing ID > Data pairs
+        """
+        Returns a dictionary containing ID > Data pairs
+        """
 
         all_data = {}
         all_data["data"] = {}
@@ -76,24 +89,25 @@ class DashLocalStorage:
         if not os.path.exists(self.get_store_root()):
             return all_data
 
-        import json
         for obj_id in os.listdir(self.get_store_root()):
-            if obj_id.startswith("."): continue
+            if obj_id.startswith("."):
+                continue
+
             all_data["data"][obj_id] = self.GetData(obj_id)
 
-        all_data["order"] = list(all_data["data"].keys())
-        all_data["order"].sort()
-        all_data["order"].reverse()
+        if self.sort_by_key:
+            all_data["order"] = self.get_dict_order_by_sort_key(all_data["data"])
+        else:
+            all_data["order"] = list(all_data["data"].keys())
+            all_data["order"].sort()
+            all_data["order"].reverse()
 
         return all_data
 
     def GetData(self, obj_id, create=False, additional_data={}):
-        import json
-
         record_path = self.get_record_path(obj_id)
 
         if not os.path.exists(record_path):
-
             if create:
                 return self.New(additional_data, obj_id=obj_id)
             else:
@@ -101,9 +115,39 @@ class DashLocalStorage:
 
         return self.Read(record_path)
 
+    def get_dict_order_by_sort_key(self, all_data):
+        order = []
+        keys_to_sort = []
+        restructured_data = {}
+
+        for entry_id in all_data:
+            entry_data = all_data[entry_id]
+
+            if not entry_data.get(self.sort_by_key):
+                continue
+
+            sorted_key = entry_data[self.sort_by_key]
+
+            if not restructured_data.get(self.sort_by_key):
+                restructured_data[sorted_key] = entry_data
+            else:
+                restructured_data[f"{sorted_key}_{entry_id}"] = entry_data
+
+        for item in restructured_data:
+            keys_to_sort.append(item)
+
+        keys_to_sort.sort()
+
+        for sorted_key in keys_to_sort:
+            order.append(restructured_data[sorted_key]["id"])
+
+        return order
+
     def get_data_root(self, obj_id_email):
-        # Nearly identical to self.get_store_root, but returns slightly different
-        # paths depending on whether or not the record is nested
+        """
+        Nearly identical to self.get_store_root, but returns slightly
+        different paths depending on whether or not the record is nested
+        """
 
         if not self.nested:
             # /local/store_path/202283291732434 <- This is the data
@@ -113,14 +157,16 @@ class DashLocalStorage:
             return os.path.join(self.get_store_root(obj_id_email), obj_id_email + "/")
 
     def get_store_root(self, obj_id_email=None):
-        # Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
-        # Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id_email
+        """
+        | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
+        | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id_email
+        """
 
         if self.store_path == "users":
             store_root = os.path.join(
                 self.dash_context["srv_path_local"],
                 self.store_path,
-                obj_id_email + "/", # Email address
+                obj_id_email + "/",  # Email address
             )
         else:
             store_root = os.path.join(
@@ -132,22 +178,19 @@ class DashLocalStorage:
 
     def get_record_count(self):
         store_root = self.get_store_root()
+
         if os.path.exists(store_root):
             return len(os.listdir(store_root))
         else:
             return 0
 
     def get_record_path(self, obj_id):
-
         if self.store_path == "users":
-
             record_path = os.path.join(
                 self.get_store_root(obj_id),
                 "usr.data"
             )
-
         else:
-
             if self.nested:
                 record_path = os.path.join(
                     self.get_store_root(obj_id),
@@ -159,11 +202,10 @@ class DashLocalStorage:
                     self.get_store_root(obj_id),
                     obj_id
                 )
+
         return record_path
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
-        import json
-
         obj_id = obj_id or Utils.Global.RequestData["obj_id"]
         key = key or Utils.Global.RequestData["key"]
         value = value or Utils.Global.RequestData.get("value")
@@ -180,7 +222,7 @@ class DashLocalStorage:
         data = self.GetData(obj_id, create=create)
         data[key] = value
         data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.datetime.now().isoformat()
+        data["modified_on"] = datetime.now().isoformat()
 
         self.WriteData(obj_id, data)
 
@@ -189,7 +231,6 @@ class DashLocalStorage:
         return response
 
     def Delete(self, obj_id):
-
         if self.nested:
             record_path = self.get_data_root(obj_id)
         else:
@@ -200,67 +241,78 @@ class DashLocalStorage:
         result["record_path"] = record_path
 
         if result["existed"]:
-
             if self.nested:
-                import shutil
-                shutil.rmtree(record_path, True)
+                from shutil import rmtree
+
+                rmtree(record_path, True)
             else:
                 os.remove(record_path)
 
         result["exists_now"] = os.path.exists(record_path)
+
         return result
 
     def WriteData(self, obj_id, data):
-        import json
         self.Write(self.get_record_path(obj_id), data)
+
         return data
 
     def Write(self, full_path, data):
-        import json
-        json_str = json.dumps(data)
-        open(full_path, "w").write(json_str)
+        from json import dumps
+
+        open(full_path, "w").write(dumps(data))
+
         return data
 
     def Read(self, full_path):
-        import json
-        return json.loads(open(full_path, "r").read())
+        from json import loads
 
-
-
+        return loads(open(full_path, "r").read())
 
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id=obj_id)
 
+
 def CreateOrUpdate(dash_context, store_path, additional_data, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).CreateOrUpdate(additional_data, obj_id)
+
 
 def SetData(dash_context, store_path, obj_id, data, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).WriteData(obj_id, data)
 
+
 def Delete(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id)
+
 
 def GetData(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).GetData(obj_id)
 
-def GetAll(dash_context, store_path, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).GetAll()
+
+def GetAll(dash_context, store_path, nested=False, sort_by_key=""):
+    return DashLocalStorage(dash_context, store_path, nested, sort_by_key).GetAll()
+
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).SetProperty(obj_id, key=key, value=value, create=create)
 
+
 def GetRecordCount(dash_context, store_path, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).get_record_count()
+
 
 def GetRecordRoot(dash_context, store_path, obj_id=None, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).get_store_root(obj_id)
 
+
 def GetRecordPath(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).get_record_path(obj_id)
 
+
 def Read(full_path):
     return DashLocalStorage(None, None, None).Read(full_path)
+
 
 def Write(full_path, data):
     return DashLocalStorage(None, None, None).Write(full_path, data)
