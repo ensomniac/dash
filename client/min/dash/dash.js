@@ -5476,6 +5476,9 @@ class DashGuiLayoutTabs {
             });
         })(this);
     };
+    this.OnTabChanged = function(callback){
+        this.on_tab_changed_cb = callback.bind(this.binder);
+    };
     this.set_styles_for_side_tabs = function(){
         this.list_backing.css({
             "position": "absolute",
@@ -5637,6 +5640,9 @@ class DashGuiLayoutTabs {
             content_html = $("<div>Error Loading Content</div>");
         };
         this.content.append(content_html);
+        if (this.on_tab_changed_cb) {
+            this.on_tab_changed_cb(this.all_content[index]);
+        };
     };
     this.style_button_content = function(content_data){
         var optional_params = content_data["optional_params"] || {};

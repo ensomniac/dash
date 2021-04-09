@@ -58,6 +58,10 @@ class DashGuiLayoutTabs {
 
     };
 
+    this.OnTabChanged = function(callback){
+        this.on_tab_changed_cb = callback.bind(this.binder);
+    };
+
     this.set_styles_for_side_tabs = function(){
 
         this.list_backing.css({
@@ -269,6 +273,10 @@ class DashGuiLayoutTabs {
         };
 
         this.content.append(content_html);
+
+        if (this.on_tab_changed_cb) {
+            this.on_tab_changed_cb(this.all_content[index]);
+        };
 
     };
 
