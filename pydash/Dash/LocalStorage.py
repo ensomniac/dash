@@ -119,11 +119,13 @@ class DashLocalStorage:
         order = []
         keys_to_sort = []
         restructured_data = {}
+        unsortable = []
 
         for entry_id in all_data:
             entry_data = all_data[entry_id]
 
             if not entry_data.get(self.sort_by_key):
+                unsortable.append(entry_id)
                 continue
 
             sorted_key = entry_data[self.sort_by_key]
@@ -137,6 +139,11 @@ class DashLocalStorage:
             keys_to_sort.append(item)
 
         keys_to_sort.sort()
+
+        # This for loop adds unsortable items to the front of the object
+        # Move this after the next for loop to add them to the end of the object instead
+        for unsorted_id in unsortable:
+            order.append(unsorted_id)
 
         for sorted_key in keys_to_sort:
             order.append(restructured_data[sorted_key]["id"])
