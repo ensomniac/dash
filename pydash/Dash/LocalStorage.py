@@ -273,9 +273,23 @@ class DashLocalStorage:
 
     def Read(self, full_path):
         from json import loads
+        import time
 
-        return loads(open(full_path, "r").read())
+        attempts = 0
+        data = None
 
+        while attempts < 3:
+            attempts += 1
+
+            try:
+                data = loads(open(full_path, "r").read())
+            except:
+                time.sleep(0.2)
+
+        if attempts >=3 and data == None:
+            raise Exception("Failed to read: " + full_path + " (" + str(attempts) + " attempts)")
+
+        return data
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id=obj_id)
