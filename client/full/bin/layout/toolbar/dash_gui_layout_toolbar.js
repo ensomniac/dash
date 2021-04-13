@@ -25,11 +25,11 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(expander);
     };
 
-    this.AddSpace = function(){
+    this.AddSpace = function(width){
         let spacer = $("<div></div>");
 
         spacer.css({
-            "width": 3,
+            "width": width,
         });
 
         this.html.append(spacer);
