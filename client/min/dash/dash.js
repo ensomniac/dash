@@ -5360,6 +5360,13 @@ function DashGuiLayoutToolbar(binder, color){
         });
         this.html.append(expander);
     };
+    this.AddSpace = function(){
+        let spacer = $("<div></div>");
+        spacer.css({
+            "width": 3,
+        });
+        this.html.append(spacer);
+    };
     this.AddButton = function(label_text, callback){
         var obj_index = this.objects.length;
         (function(self, obj_index){
