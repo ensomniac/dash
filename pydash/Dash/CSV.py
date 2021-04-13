@@ -43,13 +43,10 @@ class CSV:
 
         csv_file.close()
 
-        return self.csv_filepath, self.get_bytes_for_transfer()
+        return self.csv_filepath
 
     def Import(self):
         pass  # TODO: What will this function need to do with the imported data?
-
-    def get_bytes_for_transfer(self):
-        return None  # TODO: Follow example of previous things, like downloading MT BG image
 
     def get_all_cleaned_data(self, all_data):
         all_keys = []
