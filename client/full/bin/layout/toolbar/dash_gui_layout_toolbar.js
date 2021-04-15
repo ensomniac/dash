@@ -75,6 +75,28 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
+    this.AddUploadButton = function(label_text, callback, bind, api, params){
+        let button = new Dash.Gui.Button(label_text, callback, bind);
+        button.SetFileUploader(api, params)
+
+        button.html.css({
+            "margin": 0,
+            "margin-top": Dash.Size.Padding*0.5,
+            "height": Dash.Size.RowHeight,
+            "width": d.Size.ColumnWidth,
+        });
+
+        button.highlight.css({
+        });
+
+        button.label.css({
+            "text-align": "center",
+            "line-height": Dash.Size.RowHeight + "px",
+        });
+
+        this.html.append(button.html)
+    };
+
     this.AddInput = function(placeholder_label, callback){
 
         var obj_index = this.objects.length;
