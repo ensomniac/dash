@@ -62,13 +62,13 @@ class Collection:
             sort_by_key=self.sort_by_key
         )
 
-    def Overview(self, filter_keys):
+    def Overview(self, filter_out_keys):
         return LocalStorage.GetAll(
             self.Ctx,
             self.store_path,
             nested=self.nested,
             sort_by_key=self.sort_by_key,
-            filter_keys=filter_keys
+            filter_out_keys=filter_out_keys
         )
 
     def New(self, additional_data={}):
