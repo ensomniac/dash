@@ -41,9 +41,15 @@ function DashGuiLayoutToolbar(binder, color){
 
         (function(self, obj_index){
 
-            var button = new d.Gui.Button(label_text, function(){
-                self.on_button_clicked(obj_index);
-            }, self);
+            var button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    self.on_button_clicked(obj_index);
+                },
+                self,
+                null,
+                true  // We're now telling GuiButton that this is a toolbar button
+            );
 
             self.html.append(button.html);
 
