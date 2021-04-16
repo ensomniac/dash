@@ -64,7 +64,8 @@ class CSV:
 
         return self.csv_export_filepath
 
-    # TODO: What will this function need to do with the imported data?
+    # This should only need to handle actually importing the file
+    # Data management after the fact should be handled outside of this script
     def Import(self):
         try:
             open(self.csv_import_filepath, "wb").write(self.file)
