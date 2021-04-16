@@ -62,6 +62,15 @@ class Collection:
             sort_by_key=self.sort_by_key
         )
 
+    def Overview(self, filter_out_keys):
+        return LocalStorage.GetAll(
+            self.Ctx,
+            self.store_path,
+            nested=self.nested,
+            sort_by_key=self.sort_by_key,
+            filter_out_keys=filter_out_keys
+        )
+
     def New(self, additional_data={}):
         new_obj = LocalStorage.New(
             self.Ctx,
@@ -70,7 +79,7 @@ class Collection:
             nested=self.nested,
         )
 
-        data = self.All
+        data = self.All()
         data["new_object"] = new_obj["id"]
 
         return data
