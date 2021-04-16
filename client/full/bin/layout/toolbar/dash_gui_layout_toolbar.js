@@ -39,8 +39,6 @@ function DashGuiLayoutToolbar(binder, color){
 
         var obj_index = this.objects.length;
 
-        console.log(this);
-
         (function(self, obj_index){
 
             var button = new d.Gui.Button(label_text, function(){

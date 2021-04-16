@@ -1,5 +1,5 @@
 
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, extra_params){
+function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options){
     this.binder = binder;
 
     this.get_data_cb = null;
@@ -14,8 +14,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.dash_obj_id = dash_obj_id;
     this.data = {};
     this.property_set_data = null; // Managed Dash data
-    this.extra_params = extra_params || {};
-    this.color = this.extra_params["color"] || Dash.Color.Light;
+
+    this.options = options || {};
+    this.additional_request_params = this.options["extra_params"] || {};
+    this.color = this.options["color"] || Dash.Color.Light;
+    this.indent_properties = this.options["indent_properties"] || 0;
+
     this.num_headers = 0;
     this.update_inputs = {};
 
@@ -195,15 +199,19 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
             self.update_inputs[data_key] = row;
 
-            var indent_px = 0;
+            var indent_px = Dash.Size.Padding*2;
             var indent_row = false;
 
             if (self.num_headers > 0) {
                 indent_row = true;
             };
 
+            if (self.indent_properties || self.indent_properties > 0) {
+                indent_px += self.indent_properties;
+            };
+
             if (indent_row) {
-                row.html.css("margin-left", Dash.Size.Padding*2);
+                row.html.css("margin-left", indent_px);
             };
 
             if (!row_details["can_edit"]) {
@@ -266,8 +274,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
 
-        for (var key in this.extra_params) {
-            params[key] = this.extra_params[key];
+        for (var key in this.additional_request_params) {
+            params[key] = this.additional_request_params[key];
+        };
+
+        if (row_details["key"].includes("password") && this.endpoint == "Users") {
+            params["f"] = "update_password";
+            params["p"] = new_value;
         };
 
         (function(self, row_input, row_details){
@@ -292,6 +305,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         console.log("SERVER RESPONSE");
         console.log(response);
+
+        row_input.FlashSave();
 
         if (this.set_data_cb) {
             this.set_data_cb(response);

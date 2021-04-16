@@ -13,7 +13,6 @@ import sys
 from Dash.Utils import Utils
 from datetime import datetime
 
-
 class DashLocalStorage:
     def __init__(self, dash_context, store_path, nested, sort_by_key=""):
         """

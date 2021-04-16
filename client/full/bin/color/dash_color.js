@@ -120,7 +120,7 @@ function DashColor(){
             "text_header": "#c4d4dd",
         });
 
-        console.log(light);
+        // console.log(light);
 
         this.Raise = function(cstr, raise_steps){
             raise_steps = raise_steps || 1;
@@ -173,7 +173,7 @@ function DashColor(){
             ),
         );
 
-        console.log(dark.BackgroundRaised);
+        // console.log(dark.BackgroundRaised);
 
         this.Dark = new DashColorSet(
             dark.Background, // Background color

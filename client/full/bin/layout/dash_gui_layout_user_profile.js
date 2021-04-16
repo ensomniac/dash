@@ -7,47 +7,86 @@ function DashGuiLayoutUserProfile(user_data, options){
     this.as_overview = false;
 
     this.property_box = null;
-    this.html = null;
+    this.color = this.options["color"] || Dash.Color.Light;
+
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.img_box = $("<div></div>");
+    this.img_box_size = Dash.Size.ColumnWidth;
 
     this.setup_styles = function(){
+
+        this.add_header();
+        this.setup_property_box();
+        this.add_logout_button();
+
+        var min_height = this.img_box_size + Dash.Size.RowHeight;
+        min_height += Dash.Size.Padding;
+
+        this.html.css({
+            "min-height": min_height,
+        });
+
+    };
+
+    this.add_logout_button = function(){
+
+        this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
+        this.html.append(this.logout_button.html);
+
+        this.logout_button.html.css({
+            "position": "absolute",
+            "bottom": Dash.Size.Padding,
+            "right": Dash.Size.Padding,
+            "left": this.img_box_size + (Dash.Size.Padding * 2),
+        });
+
+    };
+
+    this.add_header = function(){
+
+        var header_title = "User Settings";
+
+        if (this.user_data["first_name"]) {
+            header_title = this.user_data["first_name"] + "'s User Settings";
+        };
+
+        this.header = new Dash.Gui.Header(header_title);
+        this.html.append(this.header.html);
+
+    };
+
+    this.setup_property_box = function(){
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
             this.set_data,  // Function to set saved data locally
             "Users",        // Endpoint
-            this.user_data["email"] // Dash obj_id (unique for users)
+            this.user_data["email"], // Dash obj_id (unique for users)
+            // {"indent_properties": Dash.Size.ColumnWidth}
         );
 
-        this.html = this.property_box.html;
+        this.html.append(this.property_box.html);
 
-        var header_title = "User Settings";
-        if (this.user_data["first_name"]) {
-            header_title = this.user_data["first_name"] + "'s User Settings";
-        };
+        this.property_box.html.css({
+            "margin": 0,
+            "padding": 0,
+            "background": "none",
+            "padding-left": this.img_box_size + Dash.Size.Padding,
+            "box-shadow": "none",
+            "border-radius": 0,
+        });
 
-        this.property_box.AddHeader(header_title);
-        this.property_box.AddInput("email",       "E-mail Address", "", null, false);
-        this.property_box.AddInput("first_name",  "First Name",     "", null, true);
-        this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
-        // this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
-
-        this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
-
-        // if (this.user_data["admin"]) {
-        //     this.is_admin = new d.Gui.InputRow("Admin", "Yes", "Admin", "Revoke", function(b){this.set_group(b, "admin", false)}, this);
-        // }
-        // else {
-        //     this.is_admin = new d.Gui.InputRow("Admin", "No", "Admin", "Promote", function(b){this.set_group(b, "admin", true)}, this);
-        // };
+        this.property_box.AddInput("email",       "E-mail Address",  "", null, false);
+        this.property_box.AddInput("first_name",  "First Name",      "", null, true);
+        this.property_box.AddInput("last_name",   "Last Name",       "", null, true);
+        this.property_box.AddInput("password",    "Update Password", "", null, true);
 
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
 
             for (var i in additional_props) {
                 var property_details = additional_props[i];
-
-                console.log(property_details);
 
                 this.property_box.AddInput(
                     property_details["key"],
@@ -61,9 +100,57 @@ function DashGuiLayoutUserProfile(user_data, options){
 
         };
 
-        this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
-        this.property_box.html.append(this.new_password_row.html);
-        this.property_box.AddButton("Log Out", this.log_out);
+        // this.property_box.AddButton("Log Out", this.log_out);
+
+        this.add_user_image_box();
+
+    };
+
+    this.add_user_image_box = function(){
+
+        this.html.append(this.img_box);
+
+        this.img_box.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding,
+            "top": (Dash.Size.Padding * 2) + Dash.Size.RowHeight,
+            "width": this.img_box_size,
+            "height": this.img_box_size,
+            "background": "#222",
+            "border-radius": 4,
+        });
+
+        this.add_user_image_upload_button();
+
+    };
+
+    this.on_user_img_uploaded = function(response){
+
+        console.log("<< on_user_img_uploaded >>");
+        console.log(response);
+
+    };
+
+    this.add_user_image_upload_button = function(){
+
+        this.user_image_upload_button = new Dash.Gui.Button("Upload Image", this.on_user_img_uploaded, this, this.color);
+        this.img_box.append(this.user_image_upload_button.html);
+
+        this.params = {}
+        this.params["f"] = "upload_image";
+        this.params["token"] = d.Local.Get("token");
+
+        this.user_image_upload_button.SetFileUploader(
+            "https://" + Dash.Context.domain + "/Users",
+            this.params
+        );
+
+        this.user_image_upload_button.html.css({
+            "position": "absolute",
+            "bottom": Dash.Size.Padding,
+            "right": Dash.Size.Padding,
+            "left": Dash.Size.Padding,
+        });
 
     };
 

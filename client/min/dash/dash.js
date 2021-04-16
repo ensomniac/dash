@@ -1992,7 +1992,7 @@ function DashColor(){
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
         });
-        console.log(light);
+        // console.log(light);
         this.Raise = function(cstr, raise_steps){
             raise_steps = raise_steps || 1;
             return cstr;
@@ -2039,7 +2039,7 @@ function DashColor(){
                 ),
             ),
         );
-        console.log(dark.BackgroundRaised);
+        // console.log(dark.BackgroundRaised);
         this.Dark = new DashColorSet(
             dark.Background, // Background color
             dark.BackgroundRaised, // Background color for raised boxes
@@ -4386,7 +4386,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 };
 
 
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, extra_params){
+function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options){
     this.binder = binder;
     this.get_data_cb = null;
     this.set_data_cb = null;
@@ -4398,8 +4398,10 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.dash_obj_id = dash_obj_id;
     this.data = {};
     this.property_set_data = null; // Managed Dash data
-    this.extra_params = extra_params || {};
-    this.color = this.extra_params["color"] || Dash.Color.Light;
+    this.options = options || {};
+    this.additional_request_params = this.options["extra_params"] || {};
+    this.color = this.options["color"] || Dash.Color.Light;
+    this.indent_properties = this.options["indent_properties"] || 0;
     this.num_headers = 0;
     this.update_inputs = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -4527,13 +4529,16 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 self.color
             );
             self.update_inputs[data_key] = row;
-            var indent_px = 0;
+            var indent_px = Dash.Size.Padding*2;
             var indent_row = false;
             if (self.num_headers > 0) {
                 indent_row = true;
             };
+            if (self.indent_properties || self.indent_properties > 0) {
+                indent_px += self.indent_properties;
+            };
             if (indent_row) {
-                row.html.css("margin-left", Dash.Size.Padding*2);
+                row.html.css("margin-left", indent_px);
             };
             if (!row_details["can_edit"]) {
                 row.SetLocked(true);
@@ -4578,8 +4583,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
-        for (var key in this.extra_params) {
-            params[key] = this.extra_params[key];
+        for (var key in this.additional_request_params) {
+            params[key] = this.additional_request_params[key];
+        };
+        if (row_details["key"].includes("password") && this.endpoint == "Users") {
+            params["f"] = "update_password";
+            params["p"] = new_value;
         };
         (function(self, row_input, row_details){
             row_input.Request(url, params, function(response){
@@ -4596,6 +4605,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         };
         console.log("SERVER RESPONSE");
         console.log(response);
+        row_input.FlashSave();
         if (this.set_data_cb) {
             this.set_data_cb(response);
             return;
@@ -5005,37 +5015,64 @@ function DashGuiLayoutUserProfile(user_data, options){
     this.user_data = user_data || Dash.User.Data;
     this.as_overview = false;
     this.property_box = null;
-    this.html = null;
+    this.color = this.options["color"] || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.img_box = $("<div></div>");
+    this.img_box_size = Dash.Size.ColumnWidth;
     this.setup_styles = function(){
+        this.add_header();
+        this.setup_property_box();
+        this.add_logout_button();
+        var min_height = this.img_box_size + Dash.Size.RowHeight;
+        min_height += Dash.Size.Padding;
+        this.html.css({
+            "min-height": min_height,
+        });
+    };
+    this.add_logout_button = function(){
+        this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
+        this.html.append(this.logout_button.html);
+        this.logout_button.html.css({
+            "position": "absolute",
+            "bottom": Dash.Size.Padding,
+            "right": Dash.Size.Padding,
+            "left": this.img_box_size + (Dash.Size.Padding * 2),
+        });
+    };
+    this.add_header = function(){
+        var header_title = "User Settings";
+        if (this.user_data["first_name"]) {
+            header_title = this.user_data["first_name"] + "'s User Settings";
+        };
+        this.header = new Dash.Gui.Header(header_title);
+        this.html.append(this.header.html);
+    };
+    this.setup_property_box = function(){
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
             this.set_data,  // Function to set saved data locally
             "Users",        // Endpoint
-            this.user_data["email"] // Dash obj_id (unique for users)
+            this.user_data["email"], // Dash obj_id (unique for users)
+            // {"indent_properties": Dash.Size.ColumnWidth}
         );
-        this.html = this.property_box.html;
-        var header_title = "User Settings";
-        if (this.user_data["first_name"]) {
-            header_title = this.user_data["first_name"] + "'s User Settings";
-        };
-        this.property_box.AddHeader(header_title);
-        this.property_box.AddInput("email",       "E-mail Address", "", null, false);
-        this.property_box.AddInput("first_name",  "First Name",     "", null, true);
-        this.property_box.AddInput("last_name",   "Last Name",      "", null, true);
-        // this.property_box.AddInput("job_prefix",   "Job Prefix",      "", null, true);
-        this.new_password_row = new d.Gui.InputRow("Update Password", "", "New Password", "Update", this.update_password, this);
-        // if (this.user_data["admin"]) {
-        //     this.is_admin = new d.Gui.InputRow("Admin", "Yes", "Admin", "Revoke", function(b){this.set_group(b, "admin", false)}, this);
-        // }
-        // else {
-        //     this.is_admin = new d.Gui.InputRow("Admin", "No", "Admin", "Promote", function(b){this.set_group(b, "admin", true)}, this);
-        // };
+        this.html.append(this.property_box.html);
+        this.property_box.html.css({
+            "margin": 0,
+            "padding": 0,
+            "background": "none",
+            "padding-left": this.img_box_size + Dash.Size.Padding,
+            "box-shadow": "none",
+            "border-radius": 0,
+        });
+        this.property_box.AddInput("email",       "E-mail Address",  "", null, false);
+        this.property_box.AddInput("first_name",  "First Name",      "", null, true);
+        this.property_box.AddInput("last_name",   "Last Name",       "", null, true);
+        this.property_box.AddInput("password",    "Update Password", "", null, true);
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
             for (var i in additional_props) {
                 var property_details = additional_props[i];
-                console.log(property_details);
                 this.property_box.AddInput(
                     property_details["key"],
                     property_details["label_text"],
@@ -5045,9 +5082,42 @@ function DashGuiLayoutUserProfile(user_data, options){
                 );
             };
         };
-        this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
-        this.property_box.html.append(this.new_password_row.html);
-        this.property_box.AddButton("Log Out", this.log_out);
+        // this.property_box.AddButton("Log Out", this.log_out);
+        this.add_user_image_box();
+    };
+    this.add_user_image_box = function(){
+        this.html.append(this.img_box);
+        this.img_box.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding,
+            "top": (Dash.Size.Padding * 2) + Dash.Size.RowHeight,
+            "width": this.img_box_size,
+            "height": this.img_box_size,
+            "background": "#222",
+            "border-radius": 4,
+        });
+        this.add_user_image_upload_button();
+    };
+    this.on_user_img_uploaded = function(response){
+        console.log("<< on_user_img_uploaded >>");
+        console.log(response);
+    };
+    this.add_user_image_upload_button = function(){
+        this.user_image_upload_button = new Dash.Gui.Button("Upload Image", this.on_user_img_uploaded, this, this.color);
+        this.img_box.append(this.user_image_upload_button.html);
+        this.params = {}
+        this.params["f"] = "upload_image";
+        this.params["token"] = d.Local.Get("token");
+        this.user_image_upload_button.SetFileUploader(
+            "https://" + Dash.Context.domain + "/Users",
+            this.params
+        );
+        this.user_image_upload_button.html.css({
+            "position": "absolute",
+            "bottom": Dash.Size.Padding,
+            "right": Dash.Size.Padding,
+            "left": Dash.Size.Padding,
+        });
     };
     this.get_data = function(){
         return this.user_data;
@@ -5389,7 +5459,6 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.AddButton = function(label_text, callback){
         var obj_index = this.objects.length;
-        console.log(this);
         (function(self, obj_index){
             var button = new d.Gui.Button(label_text, function(){
                 self.on_button_clicked(obj_index);
