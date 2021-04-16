@@ -5498,6 +5498,7 @@ function DashGuiLayoutToolbar(binder, color){
             "text-align": "center",
             "line-height": Dash.Size.RowHeight + "px",
         });
+        return button;  // Ryan, I added this to make it more flexible like a standalone button
     };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         let button = new Dash.Gui.Button(label_text, callback, bind);

@@ -73,6 +73,7 @@ function DashGuiLayoutToolbar(binder, color){
             "line-height": Dash.Size.RowHeight + "px",
         });
 
+        return button;  // Ryan, I added this to make it more flexible like a standalone button
     };
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
