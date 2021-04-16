@@ -100,13 +100,17 @@ function DashGuiLayoutUserProfile(user_data, options){
 
         };
 
-        // this.property_box.AddButton("Log Out", this.log_out);
-
         this.add_user_image_box();
 
     };
 
     this.add_user_image_box = function(){
+
+        var img_url = "dash/fonts/user_default.jpg";
+
+        if (this.user_data["img"]) {
+            img_url = this.user_data["img"]["thumb_url"];
+        };
 
         this.html.append(this.img_box);
 
@@ -118,6 +122,8 @@ function DashGuiLayoutUserProfile(user_data, options){
             "height": this.img_box_size,
             "background": "#222",
             "border-radius": 4,
+            "background-image": "url(" + img_url + ")",
+            "background-size": "cover",
         });
 
         this.add_user_image_upload_button();
@@ -126,8 +132,18 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     this.on_user_img_uploaded = function(response){
 
+        if (response.timeStamp) {
+            return;
+        };
+
         console.log("<< on_user_img_uploaded >>");
         console.log(response);
+
+        if (this.img_box && response["img"]) {
+            this.img_box.css({
+                "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
+            });
+        };
 
     };
 
@@ -139,6 +155,7 @@ function DashGuiLayoutUserProfile(user_data, options){
         this.params = {}
         this.params["f"] = "upload_image";
         this.params["token"] = d.Local.Get("token");
+        this.params["user_data"] = this.user_data;
 
         this.user_image_upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Users",

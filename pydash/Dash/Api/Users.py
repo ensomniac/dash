@@ -24,6 +24,103 @@ class ApiUsers:
         self.Add(self.update_password, requires_authentication=True)
         self.Add(self.set_property,    requires_authentication=True)
         self.Add(self.get_all,         requires_authentication=True)
+        self.Add(self.upload_image,    requires_authentication=True)
+
+    def upload_image(self):
+        # TODO: Move this into the core Users.py module
+        from Dash import Users
+        from PIL import Image
+        import io
+        import datetime
+
+        user_data = self.Params.get("user_data") or self.User
+
+        data_root = Users.GetUserDataRoot(user_data["email"], admin_user_data=self.User)
+        usr_data_path = os.path.join(data_root, "usr.data")
+        img_root = os.path.join(data_root, "img/")
+
+        if not os.path.exists(img_root):
+            os.makedirs(img_root)
+
+        extension = self.Params.get("filename").split(".")[0].strip().lower()
+
+        img = Image.open(io.BytesIO(self.Params["file"]))
+        img = img.convert("RGB")
+
+        img_data = {}
+        img_data["id"] = self.RandomID
+        img_data["org_width"] = img.size[0]
+        img_data["org_height"] = img.size[0]
+        img_data["org_aspect"] = img.size[0]/float(img.size[1])
+        img_data["uploaded_by"] = self.User["email"]
+        img_data["uploaded_on"] = datetime.datetime.now().isoformat()
+
+        orig_path = os.path.join(img_root, img_data["id"] + "_orig.png")
+        thumb_path = os.path.join(img_root, img_data["id"] + "_thb.jpg")
+        data_path = os.path.join(img_root, img_data["id"] + ".json")
+
+        img.save(orig_path)
+        size = img.size[0]
+
+        if img.size[0] != img.size[1]:
+
+            if img.size[0] > img.size[1]:
+                # Wider
+
+                size = img.size[1]
+
+                x = int((img.size[0]*0.5) - (size*0.5))
+
+                img = img.crop((
+                    x,           # x start
+                    0,           # y start
+                    x + size,    # x + width
+                    size         # y + height
+                ))
+
+            else:
+                # Taller
+                size = img.size[0]
+
+                y = int((img.size[1]*0.5) - (size*0.5))
+
+                img = img.crop((
+                    0,           # x start
+                    y,           # y start
+                    size,        # x + width
+                    y + size     # y + height
+                ))
+
+        thumb_size = 512
+        if size > thumb_size:
+            img = img.resize((thumb_size, thumb_size), Image.ANTIALIAS)
+            size = thumb_size
+
+        img.save(thumb_path)
+
+        thumb_url = "https://" + self.DashContext["domain"] + "/local/"
+        thumb_url += img_root.split("/" + self.DashContext["asset_path"] + "/local/")[-1]
+        thumb_url += img_data["id"] + "_thb.jpg"
+
+        orig_url = "https://" + self.DashContext["domain"] + "/local/"
+        orig_url += img_root.split("/" + self.DashContext["asset_path"] + "/local/")[-1]
+        orig_url += img_data["id"] + "_orig.png"
+
+        img_data["thumb_url"] = thumb_url
+        img_data["orig_url"] = orig_url
+
+        img_data["width"] = size
+        img_data["height"] = size
+        img_data["aspect"] = 1
+
+        LocalStorage.Write(data_path, img_data)
+
+        # Now finally, update this user's user data
+        user_data = LocalStorage.Read(usr_data_path)
+        user_data["img"] = img_data
+        LocalStorage.Write(usr_data_path, user_data)
+
+        return self.SetResponse(user_data)
 
     def reset(self):
         return self.SetResponse(DashUsers(self.Params, self.DashContext).Reset())
