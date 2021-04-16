@@ -104,8 +104,8 @@ class DashLocalStorage:
             all_data["order"].reverse()
 
         if self.filter_keys:
-            for entry_id in all_data:
-                all_data["data"][entry_id] = self.filter_data_entry(all_data[entry_id])
+            for entry_id in all_data["data"]:
+                all_data["data"][entry_id] = self.filter_data_entry(all_data["data"][entry_id])
 
         return all_data
 
