@@ -39,6 +39,8 @@ function DashGuiLayoutToolbar(binder, color){
 
         var obj_index = this.objects.length;
 
+        console.log(this);
+
         (function(self, obj_index){
 
             var button = new d.Gui.Button(label_text, function(){
@@ -49,7 +51,7 @@ function DashGuiLayoutToolbar(binder, color){
 
             var obj = {};
             obj["html"] = button;
-            obj["callback"] = callback.bind(this.binder);
+            obj["callback"] = callback.bind(self.binder);
             obj["index"] = obj_index;
             self.objects.push(obj);
 
@@ -146,6 +148,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.on_button_clicked = function(obj_index){
+        console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"]);
     };

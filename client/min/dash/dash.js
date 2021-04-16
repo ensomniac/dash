@@ -1888,6 +1888,7 @@ function DashView(){
     this.User = DashUserView;
     this.Style = DashStyleView;
     this.SiteSettings = DashAdminView;
+    this.SiteSettingsTabs = new DashAdminTabs();
     this.Admin = DashAdminView;
     this.PDF = DashPDFView;
 };
@@ -2819,6 +2820,13 @@ function DashAdminView(){
     this.setup_styles = function(){
         this.layout.Append("Settings", DashAdminSettings);
         this.layout.Append("Color", DashAdminColor);
+        for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
+            var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];
+            this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
+        };
+    };
+    this.AddTab = function(){
+        console.log("Adding tab");
     };
     this.setup_styles();
 };
@@ -3024,6 +3032,18 @@ function DashAdminColorDoc(color){
         });
     };
     this.setup_styles();
+};
+
+
+function DashAdminTabs(){
+    // This tiny class allows us to add overrides to the tabs in the Dash Admin page
+    this.user_tabs = [];
+    this.Add = function(label_text, html_obj){
+        var tab_details = {};
+        tab_details["label_text"] = label_text;
+        tab_details["html_obj"] = html_obj;
+        this.user_tabs.push(tab_details);
+    };
 };
 
 
@@ -5369,6 +5389,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.AddButton = function(label_text, callback){
         var obj_index = this.objects.length;
+        console.log(this);
         (function(self, obj_index){
             var button = new d.Gui.Button(label_text, function(){
                 self.on_button_clicked(obj_index);
@@ -5376,7 +5397,7 @@ function DashGuiLayoutToolbar(binder, color){
             self.html.append(button.html);
             var obj = {};
             obj["html"] = button;
-            obj["callback"] = callback.bind(this.binder);
+            obj["callback"] = callback.bind(self.binder);
             obj["index"] = obj_index;
             self.objects.push(obj);
         })(this, obj_index);
@@ -5449,6 +5470,7 @@ function DashGuiLayoutToolbar(binder, color){
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
     this.on_button_clicked = function(obj_index){
+        console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"]);
     };

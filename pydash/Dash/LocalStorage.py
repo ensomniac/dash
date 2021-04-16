@@ -275,7 +275,7 @@ class DashLocalStorage:
         # and I want to make sure I can quickly revert this change in the
         # case that it starts causing problems instead of solving them
 
-        self.write_protected(full_path, data)
+        return self.write_protected(full_path, data)
 
     def Read(self, full_path):
         from json import loads
