@@ -79,7 +79,7 @@ class Collection:
             nested=self.nested,
         )
 
-        data = self.All()
+        data = self.All
         data["new_object"] = new_obj["id"]
 
         return data
