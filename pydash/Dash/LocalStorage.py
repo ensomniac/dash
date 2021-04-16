@@ -15,7 +15,7 @@ from datetime import datetime
 
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path, nested, sort_by_key=""):
+    def __init__(self, dash_context, store_path, nested, sort_by_key="", filter_keys=[]):
         """
         Utility for reading, writing and maintaining common data
 
@@ -28,6 +28,7 @@ class DashLocalStorage:
         self.nested = nested
         self.store_path = store_path
         self.sort_by_key = sort_by_key
+        self.filter_keys = filter_keys
         self.dash_context = dash_context
 
     def CreateOrUpdate(self, additional_data, obj_id):
@@ -102,6 +103,10 @@ class DashLocalStorage:
             all_data["order"].sort()
             all_data["order"].reverse()
 
+        if self.filter_keys:
+            for entry_id in all_data:
+                all_data["data"][entry_id] = self.filter_data_entry(all_data[entry_id])
+
         return all_data
 
     def GetData(self, obj_id, create=False, additional_data={}):
@@ -113,7 +118,20 @@ class DashLocalStorage:
             else:
                 raise Exception("Expected record does not exist. x9483 Expected " + record_path + " / " + obj_id)
 
-        return self.Read(record_path)
+        data = self.Read(record_path)
+
+        return data
+
+    def filter_data_entry(self, data):
+        filtered_data = {}
+
+        for key in self.filter_keys:
+            try:
+                filtered_data[key] = data[key]
+            except:
+                continue
+
+        return filtered_data
 
     def get_dict_order_by_sort_key(self, all_data):
         order = []
@@ -344,8 +362,8 @@ def GetData(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).GetData(obj_id)
 
 
-def GetAll(dash_context, store_path, nested=False, sort_by_key=""):
-    return DashLocalStorage(dash_context, store_path, nested, sort_by_key).GetAll()
+def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_keys=[]):
+    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_keys).GetAll()
 
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
