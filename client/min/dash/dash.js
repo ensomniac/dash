@@ -5121,7 +5121,7 @@ function DashGuiLayoutUserProfile(user_data, options){
         this.params = {}
         this.params["f"] = "upload_image";
         this.params["token"] = d.Local.Get("token");
-        this.params["user_data"] = this.user_data;
+        this.params["user_data"] = JSON.stringify(this.user_data);
         this.user_image_upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Users",
             this.params

@@ -32,8 +32,13 @@ class ApiUsers:
         from PIL import Image
         import io
         import datetime
+        import json
 
         user_data = self.Params.get("user_data") or self.User
+
+        if type(user_data) == str:
+            # Sent from the client
+            user_data = json.loads(user_data)
 
         data_root = Users.GetUserDataRoot(user_data["email"], admin_user_data=self.User)
         usr_data_path = os.path.join(data_root, "usr.data")

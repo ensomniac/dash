@@ -140,9 +140,12 @@ function DashGuiLayoutUserProfile(user_data, options){
         console.log(response);
 
         if (this.img_box && response["img"]) {
+            this.user_data["img"] = response["img"];
+
             this.img_box.css({
                 "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
             });
+
         };
 
     };
@@ -155,7 +158,7 @@ function DashGuiLayoutUserProfile(user_data, options){
         this.params = {}
         this.params["f"] = "upload_image";
         this.params["token"] = d.Local.Get("token");
-        this.params["user_data"] = this.user_data;
+        this.params["user_data"] = JSON.stringify(this.user_data);
 
         this.user_image_upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Users",
