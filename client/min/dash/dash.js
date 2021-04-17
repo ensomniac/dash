@@ -3298,10 +3298,11 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
 };
 
 
-function DashGuiButton(Label, Callback, Bind, color){
+function DashGuiButton(Label, Callback, Bind, color, in_toolbar=false){
     this.label = Label;
     this.callback = Callback;
     this.bind = Bind;
+    this.in_toolbar = in_toolbar;
     // This messy check is temporary. I went with the wrong path of
     // passing in a color BUTTON set rather than the full color set
     color = color || Dash.Color.Light;
@@ -3341,7 +3342,7 @@ function DashGuiButton(Label, Callback, Bind, color){
     // }
     // console.log(this.who());
 
-    this.setup_styles = function(){
+    this.setup_styles = function() {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
@@ -3399,6 +3400,9 @@ function DashGuiButton(Label, Callback, Bind, color){
             "text-align": "center",
             "color": this.color_set.Text.Base,
         });
+        if (this.in_toolbar) {
+            this.set_size_in_toolbar();
+        }
     };
     this.ChangeLabel = function(label_text) {
         this.html[0].innerText = "";
@@ -3407,6 +3411,20 @@ function DashGuiButton(Label, Callback, Bind, color){
     }
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
+    }
+    this.set_size_in_toolbar = function () {
+        this.html.css({
+            "margin": 0,
+            "margin-top": Dash.Size.Padding*0.5,
+            "height": Dash.Size.RowHeight,
+            "width": d.Size.ColumnWidth,
+        });
+        this.highlight.css({
+        });
+        this.label.css({
+            "text-align": "center",
+            "line-height": Dash.Size.RowHeight + "px",
+        });
     }
     this.SetBorderRadius = function(border_radius){
         this.html.css({
@@ -5474,9 +5492,15 @@ function DashGuiLayoutToolbar(binder, color){
     this.AddButton = function(label_text, callback){
         var obj_index = this.objects.length;
         (function(self, obj_index){
-            var button = new d.Gui.Button(label_text, function(){
-                self.on_button_clicked(obj_index);
-            }, self);
+            var button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    self.on_button_clicked(obj_index);
+                },
+                self,
+                null,
+                true  // We're now telling GuiButton that this is a toolbar button
+            );
             self.html.append(button.html);
             var obj = {};
             obj["html"] = button;
@@ -5498,6 +5522,7 @@ function DashGuiLayoutToolbar(binder, color){
             "text-align": "center",
             "line-height": Dash.Size.RowHeight + "px",
         });
+        return button;  // Ryan, I added this to make it more flexible like a standalone button
     };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         let button = new Dash.Gui.Button(label_text, callback, bind);
