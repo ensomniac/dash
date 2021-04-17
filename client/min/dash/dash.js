@@ -5128,6 +5128,7 @@ function DashGuiLayoutUserProfile(user_data, options){
         console.log("<< on_user_img_uploaded >>");
         console.log(response);
         if (this.img_box && response["img"]) {
+            this.user_data["img"] = response["img"];
             this.img_box.css({
                 "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
             });
