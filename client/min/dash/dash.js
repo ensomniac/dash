@@ -2026,10 +2026,10 @@ function DashColor(){
             ),
             new DashColorButtonSet(    // Tab
                 new DashColorStateSet( // Tab Background
-                    light.Button,    // Tab.Background.Base
-                    button_selected,    // Tab.Background.Selected
-                    button_hover_color, // Tab.Background.BaseHover
-                    button_selected_hover, // Tab.Background.SelectedHover
+                    "green",    // Tab.Background.Base
+                    "green",    // Tab.Background.Selected
+                    "green", // Tab.Background.BaseHover
+                    "green", // Tab.Background.SelectedHover
                 ),
                 new DashColorStateSet( // Tab Text
                     light.ButtonText,   // Tab.Text.Base
@@ -5118,6 +5118,7 @@ function DashGuiLayoutUserProfile(user_data, options){
             "border-radius": 4,
             "background-image": "url(" + img_url + ")",
             "background-size": "cover",
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
         });
         this.add_user_image_upload_button();
     };
@@ -5826,9 +5827,16 @@ class DashGuiLayoutTabs {
                 "width": Dash.Size.ColumnWidth,
             });
             content_data["button"].label.css({
-                "font-size": "85%",
                 "padding-left": indent,
+                "background": "none",
             });
+            content_data["button"].highlight.css({
+                "top": "auto",
+                "height": 10,
+                // "padding-left": indent,
+                "background": "none",
+            });
+            // this.highlight
         };
         content_data["button"].SetBorderRadius(0);
     };

@@ -316,9 +316,18 @@ class DashGuiLayoutTabs {
             });
 
             content_data["button"].label.css({
-                "font-size": "85%",
                 "padding-left": indent,
+                "background": "none",
             });
+
+            content_data["button"].highlight.css({
+                "top": "auto",
+                "height": 10,
+                // "padding-left": indent,
+                "background": "none",
+            });
+
+            // this.highlight
 
         };
 

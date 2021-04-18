@@ -188,6 +188,15 @@ class DashLocalStorage:
         """
 
         if self.store_path == "users":
+
+            if not obj_id_email:
+                from Dash.Utils import Utils as DashUtils
+                params = DashUtils.Global.RequestData
+                obj_id_email = params.get("email")
+
+            if not obj_id_email:
+                raise Exception("An email address is required. Error x8392")
+
             store_root = os.path.join(
                 self.dash_context["srv_path_local"],
                 self.store_path,

@@ -159,10 +159,10 @@ function DashColor(){
             ),
             new DashColorButtonSet(    // Tab
                 new DashColorStateSet( // Tab Background
-                    light.Button,    // Tab.Background.Base
-                    button_selected,    // Tab.Background.Selected
-                    button_hover_color, // Tab.Background.BaseHover
-                    button_selected_hover, // Tab.Background.SelectedHover
+                    "green",    // Tab.Background.Base
+                    "green",    // Tab.Background.Selected
+                    "green", // Tab.Background.BaseHover
+                    "green", // Tab.Background.SelectedHover
                 ),
                 new DashColorStateSet( // Tab Text
                     light.ButtonText,   // Tab.Text.Base

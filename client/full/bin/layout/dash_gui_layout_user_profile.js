@@ -124,6 +124,7 @@ function DashGuiLayoutUserProfile(user_data, options){
             "border-radius": 4,
             "background-image": "url(" + img_url + ")",
             "background-size": "cover",
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
         });
 
         this.add_user_image_upload_button();
