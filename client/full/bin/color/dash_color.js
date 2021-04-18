@@ -100,12 +100,22 @@ function DashColor(){
 
         var light = new DashSiteColors({
             "background": "#dcdbd9",
+            "background": "#e0dfde",
+            "background": "#e3e8ea",
+            "background": "red",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
-            "accent_good": "#e0ccb4",
+            // "accent_good": "#e0ccb4",
+            "accent_good": "#f3d057",
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
+            "tab_area_background": "#e4eaee",
+            "tab_area_background": "#659cba",
+            // "tab_area_background": "#6a7f8a",
+            // "tab_area_background": "#e0ccb4",
+            // "tab_area_background": "#655f5d",
+            "tab_area_background": "#333",
         });
 
         // 659cba
@@ -118,6 +128,7 @@ function DashColor(){
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
+            "tab_area_background": "red",
         });
 
         // console.log(light);
@@ -136,54 +147,55 @@ function DashColor(){
         };
 
         this.Light = new DashColorSet(
-            light.Background, // Background color
+            light.Background,       // Background color
             light.BackgroundRaised, // Background color for raised boxes
-            light.TabBackground, // Tab area background
-            light_bg_text, // Text color
-            light.TextHeader, // Text header color
+            light_bg_text,          // Text color
+            light.TextHeader,       // Text header color
             light.AccentGood,
             light.AccentBad,
             new DashColorButtonSet( // Button
+                "none",                    // The color of the area behind a set of buttons, if applicable
                 new DashColorStateSet(
-                    light.Button,    // Button.Background.Base
-                    button_selected,    // Button.Background.Selected
-                    button_hover_color, // Button.Background.BaseHover
+                    light.Button,          // Button.Background.Base
+                    button_selected,       // Button.Background.Selected
+                    button_hover_color,    // Button.Background.BaseHover
                     button_selected_hover, // Button.Background.SelectedHover
                 ),
                 new DashColorStateSet(
                     light.ButtonText,   // Button.Text.Base
                     button_text_color,  // Button.Text.Selected
                     button_text_color,  // Button.Text.BaseHover
-                    button_text_color, // Button.Text.SelectedHover
+                    button_text_color,  // Button.Text.SelectedHover
                 ),
             ),
-            new DashColorButtonSet(    // Tab
-                new DashColorStateSet( // Tab Background
-                    "green",    // Tab.Background.Base
-                    "green",    // Tab.Background.Selected
-                    "green", // Tab.Background.BaseHover
-                    "green", // Tab.Background.SelectedHover
+            new DashColorButtonSet(     // Tab
+                // "#e4eaee",                    // The color of the area behind a set of buttons, if applicable
+                // "#e4eaee",                    // The color of the area behind a set of buttons, if applicable
+                light.TabAreaBackground,
+                new DashColorStateSet(  // Tab Background
+                    "rgba(0, 0, 0, 0)", // Tab.Background.Base
+                    "rgba(0, 0, 0, 0)", // Tab.Background.Selected
+                    "rgba(0, 0, 0, 0)",  // Tab.Background.BaseHover
+                    light.AccentGood,      // Tab.Background.SelectedHover
                 ),
-                new DashColorStateSet( // Tab Text
-                    light.ButtonText,   // Tab.Text.Base
-                    light.ButtonText,  // Tab.Text.BaseHover
-                    light.ButtonText,  // Tab.Text.BaseHover
-                    light.ButtonText, // Tab.Text.SelectedHover
+                new DashColorStateSet(    // Tab Text
+                    "rgba(255, 255, 255, 0.6)", // Tab.Text.Base
+                    "rgba(255, 255, 255, 0.9)", // Tab.Text.Selected
+                    "rgba(255, 255, 255, 0.7)",     // Tab.Text.BaseHover
+                    "rgba(255, 255, 255, 1.0)",     // Tab.Text.SelectedHover
                 ),
             ),
         );
 
-        // console.log(dark.BackgroundRaised);
-
         this.Dark = new DashColorSet(
             dark.Background, // Background color
             dark.BackgroundRaised, // Background color for raised boxes
-            dark.TabBackground, // Tab area background
             dark_bg_text, // Text color
             dark.TextHeader, // Text header color
             dark.AccentGood,
             dark.AccentBad,
             new DashColorButtonSet( // Button
+                "none", // The color of the area behind a set of buttons, if applicable
                 new DashColorStateSet(
                     dark.Button, // Button.Background.Base
                     button_selected, // Button.Background.Selected
@@ -198,6 +210,7 @@ function DashColor(){
                 ),
             ),
             new DashColorButtonSet(    // Tab
+                "red", // The color of the area behind a set of tabs, if applicable
                 new DashColorStateSet( // Tab Background
                     dark.Button,    // Tab.Background.Base
                     button_selected,    // Tab.Background.Selected

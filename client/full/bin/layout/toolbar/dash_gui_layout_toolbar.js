@@ -48,7 +48,7 @@ function DashGuiLayoutToolbar(binder, color){
                 },
                 self,
                 null,
-                true  // We're now telling GuiButton that this is a toolbar button
+                {"style": "toolbar"}  // We're now telling GuiButton that this is a toolbar button
             );
 
             self.html.append(button.html);

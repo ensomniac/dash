@@ -1,9 +1,8 @@
 class DashColorSet {
 
-    constructor(background, background_raised, tab_background, text, text_header, accent_good, accent_bad, button, tab) {
+    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab) {
         this._background  = background;       // HTML Color
         this._background_raised  = background_raised;       // HTML Color
-        this._tab_background = tab_background // HTML Color
         this._text        = text;             // HTML Color
         this._text_header = text_header;      // HTML Color
         this._accent_good = accent_good;      // HTML Color
@@ -18,10 +17,6 @@ class DashColorSet {
 
     get BackgroundRaised() {
         return this._background_raised;
-    };
-
-    get TabBackground() {
-        return this._tab_background;
     };
 
     get Text() {
@@ -60,10 +55,6 @@ class DashColorSet {
 
     set Background(color) {
         this._background = color;
-    };
-
-    set TabBackground(color) {
-        this._tab_background = color;
     };
 
     set Text(color) {

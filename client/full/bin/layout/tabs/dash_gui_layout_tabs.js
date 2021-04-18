@@ -160,10 +160,6 @@ class DashGuiLayoutTabs {
             "box-shadow": box_shadow,
         });
 
-        for (var i in this.all_content) {
-            this.style_button_content(this.all_content[i]);
-        };
-
     };
 
     this.update_styles_for_top_tabs = function(){
@@ -176,8 +172,9 @@ class DashGuiLayoutTabs {
 
         this.list_backing.css({
             "height": this.size,
-            "background": this.color.TabBackground,
-            "box-shadow": box_shadow,
+            // "background": this.color.TabBackground,
+            "background": this.color.Tab.AreaBackground,
+            // "box-shadow": box_shadow,
         });
 
         this.list_top.css({
@@ -191,10 +188,6 @@ class DashGuiLayoutTabs {
         this.content.css({
             "top": this.size,
         });
-
-        for (var i in this.all_content) {
-            this.style_button_content(this.all_content[i]);
-        };
 
     };
 
@@ -280,61 +273,6 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.style_button_content = function(content_data){
-
-        var optional_params = content_data["optional_params"] || {};
-
-        var indent = 0;
-
-        if (optional_params["indent"]) {
-            indent = Dash.Size.Padding;
-        };
-
-        if (this.side_tabs) {
-
-            content_data["button"].SetTextAlign("left");
-            content_data["button"].html.css({
-                "margin-bottom": 1,
-                "flex-grow": 1,
-            });
-
-            content_data["button"].label.css({
-                // "font-size": "85%",
-                "padding-left": indent,
-                // "font-family": "aa_bold",
-                // "font-family": "aa_normal",
-                // "font-family": "aa_headline",
-            });
-
-        }
-        else {
-
-            content_data["button"].SetTextAlign("center");
-            content_data["button"].html.css({
-                "margin-right": 1,
-                "width": Dash.Size.ColumnWidth,
-            });
-
-            content_data["button"].label.css({
-                "padding-left": indent,
-                "background": "none",
-            });
-
-            content_data["button"].highlight.css({
-                "top": "auto",
-                "height": 10,
-                // "padding-left": indent,
-                "background": "none",
-            });
-
-            // this.highlight
-
-        };
-
-        content_data["button"].SetBorderRadius(0);
-
-    };
-
     this.AppendHTML = function(html){
         this.list_top.append(html);
     };
@@ -380,17 +318,30 @@ class DashGuiLayoutTabs {
         content_data["button"] = null;
         content_data["optional_params"] = optional_params;
 
-        (function(self, index){
-            content_data["button"] = new d.Gui.Button(label_text, function(){
-                self.LoadIndex(index);
-            }, self, self.color);
-        })(this, this.all_content.length);
+        var button_options = {};
+
+        if (this.side_tabs) {
+            button_options["style"] = "tab_side";
+        }
+        else {
+            button_options["style"] = "tab_top";
+        };
+
+        (function(self, index, button_options){
+
+            content_data["button"] = new d.Gui.Button(
+                label_text,                         // Label
+                function(){self.LoadIndex(index);}, // Callback
+                self,                               // Binder
+                self.color,                         // Dash Color Set
+                button_options                      // Options
+            );
+
+        })(this, this.all_content.length, button_options);
 
         anchor_div = anchor_div || this.list_top;
-
         anchor_div.append(content_data["button"].html);
 
-        this.style_button_content(content_data);
         this.all_content.push(content_data);
 
         return content_data["button"];

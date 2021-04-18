@@ -1,123 +1,60 @@
 
-function DashGuiButton(Label, Callback, Bind, color, in_toolbar=false){
+function DashGuiButton(Label, Callback, Bind, color, options){
 
-    this.label = Label;
-    this.callback = Callback;
-    this.bind = Bind;
-    this.in_toolbar = in_toolbar;
+    this.label      = Label;
+    this.callback   = Callback;
+    this.bind       = Bind;
+    this.options    = options || {};
+    this.style      = this.options["style"] || "default";
+    this.in_toolbar = this.style == "toolbar";
+    this.color      = color || Dash.Color.Light;
 
-    // This messy check is temporary. I went with the wrong path of
-    // passing in a color BUTTON set rather than the full color set
-    color = color || Dash.Color.Light;
-    if (color instanceof DashColorSet) {
-        // This is correct - the newer style
-    }
-    else {
-        console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
-        console.log(arguments.callee.caller);
-        // console.log(DashGuiButton.caller);
-        color = color.Button;
-    };
-
-    this.color = color || Dash.Color.Light;
-    this.color_set = this.color.Button; // Temporary
-
-    this.html = $("<div></div>");
-    this.highlight = $("<div></div>");
+    this.html            = $("<div></div>");
+    this.highlight       = $("<div></div>");
     this.click_highlight = $("<div></div>");
-    this.load_bar = $("<div></div>");
-    this.label = $("<div>" + this.label + "</div>");
-    this.load_dots = null;
-    this.right_label = null;
-    this.label_shown = null;
+    this.load_bar        = $("<div></div>");
+    this.label           = $("<div>" + this.label + "</div>");
+
+    this.load_dots             = null;
+    this.color_set             = null;
+    this.right_label           = null;
+    this.label_shown           = null;
     this.last_right_label_text = null;
-    this.is_selected = false;
+    this.styler                = null;
+    this.is_selected           = false;
 
-    // this.who = function() {
-    //   try {
-    //     throw new Error();
-    //   } catch (e) {
-    //     console.log(e);
-    //     // matches this function, the caller and the parent
-    //     const allMatches = e.stack.match(/(\w+)@|at (\w+) \(/g);
-    //     // match parent function name
-    //     const parentMatches = allMatches[2].match(/(\w+)@|at (\w+) \(/);
-    //     // return only name
-    //     return parentMatches[1] || parentMatches[2];
-    //   }
-    // }
+    this.initialize_style = function() {
 
-    // console.log(this.who());
+        // Toss a warning if this isn't a known style so we don't fail silently
+        this.styles = ["default", "toolbar", "tab_top", "tab_side"];
+        if (!this.styles.includes(this.style)) {
+            console.log("Error: Unknown Dash Button Style: " + this.style);
+            this.style = "default";
+        };
 
+        this.styler = null;
 
-    this.setup_styles = function() {
-
-        this.html.append(this.highlight);
-        this.html.append(this.load_bar);
-        this.html.append(this.click_highlight);
-        this.html.append(this.label);
-
-        this.html.css({
-            "background": this.color_set.Background.Base,
-            "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "border-radius": d.Size.BorderRadius,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
-            "padding": 0,
-            "margin": 0,
-        });
-
-        this.highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
-            // "background": "pink",
-            "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
-        });
-
-        this.load_bar.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "bottom": 0,
-            "width": 0,
-            "background": d.Color.Primary,
-            "border-radius": d.Size.BorderRadius,
-        });
-
-        this.click_highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "background": "rgba(255, 255, 255, 0.5)",
-            "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
-        });
-
-        this.label.css({
-            "position": "absolute",
-            "left": d.Size.Padding,
-            "top": 0,
-            "right": d.Size.Padding,
-            "bottom": 0,
-            "line-height": (d.Size.ButtonHeight) + "px",
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "text-align": "center",
-            "color": this.color_set.Text.Base,
-        });
-
-        if (this.in_toolbar) {
-            this.set_size_in_toolbar();
+        if (this.style == "toolbar") {
+            this.color_set  = this.color.Button;
+            DashGuiButtonStyleToolbar.call(this);
         }
+        else if (this.style == "tab_top") {
+            this.color_set  = this.color.Tab;
+            DashGuiButtonStyleTabTop.call(this);
+        }
+        else if (this.style == "tab_side") {
+            this.color_set  = this.color.Tab;
+            DashGuiButtonStyleTabSide.call(this);
+        }
+        else {
+            this.color_set  = this.color.Button;
+            DashGuiButtonStyleDefault.call(this);
+        };
+
+        if (!this.color instanceof DashColorSet) {
+            console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+        };
+
     };
 
     this.ChangeLabel = function(label_text) {
@@ -128,23 +65,6 @@ function DashGuiButton(Label, Callback, Bind, color, in_toolbar=false){
 
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
-    }
-
-    this.set_size_in_toolbar = function () {
-        this.html.css({
-            "margin": 0,
-            "margin-top": Dash.Size.Padding*0.5,
-            "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
-        });
-
-        this.highlight.css({
-        });
-
-        this.label.css({
-            "text-align": "center",
-            "line-height": Dash.Size.RowHeight + "px",
-        });
     }
 
     this.SetBorderRadius = function(border_radius){
@@ -392,13 +312,20 @@ function DashGuiButton(Label, Callback, Bind, color, in_toolbar=false){
             });
 
             self.html.click(function(event){
-                self.highlight.stop().animate({"opacity": 0}, 50);
-                self.click_highlight.stop().css({"opacity": 1});
-                self.click_highlight.stop().animate({"opacity": 0}, 150);
+                self.manage_style_on_click();
                 self.on_click(event);
             });
 
         })(this);
+
+    };
+
+    this.manage_style_on_click = function(label_text){
+        // Overridden in DashGuiButtonStyleTabTop
+
+        this.highlight.stop().animate({"opacity": 0}, 50);
+        this.click_highlight.stop().css({"opacity": 1});
+        this.click_highlight.stop().animate({"opacity": 0}, 150);
 
     };
 
@@ -474,6 +401,7 @@ function DashGuiButton(Label, Callback, Bind, color, in_toolbar=false){
 
     };
 
+    this.initialize_style();
     this.setup_styles();
     this.setup_connections();
 

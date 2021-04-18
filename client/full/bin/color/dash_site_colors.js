@@ -28,8 +28,8 @@ class DashSiteColors {
         return this._col["accent_bad"] || "orange";
     };
 
-    get TabBackground() {
-        return this._col["tab_background"] || this._col["background"] || "orange";
+    get TabAreaBackground() {
+        return this._col["tab_area_background"] || this._col["background"] || "orange";
     };
 
     get TextHeader() {

@@ -1,8 +1,13 @@
 class DashColorButtonSet {
 
-    constructor(background, text) {
+    constructor(area_background, background, text) {
+        this._area_background = area_background; // HTML Color
         this._background = background; // DashColorStateSet()
         this._text       = text;       // DashColorStateSet()
+    };
+
+    get AreaBackground() {
+        return this._area_background;
     };
 
     get Background() {
@@ -14,6 +19,10 @@ class DashColorButtonSet {
     };
 
     //////////////////////////
+
+    set AreaBackground(state_set) {
+        this._area_background = state_set;
+    };
 
     set Background(state_set) {
         this._background = state_set;
