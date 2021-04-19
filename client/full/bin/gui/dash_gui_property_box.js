@@ -74,6 +74,36 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
+    this.add_top_right_label = function(){
+
+        this.top_right_label = Dash.Gui.GetHTMLAbsContext();
+        this.html.append(this.top_right_label);
+
+        this.top_right_label.css({
+            "left": "auto",
+            "bottom": "auto",
+            "top": Dash.Size.Padding,
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "text-align": "right",
+            "color": this.color.Text,
+            "opacity": 0.6,
+            "z-index": 1,
+        });
+
+    };
+
+    this.SetTopRightLabel = function(label_text){
+
+        if (!this.top_right_label) {
+            this.add_top_right_label();
+        };
+
+        this.top_right_label.text(label_text);
+
+
+    };
+
     this.AddHTML = function(html){
         this.html.append(html);
     };
@@ -121,6 +151,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.AddCombo = function(label_text, combo_options, property_key){
 
+        var indent_px = Dash.Size.Padding*2;
+        var indent_row = false;
+
+        if (this.num_headers > 0) {
+            indent_row = true;
+        };
+
         var row = new d.Gui.InputRow(
             label_text,
             "",
@@ -132,6 +169,10 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         row.input.input.css("pointer-events", "none");
         this.html.append(row.html);
+
+        if (indent_row) {
+            row.html.css("margin-left", indent_px);
+        };
 
         var selected_key = this.get_data_cb()[property_key];
 

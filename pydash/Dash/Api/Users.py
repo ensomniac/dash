@@ -16,6 +16,7 @@ class ApiUsers:
     def __init__(self, execute_as_module, asset_path):
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
+        self._on_init_callback = None
 
         self.Add(self.reset,           requires_authentication=False)
         self.Add(self.r,               requires_authentication=False)
@@ -136,8 +137,22 @@ class ApiUsers:
     def login(self):
         return self.SetResponse(DashUsers(self.Params, self.DashContext).Login())
 
+    def OnInit(self, callback):
+        # When passed a callback, this function will be called whenever
+        # portal init data is passed back, so that custom data can
+        # be included in the response.
+        self._on_init_callback = callback
+
     def validate(self):
-        return self.SetResponse(DashUsers(self.Params, self.DashContext).Validate())
+        response = DashUsers(self.Params, self.DashContext).Validate()
+
+        if response.get("init") and self._on_init_callback:
+            additional = self._on_init_callback()
+
+            for key in additional:
+                response["init"][key] = additional[key]
+
+        return self.SetResponse(response)
 
     def update_password(self):
         return self.SetResponse(DashUsers(self.Params, self.DashContext).UpdatePassword())
