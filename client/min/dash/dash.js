@@ -1977,7 +1977,7 @@ function DashColor(){
             "background": "#dcdbd9",
             "background": "#e0dfde",
             "background": "#e3e8ea",
-            "background": "red",
+            // "background": "red",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
