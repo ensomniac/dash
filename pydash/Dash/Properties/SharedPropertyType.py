@@ -131,7 +131,7 @@ class PropertySet(SharedPropertyType):
         if not self.PropertySetKey:
             return {"error": "Missing PropertySetKey!"}
 
-        from . import GetModuleByConfigType
+        from Dash.Properties import GetModuleByConfigType
 
         config = GetModuleByConfigType(self.PropertySetKey)
 

@@ -7,7 +7,7 @@ import os
 import sys
 
 from Dash import LocalStorage
-from .SharedProperty import SharedProperty
+from Dash.Properties.SharedProperty import SharedProperty
 
 
 class Configuration:
@@ -22,6 +22,7 @@ class Configuration:
     def DashContext(self):
         if not hasattr(self, "_dash_context"):
             from Dash import PackageContext as Context
+
             self._dash_context = Context.Get(self.asset_path)
 
         return self._dash_context
@@ -51,7 +52,7 @@ class Configuration:
         ))
 
     def CreateConfig(self):
-        from . import MergeDefaultValues
+        from Dash.Properties import MergeDefaultValues
 
         additional_data = MergeDefaultValues({"config_type": self.config_type}, self.SharedProperties)
 

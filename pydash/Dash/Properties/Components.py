@@ -6,7 +6,7 @@
 import os
 import sys
 
-from .Configuration import Configuration
+from Dash.Properties.Configuration import Configuration
 
 
 class Components(Configuration):

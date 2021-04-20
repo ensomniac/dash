@@ -6,7 +6,7 @@
 import os
 import sys
 
-from .SharedPropertyType import Float, String, Int, PropertySet
+from Dash.Properties.SharedPropertyType import Float, String, Int, PropertySet
 
 
 class __SharedPropertyTypes:
@@ -19,7 +19,7 @@ class __SharedPropertyTypes:
         self.PropertySet = PropertySet(self)
 
         # Generic example
-        # from .SharedPropertyType import SharedPropertyType
+        # from Dash.Properties.SharedPropertyType import SharedPropertyType
         # self.String = SharedPropertyType(self, "String", "string")
 
     def Subscribe(self, shared_property_type_obj):

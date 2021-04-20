@@ -26,7 +26,7 @@ def GetModuleByConfigType(config_type):
     config_module = None
 
     if config_type == "component":
-        from .Components import Components
+        from Dash.Properties.Components import Components
 
         config_module = Components()
 
@@ -43,7 +43,7 @@ def GetConfig(config_type):
 
 
 def GetComponents():
-    from .Components import Components
+    from Dash.Properties.Components import Components
 
     return Components().GetAll()
 
