@@ -9,6 +9,34 @@ import sys
 from types import FunctionType
 
 
+class ConfigManager:
+    def __init__(self, config_type, config_module_function):
+        if not isinstance(config_module_function, FunctionType):
+            raise Exception("Param 'config_module_function' must be a function, typically "
+                            "the context-appropriate variation of 'GetModuleByConfigType'")
+
+        self.config_type = config_type
+        self.config_module = config_module_function(config_type)
+
+        self.verify_module()
+
+    def Create(self):
+        return self.config_module.CreateConfig()
+
+    def Delete(self, obj_id):
+        return self.config_module.Delete(obj_id)
+
+    def Get(self):
+        return self.config_module.GetAll()
+
+    def SetProperty(self, obj_id):
+        return self.config_module.SetConfigProperty(obj_id)
+
+    def verify_module(self):
+        if not self.config_module:
+            return {"error": f"Unknown config type: {self.config_type}"}
+
+
 def MergeDefaultValues(data, shared_properties, config_module):
     """
     From a set of shared_properties, merge any default values for any
