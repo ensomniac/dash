@@ -26,7 +26,7 @@ class ConfigManager:
     def Delete(self, obj_id):
         return self.config_module.Delete(obj_id)
 
-    def Get(self):
+    def GetAll(self):
         return self.config_module.GetAll()
 
     def SetProperty(self, obj_id):
