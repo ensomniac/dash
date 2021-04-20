@@ -13,9 +13,10 @@ from Dash.Properties.SharedProperty import SharedProperty
 class Configuration:
     _dash_context: dict
 
-    def __init__(self, config_type):
+    def __init__(self, config_type, config_module):
         self.asset_path = "authentic"
         self.config_type = config_type  # vibe / model / component
+        self.config_module = config_module  # Vibes() etc
         self.sp_objects = []  # Shared property objects
 
     @property
@@ -30,6 +31,15 @@ class Configuration:
     @property
     def StorePath(self):
         return f"sb_config_{self.config_type}"
+
+    @property
+    def SharedProperties(self):
+        shared_properties = []
+
+        for sp in self.sp_objects:
+            shared_properties.append(sp.ToDict())
+
+        return shared_properties
 
     def AddProperty(
             self,
@@ -54,7 +64,11 @@ class Configuration:
     def CreateConfig(self):
         from Dash.Properties import MergeDefaultValues
 
-        additional_data = MergeDefaultValues({"config_type": self.config_type}, self.SharedProperties)
+        additional_data = MergeDefaultValues(
+            {"config_type": self.config_type},
+            self.SharedProperties,
+            self.config_module
+        )
 
         created_config = LocalStorage.New(
             dash_context=self.DashContext,
@@ -67,15 +81,6 @@ class Configuration:
         response["new_id"] = created_config["id"]
 
         return response
-
-    @property
-    def SharedProperties(self):
-        shared_properties = []
-
-        for sp in self.sp_objects:
-            shared_properties.append(sp.ToDict())
-
-        return shared_properties
 
     def GetAll(self):
         response = LocalStorage.GetAll(

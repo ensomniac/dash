@@ -57,7 +57,7 @@ class SharedPropertyType:
 
         return data
 
-    def Validate(self, value):
+    def Validate(self, value, config_module):
         return {"error": f"No validation data for property type: {self.AssetPath}"}
 
     def SetValidationOptions(self, validation_options={}):
@@ -81,7 +81,7 @@ class String(SharedPropertyType):
     def __init__(self, types):
         SharedPropertyType.__init__(self, types, "String", "string")
 
-    def Validate(self, value):
+    def Validate(self, value, config_module):
         return {"valid": True}
 
 
@@ -89,7 +89,7 @@ class Float(SharedPropertyType):
     def __init__(self, types):
         SharedPropertyType.__init__(self, types, "Float", "float")
 
-    def Validate(self, value):
+    def Validate(self, value, config_module):
         try:
             value = float(value)
         except:
@@ -108,7 +108,7 @@ class Int(SharedPropertyType):
     def __init__(self, types):
         SharedPropertyType.__init__(self, types, "Int", "int")
 
-    def Validate(self, value):
+    def Validate(self, value, config_module):
         try:
             value = int(value)
         except:
@@ -127,18 +127,14 @@ class PropertySet(SharedPropertyType):
     def __init__(self, types):
         SharedPropertyType.__init__(self, types, "PropertySet", "property_set")
 
-    def Validate(self, value):
+    def Validate(self, value, config_module):
         if not self.PropertySetKey:
             return {"error": "Missing PropertySetKey!"}
 
-        from Dash.Properties import GetModuleByConfigType
-
-        config = GetModuleByConfigType(self.PropertySetKey)
-
-        if not config:
+        if not config_module:
             return {"error": f"Invalid PropertySetKey - unable to locate property by name: {self.PropertySetKey}"}
 
-        options = config.GetAll()
+        options = config_module.GetAll()
         data = options["data"]
         order = options["order"]
 

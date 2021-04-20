@@ -7,7 +7,7 @@ import os
 import sys
 
 
-def MergeDefaultValues(data, shared_properties):
+def MergeDefaultValues(data, shared_properties, config_module):
     """
     From a set of shared_properties, merge any default values for any
     properties that have one, or set an existing enum if one exists
@@ -17,29 +17,9 @@ def MergeDefaultValues(data, shared_properties):
         if item.get("default_value"):
             data[item["key"]] = item["default_value"]
         elif item.get("property_set_key"):
-            data[item["key"]] = get_first_enum_for_property_set(item["property_set_key"])
+            data[item["key"]] = get_first_enum_for_property_set(item["property_set_key"], config_module)
 
     return data
-
-
-def GetModuleByConfigType(config_type):
-    config_module = None
-
-    if config_type == "component":
-        from Dash.Properties.Components import Components
-
-        config_module = Components()
-
-    return config_module
-
-
-def GetConfig(config_type):
-    config_module = GetModuleByConfigType(config_type)
-
-    if not config_module:
-        return {"error": f"Unknown config type: {config_type}"}
-
-    return config_module.GetAll()
 
 
 def GetComponents():
@@ -48,40 +28,11 @@ def GetComponents():
     return Components().GetAll()
 
 
-def SetConfigProperty(config_type, obj_id, key, value):
-    config_module = GetModuleByConfigType(config_type)
-
+def get_first_enum_for_property_set(property_set_key, config_module):
     if not config_module:
-        return {"error": f"Unknown config type: {config_type}"}
-
-    return config_module.SetConfigProperty(obj_id, key, value)
-
-
-def CreateConfig(config_type):
-    config_module = GetModuleByConfigType(config_type)
-
-    if not config_module:
-        return {"error": f"Unknown config type: {config_type}"}
-
-    return config_module.CreateConfig()
-
-
-def DeleteConfig(config_type, obj_id):
-    config_module = GetModuleByConfigType(config_type)
-
-    if not config_module:
-        return {"error": f"Unknown config type: {config_type}"}
-
-    return config_module.Delete(obj_id)
-
-
-def get_first_enum_for_property_set(property_set_key):
-    prop_module = GetModuleByConfigType(property_set_key)
-
-    if not prop_module:
         raise Exception(f"Unknown property module: '{property_set_key}'")
 
-    all_props = prop_module.GetAll()
+    all_props = config_module.GetAll()
 
     if not all_props["order"]:
         raise Exception(f"Property Set has no existing options. Create them first for: {property_set_key}")
