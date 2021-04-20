@@ -6,6 +6,8 @@
 import os
 import sys
 
+from types import FunctionType
+
 
 def MergeDefaultValues(data, shared_properties, config_module):
     """
@@ -16,8 +18,11 @@ def MergeDefaultValues(data, shared_properties, config_module):
     for item in shared_properties:
         if item.get("default_value"):
             data[item["key"]] = item["default_value"]
+
         elif item.get("property_set_key"):
-            data[item["key"]] = get_first_enum_for_property_set(item["property_set_key"], config_module)
+            property_set_key = item["property_set_key"]
+            config_module = ValidateConfigModule(property_set_key, config_module)
+            data[item["key"]] = get_first_enum_for_property_set(property_set_key, config_module)
 
     return data
 
@@ -28,9 +33,19 @@ def GetComponents():
     return Components().GetAll()
 
 
+def ValidateConfigModule(property_set_key, config_module):
+    if isinstance(config_module, FunctionType):
+        try:
+            config_module = config_module(property_set_key)
+        except Exception as e:
+            raise Exception(f"Failed to get config/property module for: '{property_set_key}' ({e})")
+
+    return config_module
+
+
 def get_first_enum_for_property_set(property_set_key, config_module):
     if not config_module:
-        raise Exception(f"Unknown property module: '{property_set_key}'")
+        raise Exception(f"Unknown config/property module: '{property_set_key}'")
 
     all_props = config_module.GetAll()
 

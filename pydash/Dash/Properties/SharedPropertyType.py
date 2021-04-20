@@ -131,6 +131,10 @@ class PropertySet(SharedPropertyType):
         if not self.PropertySetKey:
             return {"error": "Missing PropertySetKey!"}
 
+        from . import ValidateConfigModule
+
+        config_module = ValidateConfigModule(self.PropertySetKey, config_module)
+
         if not config_module:
             return {"error": f"Invalid PropertySetKey - unable to locate property by name: {self.PropertySetKey}"}
 

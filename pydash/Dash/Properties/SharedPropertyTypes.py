@@ -35,7 +35,7 @@ class __SharedPropertyTypes:
         return self._all.get(asset_path)
 
 
-def Validate(asset_path, value_to_validate, validation_options={}):
+def Validate(asset_path, value_to_validate, config_module, validation_options={}):
     prop = SharedPropertyTypes.GetByAssetPath(asset_path)
 
     if not prop:
@@ -44,7 +44,7 @@ def Validate(asset_path, value_to_validate, validation_options={}):
     if validation_options:
         prop.SetValidationOptions(validation_options)
 
-    return prop.Validate(value_to_validate)
+    return prop.Validate(value_to_validate, config_module)
 
 
 SharedPropertyTypes = __SharedPropertyTypes()

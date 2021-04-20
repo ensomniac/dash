@@ -47,11 +47,12 @@ class SharedProperty:
         return data
 
 
-def Validate(property_data, value_to_validate, validation_options={}):
+def Validate(property_data, value_to_validate, config_module, validation_options={}):
     from Dash.Properties.SharedPropertyTypes import Validate
 
     return Validate(
         property_data,
         value_to_validate,
+        config_module,
         validation_options=validation_options,
     )
