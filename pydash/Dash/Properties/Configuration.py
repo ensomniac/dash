@@ -13,10 +13,10 @@ from Dash.Properties.SharedProperty import SharedProperty
 class Configuration:
     _dash_context: dict
 
-    def __init__(self, config_type):
-        self.asset_path = "authentic"
-        self.config_type = config_type  # vibe / model / component
-        self.sp_objects = []  # Shared property objects
+    def __init__(self, dash_context_asset_path, config_type):
+        self.asset_path = dash_context_asset_path
+        self.config_type = config_type  # Ex: vibe / billing_status / component
+        self.shared_property_objects = []
 
     @property
     def DashContext(self):
@@ -29,13 +29,19 @@ class Configuration:
 
     @property
     def StorePath(self):
-        return f"sb_config_{self.config_type}"
+        if self.asset_path == "authentic":
+            # TODO: Authentic will need to be updated to the new format at some point
+            return f"sb_config_{self.config_type}"
+
+        else:
+            # New format
+            return os.path.join("config_properties", self.config_type)
 
     @property
     def SharedProperties(self):
         shared_properties = []
 
-        for sp in self.sp_objects:
+        for sp in self.shared_property_objects:
             shared_properties.append(sp.ToDict())
 
         return shared_properties
@@ -50,7 +56,7 @@ class Configuration:
             default_value=None,
             property_set_key=None
     ):
-        self.sp_objects.append(SharedProperty(
+        self.shared_property_objects.append(SharedProperty(
             display_name=display_name,
             key=key,
             prop_type=prop_type,
@@ -89,7 +95,7 @@ class Configuration:
 
         response["shared_properties"] = []
 
-        for sp in self.sp_objects:
+        for sp in self.shared_property_objects:
             response["shared_properties"].append(sp.ToDict())
 
         return response
