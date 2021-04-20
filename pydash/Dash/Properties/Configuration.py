@@ -13,10 +13,9 @@ from Dash.Properties.SharedProperty import SharedProperty
 class Configuration:
     _dash_context: dict
 
-    def __init__(self, config_type, config_module):
+    def __init__(self, config_type):
         self.asset_path = "authentic"
         self.config_type = config_type  # vibe / model / component
-        self.config_module = config_module  # Vibes() etc
         self.sp_objects = []  # Shared property objects
 
     @property
@@ -67,7 +66,7 @@ class Configuration:
         additional_data = MergeDefaultValues(
             {"config_type": self.config_type},
             self.SharedProperties,
-            self.config_module
+            self
         )
 
         created_config = LocalStorage.New(
