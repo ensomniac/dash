@@ -5730,6 +5730,7 @@ function DashGuiLayoutToolbar(binder, color){
             "height": Dash.Size.ButtonHeight,
             "padding-right": Dash.Size.Padding*0.5,
             "display": "flex",
+            "padding-left": Dash.Size.Padding*0.5,
         });
     };
     this.AddExpander = function(placeholder_label, callback){
@@ -5740,7 +5741,7 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(expander);
     };
     this.AddSpace = function(width){
-        let spacer = $("<div></div>");
+        var spacer = $("<div></div>");
         spacer.css({
             "width": width,
         });
@@ -5770,6 +5771,7 @@ function DashGuiLayoutToolbar(binder, color){
         button.html.css({
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
             "width": d.Size.ColumnWidth,
         });
@@ -5787,6 +5789,7 @@ function DashGuiLayoutToolbar(binder, color){
         button.html.css({
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
             "width": d.Size.ColumnWidth,
         });
@@ -5804,6 +5807,7 @@ function DashGuiLayoutToolbar(binder, color){
         input.html.css({
             "padding-left": d.Size.Padding*0.5,
             "margin-top": d.Size.Padding*0.5,
+            "margin-right": d.Size.Padding*0.5,
         });
         input.input.css({
             "padding-left": 0,
@@ -5829,6 +5833,42 @@ function DashGuiLayoutToolbar(binder, color){
             });
         })(this, input, obj_index);
         this.html.append(input.html);
+    };
+    this.AddCombo = function(label_text, combo_options, selected_id, callback){
+        if (callback) {
+            callback = callback.bind(this.binder);
+        };
+        (function(self, selected_id, combo_options, callback){
+            var _callback = function(selected_option){
+                self.on_combo_updated(callback, selected_option["id"]);
+            };
+            var combo = new Dash.Gui.Combo (
+                selected_id,      // Label
+                _callback,        // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_id,      // Selected
+                null,             // Color set
+            );
+            self.html.append(combo.html);
+            combo.html.css({
+                "margin-top": Dash.Size.Padding*0.5,
+                "margin-right": Dash.Size.Padding*0.5,
+                "height": Dash.Size.RowHeight,
+            });
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px",
+            });
+        })(this, selected_id, combo_options, callback);
+    };
+    this.on_combo_updated = function(callback, selected_id){
+        if (callback) {
+            callback(selected_id);
+        }
+        else {
+            console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+        };
     };
     this.on_input_changed = function(obj_index){
         var obj = this.objects[obj_index];
