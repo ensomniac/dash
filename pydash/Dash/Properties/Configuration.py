@@ -100,11 +100,21 @@ class Configuration:
 
         return response
 
-    def SetConfigProperty(self, obj_id):
+    def SetConfigProperty(self, obj_id, key, value):
+        if key == "display_name":
+            error = self.check_if_property_exists(key, value)
+
+            if error:
+                return {"error": error}
+
+            self.set_combo_id(obj_id, value)
+
         result = LocalStorage.SetProperty(
             dash_context=self.DashContext,
             store_path=self.StorePath,
-            obj_id=obj_id
+            obj_id=obj_id,
+            key=key,
+            value=value
         )
 
         return result
@@ -121,3 +131,23 @@ class Configuration:
         result["config_type"] = self.config_type
 
         return result
+
+    def check_if_property_exists(self, key, value):
+        all_properties = self.GetAll()["data"]
+
+        for property_id in all_properties:
+            property_data = all_properties[property_id]
+
+            if property_data.get(key) == value:
+                return f"'{value}' already exists! Please use a different '{key}'"
+
+    def set_combo_id(self, obj_id, value): 
+        from Dash.Utils import Utils
+
+        LocalStorage.SetProperty(
+            dash_context=self.DashContext,
+            store_path=self.StorePath,
+            obj_id=obj_id,
+            key="combo_id",
+            value=Utils.GetAssetPath(value)
+        )

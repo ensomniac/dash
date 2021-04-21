@@ -29,8 +29,8 @@ class ConfigManager:
     def GetAll(self):
         return self.config_module.GetAll()
 
-    def SetProperty(self, obj_id):
-        return self.config_module.SetConfigProperty(obj_id)
+    def SetProperty(self, obj_id, key, value):
+        return self.config_module.SetConfigProperty(obj_id, key, value)
 
     def verify_module(self):
         if not self.config_module:
