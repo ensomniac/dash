@@ -1763,9 +1763,16 @@ function Dash(){
     };
     this.extend_js = function(){
         // TODO: Move this into utils
-        String.prototype.Title = function(){
-            var first = this.slice(0, 1);
-            var rest = this.slice(1, this.length);
+        String.prototype.Title = function () {
+            if (this.includes("_")) {
+                var asset_path = this.replace("_", " ").toLowerCase().split(" ");
+                for (var i = 0; i < asset_path.length; i++) {
+                    asset_path[i] = asset_path[i].charAt(0).toUpperCase() + asset_path[i].slice(1);
+                }
+                return asset_path.join(" ");
+            }
+            // var first = this.slice(0, 1);
+            // var rest = this.slice(1, this.length);
             return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
         };
     };
