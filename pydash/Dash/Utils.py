@@ -52,6 +52,80 @@ class __Utils:
                f"{now.split('.')[-1].strip()[:3]}" \
                f"{str(randint(0, 99))}"
 
+    def GetAssetPath(self, string):
+        cleaned = []
+        asset_path = ""
+        cleaned_split = []
+        string_split = string.strip().lower().split(" ")
+
+        # Cleanly break the string into words with no spaces
+        for index, word in enumerate(string_split):
+            if not len(word):
+                continue
+
+            # Replace any number of spaces with one underscore
+            if word == " ":
+                try:
+                    if string_split[index - 1] == " ":
+                        continue
+
+                    if string_split[index + 1] == " ":
+                        continue
+
+                except IndexError:
+                    pass
+
+                cleaned.append("_")
+                continue
+
+            cleaned.append(word)
+
+        # Filter it further, skipping symbols and confirming underscores
+        for char in [c for c in "_".join(cleaned)]:
+            if char != "_" and not char.isalnum():
+                continue
+
+            # Prevent double underscores that would occur from skipped characters above
+            if char == "_" and cleaned_split[-1] == "_":
+                continue
+
+            cleaned_split.append(char)
+
+        # Compose final asset path
+        for index, char in enumerate(cleaned_split):
+
+            # Add underscore between current letter and previous number
+            if char.isalpha():
+                try:
+                    prev = cleaned_split[index - 1]
+
+                    try:
+                        int(prev)
+
+                        asset_path += "_"
+                    except:
+                        pass
+                except IndexError:
+                    pass
+
+            asset_path += char
+
+            # Add underscore between current letter and next number
+            if char.isalpha():
+                try:
+                    nex = cleaned_split[index + 1]
+
+                    try:
+                        int(nex)
+
+                        asset_path += "_"
+                    except:
+                        pass
+                except IndexError:
+                    pass
+
+        return asset_path
+
     def OSListDirCleaned(self, path):
         cleaned_list = []
 
