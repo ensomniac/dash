@@ -90,7 +90,8 @@ class Configuration:
     def GetAll(self):
         response = LocalStorage.GetAll(
             dash_context=self.DashContext,
-            store_path=self.StorePath
+            store_path=self.StorePath,
+            sort_by_key="combo_id"
         )
 
         response["shared_properties"] = []
@@ -141,7 +142,7 @@ class Configuration:
             if property_data.get(key) == value:
                 return f"'{value}' already exists! Please use a different '{key}'"
 
-    def set_combo_id(self, obj_id, value): 
+    def set_combo_id(self, obj_id, value):
         from Dash.Utils import Utils
 
         LocalStorage.SetProperty(
