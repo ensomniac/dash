@@ -56,7 +56,31 @@ class __Utils:
         cleaned = []
         asset_path = ""
         cleaned_split = []
-        string_split = string.strip().lower().split(" ")
+        string = string.strip().lower()
+
+        # Replace slashes with spaces if they're between words
+        if "/" in string:
+            string_split = [c for c in string]
+
+            for index, char in enumerate(string_split):
+                if char != "/":
+                    continue
+
+                try:
+                    if not string_split[index - 1].isalnum():
+                        continue
+
+                    if not string_split[index + 1].isalnum():
+                        continue
+
+                    string_split[index] = " "
+
+                except IndexError:
+                    pass
+
+            string = "".join(string_split)
+
+        string_split = string.split(" ")
 
         # Cleanly break the string into words with no spaces
         for index, word in enumerate(string_split):
