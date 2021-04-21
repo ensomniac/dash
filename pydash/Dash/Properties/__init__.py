@@ -34,7 +34,10 @@ class ConfigManager:
 
     def verify_module(self):
         if not self.config_module:
-            return {"error": f"Unknown config type: {self.config_type}"}
+            raise Exception(f"Unknown config type: {self.config_type}")
+
+        if type(self.config_module) == property:
+            raise Exception(f"Config module cannot be a property! ({self.config_type})")
 
 
 def MergeDefaultValues(data, shared_properties, config_module):
