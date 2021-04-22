@@ -142,6 +142,8 @@ class Configuration:
             if property_data.get(key) == value:
                 return f"'{value}' already exists! Please use a different '{key}'"
 
+        return None
+
     def set_combo_id(self, obj_id, value):
         from Dash.Utils import Utils
 

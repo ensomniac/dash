@@ -5933,6 +5933,7 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(input.html);
     };
     this.AddCombo = function(label_text, combo_options, selected_id, callback){
+        var obj_index = this.objects.length;
         if (callback) {
             callback = callback.bind(this.binder);
         };
@@ -5958,7 +5959,15 @@ function DashGuiLayoutToolbar(binder, color){
                 "height": Dash.Size.RowHeight,
                 "line-height": Dash.Size.RowHeight + "px",
             });
+            var obj = {};
+            obj["html"] = combo;
+            obj["callback"] = callback.bind(self.binder);  // Not sure if this is right
+            obj["index"] = obj_index;
+            self.objects.push(obj);
         })(this, selected_id, combo_options, callback);
+        var obj = this.objects[obj_index];
+        var combo = obj["html"];
+        return combo;  // Ryan, I added this to make it more flexible like a standalone combo
     };
     this.on_combo_updated = function(callback, selected_id){
         if (callback) {
