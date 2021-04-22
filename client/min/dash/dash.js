@@ -3337,7 +3337,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     this.right_label           = null;
     this.label_shown           = null;
     this.last_right_label_text = null;
-    this.styler                = null;
     this.is_selected           = false;
     this.initialize_style = function() {
         // Toss a warning if this isn't a known style so we don't fail silently
@@ -3346,7 +3345,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
             console.log("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
         };
-        this.styler = null;
         if (this.style == "toolbar") {
             this.color_set  = this.color.Button;
             DashGuiButtonStyleToolbar.call(this);
@@ -3366,6 +3364,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         if (!this.color instanceof DashColorSet) {
             console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         };
+        this.setup_styles();
     };
     this.ChangeLabel = function(label_text) {
         this.html[0].innerText = "";
@@ -3610,7 +3609,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         });
     };
     this.initialize_style();
-    this.setup_styles();
     this.setup_connections();
 };
 
@@ -4762,7 +4760,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 self,             // Binder
                 combo_options,    // Option List
                 selected_key,     // Selected
-                null,             // Color set
+                self.color,       // Color set
+                {"style": "row"}  // Options
             );
             row.input.html.append(combo.html);
             combo.html.css({
@@ -4924,82 +4923,48 @@ function DashGuiHeader(label_text, color){
 };
 
 
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color_set){
-    this.label = label;
-    this.binder = binder;
-    this.callback = callback.bind(this.binder);
-    this.option_list = option_list;
+function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options){
+    this.label              = label;
+    this.binder             = binder;
+    this.callback           = callback.bind(this.binder);
+    this.option_list        = option_list;
     this.selected_option_id = selected_option_id;
-    this.color_set = color_set || Dash.Color.Light.Button;
-    this.initialized = false;
-    this.html = $("<div>COMBO</div>");
+    this.color              = color || Dash.Color.Light;
+    this.color_set          = null;
+    this.initialized        = false;
+    this.options            = options || {};
+    this.style              = this.options["style"] || "default";
+    this.html = $("<div></div>");
     // ---------------------------------------------------
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
-    this.setup_styles = function(){
-        this.font_size = "100%";
-        this.highlight_css = {
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
-            "opacity": 0,
+    this.initialize_style = function() {
+        // Toss a warning if this isn't a known style so we don't fail silently
+        this.styles = ["default", "row"];
+        if (!this.styles.includes(this.style)) {
+            console.log("Error: Unknown Dash Combo Style: " + this.style);
+            this.style = "default";
         };
-        this.text_alignment = "center";
-        this.label_text_color = "rgba(0, 0, 0, 0.8)";
-        this.label_background = this.color_set.Background.Base;
-        this.html.append(this.highlight);
-        this.html.append(this.click);
-        this.html.append(this.label);
-        this.html.append(this.rows);
-        this.label.html(this.label_text);
-        this.html.css({
-            "background": this.label_background,
-            "margin-right": Dash.Size.Padding*0.5,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
-            "cursor": "pointer",
-            "border-radius": 3,
-            "width": d.Size.ColumnWidth,
-        });
-        this.highlight.css(this.highlight_css);
-        this.click.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
-            "background": this.color_set.Background.Base,
-            "opacity": 0,
-        });
-        this.label.css({
-            "position": "absolute",
-            "left": Dash.Size.Padding*0.5,
-            "top": 0,
-            "right": Dash.Size.Padding*0.5,
-            "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
-            "text-align": this.text_alignment,
-            "font-size": this.font_size,
-            "color": this.color_set.Text.Base,
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-        });
-        this.rows.css({
-            "width": d.Size.ColumnWidth,
-            "z-index": 10,
-            "overflow": "hidden",
-            "height": 0,
-            "overflow": "hidden",
-            "border-radius": 3,
-        });
+        console.log("this.style: " + this.style);
+        if (this.style == "row") {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleRow.call(this);
+        }
+        else if (this.style == "default") {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleDefault.call(this);
+        }
+        else {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleDefault.call(this);
+        };
+        this.setup_styles();
+        this.initialize_rows();
+    };
+    this.initialize_rows = function(){
         var selected_obj = null;
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
@@ -5198,7 +5163,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             });
         })(this);
     };
-    this.setup_styles();
+    this.initialize_style();
     this.setup_connections();
 
 };
@@ -5268,6 +5233,139 @@ function DashGuiComboRow(Combo, option){
     };
     this.setup_styles();
     this.setup_connections();
+};
+
+
+function DashGuiComboStyleDefault(){
+    this.setup_styles = function() {
+        this.font_size = "100%";
+        this.highlight_css = {
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "background": this.color_set.Background.BaseHover,
+            "opacity": 0,
+        };
+        this.text_alignment = "center";
+        this.label_text_color = "rgba(0, 0, 0, 0.8)";
+        this.label_background = this.color_set.Background.Base;
+        this.html.append(this.highlight);
+        this.html.append(this.click);
+        this.html.append(this.label);
+        this.html.append(this.rows);
+        this.label.html(this.label_text);
+        this.html.css({
+            "background": this.label_background,
+            "margin-right": Dash.Size.Padding*0.5,
+            "height": d.Size.ButtonHeight,
+            "line-height": d.Size.ButtonHeight + "px",
+            "cursor": "pointer",
+            "border-radius": 3,
+            "width": d.Size.ColumnWidth,
+        });
+        this.highlight.css(this.highlight_css);
+        this.click.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "line-height": d.Size.ButtonHeight + "px",
+            "background": this.color_set.Background.Base,
+            "opacity": 0,
+        });
+        this.label.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding*0.5,
+            "top": 0,
+            "right": Dash.Size.Padding*0.5,
+            "bottom": 0,
+            "line-height": d.Size.ButtonHeight + "px",
+            "text-align": this.text_alignment,
+            "font-size": this.font_size,
+            "color": this.color_set.Text.Base,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        });
+        this.rows.css({
+            "width": d.Size.ColumnWidth,
+            "z-index": 10,
+            "overflow": "hidden",
+            "height": 0,
+            "overflow": "hidden",
+            "border-radius": 3,
+        });
+        console.log("Default styler");
+    };
+};
+
+
+function DashGuiComboStyleRow(){
+    this.setup_styles = function() {
+        this.font_size = "100%";
+        this.highlight_css = {
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "background": this.color_set.Background.BaseHover,
+            "opacity": 0,
+        };
+        this.text_alignment = "left";
+        this.label_text_color = "rgba(0, 0, 0, 0.8)";
+        this.label_background = this.color_set.Background.Base;
+        this.html.append(this.highlight);
+        this.html.append(this.click);
+        this.html.append(this.label);
+        this.html.append(this.rows);
+        this.label.html(this.label_text);
+        this.html.css({
+            "background": this.label_background,
+            "margin-right": Dash.Size.Padding*0.5,
+            "height": d.Size.ButtonHeight,
+            "line-height": d.Size.ButtonHeight + "px",
+            "cursor": "pointer",
+            "border-radius": 3,
+            "width": d.Size.ColumnWidth * 2,
+        });
+        this.highlight.css(this.highlight_css);
+        this.click.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "line-height": d.Size.ButtonHeight + "px",
+            "background": this.color_set.Background.Base,
+            "opacity": 0,
+        });
+        this.label.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding*0.5,
+            "top": 0,
+            "right": Dash.Size.Padding*0.5,
+            "bottom": 0,
+            "line-height": d.Size.ButtonHeight + "px",
+            "text-align": "left",
+            "font-size": this.font_size,
+            "color": this.color_set.Text.Base,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        });
+        this.rows.css({
+            "width": d.Size.ColumnWidth,
+            "z-index": 10,
+            "overflow": "hidden",
+            "height": 0,
+            "overflow": "hidden",
+            "border-radius": 3,
+        });
+    };
 };
 
 function DashGuiLayout(){

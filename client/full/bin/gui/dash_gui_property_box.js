@@ -188,7 +188,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 self,             // Binder
                 combo_options,    // Option List
                 selected_key,     // Selected
-                null,             // Color set
+                self.color,       // Color set
+                {"style": "row"}  // Options
             );
 
             row.input.html.append(combo.html);

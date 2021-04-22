@@ -1,15 +1,18 @@
 
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color_set){
+function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options){
 
-    this.label = label;
-    this.binder = binder;
-    this.callback = callback.bind(this.binder);
-    this.option_list = option_list;
+    this.label              = label;
+    this.binder             = binder;
+    this.callback           = callback.bind(this.binder);
+    this.option_list        = option_list;
     this.selected_option_id = selected_option_id;
-    this.color_set = color_set || Dash.Color.Light.Button;
-    this.initialized = false;
+    this.color              = color || Dash.Color.Light;
+    this.color_set          = null;
+    this.initialized        = false;
+    this.options            = options || {};
+    this.style              = this.options["style"] || "default";
 
-    this.html = $("<div>COMBO</div>");
+    this.html = $("<div></div>");
 
     // ---------------------------------------------------
 
@@ -19,76 +22,36 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
 
-    this.setup_styles = function(){
+    this.initialize_style = function() {
 
-        this.font_size = "100%";
-
-        this.highlight_css = {
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
-            "opacity": 0,
+        // Toss a warning if this isn't a known style so we don't fail silently
+        this.styles = ["default", "row"];
+        if (!this.styles.includes(this.style)) {
+            console.log("Error: Unknown Dash Combo Style: " + this.style);
+            this.style = "default";
         };
 
-        this.text_alignment = "center";
-        this.label_text_color = "rgba(0, 0, 0, 0.8)";
-        this.label_background = this.color_set.Background.Base;
+        console.log("this.style: " + this.style);
 
-        this.html.append(this.highlight);
-        this.html.append(this.click);
-        this.html.append(this.label);
-        this.html.append(this.rows);
-        this.label.html(this.label_text);
+        if (this.style == "row") {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleRow.call(this);
+        }
+        else if (this.style == "default") {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleDefault.call(this);
+        }
+        else {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleDefault.call(this);
+        };
 
-        this.html.css({
-            "background": this.label_background,
-            "margin-right": Dash.Size.Padding*0.5,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
-            "cursor": "pointer",
-            "border-radius": 3,
-            "width": d.Size.ColumnWidth,
-        });
+        this.setup_styles();
+        this.initialize_rows();
 
-        this.highlight.css(this.highlight_css);
+    };
 
-        this.click.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
-            "background": this.color_set.Background.Base,
-            "opacity": 0,
-        });
-
-        this.label.css({
-            "position": "absolute",
-            "left": Dash.Size.Padding*0.5,
-            "top": 0,
-            "right": Dash.Size.Padding*0.5,
-            "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
-            "text-align": this.text_alignment,
-            "font-size": this.font_size,
-            "color": this.color_set.Text.Base,
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-        });
-
-        this.rows.css({
-            "width": d.Size.ColumnWidth,
-            "z-index": 10,
-            "overflow": "hidden",
-            "height": 0,
-            "overflow": "hidden",
-            "border-radius": 3,
-        });
+    this.initialize_rows = function(){
 
         var selected_obj = null;
 
@@ -372,7 +335,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
     };
 
-    this.setup_styles();
+    this.initialize_style();
     this.setup_connections();
 
 

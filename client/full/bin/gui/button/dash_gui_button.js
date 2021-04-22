@@ -20,7 +20,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     this.right_label           = null;
     this.label_shown           = null;
     this.last_right_label_text = null;
-    this.styler                = null;
     this.is_selected           = false;
 
     this.initialize_style = function() {
@@ -31,8 +30,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
             console.log("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
         };
-
-        this.styler = null;
 
         if (this.style == "toolbar") {
             this.color_set  = this.color.Button;
@@ -54,6 +51,8 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         if (!this.color instanceof DashColorSet) {
             console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         };
+
+        this.setup_styles();
 
     };
 
@@ -402,7 +401,6 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     };
 
     this.initialize_style();
-    this.setup_styles();
     this.setup_connections();
 
 };
