@@ -5747,7 +5747,7 @@ function DashGuiLayoutToolbar(binder, color){
         });
         this.html.append(spacer);
     };
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function(label_text, callback, width=null){
         var obj_index = this.objects.length;
         (function(self, obj_index){
             var button = new Dash.Gui.Button(
@@ -5773,7 +5773,7 @@ function DashGuiLayoutToolbar(binder, color){
             "margin-top": Dash.Size.Padding*0.5,
             "margin-right": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
+            "width": width || Dash.Size.ColumnWidth,
         });
         button.highlight.css({
         });
