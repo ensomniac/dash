@@ -85,7 +85,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
-        let button = new Dash.Gui.Button(label_text, callback, bind);
+        var button = new Dash.Gui.Button(label_text, callback, bind);
         button.SetFileUploader(api, params)
 
         button.html.css({
