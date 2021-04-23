@@ -3367,10 +3367,13 @@ function DashGuiButton(Label, Callback, Bind, color, options){
             console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         };
     };
-    this.ChangeLabel = function(label_text) {
+    this.ChangeLabel = function(label_text, width=null) {
         this.html[0].innerText = "";
         this.label = $("<div>" + label_text + "</div>");
         this.setup_styles();
+        if (width) {
+            this.html.css({"width": width})
+        }
     }
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
