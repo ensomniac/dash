@@ -91,7 +91,8 @@ class Configuration:
         response = LocalStorage.GetAll(
             dash_context=self.DashContext,
             store_path=self.StorePath,
-            sort_by_key="combo_id"
+            # sort_by_key="combo_id"
+            sort_by_key="display_name"
         )
 
         response["shared_properties"] = []
