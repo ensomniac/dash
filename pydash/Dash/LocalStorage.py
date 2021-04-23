@@ -188,7 +188,7 @@ class DashLocalStorage:
 
         if len(sorted_to_prepend):
             sorted_to_prepend.sort()
-            
+
             for prepend_key in sorted_to_prepend:
                 order.insert(0, restructured_data[prepend_key]["id"])
 
