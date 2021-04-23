@@ -58,10 +58,10 @@ def MergeDefaultValues(data, shared_properties, config_module):
     return data
 
 
-def GetComponents():
+def GetComponents(dash_context_asset_path):
     from Dash.Properties.Components import Components
 
-    return Components().GetAll()
+    return Components(dash_context_asset_path).GetAll()
 
 
 def ValidateConfigModule(property_set_key, config_module):
