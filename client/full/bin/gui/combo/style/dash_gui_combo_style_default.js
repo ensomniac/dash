@@ -72,8 +72,6 @@ function DashGuiComboStyleDefault(){
             "border-radius": 3,
         });
 
-        console.log("Default styler");
-
     };
 
 };

@@ -32,7 +32,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             this.style = "default";
         };
 
-        console.log("this.style: " + this.style);
+        // console.log("this.style: " + this.style);
 
         if (this.style == "row") {
             this.color_set  = this.color.Button;

@@ -5215,7 +5215,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
         };
-        console.log("this.style: " + this.style);
+        // console.log("this.style: " + this.style);
         if (this.style == "row") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleRow.call(this);
@@ -5565,7 +5565,6 @@ function DashGuiComboStyleDefault(){
             "overflow": "hidden",
             "border-radius": 3,
         });
-        console.log("Default styler");
     };
 };
 
