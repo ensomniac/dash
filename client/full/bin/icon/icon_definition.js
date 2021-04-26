@@ -1,4 +1,4 @@
-function GuiIconDefinition(label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult){
+function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult){
 
     // fa_styles
     // r = regular
@@ -7,24 +7,21 @@ function GuiIconDefinition(label, fa_style, fa_id, size_mult, left_offset_mult, 
     // b = brands
     // fa_styles
 
+    this.icon = icon;
     this.label = label || "";
     this.fa_style = fa_style;
     this.fa_id = fa_id;
     this.left_offset_mult = left_offset_mult || 0;
     this.top_offset_mult = top_offset_mult || 0;
-    this.size_mult = size_mult || 1;
 
     this.get_class = function(){
-
         var icon_class = 'fa' + this.fa_style + ' fa-' + this.fa_id + '';
         return icon_class;
     };
 
-    this.get_css = function(size, color){
-        var new_size = size*this.size_mult;
+    this.get_css = function(){
 
-        console.log(color.Text);
-        console.log(color);
+        var icon_fnt_size = this.icon.size*this.icon.size_mult;
 
         var icon_css = {
             "position": "absolute",
@@ -32,14 +29,16 @@ function GuiIconDefinition(label, fa_style, fa_id, size_mult, left_offset_mult, 
             "left": 0,
             "bottom": 0,
             "right": 0,
-            "width": size,
-            "height": size,
-            "font-size": new_size + "px",
-            "line-height": size + "px",
+            "width": this.icon.size,
+            "height": this.icon.size,
+            "font-size": icon_fnt_size + "px",
+            "line-height": this.icon.size + "px",
             "text-align": "center",
-            "color": color.Text,
+            "color": this.icon.color.Text,
         };
 
         return icon_css;
+
     };
+
 };
