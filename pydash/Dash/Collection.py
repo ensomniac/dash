@@ -54,6 +54,14 @@ class Collection:
         return self.Ctx["asset_path"]
 
     @property
+    def Root(self):
+        return LocalStorage.GetRecordRoot(
+            self.Ctx,
+            self.store_path,
+            nested=self.nested,
+        )
+
+    @property
     def All(self):
         return LocalStorage.GetAll(
             self.Ctx,
@@ -71,7 +79,15 @@ class Collection:
             filter_out_keys=filter_out_keys
         )
 
-    def New(self, additional_data={}):
+    def Get(self, obj_id):
+        return LocalStorage.GetData(
+            self.Ctx,
+            self.store_path,
+            obj_id,
+            nested=self.nested,
+        )
+
+    def New(self, additional_data={}, return_all_data=True):
         new_obj = LocalStorage.New(
             self.Ctx,
             self.store_path,
@@ -79,12 +95,16 @@ class Collection:
             nested=self.nested,
         )
 
-        data = self.All
-        data["new_object"] = new_obj["id"]
+        if return_all_data:
+            data = self.All
+            data["new_object"] = new_obj["id"]
 
-        return data
+            return data
 
-    def Delete(self, obj_id):
+        else:
+            return new_obj
+
+    def Delete(self, obj_id, return_all_data=True):
         LocalStorage.Delete(
             self.Ctx,
             self.store_path,
@@ -92,25 +112,23 @@ class Collection:
             nested=self.nested,
         )
 
-        return self.All
+        if return_all_data:
+            return self.All
 
-    def SetProperty(self, obj_id, key, value):
-        LocalStorage.SetProperty(
+    def SetProperty(self, obj_id, key, value, return_all_data=True):
+        updated_data = LocalStorage.SetProperty(
             self.Ctx,
             self.store_path,
             obj_id,
             key,
             value,
             nested=self.nested,
-        )
+        )["updated_data"]
 
-        return self.All
+        if return_all_data:
+            return self.All
+        else:
+            return updated_data
 
     def Clear(self):
-        root = LocalStorage.GetRecordRoot(
-            self.Ctx,
-            self.store_path,
-            nested=self.nested,
-        )
-
-        rmtree(root, True)
+        rmtree(self.Root, True)
