@@ -19,6 +19,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
+    this.label_container = $("<div></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
 

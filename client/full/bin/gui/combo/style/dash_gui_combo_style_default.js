@@ -23,7 +23,7 @@ function DashGuiComboStyleDefault(){
         this.html.append(this.click);
         this.html.append(this.label);
         this.html.append(this.rows);
-        this.label.html(this.label_text);
+        this.label.text(this.label_text);
 
         this.html.css({
             "background": this.label_background,

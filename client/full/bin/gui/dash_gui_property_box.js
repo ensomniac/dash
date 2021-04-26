@@ -196,7 +196,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
             combo.html.css({
                 "position": "absolute",
-                "left": Dash.Size.Padding,
+                "left": Dash.Size.Padding*0.5,
                 "top": 0,
                 "height": Dash.Size.RowHeight,
             });
