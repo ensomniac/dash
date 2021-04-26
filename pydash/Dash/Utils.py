@@ -148,7 +148,7 @@ class __Utils:
                 except IndexError:
                     pass
 
-        return asset_path
+        return asset_path.strip("_")
 
     def OSListDirCleaned(self, path):
         cleaned_list = []
