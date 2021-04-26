@@ -135,9 +135,10 @@ class DashLocalStorage:
 
     def get_dict_order_by_sort_key(self, all_data):
         order = []
-        keys_to_sort = []
-        restructured_data = {}
         unsortable = []
+        keys_to_sort = []
+        sorted_to_prepend = []
+        restructured_data = {}
 
         for entry_id in all_data:
             entry_data = all_data[entry_id]
@@ -156,7 +157,26 @@ class DashLocalStorage:
         for item in restructured_data:
             keys_to_sort.append(item)
 
-        keys_to_sort.sort()
+        og_keys_to_sort = keys_to_sort.copy()
+
+        # Check if all keys are ints so we can sort accordingly
+        for index, key in enumerate(keys_to_sort):
+            try:
+                if len(key) > 1 and key.startswith("0") and key.endswith("0"):
+                    sorted_to_prepend.append(key)
+
+                keys_to_sort[index] = int(key)
+
+            except:
+                sorted_to_prepend = []
+                keys_to_sort = og_keys_to_sort.copy()
+                break
+
+        if keys_to_sort != og_keys_to_sort:
+            keys_to_sort.sort()
+            keys_to_sort = [str(k) for k in keys_to_sort]
+        else:
+            keys_to_sort.sort()
 
         # This for loop adds unsortable items to the front of the object
         # Move this after the next for loop to add them to the end of the object instead
@@ -165,6 +185,12 @@ class DashLocalStorage:
 
         for sorted_key in keys_to_sort:
             order.append(restructured_data[sorted_key]["id"])
+
+        if len(sorted_to_prepend):
+            sorted_to_prepend.sort()
+
+            for prepend_key in sorted_to_prepend:
+                order.insert(0, restructured_data[prepend_key]["id"])
 
         return order
 

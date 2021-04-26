@@ -64,30 +64,21 @@ class CSV:
 
         return self.csv_export_filepath
 
-    # This should only need to handle actually importing the file
-    # Data management after the fact should be handled outside of this script
     def Import(self):
+        """
+        This should only need to handle actually importing the file.
+        Data management after the fact should be handled outside of this script.
+
+        :return: Imported CSV path.
+        :rtype: str
+        """
+
         try:
             open(self.csv_import_filepath, "wb").write(self.file)
 
             return self.csv_import_filepath
         except:
             return ""
-
-    # def upload_file(self, asset_path, file, filetype):
-    #     stream_root = os.path.join(self.root, asset_path)
-    #     full_path = os.path.join(stream_root, f"{asset_path}.{filetype}")
-    #
-    #     try:
-    #         os.makedirs(stream_root, exist_ok=True)
-    #         open(full_path, "wb").write(file)
-    #
-    #         if os.path.exists(full_path):
-    #             return {"uploaded": True, "path": full_path}
-    #     except:
-    #         from traceback import format_exc
-    #
-    #         return {"uploaded": False, "error": format_exc()}
 
     def ensure_roots_exist(self):
         for root in [self.csv_root, self.csv_export_root, self.csv_import_root]:
@@ -99,8 +90,8 @@ class CSV:
         as well as for improving user readability, like formatting timestamps, etc
 
         :param dict all_data: all data objects to clean
-        :rtype: list
         :return: all cleaned data objects
+        :rtype: list
         """
 
         all_keys = []

@@ -3629,10 +3629,13 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         };
         this.setup_styles();
     };
-    this.ChangeLabel = function(label_text) {
+    this.ChangeLabel = function(label_text, width=null) {
         this.html[0].innerText = "";
         this.label = $("<div>" + label_text + "</div>");
         this.setup_styles();
+        if (width) {
+            this.html.css({"width": width})
+        }
     }
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
@@ -6144,7 +6147,7 @@ function DashGuiLayoutToolbar(binder, color){
         });
         this.html.append(spacer);
     };
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function(label_text, callback, width=null){
         var obj_index = this.objects.length;
         (function(self, obj_index){
             var button = new Dash.Gui.Button(
@@ -6170,7 +6173,7 @@ function DashGuiLayoutToolbar(binder, color){
             "margin-top": Dash.Size.Padding*0.5,
             "margin-right": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
+            "width": width || Dash.Size.ColumnWidth,
         });
         button.highlight.css({
         });
@@ -6181,7 +6184,7 @@ function DashGuiLayoutToolbar(binder, color){
         return button;  // Ryan, I added this to make it more flexible like a standalone button
     };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
-        let button = new Dash.Gui.Button(label_text, callback, bind);
+        var button = new Dash.Gui.Button(label_text, callback, bind);
         button.SetFileUploader(api, params)
         button.html.css({
             "margin": 0,

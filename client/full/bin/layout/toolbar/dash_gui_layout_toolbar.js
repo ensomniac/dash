@@ -36,7 +36,7 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(spacer);
     };
 
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function(label_text, callback, width=null){
 
         var obj_index = this.objects.length;
 
@@ -70,7 +70,7 @@ function DashGuiLayoutToolbar(binder, color){
             "margin-top": Dash.Size.Padding*0.5,
             "margin-right": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
+            "width": width || Dash.Size.ColumnWidth,
         });
 
         button.highlight.css({
@@ -85,7 +85,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
-        let button = new Dash.Gui.Button(label_text, callback, bind);
+        var button = new Dash.Gui.Button(label_text, callback, bind);
         button.SetFileUploader(api, params)
 
         button.html.css({
