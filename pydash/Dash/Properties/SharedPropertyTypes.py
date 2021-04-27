@@ -6,7 +6,7 @@
 import os
 import sys
 
-from Dash.Properties.SharedPropertyType import Float, String, Int, PropertySet
+from Dash.Properties.SharedPropertyType import Float, String, Int, Bool, PropertySet
 
 
 class __SharedPropertyTypes:
@@ -14,6 +14,7 @@ class __SharedPropertyTypes:
 
     def __init__(self):
         self.Float = Float(self)
+        self.Bool = Bool(self)
         self.Int = Int(self)
         self.String = String(self)
         self.PropertySet = PropertySet(self)

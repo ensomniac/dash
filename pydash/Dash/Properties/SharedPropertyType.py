@@ -78,16 +78,32 @@ class SharedPropertyType:
 
 
 class String(SharedPropertyType):
-    def __init__(self, types):
-        SharedPropertyType.__init__(self, types, "String", "string")
+    def __init__(self, types_module):
+        SharedPropertyType.__init__(self, types_module, "String", "string")
 
     def Validate(self, value, config_module):
+        try:
+            value = str(value)
+        except:
+            return {"error": f"Value must be a string. Received: '{value}'"}
+
+        return {"valid": True}
+
+
+class Bool(SharedPropertyType):
+    def __init__(self, types_module):
+        SharedPropertyType.__init__(self, types_module, "Bool", "bool")
+
+    def Validate(self, value, config_module):
+        if not isinstance(value, bool):
+            return {"error": f"Value must be a bool. Received: '{value}'"}
+
         return {"valid": True}
 
 
 class Float(SharedPropertyType):
-    def __init__(self, types):
-        SharedPropertyType.__init__(self, types, "Float", "float")
+    def __init__(self, types_module):
+        SharedPropertyType.__init__(self, types_module, "Float", "float")
 
     def Validate(self, value, config_module):
         try:
@@ -105,8 +121,8 @@ class Float(SharedPropertyType):
 
 
 class Int(SharedPropertyType):
-    def __init__(self, types):
-        SharedPropertyType.__init__(self, types, "Int", "int")
+    def __init__(self, types_module):
+        SharedPropertyType.__init__(self, types_module, "Int", "int")
 
     def Validate(self, value, config_module):
         try:
@@ -124,8 +140,8 @@ class Int(SharedPropertyType):
 
 
 class PropertySet(SharedPropertyType):
-    def __init__(self, types):
-        SharedPropertyType.__init__(self, types, "PropertySet", "property_set")
+    def __init__(self, types_module):
+        SharedPropertyType.__init__(self, types_module, "PropertySet", "property_set")
 
     def Validate(self, value, config_module):
         if not self.PropertySetKey:
