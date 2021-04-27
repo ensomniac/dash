@@ -167,7 +167,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "opacity": 1,
         });
 
-        console.log("TODO: Make this.rows grab focus while active");
+        // TODO: Make this.rows grab focus while active
+        // console.log("TODO: Make this.rows grab focus while active");
 
         this.rows.empty();
         this.row_buttons = [];

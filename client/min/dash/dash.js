@@ -5208,7 +5208,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
         });
-        console.log("TODO: Make this.rows grab focus while active");
+        // TODO: Make this.rows grab focus while active
+        // console.log("TODO: Make this.rows grab focus while active");
         this.rows.empty();
         this.row_buttons = [];
         for (var i in this.option_list) {
