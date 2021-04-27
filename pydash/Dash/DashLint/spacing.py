@@ -22,9 +22,12 @@ class GlobalSpacing:
 
     def RemoveExtraLinesAtStartOfFile(self):
         for _ in self.iter_limit_range:
-            if not len(self.source_code[0]):
-                self.source_code.pop(0)
-            else:
+            try:
+                if not len(self.source_code[0]):
+                    self.source_code.pop(0)
+                else:
+                    break
+            except IndexError:
                 break
 
     def RemoveExtraLinesAtEndOfFile(self):
