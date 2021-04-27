@@ -102,22 +102,28 @@ class Flags:
 
     def update_line_total_comment(self):
         index = -2
-        line = self.source_code[index]
-        total_line_length_comment_base = self.total_line_length_comment.split(
-                                         str(self.total_line_length_max))[0].strip()
 
-        if total_line_length_comment_base in line:
-            existing_line_total_max = line.split(total_line_length_comment_base)[1]\
-                                          .strip().split(" ")[0].strip()
+        try:
+            line = self.source_code[index]
+            total_line_length_comment_base = self.total_line_length_comment.split(
+                                             str(self.total_line_length_max))[0].strip()
 
-            if not existing_line_total_max.startswith(str(self.total_line_length_max)) \
-                    or len(self.source_code) < self.total_line_length_max:
+            if total_line_length_comment_base in line:
+                existing_line_total_max = line.split(total_line_length_comment_base)[1]\
+                                              .strip().split(" ")[0].strip()
 
-                line = line.replace(total_line_length_comment_base, "")\
-                           .replace(existing_line_total_max, "")\
-                           .replace(self.line_length_flag_suffix, "")
+                if not existing_line_total_max.startswith(str(self.total_line_length_max)) \
+                        or len(self.source_code) < self.total_line_length_max:
 
-                self.source_code[index] = line
+                    line = line.replace(total_line_length_comment_base, "")\
+                               .replace(existing_line_total_max, "")\
+                               .replace(self.line_length_flag_suffix, "")
 
-        self.RemoveEmptyComments(index, line)
+                    self.source_code[index] = line
+
+            self.RemoveEmptyComments(index, line)
+
+        except IndexError:
+            pass
+
         self.RemoveExtraLinesAtEndOfFile()

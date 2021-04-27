@@ -68,14 +68,17 @@ class Copyright:
                     self.source_code.insert(existing_copyright_indexes[0], line)
         else:
             if self.include_shebang:
-                if self.source_code[1].strip() == self.comment_token:
-                    for line in copyright_lines_reversed:
-                        self.source_code.insert(2, line)
-                else:
-                    copyright_lines_reversed.append(self.comment_token)
-    
-                    for line in copyright_lines_reversed:
-                        self.source_code.insert(1, line)
+                try:
+                    if self.source_code[1].strip() == self.comment_token:
+                        for line in copyright_lines_reversed:
+                            self.source_code.insert(2, line)
+                    else:
+                        copyright_lines_reversed.append(self.comment_token)
+
+                        for line in copyright_lines_reversed:
+                            self.source_code.insert(1, line)
+                except IndexError:
+                    pass
             else:
                 for line in copyright_lines_reversed:
                     self.source_code.insert(0, line)
