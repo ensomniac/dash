@@ -32,9 +32,12 @@ class GlobalSpacing:
 
     def RemoveExtraLinesAtEndOfFile(self):
         for _ in self.iter_limit_range:
-            if not len(self.source_code[-1]) and not len(self.source_code[-2]):
-                self.source_code.pop()
-            else:
+            try:
+                if not len(self.source_code[-1]) and not len(self.source_code[-2]):
+                    self.source_code.pop()
+                else:
+                    break
+            except IndexError:
                 break
 
     def CheckSpecificSpacing(self, starts_with_keyword, line_break_quantity=1, group=False, ignore=""):
