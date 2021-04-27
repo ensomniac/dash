@@ -4890,7 +4890,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, callback);
         return this.buttons[this.buttons.length-1];
     };
-    this.AddCombo = function(label_text, combo_options, property_key){
+    this.AddCombo = function(label_text, combo_options, property_key, default_value=null, bool=false){
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
         if (this.num_headers > 0) {
@@ -4909,8 +4909,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         if (indent_row) {
             row.html.css("margin-left", indent_px);
         };
-        var selected_key = this.get_data_cb()[property_key];
-        (function(self, row, selected_key, property_key, combo_options){
+        var selected_key = default_value || this.get_data_cb()[property_key];
+        (function(self, row, selected_key, property_key, combo_options, bool){
             var callback = function(selected_option){
                 self.on_combo_updated(property_key, selected_option["id"]);
             };
@@ -4921,7 +4921,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 combo_options,    // Option List
                 selected_key,     // Selected
                 self.color,       // Color set
-                {"style": "row"}  // Options
+                {"style": "row"}, // Options
+                bool              // Bool (Toggle)
             );
             row.input.html.append(combo.html);
             combo.html.css({
@@ -4934,7 +4935,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 "height": Dash.Size.RowHeight,
                 "line-height": Dash.Size.RowHeight + "px",
             });
-        })(this, row, selected_key, property_key, combo_options);
+        })(this, row, selected_key, property_key, combo_options, bool);
     };
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
         if (this.get_data_cb) {
@@ -5083,7 +5084,7 @@ function DashGuiHeader(label_text, color){
 };
 
 
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options){
+function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options, bool){
     this.label              = label;
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
@@ -5094,6 +5095,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.initialized        = false;
     this.options            = options || {};
     this.style              = this.options["style"] || "default";
+    this.bool               = bool || false;
     this.html = $("<div></div>");
     // ---------------------------------------------------
     this.html = $("<div class='Combo'></div>");
@@ -5156,6 +5158,9 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.selected_option_id = selected;
         // this.setup_label_list();
         this.on_selection(this.selected_option_id, ignore_callback);
+        if (this.bool) {
+            this.option_list.reverse()
+        }
     };
     this.setup_load_dots = function(){
         this.load_dots = new LoadDots(d.Size.ButtonHeight-Dash.Size.Padding);
@@ -5189,7 +5194,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.on_request_response_callback = null;
         var binder = bind_to || this.binder;
         if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder)
+            this.on_request_response_callback = on_complete_callback.bind(binder);
         };
         (function(self){
             $.post(api, server_data, function(response) {

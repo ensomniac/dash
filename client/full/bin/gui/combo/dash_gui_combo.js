@@ -1,5 +1,5 @@
 
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options){
+function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options, bool){
 
     this.label              = label;
     this.binder             = binder;
@@ -11,6 +11,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.initialized        = false;
     this.options            = options || {};
     this.style              = this.options["style"] || "default";
+    this.bool               = bool || false;
 
     this.html = $("<div></div>");
 
@@ -94,6 +95,9 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         // this.setup_label_list();
         this.on_selection(this.selected_option_id, ignore_callback);
 
+        if (this.bool) {
+            this.option_list.reverse()
+        }
     };
 
     this.setup_load_dots = function(){
@@ -137,7 +141,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.on_request_response_callback = null;
         var binder = bind_to || this.binder;
         if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder)
+            this.on_request_response_callback = on_complete_callback.bind(binder);
         };
 
         (function(self){
@@ -155,7 +159,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             });
 
         })(this);
-
     };
 
     this.setup_label_list = function(){
@@ -231,7 +234,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
 
         this.initialized = true;
-
     };
 
     this.pre_show_size_set = function(){
