@@ -6,6 +6,8 @@ function DashGuiComboStyleRow(){
     this.setup_styles = function() {
 
         this.dropdown_icon = new DashIcon(this.color, "arrow_down", d.Size.RowHeight, 0.5);
+        this.dropdown_icon.html.addClass("ComboLabel");
+        this.dropdown_icon.html.addClass("Combo");
 
         this.font_size = "100%";
         this.text_alignment = "left";
@@ -24,7 +26,7 @@ function DashGuiComboStyleRow(){
             "position": "relative",
             "display": "block",
             "margin-left": -(Dash.Size.Padding*0.25),
-            // "background": "green",
+            "pointer-events": "none",
         });
 
         this.html.css({

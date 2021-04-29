@@ -5101,9 +5101,48 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
-    this.label_container = $("<div></div>");
+    this.label_container = $("<div class='ComboLabel Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
+    this.click_skirt = null;
+    this.hide_skirt = function() {
+        if (!this.click_skirt) {
+            return;
+        };
+        for (var i in this.click_skirt) {
+            var panel = this.click_skirt[i];
+            panel.remove();
+        };
+        this.click_skirt = null;
+    };
+    this.draw_click_skirt = function(height, width) {
+        this.hide_skirt();
+        this.click_skirt = [];
+        this.click_skirt = [
+            $("<div class='ComboClickSkirt Combo'></div>"),
+            $("<div class='ComboClickSkirt Combo'></div>"),
+            $("<div class='ComboClickSkirt Combo'></div>"),
+            $("<div class='ComboClickSkirt Combo'></div>")
+        ];
+        var skirt_thickness = Dash.Size.ColumnWidth*1.2;
+        var set_left = [0, width, 0, -skirt_thickness]; // top, right, bottom, left
+        var set_top = [-skirt_thickness, -skirt_thickness, height, -skirt_thickness]; // top, right, bottom, left
+        var set_width = [width, skirt_thickness, width, skirt_thickness]; // top, right, bottom, left
+        var set_height = [skirt_thickness, height+(skirt_thickness*2), skirt_thickness, height+(skirt_thickness*2)]; // top, right, bottom, left
+        for (var i in this.click_skirt) {
+            var panel = this.click_skirt[i];
+            panel.css({
+                "position": "absolute",
+                "left": set_left[i],
+                "top": set_top[i],
+                "width": set_width[i],
+                "height": set_height[i],
+                // "background": "red",
+                "z-index": 100,
+            });
+            this.html.append(panel);
+        };
+    };
     this.initialize_style = function() {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "row"];
@@ -5225,6 +5264,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
     };
     this.on_click = function(){
+        this.flash();
         if (this.expanded) {
             this.hide();
         }
@@ -5284,6 +5324,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "height": "auto",
         });
         var end_height = this.rows.height();
+        this.draw_click_skirt(end_height, this.rows.width());
         this.rows.css({
             "height": start_height,
             "z-index": 2000,
@@ -5296,6 +5337,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     };
     this.hide = function(){
         this.expanded = false;
+        this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function(){$(this).css({"z-index": 10})});
     };
@@ -5320,8 +5362,12 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
                 self.highlight.stop().animate({"opacity": 0}, 200);
             });
             self.html.click(function(e){
-                self.flash();
                 if ($(e.target).hasClass("ComboLabel")) {
+                    self.on_click();
+                    e.preventDefault();
+                    return false;
+                };
+                if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
@@ -5472,6 +5518,8 @@ function DashGuiComboStyleRow(){
     this.dropdown_icon = null;
     this.setup_styles = function() {
         this.dropdown_icon = new DashIcon(this.color, "arrow_down", d.Size.RowHeight, 0.5);
+        this.dropdown_icon.html.addClass("ComboLabel");
+        this.dropdown_icon.html.addClass("Combo");
         this.font_size = "100%";
         this.text_alignment = "left";
         this.label_text_color = "rgba(0, 0, 0, 0.8)";
@@ -5486,7 +5534,7 @@ function DashGuiComboStyleRow(){
             "position": "relative",
             "display": "block",
             "margin-left": -(Dash.Size.Padding*0.25),
-            // "background": "green",
+            "pointer-events": "none",
         });
         this.html.css({
             "margin-right": Dash.Size.Padding*0.5,
