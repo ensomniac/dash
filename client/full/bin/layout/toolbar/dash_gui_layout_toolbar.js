@@ -20,10 +20,14 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddExpander = function(placeholder_label, callback){
         var expander = $("<div></div>");
+
         expander.css({
             "flex-grow": 2,
         });
+
         this.html.append(expander);
+
+        return expander;
     };
 
     this.AddSpace = function(width){
@@ -178,7 +182,9 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
-    this.AddCombo = function(label_text, combo_options, selected_id, callback){
+    // Ryan, adding `return_full_option` because I need the full combo returned, as it happens in
+    // the regular Dash.Gui.Combo, but I don't want to break any existing Combos across all the portals
+    this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false) {
         var obj_index = this.objects.length;
 
         if (callback) {
@@ -188,7 +194,7 @@ function DashGuiLayoutToolbar(binder, color){
         (function(self, selected_id, combo_options, callback){
 
             var _callback = function(selected_option){
-                self.on_combo_updated(callback, selected_option["id"]);
+                self.on_combo_updated(callback, return_full_option ? selected_option : selected_option["id"]);
             };
 
             var combo = new Dash.Gui.Combo (
@@ -213,6 +219,8 @@ function DashGuiLayoutToolbar(binder, color){
                 "line-height": Dash.Size.RowHeight + "px",
             });
 
+            combo = self.add_dropdown_tick_to_combo(combo);
+
             var obj = {};
             obj["html"] = combo;
             obj["callback"] = callback.bind(self.binder);  // Not sure if this is right
@@ -225,6 +233,23 @@ function DashGuiLayoutToolbar(binder, color){
         var combo = obj["html"];
 
         return combo;  // Ryan, I added this to make it more flexible like a standalone combo
+    };
+
+    this.add_dropdown_tick_to_combo = function (combo) {
+        icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+
+        icon.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 0.5
+        });
+
+        combo.label.css({
+            "text-align": "left",
+        });
+
+        combo.html.append(icon.html);
+
+        return combo;
     };
 
     this.on_combo_updated = function(callback, selected_id){
