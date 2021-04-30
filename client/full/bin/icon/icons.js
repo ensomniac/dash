@@ -72,6 +72,7 @@ function GuiIcons(icon) {
     this.icon_map["toggle_off"]            = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-off");
     this.icon_map["toggle_on"]             = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-on");
     this.icon_map["tools"]                 = new GuiIconDefinition(this.icon, "Tools", this.weight.light, "tools");
+    this.icon_map["trash"]                 = new GuiIconDefinition(this.icon, "Trash", this.weight.solid, "trash-alt");
     this.icon_map["undo"]                  = new GuiIconDefinition(this.icon, "Undo", this.weight.regular, "undo");
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");

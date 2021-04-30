@@ -135,6 +135,7 @@ function GuiIcons(icon) {
     this.icon_map["toggle_off"]            = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-off");
     this.icon_map["toggle_on"]             = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-on");
     this.icon_map["tools"]                 = new GuiIconDefinition(this.icon, "Tools", this.weight.light, "tools");
+    this.icon_map["trash"]                 = new GuiIconDefinition(this.icon, "Trash", this.weight.solid, "trash-alt");
     this.icon_map["undo"]                  = new GuiIconDefinition(this.icon, "Undo", this.weight.regular, "undo");
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");
@@ -6127,7 +6128,7 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(button.html)
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text) {
+    this.AddLabel = function (text, add_end_border=true) {
         var header = new Dash.Gui.Header(text);
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,
@@ -6135,6 +6136,9 @@ function DashGuiLayoutToolbar(binder, color){
             "margin-right": Dash.Size.Padding,
         });
         this.html.append(header.html);
+        if (!add_end_border) {
+            return header;
+        }
         var end_border = $("<div></div>");
         end_border.css({
             "margin-top": Dash.Size.Padding * 0.5,
