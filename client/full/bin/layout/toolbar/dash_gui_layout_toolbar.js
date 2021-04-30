@@ -109,6 +109,17 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(button.html)
     };
 
+    this.AddDivider = function () {
+        var divider_line = this.AddLabel("", false);
+
+        divider_line.html.css({
+            "padding-left": 0,
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.2,
+        });
+    };
+
     // Intended to be the first item, if you want a header-style label starting the toolbar
     this.AddLabel = function (text, add_end_border=true) {
         var header = new Dash.Gui.Header(text);
