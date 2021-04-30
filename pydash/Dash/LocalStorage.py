@@ -13,6 +13,7 @@ import sys
 from Dash.Utils import Utils
 from datetime import datetime
 
+
 class DashLocalStorage:
     def __init__(self, dash_context, store_path, nested, sort_by_key="", filter_out_keys=[]):
         """
@@ -94,7 +95,12 @@ class DashLocalStorage:
             if obj_id.startswith("."):
                 continue
 
-            all_data["data"][obj_id] = self.GetData(obj_id)
+            data = self.GetData(obj_id)
+
+            if not data:
+                continue
+
+            all_data["data"][obj_id] = data
 
         if self.sort_by_key:
             all_data["order"] = self.get_dict_order_by_sort_key(all_data["data"])
@@ -111,6 +117,9 @@ class DashLocalStorage:
 
     def GetData(self, obj_id, create=False, additional_data={}):
         record_path = self.get_record_path(obj_id)
+
+        if not record_path:
+            return {}
 
         if not os.path.exists(record_path):
             if create:
@@ -246,24 +255,29 @@ class DashLocalStorage:
 
     def get_record_path(self, obj_id):
         if self.store_path == "users":
-            record_path = os.path.join(
+            return os.path.join(
                 self.get_store_root(obj_id),
                 "usr.data"
             )
         else:
             if self.nested:
-                record_path = os.path.join(
-                    self.get_store_root(obj_id),
-                    obj_id,
-                    "data.json"
-                )
-            else:
-                record_path = os.path.join(
+                obj_id_path = os.path.join(
                     self.get_store_root(obj_id),
                     obj_id
                 )
 
-        return record_path
+                if not os.path.isdir(obj_id_path):
+                    return ""
+
+                return os.path.join(
+                    obj_id_path,
+                    "data.json"
+                )
+            else:
+                return os.path.join(
+                    self.get_store_root(obj_id),
+                    obj_id
+                )
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         obj_id = obj_id or Utils.Global.RequestData["obj_id"]
@@ -332,21 +346,23 @@ class DashLocalStorage:
 
     def Read(self, full_path):
         from json import loads
-        import time
+        from time import sleep
 
-        attempts = 0
+        error = ""
         data = None
+        attempts = 0
 
         while attempts < 3:
             attempts += 1
 
             try:
                 data = loads(open(full_path, "r").read())
-            except:
-                time.sleep(0.2)
+            except Exception as e:
+                error = e
+                sleep(0.2)
 
-        if attempts >=3 and data == None:
-            raise Exception("Failed to read: " + full_path + " (" + str(attempts) + " attempts)")
+        if attempts >= 3 and data is None:
+            raise Exception(f"Failed to read: {full_path}, error: {error}, ({attempts} attempts)")
 
         return data
 
@@ -358,24 +374,26 @@ class DashLocalStorage:
         return data
 
     def write_protected(self, full_path, data):
-        # Andrew, this is a newer system that first writes a unique filename to
-        # disk, then moves that file into the correct location. This should resolve
-        # clobbered .json files, but it will not prevent in-memory merge failures
+        """
+        This is a newer system that first writes a unique filename to
+        disk, then moves that file into the correct location. This should resolve
+        clobbered .json files, but it will not prevent in-memory merge failures.
+        """
 
         from json import dumps
-        import random
+        from random import randint
 
         filename = full_path.split("/")[-1].strip()
         directory = full_path.rstrip(filename) + "/"
-
-        tmp_filename = directory + "_tmp_" + str(random.randint(100000, 999999))
-        tmp_filename += "_" + filename
+        tmp_filename = f"{directory}_tmp_{randint(100000, 999999)}_{filename}"
 
         open(tmp_filename, "w").write(dumps(data))
+
         os.rename(tmp_filename, full_path)
         os.chown(full_path, 10000, 1004)
 
         return data
+
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id=obj_id)
