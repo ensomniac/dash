@@ -36,12 +36,10 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(spacer);
     };
 
-    this.AddButton = function(label_text, callback, width=null){
-
+    this.AddButton = function (label_text, callback, width=null) {
         var obj_index = this.objects.length;
 
         (function(self, obj_index){
-
             var button = new Dash.Gui.Button(
                 label_text,
                 function () {
