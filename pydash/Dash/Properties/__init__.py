@@ -47,7 +47,9 @@ def MergeDefaultValues(data, shared_properties, config_module):
     """
 
     for item in shared_properties:
-        if item.get("default_value"):
+
+        # Don't use .get() here, if we have a default value, we want to set it
+        if "default_value" in item and item["default_value"] is not None:
             data[item["key"]] = item["default_value"]
 
         elif item.get("property_set_key"):
