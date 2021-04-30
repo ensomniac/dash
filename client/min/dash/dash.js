@@ -6122,6 +6122,29 @@ function DashGuiLayoutToolbar(binder, color){
         });
         this.html.append(button.html)
     };
+    // Intended to be the first item, if you want a header-style label starting the toolbar
+    this.AddLabel = function (text) {
+        var header = new Dash.Gui.Header(text);
+        header.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+        });
+        this.html.append(header.html);
+        var end_border = $("<div></div>");
+        end_border.css({
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-bottom": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding * 0.5,
+            "left": -Dash.Size.Padding*0.25,
+            "top": 0,
+            "bottom": 0,
+            "width": Dash.Size.Padding*0.5,
+            "background": this.color.AccentGood,
+        });
+        this.html.append(end_border);
+    };
     this.AddInput = function(placeholder_label, callback){
         var obj_index = this.objects.length;
         var input = new d.Gui.Input(placeholder_label, this.color);
