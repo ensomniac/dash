@@ -26,7 +26,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
         this.input = new d.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
-        this.input.SetText(this.initial_value);
+        this.input.SetText(this.initial_value.constructor === Object ? JSON.stringify(this.initial_value) : this.initial_value);
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
         this.input.OnChange(this.input_changed, this);
 
