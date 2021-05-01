@@ -18,7 +18,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.color = color || Dash.Color.Light;
 
     this.setup_styles = function(){
-
         this.html.append(this.invalid_input_highlight);
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
@@ -26,7 +25,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
         this.input = new d.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
-        this.input.SetText(this.initial_value.constructor === Object ? JSON.stringify(this.initial_value) : this.initial_value);
+
+        this.set_initial_text();
+
         this.input.input.css({"padding-left": d.Size.Padding*0.5});
         this.input.OnChange(this.input_changed, this);
 
@@ -98,6 +99,22 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             this.SetupCombo(this.button_text);
         };
 
+    };
+
+    this.set_initial_text = function () {
+        var stringify = false;
+
+        // Initial value is a dict
+        if (Object.keys(this.initial_value).length !== 0 && this.initial_value.constructor === Object) {
+            stringify = true;
+        }
+
+        // Initial value is an array
+        else if (this.initial_value.length && Array.isArray(this.initial_value)) {
+            stringify = true;
+        }
+
+        this.input.SetText(stringify ? JSON.stringify(this.initial_value) : this.initial_value);
     };
 
     this.create_save_button = function(){
