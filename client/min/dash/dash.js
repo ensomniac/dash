@@ -6195,14 +6195,14 @@ function DashGuiLayoutToolbar(binder, color){
         })(this, input, obj_index);
         this.html.append(input.html);
     };
-    // Ryan, adding `return_full_option` because I need the full combo returned, as it happens in
+    // Ryan, adding `return_full_option` because I need the full combo returned as it happens in
     // the regular Dash.Gui.Combo, but I don't want to break any existing Combos across all the portals
     this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false) {
         var obj_index = this.objects.length;
         if (callback) {
             callback = callback.bind(this.binder);
         };
-        (function(self, selected_id, combo_options, callback){
+        (function(self, selected_id, combo_options, callback, return_full_option){
             var _callback = function(selected_option){
                 self.on_combo_updated(callback, return_full_option ? selected_option : selected_option["id"]);
             };
@@ -6230,7 +6230,7 @@ function DashGuiLayoutToolbar(binder, color){
             obj["callback"] = callback.bind(self.binder);  // Not sure if this is right
             obj["index"] = obj_index;
             self.objects.push(obj);
-        })(this, selected_id, combo_options, callback);
+        })(this, selected_id, combo_options, callback, return_full_option);
         var obj = this.objects[obj_index];
         var combo = obj["html"];
         return combo;  // Ryan, I added this to make it more flexible like a standalone combo
