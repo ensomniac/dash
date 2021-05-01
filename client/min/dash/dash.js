@@ -6805,6 +6805,10 @@ function DashGuiListRow(list, arbitrary_id){
                 this.column_box.append(this.get_spacer());
                 left_aligned = false;
             }
+            else if (column_config_data["type"] == "divider") {
+                this.column_box.append(this.get_divider());
+                left_aligned = false;
+            }
             else {
                 column_config_data["left_aligned"] = left_aligned;
                 var column = new DashGuiListRowColumn(this, column_config_data);
@@ -6820,6 +6824,19 @@ function DashGuiListRow(list, arbitrary_id){
             "flex-grow": 2,
         });
         return spacer;
+    };
+    this.get_divider = function () {
+        var divider_line = new Dash.Gui.Header("");
+        divider_line.html.css({
+            "padding-left": 0,
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.2,
+        });
+        divider_line.border.css({
+            "width": Dash.Size.Padding*0.35
+        });
+        return divider_line.html;
     };
     this.setup_styles();
 };
@@ -6890,12 +6907,12 @@ function DashGuiListRowColumn(list_row, column_config_data){
     this.setup_styles();
 };
 
-function DashGuiListColumnConfig(){
+function DashGuiListColumnConfig () {
     this.columns = [];
-    this.AddColumn = function(display_name, data_key, can_edit, width, options){
+    this.AddColumn = function (display_name, data_key, can_edit, width, options) {
         if (typeof can_edit != "boolean") {
             can_edit = true;
-        };
+        }
         options = options || {};
         var optional_css = options["css"] || null;
         var column_details = {};
@@ -6908,9 +6925,10 @@ function DashGuiListColumnConfig(){
         column_details["on_click_callback"] = options["on_click_callback"];
         this.columns.push(column_details);
     };
-    this.AddSpacer = function(){
-        var column_details = {};
-        column_details["type"] = "spacer";
-        this.columns.push(column_details);
+    this.AddSpacer = function () {
+        this.columns.push({"type": "spacer"});
     };
-};
+    this.AddDivider = function () {
+        this.columns.push({"type": "divider"});
+    };
+}

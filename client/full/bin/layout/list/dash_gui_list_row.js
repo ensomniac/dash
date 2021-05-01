@@ -247,15 +247,19 @@ function DashGuiListRow(list, arbitrary_id){
                 this.column_box.append(this.get_spacer());
                 left_aligned = false;
             }
+
+            else if (column_config_data["type"] == "divider") {
+                this.column_box.append(this.get_divider());
+                left_aligned = false;
+            }
+
             else {
                 column_config_data["left_aligned"] = left_aligned;
                 var column = new DashGuiListRowColumn(this, column_config_data);
                 this.column_box.append(column.html);
                 this.columns.push(column);
             };
-
         };
-
     };
 
     this.get_spacer = function(){
@@ -267,9 +271,24 @@ function DashGuiListRow(list, arbitrary_id){
         });
 
         return spacer;
+    };
 
+    this.get_divider = function () {
+        var divider_line = new Dash.Gui.Header("");
+
+        divider_line.html.css({
+            "padding-left": 0,
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.2,
+        });
+
+        divider_line.border.css({
+            "width": Dash.Size.Padding*0.35
+        });
+
+        return divider_line.html;
     };
 
     this.setup_styles();
-
 };

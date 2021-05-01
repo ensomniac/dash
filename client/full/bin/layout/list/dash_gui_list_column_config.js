@@ -1,12 +1,10 @@
-function DashGuiListColumnConfig(){
-
+function DashGuiListColumnConfig () {
     this.columns = [];
 
-    this.AddColumn = function(display_name, data_key, can_edit, width, options){
-
+    this.AddColumn = function (display_name, data_key, can_edit, width, options) {
         if (typeof can_edit != "boolean") {
             can_edit = true;
-        };
+        }
 
         options = options || {};
         var optional_css = options["css"] || null;
@@ -21,13 +19,13 @@ function DashGuiListColumnConfig(){
         column_details["on_click_callback"] = options["on_click_callback"];
 
         this.columns.push(column_details);
-
     };
 
-    this.AddSpacer = function(){
-        var column_details = {};
-        column_details["type"] = "spacer";
-        this.columns.push(column_details);
+    this.AddSpacer = function () {
+        this.columns.push({"type": "spacer"});
     };
 
-};
+    this.AddDivider = function () {
+        this.columns.push({"type": "divider"});
+    };
+}
