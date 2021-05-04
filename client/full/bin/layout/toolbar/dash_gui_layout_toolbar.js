@@ -251,7 +251,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.add_dropdown_tick_to_combo = function (combo) {
-        icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
 
         icon.html.css({
             "position": "absolute",

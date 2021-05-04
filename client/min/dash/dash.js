@@ -6248,7 +6248,7 @@ function DashGuiLayoutToolbar(binder, color){
         return combo;  // Ryan, I added this to make it more flexible like a standalone combo
     };
     this.add_dropdown_tick_to_combo = function (combo) {
-        icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
         icon.html.css({
             "position": "absolute",
             "right": Dash.Size.Padding * 0.5
