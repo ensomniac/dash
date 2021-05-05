@@ -6836,13 +6836,10 @@ function DashGuiListRow(list, arbitrary_id){
     this.get_divider = function () {
         var divider_line = new Dash.Gui.Header("");
         divider_line.html.css({
-            "padding-left": 0,
             "margin-left": Dash.Size.Padding * 0.7,
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding * 0.2,
         });
         divider_line.border.css({
-            "width": Dash.Size.Padding*0.35
+            "width": Dash.Size.Padding * 0.25
         });
         return divider_line.html;
     };
