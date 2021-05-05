@@ -265,6 +265,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         })(this, row_details);
 
+        return this.update_inputs[data_key];
     };
 
     this.on_combo_updated = function(property_key, selected_option){
