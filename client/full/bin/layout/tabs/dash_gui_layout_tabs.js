@@ -274,6 +274,9 @@ class DashGuiLayoutTabs {
     };
 
     this.AppendHTML = function(html){
+        html.css({
+            "margin-bottom": 1,
+        });
         this.list_top.append(html);
     };
 
