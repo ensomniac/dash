@@ -40,14 +40,14 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(spacer);
     };
 
-    this.AddButton = function (label_text, callback, width=null) {
+    this.AddButton = function (label_text, callback, width=null, data=null) {
         var obj_index = this.objects.length;
 
-        (function(self, obj_index){
+        (function(self, obj_index, data){
             var button = new Dash.Gui.Button(
                 label_text,
                 function () {
-                    self.on_button_clicked(obj_index);
+                    self.on_button_clicked(obj_index, data);
                 },
                 self,
                 null,
@@ -62,7 +62,7 @@ function DashGuiLayoutToolbar(binder, color){
             obj["index"] = obj_index;
             self.objects.push(obj);
 
-        })(this, obj_index);
+        })(this, obj_index, data);
 
         var obj = this.objects[obj_index];
         var button = obj["html"];
@@ -282,10 +282,10 @@ function DashGuiLayoutToolbar(binder, color){
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
 
-    this.on_button_clicked = function(obj_index){
+    this.on_button_clicked = function(obj_index, data=null){
         console.log(this);
         var obj = this.objects[obj_index];
-        obj["callback"](obj["html"]);
+        obj["callback"](obj["html"], data);
     };
 
     this.setup_styles();
