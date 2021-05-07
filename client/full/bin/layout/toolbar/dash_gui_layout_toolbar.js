@@ -208,8 +208,12 @@ function DashGuiLayoutToolbar(binder, color){
 
         (function(self, selected_id, combo_options, callback, return_full_option){
 
-            var _callback = function(selected_option){
-                self.on_combo_updated(callback, return_full_option ? selected_option : selected_option["id"]);
+            var _callback = function(selected_option, previous_selected_option){
+                self.on_combo_updated(
+                    callback,
+                    return_full_option ? selected_option : selected_option["id"],
+                    return_full_option ? previous_selected_option : previous_selected_option["id"]
+                );
             };
 
             var combo = new Dash.Gui.Combo (
@@ -267,9 +271,9 @@ function DashGuiLayoutToolbar(binder, color){
         return combo;
     };
 
-    this.on_combo_updated = function(callback, selected_id){
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option) {
         if (callback) {
-            callback(selected_id);
+            callback(selected_id, previous_selected_option);
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);

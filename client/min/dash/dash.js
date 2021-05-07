@@ -5307,6 +5307,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     };
     this.on_selection = function(selected_option, ignore_callback){
         // Called when a selection in the combo is made
+        var previous_selected_option = this.selected_option_id;
         var label_text = selected_option["label_text"];
         if (!label_text) {
             console.log("label_text == null");
@@ -5318,7 +5319,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.label.text(label_text);
         this.selected_option_id = selected_option;
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option);
+            this.callback(selected_option, previous_selected_option);
         };
         this.initialized = true;
     };
@@ -6220,8 +6221,12 @@ function DashGuiLayoutToolbar(binder, color){
             callback = callback.bind(this.binder);
         };
         (function(self, selected_id, combo_options, callback, return_full_option){
-            var _callback = function(selected_option){
-                self.on_combo_updated(callback, return_full_option ? selected_option : selected_option["id"]);
+            var _callback = function(selected_option, previous_selected_option){
+                self.on_combo_updated(
+                    callback,
+                    return_full_option ? selected_option : selected_option["id"],
+                    return_full_option ? previous_selected_option : previous_selected_option["id"]
+                );
             };
             var combo = new Dash.Gui.Combo (
                 selected_id,      // Label
@@ -6264,9 +6269,9 @@ function DashGuiLayoutToolbar(binder, color){
         combo.html.append(icon.html);
         return combo;
     };
-    this.on_combo_updated = function(callback, selected_id){
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option) {
         if (callback) {
-            callback(selected_id);
+            callback(selected_id, previous_selected_option);
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);

@@ -273,6 +273,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.on_selection = function(selected_option, ignore_callback){
         // Called when a selection in the combo is made
 
+        var previous_selected_option = this.selected_option_id;
         var label_text = selected_option["label_text"];
 
         if (!label_text) {
@@ -287,7 +288,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.selected_option_id = selected_option;
 
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option);
+            this.callback(selected_option, previous_selected_option);
         };
 
         this.initialized = true;
