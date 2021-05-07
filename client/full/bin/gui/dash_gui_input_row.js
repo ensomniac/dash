@@ -102,19 +102,39 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.set_initial_text = function () {
-        var stringify = false;
+        this.input.SetText(this.initial_value);
+    };
+
+    this.parse_value = function (value) {
+        if (!value) {
+            return value;
+        }
 
         // Initial value is a dict
         if (Object.keys(this.initial_value).length !== 0 && this.initial_value.constructor === Object) {
-            stringify = true;
+            value = JSON.stringify(value);
         }
 
         // Initial value is an array
         else if (this.initial_value.length && Array.isArray(this.initial_value)) {
-            stringify = true;
+            value = JSON.stringify(value);
         }
 
-        this.input.SetText(stringify ? JSON.stringify(this.initial_value) : this.initial_value);
+        // Initial value is ISO datetime string
+        else if (Date.parse(value)) {
+            value = Dash.ReadableDateTime(value);
+        }
+
+        // Initial value is team member email
+        else if (value.includes("@") && value.includes(".")) {
+            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
+                if ("display_name" in Dash.User.Init["team"][value]) {
+                    value = Dash.User.Init["team"][value]["display_name"];
+                }
+            }
+        }
+
+        return value;
     };
 
     this.create_save_button = function(){
@@ -331,6 +351,8 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.SetText = function(text){
+        text = this.parse_value(text);
+
         this.input.SetText(text);
         this.input_changed(true);
 

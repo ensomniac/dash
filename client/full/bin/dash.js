@@ -33,6 +33,32 @@ function Dash(){
         return time_ago;
     };
 
+    this.ReadableDateTime = function (iso_string) {
+        var dt = new Date(Date.parse(iso_string));
+        var date = dt.toLocaleDateString();
+        var time = dt.toLocaleTimeString();
+        var readable = date + " at " + time;
+        var colon_count = 0;
+
+        // Get index of seconds
+        for (var i in readable) {
+            var char = readable[i];
+
+            if (char !== ":") {
+                continue;
+            }
+
+            colon_count += 1;
+
+            if (colon_count === 2) {
+                break;
+            }
+        }
+
+        // Return readable without seconds
+        return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+    };
+
     this.ValidateResponse = function(response){
         // TODO: doc
 
