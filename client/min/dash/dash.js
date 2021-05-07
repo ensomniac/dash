@@ -6271,7 +6271,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.on_combo_updated = function (callback, selected_id, previous_selected_option) {
         if (callback) {
-            callback(selected_id, previous_selected_option);
+            callback(selected_id, previous_selected_option, this);
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
@@ -6284,7 +6284,7 @@ function DashGuiLayoutToolbar(binder, color){
     this.on_button_clicked = function(obj_index, data=null){
         console.log(this);
         var obj = this.objects[obj_index];
-        obj["callback"](obj["html"], data);
+        obj["callback"](obj["html"], data, this);
     };
     this.setup_styles();
 };
