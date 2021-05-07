@@ -61,6 +61,9 @@ function DashGuiInput(placeholder_text, color){
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
             // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
+
+            // prevent navigating to locked box via tab
+            this.input[0].tabIndex = "-1";
         }
         else {
             this.input.css({"pointer-events": "auto"});
