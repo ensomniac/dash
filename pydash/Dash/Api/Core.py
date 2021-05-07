@@ -156,7 +156,26 @@ class ApiCore:
         print("Content-type: text/html\n")
         print(self._response)
 
+    def compress_response(self, data):
+        import gzip
+        import json
+        import base64
+
+        data = json.dumps(data).encode()
+        order_compressed = gzip.compress(data)
+        order_compressed_bin = base64.b64encode(order_compressed)
+        order_compressed_str = order_compressed_bin.decode()
+
+        data = {}
+        data["gzip"] = order_compressed_str
+
+        return data
+
     def print_return_data(self):
+
+        if "gzip" in self.Params and not self._response.get("error"):
+            self._response = self.compress_response(self._response)
+
         print("Content-type: text/plain\n")
         print(str(json.dumps(self._response)))
 

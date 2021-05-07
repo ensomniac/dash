@@ -40,7 +40,56 @@ function DashRequest(){
         //console.log(">> on_no_further_requests_pending <<");
     };
 
+    this.decompress_response = function(request, response){
+        // This is called immediately before returning a
+        // response that has been compressed with gzip
+
+        var gzip_bytes = Buffer.from(response["gzip"], "base64");
+
+        (function(self, gzip_bytes, request, response){
+
+            zlib.unzip(gzip_bytes, function (_, decompressed_data) {
+
+                delete response["gzip"];
+                response["dash_decompressed"] = true;
+
+                if (decompressed_data) {
+                    var gzip_str = new TextDecoder("utf-8").decode(decompressed_data);
+                    var gzipped_data = JSON.parse(gzip_str);
+
+                    for (var key in gzipped_data) {
+                        response[key] = gzipped_data[key];
+                    };
+
+                }
+                else {
+
+                    console.log("Dash failed to decompress gzip content");
+                    console.log(response);
+
+                    if (!response["error"]) {
+                        response["error"] = "Failed to decompress gzip data from server!";
+                    }
+                    else {
+                        response["error_gzip"] = "Failed to decompress gzip data from server!";
+                    };
+
+                };
+
+                self.on_response(request, response);
+
+            });
+
+        })(this, gzip_bytes, request, response);
+
+    };
+
     this.on_response = function(request, response){
+
+        if (response["gzip"]) {
+            this.decompress_response(request, response);
+            return;
+        };
 
         callback = request.callback.bind(request.binder);
 
