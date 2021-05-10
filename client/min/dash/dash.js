@@ -19772,7 +19772,7 @@ function DashGuiIconButton(icon_name, callback, binder, color, options){
     this.setup_icon = function(){
         // This is bad and should be instead derived from a stable button
         // height property, which doesn't exist yet...
-        this.icon_height = this.html.height()-Dash.Size.Padding;
+        this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
         this.icon = new Dash.Gui.Icon(
             this.color,       // Dash Color
             this.icon_name,   // Icon name / asset path
@@ -20902,7 +20902,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             this.buttons = [];
         };
         (function(self, row, callback, data_key){
-            var button = new d.Gui.IconButton("delete", function(){
+            var button = new d.Gui.IconButton("trash", function(){
                 callback(data_key);
             }, self, self.color);
             self.buttons.push(button);

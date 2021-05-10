@@ -12,7 +12,7 @@ function DashGuiIconButton(icon_name, callback, binder, color, options){
 
         // This is bad and should be instead derived from a stable button
         // height property, which doesn't exist yet...
-        this.icon_height = this.html.height()-Dash.Size.Padding;
+        this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
 
         this.icon = new Dash.Gui.Icon(
             this.color,       // Dash Color

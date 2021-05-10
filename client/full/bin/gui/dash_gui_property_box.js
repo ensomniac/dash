@@ -284,7 +284,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         (function(self, row, callback, data_key){
 
-            var button = new d.Gui.IconButton("delete", function(){
+            var button = new d.Gui.IconButton("trash", function(){
                 callback(data_key);
             }, self, self.color);
 
