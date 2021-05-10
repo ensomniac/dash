@@ -19069,6 +19069,8 @@ function DashGui(){
     this.Layout = new DashGuiLayout();
     this.Login = DashGuiLogin;
     this.Button = DashGuiButton;
+    this.IconButton = DashGuiIconButton;
+    this.Icon = DashIcon;
     this.Input = DashGuiInput;
     this.PropertyBox = DashGuiPropertyBox;
     this.LoadDots = DashGuiLoadDots;
@@ -19759,6 +19761,43 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.draw_dropzone();
 };
 
+
+
+function DashGuiIconButton(icon_name, callback, binder, color, options){
+    this.icon = null;
+    this.icon_height = null;
+    this.icon_name = icon_name;
+    this.icon_default_opacity = 0.8;
+    DashGuiButton.call(this, "", callback, binder, color, options);
+    this.setup_icon = function(){
+        // This is bad and should be instead derived from a stable button
+        // height property, which doesn't exist yet...
+        this.icon_height = this.html.height()-Dash.Size.Padding;
+        this.icon = new Dash.Gui.Icon(
+            this.color,       // Dash Color
+            this.icon_name,   // Icon name / asset path
+            this.icon_height, // Height...
+            1                 // Size mult for the icon, within the container
+        );
+        this.highlight.css({
+            "background": "rgba(0, 0, 0, 0)",
+        });
+        this.html.css({
+            "background": "rgba(0, 0, 0, 0)",
+        });
+        this.icon.html.css({
+            "opacity": this.icon_default_opacity,
+        });
+        this.html.append(this.icon.html);
+    };
+    this.on_hover_in = function(){
+        this.icon.html.stop().animate({"opacity": 1}, 50);
+    };
+    this.on_hover_out = function(){
+        this.icon.html.stop().animate({"opacity": this.icon_default_opacity}, 100);
+    };
+    this.setup_icon();
+};
 
 
 function DashGuiButtonStyleDefault(){
@@ -20809,7 +20848,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             });
         })(this, row, selected_key, property_key, combo_options, bool);
     };
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
+    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
         }
@@ -20848,9 +20887,40 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             if (!row_details["can_edit"]) {
                 row.SetLocked(true);
             };
+            if (options["on_delete"]) {
+                row = self.add_delete_button(row, options["on_delete"], data_key);
+            };
             self.html.append(row.html);
         })(this, row_details);
         return this.update_inputs[data_key];
+    };
+    this.add_delete_button = function(row, callback, data_key){
+        // Note: This function was initially intended for PropertyBox
+        // rows - it may not work well with other styles without modification
+        callback = callback.bind(this.binder);
+        if (!this.buttons) {
+            this.buttons = [];
+        };
+        (function(self, row, callback, data_key){
+            var button = new d.Gui.IconButton("delete", function(){
+                callback(data_key);
+            }, self, self.color);
+            self.buttons.push(button);
+            button.html.css({
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+                "width": Dash.Size.RowHeight,
+            });
+            row.html.append(button.html);
+        })(this, row, callback, data_key);
+
+        if (row.button) {
+            // We need to leave space for this button to coexist with this new button
+            row.button.html.css("margin-right", Dash.Size.RowHeight);
+        };
+        return row;
     };
     this.on_combo_updated = function(property_key, selected_option){
         if (this.dash_obj_id) {

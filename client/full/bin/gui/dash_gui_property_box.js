@@ -211,7 +211,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit){
+    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
 
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
@@ -261,11 +261,55 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row.SetLocked(true);
             };
 
+            if (options["on_delete"]) {
+                row = self.add_delete_button(row, options["on_delete"], data_key);
+            };
+
             self.html.append(row.html);
 
         })(this, row_details);
 
         return this.update_inputs[data_key];
+    };
+
+    this.add_delete_button = function(row, callback, data_key){
+        // Note: This function was initially intended for PropertyBox
+        // rows - it may not work well with other styles without modification
+
+        callback = callback.bind(this.binder);
+
+        if (!this.buttons) {
+            this.buttons = [];
+        };
+
+        (function(self, row, callback, data_key){
+
+            var button = new d.Gui.IconButton("delete", function(){
+                callback(data_key);
+            }, self, self.color);
+
+            self.buttons.push(button);
+
+            button.html.css({
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+                "width": Dash.Size.RowHeight,
+            });
+
+            row.html.append(button.html);
+
+        })(this, row, callback, data_key);
+
+
+        if (row.button) {
+            // We need to leave space for this button to coexist with this new button
+            row.button.html.css("margin-right", Dash.Size.RowHeight);
+        };
+
+        return row;
+
     };
 
     this.on_combo_updated = function(property_key, selected_option){

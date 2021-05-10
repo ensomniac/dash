@@ -182,7 +182,6 @@ class ApiCore:
     def SetError(self, error_str):
         self.SetResponse({"error": error_str})
 
-    # Previously: set_return_data(self, return_data=None):
     def SetResponse(self, response=None):
         if type(response) == str:
             self._render_html = True
