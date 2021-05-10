@@ -238,8 +238,6 @@ function DashGuiLayoutToolbar(binder, color){
                 "line-height": Dash.Size.RowHeight + "px",
             });
 
-            combo = self.add_dropdown_tick_to_combo(combo);
-
             var obj = {};
             obj["html"] = combo;
             obj["callback"] = callback.bind(self.binder);  // Not sure if this is right
@@ -252,23 +250,6 @@ function DashGuiLayoutToolbar(binder, color){
         var combo = obj["html"];
 
         return combo;  // Ryan, I added this to make it more flexible like a standalone combo
-    };
-
-    this.add_dropdown_tick_to_combo = function (combo) {
-        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
-
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5
-        });
-
-        combo.label.css({
-            "text-align": "left",
-        });
-
-        combo.html.append(icon.html);
-
-        return combo;
     };
 
     this.on_combo_updated = function (callback, selected_id, previous_selected_option) {

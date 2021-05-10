@@ -82,7 +82,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.initialize_style = function() {
 
         // Toss a warning if this isn't a known style so we don't fail silently
-        this.styles = ["default", "row"];
+        this.styles = ["default", "row", "standalone"];
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
@@ -103,7 +103,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         this.setup_styles();
         this.initialize_rows();
-
+        this.add_dropdown_tick();
     };
 
     this.initialize_rows = function(){
@@ -400,6 +400,27 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         })(this);
 
+    };
+
+    this.add_dropdown_tick = function () {
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+
+        icon.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 0.5
+        });
+
+        if (this.style === "standalone") {
+            icon.html.css({
+                "top": Dash.Size.Padding * 0.5
+            });
+        }
+
+        this.label.css({
+            "text-align": "left",
+        });
+
+        this.html.append(icon.html);
     };
 
     this.initialize_style();

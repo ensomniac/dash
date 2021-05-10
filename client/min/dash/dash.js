@@ -21088,7 +21088,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     };
     this.initialize_style = function() {
         // Toss a warning if this isn't a known style so we don't fail silently
-        this.styles = ["default", "row"];
+        this.styles = ["default", "row", "standalone"];
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
@@ -21107,6 +21107,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
         this.setup_styles();
         this.initialize_rows();
+        this.add_dropdown_tick();
     };
     this.initialize_rows = function(){
         var selected_obj = null;
@@ -21318,6 +21319,22 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
                 };
             });
         })(this);
+    };
+    this.add_dropdown_tick = function () {
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+        icon.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 0.5
+        });
+        if (this.style === "standalone") {
+            icon.html.css({
+                "top": Dash.Size.Padding * 0.5
+            });
+        }
+        this.label.css({
+            "text-align": "left",
+        });
+        this.html.append(icon.html);
     };
     this.initialize_style();
     this.setup_connections();
@@ -22168,7 +22185,6 @@ function DashGuiLayoutToolbar(binder, color){
                 "height": Dash.Size.RowHeight,
                 "line-height": Dash.Size.RowHeight + "px",
             });
-            combo = self.add_dropdown_tick_to_combo(combo);
             var obj = {};
             obj["html"] = combo;
             obj["callback"] = callback.bind(self.binder);  // Not sure if this is right
@@ -22178,18 +22194,6 @@ function DashGuiLayoutToolbar(binder, color){
         var obj = this.objects[obj_index];
         var combo = obj["html"];
         return combo;  // Ryan, I added this to make it more flexible like a standalone combo
-    };
-    this.add_dropdown_tick_to_combo = function (combo) {
-        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5
-        });
-        combo.label.css({
-            "text-align": "left",
-        });
-        combo.html.append(icon.html);
-        return combo;
     };
     this.on_combo_updated = function (callback, selected_id, previous_selected_option) {
         if (callback) {
