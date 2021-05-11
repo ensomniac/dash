@@ -22140,8 +22140,8 @@ function DashGuiLayoutToolbar(binder, color){
         });
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true) {
-        var header = new Dash.Gui.Header(text);
+    this.AddLabel = function (text, add_end_border=true, color=null) {
+        var header = new Dash.Gui.Header(text, color);
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,
             "margin-top": Dash.Size.Padding * 0.5,
