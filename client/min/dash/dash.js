@@ -17666,6 +17666,9 @@ function Dash(){
         // Return readable without seconds
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
+    this.IsServerIsoDate = function (str) {
+        return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+    };
     this.ValidateResponse = function(response){
         // TODO: doc
         if (!response) {
@@ -20442,10 +20445,12 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             value = JSON.stringify(value);
         }
         // Initial value is ISO datetime string
-        else if (Date.parse(value)) {
+        if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
+        // This could potentially be an issue if we're allowing people to edit
+        // simple, plain input rows where we expect an email address
         else if (value.includes("@") && value.includes(".")) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
@@ -20610,7 +20615,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.save_button_visible = false;
     };
     this.SetText = function(text){
-        text = this.parse_value(text);
+        // text = this.parse_value(text);
         this.input.SetText(text);
         this.input_changed(true);
         if (this.autosave_timeout) {
