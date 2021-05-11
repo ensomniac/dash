@@ -20773,6 +20773,52 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.top_right_label.text(label_text);
 
     };
+    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null) {
+        if (this.top_right_delete_button) {
+            return;
+        }
+        if (this.top_right_label) {
+            this.top_right_label.css({
+                "right": Dash.Size.Padding * 5
+            });
+        }
+        this.top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
+        this.top_right_delete_button.css({
+            "left": "auto",
+            "bottom": "auto",
+            "top": Dash.Size.Padding * 0.8,
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "color": this.color,
+            "z-index": 1,
+            "overflow-y": ""
+        });
+        callback = callback.bind(this.binder);
+        if (!this.buttons) {
+            this.buttons = [];
+        }
+        (function (self, callback, data_key, additional_data) {
+            var button = new Dash.Gui.IconButton(
+                "trash",
+                function () {
+                    callback(data_key, additional_data);
+                },
+                self,
+                self.color
+            );
+            self.buttons.push(button);
+            button.html.css({
+            });
+            self.top_right_delete_button.append(button.html);
+        })(this, callback, data_key, additional_data);
+
+        if (this.top_right_delete_button.button) {
+            this.top_right_delete_button.button.html.css({
+                "margin-right": Dash.Size.RowHeight
+            });
+        }
+        this.html.append(this.top_right_delete_button);
+    };
     this.AddHTML = function(html){
         this.html.append(html);
     };
