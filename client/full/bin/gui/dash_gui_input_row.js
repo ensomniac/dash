@@ -102,7 +102,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.set_initial_text = function () {
-        this.input.SetText(this.initial_value);
+        this.input.SetText(this.parse_value(this.initial_value));
     };
 
     this.parse_value = function (value) {
