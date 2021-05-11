@@ -268,7 +268,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.on_button_clicked = function(obj_index, data=null){
-        console.log(this);
+        // console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
