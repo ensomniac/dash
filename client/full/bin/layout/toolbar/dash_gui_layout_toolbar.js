@@ -88,7 +88,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         var button = new Dash.Gui.Button(label_text, callback, bind);
-        button.SetFileUploader(api, params)
+        button.SetFileUploader(api, params);
 
         button.html.css({
             "margin": 0,
@@ -106,7 +106,9 @@ function DashGuiLayoutToolbar(binder, color){
             "line-height": Dash.Size.RowHeight + "px",
         });
 
-        this.html.append(button.html)
+        this.html.append(button.html);
+
+        return button;
     };
 
     this.AddDivider = function () {
@@ -204,7 +206,7 @@ function DashGuiLayoutToolbar(binder, color){
 
         if (callback) {
             callback = callback.bind(this.binder);
-        };
+        }
 
         (function(self, selected_id, combo_options, callback, return_full_option){
 
@@ -258,7 +260,7 @@ function DashGuiLayoutToolbar(binder, color){
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        };
+        }
 
     };
 
@@ -275,4 +277,4 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.setup_styles();
 
-};
+}

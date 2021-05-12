@@ -22119,7 +22119,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         var button = new Dash.Gui.Button(label_text, callback, bind);
-        button.SetFileUploader(api, params)
+        button.SetFileUploader(api, params);
         button.html.css({
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
@@ -22133,7 +22133,8 @@ function DashGuiLayoutToolbar(binder, color){
             "text-align": "center",
             "line-height": Dash.Size.RowHeight + "px",
         });
-        this.html.append(button.html)
+        this.html.append(button.html);
+        return button;
     };
     this.AddDivider = function () {
         var divider_line = this.AddLabel("", false);
@@ -22209,7 +22210,7 @@ function DashGuiLayoutToolbar(binder, color){
         var obj_index = this.objects.length;
         if (callback) {
             callback = callback.bind(this.binder);
-        };
+        }
         (function(self, selected_id, combo_options, callback, return_full_option){
             var _callback = function(selected_option, previous_selected_option){
                 self.on_combo_updated(
@@ -22252,7 +22253,7 @@ function DashGuiLayoutToolbar(binder, color){
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        };
+        }
     };
     this.on_input_changed = function(obj_index){
         var obj = this.objects[obj_index];
@@ -22264,7 +22265,7 @@ function DashGuiLayoutToolbar(binder, color){
         obj["callback"](obj["html"], data, this);
     };
     this.setup_styles();
-};
+}
 
 class DashGuiLayoutTabs {
     // TODO - convert this to a proper class
