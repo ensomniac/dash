@@ -102,7 +102,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.set_initial_text = function () {
-        this.input.SetText(this.initial_value);
+        this.input.SetText(this.parse_value(this.initial_value));
     };
 
     this.parse_value = function (value) {
@@ -122,11 +122,14 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
 
         // Initial value is ISO datetime string
-        else if (Date.parse(value)) {
+        if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
         else if (("" + value).includes("@") && ("" + value).includes(".")) {
+        // This could potentially be an issue if we're allowing people to edit
+        // simple, plain input rows where we expect an email address
+
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -351,7 +354,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.SetText = function(text){
-        text = this.parse_value(text);
+        // text = this.parse_value(text);
 
         this.input.SetText(text);
         this.input_changed(true);

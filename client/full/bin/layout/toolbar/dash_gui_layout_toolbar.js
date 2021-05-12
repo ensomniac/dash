@@ -88,7 +88,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         var button = new Dash.Gui.Button(label_text, callback, bind);
-        button.SetFileUploader(api, params)
+        button.SetFileUploader(api, params);
 
         button.html.css({
             "margin": 0,
@@ -106,7 +106,9 @@ function DashGuiLayoutToolbar(binder, color){
             "line-height": Dash.Size.RowHeight + "px",
         });
 
-        this.html.append(button.html)
+        this.html.append(button.html);
+
+        return button;
     };
 
     this.AddDivider = function () {
@@ -121,8 +123,8 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true) {
-        var header = new Dash.Gui.Header(text);
+    this.AddLabel = function (text, add_end_border=true, color=null) {
+        var header = new Dash.Gui.Header(text, color);
 
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,
@@ -204,7 +206,7 @@ function DashGuiLayoutToolbar(binder, color){
 
         if (callback) {
             callback = callback.bind(this.binder);
-        };
+        }
 
         (function(self, selected_id, combo_options, callback, return_full_option){
 
@@ -258,7 +260,7 @@ function DashGuiLayoutToolbar(binder, color){
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        };
+        }
 
     };
 
@@ -268,11 +270,11 @@ function DashGuiLayoutToolbar(binder, color){
     };
 
     this.on_button_clicked = function(obj_index, data=null){
-        console.log(this);
+        // console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
 
     this.setup_styles();
 
-};
+}

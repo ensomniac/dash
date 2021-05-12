@@ -17666,6 +17666,9 @@ function Dash(){
         // Return readable without seconds
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
+    this.IsServerIsoDate = function (str) {
+        return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+    };
     this.ValidateResponse = function(response){
         // TODO: doc
         if (!response) {
@@ -20470,7 +20473,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         };
     };
     this.set_initial_text = function () {
-        this.input.SetText(this.initial_value);
+        this.input.SetText(this.parse_value(this.initial_value));
     };
     this.parse_value = function (value) {
         if (!value) {
@@ -20485,11 +20488,13 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             value = JSON.stringify(value);
         }
         // Initial value is ISO datetime string
-        else if (Date.parse(value)) {
+        if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
         else if (("" + value).includes("@") && ("" + value).includes(".")) {
+        // This could potentially be an issue if we're allowing people to edit
+        // simple, plain input rows where we expect an email address
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -20653,7 +20658,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.save_button_visible = false;
     };
     this.SetText = function(text){
-        text = this.parse_value(text);
+        // text = this.parse_value(text);
         this.input.SetText(text);
         this.input_changed(true);
         if (this.autosave_timeout) {
@@ -22158,7 +22163,7 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         var button = new Dash.Gui.Button(label_text, callback, bind);
-        button.SetFileUploader(api, params)
+        button.SetFileUploader(api, params);
         button.html.css({
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
@@ -22172,7 +22177,8 @@ function DashGuiLayoutToolbar(binder, color){
             "text-align": "center",
             "line-height": Dash.Size.RowHeight + "px",
         });
-        this.html.append(button.html)
+        this.html.append(button.html);
+        return button;
     };
     this.AddDivider = function () {
         var divider_line = this.AddLabel("", false);
@@ -22184,8 +22190,8 @@ function DashGuiLayoutToolbar(binder, color){
         });
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true) {
-        var header = new Dash.Gui.Header(text);
+    this.AddLabel = function (text, add_end_border=true, color=null) {
+        var header = new Dash.Gui.Header(text, color);
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,
             "margin-top": Dash.Size.Padding * 0.5,
@@ -22248,7 +22254,7 @@ function DashGuiLayoutToolbar(binder, color){
         var obj_index = this.objects.length;
         if (callback) {
             callback = callback.bind(this.binder);
-        };
+        }
         (function(self, selected_id, combo_options, callback, return_full_option){
             var _callback = function(selected_option, previous_selected_option){
                 self.on_combo_updated(
@@ -22291,19 +22297,19 @@ function DashGuiLayoutToolbar(binder, color){
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        };
+        }
     };
     this.on_input_changed = function(obj_index){
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
     this.on_button_clicked = function(obj_index, data=null){
-        console.log(this);
+        // console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
     this.setup_styles();
-};
+}
 
 class DashGuiLayoutTabs {
     // TODO - convert this to a proper class

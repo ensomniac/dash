@@ -59,6 +59,10 @@ function Dash(){
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
 
+    this.IsServerIsoDate = function (str) {
+        return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+    };
+
     this.ValidateResponse = function(response){
         // TODO: doc
 
