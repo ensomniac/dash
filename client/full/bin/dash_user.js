@@ -21,6 +21,7 @@ function DashUser(){
             params["f"] = "validate";
             params["token"] = token;
             params["init"] = true;
+            params["gzip"] = true;
 
             d.Request(this, this.on_auth_response, "Users", params);
 

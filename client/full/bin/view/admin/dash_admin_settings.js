@@ -65,20 +65,21 @@ function DashAdminSettings(){
 
     this.add_users_box = function(){
 
-        this.users_box = Dash.Gui.GetHTMLBoxContext({});
+        // this.users_box = Dash.Gui.GetHTMLBoxContext({});
+        this.users_box = Dash.Gui.GetHTMLContext();
         this.html.append(this.users_box);
 
-        var users_header = new d.Gui.Header("Users").html;
-        this.users_box.append(users_header);
+        // var users_header = new d.Gui.Header("Users").html;
+        // this.users_box.append(users_header);
 
         for (var i in this.data["users"]["order"]) {
             var email = this.data["users"]["order"][i];
             var user_data = this.data["users"]["data"][email];
             var user_box = new Dash.Gui.Layout.UserProfile(user_data);
             this.users_box.append(user_box.html);
-            user_box.html.css({
-                "margin": Dash.Size.Padding*2,
-            });
+            // user_box.html.css({
+            //     "margin": Dash.Size.Padding*2,
+            // });
         };
 
     };

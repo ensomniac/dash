@@ -17810,6 +17810,7 @@ function DashUser(){
             params["f"] = "validate";
             params["token"] = token;
             params["init"] = true;
+            params["gzip"] = true;
             d.Request(this, this.on_auth_response, "Users", params);
         }
         else {
@@ -18880,7 +18881,7 @@ function DashAdminView(){
     this.layout = new Dash.Gui.Layout.Tabs.Top(this);
     this.html = this.layout.html;
     this.setup_styles = function(){
-        this.layout.Append("Settings", DashAdminSettings);
+        this.layout.Append("Users", DashAdminSettings);
         // this.layout.Append("Color", DashAdminColor);
         for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
             var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];
@@ -18938,18 +18939,19 @@ function DashAdminSettings(){
         // this.user_groups_box.Load();
     };
     this.add_users_box = function(){
-        this.users_box = Dash.Gui.GetHTMLBoxContext({});
+        // this.users_box = Dash.Gui.GetHTMLBoxContext({});
+        this.users_box = Dash.Gui.GetHTMLContext();
         this.html.append(this.users_box);
-        var users_header = new d.Gui.Header("Users").html;
-        this.users_box.append(users_header);
+        // var users_header = new d.Gui.Header("Users").html;
+        // this.users_box.append(users_header);
         for (var i in this.data["users"]["order"]) {
             var email = this.data["users"]["order"][i];
             var user_data = this.data["users"]["data"][email];
             var user_box = new Dash.Gui.Layout.UserProfile(user_data);
             this.users_box.append(user_box.html);
-            user_box.html.css({
-                "margin": Dash.Size.Padding*2,
-            });
+            // user_box.html.css({
+            //     "margin": Dash.Size.Padding*2,
+            // });
         };
     };
     this.create_group = function(){
