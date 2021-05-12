@@ -282,7 +282,10 @@ class DashLocalStorage:
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         obj_id = obj_id or Utils.Global.RequestData["obj_id"]
         key = key or Utils.Global.RequestData["key"]
-        value = value or Utils.Global.RequestData.get("value")
+        # value = value or Utils.Global.RequestData.get("value")  # This was breaking certain cases
+
+        if value is None and "value" in Utils.Global.RequestData:
+            value = Utils.Global.RequestData["value"]
 
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
