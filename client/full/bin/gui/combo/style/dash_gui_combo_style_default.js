@@ -72,6 +72,29 @@ function DashGuiComboStyleDefault(){
             "border-radius": 3,
         });
 
+        this.add_default_dropdown_tick();
+
+    };
+
+    this.add_default_dropdown_tick = function () {
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+
+        icon.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 0.5
+        });
+
+        if (this.style === "standalone") {
+            icon.html.css({
+                "top": Dash.Size.Padding * 0.5
+            });
+        }
+
+        this.label.css({
+            "text-align": "left",
+        });
+
+        this.html.append(icon.html);
     };
 
 };

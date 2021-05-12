@@ -12,14 +12,10 @@ function DashGuiButtonStyleTabTop(){
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": d.Size.ButtonHeight,
-            // "border-radius": d.Size.BorderRadius,
-            // "padding-left": d.Size.Padding,
-            // "padding-right": d.Size.Padding,
             "padding": 0,
             "margin": 0,
-            "width": Dash.Size.ColumnWidth*0.85,
-            // "width": "auto",
-            // "min-width": 30,
+            "padding-left": Dash.Size.Padding*0.5,
+            "padding-right": Dash.Size.Padding*0.5,
         });
 
         this.highlight.css({
@@ -54,10 +50,6 @@ function DashGuiButtonStyleTabTop(){
         });
 
         this.label.css({
-            "position": "absolute",
-            "left": d.Size.Padding,
-            "top": 0,
-            "right": d.Size.Padding,
             "bottom": 0,
             "line-height": (d.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
@@ -66,6 +58,9 @@ function DashGuiButtonStyleTabTop(){
             "text-align": "center",
             "color": this.color_set.Text.Base,
             "font-family": "sans_serif_bold",
+            "padding-left": Dash.Size.Padding*0.5,
+            "padding-right": Dash.Size.Padding*0.5,
+            "font-size": "80%",
         });
 
     };

@@ -127,4 +127,15 @@ function DashGui(){
 
     };
 
+    this.GetFlexSpacer = function(flex_grow_value=2){
+
+        var html = $("<div></div>");
+        html.css({
+            "flex-grow": flex_grow_value,
+        });
+
+        return html;
+
+    };
+
 };

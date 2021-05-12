@@ -17974,6 +17974,10 @@ function DashColor(){
             "text_header": "#c4d4dd",
             "tab_area_background": "red",
         });
+        var dark_input_background = "rgba(255, 255, 255, 0.8)";
+        var light_input_background = "rgba(0, 0, 0, 0)";
+        var dark_input_text = "rgba(0, 0, 0, 0.8)";
+        var light_input_text = "rgba(0, 0, 0, 0.8)";
         // console.log(light);
         this.Raise = function(cstr, raise_steps){
             raise_steps = raise_steps || 1;
@@ -18023,6 +18027,21 @@ function DashColor(){
                     "rgba(255, 255, 255, 1.0)",     // Tab.Text.SelectedHover
                 ),
             ),
+            new DashColorButtonSet(     // Input
+                light.TabAreaBackground, // area background
+                new DashColorStateSet(  // Input Background
+                    light_input_background, // Input.Background.Base
+                    light_input_background, // Input.Background.Selected
+                    light_input_background,  // Input.Background.BaseHover
+                    light_input_background,      // Input.Background.SelectedHover
+                ),
+                new DashColorStateSet(    // Input Text
+                    light_input_text, // Input.Text.Base
+                    light_input_text, // Input.Text.Selected
+                    light_input_text,     // Input.Text.BaseHover
+                    light_input_text,     // Input.Text.SelectedHover
+                ),
+            ),
         );
         this.Dark = new DashColorSet(
             dark.Background, // Background color
@@ -18059,6 +18078,21 @@ function DashColor(){
                     dark.ButtonText,  // Tab.Text.Selected
                     dark.ButtonText,  // Tab.Text.BaseHover
                     dark.ButtonText, // Tab.Text.SelectedHover
+                ),
+            ),
+            new DashColorButtonSet(     // Input
+                light.TabAreaBackground, // area background
+                new DashColorStateSet(  // Input Background
+                    dark_input_background, // Input.Background.Base
+                    dark_input_background, // Input.Background.Selected
+                    dark_input_background,  // Input.Background.BaseHover
+                    dark_input_background,      // Input.Background.SelectedHover
+                ),
+                new DashColorStateSet(    // Input Text
+                    dark_input_text, // Input.Text.Base
+                    dark_input_text, // Input.Text.Selected
+                    dark_input_text,     // Input.Text.BaseHover
+                    dark_input_text,     // Input.Text.SelectedHover
                 ),
             ),
         );
@@ -18395,7 +18429,7 @@ function DashColor(){
 };
 
 class DashColorSet {
-    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab) {
+    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
         this._background  = background;       // HTML Color
         this._background_raised  = background_raised;       // HTML Color
         this._text        = text;             // HTML Color
@@ -18404,6 +18438,7 @@ class DashColorSet {
         this._accent_bad  = accent_bad;       // HTML Color
         this._button      = button;           // DashColorButtonSet()
         this._tab         = tab;              // DashColorButtonSet()
+        this._input       = input;            // DashColorButtonSet()
     };
     get Background() {
         return this._background;
@@ -18429,6 +18464,9 @@ class DashColorSet {
     get Tab() {
         return this._tab;
     };
+    get Input() {
+        return this._input;
+    };
     /////////////////////////
     ///// INTERMEDIATES /////
     /////////////////////////
@@ -18450,6 +18488,9 @@ class DashColorSet {
     };
     set Tab(color_button_set) {
         this._tab = color_button_set;
+    };
+    set Input(color_button_set) {
+        this._input = color_button_set;
     };
 };
 
@@ -18837,7 +18878,7 @@ function DashAdminView(){
     this.html = this.layout.html;
     this.setup_styles = function(){
         this.layout.Append("Settings", DashAdminSettings);
-        this.layout.Append("Color", DashAdminColor);
+        // this.layout.Append("Color", DashAdminColor);
         for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
             var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];
             this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
@@ -18860,10 +18901,10 @@ function DashAdminSettings(){
         if (!Dash.ValidateResponse(response)) {return};
         this.html.empty();
         this.data = response;
-        this.add_site_settings_box();
-        this.add_user_groups_box();
+        // this.add_site_settings_box();
+        // this.add_user_groups_box();
         this.add_users_box();
-        console.log(response);
+        // console.log(response);
     };
     this.add_site_settings_box = function(){
         this.property_box = new Dash.Gui.PropertyBox(
@@ -19152,6 +19193,13 @@ function DashGui(){
         tip.append(code_html);
         tip.append(msg_html);
         return tip;
+    };
+    this.GetFlexSpacer = function(flex_grow_value=2){
+        var html = $("<div></div>");
+        html.css({
+            "flex-grow": flex_grow_value,
+        });
+        return html;
     };
 };
 
@@ -19931,14 +19979,10 @@ function DashGuiButtonStyleTabTop(){
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": d.Size.ButtonHeight,
-            // "border-radius": d.Size.BorderRadius,
-            // "padding-left": d.Size.Padding,
-            // "padding-right": d.Size.Padding,
             "padding": 0,
             "margin": 0,
-            "width": Dash.Size.ColumnWidth*0.85,
-            // "width": "auto",
-            // "min-width": 30,
+            "padding-left": Dash.Size.Padding*0.5,
+            "padding-right": Dash.Size.Padding*0.5,
         });
         this.highlight.css({
             "position": "absolute",
@@ -19969,10 +20013,6 @@ function DashGuiButtonStyleTabTop(){
             "border-radius": d.Size.BorderRadius,
         });
         this.label.css({
-            "position": "absolute",
-            "left": d.Size.Padding,
-            "top": 0,
-            "right": d.Size.Padding,
             "bottom": 0,
             "line-height": (d.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
@@ -19981,6 +20021,9 @@ function DashGuiButtonStyleTabTop(){
             "text-align": "center",
             "color": this.color_set.Text.Base,
             "font-family": "sans_serif_bold",
+            "padding-left": Dash.Size.Padding*0.5,
+            "padding-right": Dash.Size.Padding*0.5,
+            "font-size": "80%",
         });
     };
     this.on_hover_in = function(){
@@ -20086,7 +20129,7 @@ function DashGuiInput(placeholder_text, color){
         this.html.append(this.input);
         this.html.css({
             "height": d.Size.RowHeight,
-            // "background": "rgba(255, 255, 255, 0.7)",
+            "background": this.color.Input.Background.Base,
             "border-radius": 2,
             "padding-right": d.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -20099,7 +20142,7 @@ function DashGuiInput(placeholder_text, color){
             "width": "100%",
             "height": "100%",
             "padding-left": d.Size.Padding,
-            "color": this.color.Text,
+            "color": this.color.Input.Text.Base,
         });
     };
     // this.SetHeight = function(height, optional_font_size){
@@ -20446,7 +20489,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
-        else if (value.includes("@") && value.includes(".")) {
+        else if (("" + value).includes("@") && ("" + value).includes(".")) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -21153,7 +21196,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
         this.setup_styles();
         this.initialize_rows();
-        this.add_dropdown_tick();
+        // Andrew - this needs to be managed inside the style definitions
+        // this.add_dropdown_tick();
     };
     this.initialize_rows = function(){
         var selected_obj = null;
@@ -21366,25 +21410,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             });
         })(this);
     };
-    this.add_dropdown_tick = function () {
-        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5
-        });
-        if (this.style === "standalone") {
-            icon.html.css({
-                "top": Dash.Size.Padding * 0.5
-            });
-        }
-        this.label.css({
-            "text-align": "left",
-        });
-        this.html.append(icon.html);
-    };
     this.initialize_style();
     this.setup_connections();
-
 };
 
 
@@ -21517,6 +21544,23 @@ function DashGuiComboStyleDefault(){
             "overflow": "hidden",
             "border-radius": 3,
         });
+        this.add_default_dropdown_tick();
+    };
+    this.add_default_dropdown_tick = function () {
+        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+        icon.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 0.5
+        });
+        if (this.style === "standalone") {
+            icon.html.css({
+                "top": Dash.Size.Padding * 0.5
+            });
+        }
+        this.label.css({
+            "text-align": "left",
+        });
+        this.html.append(icon.html);
     };
 };
 

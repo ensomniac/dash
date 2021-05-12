@@ -9,15 +9,16 @@ function DashAdminSettings(){
     };
 
     this.SetData = function(response){
+
         if (!Dash.ValidateResponse(response)) {return};
         this.html.empty();
 
         this.data = response;
 
-        this.add_site_settings_box();
-        this.add_user_groups_box();
+        // this.add_site_settings_box();
+        // this.add_user_groups_box();
         this.add_users_box();
-        console.log(response);
+        // console.log(response);
 
     };
 

@@ -6,7 +6,7 @@ function DashAdminView(){
 
     this.setup_styles = function(){
         this.layout.Append("Settings", DashAdminSettings);
-        this.layout.Append("Color", DashAdminColor);
+        // this.layout.Append("Color", DashAdminColor);
 
         for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
             var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];

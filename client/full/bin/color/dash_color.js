@@ -131,6 +131,12 @@ function DashColor(){
             "tab_area_background": "red",
         });
 
+        var dark_input_background = "rgba(255, 255, 255, 0.8)";
+        var light_input_background = "rgba(0, 0, 0, 0)";
+
+        var dark_input_text = "rgba(0, 0, 0, 0.8)";
+        var light_input_text = "rgba(0, 0, 0, 0.8)";
+
         // console.log(light);
 
         this.Raise = function(cstr, raise_steps){
@@ -185,6 +191,21 @@ function DashColor(){
                     "rgba(255, 255, 255, 1.0)",     // Tab.Text.SelectedHover
                 ),
             ),
+            new DashColorButtonSet(     // Input
+                light.TabAreaBackground, // area background
+                new DashColorStateSet(  // Input Background
+                    light_input_background, // Input.Background.Base
+                    light_input_background, // Input.Background.Selected
+                    light_input_background,  // Input.Background.BaseHover
+                    light_input_background,      // Input.Background.SelectedHover
+                ),
+                new DashColorStateSet(    // Input Text
+                    light_input_text, // Input.Text.Base
+                    light_input_text, // Input.Text.Selected
+                    light_input_text,     // Input.Text.BaseHover
+                    light_input_text,     // Input.Text.SelectedHover
+                ),
+            ),
         );
 
         this.Dark = new DashColorSet(
@@ -224,6 +245,23 @@ function DashColor(){
                     dark.ButtonText, // Tab.Text.SelectedHover
                 ),
             ),
+
+            new DashColorButtonSet(     // Input
+                light.TabAreaBackground, // area background
+                new DashColorStateSet(  // Input Background
+                    dark_input_background, // Input.Background.Base
+                    dark_input_background, // Input.Background.Selected
+                    dark_input_background,  // Input.Background.BaseHover
+                    dark_input_background,      // Input.Background.SelectedHover
+                ),
+                new DashColorStateSet(    // Input Text
+                    dark_input_text, // Input.Text.Base
+                    dark_input_text, // Input.Text.Selected
+                    dark_input_text,     // Input.Text.BaseHover
+                    dark_input_text,     // Input.Text.SelectedHover
+                ),
+            ),
+
         );
 
     };

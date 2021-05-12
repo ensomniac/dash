@@ -106,6 +106,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.parse_value = function (value) {
+
         if (!value) {
             return value;
         }
@@ -124,9 +125,8 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         else if (Date.parse(value)) {
             value = Dash.ReadableDateTime(value);
         }
-
         // Initial value is team member email
-        else if (value.includes("@") && value.includes(".")) {
+        else if (("" + value).includes("@") && ("" + value).includes(".")) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];

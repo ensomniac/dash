@@ -1,6 +1,6 @@
 class DashColorSet {
 
-    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab) {
+    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
         this._background  = background;       // HTML Color
         this._background_raised  = background_raised;       // HTML Color
         this._text        = text;             // HTML Color
@@ -9,6 +9,7 @@ class DashColorSet {
         this._accent_bad  = accent_bad;       // HTML Color
         this._button      = button;           // DashColorButtonSet()
         this._tab         = tab;              // DashColorButtonSet()
+        this._input       = input;            // DashColorButtonSet()
     };
 
     get Background() {
@@ -43,6 +44,10 @@ class DashColorSet {
         return this._tab;
     };
 
+    get Input() {
+        return this._input;
+    };
+
     /////////////////////////
     ///// INTERMEDIATES /////
     /////////////////////////
@@ -71,6 +76,10 @@ class DashColorSet {
 
     set Tab(color_button_set) {
         this._tab = color_button_set;
+    };
+
+    set Input(color_button_set) {
+        this._input = color_button_set;
     };
 
 };

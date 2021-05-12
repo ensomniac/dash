@@ -103,7 +103,10 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         this.setup_styles();
         this.initialize_rows();
-        this.add_dropdown_tick();
+
+        // Andrew - this needs to be managed inside the style definitions
+        // this.add_dropdown_tick();
+
     };
 
     this.initialize_rows = function(){
@@ -402,29 +405,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
     };
 
-    this.add_dropdown_tick = function () {
-        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
-
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5
-        });
-
-        if (this.style === "standalone") {
-            icon.html.css({
-                "top": Dash.Size.Padding * 0.5
-            });
-        }
-
-        this.label.css({
-            "text-align": "left",
-        });
-
-        this.html.append(icon.html);
-    };
-
     this.initialize_style();
     this.setup_connections();
-
 
 };

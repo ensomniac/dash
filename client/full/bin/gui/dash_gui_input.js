@@ -20,7 +20,7 @@ function DashGuiInput(placeholder_text, color){
 
         this.html.css({
             "height": d.Size.RowHeight,
-            // "background": "rgba(255, 255, 255, 0.7)",
+            "background": this.color.Input.Background.Base,
             "border-radius": 2,
             "padding-right": d.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -34,7 +34,7 @@ function DashGuiInput(placeholder_text, color){
             "width": "100%",
             "height": "100%",
             "padding-left": d.Size.Padding,
-            "color": this.color.Text,
+            "color": this.color.Input.Text.Base,
         });
 
     };
