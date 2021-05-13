@@ -35,6 +35,14 @@ function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_
             "line-height": this.icon.size + "px",
             "text-align": "center",
             "color": this.icon.color.Text,
+            // "color": "white",
+        };
+
+        if (!this.icon.color.Text) {
+            console.log("Error: Incorrect color object passed to DashIcon:");
+            console.log(this.color);
+            console.trace();
+            debugger;
         };
 
         return icon_css;

@@ -70,6 +70,14 @@ class DashColorSet {
         this._text_header = color;
     };
 
+    set AccentGood(color) {
+        this._accent_good = color;
+    };
+
+    set AccentBad(color) {
+        this._accent_bad = color;
+    };
+
     set Button(color_button_set) {
         this._button = color_button_set;
     };

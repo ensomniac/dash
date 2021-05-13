@@ -1,12 +1,13 @@
 
-function DashGuiLoadDots(size){
+function DashGuiLoadDots(size, color){
 
-    this.size = size;
+    this.size = size || Dash.Size.RowHeight;
     this.html = $("<div></div>");
 
     this.layout = "horizontal";
     this.num_dots = 3;
     this.dots = [];
+    this.color = color || Dash.Color.Light;
 
     this.iteration = 0;
     this.t = 0;
@@ -19,11 +20,13 @@ function DashGuiLoadDots(size){
     };
 
     this.Start = function(){
+
         if (this.is_active) {return;}
 
         this.is_active = true;
         this.activation_t = this.t;
         this.show_t = 0;
+        this.stop_requested = false;
 
         for (var x in this.dots) {
             this.dots[x].Start();
@@ -31,13 +34,35 @@ function DashGuiLoadDots(size){
 
     };
 
-    this.Stop = function(){
+    this.Stop = function(callback, binder){
         if (!this.is_active) {return;}
 
+        if (callback && binder) {
+            callback = callback.bind(binder);
+        };
+
+        if (callback) {
+            this.on_stopped_callback = callback;
+        };
+
         this.is_active = false;
+        this.stop_requested = true;
 
         for (var x in this.dots) {
             this.dots[x].Stop();
+        };
+
+        if (this.on_stopped_callback) {
+            // This is wrong. Obviously. But I don't have time
+            // to hook up firing the callback correctly rn
+
+            (function(self){
+                setTimeout(function(){
+                    self.on_stopped_callback();
+                    self.on_stopped_callback = null;
+                }, 500);
+            })(this);
+
         };
 
     };
@@ -73,6 +98,11 @@ function DashGuiLoadDots(size){
     };
 
     this.update = function(t){
+
+        if (this.stop_requested) {
+            return;
+        };
+
         (function(self){requestAnimationFrame(function(t){self.update(t);});})(this);
 
         if (this.t >= 1) {
@@ -105,6 +135,7 @@ function DashGuiLoadDots(size){
 function LoadDot(dots){
 
     this.dots = dots;
+    this.color = this.dots.color;
     this.html = $("<div></div>");
     this.index = this.dots.dots.length;
 
@@ -188,7 +219,7 @@ function LoadDot(dots){
             "position": "absolute",
             "left": this.left,
             "top": this.top,
-            "background": "rgba(255, 255, 255, 0.9)",
+            "background": this.color.Text,
             "width": this.size,
             "height": this.size,
             "border-radius": this.size*0.5,

@@ -150,7 +150,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.option_list = label_list;
         this.selected_option_id = selected;
 
-        // this.setup_label_list();
         this.on_selection(this.selected_option_id, ignore_callback);
 
         if (this.bool) {
@@ -223,9 +222,11 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         this.rows.css({
             "background": this.color_set.Background.Base,
-            // "box-shadow": "0px 0px 1000px 100px " + "rgb(200, 200, 200)",
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
+            "left": 0,
+            "top": 0,
+            "width": "auto", // This is important so it can auto-size
         });
 
         // TODO: Make this.rows grab focus while active
@@ -301,15 +302,14 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         // Prior to showing, set the width of rows
         this.setup_label_list();
 
-        this.width = this.html.width();
-        this.width = this.width;
+        var width = this.rows.width() + Dash.Size.Padding;
 
         this.rows.css({
-            "width": this.width,
+            "width": width,
         });
 
         for (var i in this.row_buttons) {
-            this.row_buttons[i].SetWidth(this.width);
+            this.row_buttons[i].SetWidth(width);
         };
 
     };

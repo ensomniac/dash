@@ -3,19 +3,32 @@
 function DashGuiLayoutToolbar(binder, color){
 
     this.binder = binder;
-    this.color = color || this.binder.color || Dash.Color.Light;
+    this.color = color || this.binder.color || Dash.Color.Dark;
     this.html = new Dash.Gui.GetHTMLContext("", {});
+    this.stroke_sep = new Dash.Gui.GetHTMLAbsContext("", {});
 
     this.objects = [];
 
     this.setup_styles = function(){
+
         this.html.css({
             "background": this.color.Background,
-            "height": Dash.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight+1, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding*0.5,
             "display": "flex",
             "padding-left": Dash.Size.Padding*0.5,
+            // "box-shadow": "0px 0px 5px 1px rgba(0, 0, 0, 0.2)",
         });
+
+        this.stroke_sep.css({
+            "background": this.color.Background,
+            "background": this.color.AccentGood,
+            "top": "auto",
+            "height": 1,
+        });
+
+        this.html.append(this.stroke_sep);
+
     };
 
     this.AddExpander = function(placeholder_label, callback){
@@ -42,16 +55,17 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddButton = function (label_text, callback, width=null, data=null) {
         var obj_index = this.objects.length;
+        var button = null;
 
         (function(self, obj_index, data){
-            var button = new Dash.Gui.Button(
+            button = new Dash.Gui.Button(
                 label_text,
                 function () {
                     self.on_button_clicked(obj_index, data);
                 },
                 self,
                 null,
-                {"style": "toolbar"}  // We're now telling GuiButton that this is a toolbar button
+                {"style": "toolbar"}
             );
 
             self.html.append(button.html);
@@ -64,47 +78,21 @@ function DashGuiLayoutToolbar(binder, color){
 
         })(this, obj_index, data);
 
-        var obj = this.objects[obj_index];
-        var button = obj["html"];
+        return button;
 
-        button.html.css({
-            "margin": 0,
-            "margin-top": Dash.Size.Padding*0.5,
-            "margin-right": Dash.Size.Padding*0.5,
-            "height": Dash.Size.RowHeight,
-            "width": width || Dash.Size.ColumnWidth,
-        });
-
-        button.highlight.css({
-        });
-
-        button.label.css({
-            "text-align": "center",
-            "line-height": Dash.Size.RowHeight + "px",
-        });
-
-        return button;  // Ryan, I added this to make it more flexible like a standalone button
     };
 
     this.AddUploadButton = function(label_text, callback, bind, api, params){
-        var button = new Dash.Gui.Button(label_text, callback, bind);
+
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
+            bind,
+            null,
+            {"style": "toolbar"}
+        );
+
         button.SetFileUploader(api, params);
-
-        button.html.css({
-            "margin": 0,
-            "margin-top": Dash.Size.Padding*0.5,
-            "margin-right": Dash.Size.Padding*0.5,
-            "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
-        });
-
-        button.highlight.css({
-        });
-
-        button.label.css({
-            "text-align": "center",
-            "line-height": Dash.Size.RowHeight + "px",
-        });
 
         this.html.append(button.html);
 
@@ -163,7 +151,7 @@ function DashGuiLayoutToolbar(binder, color){
         input.html.css({
             "padding-left": d.Size.Padding*0.5,
             "margin-top": d.Size.Padding*0.5,
-            "margin-right": d.Size.Padding*0.5,
+            // "margin-right": d.Size.Padding*0.5,
         });
 
         input.input.css({
@@ -172,7 +160,7 @@ function DashGuiLayoutToolbar(binder, color){
         });
 
         input.html.css({
-            "background": "#ffc74c",
+            // "background": "#ffc74c",
         });
 
         var obj = {};
@@ -187,10 +175,8 @@ function DashGuiLayoutToolbar(binder, color){
             }, self);
 
             input.input.dblclick(function(){
-                console.log(input);
                 input.SetText("");
                 self.on_input_changed(obj_index);
-                console.log("double");
             });
 
         })(this, input, obj_index);
@@ -225,6 +211,7 @@ function DashGuiLayoutToolbar(binder, color){
                 combo_options,    // Option List
                 selected_id,      // Selected
                 null,             // Color set
+                {"style": "row"}
             );
 
             self.html.append(combo.html);

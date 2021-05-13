@@ -19,7 +19,8 @@ function DashGuiButtonStyleToolbar(){
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
+            "margin-right": Dash.Size.Padding*0.5,
+            // "width": d.Size.ColumnWidth,
         });
 
         this.highlight.css({
@@ -55,17 +56,14 @@ function DashGuiButtonStyleToolbar(){
         });
 
         this.label.css({
-            "position": "absolute",
-            "left": d.Size.Padding,
-            "top": 0,
-            "right": d.Size.Padding,
-            "bottom": 0,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "color": this.color_set.Text.Base,
             "text-align": "center",
             "line-height": Dash.Size.RowHeight + "px",
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
         });
 
     };

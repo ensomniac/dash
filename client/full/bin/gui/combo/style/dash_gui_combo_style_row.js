@@ -35,7 +35,7 @@ function DashGuiComboStyleRow(){
             "line-height": d.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
-            "width": d.Size.ColumnWidth * 2,
+            // "width": d.Size.ColumnWidth * 2,
         });
 
         this.highlight.css({
@@ -44,29 +44,26 @@ function DashGuiComboStyleRow(){
             "top": 0,
             "width": "auto",
             "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
+            // "background": this.color_set.Background.BaseHover,
             "opacity": 0,
             "cursor": "pointer",
+            // "background": "purple",
         });
 
         this.click.css({
             "position": "absolute",
             "left": 0,
-            "top": 0,
+            "top": "auto",
             "right": 0,
-            "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
-            "background": this.color_set.Background.Base,
+            "bottom": Dash.Size.Padding,
+            "height": Dash.Size.Stroke,
             "opacity": 0,
+            // "background": this.color.AccentBad,
+            // "background": "orange",
         });
 
         this.label_container.css({
-            "position": "absolute",
             "display": "flex",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
         });
 
         this.label.css({
@@ -74,17 +71,17 @@ function DashGuiComboStyleRow(){
             "text-align": "left",
             "color": this.color.Text,
             "white-space": "nowrap",
-            "overflow": "hidden",
             "text-overflow": "ellipsis",
         });
 
         this.rows.css({
+            "position": "absolute",
             "width": d.Size.ColumnWidth,
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "overflow": "hidden",
             "border-radius": 3,
+            "background": "orange",
         });
 
     };

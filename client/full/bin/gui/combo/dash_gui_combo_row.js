@@ -6,7 +6,7 @@ function DashGuiComboRow(Combo, option){
     this.color_set = this.combo.color_set;
     this.label_text = this.option["label_text"];
 
-    this.height = this.combo.height;
+    this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
@@ -34,7 +34,6 @@ function DashGuiComboRow(Combo, option){
             "text-align": this.combo.text_alignment,
             "height": this.height,
             "line-height": (this.height) + "px",
-            // "font-size": "85%",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",

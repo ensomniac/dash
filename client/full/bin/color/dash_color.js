@@ -64,7 +64,7 @@ function DashColor(){
         // var dark  = this.fill_set(min_dark);
 
         var dark_bg = "#23262b";
-        var dark_bg_text = "rgb(200, 200, 200)";
+        var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
 
@@ -137,6 +137,23 @@ function DashColor(){
         var dark_input_text = "rgba(0, 0, 0, 0.8)";
         var light_input_text = "rgba(0, 0, 0, 0.8)";
 
+        // var tabs_top_dark = new DashColorButtonSet( // Top Tabs
+        //     // authentic_modern_black, // The color of the area behind a set of buttons, if applicable
+        //     "rgba(0, 0, 0, 0.2)", // The color of the area behind a set of buttons, if applicable
+        //     new DashColorStateSet(
+        //         "none", // Dark.Tabs.Background.Base
+        //         background_color_light, // Dark.Tabs.Background.Selected
+        //         "rgba(0, 0, 0, 0.0)", // Stroke under inactive tab
+        //         authentic_magenta, // Dark.Tabs.Background.SelectedHover
+        //     ),
+        //     new DashColorStateSet(
+        //         "rgba(0, 0, 0, 0.5)",   // Dark.Tabs.Text.Base
+        //         "rgba(0, 0, 0, 0.8)",  // Dark.Tabs.Text.Selected
+        //         "rgba(0, 0, 0, 0.7)",  // Dark.Tabs.Text.BaseHover
+        //         "rgba(0, 0, 0, 0.9)",  // Dark.Tabs.Text.SelectedHover
+        //     ),
+        // );
+
         // console.log(light);
 
         this.Raise = function(cstr, raise_steps){
@@ -175,9 +192,8 @@ function DashColor(){
                 ),
             ),
             new DashColorButtonSet(     // Tab
-                // "#e4eaee",                    // The color of the area behind a set of buttons, if applicable
-                // "#e4eaee",                    // The color of the area behind a set of buttons, if applicable
-                light.TabAreaBackground,
+                // light.TabAreaBackground,
+                "purple",
                 new DashColorStateSet(  // Tab Background
                     "rgba(0, 0, 0, 0)", // Tab.Background.Base
                     "rgba(0, 0, 0, 0)", // Tab.Background.Selected

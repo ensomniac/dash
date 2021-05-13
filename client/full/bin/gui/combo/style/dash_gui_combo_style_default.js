@@ -19,20 +19,26 @@ function DashGuiComboStyleDefault(){
         this.label_text_color = "rgba(0, 0, 0, 0.8)";
         this.label_background = this.color_set.Background.Base;
 
-        this.html.append(this.highlight);
-        this.html.append(this.click);
-        this.html.append(this.label);
-        this.html.append(this.rows);
+        this.inner_html = $("<div></div>");
+        this.html.append(this.inner_html);
+
+        this.inner_html.append(this.highlight);
+        this.inner_html.append(this.click);
+        this.inner_html.append(this.label);
+        this.inner_html.append(this.rows);
         this.label.text(this.label_text);
 
         this.html.css({
+            "display": "flex",
+            "height": d.Size.ButtonHeight,
+        });
+
+        this.inner_html.css({
             "background": this.label_background,
-            "margin-right": Dash.Size.Padding*0.5,
             "height": d.Size.ButtonHeight,
             "line-height": d.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
-            "width": d.Size.ColumnWidth,
         });
 
         this.highlight.css(this.highlight_css);
@@ -49,11 +55,6 @@ function DashGuiComboStyleDefault(){
         });
 
         this.label.css({
-            "position": "absolute",
-            "left": Dash.Size.Padding*0.5,
-            "top": 0,
-            "right": Dash.Size.Padding*0.5,
-            "bottom": 0,
             "line-height": d.Size.ButtonHeight + "px",
             "text-align": this.text_alignment,
             "font-size": this.font_size,
@@ -61,15 +62,17 @@ function DashGuiComboStyleDefault(){
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.ButtonHeight,
         });
 
         this.rows.css({
-            "width": d.Size.ColumnWidth,
+            "position": "absolute",
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "overflow": "hidden",
             "border-radius": 3,
+            "background": "orange",
         });
 
         this.add_default_dropdown_tick();
@@ -77,11 +80,12 @@ function DashGuiComboStyleDefault(){
     };
 
     this.add_default_dropdown_tick = function () {
-        var icon = new DashIcon(Dash.Color.Dark.AccentGood, "arrow_down", Dash.Size.RowHeight, 0.75);
+        var icon = new DashIcon(Dash.Color.Dark, "arrow_down", Dash.Size.RowHeight, 0.75);
 
         icon.html.css({
             "position": "absolute",
-            "right": Dash.Size.Padding * 0.5
+            "right": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5,
         });
 
         if (this.style === "standalone") {
@@ -94,7 +98,7 @@ function DashGuiComboStyleDefault(){
             "text-align": "left",
         });
 
-        this.html.append(icon.html);
+        this.inner_html.append(icon.html);
     };
 
 };

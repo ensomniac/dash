@@ -17,6 +17,7 @@ function DashGuiButtonStyleDefault(){
             "padding-right": d.Size.Padding,
             "padding": 0,
             "margin": 0,
+            // "width": 30,
         });
 
         this.highlight.css({
@@ -52,11 +53,11 @@ function DashGuiButtonStyleDefault(){
         });
 
         this.label.css({
-            "position": "absolute",
-            "left": d.Size.Padding,
-            "top": 0,
-            "right": d.Size.Padding,
-            "bottom": 0,
+            // "position": "absolute",
+            // "left": d.Size.Padding,
+            // "top": 0,
+            // "right": d.Size.Padding,
+            // "bottom": 0,
             "line-height": (d.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",

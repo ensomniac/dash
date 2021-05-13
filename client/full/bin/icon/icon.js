@@ -11,6 +11,13 @@ function DashIcon(color, icon_name, container_size, icon_size_mult) {
     this.size_mult = icon_size_mult || 1;
     this.icon_definition = GuiIcons(this);
 
+    if (!this.color.Text) {
+        console.log("Error: Incorrect color object passed to DashIcon:");
+        console.log(this.color);
+        console.trace();
+        debugger;
+    };
+
     this.setup_styles = function(){
 
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
