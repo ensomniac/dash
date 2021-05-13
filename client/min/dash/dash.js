@@ -22291,6 +22291,9 @@ function DashGuiLayoutToolbar(binder, color){
         })(this, obj_index, data);
         return button;
     };
+    this.AddHTML = function(html){
+        this.html.append(html);
+    };
     this.AddUploadButton = function(label_text, callback, bind, api, params){
         var button = new Dash.Gui.Button(
             label_text,

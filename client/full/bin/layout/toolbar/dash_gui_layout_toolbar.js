@@ -113,6 +113,10 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
+    this.AddHTML = function(html){
+        this.html.append(html);
+    };
+
     this.AddUploadButton = function(label_text, callback, bind, api, params){
 
         var button = new Dash.Gui.Button(
