@@ -53,7 +53,38 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(spacer);
     };
 
+    this.AddIconButton = function (icon_name, callback, width=null, data=null) {
+
+        var obj_index = this.objects.length;
+        var button = null;
+
+        (function(self, obj_index, data){
+            button = new Dash.Gui.IconButton(
+                icon_name,
+                function () {
+                    self.on_button_clicked(obj_index, data);
+                },
+                self,
+                null,
+                {"style": "toolbar"}
+            );
+
+            self.html.append(button.html);
+
+            var obj = {};
+            obj["html"] = button;
+            obj["callback"] = callback.bind(self.binder);
+            obj["index"] = obj_index;
+            self.objects.push(obj);
+
+        })(this, obj_index, data);
+
+        return button;
+
+    };
+
     this.AddButton = function (label_text, callback, width=null, data=null) {
+
         var obj_index = this.objects.length;
         var button = null;
 
