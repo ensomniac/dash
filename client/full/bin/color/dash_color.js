@@ -193,7 +193,7 @@ function DashColor(){
             ),
             new DashColorButtonSet(     // Tab
                 // light.TabAreaBackground,
-                "purple",
+                "none",
                 new DashColorStateSet(  // Tab Background
                     "rgba(0, 0, 0, 0)", // Tab.Background.Base
                     "rgba(0, 0, 0, 0)", // Tab.Background.Selected
