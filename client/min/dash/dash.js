@@ -22390,7 +22390,7 @@ function DashGuiLayoutToolbar(binder, color){
                 self,             // Binder
                 combo_options,    // Option List
                 selected_id,      // Selected
-                null,             // Color set
+                self.color,             // Color set
                 {"style": "row"}
             );
             self.html.append(combo.html);
