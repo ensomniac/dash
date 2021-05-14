@@ -21389,8 +21389,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
         this.setup_styles();
         this.initialize_rows();
-        // Andrew - this needs to be managed inside the style definitions
-        // this.add_dropdown_tick();
     };
     this.initialize_rows = function(){
         var selected_obj = null;
@@ -21673,9 +21671,29 @@ function DashGuiComboRow(Combo, option){
     this.setup_connections();
 };
 
-
-function DashGuiComboStyleDefault(){
-    this.setup_styles = function() {
+function DashGuiComboStyleDefault () {
+    this.dropdown_icon = null;
+    this.setup_styles = function () {
+        var icon_color = this.color;
+        // This inverse color setting is needed because it's not showing the
+        // right color to match the color of the text and looks odd
+        if (this.color === Dash.Color.Light) {
+            icon_color = Dash.Color.Dark;
+        }
+        else if (this.color === Dash.Color.Dark) {
+            icon_color = Dash.Color.Light;
+        }
+        this.dropdown_icon = new DashIcon(icon_color, "arrow_down", Dash.Size.RowHeight, 0.75);
+        this.dropdown_icon.html.addClass("ComboLabel");
+        this.dropdown_icon.html.addClass("Combo");
+        this.dropdown_icon.html.css({
+            "position": "relative",
+            "display": "block",
+            "right": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5,
+            "margin-left": -(Dash.Size.Padding*0.25),
+            "pointer-events": "none",
+        });
         this.font_size = "100%";
         this.highlight_css = {
             "position": "absolute",
@@ -21693,9 +21711,15 @@ function DashGuiComboStyleDefault(){
         this.html.append(this.inner_html);
         this.inner_html.append(this.highlight);
         this.inner_html.append(this.click);
-        this.inner_html.append(this.label);
+        // this.inner_html.append(this.label);
+        this.inner_html.append(this.label_container);
         this.inner_html.append(this.rows);
         this.label.text(this.label_text);
+        this.label_container.css({
+            "display": "flex"
+        });
+        this.label_container.append(this.label);
+        this.label_container.append(this.dropdown_icon.html);
         this.html.css({
             "display": "flex",
             "height": d.Size.ButtonHeight,
@@ -21737,26 +21761,8 @@ function DashGuiComboStyleDefault(){
             "border-radius": 3,
             "background": "orange",
         });
-        this.add_default_dropdown_tick();
     };
-    this.add_default_dropdown_tick = function () {
-        var icon = new DashIcon(Dash.Color.Dark, "arrow_down", Dash.Size.RowHeight, 0.75);
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5,
-            "top": Dash.Size.Padding * 0.5,
-        });
-        if (this.style === "standalone") {
-            icon.html.css({
-                "top": Dash.Size.Padding * 0.5
-            });
-        }
-        this.label.css({
-            "text-align": "left",
-        });
-        this.inner_html.append(icon.html);
-    };
-};
+}
 
 
 function DashGuiComboStyleRow(){
