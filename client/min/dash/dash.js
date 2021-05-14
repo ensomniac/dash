@@ -21503,7 +21503,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.on_selection = function(selected_option, ignore_callback){
         // Called when a selection in the combo is made
         var previous_selected_option = this.selected_option_id;
-        var label_text = selected_option["label_text"];
+        var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
             console.log("label_text == null");
             console.log("this.initialized: " + this.initialized);
@@ -21600,7 +21600,7 @@ function DashGuiComboRow(Combo, option){
     this.combo = Combo;
     this.option = option;
     this.color_set = this.combo.color_set;
-    this.label_text = this.option["label_text"];
+    this.label_text = this.option["label_text"] || this.option["display_name"];
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");

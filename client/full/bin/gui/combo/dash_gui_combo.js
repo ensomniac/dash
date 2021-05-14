@@ -278,7 +278,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         // Called when a selection in the combo is made
 
         var previous_selected_option = this.selected_option_id;
-        var label_text = selected_option["label_text"];
+        var label_text = selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
             console.log("label_text == null");

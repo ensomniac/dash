@@ -4,7 +4,7 @@ function DashGuiComboRow(Combo, option){
     this.combo = Combo;
     this.option = option;
     this.color_set = this.combo.color_set;
-    this.label_text = this.option["label_text"];
+    this.label_text = this.option["label_text"] || this.option["display_name"];
 
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.html = $("<div class='Combo'></div>");
