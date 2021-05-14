@@ -20860,7 +20860,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.setup_connections();
 };
 
-
 function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options){
     this.binder = binder;
     this.get_data_cb = null;
@@ -20868,7 +20867,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     if (get_data_cb && set_data_cb) {
         this.get_data_cb = get_data_cb.bind(binder);
         this.set_data_cb = set_data_cb.bind(binder);
-    };
+    }
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.data = {};
@@ -20897,20 +20896,20 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             if (!row_input.CanAutoUpdate()) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
                 continue;
-            };
+            }
             if (this.property_set_data) {
                 row_input.SetText(this.property_set_data[data_key]);
             }
             else {
-                row_input.SetText(this.get_data_cb()[data_key]);
-            };
-        };
+                row_input.SetText(this.get_data_cb()[data_key])
+            }
+        }
     };
     this.on_server_property_set = function(property_set_data){
         if (property_set_data["error"]) {
             alert("There was a problem accessing data");
             return;
-        };
+        }
         this.property_set_data = property_set_data;
         this.Update();
     };
@@ -20932,7 +20931,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.SetTopRightLabel = function(label_text){
         if (!this.top_right_label) {
             this.add_top_right_label();
-        };
+        }
         this.top_right_label.text(label_text);
 
     };
@@ -20990,7 +20989,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         var header = header_obj.html;
         if (this.num_headers > 0) {
             header.css("margin-top", Dash.Size.Padding*0.5);
-        };
+        }
         this.html.append(header);
         this.num_headers += 1;
         return header_obj;
@@ -20999,7 +20998,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
         (function(self, callback){
             var button = new d.Gui.Button(label_text, function(){
                 callback(button);
@@ -21015,20 +21014,20 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         var indent_row = false;
         if (this.num_headers > 0) {
             indent_row = true;
-        };
+        }
         var row = new d.Gui.InputRow(
             label_text,
             "",
             "",
             "",
-            function(row_input){console.log("Do nothing, dummy row")},
+            function(row_input){console.log("Do nothing, dummy row");},
             self
         );
         row.input.input.css("pointer-events", "none");
         this.html.append(row.html);
         if (indent_row) {
             row.html.css("margin-left", indent_px);
-        };
+        }
         var selected_key = default_value || this.get_data_cb()[property_key];
         (function(self, row, selected_key, property_key, combo_options, bool){
             var callback = function(selected_option){
@@ -21063,7 +21062,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         else {
             this.data = {};
-        };
+        }
         var row_details = {};
         row_details["key"] = data_key;
         row_details["label_text"] = label_text;
@@ -21071,13 +21070,24 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
-        (function(self, row_details){
+        (function(self, row_details, callback){
+            var _callback;
+            if (callback) {
+                _callback = function (row_input) {
+                    callback(row_details["key"], row_input.Text());
+                };
+            }
+            else {
+                _callback = function (row_input) {
+                    self.on_row_updated(row_input, row_details);
+                };
+            }
             var row = new d.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
                 row_details["label_text"],
                 combo_options || "Save",
-                function(row_input){self.on_row_updated(row_input, row_details)},
+                _callback,
                 self,
                 self.color
             );
@@ -21086,22 +21096,73 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             var indent_row = false;
             if (self.num_headers > 0) {
                 indent_row = true;
-            };
+            }
             if (self.indent_properties || self.indent_properties > 0) {
                 indent_px += self.indent_properties;
-            };
+            }
             if (indent_row) {
                 row.html.css("margin-left", indent_px);
-            };
+            }
             if (!row_details["can_edit"]) {
                 row.SetLocked(true);
-            };
+            }
+            if (options["add_combo"]) {
+                row = self.add_combo(
+                    row,
+                    options["add_combo"],
+                    false,
+                    !!options["on_delete"]
+                );
+            }
             if (options["on_delete"]) {
                 row = self.add_delete_button(row, options["on_delete"], data_key);
-            };
+            }
             self.html.append(row.html);
-        })(this, row_details);
+        })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
+    };
+    this.add_combo = function(row, combo_params, bool=false, add_button_margin=false){
+        var combo_options = combo_params["combo_options"];
+        var property_key = combo_params["property_key"];
+        var default_value = combo_params["default_value"] || null;
+        var callback = combo_params["callback"] || null;
+        var selected_key = default_value || this.get_data_cb()[property_key];
+        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
+            var _callback;
+            if (callback) {
+                _callback = function (selected_option) {
+                    callback(property_key, selected_option["id"]);
+                };
+            }
+            else {
+                _callback = function (selected_option) {
+                    self.on_combo_updated(property_key, selected_option["id"]);
+                };
+            }
+            var combo = new Dash.Gui.Combo (
+                selected_key,     // Label
+                _callback,         // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_key,     // Selected
+                self.color,       // Color set
+                {"style": "row"}, // Options
+                bool              // Bool (Toggle)
+            );
+            combo.html.css({
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+                "margin-right": add_button_margin ? Dash.Size.RowHeight * 2.5 : 0
+            });
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px"
+            });
+            row.html.append(combo.html);
+        })(this, row, selected_key, property_key, combo_options, bool, callback);
+        return row;
     };
     this.add_delete_button = function(row, callback, data_key){
         // Note: This function was initially intended for PropertyBox
@@ -21109,7 +21170,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
         (function(self, row, callback, data_key){
             var button = new d.Gui.IconButton("trash", function(){
                 callback(data_key);
@@ -21128,7 +21189,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         if (row.button) {
             // We need to leave space for this button to coexist with this new button
             row.button.html.css("margin-right", Dash.Size.RowHeight);
-        };
+        }
         return row;
     };
     this.on_combo_updated = function(property_key, selected_option){
@@ -21140,11 +21201,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             params["obj_id"] = this.dash_obj_id;
             Dash.Request(this, this.on_server_response, this.endpoint, params);
             return;
-        };
+        }
         if (this.set_data_cb) {
             this.set_data_cb(property_key, selected_option);
             return;
-        };
+        }
         console.log("Error: Property Box has no callback and no endpoint information!");
     };
     this.on_row_updated = function(row_input, row_details){
@@ -21152,16 +21213,16 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         if (new_value == row_details["value"]) {
             console.log("The data didn't change");
             return;
-        };
+        }
         if (this.dash_obj_id == null) {
             if (this.set_data_cb) {
                 this.set_data_cb(row_details["key"], new_value);
             }
             else {
                 console.log("Error: Property Box has no callback and no endpoint information!");
-            };
+            }
             return;
-        };
+        }
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "set_property";
@@ -21170,11 +21231,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         params["obj_id"] = this.dash_obj_id;
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
-        };
+        }
         if (row_details["key"].includes("password") && this.endpoint == "Users") {
             params["f"] = "update_password";
             params["p"] = new_value;
-        };
+        }
         (function(self, row_input, row_details){
             row_input.Request(url, params, function(response){
                 self.on_server_response(response, row_details, row_input);
@@ -21185,19 +21246,19 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         if (!Dash.ValidateResponse(response)) {
             if (row_input) {
                 row_input.SetInputValidity(false);
-            };
+            }
             return;
-        };
+        }
         console.log("SERVER RESPONSE");
         console.log(response);
         row_input.FlashSave();
         if (this.set_data_cb) {
             this.set_data_cb(response);
             return;
-        };
+        }
     };
     this.setup_styles();
-};
+}
 
 
 function DashGuiHeader(label_text, color){
