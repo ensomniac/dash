@@ -369,9 +369,25 @@ class Users:
 
         init = {}
         init["team"] = self.get_team()
+        init["team_sort"] = self.sort_team(init["team"])
         init["email"] = email
 
         return init
+
+    def sort_team(self, team):
+        sorted_emails = []
+        sortable = []
+
+        for email in team:
+            primary = team[email].get("display_name") or team[email].get("first_name") or email
+            sortable.append([primary, email])
+
+        sortable.sort()
+
+        for item in sortable:
+            sorted_emails.append(item[1])
+
+        return sorted_emails
 
     def get_team(self):
         # TODO - get rid of this code - it's been moved to Admin.py

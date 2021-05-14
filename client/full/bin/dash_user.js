@@ -49,6 +49,23 @@ function DashUser(){
             d.Local.Set("user_json", "");
         };
 
+        this.build_init_team_combo();
+
+    };
+
+    this.build_init_team_combo = function(){
+        this.Init["team_combo"] = [];
+
+        if (!this.Init["team"]) {
+            return;
+        };
+
+        for (var i in this.Init["team_sort"]) {
+            var email = this.Init["team_sort"][i];
+            var data = this.Init["team"][email];
+            this.Init["team_combo"].push(this.Init["team"][email]);
+        };
+
     };
 
     this.on_auth_response = function(response){
