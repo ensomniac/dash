@@ -101,7 +101,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null) {
+    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
+        var icon_id = "trash";
+
+        if (alt_icon_id && typeof alt_icon_id === "string") {
+            icon_id = alt_icon_id;
+        }
+
         if (this.top_right_delete_button) {
             return;
         }
@@ -133,7 +139,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         (function (self, callback, data_key, additional_data) {
             var button = new Dash.Gui.IconButton(
-                "trash",
+                icon_id,
                 function () {
                     callback(data_key, additional_data);
                 },

@@ -151,6 +151,7 @@ function GuiIcons(icon) {
     this.icon_map["trash"]                 = new GuiIconDefinition(this.icon, "Trash", this.weight.solid, "trash-alt");
     this.icon_map["undo"]                  = new GuiIconDefinition(this.icon, "Undo", this.weight.regular, "undo");
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
+    this.icon_map["unlink"]                = new GuiIconDefinition(this.icon, "Unlink", this.weight.regular, "unlink");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");
     this.icon_map["upload"]                = new GuiIconDefinition(this.icon, "Upload", this.weight.light, "upload");
     this.icon_map["user"]                  = new GuiIconDefinition(this.icon, "Climber", this.weight.regular, "user");
@@ -20947,7 +20948,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.top_right_label.text(label_text);
 
     };
-    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null) {
+    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
+        var icon_id = "trash";
+        if (alt_icon_id && typeof alt_icon_id === "string") {
+            icon_id = alt_icon_id;
+        }
         if (this.top_right_delete_button) {
             return;
         }
@@ -20973,7 +20978,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         (function (self, callback, data_key, additional_data) {
             var button = new Dash.Gui.IconButton(
-                "trash",
+                icon_id,
                 function () {
                     callback(data_key, additional_data);
                 },
