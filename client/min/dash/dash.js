@@ -20516,13 +20516,14 @@ function LoadDot(dots){
 };
 
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=null){
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
+    this.data_key = data_key;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -20620,7 +20621,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
-        else if (("" + value).includes("@") && ("" + value).includes(".")) {
+        else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
         // This could potentially be an issue if we're allowing people to edit
         // simple, plain input rows where we expect an email address
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
@@ -21106,7 +21107,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 combo_options || "Save",
                 _callback,
                 self,
-                self.color
+                self.color,
+                data_key
             );
             self.update_inputs[data_key] = row;
             var indent_px = Dash.Size.Padding*2;

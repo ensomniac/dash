@@ -312,7 +312,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 combo_options || "Save",
                 _callback,
                 self,
-                self.color
+                self.color,
+                data_key
             );
 
             self.update_inputs[data_key] = row;
