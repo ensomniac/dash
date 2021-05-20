@@ -103,10 +103,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
 
         this.setup_styles();
         this.initialize_rows();
-
-        // Andrew - this needs to be managed inside the style definitions
-        // this.add_dropdown_tick();
-
     };
 
     this.initialize_rows = function(){

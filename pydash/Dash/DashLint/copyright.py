@@ -125,7 +125,7 @@ class Copyright:
         os.chdir(code_path)
 
         for author in check_output("git log --all --format='%aN <%cE>' | sort -u", shell=True).decode().split("\n"):
-            if len(author) and "aifoundation" not in author and "noreply@github" not in author and author not in authors:
+            if len(author) and "authentic-artists" not in author and "noreply@github" not in author and author not in authors:
                 authors.append(author.replace("<", "(").replace(">", ")"))
 
         os.chdir(orig_dir)

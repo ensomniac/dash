@@ -85,6 +85,7 @@ function GuiIcons(icon) {
     this.weight.regular = "r";
     this.weight.light = "l";
     this.icon_map["add"]                   = new GuiIconDefinition(this.icon, "Add", this.weight.light, "plus", 1.3, 0.15, 0.15);
+    this.icon_map["add_person"]            = new GuiIconDefinition(this.icon, "Add Person", this.weight.light, "user-plus", 1.3, 0.15, 0.15);
     this.icon_map["admin_tools"]           = new GuiIconDefinition(this.icon, "Admin Tools", this.weight.regular, "shield-alt");
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
@@ -151,6 +152,7 @@ function GuiIcons(icon) {
     this.icon_map["trash"]                 = new GuiIconDefinition(this.icon, "Trash", this.weight.solid, "trash-alt");
     this.icon_map["undo"]                  = new GuiIconDefinition(this.icon, "Undo", this.weight.regular, "undo");
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
+    this.icon_map["unlink"]                = new GuiIconDefinition(this.icon, "Unlink", this.weight.regular, "unlink");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");
     this.icon_map["upload"]                = new GuiIconDefinition(this.icon, "Upload", this.weight.light, "upload");
     this.icon_map["user"]                  = new GuiIconDefinition(this.icon, "Climber", this.weight.regular, "user");
@@ -20515,13 +20517,14 @@ function LoadDot(dots){
 };
 
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=null){
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
+    this.data_key = data_key;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -20619,7 +20622,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             value = Dash.ReadableDateTime(value);
         }
         // Initial value is team member email
-        else if (("" + value).includes("@") && ("" + value).includes(".")) {
+        else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
         // This could potentially be an issue if we're allowing people to edit
         // simple, plain input rows where we expect an email address
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
@@ -20947,7 +20950,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.top_right_label.text(label_text);
 
     };
-    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null) {
+    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
+        var icon_id = "trash";
+        if (alt_icon_id && typeof alt_icon_id === "string") {
+            icon_id = alt_icon_id;
+        }
         if (this.top_right_delete_button) {
             return;
         }
@@ -20973,7 +20980,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         (function (self, callback, data_key, additional_data) {
             var button = new Dash.Gui.IconButton(
-                "trash",
+                icon_id,
                 function () {
                     callback(data_key, additional_data);
                 },
@@ -21101,7 +21108,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 combo_options || "Save",
                 _callback,
                 self,
-                self.color
+                self.color,
+                data_key
             );
             self.update_inputs[data_key] = row;
             var indent_px = Dash.Size.Padding*2;
@@ -21389,8 +21397,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         };
         this.setup_styles();
         this.initialize_rows();
-        // Andrew - this needs to be managed inside the style definitions
-        // this.add_dropdown_tick();
     };
     this.initialize_rows = function(){
         var selected_obj = null;
@@ -21673,9 +21679,29 @@ function DashGuiComboRow(Combo, option){
     this.setup_connections();
 };
 
-
-function DashGuiComboStyleDefault(){
-    this.setup_styles = function() {
+function DashGuiComboStyleDefault () {
+    this.dropdown_icon = null;
+    this.setup_styles = function () {
+        var icon_color = this.color;
+        // This inverse color setting is needed because it's not showing the
+        // right color to match the color of the text and looks odd
+        if (this.color === Dash.Color.Light) {
+            icon_color = Dash.Color.Dark;
+        }
+        else if (this.color === Dash.Color.Dark) {
+            icon_color = Dash.Color.Light;
+        }
+        this.dropdown_icon = new DashIcon(icon_color, "arrow_down", Dash.Size.RowHeight, 0.75);
+        this.dropdown_icon.html.addClass("ComboLabel");
+        this.dropdown_icon.html.addClass("Combo");
+        this.dropdown_icon.html.css({
+            "position": "relative",
+            "display": "block",
+            "right": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5,
+            "margin-left": -(Dash.Size.Padding*0.25),
+            "pointer-events": "none",
+        });
         this.font_size = "100%";
         this.highlight_css = {
             "position": "absolute",
@@ -21693,9 +21719,15 @@ function DashGuiComboStyleDefault(){
         this.html.append(this.inner_html);
         this.inner_html.append(this.highlight);
         this.inner_html.append(this.click);
-        this.inner_html.append(this.label);
+        // this.inner_html.append(this.label);
+        this.inner_html.append(this.label_container);
         this.inner_html.append(this.rows);
         this.label.text(this.label_text);
+        this.label_container.css({
+            "display": "flex"
+        });
+        this.label_container.append(this.label);
+        this.label_container.append(this.dropdown_icon.html);
         this.html.css({
             "display": "flex",
             "height": d.Size.ButtonHeight,
@@ -21737,26 +21769,8 @@ function DashGuiComboStyleDefault(){
             "border-radius": 3,
             "background": "orange",
         });
-        this.add_default_dropdown_tick();
     };
-    this.add_default_dropdown_tick = function () {
-        var icon = new DashIcon(Dash.Color.Dark, "arrow_down", Dash.Size.RowHeight, 0.75);
-        icon.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding * 0.5,
-            "top": Dash.Size.Padding * 0.5,
-        });
-        if (this.style === "standalone") {
-            icon.html.css({
-                "top": Dash.Size.Padding * 0.5
-            });
-        }
-        this.label.css({
-            "text-align": "left",
-        });
-        this.inner_html.append(icon.html);
-    };
-};
+}
 
 
 function DashGuiComboStyleRow(){
