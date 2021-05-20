@@ -178,7 +178,44 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(end_border);
     };
 
-    this.AddInput = function(placeholder_label, callback){
+    this.AddTransparentInput = function(placeholder_label, callback, options={}){
+        var input = this.AddInput(placeholder_label, callback, options);
+        var height = Dash.Size.ButtonHeight-Dash.Size.Padding;
+        var width = options["width"] || Dash.Size.ColumnWidth;
+        var text_align = "left";
+
+        if (options["center"]) {
+            text_align = "center";
+        };
+
+        input.html.css({
+            "padding": 0,
+            "margin": 0,
+            "margin-top": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding*0.5,
+            "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
+            "height": height,
+            "background": "none",
+            "box-shadow": "none",
+            "width": width,
+        });
+
+        input.input.css({
+            "color": "rgb(20, 20, 20)",
+            "height": height,
+            "margin": 0,
+            "padding": 0,
+            "line-height": height + "px",
+            "top": -Dash.Size.Padding*0.5,
+            "width": width,
+            "text-align": "center",
+        });
+
+        return input;
+
+    };
+
+    this.AddInput = function(placeholder_label, callback, options={}){
 
         var obj_index = this.objects.length;
         var input = new d.Gui.Input(placeholder_label, this.color);
@@ -186,7 +223,6 @@ function DashGuiLayoutToolbar(binder, color){
         input.html.css({
             "padding-left": d.Size.Padding*0.5,
             "margin-top": d.Size.Padding*0.5,
-            // "margin-right": d.Size.Padding*0.5,
         });
 
         input.input.css({
@@ -194,29 +230,41 @@ function DashGuiLayoutToolbar(binder, color){
             "color": "rgb(20, 20, 20)",
         });
 
-        input.html.css({
-            // "background": "#ffc74c",
-        });
-
         var obj = {};
         obj["html"] = input;
         obj["callback"] = callback.bind(this.binder);
         obj["index"] = obj_index;
+
+        if (options["on_enter"]) {
+            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
+        };
+
         this.objects.push(obj);
 
-        (function(self, input, obj_index){
+        (function(self, input, obj_index, obj){
+
             input.OnChange(function(){
                 self.on_input_changed(obj_index);
             }, self);
+
+            if (obj["on_enter_callback"]) {
+
+                input.OnSubmit(function(){
+                    self.on_input_submitted(obj_index);
+                }, self);
+
+            };
 
             input.input.dblclick(function(){
                 input.SetText("");
                 self.on_input_changed(obj_index);
             });
 
-        })(this, input, obj_index);
+        })(this, input, obj_index, obj);
 
         this.html.append(input.html);
+
+        return input;
 
     };
 
@@ -291,8 +339,12 @@ function DashGuiLayoutToolbar(binder, color){
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
 
+    this.on_input_submitted = function(obj_index){
+        var obj = this.objects[obj_index];
+        obj["on_enter_callback"](obj["html"].Text(), obj["html"]);
+    };
+
     this.on_button_clicked = function(obj_index, data=null){
-        // console.log(this);
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
