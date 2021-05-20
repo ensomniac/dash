@@ -13,6 +13,13 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
     this.recall_id = "dash_pane_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "")
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
 
+    if (this.is_vertical) {
+        this.recall_id += "_v";
+    }
+    else {
+        this.recall_id += "_h";
+    };
+
     this.locked_width = this.default_size;
 
     if (Dash.Local.Get(this.recall_id)) {

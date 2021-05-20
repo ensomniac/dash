@@ -281,7 +281,7 @@ class __Utils:
         from datetime import datetime
 
         time_markup = datetime_object.strftime("%I:%M %p").lower()
-        
+
         if time_markup.startswith("0"):
             time_markup = time_markup[1:]
 
