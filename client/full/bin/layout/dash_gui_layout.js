@@ -13,4 +13,6 @@ function DashGuiLayout(){
 
     this.Toolbar = DashGuiLayoutToolbar;
 
+    this.ButtonBar = DashGuiButtonBar;
+
 };

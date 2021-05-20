@@ -21013,6 +21013,14 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.num_headers += 1;
         return header_obj;
     };
+    this.AddButtonBar = function(label_text){
+        var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
+        bar.html.css({
+            "margin-top": Dash.Size.Padding,
+        });
+        this.AddHTML(bar.html);
+        return bar;
+    };
     this.AddButton = function(label_text, callback){
         callback = callback.bind(this.binder);
         if (!this.buttons) {
@@ -21856,6 +21864,7 @@ function DashGuiLayout(){
     this.Tabs.Top = DashGuiLayoutTabsTop;
     this.Tabs.Side = DashGuiLayoutTabsSide;
     this.Toolbar = DashGuiLayoutToolbar;
+    this.ButtonBar = DashGuiButtonBar;
 };
 
 
@@ -22846,6 +22855,52 @@ class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
     constructor(Binder) {
         super(Binder, false);
     };
+};
+
+function DashGuiButtonBar(binder, color){
+    this.html = $("<div></div>");
+    this.binder = binder;
+    this.color = color || Dash.Color.Light;
+    this.buttons = [];
+    this.setup_styles = function(){
+        this.html.css({
+            "display": "flex",
+            "height": Dash.Size.ButtonHeight,
+        });
+    };
+    this.AddButton = function(label_text, callback){
+        callback = callback.bind(this.binder);
+        (function(self, callback){
+            var button = new d.Gui.Button(label_text, function(){
+                callback(button);
+            }, self, self.color);
+            self.buttons.push(button);
+            button.html.css({
+                "margin": 0,
+                "flex-grow": 1,
+            });
+            self.html.append(button.html);
+        })(this, callback);
+        this.update_spacing();
+        return this.buttons[this.buttons.length-1];
+    };
+    this.update_spacing = function(){
+        // TODO: Make this more efficient - we don't need to hit
+        // this multiple times on the same frame
+        for (var i in this.buttons) {
+            var button = this.buttons[i];
+            var right_padding = Dash.Size.Padding;
+            if (i == this.buttons.length-1) {
+                right_padding = 0;
+            };
+            button.html.css({
+                "margin": 0,
+                "flex-grow": 1,
+                "margin-right": right_padding,
+            });
+        };
+    };
+    this.setup_styles();
 };
 
 function DashGuiList(binder, selected_callback, column_config, color){

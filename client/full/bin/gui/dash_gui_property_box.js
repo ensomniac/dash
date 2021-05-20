@@ -186,6 +186,17 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
+    this.AddButtonBar = function(label_text){
+        var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
+
+        bar.html.css({
+            "margin-top": Dash.Size.Padding,
+        });
+
+        this.AddHTML(bar.html);
+        return bar;
+    };
+
     this.AddButton = function(label_text, callback){
         callback = callback.bind(this.binder);
 
