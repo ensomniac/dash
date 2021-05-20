@@ -277,8 +277,41 @@ class __Utils:
 
         return self._usr_token
 
-    def FormatTime(self, datetime_object, time_format=1):
+    def change_dt_tz(self, dt_obj, tz):
+        from pytz import timezone as pytz_timezone
+
+        if not dt_obj.tzinfo:
+            dt_obj = pytz_timezone("UTC").localize(dt_obj)
+
+        if tz == "est":
+            dt_obj = dt_obj.astimezone(pytz_timezone("America/New_York"))
+
+        elif tz == "pst":
+            dt_obj = dt_obj.astimezone(pytz_timezone("America/Los_Angeles"))
+
+        elif tz == "mst":
+            dt_obj = dt_obj.astimezone(pytz_timezone("America/Denver"))
+
+        elif tz == "cst":
+            dt_obj = dt_obj.astimezone(pytz_timezone("America/Chicago"))
+
+        return dt_obj
+
+    def FormatTime(self, datetime_object, time_format=1, tz="utc"):
+        """
+        Format a timestamp string using a datetime object.
+
+        :param datetime.datetime datetime_object: source datetime object
+        :param int time_format: (default=1)
+        :param str tz: (default="utc")
+        :return: strftime-formatted timestamp
+        :rtype: string
+        """
+
         from datetime import datetime
+
+        if tz != "utc":
+            datetime_object = self.change_dt_tz(datetime_object, tz)
 
         time_markup = datetime_object.strftime("%I:%M %p").lower()
         
