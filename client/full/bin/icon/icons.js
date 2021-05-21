@@ -9,6 +9,7 @@ function GuiIcons(icon) {
     this.weight.light = "l";
 
     this.icon_map["add"]                   = new GuiIconDefinition(this.icon, "Add", this.weight.light, "plus", 1.3, 0.15, 0.15);
+    this.icon_map["add_layer"]             = new GuiIconDefinition(this.icon, "Add Layer", this.weight.light, "layer-plus", 1.3, 0.15, 0.15);
     this.icon_map["add_person"]            = new GuiIconDefinition(this.icon, "Add Person", this.weight.light, "user-plus", 1.3, 0.15, 0.15);
     this.icon_map["admin_tools"]           = new GuiIconDefinition(this.icon, "Admin Tools", this.weight.regular, "shield-alt");
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);

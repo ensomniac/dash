@@ -1,6 +1,4 @@
-
-function DashGui(){
-
+function DashGui() {
     this.Layout = new DashGuiLayout();
     this.Login = DashGuiLogin;
     this.Button = DashGuiButton;
@@ -14,8 +12,7 @@ function DashGui(){
     this.Combo = DashGuiCombo;
     this.PaneSlider = DashGuiPaneSlider;
 
-    this.GetHTMLContext = function(optional_label_text, optional_style_css){
-
+    this.GetHTMLContext = function (optional_label_text, optional_style_css) {
         optional_label_text = optional_label_text || "";
         optional_style_css = optional_style_css || {};
 
@@ -29,16 +26,14 @@ function DashGui(){
 
         for (var key in optional_style_css) {
             css[key] = optional_style_css[key];
-        };
+        }
 
         html.css(css);
 
         return html;
-
     };
 
-    this.GetHTMLAbsContext = function(optional_label_text){
-
+    this.GetHTMLAbsContext = function (optional_label_text) {
         optional_label_text = optional_label_text || "";
 
         var html = $("<div>" + optional_label_text + "</div>");
@@ -55,11 +50,9 @@ function DashGui(){
         });
 
         return html;
-
     };
 
-    this.GetHTMLBoxContext = function(optional_style_css, color){
-
+    this.GetHTMLBoxContext = function (optional_style_css, color) {
         color = color || Dash.Color.Light;
 
         // optional_label_text = optional_label_text || "";
@@ -78,16 +71,14 @@ function DashGui(){
 
         for (var key in optional_style_css) {
             css[key] = optional_style_css[key];
-        };
+        }
 
         html.css(css);
 
         return html;
-
     };
 
-    this.GetTipBox = function(code, msg, optional_style_css){
-
+    this.GetTipBox = function (code, msg, optional_style_css) {
         // A full width box that is meant to display information
 
         var tip = Dash.Gui.GetHTMLBoxContext(optional_style_css);
@@ -102,11 +93,9 @@ function DashGui(){
         tip.append(msg_html);
 
         return tip;
-
     };
 
-    this.GetErrorBox = function(code, msg){
-
+    this.GetErrorBox = function (code, msg) {
         // A full width box that is meant to display an error
 
         var css = {};
@@ -124,18 +113,70 @@ function DashGui(){
         tip.append(msg_html);
 
         return tip;
-
     };
 
-    this.GetFlexSpacer = function(flex_grow_value=2){
-
+    this.GetFlexSpacer = function (flex_grow_value=2) {
         var html = $("<div></div>");
+        
         html.css({
             "flex-grow": flex_grow_value,
         });
 
         return html;
-
     };
 
-};
+    this.AddTopRightDeleteButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
+        var icon_id = "trash";
+
+        if (alt_icon_id && typeof alt_icon_id === "string") {
+            icon_id = alt_icon_id;
+        }
+
+        if (existing_top_right_label) {
+            existing_top_right_label.css({
+                "right": Dash.Size.Padding * 5
+            });
+        }
+
+        var top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
+
+        top_right_delete_button.css({
+            "left": "auto",
+            "bottom": "auto",
+            "top": Dash.Size.Padding * 0.8,
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "color": binder.color || Dash.Color.Dark,
+            "z-index": 1,
+            "overflow-y": ""
+        });
+
+        callback = callback.bind(binder);
+
+        (function (binder, callback, top_right_delete_button, icon_id, data_key, additional_data) {
+            var button = new Dash.Gui.IconButton(
+                icon_id,
+                function () {
+                    callback(data_key, additional_data);
+                },
+                binder,
+                binder.color || Dash.Color.Dark
+            );
+
+            button.html.css({
+            });
+
+            top_right_delete_button.append(button.html);
+
+        })(binder, callback, top_right_delete_button, icon_id, data_key, additional_data);
+
+
+        if (top_right_delete_button.button) {
+            top_right_delete_button.button.html.css({
+                "margin-right": Dash.Size.RowHeight
+            });
+        }
+
+        return top_right_delete_button;
+    };
+}
