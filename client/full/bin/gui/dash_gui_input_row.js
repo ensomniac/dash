@@ -1,5 +1,5 @@
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=null){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=""){
 
     this.label_text = label_text;
     this.initial_value = initial_value;
@@ -107,7 +107,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.parse_value = function (value) {
-
         if (!value) {
             return value;
         }
@@ -128,8 +127,8 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
         // Initial value is team member email
         else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
-        // This could potentially be an issue if we're allowing people to edit
-        // simple, plain input rows where we expect an email address
+            // This could potentially be an issue if we're allowing people to edit
+            // simple, plain input rows where we expect an email address
 
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
@@ -355,7 +354,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
 
     this.SetText = function(text){
-        // text = this.parse_value(text);
+        text = this.parse_value(text);
 
         this.input.SetText(text);
         this.input_changed(true);

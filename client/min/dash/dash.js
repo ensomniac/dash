@@ -20562,7 +20562,7 @@ function LoadDot(dots){
 };
 
 
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=null){
+function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=""){
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
@@ -20668,8 +20668,8 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
         // Initial value is team member email
         else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
-        // This could potentially be an issue if we're allowing people to edit
-        // simple, plain input rows where we expect an email address
+            // This could potentially be an issue if we're allowing people to edit
+            // simple, plain input rows where we expect an email address
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -20833,7 +20833,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.save_button_visible = false;
     };
     this.SetText = function(text){
-        // text = this.parse_value(text);
+        text = this.parse_value(text);
         this.input.SetText(text);
         this.input_changed(true);
         if (this.autosave_timeout) {
@@ -21162,9 +21162,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                data_key
+                row_details["key"]
             );
-            self.update_inputs[data_key] = row;
+            self.update_inputs[row_details["key"]] = row;
             var indent_px = Dash.Size.Padding*2;
             var indent_row = false;
             if (self.num_headers > 0) {
@@ -21188,7 +21188,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 );
             }
             if (options["on_delete"]) {
-                row = self.add_delete_button(row, options["on_delete"], data_key);
+                row = self.add_delete_button(row, options["on_delete"], row_details["key"]);
             }
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);

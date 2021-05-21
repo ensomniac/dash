@@ -324,10 +324,10 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                data_key
+                row_details["key"]
             );
 
-            self.update_inputs[data_key] = row;
+            self.update_inputs[row_details["key"]] = row;
 
             var indent_px = Dash.Size.Padding*2;
             var indent_row = false;
@@ -358,7 +358,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             }
 
             if (options["on_delete"]) {
-                row = self.add_delete_button(row, options["on_delete"], data_key);
+                row = self.add_delete_button(row, options["on_delete"], row_details["key"]);
             }
 
             self.html.append(row.html);
