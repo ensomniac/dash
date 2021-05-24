@@ -178,21 +178,21 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(end_border);
     };
 
-    this.AddTransparentInput = function(placeholder_label, callback, options={}){
-        var input = this.AddInput(placeholder_label, callback, options);
+    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
+        var input = this.AddInput(placeholder_label, callback, options, additional_data);
         var height = Dash.Size.ButtonHeight-Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
         var text_align = "left";
 
         if (options["center"]) {
             text_align = "center";
-        };
+        }
 
         input.html.css({
             "padding": 0,
             "margin": 0,
-            "margin-top": Dash.Size.Padding*0.5,
-            "margin-right": Dash.Size.Padding*0.5,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
             "height": height,
             "background": "none",
@@ -206,17 +206,15 @@ function DashGuiLayoutToolbar(binder, color){
             "margin": 0,
             "padding": 0,
             "line-height": height + "px",
-            "top": -Dash.Size.Padding*0.5,
+            "top": -Dash.Size.Padding * 0.5,
             "width": width,
-            "text-align": "center",
+            "text-align": text_align,
         });
 
         return input;
-
     };
 
-    this.AddInput = function(placeholder_label, callback, options={}){
-
+    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
         var obj_index = this.objects.length;
         var input = new d.Gui.Input(placeholder_label, this.color);
 
@@ -234,14 +232,15 @@ function DashGuiLayoutToolbar(binder, color){
         obj["html"] = input;
         obj["callback"] = callback.bind(this.binder);
         obj["index"] = obj_index;
+        obj["additional_data"] = additional_data;
 
         if (options["on_enter"]) {
             obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
-        };
+        }
 
         this.objects.push(obj);
 
-        (function(self, input, obj_index, obj){
+        (function(self, input, obj_index, obj) {
 
             input.OnChange(function(){
                 self.on_input_changed(obj_index);
@@ -265,25 +264,23 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(input.html);
 
         return input;
-
     };
 
-    // Ryan, adding `return_full_option` because I need the full combo returned as it happens in
-    // the regular Dash.Gui.Combo, but I don't want to break any existing Combos across all the portals
-    this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false) {
+    this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
         var obj_index = this.objects.length;
 
         if (callback) {
             callback = callback.bind(this.binder);
         }
 
-        (function(self, selected_id, combo_options, callback, return_full_option){
+        (function(self, selected_id, combo_options, callback, return_full_option, additional_data){
 
-            var _callback = function(selected_option, previous_selected_option){
+            var _callback = function(selected_option, previous_selected_option, additional_data){
                 self.on_combo_updated(
                     callback,
                     return_full_option ? selected_option : selected_option["id"],
-                    return_full_option ? previous_selected_option : previous_selected_option["id"]
+                    return_full_option ? previous_selected_option : previous_selected_option["id"],
+                    additional_data
                 );
             };
 
@@ -294,7 +291,7 @@ function DashGuiLayoutToolbar(binder, color){
                 combo_options,    // Option List
                 selected_id,      // Selected
                 self.color,             // Color set
-                {"style": "row"}
+                {"style": "row", "additional_data": additional_data}
             );
 
             self.html.append(combo.html);
@@ -316,17 +313,17 @@ function DashGuiLayoutToolbar(binder, color){
             obj["index"] = obj_index;
             self.objects.push(obj);
 
-        })(this, selected_id, combo_options, callback, return_full_option);
+        })(this, selected_id, combo_options, callback, return_full_option, additional_data);
 
         var obj = this.objects[obj_index];
         var combo = obj["html"];
 
-        return combo;  // Ryan, I added this to make it more flexible like a standalone combo
+        return combo;
     };
 
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option) {
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
         if (callback) {
-            callback(selected_id, previous_selected_option, this);
+            callback(selected_id, previous_selected_option, this, additional_data);
         }
         else {
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
@@ -341,7 +338,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.on_input_submitted = function(obj_index){
         var obj = this.objects[obj_index];
-        obj["on_enter_callback"](obj["html"].Text(), obj["html"]);
+        obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
 
     this.on_button_clicked = function(obj_index, data=null){

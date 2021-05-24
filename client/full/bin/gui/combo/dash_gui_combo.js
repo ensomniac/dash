@@ -11,6 +11,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.initialized        = false;
     this.options            = options || {};
     this.style              = this.options["style"] || "default";
+    this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool || false;
 
     this.html = $("<div></div>");
@@ -288,7 +289,12 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.selected_option_id = selected_option;
 
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, previous_selected_option);
+            if (this.additional_data) {
+                this.callback(selected_option, previous_selected_option, this.additional_data);
+            }
+            else {
+                this.callback(selected_option, previous_selected_option);
+            }
         };
 
         this.initialized = true;
