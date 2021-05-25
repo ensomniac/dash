@@ -17683,6 +17683,22 @@ function Dash(){
         // Return readable without seconds
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
+    this.IsValidEmail = function (str) {
+        var username = str.split("@")[0];
+        var domain = str.split("@");
+        domain = domain[domain.length - 1];
+        var domain_split = domain.split(".");
+        var domain_start = domain_split[0];
+        var domain_end = domain_split[domain_split.length - 1];
+        var at_sign_count = (str.match(/@/g) || []).length;
+        if (str.length > 0 && (at_sign_count !== 1 || !(domain.includes(".")))) {
+            return false;
+        }
+        if (domain_start.length < 1 || domain_end.length < 1 || username.length < 1) {
+            return false;
+        }
+        return true;
+    };
     this.IsServerIsoDate = function (str) {
         return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
     };
@@ -20666,10 +20682,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
+        
         // Initial value is team member email
-        else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
-            // This could potentially be an issue if we're allowing people to edit
-            // simple, plain input rows where we expect an email address
+        else if (Dash.IsValidEmail(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -20754,11 +20769,14 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             this.on_submit();
         };
     };
-    this.on_label_clicked = function(){
+    this.on_label_clicked = function () {
         var active_text = this.input.Text();
-        if (active_text.slice(0, 8) == "https://") {
+        if (active_text.slice(0, 8) === "https://") {
             window.open(active_text, "_blank");
-        };
+        }
+        if (Dash.IsValidEmail(active_text)) {
+            window.open("mailto:" + active_text, "_blank");
+        }
     };
     this.setup_connections = function(){
         (function(self){

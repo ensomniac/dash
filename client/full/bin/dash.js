@@ -59,6 +59,26 @@ function Dash(){
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
 
+    this.IsValidEmail = function (str) {
+        var username = str.split("@")[0];
+        var domain = str.split("@");
+        domain = domain[domain.length - 1];
+        var domain_split = domain.split(".");
+        var domain_start = domain_split[0];
+        var domain_end = domain_split[domain_split.length - 1];
+        var at_sign_count = (str.match(/@/g) || []).length;
+
+        if (str.length > 0 && (at_sign_count !== 1 || !(domain.includes(".")))) {
+            return false;
+        }
+
+        if (domain_start.length < 1 || domain_end.length < 1 || username.length < 1) {
+            return false;
+        }
+
+        return true;
+    };
+
     this.IsServerIsoDate = function (str) {
         return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
     };

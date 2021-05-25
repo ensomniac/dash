@@ -125,11 +125,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
+        
         // Initial value is team member email
-        else if (("" + value).includes("@") && ("" + value).includes(".") && this.data_key !== "email") {
-            // This could potentially be an issue if we're allowing people to edit
-            // simple, plain input rows where we expect an email address
-
+        else if (Dash.IsValidEmail(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -241,14 +239,16 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
 
     };
 
-    this.on_label_clicked = function(){
-
+    this.on_label_clicked = function () {
         var active_text = this.input.Text();
 
-        if (active_text.slice(0, 8) == "https://") {
+        if (active_text.slice(0, 8) === "https://") {
             window.open(active_text, "_blank");
-        };
+        }
 
+        if (Dash.IsValidEmail(active_text)) {
+            window.open("mailto:" + active_text, "_blank");
+        }
     };
 
     this.setup_connections = function(){
