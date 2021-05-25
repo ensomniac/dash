@@ -125,7 +125,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
-        
+
         // Initial value is team member email
         else if (Dash.IsValidEmail(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {

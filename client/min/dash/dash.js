@@ -20682,7 +20682,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         if (Dash.IsServerIsoDate(value)) {
             value = Dash.ReadableDateTime(value);
         }
-        
         // Initial value is team member email
         else if (Dash.IsValidEmail(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
@@ -21558,7 +21557,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "top": 0,
             "width": "auto", // This is important so it can auto-size
         });
-        // TODO: Make this.rows grab focus while active
         // console.log("TODO: Make this.rows grab focus while active");
         this.rows.empty();
         this.row_buttons = [];
@@ -21621,7 +21619,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "width": width,
         });
         for (var i in this.row_buttons) {
-            this.row_buttons[i].SetWidth(width);
+            // this.row_buttons[i].SetWidth(width);
+            this.row_buttons[i].SetWidthToFit(width); // This is important so it can auto-size using "fit-content"
         };
     };
     this.show = function(){
@@ -21724,6 +21723,17 @@ function DashGuiComboRow(Combo, option){
             "text-overflow": "ellipsis",
             "border-bottom": "1px solid rgba(255, 255, 255, 0.05)",
             "color": this.color_set.Text.Base,
+        });
+    };
+    this.SetWidthToFit = function () {
+        // Prior to showing, set the width of rows to fit the content
+        this.html.css({
+            "width": "fit-content",
+        });
+        this.label.css({
+            "width": "fit-content",
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
         });
     };
     this.SetWidth = function(width){

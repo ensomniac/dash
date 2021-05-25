@@ -226,7 +226,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "width": "auto", // This is important so it can auto-size
         });
 
-        // TODO: Make this.rows grab focus while active
         // console.log("TODO: Make this.rows grab focus while active");
 
         this.rows.empty();
@@ -311,7 +310,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         });
 
         for (var i in this.row_buttons) {
-            this.row_buttons[i].SetWidth(width);
+            // this.row_buttons[i].SetWidth(width);
+            this.row_buttons[i].SetWidthToFit(width); // This is important so it can auto-size using "fit-content"
         };
 
     };
