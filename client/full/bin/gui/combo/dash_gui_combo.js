@@ -1,5 +1,4 @@
-
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options, bool){
+function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
 
     this.label              = label;
     this.binder             = binder;
