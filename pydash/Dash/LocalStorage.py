@@ -158,7 +158,7 @@ class DashLocalStorage:
 
             sorted_key = entry_data[self.sort_by_key]
 
-            if not restructured_data.get(self.sort_by_key):
+            if not restructured_data.get(sorted_key):
                 restructured_data[sorted_key] = entry_data
             else:
                 restructured_data[f"{sorted_key}_{entry_id}"] = entry_data
