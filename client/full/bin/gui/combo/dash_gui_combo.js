@@ -1,5 +1,4 @@
-
-function DashGuiCombo(label, callback, binder, option_list, selected_option_id, color, options, bool){
+function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
 
     this.label              = label;
     this.binder             = binder;
@@ -11,6 +10,7 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
     this.initialized        = false;
     this.options            = options || {};
     this.style              = this.options["style"] || "default";
+    this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool || false;
 
     this.html = $("<div></div>");
@@ -225,7 +225,6 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
             "width": "auto", // This is important so it can auto-size
         });
 
-        // TODO: Make this.rows grab focus while active
         // console.log("TODO: Make this.rows grab focus while active");
 
         this.rows.empty();
@@ -288,7 +287,12 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         this.selected_option_id = selected_option;
 
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, previous_selected_option);
+            if (this.additional_data) {
+                this.callback(selected_option, previous_selected_option, this.additional_data);
+            }
+            else {
+                this.callback(selected_option, previous_selected_option);
+            }
         };
 
         this.initialized = true;
@@ -305,7 +309,8 @@ function DashGuiCombo(label, callback, binder, option_list, selected_option_id, 
         });
 
         for (var i in this.row_buttons) {
-            this.row_buttons[i].SetWidth(width);
+            // this.row_buttons[i].SetWidth(width);
+            this.row_buttons[i].SetWidthToFit(width); // This is important so it can auto-size using "fit-content"
         };
 
     };
