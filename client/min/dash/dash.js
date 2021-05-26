@@ -159,6 +159,9 @@ function GuiIcons(icon) {
     this.icon_map["video"]                 = new GuiIconDefinition(this.icon, "Video", this.weight.regular, "video", 0.85);
     this.icon_map["view"]                  = new GuiIconDefinition(this.icon, "View", this.weight.regular, "eye");
     this.icon_map["web"]                   = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "spider-web");
+    this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
+    this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
+    this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation-triangle", 0.9);
     if (this.icon.name == "icon_map"){
         // Return icon map for use in portal editor > font icons
         return this.icon_map;
@@ -19864,12 +19867,12 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
 
 
 
-function DashGuiIconButton(icon_name, callback, binder, color, options){
+function DashGuiIconButton(icon_name, callback, binder, color, options={}){
     this.icon = null;
     this.icon_height = null;
     this.icon_name = icon_name;
     this.icon_default_opacity = 0.8;
-    this.icon_size_mult = 1.0;
+    this.icon_size_mult = options["size_mult"] || 1.0;
     DashGuiButton.call(this, "", callback, binder, color, options);
     this.setup_icon = function(){
         if (this.style == "toolbar") {

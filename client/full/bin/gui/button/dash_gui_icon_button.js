@@ -1,11 +1,11 @@
 
-function DashGuiIconButton(icon_name, callback, binder, color, options){
+function DashGuiIconButton(icon_name, callback, binder, color, options={}){
 
     this.icon = null;
     this.icon_height = null;
     this.icon_name = icon_name;
     this.icon_default_opacity = 0.8;
-    this.icon_size_mult = 1.0;
+    this.icon_size_mult = options["size_mult"] || 1.0;
 
     DashGuiButton.call(this, "", callback, binder, color, options);
 
