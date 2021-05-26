@@ -43,15 +43,19 @@ function DashGuiComboRow(Combo, option){
 
     };
 
-    this.SetWidthToFit = function () {
+    this.SetWidthToFit = function (label_width=null) {
         // Prior to showing, set the width of rows to fit the content
+
+        if (!label_width) {
+            label_width = "fit-content";
+        }
 
         this.html.css({
             "width": "fit-content",
         });
 
         this.label.css({
-            "width": "fit-content",
+            "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
         });

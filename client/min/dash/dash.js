@@ -17690,7 +17690,6 @@ function Dash(){
         if (typeof str !== "string") {
             return false;
         }
-
         var username = str.split("@")[0];
         var domain = str.split("@");
         domain = domain[domain.length - 1];
@@ -21621,13 +21620,23 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         // Prior to showing, set the width of rows
         this.setup_label_list();
         var width = this.rows.width() + Dash.Size.Padding;
+        var label_width = 0;
+        var i;
         this.rows.css({
             "width": width,
         });
-        for (var i in this.row_buttons) {
+        for (i in this.row_buttons) {
+            var scroll_width = this.row_buttons[i].html[0]["scrollWidth"];
+            console.log(scroll_width);
+            if (scroll_width <= label_width) {
+                continue;
+            }
+            label_width = scroll_width;
+        }
+        for (i in this.row_buttons) {
             // this.row_buttons[i].SetWidth(width);
-            this.row_buttons[i].SetWidthToFit(width); // This is important so it can auto-size using "fit-content"
-        };
+            this.row_buttons[i].SetWidthToFit(label_width); // This is important so it can auto-size
+        }
     };
     this.show = function(){
         this.pre_show_size_set();
@@ -21731,13 +21740,16 @@ function DashGuiComboRow(Combo, option){
             "color": this.color_set.Text.Base,
         });
     };
-    this.SetWidthToFit = function () {
+    this.SetWidthToFit = function (label_width=null) {
         // Prior to showing, set the width of rows to fit the content
+        if (!label_width) {
+            label_width = "fit-content";
+        }
         this.html.css({
             "width": "fit-content",
         });
         this.label.css({
-            "width": "fit-content",
+            "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
         });

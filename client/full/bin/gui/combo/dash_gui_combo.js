@@ -303,16 +303,28 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.setup_label_list();
 
         var width = this.rows.width() + Dash.Size.Padding;
+        var label_width = 0;
+        var i;
 
         this.rows.css({
             "width": width,
         });
 
-        for (var i in this.row_buttons) {
-            // this.row_buttons[i].SetWidth(width);
-            this.row_buttons[i].SetWidthToFit(width); // This is important so it can auto-size using "fit-content"
-        };
+        for (i in this.row_buttons) {
+            var scroll_width = this.row_buttons[i].html[0]["scrollWidth"];
+            console.log(scroll_width);
 
+            if (scroll_width <= label_width) {
+                continue;
+            }
+
+            label_width = scroll_width;
+        }
+
+        for (i in this.row_buttons) {
+            // this.row_buttons[i].SetWidth(width);
+            this.row_buttons[i].SetWidthToFit(label_width); // This is important so it can auto-size
+        }
     };
 
     this.show = function(){

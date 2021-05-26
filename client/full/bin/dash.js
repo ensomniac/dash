@@ -64,7 +64,6 @@ function Dash(){
             return false;
         }
 
-
         var username = str.split("@")[0];
         var domain = str.split("@");
         domain = domain[domain.length - 1];
