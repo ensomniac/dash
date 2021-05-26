@@ -17687,6 +17687,10 @@ function Dash(){
         return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
     };
     this.IsValidEmail = function (str) {
+        if (typeof str !== "string") {
+            return false;
+        }
+
         var username = str.split("@")[0];
         var domain = str.split("@");
         domain = domain[domain.length - 1];
