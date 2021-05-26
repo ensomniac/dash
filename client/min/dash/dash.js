@@ -21627,7 +21627,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         });
         for (i in this.row_buttons) {
             var scroll_width = this.row_buttons[i].html[0]["scrollWidth"];
-            console.log(scroll_width);
             if (scroll_width <= label_width) {
                 continue;
             }
