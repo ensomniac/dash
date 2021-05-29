@@ -37,6 +37,7 @@ function GuiIcons(icon) {
     this.icon_map["cdn_tool_text"]         = new GuiIconDefinition(this.icon, "Text Tool", this.weight.regular, "font", 0.9);
     this.icon_map["cdn_tool_video"]        = new GuiIconDefinition(this.icon, "Text Tool", this.weight.regular, "video", 0.85);
     this.icon_map["cell"]                  = new GuiIconDefinition(this.icon, "Cell Phone", this.weight.regular, "mobile-alt");
+    this.icon_map["checked_box"]           = new GuiIconDefinition(this.icon, "Checked Box", this.weight.regular, "check-square");
     this.icon_map["close"]                 = new GuiIconDefinition(this.icon, "Close", this.weight.regular, "times", 1.2, 0.25, 0.25);
     this.icon_map["comment"]               = new GuiIconDefinition(this.icon, "Conversation Bubble", this.weight.solid, "comment");
     this.icon_map["comments"]              = new GuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight.solid, "comments");
@@ -76,6 +77,7 @@ function GuiIcons(icon) {
     this.icon_map["toggle_on"]             = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-on");
     this.icon_map["tools"]                 = new GuiIconDefinition(this.icon, "Tools", this.weight.light, "tools");
     this.icon_map["trash"]                 = new GuiIconDefinition(this.icon, "Trash", this.weight.solid, "trash-alt");
+    this.icon_map["unchecked_box"]         = new GuiIconDefinition(this.icon, "Unchecked Box", this.weight.regular,"square");
     this.icon_map["undo"]                  = new GuiIconDefinition(this.icon, "Undo", this.weight.regular, "undo");
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
     this.icon_map["unlink"]                = new GuiIconDefinition(this.icon, "Unlink", this.weight.regular, "unlink");
