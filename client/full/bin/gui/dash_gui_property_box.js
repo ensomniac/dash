@@ -319,7 +319,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             var row = new d.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
-                row_details["label_text"],
+                row_details["default_value"] || row_details["label_text"],
                 combo_options || "Save",
                 _callback,
                 self,
