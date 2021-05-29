@@ -170,7 +170,7 @@ function Dash(){
         String.prototype.Title = function () {
             try {
                 if (this.includes("_")) {
-                    var asset_path = this.replace("_", " ").toLowerCase().split(" ");
+                    var asset_path = this.replaceAll("_", " ").toLowerCase().split(" ");
 
                     for (var i = 0; i < asset_path.length; i++) {
                         asset_path[i] = asset_path[i].charAt(0).toUpperCase() + asset_path[i].slice(1);
