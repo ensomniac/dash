@@ -7,7 +7,7 @@ function DashGuiInput(placeholder_text, color){
 
     this.html = $("<div></div>");
 
-    if (this.placeholder.toLowerCase().includes("password")) {
+    if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
     }
     else {
