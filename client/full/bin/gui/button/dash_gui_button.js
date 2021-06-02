@@ -209,7 +209,14 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetFileUploader = function(api, params, optional_on_start_callback){
+    this.SetFileUploader = function (api, params, optional_on_start_callback) {
+        if (!params["token"]) {
+            var token = Dash.Local.Get("token");
+
+            if (token) {
+                params["token"] = token;
+            }
+        }
 
         this.file_upload_type = "file";
         this.file_upload_api = api;
@@ -217,31 +224,30 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (this.file_uploader) {
             this.file_uploader.html.remove();
-        };
+        }
 
         if (optional_on_start_callback) {
             this.on_file_upload_start_callback = optional_on_start_callback.bind(this.bind);
         }
+
         else {
             this.on_file_upload_start_callback = null;
-        };
+        }
 
         this.file_uploader = null;
 
-        (function(self){
-            self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function(response){
+        (function (self) {
+            self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function (response) {
                 self.on_file_upload_response(response);
             }, function(){
 
                 if (self.on_file_upload_start_callback) {
                     self.on_file_upload_start_callback();
-                };
-
+                }
             });
         })(this);
 
         this.html.append(this.file_uploader.html);
-
     };
 
     this.on_file_upload_response = function(response){
