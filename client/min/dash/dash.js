@@ -21363,14 +21363,14 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.setup_styles();
 }
 
-
-function DashGuiHeader(label_text, color){
+function DashGuiHeader (label_text, color, include_border=true) {
     this.label_text = label_text;
-    this.html = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
-    this.border = $("<div></div>");
     this.color = color || Dash.Color.Light;
-    this.setup_styles = function(){
+    this.include_border = include_border;
+    this.html = $("<div></div>");
+    this.border = $("<div></div>");
+    this.label = $("<div>" + this.label_text + "</div>");
+    this.setup_styles = function () {
         this.html.append(this.label);
         this.html.append(this.border);
         this.html.css({
@@ -21384,20 +21384,22 @@ function DashGuiHeader(label_text, color){
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
         });
-        this.border.css({
-            "position": "absolute",
-            "left": -Dash.Size.Padding*0.25,
-            "top": 0,
-            "bottom": 0,
-            "width": Dash.Size.Padding*0.5,
-            "background": this.color.AccentGood,
-        });
+        if (this.include_border) {
+            this.border.css({
+                "position": "absolute",
+                "left": -Dash.Size.Padding * 0.25,
+                "top": 0,
+                "bottom": 0,
+                "width": Dash.Size.Padding * 0.5,
+                "background": this.color.AccentGood,
+            });
+        }
     };
-    this.SetText = function(label_text){
+    this.SetText = function (label_text) {
         this.label.text(label_text);
     };
     this.setup_styles();
-};
+}
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
     this.label              = label;
