@@ -251,8 +251,8 @@ class __Utils:
         url_root = f"https://{dash_context['domain']}/local/"
         url_root += img_root.split(f"/{dash_context['asset_path']}/local/")[-1]
 
-        thumb_url = f"{url_root}{img_data['id']}_thb.jpg"
-        orig_url = f"{url_root}{img_data['id']}_orig.png"
+        thumb_url = f"{url_root}/{img_data['id']}_thb.jpg"
+        orig_url = f"{url_root}/{img_data['id']}_orig.png"
 
         img_data["thumb_url"] = thumb_url
         img_data["orig_url"] = orig_url
