@@ -17648,7 +17648,7 @@ function Dash(){
     this.Local = new DashLocal();
     this.Math = new DashMath();
     this.Color = new DashColor();
-    this.Size = new DashSize();
+    this.Size = new DashSize(this.IsMobile);
     this.User = new DashUser();
     this.Gui = new DashGui();
     this.View = new DashView();
@@ -17900,13 +17900,21 @@ function DashUser(){
 };
 
 
-function DashSize(){
+function DashSize(is_mobile){
     this.Padding = 10;
     this.Stroke = 3;
     this.RowHeight = 20;
     this.ButtonHeight = this.RowHeight + (this.Padding);
     this.ColumnWidth = 150;
     this.BorderRadius = 3;
+    if (is_mobile) {
+        this.Padding = 20;
+        this.Stroke = 6;
+        this.RowHeight = 40;
+        this.ButtonHeight = this.RowHeight + (this.Padding);
+        this.ColumnWidth = 300;
+        this.BorderRadius = 3;
+    };
 };
 
 
@@ -18494,6 +18502,16 @@ function DashColor(){
             if (cstr.opacity != null) alpha /= 100
         };
         return [parts[0], parts[1], parts[2], alpha, space]
+    };
+    this.SetPlaceholderColor = function(input_html, placeholder_color){
+        // This function will set the placeholder text for an input element
+        var class_name = "placeholder_inline_style_" + parseInt(Math.random()*1000000);
+        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
+        var node = document.createElement("style");
+        node.innerHTML = style_str;
+        document.body.appendChild(node);
+        input_html.addClass(class_name);
+        return input_html;
     };
     this.setup_color_sets();
 };

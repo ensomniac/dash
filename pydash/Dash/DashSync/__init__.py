@@ -24,6 +24,7 @@ except:
 class DashSync:
     def __init__(self):
         print("\nDash Sync\n")
+
         SyncUtils.CheckForRunningProcess("dashsync")
         self.packages = SyncUtils.GetServerSyncPackages()
         self.sync_threads = []

@@ -651,6 +651,22 @@ function DashColor(){
 
     };
 
+    this.SetPlaceholderColor = function(input_html, placeholder_color){
+        // This function will set the placeholder text for an input element
+
+        var class_name = "placeholder_inline_style_" + parseInt(Math.random()*1000000);
+        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
+        var node = document.createElement("style");
+
+        node.innerHTML = style_str;
+        document.body.appendChild(node);
+
+        input_html.addClass(class_name);
+
+        return input_html;
+
+    };
+
     this.setup_color_sets();
 
 };

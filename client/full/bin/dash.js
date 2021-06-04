@@ -11,7 +11,7 @@ function Dash(){
     this.Local = new DashLocal();
     this.Math = new DashMath();
     this.Color = new DashColor();
-    this.Size = new DashSize();
+    this.Size = new DashSize(this.IsMobile);
     this.User = new DashUser();
     this.Gui = new DashGui();
     this.View = new DashView();
