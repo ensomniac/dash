@@ -1,13 +1,10 @@
-
-function DashGuiInput(placeholder_text, color){
-
+function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
     this.column_width = window.ColumnWidth || (d.Size.RowHeight*5);
     this.color = color || Dash.Color.Light;
-
     this.html = $("<div></div>");
 
-    if (this.placeholder.toLowerCase().includes("password")) {
+    if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
     }
     else {

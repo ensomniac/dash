@@ -189,6 +189,82 @@ class __Utils:
         message.set_body_html(msg)
         message.send()
 
+    def UploadImage(self, dash_context, user, img_root, img_file, nested=False):
+        from PIL import Image
+        from io import BytesIO
+        from datetime import datetime
+        from Dash.LocalStorage import Write
+
+        img = Image.open(BytesIO(img_file))
+        img = img.convert("RGB")
+
+        img_data = {}
+        img_data["id"] = self.GetRandomID()
+        img_data["orig_width"] = img.size[0]
+        img_data["orig_height"] = img.size[0]
+        img_data["orig_aspect"] = img.size[0] / float(img.size[1])
+        img_data["uploaded_by"] = user["email"]
+        img_data["uploaded_on"] = datetime.now().isoformat()
+
+        if nested:
+            img_root = os.path.join(img_root, img_data["id"])
+
+        os.makedirs(img_root, exist_ok=True)
+
+        orig_path = os.path.join(img_root, f"{img_data['id']}_orig.png")
+        thumb_path = os.path.join(img_root, f"{img_data['id']}_thb.jpg")
+        data_path = os.path.join(img_root, f"{img_data['id']}.json")
+
+        img.save(orig_path)
+
+        size = img.size[0]
+        thumb_size = 512
+
+        if img.size[0] != img.size[1]:
+            if img.size[0] > img.size[1]:  # Wider
+                size = img.size[1]
+                x = int((img.size[0]*0.5) - (size*0.5))
+
+                img = img.crop((
+                    x,         # x start
+                    0,         # y start
+                    x + size,  # x + width
+                    size       # y + height
+                ))
+            else:  # Taller
+                size = img.size[0]
+                y = int((img.size[1]*0.5) - (size*0.5))
+
+                img = img.crop((
+                    0,        # x start
+                    y,        # y start
+                    size,     # x + width
+                    y + size  # y + height
+                ))
+
+        if size > thumb_size:
+            img = img.resize((thumb_size, thumb_size), Image.ANTIALIAS)
+            size = thumb_size
+
+        img.save(thumb_path)
+
+        url_root = f"https://{dash_context['domain']}/local/"
+        url_root += img_root.split(f"/{dash_context['asset_path']}/local/")[-1]
+
+        thumb_url = f"{url_root}/{img_data['id']}_thb.jpg"
+        orig_url = f"{url_root}/{img_data['id']}_orig.png"
+
+        img_data["thumb_url"] = thumb_url
+        img_data["orig_url"] = orig_url
+
+        img_data["width"] = size
+        img_data["height"] = size
+        img_data["aspect"] = 1
+
+        Write(data_path, img_data)
+
+        return img_data
+
     @property
     def LocalPackages(self):
         # Andrew - I'm going to be moving these config objects

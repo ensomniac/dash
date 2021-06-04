@@ -28,7 +28,8 @@ class ApiUsers:
         self.Add(self.upload_image,    requires_authentication=True)
 
     def upload_image(self):
-        # TODO: Move this into the core Users.py module
+        # TODO: Update this to use Dash.Utils UploadImage, then move this into the core Users.py module
+
         from Dash import Users
         from PIL import Image
         import io
@@ -189,5 +190,3 @@ class ApiUsers:
         user_data["conformed"] = True
 
         return user_data
-
-
