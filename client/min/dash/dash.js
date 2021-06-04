@@ -22720,6 +22720,7 @@ class DashGuiLayoutTabs {
     this.all_content = [];
     this.selected_index = -1;
     this.size = Dash.Size.ColumnWidth; // Thickness
+    this.current_index = null;
     this.setup_styles = function(){
         this.html.append(this.list_backing);
         this.html.append(this.list_top);
@@ -22872,11 +22873,15 @@ class DashGuiLayoutTabs {
         };
         this.LoadIndex(last_index);
     };
+    this.GetCurrentIndex = function () {
+        return this.current_index;
+    };
     this.LoadIndex = function(index){
         if (index > this.all_content.length-1) {
             return;
         };
         d.Local.Set("sidebar_index_" + this.recall_id, index);
+        this.current_index = index;
         var button = null;
         for (var i in this.all_content) {
             var content_data = this.all_content[i];
