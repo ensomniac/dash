@@ -54,6 +54,7 @@ function GuiIcons(icon) {
     this.icon_map["exec"]                  = new GuiIconDefinition(this.icon, "Executive", this.weight.light, "business-time");
     this.icon_map["expand"]                = new GuiIconDefinition(this.icon, "Expand View", this.weight.regular, "expand-alt");
     this.icon_map["file"]                  = new GuiIconDefinition(this.icon, "File", this.weight.light, "file");
+    this.icon_map["flag"]                  = new GuiIconDefinition(this.icon, "Flag", this.weight.solid, "flag-alt");
     this.icon_map["gear"]                  = new GuiIconDefinition(this.icon, "Gear", this.weight.regular, "cog");
     this.icon_map["goal_reply"]            = new GuiIconDefinition(this.icon, "Goal Reply", this.weight.solid, "reply");
     this.icon_map["group"]                 = new GuiIconDefinition(this.icon, "Group", this.weight.solid, "layer-group");
