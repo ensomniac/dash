@@ -125,6 +125,42 @@ function DashGui() {
         return html;
     };
 
+    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#ff0000") {
+        if (!dash_color) {
+            dash_color = Dash.Color.Light;
+        }
+
+        callback = callback.bind(binder);
+
+        var color_picker = {};
+        color_picker["html"] = $("<div></div>");
+        color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
+        color_picker["input"] = $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>");
+
+        color_picker.label.css({
+            "font-family": "sans_serif_normal",
+            "color": dash_color.Text || "black"
+        });
+
+        color_picker.input.css({
+            "margin-left": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+            "font-family": "sans_serif_normal",
+            "color": dash_color.Text || "black"
+        });
+
+        color_picker.html.append(color_picker.label);
+        color_picker.html.append(color_picker.input);
+
+        (function (input, callback) {
+            input.on("change", function () {
+                callback(color_picker.input.val());
+            });
+        })(color_picker.input, callback);
+
+        return color_picker;
+    };
+
     this.AddTopRightDeleteButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
         var icon_id = "trash";
 
