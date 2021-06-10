@@ -17669,7 +17669,16 @@ function Dash(){
         return time_ago;
     };
     this.ReadableDateTime = function (iso_string) {
+        var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
+        if (this.Context["domain"] === "altona.io") {
+            tz_label = "EST";
+            dt.setHours(dt.getHours() - 4);
+        }
+        else if (this.Context["domain"] === "authentic.tools") {
+            tz_label = "PST";
+            dt.setHours(dt.getHours() - 7);
+        }
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
         var readable = date + " at " + time;
@@ -17686,7 +17695,8 @@ function Dash(){
             }
         }
         // Return readable without seconds
-        return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        return readable + " " + tz_label;
     };
     this.IsValidEmail = function (str) {
         if (typeof str !== "string") {
