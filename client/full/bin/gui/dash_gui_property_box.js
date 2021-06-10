@@ -282,6 +282,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         })(this, row, selected_key, property_key, combo_options, bool);
 
+        return row;
     };
 
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
