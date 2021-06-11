@@ -23138,21 +23138,21 @@ function DashGuiList(binder, selected_callback, column_config, color){
     this.setup_styles();
 };
 
-function DashGuiListRow(list, arbitrary_id){
-    this.html = $("<div></div>");
-    this.highlight = $("<div></div>");
-    this.selected_highlight = $("<div></div>");
-    this.expand_content = $("<div></div>");
-    this.column_box = $("<div></div>");
-    this.expanded_highlight = null;
+function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
-    this.color = this.list.color;
-    this.id = arbitrary_id;
     this.columns = [];
+    this.is_shown = true;
+    this.id = arbitrary_id;
     this.is_selected = false;
     this.is_expanded = false;
-    this.is_shown = true;
-    this.setup_styles = function(){
+    this.color = this.list.color;
+    this.expanded_highlight = null;
+    this.html = $("<div></div>");
+    this.highlight = $("<div></div>");
+    this.column_box = $("<div></div>");
+    this.expand_content = $("<div></div>");
+    this.selected_highlight = $("<div></div>");
+    this.setup_styles = function () {
         // this.html.append(this.expand_content);
         this.html.append(this.highlight);
         this.html.append(this.selected_highlight);
@@ -23205,7 +23205,7 @@ function DashGuiListRow(list, arbitrary_id){
         this.setup_columns();
         this.setup_connections();
     };
-    this.create_expand_highlight = function(){
+    this.create_expand_highlight = function () {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
         this.expanded_highlight.css({
             "background": this.color.BackgroundRaised,
@@ -23221,38 +23221,37 @@ function DashGuiListRow(list, arbitrary_id){
         });
         this.html.prepend(this.expanded_highlight);
     };
-    this.Hide = function(){
+    this.Hide = function () {
         if (!this.is_shown) {
             return;
-        };
+        }
         this.is_shown = false;
         this.html.css("display", "none");
     };
-    this.Show = function(){
+    this.Show = function () {
         if (this.is_shown) {
             return;
-        };
+        }
         this.is_shown = true;
         this.html.css("display", "block");
     };
-    this.Update = function(){
+    this.Update = function () {
         for (var i in this.columns) {
             this.columns[i].Update();
-        };
+        }
     };
+    // Expand an html element below this row
     this.Expand = function(html){
-        // Expand an html element below this row
         if (this.is_expanded) {
             console.log("Already expanded");
             this.Collapse();
             return;
-        };
-        this.is_expanded = true;
+        }
         this.html.css("z-index", 2000);
         if (!this.expanded_highlight) {
             this.create_expand_highlight();
-        };
-        this.expanded_highlight.stop().animate({"opacity": 1}, 300);
+        }
+        this.expanded_highlight.stop().animate({"opacity": 1}, 270);
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
         this.expand_content.stop().css({
             "overflow-y": "auto",
@@ -23267,37 +23266,38 @@ function DashGuiListRow(list, arbitrary_id){
             "overflow-y": "hidden",
         });
         (function(self){
-            self.expand_content.animate({"height": target_size}, 200, function(){
+            self.expand_content.animate({"height": target_size}, 180, function () {
                 self.expand_content.css({"overflow-y": "auto"});
+                self.is_expanded = true;
             });
         })(this);
     };
-    this.Collapse = function(){
+    this.Collapse = function () {
         if (!this.is_expanded) {
             return;
-        };
-        this.is_expanded = false;
+        }
         this.html.css("z-index", "initial");
         if (this.expanded_highlight) {
-            this.expanded_highlight.stop().animate({"opacity": 0}, 300);
-        };
-        var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
-        var target_height = 0;
+            this.expanded_highlight.stop().animate({"opacity": 0}, 270);
+        }
+        // var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
+        // var target_height = 0;
         this.expand_content.stop().css({
             "overflow-y": "hidden",
         });
         (function(self){
-            self.expand_content.animate({"height": 0}, 200, function(){
+            self.expand_content.animate({"height": 0}, 180, function () {
                 self.expand_content.stop().css({
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
-                self.expanded_highlight.stop().animate({"opacity": 0}, 150);
+                self.expanded_highlight.stop().animate({"opacity": 0}, 135);
                 self.expand_content.empty();
+                self.is_expanded = false;
             });
         })(this);
     };
-    this.SetSelected = function(is_selected){
+    this.SetSelected = function (is_selected) {
         // this.is_selected = is_selected;
         // if (this.is_selected) {
         //     this.selected_highlight.stop().animate({"opacity": 1}, 100);
@@ -23306,22 +23306,22 @@ function DashGuiListRow(list, arbitrary_id){
         //     this.selected_highlight.stop().animate({"opacity": 0}, 250);
         // };
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.mouseenter(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
                 self.highlight.stop().animate({"opacity": 1}, 100);
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 if (!self.is_expanded) {
                     self.highlight.stop().animate({"opacity": 0}, 250);
-                };
+                }
             });
-            self.column_box.click(function(){
+            self.column_box.on("click", function () {
                 self.list.SetSelection(self.id);
             });
         })(this);
     };
-    this.setup_columns = function(){
+    this.setup_columns = function () {
         var left_aligned = true;
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
@@ -23338,10 +23338,10 @@ function DashGuiListRow(list, arbitrary_id){
                 var column = new DashGuiListRowColumn(this, column_config_data);
                 this.column_box.append(column.html);
                 this.columns.push(column);
-            };
-        };
+            }
+        }
     };
-    this.get_spacer = function(){
+    this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
             "height": Dash.Size.RowHeight,
@@ -23360,7 +23360,7 @@ function DashGuiListRow(list, arbitrary_id){
         return divider_line.html;
     };
     this.setup_styles();
-};
+}
 
 function DashGuiListRowColumn(list_row, column_config_data){
     this.list_row = list_row;
