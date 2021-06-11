@@ -16,7 +16,12 @@ function GuiIcons(icon) {
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
     this.icon_map["arrow_left"]            = new GuiIconDefinition(this.icon, "Arrow Left", this.weight.regular, "angle-left", 1.5);
+    this.icon_map["arrow_left_alt"]        = new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight.regular, "arrow-left");
+    this.icon_map["arrow_left_long"]       = new GuiIconDefinition(this.icon, "Arrow Left Long", this.weight.regular, "long-arrow-left");
+    this.icon_map["arrow_left_circled"]    = new GuiIconDefinition(this.icon, "Arrow Left Circled", this.weight.light, "arrow-circle-left");
+    this.icon_map["arrow_left_from_right"] = new GuiIconDefinition(this.icon, "Arrow Left From Right", this.weight.regular, "arrow-from-right");
     this.icon_map["arrow_right"]           = new GuiIconDefinition(this.icon, "Arrow Right", this.weight.regular, "angle-right", 1.5);
+    this.icon_map["arrow_to_left"]         = new GuiIconDefinition(this.icon, "Arrow To Left", this.weight.regular, "arrow-to-left");
     this.icon_map["arrow_up"]              = new GuiIconDefinition(this.icon, "Arrow Up", this.weight.regular, "angle-up", 1.5);
     this.icon_map["award"]                 = new GuiIconDefinition(this.icon, "Award", this.weight.regular, "award");
     this.icon_map["browser_window"]        = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "window");

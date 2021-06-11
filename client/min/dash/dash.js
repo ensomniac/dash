@@ -1,4 +1,4 @@
-function DashIcon(color, icon_name, container_size, icon_size_mult) {
+function DashIcon (color, icon_name, container_size, icon_size_mult) {
     this.color = color || Dash.Color.Light;
     this.theme = "light";
     this.html = $("<div class='GuiIcon'></div>");
@@ -6,16 +6,13 @@ function DashIcon(color, icon_name, container_size, icon_size_mult) {
     this.name = icon_name || "unknown";
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult || 1;
-    this.icon_definition = GuiIcons(this);
+    this.icon_definition = new GuiIcons(this);
     if (!this.color.Text) {
-        console.log("Error: Incorrect color object passed to DashIcon:");
-        console.log(this.color);
+        console.log("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
         debugger;
-    };
-    this.setup_styles = function(){
-        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
-        this.html.append(this.icon_html);
+    }
+    this.setup_styles = function () {
         this.html.css({
             "width": this.size,
             "height": this.size,
@@ -24,35 +21,35 @@ function DashIcon(color, icon_name, container_size, icon_size_mult) {
             "cursor": "pointer",
             "-webkit-user-select": "none",
         });
+        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
+        this.html.append(this.icon_html);
     };
-    this.update = function(icon_id){
+    this.update = function (icon_id) {
         this.id = icon_id;
         this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
         this.default_size = ICON_MAP["icons"][this.id][1];
     };
     this.setup_styles();
-};
+}
 
-function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult){
-    // fa_styles
-    // r = regular
-    // s = solid
-    // l = light
-    // b = brands
-    // fa_styles
+function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult) {
+    // FA Styles:
+    //     r = regular
+    //     s = solid
+    //     l = light
+    //     b = brands
     this.icon = icon;
     this.label = label || "";
     this.fa_style = fa_style;
     this.fa_id = fa_id;
     this.left_offset_mult = left_offset_mult || 0;
     this.top_offset_mult = top_offset_mult || 0;
-    this.get_class = function(){
-        var icon_class = 'fa' + this.fa_style + ' fa-' + this.fa_id + '';
-        return icon_class;
+    this.get_class = function () {
+        return "fa" + this.fa_style + " fa-" + this.fa_id + "";
     };
-    this.get_css = function(){
-        var icon_fnt_size = this.icon.size*this.icon.size_mult;
+    this.get_css = function () {
+        var icon_fnt_size = this.icon.size * this.icon.size_mult;
         var icon_css = {
             "position": "absolute",
             "top": 0,
@@ -64,18 +61,16 @@ function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_
             "font-size": icon_fnt_size + "px",
             "line-height": this.icon.size + "px",
             "text-align": "center",
-            "color": this.icon.color.Text,
-            // "color": "white",
+            "color": this.icon.color.Text
         };
         if (!this.icon.color.Text) {
-            console.log("Error: Incorrect color object passed to DashIcon:");
-            console.log(this.color);
+            console.log("Error: Incorrect color object passed to DashIcon:", this.color);
             console.trace();
             debugger;
-        };
+        }
         return icon_css;
     };
-};
+}
 
 function GuiIcons(icon) {
     this.icon = icon;
@@ -92,7 +87,12 @@ function GuiIcons(icon) {
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
     this.icon_map["arrow_left"]            = new GuiIconDefinition(this.icon, "Arrow Left", this.weight.regular, "angle-left", 1.5);
+    this.icon_map["arrow_left_alt"]        = new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight.regular, "arrow-left");
+    this.icon_map["arrow_left_long"]       = new GuiIconDefinition(this.icon, "Arrow Left Long", this.weight.regular, "long-arrow-left");
+    this.icon_map["arrow_left_circled"]    = new GuiIconDefinition(this.icon, "Arrow Left Circled", this.weight.light, "arrow-circle-left");
+    this.icon_map["arrow_left_from_right"] = new GuiIconDefinition(this.icon, "Arrow Left From Right", this.weight.regular, "arrow-from-right");
     this.icon_map["arrow_right"]           = new GuiIconDefinition(this.icon, "Arrow Right", this.weight.regular, "angle-right", 1.5);
+    this.icon_map["arrow_to_left"]         = new GuiIconDefinition(this.icon, "Arrow To Left", this.weight.regular, "arrow-to-left");
     this.icon_map["arrow_up"]              = new GuiIconDefinition(this.icon, "Arrow Up", this.weight.regular, "angle-up", 1.5);
     this.icon_map["award"]                 = new GuiIconDefinition(this.icon, "Award", this.weight.regular, "award");
     this.icon_map["browser_window"]        = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "window");
@@ -20004,37 +20004,38 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
 };
 
 
-
-function DashGuiIconButton(icon_name, callback, binder, color, options={}){
+function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon = null;
-    this.icon_height = null;
+    this.icon_height = options["container_size"] || null;
     this.icon_name = icon_name;
     this.icon_default_opacity = 0.8;
     this.icon_size_mult = options["size_mult"] || 1.0;
+    this.style = options["style"] || "default";
     DashGuiButton.call(this, "", callback, binder, color, options);
-    this.setup_icon = function(){
-        if (this.style == "toolbar") {
-            this.icon_height = Dash.Size.RowHeight;
+    this.setup_icon = function () {
+        if (this.style === "toolbar") {
+            if (!this.icon_height) {
+                this.icon_height = Dash.Size.RowHeight;
+            }
             this.icon_size_mult = 0.75;
             this.setup_toolbar_icon();
         }
-        else if ("default") {
-            this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
+        else if (this.style === "default") {
+            if (!this.icon_height) {
+                this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
+            }
             this.setup_default_icon();
         }
         else {
-            this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
+            if (!this.icon_height) {
+                this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
+            }
             console.log("Warning: Unhandled button / icon style: " + this.style);
             this.setup_default_icon();
-        };
-    }
-    this.setup_toolbar_icon = function(){
-        this.icon = new Dash.Gui.Icon(
-            this.color,          // Dash Color
-            this.icon_name,      // Icon name / asset path
-            this.icon_height,    // Height...
-            this.icon_size_mult, // Size mult for the icon, within the container
-        );
+        }
+    };
+    this.setup_toolbar_icon = function () {
+        this.icon = this.get_icon();
         this.highlight.css({
             "background": this.color.AccentGood,
             "top": "auto",
@@ -20049,13 +20050,8 @@ function DashGuiIconButton(icon_name, callback, binder, color, options={}){
         });
         this.html.append(this.icon.html);
     };
-    this.setup_default_icon = function(){
-        this.icon = new Dash.Gui.Icon(
-            this.color,          // Dash Color
-            this.icon_name,      // Icon name / asset path
-            this.icon_height,    // Height...
-            this.icon_size_mult, // Size mult for the icon, within the container
-        );
+    this.setup_default_icon = function () {
+        this.icon = this.get_icon();
         this.highlight.css({
             "background": "rgba(0, 0, 0, 0)",
         });
@@ -20067,36 +20063,16 @@ function DashGuiIconButton(icon_name, callback, binder, color, options={}){
         });
         this.html.append(this.icon.html);
     };
-    this.on_hover_in = function(){
-        this.highlight.stop().animate({"opacity": 1}, 50);
-        this.icon.html.stop().animate({"opacity": 1}, 50);
+    this.get_icon = function () {
+        return new Dash.Gui.Icon(
+            this.color,          // Dash Color
+            this.icon_name,      // Icon name / FA asset path
+            this.icon_height,    // Container size
+            this.icon_size_mult, // Size mult for the icon, within the container
+        );
     };
-    this.on_hover_out = function(){
-        this.highlight.stop().animate({"opacity": 0}, 100);
-        this.icon.html.stop().animate({"opacity": this.icon_default_opacity}, 100);
-    };
-    // this.on_hover_in = function(){
-    //     this.highlight.stop().animate({"opacity": 1}, 50);
-    //     if (this.is_selected) {
-    //         this.label.css("color", this.color_set.Text.SelectedHover);
-    //     }
-    //     else {
-    //         this.label.css("color", this.color_set.Text.BaseHover);
-    //     };
-    // };
-    // this.on_hover_out = function(){
-    //     this.highlight.stop().animate({"opacity": 0}, 100);
-    //     if (this.is_selected) {
-    //         this.label.css("color", this.color_set.Text.Selected);
-    //     }
-    //     else {
-    //         this.label.css("color", this.color_set.Text.Base);
-    //     };
-    // };
-
-
     this.setup_icon();
-};
+}
 
 
 function DashGuiButtonStyleDefault(){
