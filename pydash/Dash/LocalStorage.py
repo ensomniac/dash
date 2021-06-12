@@ -279,6 +279,23 @@ class DashLocalStorage:
                     obj_id
                 )
 
+    def SetProperties(self, obj_id, properties, create=False):
+        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
+
+        if not obj_id:
+            raise Exception("Missing 'obj_id' error x8932")
+
+        data = self.GetData(obj_id, create=create)
+        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_on"] = datetime.now().isoformat()
+
+        for key in properties:
+            data[key] = properties[key]
+
+        self.WriteData(obj_id, data)
+
+        return data
+
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         obj_id = obj_id or Utils.Global.RequestData["obj_id"]
         key = key or Utils.Global.RequestData["key"]
@@ -424,6 +441,10 @@ def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_ke
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).SetProperty(obj_id, key=key, value=value, create=create)
+
+
+def SetProperties(dash_context, store_path, obj_id, properties={}, create=False, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).SetProperties(obj_id, properties, create=create)
 
 
 def GetRecordCount(dash_context, store_path, nested=False):

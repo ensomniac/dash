@@ -130,5 +130,19 @@ class Collection:
         else:
             return updated_data
 
+    def SetProperties(self, obj_id, properties, return_all_data=True):
+        updated_data = LocalStorage.SetProperties(
+            self.Ctx,
+            self.store_path,
+            obj_id,
+            properties,
+            nested=self.nested,
+        )
+
+        if return_all_data:
+            return self.All
+        else:
+            return updated_data
+
     def Clear(self):
         rmtree(self.Root, True)
