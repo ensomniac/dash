@@ -1,4 +1,4 @@
-function DashIcon(color, icon_name, container_size, icon_size_mult) {
+function DashIcon (color, icon_name, container_size, icon_size_mult) {
     this.color = color || Dash.Color.Light;
     this.theme = "light";
     this.html = $("<div class='GuiIcon'></div>");
@@ -6,16 +6,13 @@ function DashIcon(color, icon_name, container_size, icon_size_mult) {
     this.name = icon_name || "unknown";
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult || 1;
-    this.icon_definition = GuiIcons(this);
+    this.icon_definition = new GuiIcons(this);
     if (!this.color.Text) {
-        console.log("Error: Incorrect color object passed to DashIcon:");
-        console.log(this.color);
+        console.log("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
         debugger;
-    };
-    this.setup_styles = function(){
-        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
-        this.html.append(this.icon_html);
+    }
+    this.setup_styles = function () {
         this.html.css({
             "width": this.size,
             "height": this.size,
@@ -24,35 +21,35 @@ function DashIcon(color, icon_name, container_size, icon_size_mult) {
             "cursor": "pointer",
             "-webkit-user-select": "none",
         });
+        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
+        this.html.append(this.icon_html);
     };
-    this.update = function(icon_id){
+    this.update = function (icon_id) {
         this.id = icon_id;
         this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
         this.default_size = ICON_MAP["icons"][this.id][1];
     };
     this.setup_styles();
-};
+}
 
-function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult){
-    // fa_styles
-    // r = regular
-    // s = solid
-    // l = light
-    // b = brands
-    // fa_styles
+function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult) {
+    // FA Styles:
+    //     r = regular
+    //     s = solid
+    //     l = light
+    //     b = brands
     this.icon = icon;
     this.label = label || "";
     this.fa_style = fa_style;
     this.fa_id = fa_id;
     this.left_offset_mult = left_offset_mult || 0;
     this.top_offset_mult = top_offset_mult || 0;
-    this.get_class = function(){
-        var icon_class = 'fa' + this.fa_style + ' fa-' + this.fa_id + '';
-        return icon_class;
+    this.get_class = function () {
+        return "fa" + this.fa_style + " fa-" + this.fa_id + "";
     };
-    this.get_css = function(){
-        var icon_fnt_size = this.icon.size*this.icon.size_mult;
+    this.get_css = function () {
+        var icon_fnt_size = this.icon.size * this.icon.size_mult;
         var icon_css = {
             "position": "absolute",
             "top": 0,
@@ -64,18 +61,16 @@ function GuiIconDefinition(icon, label, fa_style, fa_id, size_mult, left_offset_
             "font-size": icon_fnt_size + "px",
             "line-height": this.icon.size + "px",
             "text-align": "center",
-            "color": this.icon.color.Text,
-            // "color": "white",
+            "color": this.icon.color.Text
         };
         if (!this.icon.color.Text) {
-            console.log("Error: Incorrect color object passed to DashIcon:");
-            console.log(this.color);
+            console.log("Error: Incorrect color object passed to DashIcon:", this.color);
             console.trace();
             debugger;
-        };
+        }
         return icon_css;
     };
-};
+}
 
 function GuiIcons(icon) {
     this.icon = icon;
@@ -92,7 +87,12 @@ function GuiIcons(icon) {
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
     this.icon_map["arrow_left"]            = new GuiIconDefinition(this.icon, "Arrow Left", this.weight.regular, "angle-left", 1.5);
+    this.icon_map["arrow_left_alt"]        = new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight.regular, "arrow-left");
+    this.icon_map["arrow_left_long"]       = new GuiIconDefinition(this.icon, "Arrow Left Long", this.weight.regular, "long-arrow-left");
+    this.icon_map["arrow_left_circled"]    = new GuiIconDefinition(this.icon, "Arrow Left Circled", this.weight.light, "arrow-circle-left");
+    this.icon_map["arrow_left_from_right"] = new GuiIconDefinition(this.icon, "Arrow Left From Right", this.weight.regular, "arrow-from-right");
     this.icon_map["arrow_right"]           = new GuiIconDefinition(this.icon, "Arrow Right", this.weight.regular, "angle-right", 1.5);
+    this.icon_map["arrow_to_left"]         = new GuiIconDefinition(this.icon, "Arrow To Left", this.weight.regular, "arrow-to-left");
     this.icon_map["arrow_up"]              = new GuiIconDefinition(this.icon, "Arrow Up", this.weight.regular, "angle-up", 1.5);
     this.icon_map["award"]                 = new GuiIconDefinition(this.icon, "Award", this.weight.regular, "award");
     this.icon_map["browser_window"]        = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "window");
@@ -130,6 +130,7 @@ function GuiIcons(icon) {
     this.icon_map["exec"]                  = new GuiIconDefinition(this.icon, "Executive", this.weight.light, "business-time");
     this.icon_map["expand"]                = new GuiIconDefinition(this.icon, "Expand View", this.weight.regular, "expand-alt");
     this.icon_map["file"]                  = new GuiIconDefinition(this.icon, "File", this.weight.light, "file");
+    this.icon_map["flag"]                  = new GuiIconDefinition(this.icon, "Flag", this.weight.solid, "flag-alt");
     this.icon_map["gear"]                  = new GuiIconDefinition(this.icon, "Gear", this.weight.regular, "cog");
     this.icon_map["goal_reply"]            = new GuiIconDefinition(this.icon, "Goal Reply", this.weight.solid, "reply");
     this.icon_map["group"]                 = new GuiIconDefinition(this.icon, "Group", this.weight.solid, "layer-group");
@@ -17669,7 +17670,16 @@ function Dash(){
         return time_ago;
     };
     this.ReadableDateTime = function (iso_string) {
+        var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
+        if (this.Context["domain"] === "altona.io") {
+            tz_label = "EST";
+            dt.setHours(dt.getHours() - 4);
+        }
+        else if (this.Context["domain"] === "authentic.tools") {
+            tz_label = "PST";
+            dt.setHours(dt.getHours() - 7);
+        }
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
         var readable = date + " at " + time;
@@ -17686,7 +17696,8 @@ function Dash(){
             }
         }
         // Return readable without seconds
-        return readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        return readable + " " + tz_label;
     };
     this.IsValidEmail = function (str) {
         if (typeof str !== "string") {
@@ -19298,6 +19309,34 @@ function DashGui() {
         });
         return html;
     };
+    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#ff0000") {
+        if (!dash_color) {
+            dash_color = Dash.Color.Light;
+        }
+        callback = callback.bind(binder);
+        var color_picker = {};
+        color_picker["html"] = $("<div></div>");
+        color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
+        color_picker["input"] = $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>");
+        color_picker.label.css({
+            "font-family": "sans_serif_normal",
+            "color": dash_color.Text || "black"
+        });
+        color_picker.input.css({
+            "margin-left": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+            "font-family": "sans_serif_normal",
+            "color": dash_color.Text || "black"
+        });
+        color_picker.html.append(color_picker.label);
+        color_picker.html.append(color_picker.input);
+        (function (input, callback) {
+            input.on("change", function () {
+                callback(color_picker.input.val());
+            });
+        })(color_picker.input, callback);
+        return color_picker;
+    };
     this.AddTopRightDeleteButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
         var icon_id = "trash";
         if (alt_icon_id && typeof alt_icon_id === "string") {
@@ -19343,29 +19382,29 @@ function DashGui() {
     };
 }
 
-
-function DashGuiLogin(on_login_binder, on_login_callback, color){
+function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
-    this.header_label = $("<div>" + d.Context["display_name"] + "</div>");
+    this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
     this.email_row = $("<div></div>");
     this.password_row = $("<div></div>");
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
     this.on_login_callback = null;
-    if (on_login_binder && on_login_callback){
+    
+    if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
-    };
-    this.setup_styles = function(){
-        this.login_button   = new d.Gui.Button("Login",                this.Login,      this, this.color);
-        this.reset_button   = new d.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
-        this.email_input    = new d.Gui.Input("email@" + d.Context["domain"], this.color);
-        this.password_input = new d.Gui.Input("Password", this.color);
+    }
+    this.setup_styles = function () {
+        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
+        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.password_input = new Dash.Gui.Input("Password", this.color);
         this.email_input.html.css({
-            "padding": Dash.Size.Padding*0.5,
+            "padding": Dash.Size.Padding * 0.5,
         });
         this.password_input.html.css({
-            "padding": Dash.Size.Padding*0.5,
+            "padding": Dash.Size.Padding * 0.5,
         });
         this.email_input.OnSubmit(this.Submit, this);
         this.password_input.OnSubmit(this.Submit, this);
@@ -19380,11 +19419,11 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
         this.login_box.append(this.button_bar);
         this.button_bar.append(this.reset_button.html);
         this.button_bar.append(this.login_button.html);
-        var login_box_width = window.outerWidth*0.5;
-        if (!d.IsMobile && login_box_width > 350) {
+        var login_box_width = window.outerWidth * 0.5;
+        if (!Dash.IsMobile && login_box_width > 350) {
             login_box_width = 350;
-        };
-        var login_box_height = (d.Size.RowHeight*4)+(d.Size.Padding*3);
+        }
+        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
         this.html.css({
             "left": 0,
             "top": 0,
@@ -19397,8 +19436,8 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
             "height": "auto",
             "margin-left": "auto",
             "margin-right": "auto",
-            "margin-top": d.Size.Padding*2,
-            "padding-bottom": d.Size.Padding*2,
+            "margin-top": Dash.Size.Padding * 2,
+            "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
             "border-radius": 4,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -19407,103 +19446,112 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
         this.header_label.css({
             "text-align": "center",
             "font-family": "sans_serif_bold",
-            "height": d.Size.RowHeight,
-            "line-height": d.Size.RowHeight + "px",
-            "padding": d.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding": Dash.Size.Padding,
         });
         this.button_bar.css({
             "display": "flex",
-            "height": d.Size.RowHeight,
+            "height": Dash.Size.RowHeight,
         });
         this.email_row.css({
-            "margin": d.Size.Padding,
+            "margin": Dash.Size.Padding,
             "margin-top": 0,
         });
         this.password_row.css({
-            "margin": d.Size.Padding,
+            "margin": Dash.Size.Padding,
             "margin-top": 0,
         });
         this.login_button.html.css({
-            "margin-left": d.Size.Padding,
+            "margin-left": Dash.Size.Padding,
             // "margin-top": 0,
-            // "padding": d.Size.Padding*0.5,
-            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
-            // "background": d.Color.Primary,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+            // "background": Dash.Color.Primary,
         });
         this.reset_button.html.css({
-            // "margin": d.Size.Padding,
-            "margin-left": d.Size.Padding,
+            // "margin": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
             // "margin-right": 0,
-            // "padding": d.Size.Padding*0.5,
-            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
         });
-        this.email_input.SetText(d.Local.Get("email") || "");
+        this.email_input.SetText(Dash.Local.Get("email") || "");
         this.show_login_box();
     };
-    this.show_login_box = function(){
+    this.show_login_box = function () {
         this.login_box.css({"opacity": 1});
     };
-    this.store_input = function(){
-        d.Local.Set("email", this.email_input.Text());
+    this.store_input = function () {
+        Dash.Local.Set("email", this.email_input.Text());
     };
-    this.Submit = function(){
+    this.Submit = function () {
         var email = this.email_input.Text();
         var pass = this.password_input.Text();
         if (email && pass) {
             this.Login();
         }
-        else {
-            this.ResetLogin();
-        };
+        // Disabling this to prevent accidental resets, better if they deliberately click the button
+        // else {
+        //     this.ResetLogin();
+        // }
     };
-    this.Login = function(){
+    this.Login = function () {
         var email = this.email_input.Text();
         var pass = this.password_input.Text();
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+            return;
+        }
         if (!pass) {
             alert("Please enter a valid password");
             return;
-        };
-        var api = "https://" + d.Context["domain"] + "/Users";
+        }
+        var api = "https://" + Dash.Context["domain"] + "/Users";
         var server_data = {};
         server_data["f"] = "login";
         server_data["email"] = email;
         server_data["pass"] = pass;
         this.login_button.Request(api, server_data, this.on_login_response, this);
     };
-    this.ResetLogin = function(){
+    this.ResetLogin = function () {
         var email = this.email_input.Text();
-        var api = "https://" + d.Context["domain"] + "/Users";
+        var api = "https://" + Dash.Context["domain"] + "/Users";
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+            return;
+        }
         var server_data = {};
         server_data["f"] = "reset";
         server_data["email"] = email;
         this.reset_button.Request(api, server_data, this.on_reset_response, this);
     };
-    this.on_reset_response = function(response){
+    this.on_reset_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
             return;
-        };
+        }
         if (response["success"]) {
             alert("Your password link has been sent to " + response["email"] + ". Click that link to receive a new temporary password and log in");
-        };
+        }
     };
-    this.on_login_response = function(response){
+    this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
+            
             return;
-        };
-        console.log("******* LOG IN *******");
-        console.log(response);
-        d.User.SetUserAuthentication(this.email_input.Text(), response);
-        (function(self){
-            self.html.animate({"opacity": 0}, 150, function(){
+        }
+        console.log("******* LOG IN *******", response);
+        Dash.User.SetUserAuthentication(this.email_input.Text(), response);
+        (function (self) {
+            self.html.animate({"opacity": 0}, 150, function () {
                 self.html.remove();
                 self.on_login_callback();
             });
         })(this);
     };
     this.setup_styles();
-};
+}
 
 
 function DashGuiButton(Label, Callback, Bind, color, options){
@@ -19959,37 +20007,38 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
 };
 
 
-
-function DashGuiIconButton(icon_name, callback, binder, color, options={}){
+function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon = null;
-    this.icon_height = null;
+    this.icon_height = options["container_size"] || null;
     this.icon_name = icon_name;
     this.icon_default_opacity = 0.8;
     this.icon_size_mult = options["size_mult"] || 1.0;
+    this.style = options["style"] || "default";
     DashGuiButton.call(this, "", callback, binder, color, options);
-    this.setup_icon = function(){
-        if (this.style == "toolbar") {
-            this.icon_height = Dash.Size.RowHeight;
+    this.setup_icon = function () {
+        if (this.style === "toolbar") {
+            if (!this.icon_height) {
+                this.icon_height = Dash.Size.RowHeight;
+            }
             this.icon_size_mult = 0.75;
             this.setup_toolbar_icon();
         }
-        else if ("default") {
-            this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
+        else if (this.style === "default") {
+            if (!this.icon_height) {
+                this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
+            }
             this.setup_default_icon();
         }
         else {
-            this.icon_height = this.html.height()-(Dash.Size.Padding * 1.2);
+            if (!this.icon_height) {
+                this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
+            }
             console.log("Warning: Unhandled button / icon style: " + this.style);
             this.setup_default_icon();
-        };
-    }
-    this.setup_toolbar_icon = function(){
-        this.icon = new Dash.Gui.Icon(
-            this.color,          // Dash Color
-            this.icon_name,      // Icon name / asset path
-            this.icon_height,    // Height...
-            this.icon_size_mult, // Size mult for the icon, within the container
-        );
+        }
+    };
+    this.setup_toolbar_icon = function () {
+        this.icon = this.get_icon();
         this.highlight.css({
             "background": this.color.AccentGood,
             "top": "auto",
@@ -20004,13 +20053,8 @@ function DashGuiIconButton(icon_name, callback, binder, color, options={}){
         });
         this.html.append(this.icon.html);
     };
-    this.setup_default_icon = function(){
-        this.icon = new Dash.Gui.Icon(
-            this.color,          // Dash Color
-            this.icon_name,      // Icon name / asset path
-            this.icon_height,    // Height...
-            this.icon_size_mult, // Size mult for the icon, within the container
-        );
+    this.setup_default_icon = function () {
+        this.icon = this.get_icon();
         this.highlight.css({
             "background": "rgba(0, 0, 0, 0)",
         });
@@ -20022,36 +20066,16 @@ function DashGuiIconButton(icon_name, callback, binder, color, options={}){
         });
         this.html.append(this.icon.html);
     };
-    this.on_hover_in = function(){
-        this.highlight.stop().animate({"opacity": 1}, 50);
-        this.icon.html.stop().animate({"opacity": 1}, 50);
+    this.get_icon = function () {
+        return new Dash.Gui.Icon(
+            this.color,          // Dash Color
+            this.icon_name,      // Icon name / FA asset path
+            this.icon_height,    // Container size
+            this.icon_size_mult, // Size mult for the icon, within the container
+        );
     };
-    this.on_hover_out = function(){
-        this.highlight.stop().animate({"opacity": 0}, 100);
-        this.icon.html.stop().animate({"opacity": this.icon_default_opacity}, 100);
-    };
-    // this.on_hover_in = function(){
-    //     this.highlight.stop().animate({"opacity": 1}, 50);
-    //     if (this.is_selected) {
-    //         this.label.css("color", this.color_set.Text.SelectedHover);
-    //     }
-    //     else {
-    //         this.label.css("color", this.color_set.Text.BaseHover);
-    //     };
-    // };
-    // this.on_hover_out = function(){
-    //     this.highlight.stop().animate({"opacity": 0}, 100);
-    //     if (this.is_selected) {
-    //         this.label.css("color", this.color_set.Text.Selected);
-    //     }
-    //     else {
-    //         this.label.css("color", this.color_set.Text.Base);
-    //     };
-    // };
-
-
     this.setup_icon();
-};
+}
 
 
 function DashGuiButtonStyleDefault(){
@@ -21178,6 +21202,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 "line-height": Dash.Size.RowHeight + "px",
             });
         })(this, row, selected_key, property_key, combo_options, bool);
+        return row;
     };
     this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
         if (this.get_data_cb) {
@@ -22723,6 +22748,7 @@ class DashGuiLayoutTabs {
     this.all_content = [];
     this.selected_index = -1;
     this.size = Dash.Size.ColumnWidth; // Thickness
+    this.current_index = null;
     this.setup_styles = function(){
         this.html.append(this.list_backing);
         this.html.append(this.list_top);
@@ -22875,11 +22901,15 @@ class DashGuiLayoutTabs {
         };
         this.LoadIndex(last_index);
     };
+    this.GetCurrentIndex = function () {
+        return this.current_index;
+    };
     this.LoadIndex = function(index){
         if (index > this.all_content.length-1) {
             return;
         };
         d.Local.Set("sidebar_index_" + this.recall_id, index);
+        this.current_index = index;
         var button = null;
         for (var i in this.all_content) {
             var content_data = this.all_content[i];
@@ -23087,21 +23117,21 @@ function DashGuiList(binder, selected_callback, column_config, color){
     this.setup_styles();
 };
 
-function DashGuiListRow(list, arbitrary_id){
-    this.html = $("<div></div>");
-    this.highlight = $("<div></div>");
-    this.selected_highlight = $("<div></div>");
-    this.expand_content = $("<div></div>");
-    this.column_box = $("<div></div>");
-    this.expanded_highlight = null;
+function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
-    this.color = this.list.color;
-    this.id = arbitrary_id;
     this.columns = [];
+    this.is_shown = true;
+    this.id = arbitrary_id;
     this.is_selected = false;
     this.is_expanded = false;
-    this.is_shown = true;
-    this.setup_styles = function(){
+    this.color = this.list.color;
+    this.expanded_highlight = null;
+    this.html = $("<div></div>");
+    this.highlight = $("<div></div>");
+    this.column_box = $("<div></div>");
+    this.expand_content = $("<div></div>");
+    this.selected_highlight = $("<div></div>");
+    this.setup_styles = function () {
         // this.html.append(this.expand_content);
         this.html.append(this.highlight);
         this.html.append(this.selected_highlight);
@@ -23154,7 +23184,7 @@ function DashGuiListRow(list, arbitrary_id){
         this.setup_columns();
         this.setup_connections();
     };
-    this.create_expand_highlight = function(){
+    this.create_expand_highlight = function () {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
         this.expanded_highlight.css({
             "background": this.color.BackgroundRaised,
@@ -23170,38 +23200,37 @@ function DashGuiListRow(list, arbitrary_id){
         });
         this.html.prepend(this.expanded_highlight);
     };
-    this.Hide = function(){
+    this.Hide = function () {
         if (!this.is_shown) {
             return;
-        };
+        }
         this.is_shown = false;
         this.html.css("display", "none");
     };
-    this.Show = function(){
+    this.Show = function () {
         if (this.is_shown) {
             return;
-        };
+        }
         this.is_shown = true;
         this.html.css("display", "block");
     };
-    this.Update = function(){
+    this.Update = function () {
         for (var i in this.columns) {
             this.columns[i].Update();
-        };
+        }
     };
+    // Expand an html element below this row
     this.Expand = function(html){
-        // Expand an html element below this row
         if (this.is_expanded) {
             console.log("Already expanded");
             this.Collapse();
             return;
-        };
-        this.is_expanded = true;
+        }
         this.html.css("z-index", 2000);
         if (!this.expanded_highlight) {
             this.create_expand_highlight();
-        };
-        this.expanded_highlight.stop().animate({"opacity": 1}, 300);
+        }
+        this.expanded_highlight.stop().animate({"opacity": 1}, 270);
         var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
         this.expand_content.stop().css({
             "overflow-y": "auto",
@@ -23216,37 +23245,38 @@ function DashGuiListRow(list, arbitrary_id){
             "overflow-y": "hidden",
         });
         (function(self){
-            self.expand_content.animate({"height": target_size}, 200, function(){
+            self.expand_content.animate({"height": target_size}, 180, function () {
                 self.expand_content.css({"overflow-y": "auto"});
+                self.is_expanded = true;
             });
         })(this);
     };
-    this.Collapse = function(){
+    this.Collapse = function () {
         if (!this.is_expanded) {
             return;
-        };
-        this.is_expanded = false;
+        }
         this.html.css("z-index", "initial");
         if (this.expanded_highlight) {
-            this.expanded_highlight.stop().animate({"opacity": 0}, 300);
-        };
-        var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
-        var target_height = 0;
+            this.expanded_highlight.stop().animate({"opacity": 0}, 270);
+        }
+        // var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
+        // var target_height = 0;
         this.expand_content.stop().css({
             "overflow-y": "hidden",
         });
         (function(self){
-            self.expand_content.animate({"height": 0}, 200, function(){
+            self.expand_content.animate({"height": 0}, 180, function () {
                 self.expand_content.stop().css({
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
-                self.expanded_highlight.stop().animate({"opacity": 0}, 150);
+                self.expanded_highlight.stop().animate({"opacity": 0}, 135);
                 self.expand_content.empty();
+                self.is_expanded = false;
             });
         })(this);
     };
-    this.SetSelected = function(is_selected){
+    this.SetSelected = function (is_selected) {
         // this.is_selected = is_selected;
         // if (this.is_selected) {
         //     this.selected_highlight.stop().animate({"opacity": 1}, 100);
@@ -23255,22 +23285,22 @@ function DashGuiListRow(list, arbitrary_id){
         //     this.selected_highlight.stop().animate({"opacity": 0}, 250);
         // };
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.mouseenter(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
                 self.highlight.stop().animate({"opacity": 1}, 100);
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 if (!self.is_expanded) {
                     self.highlight.stop().animate({"opacity": 0}, 250);
-                };
+                }
             });
-            self.column_box.click(function(){
+            self.column_box.on("click", function () {
                 self.list.SetSelection(self.id);
             });
         })(this);
     };
-    this.setup_columns = function(){
+    this.setup_columns = function () {
         var left_aligned = true;
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
@@ -23287,10 +23317,10 @@ function DashGuiListRow(list, arbitrary_id){
                 var column = new DashGuiListRowColumn(this, column_config_data);
                 this.column_box.append(column.html);
                 this.columns.push(column);
-            };
-        };
+            }
+        }
     };
-    this.get_spacer = function(){
+    this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
             "height": Dash.Size.RowHeight,
@@ -23309,7 +23339,7 @@ function DashGuiListRow(list, arbitrary_id){
         return divider_line.html;
     };
     this.setup_styles();
-};
+}
 
 function DashGuiListRowColumn(list_row, column_config_data){
     this.list_row = list_row;

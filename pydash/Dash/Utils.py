@@ -196,7 +196,6 @@ class __Utils:
         from Dash.LocalStorage import Write
 
         img = Image.open(BytesIO(img_file))
-        img = img.convert("RGB")
 
         img_data = {}
         img_data["id"] = self.GetRandomID()
@@ -216,6 +215,9 @@ class __Utils:
         data_path = os.path.join(img_root, f"{img_data['id']}.json")
 
         img.save(orig_path)
+
+        # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
+        img = img.convert("RGB")
 
         size = img.size[0]
         thumb_size = 512

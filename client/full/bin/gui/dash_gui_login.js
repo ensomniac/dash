@@ -1,32 +1,29 @@
-
-function DashGuiLogin(on_login_binder, on_login_callback, color){
-
+function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
-    this.header_label = $("<div>" + d.Context["display_name"] + "</div>");
+    this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
     this.email_row = $("<div></div>");
     this.password_row = $("<div></div>");
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
-
     this.on_login_callback = null;
-    if (on_login_binder && on_login_callback){
+    
+    if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
-    };
+    }
 
-    this.setup_styles = function(){
-
-        this.login_button   = new d.Gui.Button("Login",                this.Login,      this, this.color);
-        this.reset_button   = new d.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
-        this.email_input    = new d.Gui.Input("email@" + d.Context["domain"], this.color);
-        this.password_input = new d.Gui.Input("Password", this.color);
+    this.setup_styles = function () {
+        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
+        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.password_input = new Dash.Gui.Input("Password", this.color);
 
         this.email_input.html.css({
-            "padding": Dash.Size.Padding*0.5,
+            "padding": Dash.Size.Padding * 0.5,
         });
 
         this.password_input.html.css({
-            "padding": Dash.Size.Padding*0.5,
+            "padding": Dash.Size.Padding * 0.5,
         });
 
         this.email_input.OnSubmit(this.Submit, this);
@@ -47,12 +44,13 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
         this.button_bar.append(this.reset_button.html);
         this.button_bar.append(this.login_button.html);
 
-        var login_box_width = window.outerWidth*0.5;
-        if (!d.IsMobile && login_box_width > 350) {
-            login_box_width = 350;
-        };
+        var login_box_width = window.outerWidth * 0.5;
 
-        var login_box_height = (d.Size.RowHeight*4)+(d.Size.Padding*3);
+        if (!Dash.IsMobile && login_box_width > 350) {
+            login_box_width = 350;
+        }
+
+        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
 
         this.html.css({
             "left": 0,
@@ -67,8 +65,8 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
             "height": "auto",
             "margin-left": "auto",
             "margin-right": "auto",
-            "margin-top": d.Size.Padding*2,
-            "padding-bottom": d.Size.Padding*2,
+            "margin-top": Dash.Size.Padding * 2,
+            "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
             "border-radius": 4,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
@@ -78,134 +76,142 @@ function DashGuiLogin(on_login_binder, on_login_callback, color){
         this.header_label.css({
             "text-align": "center",
             "font-family": "sans_serif_bold",
-            "height": d.Size.RowHeight,
-            "line-height": d.Size.RowHeight + "px",
-            "padding": d.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding": Dash.Size.Padding,
         });
 
         this.button_bar.css({
             "display": "flex",
-            "height": d.Size.RowHeight,
+            "height": Dash.Size.RowHeight,
         });
 
         this.email_row.css({
-            "margin": d.Size.Padding,
+            "margin": Dash.Size.Padding,
             "margin-top": 0,
         });
 
         this.password_row.css({
-            "margin": d.Size.Padding,
+            "margin": Dash.Size.Padding,
             "margin-top": 0,
         });
 
         this.login_button.html.css({
-            "margin-left": d.Size.Padding,
+            "margin-left": Dash.Size.Padding,
             // "margin-top": 0,
-            // "padding": d.Size.Padding*0.5,
-            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
-            // "background": d.Color.Primary,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+            // "background": Dash.Color.Primary,
         });
 
         this.reset_button.html.css({
-            // "margin": d.Size.Padding,
-            "margin-left": d.Size.Padding,
+            // "margin": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
             // "margin-right": 0,
-            // "padding": d.Size.Padding*0.5,
-            "width": (login_box_width*0.5)-Dash.Size.Padding*1.5,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
         });
 
-        this.email_input.SetText(d.Local.Get("email") || "");
-        this.show_login_box();
+        this.email_input.SetText(Dash.Local.Get("email") || "");
 
+        this.show_login_box();
     };
 
-    this.show_login_box = function(){
+    this.show_login_box = function () {
         this.login_box.css({"opacity": 1});
     };
 
-    this.store_input = function(){
-        d.Local.Set("email", this.email_input.Text());
+    this.store_input = function () {
+        Dash.Local.Set("email", this.email_input.Text());
     };
 
-    this.Submit = function(){
+    this.Submit = function () {
         var email = this.email_input.Text();
         var pass = this.password_input.Text();
 
         if (email && pass) {
             this.Login();
         }
-        else {
-            this.ResetLogin();
-        };
 
+        // Disabling this to prevent accidental resets, better if they deliberately click the button
+        // else {
+        //     this.ResetLogin();
+        // }
     };
 
-    this.Login = function(){
+    this.Login = function () {
         var email = this.email_input.Text();
         var pass = this.password_input.Text();
 
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+
+            return;
+        }
+
         if (!pass) {
             alert("Please enter a valid password");
-            return;
-        };
 
-        var api = "https://" + d.Context["domain"] + "/Users";
+            return;
+        }
+
+        var api = "https://" + Dash.Context["domain"] + "/Users";
+
         var server_data = {};
         server_data["f"] = "login";
         server_data["email"] = email;
         server_data["pass"] = pass;
 
         this.login_button.Request(api, server_data, this.on_login_response, this);
-
     };
 
-    this.ResetLogin = function(){
+    this.ResetLogin = function () {
         var email = this.email_input.Text();
-        var api = "https://" + d.Context["domain"] + "/Users";
+        var api = "https://" + Dash.Context["domain"] + "/Users";
+
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+
+            return;
+        }
+
         var server_data = {};
         server_data["f"] = "reset";
         server_data["email"] = email;
 
         this.reset_button.Request(api, server_data, this.on_reset_response, this);
-
     };
 
-    this.on_reset_response = function(response){
-
+    this.on_reset_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
+
             return;
-        };
+        }
 
         if (response["success"]) {
             alert("Your password link has been sent to " + response["email"] + ". Click that link to receive a new temporary password and log in");
-        };
-
+        }
     };
 
-    this.on_login_response = function(response){
-
+    this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
+            
             return;
-        };
+        }
 
-        console.log("******* LOG IN *******");
-        console.log(response);
+        console.log("******* LOG IN *******", response);
 
-        d.User.SetUserAuthentication(this.email_input.Text(), response);
+        Dash.User.SetUserAuthentication(this.email_input.Text(), response);
 
-        (function(self){
-
-            self.html.animate({"opacity": 0}, 150, function(){
+        (function (self) {
+            self.html.animate({"opacity": 0}, 150, function () {
                 self.html.remove();
                 self.on_login_callback();
             });
-
         })(this);
-
     };
 
     this.setup_styles();
-
-};
+}
