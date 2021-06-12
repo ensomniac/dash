@@ -1,7 +1,9 @@
 function DashGui() {
+
     this.Layout = new DashGuiLayout();
     this.Login = DashGuiLogin;
     this.Button = DashGuiButton;
+    this.Slider = DashGuiSlider;
     this.IconButton = DashGuiIconButton;
     this.Icon = DashIcon;
     this.Input = DashGuiInput;
