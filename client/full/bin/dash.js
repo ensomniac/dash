@@ -21,6 +21,7 @@ function Dash(){
     this.Utils = new DashUtils();
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
+    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
 
     this.width = 0;
     this.height = 0;
