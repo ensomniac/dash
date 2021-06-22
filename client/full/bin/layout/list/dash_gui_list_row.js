@@ -1,9 +1,8 @@
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
-    this.columns = [];
     this.is_shown = true;
     this.id = arbitrary_id;
-    this.is_selected = false;
+    // this.is_selected = false;
     this.is_expanded = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
@@ -12,6 +11,10 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
+
+    this.columns = [];
+    this.spacers = [];
+    this.dividers = [];
 
     this.setup_styles = function () {
         // this.html.append(this.expand_content);
@@ -118,7 +121,7 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     // Expand an html element below this row
-    this.Expand = function(html){
+    this.Expand = function (html) {
         if (this.is_expanded) {
             console.log("Already expanded");
             this.Collapse();
@@ -225,14 +228,22 @@ function DashGuiListRow (list, arbitrary_id) {
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
 
-            if (column_config_data["type"] == "spacer") {
-                this.column_box.append(this.get_spacer());
+            if (column_config_data["type"] === "spacer") {
+                var spacer = this.get_spacer();
+
+                this.column_box.append(spacer);
+
+                this.spacers.push(spacer);
 
                 left_aligned = false;
             }
 
-            else if (column_config_data["type"] == "divider") {
-                this.column_box.append(this.get_divider());
+            else if (column_config_data["type"] === "divider") {
+                var divider = this.get_divider();
+
+                this.column_box.append(divider);
+
+                this.dividers.push(divider);
 
                 left_aligned = false;
             }
@@ -243,6 +254,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 var column = new DashGuiListRowColumn(this, column_config_data);
 
                 this.column_box.append(column.html);
+
                 this.columns.push(column);
             }
         }
