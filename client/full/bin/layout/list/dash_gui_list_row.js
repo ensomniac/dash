@@ -12,6 +12,8 @@ function DashGuiListRow (list, arbitrary_id) {
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
 
+    // TODO: These lists should really be consolidated into a columns dict, but don't want to break anything
+    this.combos = [];
     this.columns = [];
     this.spacers = [];
     this.dividers = [];
@@ -247,6 +249,15 @@ function DashGuiListRow (list, arbitrary_id) {
 
                 left_aligned = false;
             }
+            
+            // TODO: This should be part of DashGuiListRowColumn, but I couldn't get it to work
+            else if (column_config_data["type"] === "combo") {
+                var combo = this.get_combo(column_config_data);
+
+                this.column_box.append(combo);
+
+                this.combos.push(combo);
+            }
 
             else {
                 column_config_data["left_aligned"] = left_aligned;
@@ -283,6 +294,29 @@ function DashGuiListRow (list, arbitrary_id) {
         });
 
         return divider_line.html;
+    };
+
+    this.get_combo = function (column_config_data) {
+        var combo = new Dash.Gui.Combo (
+            column_config_data["options"]["label_text"] || "",                                             // Label
+            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
+            column_config_data["options"]["binder"] || null,                                               // Binder
+            column_config_data["options"]["combo_options"] || null,                                        // Option List
+            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || "",                 // Selected ID
+            this.color,                                                                                    // Color set
+            {"style": "row"}                                                                               // Options
+        );
+
+        combo.html.css({
+            "height": Dash.Size.RowHeight
+        });
+
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
+
+        return combo.html;
     };
 
     this.setup_styles();

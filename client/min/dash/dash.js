@@ -23526,6 +23526,8 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
+    // TODO: These lists should really be consolidated into a columns dict, but don't want to break anything
+    this.combos = [];
     this.columns = [];
     this.spacers = [];
     this.dividers = [];
@@ -23714,6 +23716,13 @@ function DashGuiListRow (list, arbitrary_id) {
                 this.dividers.push(divider);
                 left_aligned = false;
             }
+            
+            // TODO: This should be part of DashGuiListRowColumn, but I couldn't get it to work
+            else if (column_config_data["type"] === "combo") {
+                var combo = this.get_combo(column_config_data);
+                this.column_box.append(combo);
+                this.combos.push(combo);
+            }
             else {
                 column_config_data["left_aligned"] = left_aligned;
                 var column = new DashGuiListRowColumn(this, column_config_data);
@@ -23740,16 +23749,35 @@ function DashGuiListRow (list, arbitrary_id) {
         });
         return divider_line.html;
     };
+    this.get_combo = function (column_config_data) {
+        var combo = new Dash.Gui.Combo (
+            column_config_data["options"]["label_text"] || "",                                             // Label
+            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
+            column_config_data["options"]["binder"] || null,                                               // Binder
+            column_config_data["options"]["combo_options"] || null,                                        // Option List
+            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || "",                 // Selected ID
+            this.color,                                                                                    // Color set
+            {"style": "row"}                                                                               // Options
+        );
+        combo.html.css({
+            "height": Dash.Size.RowHeight
+        });
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
+        return combo.html;
+    };
     this.setup_styles();
 }
 
 function DashGuiListRowColumn(list_row, column_config_data){
     this.list_row = list_row;
-    this.list = this.list_row.list;
     this.column_config_data = column_config_data;
+    this.list = this.list_row.list;
     this.html = $("<div></div>");
     this.width = this.column_config_data["width"] || -1;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         var css = {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
@@ -23761,53 +23789,51 @@ function DashGuiListRowColumn(list_row, column_config_data){
         };
         if (this.width > 0) {
             css["width"] = this.width;
-        };
+        }
         if (this.column_config_data["left_aligned"]) {
             css["margin-right"] = Dash.Size.Padding;
         }
         else {
             css["margin-left"] = Dash.Size.Padding;
-        };
+        }
         if (this.column_config_data["css"]) {
             for (var key in this.column_config_data["css"]) {
                 css[key] = this.column_config_data["css"][key];
-            };
-        };
+            }
+        }
         if (this.column_config_data["on_click_callback"]) {
             var binder = this.list.binder;
             this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
-            (function(self){
-                self.html.click(function(e){
+            (function (self) {
+                self.html.on("click", function (e) {
                     self.column_config_data["on_click_callback"](self.list_row.id);
                     e.preventDefault();
                     return false;
                 });
             })(this);
-        };
+        }
         this.html.css(css);
     };
-    this.Update = function(){
+    this.Update = function () {
         var column_value = this.list.binder.GetDataForKey(
             this.list_row.id,
-            this.column_config_data["data_key"],
+            this.column_config_data["data_key"]
         );
         if (column_value && column_value.length > 0) {
             this.html.css({
-                // "color": Dash.Color.Light.Text,
                 "font-family": "sans_serif_normal",
             });
         }
         else {
             this.html.css({
-                // "color": "rgba(0, 0, 0, 0.5)",
                 "font-family": "sans_serif_italic",
             });
-        };
+        }
         column_value = column_value || this.column_config_data["display_name"];
         this.html.text(column_value);
     };
     this.setup_styles();
-};
+}
 
 function DashGuiListColumnConfig () {
     this.columns = [];
@@ -23818,13 +23844,14 @@ function DashGuiListColumnConfig () {
         options = options || {};
         var optional_css = options["css"] || null;
         var column_details = {};
-        column_details["type"] = "input";
+        column_details["type"] = options["type"] || "input";
         column_details["display_name"] = display_name;
         column_details["data_key"] = data_key;
         column_details["can_edit"] = can_edit;
         column_details["width"] = width;
         column_details["css"] = optional_css;
         column_details["on_click_callback"] = options["on_click_callback"];
+        column_details["options"] = options["options"] || {};
         this.columns.push(column_details);
     };
     this.AddSpacer = function () {
