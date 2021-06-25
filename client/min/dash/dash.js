@@ -23867,7 +23867,7 @@ function DashGuiListRow (list, arbitrary_id) {
         }
         if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
             var row_id = this.id;
-            (function (self, column_config_data) {
+            (function (self, column_config_data, row_id, input) {
                 input.OnSubmit(
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
@@ -23875,12 +23875,28 @@ function DashGuiListRow (list, arbitrary_id) {
                     },
                     column_config_data["options"]["binder"]
                 );
-            })(this, column_config_data);
+            })(this, column_config_data, row_id, input);
         }
         return input;
     };
     this.get_icon_button = function (column_config_data) {
-        // TODO
+        var  row_id = this.id;
+        var icon_button = new Dash.Gui.IconButton(
+            column_config_data["options"]["icon_name"],
+            function () {
+                var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+                callback(row_id);
+            },
+            column_config_data["options"]["binder"],
+            column_config_data["options"]["color"] || this.color,
+            column_config_data["options"]["options"] || {}
+        );
+        if (column_config_data["css"]) {
+            for (var key in column_config_data["css"]) {
+                icon_button.html.css(key, column_config_data["css"][key]);
+            }
+        }
+        return icon_button;
     };
     this.setup_styles();
 }
