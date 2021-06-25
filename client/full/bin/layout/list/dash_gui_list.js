@@ -38,6 +38,12 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return row;
     };
 
+    this.Update = function () {
+        for (var i in this.rows) {
+            this.rows[i].Update();
+        }
+    };
+
     this.Clear = function () {
         this.html.empty();
 

@@ -23477,6 +23477,11 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.html.append(row.html);
         return row;
     };
+    this.Update = function () {
+        for (var i in this.rows) {
+            this.rows[i].Update();
+        }
+    };
     this.Clear = function () {
         this.html.empty();
         this.rows = [];
@@ -23515,6 +23520,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
+    this.columns = {};
     this.is_shown = true;
     this.id = arbitrary_id;
     // this.is_selected = false;
@@ -23526,11 +23532,6 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
-    // TODO: These lists should really be consolidated into a columns dict, but don't want to break anything
-    this.combos = [];
-    this.columns = [];
-    this.spacers = [];
-    this.dividers = [];
     this.setup_styles = function () {
         // this.html.append(this.expand_content);
         this.html.append(this.highlight);
@@ -23615,8 +23616,31 @@ function DashGuiListRow (list, arbitrary_id) {
         this.html.css("display", "block");
     };
     this.Update = function () {
-        for (var i in this.columns) {
-            this.columns[i].Update();
+        var i;
+        for (var type in this.columns) {
+            if (!this.columns[type] || this.columns[type].length < 1) {
+                continue;
+            }
+            if (type === "default") {
+                for (i in this.columns[type]) {
+                    var column = this.columns[type][i];
+                    column["obj"].Update();
+                }
+            }
+            else if (type === "inputs") {
+                for (i in this.columns[type]) {
+                    var input = this.columns[type][i];
+                    var new_value = this.list.binder.GetDataForKey(this.id, input["column_config_data"]["data_key"]);
+                    if (new_value) {
+                        input["obj"].SetText(new_value);
+                    }
+                }
+            }
+            // else if (type === "combos") {
+            //     for (i in this.columns[type]) {
+            //         var combo = this.columns[type][i];
+            //     }
+            // }
         }
     };
     // Expand an html element below this row
@@ -23707,27 +23731,74 @@ function DashGuiListRow (list, arbitrary_id) {
             if (column_config_data["type"] === "spacer") {
                 var spacer = this.get_spacer();
                 this.column_box.append(spacer);
-                this.spacers.push(spacer);
+                if (!this.columns["spacers"]) {
+                    this.columns["spacers"] = [];
+                }
+                this.columns["spacers"].push({
+                    "obj": spacer,
+                    "column_config_data": column_config_data
+                });
                 left_aligned = false;
             }
             else if (column_config_data["type"] === "divider") {
                 var divider = this.get_divider();
                 this.column_box.append(divider);
-                this.dividers.push(divider);
+                if (!this.columns["dividers"]) {
+                    this.columns["dividers"] = [];
+                }
+                this.columns["dividers"].push({
+                    "obj": divider,
+                    "column_config_data": column_config_data
+                });
                 left_aligned = false;
             }
-            
-            // TODO: This should be part of DashGuiListRowColumn, but I couldn't get it to work
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
-                this.column_box.append(combo);
-                this.combos.push(combo);
+                this.column_box.append(combo.html);
+                if (!this.columns["combos"]) {
+                    this.columns["combos"] = [];
+                }
+                this.columns["combos"].push({
+                    "obj": combo,
+                    "column_config_data": column_config_data
+                });
+            }
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "input") {
+                var input = this.get_input(column_config_data);
+                this.column_box.append(input.html);
+                if (!this.columns["inputs"]) {
+                    this.columns["inputs"] = [];
+                }
+                this.columns["inputs"].push({
+                    "obj": input,
+                    "column_config_data": column_config_data
+                });
+            }
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "icon_button") {
+                var icon_button = this.get_icon_button(column_config_data);
+                this.column_box.append(icon_button.html);
+                if (!this.columns["icon_buttons"]) {
+                    this.columns["icon_buttons"] = [];
+                }
+                this.columns["icon_buttons"].push({
+                    "obj": icon_button,
+                    "column_config_data": column_config_data
+                });
             }
             else {
                 column_config_data["left_aligned"] = left_aligned;
                 var column = new DashGuiListRowColumn(this, column_config_data);
                 this.column_box.append(column.html);
-                this.columns.push(column);
+                if (!this.columns["default"]) {
+                    this.columns["default"] = [];
+                }
+                this.columns["default"].push({
+                    "obj": column,
+                    "column_config_data": column_config_data
+                });
             }
         }
     };
@@ -23755,9 +23826,9 @@ function DashGuiListRow (list, arbitrary_id) {
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
             column_config_data["options"]["binder"] || null,                                               // Binder
             column_config_data["options"]["combo_options"] || null,                                        // Option List
-            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || "",                 // Selected ID
+            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], true) || "",           // Selected ID
             this.color,                                                                                    // Color set
-            {"style": "row"}                                                                               // Options
+            {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
         );
         combo.html.css({
             "height": Dash.Size.RowHeight
@@ -23766,7 +23837,46 @@ function DashGuiListRow (list, arbitrary_id) {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px"
         });
-        return combo.html;
+        return combo;
+    };
+    this.get_input = function (column_config_data) {
+        var input = new Dash.Gui.Input(
+            column_config_data["options"]["placeholder_label"] || "",
+            column_config_data["options"]["color"] || this.color
+        );
+        input.html.css({
+            "height": Dash.Size.RowHeight * 0.9
+        });
+        if (column_config_data["width"]) {
+            input.html.css({
+                "width": column_config_data["width"]
+            });
+        }
+        input.input.css({
+            "height": Dash.Size.RowHeight * 0.9,
+            "line-height": (Dash.Size.RowHeight * 0.9) + "px",
+            "padding-left": Dash.Size.Padding * 0.35
+        });
+        var starting_value = this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || null;
+        if (starting_value) {
+            input.SetText(starting_value.toString());
+        }
+        if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
+            var row_id = this.id;
+            (function (self, column_config_data) {
+                input.OnSubmit(
+                    function () {
+                        var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+                        callback(row_id, input.Text());
+                    },
+                    column_config_data["options"]["binder"]
+                );
+            })(this, column_config_data);
+        }
+        return input;
+    };
+    this.get_icon_button = function (column_config_data) {
+        // TODO
     };
     this.setup_styles();
 }
@@ -23844,10 +23954,10 @@ function DashGuiListColumnConfig () {
         options = options || {};
         var optional_css = options["css"] || null;
         var column_details = {};
-        column_details["type"] = options["type"] || "input";
+        column_details["type"] = options["type"] || "";
         column_details["display_name"] = display_name;
         column_details["data_key"] = data_key;
-        column_details["can_edit"] = can_edit;
+        column_details["can_edit"] = can_edit;  // TODO: Hook this up as part of "type" === "input" case
         column_details["width"] = width;
         column_details["css"] = optional_css;
         column_details["on_click_callback"] = options["on_click_callback"];
