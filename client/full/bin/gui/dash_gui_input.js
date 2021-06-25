@@ -139,7 +139,13 @@ function DashGuiInput (placeholder_text, color) {
 
         (function(self){
 
-            self.input.on('keypress',function(e) {
+            self.input.on("click", function (event) {
+                event.preventDefault();
+
+                return false;
+            });
+
+            self.input.on("keypress",function(e) {
                 if (e.which == 13) {
                     self.on_submit();
                 };
