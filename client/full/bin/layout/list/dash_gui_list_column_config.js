@@ -13,7 +13,7 @@ function DashGuiListColumnConfig () {
         column_details["type"] = options["type"] || "";
         column_details["display_name"] = display_name;
         column_details["data_key"] = data_key;
-        column_details["can_edit"] = can_edit;  // TODO: Hook this up as part of "type" === "input" case
+        column_details["can_edit"] = can_edit;
         column_details["width"] = width;
         column_details["css"] = optional_css;
         column_details["on_click_callback"] = options["on_click_callback"];
