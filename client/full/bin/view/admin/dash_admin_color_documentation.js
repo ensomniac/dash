@@ -4,7 +4,7 @@ function DashAdminColorDoc(color){
     this.html = Dash.Gui.GetHTMLContext("--");
     this.color = color || Dash.Color.Light;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             "background": this.color.BackgroundRaised,
@@ -19,4 +19,4 @@ function DashAdminColorDoc(color){
 
     this.setup_styles();
 
-};
+}

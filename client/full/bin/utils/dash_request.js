@@ -4,7 +4,7 @@ function DashRequest(){
     this.requests = [];
 
     this.Request = function(binder, callback, endpoint, params){
-        var url = "https://" + d.Context["domain"] + "/" + endpoint;
+        var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
 
@@ -13,13 +13,13 @@ function DashRequest(){
         this.dash_requests = dash_requests;
         this.url = url;
         this.params = params || {};
-        this.params["token"] = d.Local.Get("token");
+        this.params["token"] = Dash.Local.Get("token");
 
-        this.id = parseInt(Math.random() * (999999 - 100000) + 100000);
+        this.id = Math.random() * (999999 - 100000) + 100000;
         this.callback = callback;
         this.binder = binder;
 
-        this.post = function(){
+        this.post = function () {
 
             (function(self){
 
@@ -33,9 +33,9 @@ function DashRequest(){
 
         this.post();
 
-    };
+    }
 
-    this.on_no_further_requests_pending = function(){
+    this.on_no_further_requests_pending = function () {
         // Called when a request finishes, and there are no more requests queued
         //console.log(">> on_no_further_requests_pending <<");
     };
@@ -59,7 +59,7 @@ function DashRequest(){
 
                     for (var key in gzipped_data) {
                         response[key] = gzipped_data[key];
-                    };
+                    }
 
                 }
                 else {
@@ -72,9 +72,9 @@ function DashRequest(){
                     }
                     else {
                         response["error_gzip"] = "Failed to decompress gzip data from server!";
-                    };
+                    }
 
-                };
+                }
 
                 self.on_response(request, response);
 
@@ -89,24 +89,24 @@ function DashRequest(){
         if (response["gzip"]) {
             this.decompress_response(request, response);
             return;
-        };
+        }
 
-        callback = request.callback.bind(request.binder);
+        var callback = request.callback.bind(request.binder);
 
         var requests = [];
         for (var i in this.requests) {
-            if (this.requests[i] == request) {continue};
+            if (this.requests[i] == request) {continue;}
             requests.push(this.requests[i]);
-        };
+        }
 
         this.requests = requests;
 
         if (this.requests.length == 0) {
             this.on_no_further_requests_pending();
-        };
+        }
 
         callback(response);
 
     };
 
-};
+}

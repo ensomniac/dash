@@ -15,4 +15,4 @@ function DashGuiLayout(){
 
     this.ButtonBar = DashGuiButtonBar;
 
-};
+}

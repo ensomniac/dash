@@ -22,14 +22,14 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     this.last_right_label_text = null;
     this.is_selected           = false;
 
-    this.initialize_style = function() {
+    this.initialize_style = function () {
 
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
-        };
+        }
 
         if (this.style == "toolbar") {
             this.color_set  = this.color.Button;
@@ -46,11 +46,11 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         else {
             this.color_set  = this.color.Button;
             DashGuiButtonStyleDefault.call(this);
-        };
+        }
 
         if (!this.color instanceof DashColorSet) {
             console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
-        };
+        }
 
         this.setup_styles();
 
@@ -62,9 +62,9 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         this.setup_styles();
 
         if (width) {
-            this.html.css({"width": width})
+            this.html.css({"width": width});
         }
-    }
+    };
 
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
@@ -114,7 +114,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (is_selected == this.is_selected) {
             return;
-        };
+        }
 
         this.is_selected = is_selected;
 
@@ -125,13 +125,13 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         else {
             this.html.css({"background": this.color_set.Background.Base});
             this.highlight.css({"background": this.color_set.Background.BaseHover});
-        };
+        }
 
         this.on_hover_out();
 
     };
 
-    this.on_hover_in = function(){
+    this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
 
         if (this.is_selected) {
@@ -139,11 +139,11 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         }
         else {
             this.label.css("color", this.color_set.Text.BaseHover);
-        };
+        }
 
     };
 
-    this.on_hover_out = function(){
+    this.on_hover_out = function () {
         this.highlight.stop().animate({"opacity": 0}, 100);
 
         if (this.is_selected) {
@@ -151,7 +151,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         }
         else {
             this.label.css("color", this.color_set.Text.Base);
-        };
+        }
 
     };
 
@@ -162,7 +162,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         }
         else {
             this.html.css({"opacity": 0, "pointer-events": "none"});
-        };
+        }
 
     };
 
@@ -170,40 +170,35 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         this.load_bar.css({"width": this.html.width()*t});
     };
 
-    this.IsLoading = function(){
-        if (this.load_dots) {
-            return true;
-        }
-        else {
-            return false;
-        };
+    this.IsLoading = function () {
+        return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
 
     this.SetLoading = function(is_loading){
         if (is_loading && this.load_dots) {
             return;
-        };
+        }
 
         if (!is_loading && !this.load_dots) {
             return;
-        };
+        }
 
         if (!is_loading && this.load_dots) {
             this.load_dots.Stop();
             this.load_dots = null;
             return;
-        };
+        }
 
-        this.load_dots = new d.Gui.LoadDots(this.html.outerHeight()-d.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(this.html.outerHeight()-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.html.append(this.load_dots.html);
 
-        var height = this.html.css("height");
-        var padding = this.html.css("padding");
+        // var height = this.html.css("height");
+        // var padding = this.html.css("padding");
 
         this.load_dots.html.css({
             "position": "absolute",
-            "top": d.Size.Padding*0.5,
+            "top": Dash.Size.Padding*0.5,
             "bottom": 0,
             "right": 0,
 
@@ -243,7 +238,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         (function (self) {
             self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function (response) {
                 self.on_file_upload_response(response);
-            }, function(){
+            }, function () {
 
                 if (self.on_file_upload_start_callback) {
                     self.on_file_upload_start_callback();
@@ -258,15 +253,15 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (this.file_uploader.html) {
             this.file_uploader.html.remove();
-        };
+        }
 
         if (this.file_upload_api) {
             this.SetFileUploader(this.file_upload_api, this.file_upload_params);
-        };
+        }
 
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(response);
-        };
+        }
 
     };
 
@@ -274,17 +269,17 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (this.load_dots) {
             return;
-        };
+        }
 
         this.on_request_response_callback = null;
         var binder = bind_to || this.bind;
         if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder)
-        };
+            this.on_request_response_callback = on_complete_callback.bind(binder);
+        }
 
         this.SetLoading(true);
         server_data = server_data || {};
-        server_data["token"] = d.Local.Get("token");
+        server_data["token"] = Dash.Local.Get("token");
 
         (function(self){
 
@@ -296,7 +291,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
                 if (self.on_request_response_callback) {
                     self.on_request_response_callback(response_json);
-                };
+                }
 
             });
 
@@ -308,23 +303,23 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(event, this);
-        };
+        }
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
         (function(self){
 
-            self.html.mouseenter(function(){
+            self.html.on("mouseenter", function () {
                 self.on_hover_in();
             });
 
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_out();
             });
 
-            self.html.click(function(event){
+            self.html.on("click", function(event){
                 self.manage_style_on_click();
                 self.on_click(event);
             });
@@ -346,18 +341,18 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (!this.right_label) {
             this.setup_right_label();
-        };
+        }
 
         if (label_text == this.last_right_label_text && this.label_shown) {
             return;
-        };
+        }
 
         if (this.label_shown) {
             // Was visible
 
             (function(self){
 
-                self.right_label.animate({"opacity": 0}, 200, function(){
+                self.right_label.animate({"opacity": 0}, 200, function () {
                     self.set_right_label_text(label_text);
                     self.right_label.animate({"opacity": 1}, 600);
                 });
@@ -369,7 +364,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
             // Was never visible
             this.set_right_label_text(label_text);
 
-            this.right_label.animate({"opacity": 1}, 200, function(){
+            this.right_label.animate({"opacity": 1}, 200, function () {
             });
 
         }
@@ -383,29 +378,29 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
         if (!label_text && label_text != 0 || label_text == this.last_right_label_text) {
             return;
-        };
+        }
 
         this.right_label.text(label_text);
         this.last_right_label_text = label_text;
 
     };
 
-    this.setup_right_label = function(){
+    this.setup_right_label = function () {
 
         this.right_label = $("<div>--</div>");
 
         this.html.append(this.right_label);
 
-        var size = Math.round(d.Size.RowHeight-d.Size.Padding);
+        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
 
         this.right_label.css({
             "position": "absolute",
-            "right": d.Size.Padding*0.5,
-            "top": d.Size.Padding*0.5,
+            "right": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding*0.5,
             "width": size,
             "height": size,
             "line-height": size + "px",
-            "background": d.Color.Dark,
+            "background": Dash.Color.Dark,
             "border-radius": 4,
             "font-size": (size*0.5) + "px",
             "text-align": "center",
@@ -417,4 +412,4 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     this.initialize_style();
     this.setup_connections();
 
-};
+}

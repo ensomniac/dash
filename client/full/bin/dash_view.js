@@ -8,4 +8,4 @@ function DashView(){
     this.Admin = DashAdminView;
     this.PDF = DashPDFView;
 
-};
+}

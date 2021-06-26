@@ -24,12 +24,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
     };
 
-    this.Load = function(){
+    this.Load = function () {
 
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+        // var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "get_property_set";
         params["obj_id"] = this.dash_obj_id;
@@ -39,7 +39,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.Update = function(){
+    this.Update = function () {
         // Do we have new data?
 
         for (var data_key in this.update_inputs) {
@@ -54,7 +54,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row_input.SetText(this.property_set_data[data_key]);
             }
             else {
-                row_input.SetText(this.get_data_cb()[data_key])
+                row_input.SetText(this.get_data_cb()[data_key]);
             }
         }
     };
@@ -71,7 +71,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.add_top_right_label = function(){
+    this.add_top_right_label = function () {
 
         this.top_right_label = Dash.Gui.GetHTMLAbsContext();
         this.html.append(this.top_right_label);
@@ -172,7 +172,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.AddHeader = function(label_text){
 
-        var header_obj = new d.Gui.Header(label_text, this.color);
+        var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
 
         if (this.num_headers > 0) {
@@ -206,7 +206,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         (function(self, callback){
 
-            var button = new d.Gui.Button(label_text, function(){
+            var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);
             }, self, self.color);
 
@@ -231,7 +231,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             indent_row = true;
         }
 
-        var row = new d.Gui.InputRow(
+        var row = new Dash.Gui.InputRow(
             label_text,
             "",
             "",
@@ -317,7 +317,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 };
             }
 
-            var row = new d.Gui.InputRow(
+            var row = new Dash.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
                 row_details["default_value"] || row_details["label_text"],
@@ -434,7 +434,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         (function(self, row, callback, data_key){
 
-            var button = new d.Gui.IconButton("trash", function(){
+            var button = new Dash.Gui.IconButton("trash", function () {
                 callback(data_key);
             }, self, self.color);
 
@@ -548,7 +548,6 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         if (this.set_data_cb) {
             this.set_data_cb(response);
-            return;
         }
 
     };

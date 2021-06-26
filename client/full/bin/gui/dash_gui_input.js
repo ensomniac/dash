@@ -1,6 +1,6 @@
 function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
-    this.column_width = window.ColumnWidth || (d.Size.RowHeight*5);
+    this.column_width = window.ColumnWidth || (Dash.Size.RowHeight*5);
     this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
 
@@ -9,17 +9,17 @@ function DashGuiInput (placeholder_text, color) {
     }
     else {
         this.input = $("<input placeholder='" + this.placeholder + "'>");
-    };
+    }
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.append(this.input);
 
         this.html.css({
-            "height": d.Size.RowHeight,
+            "height": Dash.Size.RowHeight,
             "background": this.color.Input.Background.Base,
             "border-radius": 2,
-            "padding-right": d.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,
             "margin": 0,
@@ -27,10 +27,10 @@ function DashGuiInput (placeholder_text, color) {
 
         this.input.css({
             "background": "rgba(0, 0, 0, 0)",
-            "line-height": d.Size.RowHeight + "px",
+            "line-height": Dash.Size.RowHeight + "px",
             "width": "100%",
             "height": "100%",
-            "padding-left": d.Size.Padding,
+            "padding-left": Dash.Size.Padding,
             "color": this.color.Input.Text.Base,
         });
 
@@ -65,7 +65,7 @@ function DashGuiInput (placeholder_text, color) {
         else {
             this.input.css({"pointer-events": "auto"});
             // this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
-        };
+        }
     };
 
     this.SetDarkMode = function(dark_mode_on){
@@ -81,7 +81,7 @@ function DashGuiInput (placeholder_text, color) {
                 "color": "rgba(255, 255, 255, 0.9)",
             });
 
-        };
+        }
 
     };
 
@@ -92,12 +92,12 @@ function DashGuiInput (placeholder_text, color) {
                 "box-shadow": "none",
                 "background": "rgba(0, 0, 0, 0)",
             });
-        };
+        }
 
         return this;
     };
 
-    this.Text = function(){
+    this.Text = function () {
         return this.input.val();
     };
 
@@ -114,7 +114,7 @@ function DashGuiInput (placeholder_text, color) {
         this.on_submit_callback = callback.bind(bind_to);
     };
 
-    this.on_change = function(){
+    this.on_change = function () {
         // Fired if the box is clicked on or the user is typing
 
         var changed = this.input.val() != this.last_val;
@@ -122,20 +122,20 @@ function DashGuiInput (placeholder_text, color) {
 
         if (changed && this.on_change_callback) {
             this.on_change_callback();
-        };
+        }
 
     };
 
-    this.on_submit = function(){
+    this.on_submit = function () {
         // Fired on 'enter' or 'paste'
 
         if (this.on_submit_callback) {
             this.on_submit_callback();
-        };
+        }
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
         (function(self){
 
@@ -148,18 +148,18 @@ function DashGuiInput (placeholder_text, color) {
             self.input.on("keypress",function(e) {
                 if (e.which == 13) {
                     self.on_submit();
-                };
+                }
             });
 
-            self.input.change(function(){
+            self.input.on("change", function () {
                 self.on_change();
             });
 
-            self.input.on("paste", function(){
+            self.input.on("paste", function () {
                 self.on_change();
             });
 
-            self.input.on("keyup click", function(){
+            self.input.on("keyup click", function () {
                 self.on_change();
             });
 
@@ -170,4 +170,4 @@ function DashGuiInput (placeholder_text, color) {
     this.setup_styles();
     this.setup_connections();
 
-};
+}

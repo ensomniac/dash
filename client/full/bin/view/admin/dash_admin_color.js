@@ -1,7 +1,7 @@
 
 function DashAdminColor(){
 
-    // this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+    // this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html = Dash.Gui.GetHTMLContext("");
     this.property_box = null;
     this.data = null;
@@ -13,7 +13,7 @@ function DashAdminColor(){
     this.header = null;
     this.property_box = null;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             "position": "absolute",
@@ -28,14 +28,14 @@ function DashAdminColor(){
 
     };
 
-    this.draw_all = function(){
+    this.draw_all = function () {
 
         if (this.display_theme == "light") {
             this.color = Dash.Color.Light;
         }
         else {
             this.color = Dash.Color.Dark;
-        };
+        }
 
         this.html.empty();
 
@@ -51,10 +51,10 @@ function DashAdminColor(){
         //
         //           ▽ - Color of the page/element background
         //           |
-        // d.Color.Dark.Button.Background.Main
-        // d.Color.Dark.Button.Background.Hover
-        // d.Color.Dark.Button.Background.Selected
-        // d.Color.Dark.Button.Background.SelectedHover
+        // Dash.Color.Dark.Button.Background.Main
+        // Dash.Color.Dark.Button.Background.Hover
+        // Dash.Color.Dark.Button.Background.Selected
+        // Dash.Color.Dark.Button.Background.SelectedHover
 
         // console.log(color_set);
         // console.log(color_set.Background);
@@ -78,7 +78,7 @@ function DashAdminColor(){
 
         if (this.display_theme != "light") {
             label = "Header - " + this.display_theme.Title() + " Style (Switch to Light)";
-        };
+        }
 
         this.header = new Dash.Gui.Header(label, this.color);
         this.html.append(this.header.html);
@@ -88,14 +88,14 @@ function DashAdminColor(){
         });
 
         (function(self){
-            self.header.html.click(function(){
+            self.header.html.click(function () {
 
                 if (self.display_theme == "light") {
                     self.display_theme = "dark";
                 }
                 else {
                     self.display_theme = "light";
-                };
+                }
 
                 Dash.Local.Set("dash_admin_color_style", self.display_theme);
 
@@ -134,7 +134,7 @@ function DashAdminColor(){
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
 
-        this.new_password_row = new d.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
+        this.new_password_row = new Dash.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
         this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
         this.property_box.html.append(this.new_password_row.html);
 
@@ -142,19 +142,19 @@ function DashAdminColor(){
 
     };
 
-    this.get_data = function(){
+    this.get_data = function () {
         return "";
     };
 
-    this.set_data = function(){
+    this.set_data = function () {
         return "";
     };
 
-    this.dummy_cb = function(){
+    this.dummy_cb = function () {
         return "";
     };
 
 
     this.setup_styles();
 
-};
+}

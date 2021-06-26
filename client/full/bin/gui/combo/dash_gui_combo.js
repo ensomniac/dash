@@ -226,7 +226,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.row_buttons = [];
 
         for (var i in this.option_list) {
-            var content = this.option_list[i];
+            // var content = this.option_list[i];
             var button = new DashGuiComboRow(this, this.option_list[i]);
 
             this.rows.append(button.html);

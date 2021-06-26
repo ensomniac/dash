@@ -9,4 +9,4 @@ function DashMath(){
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
 
-};
+}

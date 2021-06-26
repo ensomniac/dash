@@ -30,16 +30,16 @@ class DashColorStateSet {
         if (!this._base) {
             console.log("ERROR: DashColorStateSet() Requires at least one color");
             return;
-        };
+        }
 
         if (!this._selected) {
             console.log("Warning: Set a color for the 'Selected' property");
             this._selected = "red";
-        };
+        }
 
-        this._base_hover = this._base_hover || d.Color.Lighten(this._base, 50);
-        this._selected_hover = this._selected_hover || d.Color.Lighten(this._selected, 50);
+        this._base_hover = this._base_hover || Dash.Color.Lighten(this._base, 50);
+        this._selected_hover = this._selected_hover || Dash.Color.Lighten(this._selected, 50);
 
     };
 
-};
+}

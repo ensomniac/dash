@@ -109,6 +109,5 @@ function GuiIcons(icon) {
     }
     else {
         return this.icon_map[this.icon.name];
-    };
-
-};
+    }
+}

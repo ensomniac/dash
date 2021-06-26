@@ -4,4 +4,4 @@ class DashGuiLayoutTabsSide extends DashGuiLayoutTabs {
         super(Binder, true);
     };
 
-};
+}

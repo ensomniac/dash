@@ -15,6 +15,6 @@ function DashSize(is_mobile){
         this.ButtonHeight = this.RowHeight + (this.Padding);
         this.ColumnWidth = 300;
         this.BorderRadius = 3;
-    };
+    }
 
-};
+}

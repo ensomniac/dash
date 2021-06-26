@@ -1,11 +1,9 @@
 
 function Dash(){
     this.html = $("<div></div>");
-    this.IsMobile = false;
 
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-        this.IsMobile = true;
-    };
+
+    this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     this.Context = DASH_CONTEXT;
     this.Local = new DashLocal();
@@ -30,8 +28,7 @@ function Dash(){
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
         date = date.setHours(date.getHours()-server_offset_hours);
-        var time_ago = timeago.format(date);
-        return time_ago;
+        return timeago.format(date);
     };
 
     this.ReadableDateTime = function (iso_string) {
@@ -93,11 +90,7 @@ function Dash(){
             return false;
         }
 
-        if (domain_start.length < 1 || domain_end.length < 1 || username.length < 1) {
-            return false;
-        }
-
-        return true;
+        return !(domain_start.length < 1 || domain_end.length < 1 || username.length < 1);
     };
 
     this.IsServerIsoDate = function (str) {
@@ -112,20 +105,20 @@ function Dash(){
             console.log(response);
             alert("There was a server problem with this request");
             return null;
-        };
+        }
 
         if (response["error"]) {
             console.log("Dash.ValidateResponse(2)");
             console.log(response);
             alert(response["error"]);
             return null;
-        };
+        }
 
         return response;
 
     };
 
-    this.GetFormContainer = function(){
+    this.GetFormContainer = function () {
 
         var container = $("<div></div>");
 
@@ -142,7 +135,7 @@ function Dash(){
 
     };
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         $("body").css({
             "overflow": "hidden",
@@ -157,11 +150,11 @@ function Dash(){
 
         (function(self){
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.draw();
             });
 
-            $(window).resize(function(){
+            $(window).on("resize", function () {
                 self.draw();
             });
 
@@ -169,7 +162,7 @@ function Dash(){
 
     };
 
-    this.draw = function(){
+    this.draw = function () {
 
         this.width = $(window).width();
         this.height = $(window).height();
@@ -181,7 +174,7 @@ function Dash(){
 
     };
 
-    this.extend_js = function(){
+    this.extend_js = function () {
         // TODO: Move this into utils
 
         String.prototype.Title = function () {
@@ -207,19 +200,19 @@ function Dash(){
         };
     };
 
-    this.Initialize = function(){
+    this.Initialize = function () {
         // Called once when document ready
         this.extend_js();
         this.setup_styles();
     };
 
-};
+}
 
-$(document).ready(function() {
+$(document).on("ready", function () {
 
     $.fn.extend({
         animateStep: function(options) {
-            return this.each(function() {
+            return this.each(function () {
                 var elementOptions = $.extend({}, options, {step: options.step.bind($(this))});
                 $({x: options.from}).animate({x: options.to}, elementOptions);
             });
@@ -232,19 +225,17 @@ $(document).ready(function() {
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
         console.log("Warning: URL Loaded with www -> Redirecting");
         window.location.href = window.location.href.replace("https://www.", "https://");
-    };
+    }
 
     window.InverseLerp = function(min, max, val){
-        var t = (val - min) / (max - min)
-        return t;
+        return (val - min) / (max - min);
     };
 
     window.Lerp = function(valA, valB, t){
         if (t > 1) {t = 1;}
         if (t < 0) {t = 0;}
 
-        var x = valA + t * (valB - valA);
-        return x;
+        return valA + t * (valB - valA);
     };
 
     window.Dash = new Dash();
@@ -264,8 +255,8 @@ $(document).ready(function() {
         }
         else {
             window.Dash.html.append(html);
-        };
+        }
 
-    };
+    }
 
 });

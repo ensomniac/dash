@@ -49,7 +49,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
     this.manual_value = true;
     this.track_width = false;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             "display": "flex",
@@ -113,7 +113,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
         (function(self){
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.SetValue(self.initial_value);
             });
 
@@ -121,7 +121,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
     };
 
-    this.setup_sizing = function(){
+    this.setup_sizing = function () {
 
         this.track_width = true;
         this.height = Dash.Size.RowHeight;
@@ -161,11 +161,11 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
             this.monitoring_width = true;
             this.last_width = -1;
             this.monitor_width();
-        };
+        }
 
     };
 
-    this.monitor_width = function(){
+    this.monitor_width = function () {
 
     };
 
@@ -173,7 +173,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         if (interactive_update){
             this.width = null;
             this.height = null;
-        };
+        }
 
         this.setup_sizing();
 
@@ -194,7 +194,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         });
 
         this.value_label.css({
-            "background": "pink",
+            // "background": "pink",
             "width": (this.label_width*0.5)-Dash.Size.Padding,
             "height": this.height,
             "line-height": this.height + "px",
@@ -285,7 +285,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         }
         else {
             this.slider.stop().animate({"opacity": 1});
-        };
+        }
     };
 
     this.SetValue = function(value){
@@ -297,19 +297,19 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         this.update_value_label();
     };
 
-    this.update_value_label = function(){
+    this.update_value_label = function () {
 
         var display = "" + Dash.Math.Lerp(this.start_range, this.end_range, this.value);
 
         if (display.length > 4) {
             display = display.slice(0, 4);
-        };
+        }
 
         this.value_label.text(display);
 
     };
 
-    this.GetValue = function(){
+    this.GetValue = function () {
         return Dash.Math.Lerp(this.start_range, this.end_range, this.value);
     };
 
@@ -360,11 +360,11 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         xPosPx = xPosPx-(this.slider_height*0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
-        };
+        }
 
         if (xPosPx > this.slider_max_px) {
             xPosPx = this.slider_max_px;
-        };
+        }
 
         if (animate) {
             this.thumb.stop().animate({"left": xPosPx}, 500);
@@ -373,23 +373,23 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         else {
             this.thumb.css({"left": xPosPx});
             this.bar_fill.css({"width": xPosPx + (this.thumb_size*0.5)});
-        };
+        }
 
         if (this.setup_complete) {
             var value = Dash.Math.InverseLerp(0, this.slider_max_px, xPosPx);
 
             if (this.manual_value) {
                 value = this.value;
-            };
+            }
 
             if (!animate) {
                 this.value = value;
-            };
+            }
 
             if (this.on_change_callback){
                 this.on_change_callback(value, this.slider, this.extra_data, animate);
-            };
-        };
+            }
+        }
 
         return xPosPx;
     };
@@ -411,14 +411,14 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         else {
             this.mark.css({"left": xPosPx + (this.thumb_size*0.5)});
 
-        };
+        }
     };
 
-    this.make_connections = function(){
+    this.make_connections = function () {
 
         (function(self){
 
-            self.slider.mousedown(function( event ) {
+            self.slider.on("mousedown", function( event ) {
 
                 if (self.locked) {
                     return;
@@ -442,7 +442,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
                 self.on_mouse_up(event);
             });
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.draw();
             });
 
@@ -452,4 +452,4 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
     this.setup_styles();
 
-};
+}

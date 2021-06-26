@@ -15,11 +15,11 @@ function DashGuiLoadDots(size, color){
     this.is_active = false;
     this.show_t = 0;
 
-    this.IsActive = function(){
+    this.IsActive = function () {
         return this.is_active;
     };
 
-    this.Start = function(){
+    this.Start = function () {
 
         if (this.is_active) {return;}
 
@@ -30,7 +30,7 @@ function DashGuiLoadDots(size, color){
 
         for (var x in this.dots) {
             this.dots[x].Start();
-        };
+        }
 
     };
 
@@ -39,31 +39,31 @@ function DashGuiLoadDots(size, color){
 
         if (callback && binder) {
             callback = callback.bind(binder);
-        };
+        }
 
         if (callback) {
             this.on_stopped_callback = callback;
-        };
+        }
 
         this.is_active = false;
         this.stop_requested = true;
 
         for (var x in this.dots) {
             this.dots[x].Stop();
-        };
+        }
 
         if (this.on_stopped_callback) {
             // This is wrong. Obviously. But I don't have time
             // to hook up firing the callback correctly rn
 
             (function(self){
-                setTimeout(function(){
+                setTimeout(function () {
                     self.on_stopped_callback();
                     self.on_stopped_callback = null;
                 }, 500);
             })(this);
 
-        };
+        }
 
     };
 
@@ -72,7 +72,7 @@ function DashGuiLoadDots(size, color){
 
         for (var x in this.dots) {
             this.dots[x].SetOrientation();
-        };
+        }
 
     };
 
@@ -80,16 +80,14 @@ function DashGuiLoadDots(size, color){
 
         for (var x in this.dots) {
             this.dots[x].SetColor(color);
-        };
+        }
 
     };
 
-    this.setup_styles = function(){
-
-        var i = 0;
-        for (i = 0; i < this.num_dots; i++) {
+    this.setup_styles = function () {
+        for (var i = 0; i < this.num_dots; i++) {
             this.dots.push(new LoadDot(this));
-        };
+        }
 
         this.html.css({
             "width": this.size,
@@ -101,36 +99,36 @@ function DashGuiLoadDots(size, color){
 
         if (this.stop_requested) {
             return;
-        };
+        }
 
         (function(self){requestAnimationFrame(function(t){self.update(t);});})(this);
 
         if (this.t >= 1) {
             this.iteration += 1;
-        };
+        }
 
         this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
-        if (this.t > 1) {this.t = 1};
+        if (this.t > 1) {this.t = 1;}
 
         if (!this.is_active) {
             return;
-        };
+        }
 
         this.show_t += 0.05;
         if (this.show_t > 1) {
             this.show_t = 1;
-        };
+        }
 
         for (var x in this.dots) {
             this.dots[x].Update(this.t);
-        };
+        }
 
     };
 
     this.setup_styles();
     this.update(0);
 
-};
+}
 
 function LoadDot(dots){
 
@@ -143,11 +141,11 @@ function LoadDot(dots){
 
     this.Update = function(cycle_t){
 
-        var t = 0;
+        var t;
         var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
 
         cycle_t += cycle_offset;
-        if (cycle_t > 1) {cycle_t = cycle_t-1;};
+        if (cycle_t > 1) {cycle_t = cycle_t-1;}
 
         if (cycle_t < this.hold_t) {
             t = Dash.Math.InverseLerp(0, this.hold_t, cycle_t);
@@ -191,7 +189,7 @@ function LoadDot(dots){
 
     };
 
-    this.SetOrientation = function(){
+    this.SetOrientation = function () {
         this.size = this.dots.size/(this.dots.num_dots+1.5);
         this.padding = (this.dots.size-((this.size*this.dots.num_dots)))/((this.dots.num_dots-1)+1);
         this.left = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
@@ -200,7 +198,7 @@ function LoadDot(dots){
         if (this.dots.layout != "horizontal") {
             this.left = (this.dots.size*0.5)-(this.size*0.5);
             this.top = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
-        };
+        }
     };
 
     this.SetColor = function(color){
@@ -211,7 +209,7 @@ function LoadDot(dots){
 
     };
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.SetOrientation();
 
@@ -232,4 +230,4 @@ function LoadDot(dots){
 
     this.setup_styles();
 
-};
+}

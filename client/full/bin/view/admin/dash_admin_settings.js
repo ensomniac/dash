@@ -1,16 +1,16 @@
 
 function DashAdminSettings(){
 
-    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": d.Size.Padding});
+    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
     this.property_box = null;
     this.data = null;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
     };
 
     this.SetData = function(response){
 
-        if (!Dash.ValidateResponse(response)) {return};
+        if (!Dash.ValidateResponse(response)) {return;}
         this.html.empty();
 
         this.data = response;
@@ -22,7 +22,7 @@ function DashAdminSettings(){
 
     };
 
-    this.add_site_settings_box = function(){
+    this.add_site_settings_box = function () {
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
@@ -42,7 +42,7 @@ function DashAdminSettings(){
 
     };
 
-    this.add_user_groups_box = function(){
+    this.add_user_groups_box = function () {
 
         this.user_groups_box = new Dash.Gui.PropertyBox(
             this,           // For binding
@@ -63,13 +63,13 @@ function DashAdminSettings(){
 
     };
 
-    this.add_users_box = function(){
+    this.add_users_box = function () {
 
         // this.users_box = Dash.Gui.GetHTMLBoxContext({});
         this.users_box = Dash.Gui.GetHTMLContext();
         this.html.append(this.users_box);
 
-        // var users_header = new d.Gui.Header("Users").html;
+        // var users_header = new Dash.Gui.Header("Users").html;
         // this.users_box.append(users_header);
 
         for (var i in this.data["users"]["order"]) {
@@ -80,19 +80,19 @@ function DashAdminSettings(){
             // user_box.html.css({
             //     "margin": Dash.Size.Padding*2,
             // });
-        };
+        }
 
     };
 
-    this.create_group = function(){
+    this.create_group = function () {
         console.log("Create Group");
     };
 
-    this.reload_data = function(){
+    this.reload_data = function () {
         Dash.Request(this, this.SetData, "Admin", {"f": "get"});
     };
 
     this.setup_styles();
     this.reload_data();
 
-};
+}

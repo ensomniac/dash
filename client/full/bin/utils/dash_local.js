@@ -3,9 +3,9 @@ function DashLocal(){
 
     this.Set = function(key, value){
 
-        if (key.indexOf(d.Context["asset_path"] + "_") != 0) {
-            key = d.Context["asset_path"] + "_" + key;
-        };
+        if (key.indexOf(Dash.Context["asset_path"] + "_") != 0) {
+            key = Dash.Context["asset_path"] + "_" + key;
+        }
 
         //console.log("Setting " + key + " to '" + value + "'");
 
@@ -15,9 +15,9 @@ function DashLocal(){
 
     this.Get = function(key){
 
-        if (key.indexOf(d.Context["asset_path"] + "_") != 0) {
-            key = d.Context["asset_path"] + "_" + key;
-        };
+        if (key.indexOf(Dash.Context["asset_path"] + "_") != 0) {
+            key = Dash.Context["asset_path"] + "_" + key;
+        }
 
         //console.log("Getting " + key + " <<- " + localStorage.getItem(key));
 
@@ -25,4 +25,4 @@ function DashLocal(){
 
     };
 
-};
+}

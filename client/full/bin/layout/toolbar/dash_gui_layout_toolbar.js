@@ -9,7 +9,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.objects = [];
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             "background": this.color.Background,
@@ -21,7 +21,7 @@ function DashGuiLayoutToolbar(binder, color){
         });
 
         this.stroke_sep.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
             "background": this.color.AccentGood,
             "top": "auto",
             "height": 1,
@@ -216,11 +216,11 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
         var obj_index = this.objects.length;
-        var input = new d.Gui.Input(placeholder_label, this.color);
+        var input = new Dash.Gui.Input(placeholder_label, this.color);
 
         input.html.css({
-            "padding-left": d.Size.Padding*0.5,
-            "margin-top": d.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding*0.5,
+            "margin-top": Dash.Size.Padding*0.5,
         });
 
         input.input.css({
@@ -242,19 +242,19 @@ function DashGuiLayoutToolbar(binder, color){
 
         (function(self, input, obj_index, obj) {
 
-            input.OnChange(function(){
+            input.OnChange(function () {
                 self.on_input_changed(obj_index);
             }, self);
 
             if (obj["on_enter_callback"]) {
 
-                input.OnSubmit(function(){
+                input.OnSubmit(function () {
                     self.on_input_submitted(obj_index);
                 }, self);
 
-            };
+            }
 
-            input.input.dblclick(function(){
+            input.input.on("dblclick", function () {
                 input.SetText("");
                 self.on_input_changed(obj_index);
             });
@@ -316,9 +316,8 @@ function DashGuiLayoutToolbar(binder, color){
         })(this, selected_id, combo_options, callback, return_full_option, additional_data);
 
         var obj = this.objects[obj_index];
-        var combo = obj["html"];
 
-        return combo;
+        return obj["html"];
     };
 
     this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {

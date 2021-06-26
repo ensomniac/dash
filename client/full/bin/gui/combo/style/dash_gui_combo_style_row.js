@@ -3,9 +3,9 @@ function DashGuiComboStyleRow(){
 
     this.dropdown_icon = null;
 
-    this.setup_styles = function() {
+    this.setup_styles = function () {
 
-        this.dropdown_icon = new DashIcon(this.color, "arrow_down", d.Size.RowHeight, 0.5);
+        this.dropdown_icon = new DashIcon(this.color, "arrow_down", Dash.Size.RowHeight, 0.5);
         this.dropdown_icon.html.addClass("ComboLabel");
         this.dropdown_icon.html.addClass("Combo");
 
@@ -31,11 +31,11 @@ function DashGuiComboStyleRow(){
 
         this.html.css({
             "margin-right": Dash.Size.Padding*0.5,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
-            // "width": d.Size.ColumnWidth * 2,
+            // "width": Dash.Size.ColumnWidth * 2,
         });
 
         this.highlight.css({
@@ -67,7 +67,7 @@ function DashGuiComboStyleRow(){
         });
 
         this.label.css({
-            "line-height": d.Size.RowHeight + "px",
+            "line-height": Dash.Size.RowHeight + "px",
             "text-align": "left",
             "color": this.color.Text,
             "white-space": "nowrap",
@@ -76,7 +76,7 @@ function DashGuiComboStyleRow(){
 
         this.rows.css({
             "position": "absolute",
-            "width": d.Size.ColumnWidth,
+            "width": Dash.Size.ColumnWidth,
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
@@ -86,4 +86,4 @@ function DashGuiComboStyleRow(){
 
     };
 
-};
+}

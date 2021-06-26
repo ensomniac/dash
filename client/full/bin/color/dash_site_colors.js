@@ -36,4 +36,4 @@ class DashSiteColors {
         return this._col["text_header"] || this._col["text"] || "red";
     };
 
-};
+}

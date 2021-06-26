@@ -35,7 +35,7 @@ function DashColor(){
 
     // };
 
-    this.setup_color_sets = function(){
+    this.setup_color_sets = function () {
 
         // var dark_bg = "rgb(30, 30, 30)";
         // var dark_bg_text = "rgb(200, 200, 200)";
@@ -63,9 +63,9 @@ function DashColor(){
         // var light = this.fill_set(min_light);
         // var dark  = this.fill_set(min_dark);
 
-        var dark_bg = "#23262b";
+        // var dark_bg = "#23262b";
         var dark_bg_text = "rgb(245, 245, 245)";
-        var light_bg = "#e6e6e6";
+        // var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
 
         var button_color = "#4d505f";
@@ -75,32 +75,20 @@ function DashColor(){
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
 
-        var text_header = "#95ae6c";
-        var text_header_dark = "#cfe1e7";
+        // var text_header = "#95ae6c";
+        // var text_header_dark = "#cfe1e7";
 
-        var light_accent_good = "green";
-        var light_accent_bad = "red";
+        // var light_accent_good = "green";
+        // var light_accent_bad = "red";
 
-        var dark_accent_good = "#5b9fb7";
-        var dark_accent_bad = "#ff6144";
+        // var dark_accent_good = "#5b9fb7";
+        // var dark_accent_bad = "#ff6144";
 
-        var dark_button = "#5ba0b8";
-
-
-
-
-
-
-
-
-
-
-
-
+        // var dark_button = "#5ba0b8";
 
         var light = new DashSiteColors({
-            "background": "#dcdbd9",
-            "background": "#e0dfde",
+            // "background": "#dcdbd9",
+            // "background": "#e0dfde",
             "background": "#e3e8ea",
             // "background": "red",
             "background_raised": "#e3e8ea",
@@ -110,8 +98,8 @@ function DashColor(){
             "accent_good": "#f3d057",
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
-            "tab_area_background": "#e4eaee",
-            "tab_area_background": "#659cba",
+            // "tab_area_background": "#e4eaee",
+            // "tab_area_background": "#659cba",
             // "tab_area_background": "#6a7f8a",
             // "tab_area_background": "#e0ccb4",
             // "tab_area_background": "#655f5d",
@@ -300,7 +288,7 @@ function DashColor(){
         }
         else if (color_1 && color_2 && color_3) {
             colors = this.ParseToRGB(color_3) + " 0%, " + this.ParseToRGB(color_2) + " 50%, ";
-            colors += this.ParseToRGB(color_1) + " 100%"
+            colors += this.ParseToRGB(color_1) + " 100%";
         }
         else if (color_1 && color_2) {
             colors = this.ParseToRGB(color_2) + " 0%, " + this.ParseToRGB(color_1) + " 100%";
@@ -308,7 +296,7 @@ function DashColor(){
         else {
             console.log("Error: At least 2 colors are required for a gradient");
             return "red";
-        };
+        }
 
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
 
@@ -508,41 +496,42 @@ function DashColor(){
     };
 
     this.Parse = function(cstr) {
-
+        var base;
+        var size;
         var m = null;
         var parts = [];
-        var alpha = 1
+        var alpha = 1;
         var space = null;
 
         if (typeof cstr === 'string') {
             //keyword
             if (this.Names[cstr]) {
-                parts = this.Names[cstr].slice()
-                space = 'rgb'
+                parts = this.Names[cstr].slice();
+                space = 'rgb';
             }
 
             //reserved words
             else if (cstr === 'transparent') {
-                alpha = 0
-                space = 'rgb'
-                parts = [0,0,0]
+                alpha = 0;
+                space = 'rgb';
+                parts = [0,0,0];
             }
 
             //hex
             else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {
-                var base = cstr.slice(1)
-                var size = base.length
-                var isShort = size <= 4
-                alpha = 1
+                base = cstr.slice(1);
+                size = base.length;
+                var isShort = size <= 4;
+                alpha = 1;
 
                 if (isShort) {
                     parts = [
                         parseInt(base[0] + base[0], 16),
                         parseInt(base[1] + base[1], 16),
                         parseInt(base[2] + base[2], 16)
-                    ]
+                    ];
                     if (size === 4) {
-                        alpha = parseInt(base[3] + base[3], 16) / 255
+                        alpha = parseInt(base[3] + base[3], 16) / 255;
                     }
                 }
                 else {
@@ -550,111 +539,111 @@ function DashColor(){
                         parseInt(base[0] + base[1], 16),
                         parseInt(base[2] + base[3], 16),
                         parseInt(base[4] + base[5], 16)
-                    ]
+                    ];
                     if (size === 8) {
-                        alpha = parseInt(base[6] + base[7], 16) / 255
+                        alpha = parseInt(base[6] + base[7], 16) / 255;
                     }
                 }
 
-                if (!parts[0]) parts[0] = 0
-                if (!parts[1]) parts[1] = 0
-                if (!parts[2]) parts[2] = 0
+                if (!parts[0]) parts[0] = 0;
+                if (!parts[1]) parts[1] = 0;
+                if (!parts[2]) parts[2] = 0;
 
-                space = 'rgb'
+                space = 'rgb';
             }
 
             //color space
             else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {
-                var name = m[1]
-                var isRGB = name === 'rgb'
-                var base = name.replace(/a$/, '')
-                space = base
-                var size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3
+                var name = m[1];
+                var isRGB = name === 'rgb';
+                base = name.replace(/a$/, '');
+                space = base;
+                size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3;
                 parts = m[2].trim()
                     .split(/\s*[,\/]\s*|\s+/)
                     .map(function (x, i) {
                         //<percentage>
                         if (/%$/.test(x)) {
                             //alpha
-                            if (i === size) return parseFloat(x) / 100
+                            if (i === size) return parseFloat(x) / 100;
                             //rgb
-                            if (base === 'rgb') return parseFloat(x) * 255 / 100
-                            return parseFloat(x)
+                            if (base === 'rgb') return parseFloat(x) * 255 / 100;
+                            return parseFloat(x);
                         }
                         //hue
                         else if (base[i] === 'h') {
                             //<deg>
                             if (/deg$/.test(x)) {
-                                return parseFloat(x)
+                                return parseFloat(x);
                             }
                             //<base-hue>
                             else if (baseHues[x] !== undefined) {
-                                return baseHues[x]
+                                return baseHues[x];
                             }
                         }
-                        return parseFloat(x)
-                    })
+                        return parseFloat(x);
+                    });
 
-                if (name === base) parts.push(1)
-                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size]
-                parts = parts.slice(0, size)
+                if (name === base) parts.push(1);
+                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
+                parts = parts.slice(0, size);
             }
 
             //named channels case
             else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {
                 parts = cstr.match(/([0-9]+)/g).map(function (value) {
-                    return parseFloat(value)
-                })
+                    return parseFloat(value);
+                });
 
-                space = cstr.match(/([a-z])/ig).join('').toLowerCase()
+                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
             }
         }
 
         //numeric case
         else if (!isNaN(cstr)) {
-            space = 'rgb'
-            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff]
+            space = 'rgb';
+            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
         }
 
         //array-like
         else if (Array.isArray(cstr) || cstr.length) {
-            parts = [cstr[0], cstr[1], cstr[2]]
-            space = 'rgb'
-            alpha = cstr.length === 4 ? cstr[3] : 1
+            parts = [cstr[0], cstr[1], cstr[2]];
+            space = 'rgb';
+            alpha = cstr.length === 4 ? cstr[3] : 1;
         }
 
         //object case - detects css cases of rgb and hsl
         else if (cstr instanceof Object) {
             if (cstr.r != null || cstr.red != null || cstr.R != null) {
-                space = 'rgb'
+                space = 'rgb';
                 parts = [
                     cstr.r || cstr.red || cstr.R || 0,
                     cstr.g || cstr.green || cstr.G || 0,
                     cstr.b || cstr.blue || cstr.B || 0
-                ]
+                ];
             }
             else {
-                space = 'hsl'
+                space = 'hsl';
                 parts = [
                     cstr.h || cstr.hue || cstr.H || 0,
                     cstr.s || cstr.saturation || cstr.S || 0,
                     cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
-                ]
+                ];
             }
 
-            alpha = cstr.a || cstr.alpha || cstr.opacity || 1
+            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
 
-            if (cstr.opacity != null) alpha /= 100
-        };
+            if (cstr.opacity != null) alpha /= 100;
+        }
 
-        return [parts[0], parts[1], parts[2], alpha, space]
+        return [parts[0], parts[1], parts[2], alpha, space];
 
     };
 
     this.SetPlaceholderColor = function(input_html, placeholder_color){
         // This function will set the placeholder text for an input element
 
-        var class_name = "placeholder_inline_style_" + parseInt(Math.random()*1000000);
+        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
         var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
         var node = document.createElement("style");
 
@@ -669,4 +658,4 @@ function DashColor(){
 
     this.setup_color_sets();
 
-};
+}

@@ -13,7 +13,7 @@ class DashGuiLayoutTabs {
     }
     else {
         this.color = Dash.Color.Light;
-    };
+    }
 
     this.list_backing = $("<div></div>");
     this.list_top = $("<div></div>");
@@ -27,7 +27,7 @@ class DashGuiLayoutTabs {
     this.size = Dash.Size.ColumnWidth; // Thickness
     this.current_index = null;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.append(this.list_backing);
         this.html.append(this.list_top);
@@ -47,12 +47,12 @@ class DashGuiLayoutTabs {
         }
         else {
             this.set_styles_for_top_tabs();
-        };
+        }
 
         this.update_styles();
 
         (function(self){
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.load_last_selection();
             });
         })(this);
@@ -63,7 +63,7 @@ class DashGuiLayoutTabs {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
 
-    this.set_styles_for_side_tabs = function(){
+    this.set_styles_for_side_tabs = function () {
 
         this.list_backing.css({
             "position": "absolute",
@@ -97,7 +97,7 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.set_styles_for_top_tabs = function(){
+    this.set_styles_for_top_tabs = function () {
 
         this.list_backing.css({
             "position": "absolute",
@@ -134,12 +134,10 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.update_styles_for_side_tabs = function(){
+    this.update_styles_for_side_tabs = function () {
 
-        var sub_border = "none";
-        var box_shadow = "none";
-
-        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
+        // var sub_border = "none";
+        var box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
 
         this.size = Dash.Size.ColumnWidth;
 
@@ -163,12 +161,11 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.update_styles_for_top_tabs = function(){
+    this.update_styles_for_top_tabs = function () {
 
-        var sub_border = "none";
-        var box_shadow = "none";
+        // var sub_border = "none";
+        // var box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
 
-        box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
         this.size = Dash.Size.RowHeight+(Dash.Size.Padding);
 
         this.list_backing.css({
@@ -192,7 +189,7 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.update_styles = function(){
+    this.update_styles = function () {
         // Called to style anything that might change between
         // the default behavior and the sub style
 
@@ -201,26 +198,26 @@ class DashGuiLayoutTabs {
         }
         else {
             this.update_styles_for_top_tabs();
-        };
+        }
 
     };
 
-    this.load_last_selection = function(){
+    this.load_last_selection = function () {
 
         if (this.selected_index != -1) {
             // A selection was already made externally
             return;
-        };
+        }
 
         if (this.all_content.length == 0) {
             return;
-        };
+        }
 
-        var last_index = parseInt(d.Local.Get("sidebar_index_" + this.recall_id)) || 0;
+        var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
 
         if (last_index > this.all_content.length-1) {
             last_index = 0;
-        };
+        }
 
         this.LoadIndex(last_index);
 
@@ -234,9 +231,9 @@ class DashGuiLayoutTabs {
 
         if (index > this.all_content.length-1) {
             return;
-        };
+        }
 
-        d.Local.Set("sidebar_index_" + this.recall_id, index);
+        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
         this.current_index = index;
         var button = null;
 
@@ -249,13 +246,14 @@ class DashGuiLayoutTabs {
             }
             else {
                 content_data["button"].SetSelected(false);
-            };
+            }
 
-        };
+        }
 
         this.content.empty();
 
-        var content_html = null;
+        var content_html;
+
         if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
             content_html = this.all_content[index]["content_div_html_class"];
         }
@@ -264,18 +262,18 @@ class DashGuiLayoutTabs {
         }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        };
+        }
 
         if (!content_html) {
             console.log("ERROR: Unknown content!");
             content_html = $("<div>Error Loading Content</div>");
-        };
+        }
 
         this.content.append(content_html);
 
         if (this.on_tab_changed_cb) {
             this.on_tab_changed_cb(this.all_content[index]);
-        };
+        }
 
     };
 
@@ -334,13 +332,13 @@ class DashGuiLayoutTabs {
         }
         else {
             button_options["style"] = "tab_top";
-        };
+        }
 
         (function(self, index, button_options){
 
-            content_data["button"] = new d.Gui.Button(
+            content_data["button"] = new Dash.Gui.Button(
                 label_text,                         // Label
-                function(){self.LoadIndex(index);}, // Callback
+                function () {self.LoadIndex(index);}, // Callback
                 self,                               // Binder
                 self.color,                         // Dash Color Set
                 button_options                      // Options
@@ -360,4 +358,4 @@ class DashGuiLayoutTabs {
     this.setup_styles();
 
     };
-};
+}

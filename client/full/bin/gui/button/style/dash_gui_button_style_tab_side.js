@@ -1,7 +1,7 @@
 
 function DashGuiButtonStyleTabSide(){
 
-    this.setup_styles = function() {
+    this.setup_styles = function () {
 
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
@@ -11,9 +11,9 @@ function DashGuiButtonStyleTabSide(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
+            "height": Dash.Size.ButtonHeight,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
             "margin-bottom": 1,
@@ -35,7 +35,7 @@ function DashGuiButtonStyleTabSide(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
+            "background": Dash.Color.Primary,
         });
 
         this.click_highlight.css({
@@ -50,11 +50,11 @@ function DashGuiButtonStyleTabSide(){
 
         this.label.css({
             "position": "absolute",
-            "left": d.Size.Padding,
+            "left": Dash.Size.Padding,
             "top": 0,
-            "right": d.Size.Padding,
+            "right": Dash.Size.Padding,
             "bottom": 0,
-            "line-height": (d.Size.ButtonHeight) + "px",
+            "line-height": (Dash.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
@@ -64,4 +64,4 @@ function DashGuiButtonStyleTabSide(){
 
     };
 
-};
+}

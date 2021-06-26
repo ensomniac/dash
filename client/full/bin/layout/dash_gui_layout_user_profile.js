@@ -13,7 +13,7 @@ function DashGuiLayoutUserProfile(user_data, options){
     this.img_box = $("<div></div>");
     this.img_box_size = Dash.Size.ColumnWidth;
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.add_header();
         this.setup_property_box();
@@ -28,7 +28,7 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.add_logout_button = function(){
+    this.add_logout_button = function () {
 
         this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
         this.html.append(this.logout_button.html);
@@ -42,20 +42,20 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.add_header = function(){
+    this.add_header = function () {
 
         var header_title = "User Settings";
 
         if (this.user_data["first_name"]) {
             header_title = this.user_data["first_name"] + "'s User Settings";
-        };
+        }
 
         this.header = new Dash.Gui.Header(header_title);
         this.html.append(this.header.html);
 
     };
 
-    this.setup_property_box = function(){
+    this.setup_property_box = function () {
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
@@ -96,21 +96,21 @@ function DashGuiLayoutUserProfile(user_data, options){
                     property_details["editable"]
                 );
 
-            };
+            }
 
-        };
+        }
 
         this.add_user_image_box();
 
     };
 
-    this.add_user_image_box = function(){
+    this.add_user_image_box = function () {
 
         var img_url = "dash/fonts/user_default.jpg";
 
         if (this.user_data["img"]) {
             img_url = this.user_data["img"]["thumb_url"];
-        };
+        }
 
         this.html.append(this.img_box);
 
@@ -135,7 +135,7 @@ function DashGuiLayoutUserProfile(user_data, options){
 
         if (response.timeStamp) {
             return;
-        };
+        }
 
         console.log("<< on_user_img_uploaded >>");
         console.log(response);
@@ -147,18 +147,18 @@ function DashGuiLayoutUserProfile(user_data, options){
                 "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
             });
 
-        };
+        }
 
     };
 
-    this.add_user_image_upload_button = function(){
+    this.add_user_image_upload_button = function () {
 
         this.user_image_upload_button = new Dash.Gui.Button("Upload Image", this.on_user_img_uploaded, this, this.color);
         this.img_box.append(this.user_image_upload_button.html);
 
-        this.params = {}
+        this.params = {};
         this.params["f"] = "upload_image";
-        this.params["token"] = d.Local.Get("token");
+        this.params["token"] = Dash.Local.Get("token");
         this.params["user_data"] = JSON.stringify(this.user_data);
 
         this.user_image_upload_button.SetFileUploader(
@@ -175,19 +175,19 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.get_data = function(){
+    this.get_data = function () {
         return this.user_data;
     };
 
-    this.set_data = function(){
+    this.set_data = function () {
         console.log("set data");
         // return {};
     };
 
     this.log_out = function(button){
-        d.Local.Set("email", "");
-        d.Local.Set("token", "");
-        d.Local.Set("user_json", "");
+        Dash.Local.Set("email", "");
+        Dash.Local.Set("token", "");
+        Dash.Local.Set("user_json", "");
         location.reload();
     };
 
@@ -207,33 +207,33 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.update_password = function(){
+    this.update_password = function () {
 
         if (!this.new_password_row.Text()) {
             return;
-        };
+        }
 
         var params = {};
         params["f"] = "update_password";
         params["p"] = this.new_password_row.Text();
 
         (function(self, params){
-            d.Request(self, function(response){
+            Dash.Request(self, function(response){
                 self.on_info_saved(response, self.new_password_row);
             }, "Users", params);
         })(this, params);
 
     };
 
-    this.update_first_name = function(){
+    this.update_first_name = function () {
         this.update_personal_information(this.first_name);
     };
 
-    this.update_last_name = function(){
+    this.update_last_name = function () {
         this.update_personal_information(this.last_name);
     };
 
-    this.update_hidden_mindtwins = function(){
+    this.update_hidden_mindtwins = function () {
         this.update_personal_information(this.hidden_mindtwins_csv);
     };
 
@@ -264,7 +264,7 @@ function DashGuiLayoutUserProfile(user_data, options){
             console.log(response);
             alert(response.error);
             return;
-        };
+        }
 
         console.log("** Info saved successfully **");
         input_row.FlashSave();
@@ -273,4 +273,4 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     this.setup_styles();
 
-};
+}
