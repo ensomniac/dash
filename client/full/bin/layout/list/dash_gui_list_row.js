@@ -150,7 +150,9 @@ function DashGuiListRow (list, arbitrary_id) {
     this.Expand = function (html) {
         if (this.is_expanded) {
             console.log("Already expanded");
+
             this.Collapse();
+
             return;
         }
 
@@ -180,9 +182,9 @@ function DashGuiListRow (list, arbitrary_id) {
             "overflow-y": "hidden",
         });
 
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": target_size}, 180, function () {
-                self.expand_content.css({"overflow-y": "auto"});
+                self.expand_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
                 self.is_expanded = true;
             });
         })(this);
