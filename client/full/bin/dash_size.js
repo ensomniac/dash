@@ -1,5 +1,4 @@
-
-function DashSize(is_mobile){
+function DashSize (is_mobile) {
 
     this.Padding = 10;
     this.Stroke = 3;

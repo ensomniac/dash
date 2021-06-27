@@ -208,7 +208,7 @@ function DashGuiListRow (list, arbitrary_id) {
             "overflow-y": "hidden",
         });
 
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": 0}, 180, function () {
                 self.expand_content.stop().css({
                     "overflow-y": "hidden",

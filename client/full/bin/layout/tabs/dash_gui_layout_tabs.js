@@ -51,7 +51,7 @@ class DashGuiLayoutTabs {
 
         this.update_styles();
 
-        (function(self){
+        (function (self) {
             requestAnimationFrame(function () {
                 self.load_last_selection();
             });
@@ -59,7 +59,7 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.OnTabChanged = function(callback){
+    this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
 
@@ -227,7 +227,7 @@ class DashGuiLayoutTabs {
         return this.current_index;
     };
 
-    this.LoadIndex = function(index){
+    this.LoadIndex = function (index) {
 
         if (index > this.all_content.length-1) {
             return;
@@ -277,14 +277,14 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.AppendHTML = function(html){
+    this.AppendHTML = function (html) {
         html.css({
             "margin-bottom": 1,
         });
         this.list_top.append(html);
     };
 
-    this.AppendImage = function(img_url){
+    this.AppendImage = function (img_url) {
 
         // TODO: Move the concept of an 'Image' into dash as a light
         // abstraction for managing aspect ratios
@@ -307,15 +307,15 @@ class DashGuiLayoutTabs {
 
     };
 
-    this.Append = function(label_text, content_div_html_class, optional_params){
+    this.Append = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.list_top, optional_params);
     };
 
-    this.Prepend = function(label_text, content_div_html_class, optional_params){
+    this.Prepend = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
 
-    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_params) {
 
         optional_params = optional_params || {};
 
@@ -334,7 +334,7 @@ class DashGuiLayoutTabs {
             button_options["style"] = "tab_top";
         }
 
-        (function(self, index, button_options){
+        (function (self, index, button_options) {
 
             content_data["button"] = new Dash.Gui.Button(
                 label_text,                         // Label

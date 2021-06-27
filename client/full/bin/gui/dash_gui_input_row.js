@@ -380,7 +380,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         (function (self) {
-            request = self.button.Request(api, server_data, function(response_json){
+            request = self.button.Request(api, server_data, function (response_json) {
                 self.on_request_response(response_json);
             }, self);
         })(this);

@@ -1,5 +1,4 @@
-
-function DashGuiButtonStyleToolbar(){
+function DashGuiButtonStyleToolbar () {
 
     this.setup_styles = function () {
 

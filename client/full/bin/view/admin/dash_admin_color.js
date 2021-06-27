@@ -1,5 +1,4 @@
-
-function DashAdminColor(){
+function DashAdminColor () {
 
     // this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html = Dash.Gui.GetHTMLContext("");
@@ -72,7 +71,7 @@ function DashAdminColor(){
 
     };
 
-    this.draw_header = function(color_set){
+    this.draw_header = function (color_set) {
 
         var label = "Header - " + this.display_theme.Title() + " Style (Switch to Dark)";
 
@@ -87,7 +86,7 @@ function DashAdminColor(){
             "cursor": "pointer",
         });
 
-        (function(self){
+        (function (self) {
             self.header.html.click(function () {
 
                 if (self.display_theme == "light") {
@@ -110,7 +109,7 @@ function DashAdminColor(){
 
     };
 
-    this.draw_property_box = function(color_set){
+    this.draw_property_box = function (color_set) {
 
         console.log("Adding property box");
 

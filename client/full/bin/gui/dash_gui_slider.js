@@ -1,4 +1,4 @@
-function DashGuiSlider(color, label_text, callback, start_range, end_range, current_value){
+function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
 
     this.color = color;
     this.callback = callback;
@@ -111,7 +111,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
         this.make_connections();
 
-        (function(self){
+        (function (self) {
 
             requestAnimationFrame(function () {
                 self.SetValue(self.initial_value);
@@ -169,8 +169,8 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
     };
 
-    this.draw = function(interactive_update){
-        if (interactive_update){
+    this.draw = function (interactive_update) {
+        if (interactive_update) {
             this.width = null;
             this.height = null;
         }
@@ -265,18 +265,18 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
     };
 
-    this.SetSize = function(width, height){
+    this.SetSize = function (width, height) {
         this.width = width;
         this.height = height;
         // this.slider_width = this.width;
         this.setup_sizing();
     };
 
-    this.SetLabel = function(label){
+    this.SetLabel = function (label) {
         this.label_text = label;
     };
 
-    this.SetLock = function(locked){
+    this.SetLock = function (locked) {
         // When true, sliders can't be MANUALLY moved
         this.locked = locked;
 
@@ -288,7 +288,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         }
     };
 
-    this.SetValue = function(value){
+    this.SetValue = function (value) {
         // The value is manually set, externally
         var valPx = Dash.Math.Lerp(0, this.slider_width, value);
         this.value = value;
@@ -313,39 +313,39 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         return Dash.Math.Lerp(this.start_range, this.end_range, this.value);
     };
 
-    this.SetExtraData = function(data){
+    this.SetExtraData = function (data) {
         this.extra_data = data;
     };
 
-    this.OnChange = function(on_change_callback){
+    this.OnChange = function (on_change_callback) {
         this.on_change_callback = on_change_callback;
     };
 
-    this.SetAnimate = function(animate){
+    this.SetAnimate = function (animate) {
         this.animate_initial_value = animate;
     };
 
-    this.SetValueLabelVisibility = function(visible){
+    this.SetValueLabelVisibility = function (visible) {
         this.value_label_visible = visible;
     };
 
-    this.on_mouse_up = function(event){
+    this.on_mouse_up = function (event) {
         if (!this.is_active) {return;}
         this.is_active = false;
     };
 
-    this.get_touch_w_offset = function(event){
+    this.get_touch_w_offset = function (event) {
         return event.pageX - $(this.slider).parent().offset().left - (this.label_width+Dash.Size.Padding);
     };
 
-    this.on_mouse_down = function(event){
+    this.on_mouse_down = function (event) {
         if (this.is_active) {return;}
         this.touch_start = this.get_touch_w_offset(event);
         this.slider_pos_touch_start = this.set_thumb(this.touch_start);
         this.is_active = true;
     };
 
-    this.on_mouse_move = function(event){
+    this.on_mouse_move = function (event) {
         if (!this.is_active) {return;}
         var now_pos = this.get_touch_w_offset(event) + (this.height*0.5);
         this.slider_pos = this.set_thumb(this.slider_pos_touch_start + (now_pos-this.touch_start));
@@ -353,7 +353,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         this.callback(this.GetValue());
     };
 
-    this.set_thumb = function(xPosPx, animate){
+    this.set_thumb = function (xPosPx, animate) {
         // Safely set the position of the slider. Returns a clamped value if provided value extends slider bounds
         animate = false;
 
@@ -386,7 +386,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
                 this.value = value;
             }
 
-            if (this.on_change_callback){
+            if (this.on_change_callback) {
                 this.on_change_callback(value, this.slider, this.extra_data, animate);
             }
         }
@@ -394,7 +394,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         return xPosPx;
     };
 
-    this.set_mark = function(xPosPx, animate){
+    this.set_mark = function (xPosPx, animate) {
         xPosPx = xPosPx-(this.slider_height*0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
@@ -416,9 +416,9 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
     this.make_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.slider.on("mousedown", function( event ) {
+            self.slider.on("mousedown", function ( event ) {
 
                 if (self.locked) {
                     return;
@@ -433,12 +433,12 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
 
             });
 
-            $(document).on('mousemove', self.slider, function(event) {
+            $(document).on('mousemove', self.slider, function (event) {
                 self.on_mouse_move(event);
                 event.preventDefault();
             });
 
-            $(document).on('mouseup', self.slider, function(event) {
+            $(document).on('mouseup', self.slider, function (event) {
                 self.on_mouse_up(event);
             });
 

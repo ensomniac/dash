@@ -1,5 +1,4 @@
-
-function DashUser(){
+function DashUser () {
 
     this.__auth_authenticated_cb = null;
     this.__auth_not_authenticated_cb = null;
@@ -7,7 +6,7 @@ function DashUser(){
     this.Data = null;
     this.Init = null;
 
-    this.Authenticate = function(bind, on_user_authenticated, on_user_not_authenticated){
+    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
 
@@ -32,7 +31,7 @@ function DashUser(){
 
     };
 
-    this.SetUserAuthentication = function(email, server_response){
+    this.SetUserAuthentication = function (email, server_response) {
 
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
@@ -68,7 +67,7 @@ function DashUser(){
 
     };
 
-    this.on_auth_response = function(response){
+    this.on_auth_response = function (response) {
 
         response["token"] = response["token"] || Dash.Local.Get("token");
 

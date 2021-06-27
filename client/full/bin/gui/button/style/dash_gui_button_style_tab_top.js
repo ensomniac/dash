@@ -1,5 +1,4 @@
-
-function DashGuiButtonStyleTabTop(){
+function DashGuiButtonStyleTabTop () {
 
     this.setup_styles = function () {
 
@@ -87,7 +86,7 @@ function DashGuiButtonStyleTabTop(){
 
     };
 
-    this.manage_style_on_click = function(label_text){
+    this.manage_style_on_click = function (label_text) {
 
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);

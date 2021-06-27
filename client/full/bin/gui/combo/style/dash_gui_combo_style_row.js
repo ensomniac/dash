@@ -1,5 +1,4 @@
-
-function DashGuiComboStyleRow(){
+function DashGuiComboStyleRow () {
 
     this.dropdown_icon = null;
 

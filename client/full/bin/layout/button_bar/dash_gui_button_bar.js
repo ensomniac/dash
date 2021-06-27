@@ -1,4 +1,4 @@
-function DashGuiButtonBar(binder, color){
+function DashGuiButtonBar (binder, color) {
 
     this.html = $("<div></div>");
     this.binder = binder;
@@ -14,11 +14,11 @@ function DashGuiButtonBar(binder, color){
 
     };
 
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function (label_text, callback) {
 
         callback = callback.bind(this.binder);
 
-        (function(self, callback){
+        (function (self, callback) {
 
             var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);

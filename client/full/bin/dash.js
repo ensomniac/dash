@@ -1,5 +1,4 @@
-
-function Dash(){
+function Dash () {
     this.html = $("<div></div>");
 
 
@@ -24,7 +23,7 @@ function Dash(){
     this.width = 0;
     this.height = 0;
 
-    this.FormatTime = function(server_iso_string){
+    this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
         date = date.setHours(date.getHours()-server_offset_hours);
@@ -97,7 +96,7 @@ function Dash(){
         return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
     };
 
-    this.ValidateResponse = function(response){
+    this.ValidateResponse = function (response) {
         // TODO: doc
 
         if (!response) {
@@ -148,7 +147,7 @@ function Dash(){
             "background": Dash.Color.GetVerticalGradient("#444", "#111", "#111"),
         });
 
-        (function(self){
+        (function (self) {
 
             requestAnimationFrame(function () {
                 self.draw();
@@ -211,13 +210,13 @@ function Dash(){
 $(document).on("ready", function () {
 
     $.fn.extend({
-        animateStep: function(options) {
+        animateStep: function (options) {
             return this.each(function () {
                 var elementOptions = $.extend({}, options, {step: options.step.bind($(this))});
                 $({x: options.from}).animate({x: options.to}, elementOptions);
             });
         },
-        rotate: function(value) {
+        rotate: function (value) {
             return this.css("transform", "rotate(" + value + "deg)");
         }
     });
@@ -227,11 +226,11 @@ $(document).on("ready", function () {
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
 
-    window.InverseLerp = function(min, max, val){
+    window.InverseLerp = function (min, max, val) {
         return (val - min) / (max - min);
     };
 
-    window.Lerp = function(valA, valB, t){
+    window.Lerp = function (valA, valB, t) {
         if (t > 1) {t = 1;}
         if (t < 0) {t = 0;}
 

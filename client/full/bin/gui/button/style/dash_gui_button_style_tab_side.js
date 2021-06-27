@@ -1,5 +1,4 @@
-
-function DashGuiButtonStyleTabSide(){
+function DashGuiButtonStyleTabSide () {
 
     this.setup_styles = function () {
 

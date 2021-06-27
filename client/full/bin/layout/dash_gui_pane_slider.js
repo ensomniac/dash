@@ -1,4 +1,4 @@
-function DashGuiPaneSlider(binder, is_vertical, default_size){
+function DashGuiPaneSlider (binder, is_vertical, default_size) {
 
     this.binder = binder;
     this.is_vertical = is_vertical || false;
@@ -35,11 +35,11 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
 
     this.drag_properties = {};
 
-    this.SetPaneContentA = function(html){
+    this.SetPaneContentA = function (html) {
         this.content_a.empty().append(html);
     };
 
-    this.SetPaneContentB = function(html){
+    this.SetPaneContentB = function (html) {
         this.content_b.empty().append(html);
     };
 
@@ -153,7 +153,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
 
     this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
             self.divider_hover.on("mouseenter", function () {
 
@@ -171,7 +171,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
 
             });
 
-            self.html.on("mousemove", function(e){
+            self.html.on("mousemove", function (e) {
 
                 if (self.drag_active) {
 
@@ -187,7 +187,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
 
             });
 
-            self.divider_hover.on("mousedown", function(e){
+            self.divider_hover.on("mousedown", function (e) {
 
                 if (!self.drag_active) {
                     self.drag_active = true;
@@ -205,7 +205,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
 
             });
 
-            self.html.on("mouseup", function(e){
+            self.html.on("mouseup", function (e) {
                 if (!self.drag_active) {return;}
 
                 if (self.drag_active) {

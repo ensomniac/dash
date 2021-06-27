@@ -1,5 +1,4 @@
-
-function DashPDFView(options){
+function DashPDFView (options) {
 
     this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
 
@@ -42,7 +41,7 @@ function DashPDFView(options){
         this.html.append(this.upload_button.html);
         this.html.append(this.pages_area);
 
-        (function(self){
+        (function (self) {
             setInterval(function () {
                 self.check_width();
             }, 100);
@@ -58,7 +57,7 @@ function DashPDFView(options){
 
     };
 
-    this.upload_pdf = function(response){
+    this.upload_pdf = function (response) {
 
         if (response.originalEvent) {
             // TODO: Prevent this from being called inside of dash_gui_button_uploader.js
@@ -102,7 +101,7 @@ function DashPDFView(options){
 
                 if (init_delay > 10) {
 
-                    (function(self, i, init_delay, fade_in_duration){
+                    (function (self, i, init_delay, fade_in_duration) {
 
                         setTimeout(function () {
 
@@ -126,12 +125,12 @@ function DashPDFView(options){
 
     };
 
-    this.on_pdf_page_clicked = function(page_data){
+    this.on_pdf_page_clicked = function (page_data) {
         console.log(page_data);
         window.open(page_data["url"], '_blank');
     };
 
-    this.on_data = function(response){
+    this.on_data = function (response) {
         if (!Dash.ValidateResponse(response)) {return;}
 
         this.data = null;
@@ -169,7 +168,7 @@ function DashPDFView(options){
             this.pages_area.append(image);
             this.images.push(image);
 
-            (function(self, image, page_data){
+            (function (self, image, page_data) {
                 image.on("click", function () {
                     self.on_pdf_page_clicked(page_data);
                 });
@@ -177,7 +176,7 @@ function DashPDFView(options){
 
         }
 
-        (function(self){
+        (function (self) {
             setTimeout(function () {
                 if (!self.images_initialized) {
                     self.update_sizes();

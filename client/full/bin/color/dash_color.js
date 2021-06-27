@@ -1,4 +1,4 @@
-function DashColor(){
+function DashColor () {
 
     // this.DarkBackground = "#e6e6e6";
     // this.LightBackground = "#e6e6e6";
@@ -18,15 +18,15 @@ function DashColor(){
     this.Light = null;
     this.Dark = null;
 
-    // this.SetFromJson = function(light_theme_json, dark_theme_json){
+    // this.SetFromJson = function (light_theme_json, dark_theme_json) {
 
     // };
 
-    // this.Set = function(light_theme, dark_theme){
+    // this.Set = function (light_theme, dark_theme) {
     //     console.log("SET");
     // };
 
-    // this.fill_set = function(color_set){
+    // this.fill_set = function (color_set) {
     //     // color_set = object
     //     console.log(color_set);
 
@@ -144,14 +144,14 @@ function DashColor(){
 
         // console.log(light);
 
-        this.Raise = function(cstr, raise_steps){
+        this.Raise = function (cstr, raise_steps) {
             raise_steps = raise_steps || 1;
 
             return cstr;
 
         };
 
-        this.Random = function(cstr, lighten_rgb){
+        this.Random = function (cstr, lighten_rgb) {
             var tmp_colors = ["red", "blue", "green", "orange"];
             return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
             // return "#" + Math.floor(Math.random()*16777215).toString(16);
@@ -270,15 +270,15 @@ function DashColor(){
 
     };
 
-    this.GetHorizontalGradient = function(color_1, color_2, color_3, color_4){
+    this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
     };
 
-    this.GetVerticalGradient = function(color_1, color_2, color_3, color_4){
+    this.GetVerticalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(0, color_1, color_2, color_3, color_4);
     };
 
-    this.GetGradient = function(degrees, color_1, color_2, color_3, color_4){
+    this.GetGradient = function (degrees, color_1, color_2, color_3, color_4) {
 
         var colors = "";
 
@@ -453,23 +453,23 @@ function DashColor(){
         "yellowgreen": [154, 205, 50]
     };
 
-    this.to_rgba = function(color_data){
+    this.to_rgba = function (color_data) {
         return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
     };
 
-    this.to_rgb = function(color_data){
+    this.to_rgb = function (color_data) {
         return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
     };
 
-    this.ParseToRGB = function(cstr){
+    this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
 
-    this.ParseToRGBA = function(cstr){
+    this.ParseToRGBA = function (cstr) {
         return this.to_rgba(this.Parse(cstr));
     };
 
-    this.Lighten = function(cstr, lighten_rgb){
+    this.Lighten = function (cstr, lighten_rgb) {
 
         lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
 
@@ -482,7 +482,7 @@ function DashColor(){
 
     };
 
-    this.Darken = function(cstr, darken_rgb){
+    this.Darken = function (cstr, darken_rgb) {
 
         darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
 
@@ -495,7 +495,7 @@ function DashColor(){
 
     };
 
-    this.Parse = function(cstr) {
+    this.Parse = function (cstr) {
         var base;
         var size;
         var m = null;
@@ -640,7 +640,7 @@ function DashColor(){
 
     };
 
-    this.SetPlaceholderColor = function(input_html, placeholder_color){
+    this.SetPlaceholderColor = function (input_html, placeholder_color) {
         // This function will set the placeholder text for an input element
 
         var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();

@@ -1,5 +1,4 @@
-
-function DashAdminSettings(){
+function DashAdminSettings () {
 
     this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
     this.property_box = null;
@@ -8,7 +7,7 @@ function DashAdminSettings(){
     this.setup_styles = function () {
     };
 
-    this.SetData = function(response){
+    this.SetData = function (response) {
 
         if (!Dash.ValidateResponse(response)) {return;}
         this.html.empty();

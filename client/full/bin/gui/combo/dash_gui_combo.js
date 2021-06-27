@@ -175,7 +175,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.Request = function(api, server_data, on_complete_callback, bind_to){
+    this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (!this.load_dots) {
             this.setup_load_dots();
         }
@@ -360,7 +360,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.setup_connections = function () {
         (function (self) {
 
-            $(window).on("click", function(event) {
+            $(window).on("click", function (event) {
                 if (!self.expanded) {
                     return;
                 }

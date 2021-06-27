@@ -1,6 +1,5 @@
-
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile(user_data, options){
+function DashGuiLayoutUserProfile (user_data, options) {
 
     this.options = options || {};
     this.user_data = user_data || Dash.User.Data;
@@ -131,7 +130,7 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.on_user_img_uploaded = function(response){
+    this.on_user_img_uploaded = function (response) {
 
         if (response.timeStamp) {
             return;
@@ -184,14 +183,14 @@ function DashGuiLayoutUserProfile(user_data, options){
         // return {};
     };
 
-    this.log_out = function(button){
+    this.log_out = function (button) {
         Dash.Local.Set("email", "");
         Dash.Local.Set("token", "");
         Dash.Local.Set("user_json", "");
         location.reload();
     };
 
-    this.set_group = function(button, group_name, group_option){
+    this.set_group = function (button, group_name, group_option) {
 
         console.log("this.set_group");
 
@@ -217,8 +216,8 @@ function DashGuiLayoutUserProfile(user_data, options){
         params["f"] = "update_password";
         params["p"] = this.new_password_row.Text();
 
-        (function(self, params){
-            Dash.Request(self, function(response){
+        (function (self, params) {
+            Dash.Request(self, function (response) {
                 self.on_info_saved(response, self.new_password_row);
             }, "Users", params);
         })(this, params);
@@ -237,7 +236,7 @@ function DashGuiLayoutUserProfile(user_data, options){
         this.update_personal_information(this.hidden_mindtwins_csv);
     };
 
-    this.update_personal_information = function(button){
+    this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
         console.log(response);
 
@@ -258,7 +257,7 @@ function DashGuiLayoutUserProfile(user_data, options){
 
     };
 
-    this.on_info_saved = function(response, input_row){
+    this.on_info_saved = function (response, input_row) {
 
         if (response.error) {
             console.log(response);

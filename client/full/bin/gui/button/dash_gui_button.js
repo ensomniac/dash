@@ -1,5 +1,4 @@
-
-function DashGuiButton(Label, Callback, Bind, color, options){
+function DashGuiButton (Label, Callback, Bind, color, options) {
 
     this.label      = Label;
     this.callback   = Callback;
@@ -56,7 +55,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.ChangeLabel = function(label_text, width=null) {
+    this.ChangeLabel = function (label_text, width=null) {
         this.html[0].innerText = "";
         this.label = $("<div>" + label_text + "</div>");
         this.setup_styles();
@@ -74,7 +73,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         this.html.css({"opacity": 1.0, "pointer-events": "auto"});
     };
 
-    this.SetBorderRadius = function(border_radius){
+    this.SetBorderRadius = function (border_radius) {
 
         this.html.css({
             "border-radius": border_radius,
@@ -94,7 +93,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetTextAlign = function(text_alignment){
+    this.SetTextAlign = function (text_alignment) {
 
         this.label.css({
             "text-align": text_alignment,
@@ -102,7 +101,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetFontSize = function(font_size){
+    this.SetFontSize = function (font_size) {
 
         this.label.css({
             "font-size": font_size,
@@ -110,7 +109,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetSelected = function(is_selected){
+    this.SetSelected = function (is_selected) {
 
         if (is_selected == this.is_selected) {
             return;
@@ -155,7 +154,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetButtonVisibility = function(button_visible){
+    this.SetButtonVisibility = function (button_visible) {
 
         if (button_visible) {
             this.html.css({"opacity": 1, "pointer-events": "auto"});
@@ -166,7 +165,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetLoadBar = function(t){
+    this.SetLoadBar = function (t) {
         this.load_bar.css({"width": this.html.width()*t});
     };
 
@@ -174,7 +173,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
 
-    this.SetLoading = function(is_loading){
+    this.SetLoading = function (is_loading) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -249,7 +248,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         this.html.append(this.file_uploader.html);
     };
 
-    this.on_file_upload_response = function(response){
+    this.on_file_upload_response = function (response) {
 
         if (this.file_uploader.html) {
             this.file_uploader.html.remove();
@@ -265,7 +264,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.Request = function(api, server_data, on_complete_callback, bind_to){
+    this.Request = function (api, server_data, on_complete_callback, bind_to) {
 
         if (this.load_dots) {
             return;
@@ -281,9 +280,9 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         server_data = server_data || {};
         server_data["token"] = Dash.Local.Get("token");
 
-        (function(self){
+        (function (self) {
 
-            $.post(api, server_data, function(response) {
+            $.post(api, server_data, function (response) {
 
                 self.SetLoading(false);
 
@@ -299,7 +298,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.on_click = function(event){
+    this.on_click = function (event) {
 
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(event, this);
@@ -309,7 +308,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
             self.html.on("mouseenter", function () {
                 self.on_hover_in();
@@ -319,7 +318,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
                 self.on_hover_out();
             });
 
-            self.html.on("click", function(event){
+            self.html.on("click", function (event) {
                 self.manage_style_on_click();
                 self.on_click(event);
             });
@@ -328,7 +327,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.manage_style_on_click = function(label_text){
+    this.manage_style_on_click = function (label_text) {
         // Overridden in DashGuiButtonStyleTabTop
 
         this.highlight.stop().animate({"opacity": 0}, 50);
@@ -337,7 +336,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.SetRightLabelText = function(label_text){
+    this.SetRightLabelText = function (label_text) {
 
         if (!this.right_label) {
             this.setup_right_label();
@@ -350,7 +349,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         if (this.label_shown) {
             // Was visible
 
-            (function(self){
+            (function (self) {
 
                 self.right_label.animate({"opacity": 0}, 200, function () {
                     self.set_right_label_text(label_text);
@@ -373,7 +372,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
 
     };
 
-    this.set_right_label_text = function(label_text) {
+    this.set_right_label_text = function (label_text) {
         // Called when the icon is not visible
 
         if (!label_text && label_text != 0 || label_text == this.last_right_label_text) {

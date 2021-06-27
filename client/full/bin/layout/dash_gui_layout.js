@@ -1,4 +1,4 @@
-function DashGuiLayout(){
+function DashGuiLayout () {
 
     this.UserProfile = DashGuiLayoutUserProfile;
 

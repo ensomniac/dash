@@ -1,5 +1,4 @@
-
-function DashAdminColorDoc(color){
+function DashAdminColorDoc (color) {
 
     this.html = Dash.Gui.GetHTMLContext("--");
     this.color = color || Dash.Color.Light;

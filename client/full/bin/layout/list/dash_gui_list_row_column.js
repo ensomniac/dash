@@ -1,4 +1,4 @@
-function DashGuiListRowColumn(list_row, column_config_data){
+function DashGuiListRowColumn (list_row, column_config_data) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
 

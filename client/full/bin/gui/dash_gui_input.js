@@ -36,7 +36,7 @@ function DashGuiInput (placeholder_text, color) {
 
     };
 
-    // this.SetHeight = function(height, optional_font_size){
+    // this.SetHeight = function (height, optional_font_size) {
 
     //     this.row_height = height;
 
@@ -54,7 +54,7 @@ function DashGuiInput (placeholder_text, color) {
 
     // };
 
-    this.SetLocked = function(is_locked){
+    this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
             // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
@@ -68,7 +68,7 @@ function DashGuiInput (placeholder_text, color) {
         }
     };
 
-    this.SetDarkMode = function(dark_mode_on){
+    this.SetDarkMode = function (dark_mode_on) {
 
         if (dark_mode_on) {
 
@@ -85,7 +85,7 @@ function DashGuiInput (placeholder_text, color) {
 
     };
 
-    this.SetTransparent = function(is_transparent){
+    this.SetTransparent = function (is_transparent) {
 
         if (is_transparent) {
             this.html.css({
@@ -101,16 +101,16 @@ function DashGuiInput (placeholder_text, color) {
         return this.input.val();
     };
 
-    this.SetText = function(text){
+    this.SetText = function (text) {
         this.last_val = text;
         return this.input.val(text);
     };
 
-    this.OnChange = function(callback, bind_to){
+    this.OnChange = function (callback, bind_to) {
         this.on_change_callback = callback.bind(bind_to);
     };
 
-    this.OnSubmit = function(callback, bind_to){
+    this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
 
@@ -137,7 +137,7 @@ function DashGuiInput (placeholder_text, color) {
 
     this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
             self.input.on("click", function (event) {
                 event.preventDefault();
@@ -145,7 +145,7 @@ function DashGuiInput (placeholder_text, color) {
                 return false;
             });
 
-            self.input.on("keypress",function(e) {
+            self.input.on("keypress",function (e) {
                 if (e.which == 13) {
                     self.on_submit();
                 }

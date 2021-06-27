@@ -1,5 +1,4 @@
-
-function DashGuiButtonStyleDefault(){
+function DashGuiButtonStyleDefault () {
 
     this.setup_styles = function () {
 

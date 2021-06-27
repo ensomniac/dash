@@ -1,5 +1,4 @@
-
-function DashGuiLoadDots(size, color){
+function DashGuiLoadDots (size, color) {
 
     this.size = size || Dash.Size.RowHeight;
     this.html = $("<div></div>");
@@ -34,7 +33,7 @@ function DashGuiLoadDots(size, color){
 
     };
 
-    this.Stop = function(callback, binder){
+    this.Stop = function (callback, binder) {
         if (!this.is_active) {return;}
 
         if (callback && binder) {
@@ -56,7 +55,7 @@ function DashGuiLoadDots(size, color){
             // This is wrong. Obviously. But I don't have time
             // to hook up firing the callback correctly rn
 
-            (function(self){
+            (function (self) {
                 setTimeout(function () {
                     self.on_stopped_callback();
                     self.on_stopped_callback = null;
@@ -67,7 +66,7 @@ function DashGuiLoadDots(size, color){
 
     };
 
-    this.SetOrientation = function(horizontal_or_vertical){
+    this.SetOrientation = function (horizontal_or_vertical) {
         this.layout = horizontal_or_vertical;
 
         for (var x in this.dots) {
@@ -76,7 +75,7 @@ function DashGuiLoadDots(size, color){
 
     };
 
-    this.SetColor = function(color){
+    this.SetColor = function (color) {
 
         for (var x in this.dots) {
             this.dots[x].SetColor(color);
@@ -95,13 +94,13 @@ function DashGuiLoadDots(size, color){
         });
     };
 
-    this.update = function(t){
+    this.update = function (t) {
 
         if (this.stop_requested) {
             return;
         }
 
-        (function(self){requestAnimationFrame(function(t){self.update(t);});})(this);
+        (function (self) {requestAnimationFrame(function (t) {self.update(t);});})(this);
 
         if (this.t >= 1) {
             this.iteration += 1;
@@ -130,7 +129,7 @@ function DashGuiLoadDots(size, color){
 
 }
 
-function LoadDot(dots){
+function LoadDot(dots) {
 
     this.dots = dots;
     this.color = this.dots.color;
@@ -139,7 +138,7 @@ function LoadDot(dots){
 
     this.hold_t = 0.25;
 
-    this.Update = function(cycle_t){
+    this.Update = function (cycle_t) {
 
         var t;
         var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
@@ -165,7 +164,7 @@ function LoadDot(dots){
 
     };
 
-    this.Start = function(cycle_t){
+    this.Start = function (cycle_t) {
 
         this.html.stop().css({
             "left": (this.dots.size*0.5)-(this.size*0.5),
@@ -179,7 +178,7 @@ function LoadDot(dots){
 
     };
 
-    this.Stop = function(cycle_t){
+    this.Stop = function (cycle_t) {
 
         this.html.stop().animate({
             "left": (this.dots.size*0.5)-(this.size*0.5),
@@ -201,7 +200,7 @@ function LoadDot(dots){
         }
     };
 
-    this.SetColor = function(color){
+    this.SetColor = function (color) {
 
         this.html.css({
             "background": color,
