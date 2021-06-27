@@ -285,7 +285,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         return row;
     };
 
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
+    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}, autosave=false) {
 
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
@@ -301,6 +301,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
+        row_details["autosave"] = autosave;
 
         (function(self, row_details, callback){
             var _callback;
@@ -325,7 +326,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                row_details["key"]
+                row_details["key"],
+                row_details["autosave"]
             );
 
             self.update_inputs[row_details["key"]] = row;

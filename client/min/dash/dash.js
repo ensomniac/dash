@@ -21012,8 +21012,7 @@ function LoadDot(dots){
     this.setup_styles();
 }
 
-
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=""){
+function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="", autosave=false) {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
@@ -21021,6 +21020,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
     this.data_key = data_key;
+    this.autosave = autosave;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -21036,7 +21036,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.input = new Dash.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
         this.set_initial_text();
-        this.input.input.css({"padding-left": Dash.Size.Padding*0.5});
+        this.input.input.css({
+            "padding-left": Dash.Size.Padding * 0.5
+        });
         this.input.OnChange(this.input_changed, this);
         this.html.append(this.label);
         this.html.append(this.input.html);
@@ -21140,7 +21142,6 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "background": "none",
             "opacity": 0,
         });
-        // console.log(Dash.Color.Text);
         this.button.highlight.css({
             "background": "none",
         });
@@ -21148,20 +21149,11 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
-            // "color": Dash.Color.Dark.Text,
-            "color": "rgba(0, 0, 0, 0.9)",
-            // "position": "absolute",
-            // "right": 0,
-            // "top": 0,
-            // "margin": 0,
-            // "width": 200,
-            // "width": Dash.Size.ColumnWidth,
-            // "opacity": 0,
+            "color": "rgba(0, 0, 0, 0.9)"
         });
     };
-    this.SetInputValidity = function(input_is_valid){
-        console.log("input_is_valid: " + input_is_valid);
-        console.log(this.color);
+    this.SetInputValidity = function (input_is_valid) {
+        console.log("input_is_valid: " + input_is_valid, "\n", this.color);
         if (input_is_valid) {
             this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         }
@@ -21170,13 +21162,13 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
     };
     this.FlashSave = function () {
-        (function(self){
+        (function (self) {
             self.flash_save.stop().animate({"opacity": 1}, 100, function () {
                 self.flash_save.stop().animate({"opacity": 0}, 1000);
             });
         })(this);
     };
-    this.SetupCombo = function(combo_options){
+    this.SetupCombo = function (combo_options) {
         this.initial_value = this.initial_value || combo_options[0]["id"];
         this.input.html.css({
             "opacity": 0,
@@ -21196,8 +21188,10 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.combo = new Combo(this, "", options, this.on_combo_changed, this);
         this.html.append(this.combo.html);
     };
-    this.on_combo_changed = function(option){
-        if (!this.combo) {return;}
+    this.on_combo_changed = function (option) {
+        if (!this.combo) {
+            return;
+        }
         this.input.SetText(option["id"]);
         if (this.on_click) {
             this.on_submit();
@@ -21213,7 +21207,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
     };
     this.setup_connections = function () {
-        (function(self){
+        (function (self) {
             self.label.on("click", function () {
                 self.on_label_clicked();
             });
@@ -21225,19 +21219,20 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             });
         })(this);
     };
-    this.SetAutosave = function(use_autosave){
+    this.SetAutosave = function (use_autosave) {
         this.autosave = use_autosave;
         return this;
     };
-    this.input_changed = function(ignore_save_button_show){
-        if (!this.button) {return;}
-        if (ignore_save_button_show) {return;}
+    this.input_changed = function (ignore_save_button_show) {
+        if (!this.button || ignore_save_button_show) {
+            return;
+        }
         if (this.autosave) {
             if (this.autosave_timeout) {
                 clearTimeout(this.autosave_timeout);
                 this.autosave_timeout = null;
             }
-            (function(self){
+            (function (self) {
                 self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 500);
             })(this);
         }
@@ -21256,15 +21251,17 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.on_submit();
     };
     this.setup_load_dots = function () {
-        if (this.load_dots) {return;}
-        this.load_dots = new LoadDots(this.height-Dash.Size.Padding);
+        if (this.load_dots) {
+            return;
+        }
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight - Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.8)");
         this.html.append(this.load_dots.html);
         this.load_dots.html.css({
             "position": "absolute",
             "left": -Dash.Size.Padding,
-            "top": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding * 0.5,
         });
     };
     this.CanAutoUpdate = function () {
@@ -21275,16 +21272,20 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         return !this.save_button_visible;
     };
     this.show_save_button = function () {
-        if (this.save_button_visible || !this.button) {return;}
+        if (this.save_button_visible || !this.button) {
+            return;
+        }
         this.button.html.stop().animate({"opacity": 1});
         this.save_button_visible = true;
     };
     this.hide_save_button = function () {
-        if (!this.save_button_visible || !this.button) {return;}
+        if (!this.save_button_visible || !this.button) {
+            return;
+        }
         this.button.html.stop().animate({"opacity": 0});
         this.save_button_visible = false;
     };
-    this.SetText = function(text){
+    this.SetText = function (text) {
         text = this.parse_value(text);
         this.input.SetText(text);
         this.input_changed(true);
@@ -21300,28 +21301,28 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.Text = function () {
         return this.input.Text();
     };
-    this.Request = function(api, server_data, callback, callback_binder){
+    this.Request = function (api, server_data, callback, callback_binder) {
         var request = null;
         this.request_callback = callback;
         this.request_callback_binder = callback_binder;
         if (!server_data["token"]) {
             server_data["token"] = Dash.Local.Get("token");
         }
-        (function(self){
+        (function (self) {
             request = self.button.Request(api, server_data, function(response_json){
                 self.on_request_response(response_json);
             }, self);
         })(this);
         return request;
     };
-    this.on_request_response = function(response_json){
+    this.on_request_response = function (response_json) {
         this.hide_save_button();
         if (this.load_dots) {
             this.load_dots.Stop();
         }
         this.request_callback.bind(this.request_callback_binder)(response_json);
     };
-    this.SetLocked = function(is_locked){
+    this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.DisableSaveButton();
         }
@@ -21330,13 +21331,17 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
     };
     this.EnableSaveButton = function () {
-        if (!this.button) {return;}
+        if (!this.button) {
+            return;
+        }
         // this.button.SetButtonVisibility(true);
         this.input.SetLocked(false);
         this.input.SetTransparent(true);
     };
     this.DisableSaveButton = function () {
-        if (!this.button) {return;}
+        if (!this.button) {
+            return;
+        }
         // this.button.SetButtonVisibility(false);
         this.input.SetLocked(true);
     };
@@ -21581,7 +21586,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, row, selected_key, property_key, combo_options, bool);
         return row;
     };
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
+    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}, autosave=false) {
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
         }
@@ -21595,6 +21600,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
+        row_details["autosave"] = autosave;
         (function(self, row_details, callback){
             var _callback;
             if (callback) {
@@ -21615,7 +21621,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                row_details["key"]
+                row_details["key"],
+                row_details["autosave"]
             );
             self.update_inputs[row_details["key"]] = row;
             var indent_px = Dash.Size.Padding*2;
