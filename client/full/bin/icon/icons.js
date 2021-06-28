@@ -97,7 +97,7 @@ function GuiIcons(icon) {
     this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
     this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation-triangle", 0.9);
 
-    if (this.icon.name == "icon_map"){
+    if (this.icon.name == "icon_map") {
         // Return icon map for use in portal editor > font icons
         return this.icon_map;
     }
@@ -109,6 +109,5 @@ function GuiIcons(icon) {
     }
     else {
         return this.icon_map[this.icon.name];
-    };
-
-};
+    }
+}

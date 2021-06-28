@@ -1,11 +1,10 @@
-
-function DashAdminTabs(){
+function DashAdminTabs () {
 
     // This tiny class allows us to add overrides to the tabs in the Dash Admin page
 
     this.user_tabs = [];
 
-    this.Add = function(label_text, html_obj){
+    this.Add = function (label_text, html_obj) {
 
         var tab_details = {};
         tab_details["label_text"] = label_text;
@@ -15,4 +14,4 @@ function DashAdminTabs(){
 
     };
 
-};
+}

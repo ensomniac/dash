@@ -1,5 +1,4 @@
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
-
     this.label              = label;
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
@@ -23,26 +22,24 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label_container = $("<div class='ComboLabel Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
-
     this.click_skirt = null;
 
-    this.hide_skirt = function() {
-
+    this.hide_skirt = function () {
         if (!this.click_skirt) {
             return;
-        };
+        }
 
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];
+
             panel.remove();
-        };
+        }
 
         this.click_skirt = null;
 
     };
 
-    this.draw_click_skirt = function(height, width) {
-
+    this.draw_click_skirt = function (height, width) {
         this.hide_skirt();
 
         this.click_skirt = [];
@@ -69,79 +66,79 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "top": set_top[i],
                 "width": set_width[i],
                 "height": set_height[i],
-                // "background": "red",
                 "z-index": 100,
             });
 
             this.html.append(panel);
-
-        };
-
+        }
     };
 
-    this.initialize_style = function() {
-
+    this.initialize_style = function () {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "row", "standalone"];
+
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
-        };
+        }
 
         if (this.style == "row") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleRow.call(this);
         }
+
         else if (this.style == "default") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleDefault.call(this);
         }
+
         else {
             this.color_set  = this.color.Button;
             DashGuiComboStyleDefault.call(this);
-        };
+        }
 
         this.setup_styles();
         this.initialize_rows();
     };
 
-    this.initialize_rows = function(){
-
+    this.initialize_rows = function () {
         var selected_obj = null;
 
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
-        };
+        }
 
         for (var x in this.option_list) {
             if (this.option_list[x]["id"] == this.selected_option_id) {
                 selected_obj = this.option_list[x];
+
                 break;
-            };
-        };
+            }
+        }
 
         if (selected_obj) {
             this.on_selection(selected_obj);
         }
+
         else {
             this.label.text("No Options");
-        };
-
+        }
     };
 
-    this.GetActiveID = function(){
+    this.GetActiveID = function () {
         return this.selected_option_id;
     };
 
-    this.SetModeOff = function(){
+    this.SetModeOff = function () {
         var cmd_options = {"command": "TurnModeOff", "mindtwin_id": "markiplier", "mode": ""};
         this.link.tab_view.send_trigger("json_command", cmd_options);
     };
 
-    this.Update = function(label_list, selected){
-
+    this.Update = function (label_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
-        var ignore_callback = (selected["id"] == this.selected_option_id);
+        if (!ignore_callback) {
+            ignore_callback = (selected["id"] == this.selected_option_id);
+        }
 
         this.option_list = label_list;
         this.selected_option_id = selected;
@@ -149,13 +146,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.on_selection(this.selected_option_id, ignore_callback);
 
         if (this.bool) {
-            this.option_list.reverse()
+            this.option_list.reverse();
         }
     };
 
-    this.setup_load_dots = function(){
-
-        this.load_dots = new LoadDots(d.Size.ButtonHeight-Dash.Size.Padding);
+    this.setup_load_dots = function () {
+        this.load_dots = new LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
 
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
@@ -166,40 +162,40 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
-                "right": -(d.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "right": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
             });
         }
+
         else {
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
-                "left": -(d.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "left": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
             });
-        };
-
+        }
     };
 
-    this.Request = function(api, server_data, on_complete_callback, bind_to){
-
+    this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (!this.load_dots) {
             this.setup_load_dots();
-        };
+        }
 
         if (this.load_dots.IsActive()) {
             console.log("Request active...");
+
             return;
-        };
+        }
 
         this.load_dots.Start();
         this.on_request_response_callback = null;
         var binder = bind_to || this.binder;
+
         if (binder && on_complete_callback) {
             this.on_request_response_callback = on_complete_callback.bind(binder);
-        };
+        }
 
-        (function(self){
-
-            $.post(api, server_data, function(response) {
+        (function (self) {
+            $.post(api, server_data, function (response) {
 
                 self.load_dots.Stop();
 
@@ -207,15 +203,14 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
                 if (self.on_request_response_callback) {
                     self.on_request_response_callback(response_json);
-                };
+                }
 
             });
 
         })(this);
     };
 
-    this.setup_label_list = function(){
-
+    this.setup_label_list = function () {
         this.rows.css({
             "background": this.color_set.Background.Base,
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
@@ -225,51 +220,48 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "width": "auto", // This is important so it can auto-size
         });
 
-        // console.log("TODO: Make this.rows grab focus while active");
+        // TODO: Make this.rows grab focus while active
 
         this.rows.empty();
         this.row_buttons = [];
 
         for (var i in this.option_list) {
-
-            var content = this.option_list[i];
+            // var content = this.option_list[i];
             var button = new DashGuiComboRow(this, this.option_list[i]);
+
             this.rows.append(button.html);
             this.row_buttons.push(button);
-
-        };
-
+        }
     };
 
-    this.on_click = function(){
-
+    this.on_click = function () {
         this.flash();
 
         if (this.expanded) {
             this.hide();
         }
+
         else {
             this.show();
-        };
-
+        }
     };
 
-    this.SetLabel = function(content){
+    this.SetLabel = function (content) {
         this.label.text(content["label"]);
     };
 
-    this.SetID = function(combo_id){
+    this.SetID = function (combo_id) {
         this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
         this.on_selection(this.selected_option_id, true);
         this.flash();
     };
 
-    this.flash = function(){
+    this.flash = function () {
         this.click.stop().css({"opacity": 1});
         this.click.stop().animate({"opacity": 0}, 2000);
     };
 
-    this.on_selection = function(selected_option, ignore_callback){
+    this.on_selection = function (selected_option, ignore_callback) {
         // Called when a selection in the combo is made
 
         var previous_selected_option = this.selected_option_id;
@@ -280,7 +272,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             console.log("this.initialized: " + this.initialized);
             this.label.text("ERROR");
             return;
-        };
+        }
 
         this.hide();
         this.label.text(label_text);
@@ -290,15 +282,16 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             if (this.additional_data) {
                 this.callback(selected_option, previous_selected_option, this.additional_data);
             }
+
             else {
                 this.callback(selected_option, previous_selected_option);
             }
-        };
+        }
 
         this.initialized = true;
     };
 
-    this.pre_show_size_set = function(){
+    this.pre_show_size_set = function () {
         // Prior to showing, set the width of rows
         this.setup_label_list();
 
@@ -326,8 +319,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.show = function(){
-
+    this.show = function () {
         this.pre_show_size_set();
 
         this.rows.detach();
@@ -351,28 +343,31 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         });
 
         this.rows.animate({"height": end_height}, 150);
-
     };
 
-    this.SetWidth = function(width){
+    this.SetWidth = function (width) {
         this.html.css({"width": width});
         this.rows.css({"width": width});
     };
 
-    this.hide = function(){
+    this.hide = function () {
         this.expanded = false;
         this.hide_skirt();
         this.rows.stop();
-        this.rows.animate({"height": 0, "opacity": 0}, 250, function(){$(this).css({"z-index": 10})});
+        this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
+        (function (self) {
 
-        (function(self){
+            $(window).on("click", function (event) {
+                if (!self.expanded) {
+                    return;
+                }
 
-            $(window).click(function(event) {
-                if (!self.expanded) {return;};
-                if (!self.html.is(":visible")) {return;};
+                if (!self.html.is(":visible")) {
+                    return;
+                }
 
                 if (!$(event.target).hasClass("Combo")) {
                     self.hide();
@@ -381,43 +376,36 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
                     if (event.originalEvent) {
                         event.originalEvent.preventDefault();
-                    };
+                    }
 
                     return false;
-
-                };
-
+                }
             });
 
-            self.html.mouseenter(function(){
+            self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
             });
 
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 200);
             });
 
-            self.html.click(function(e){
-
+            self.html.on("click", function (e) {
                 if ($(e.target).hasClass("ComboLabel")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                };
+                }
 
                 if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                };
-
+                }
             });
-
         })(this);
-
     };
 
     this.initialize_style();
     this.setup_connections();
-
-};
+}

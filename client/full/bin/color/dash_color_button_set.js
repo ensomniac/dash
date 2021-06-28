@@ -40,4 +40,4 @@ class DashColorButtonSet {
         return this._selected_hover;
     };
 
-};
+}

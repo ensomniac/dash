@@ -167,7 +167,7 @@ function GuiIcons(icon) {
     this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
     this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
     this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation-triangle", 0.9);
-    if (this.icon.name == "icon_map"){
+    if (this.icon.name == "icon_map") {
         // Return icon map for use in portal editor > font icons
         return this.icon_map;
     }
@@ -179,8 +179,8 @@ function GuiIcons(icon) {
     }
     else {
         return this.icon_map[this.icon.name];
-    };
-};
+    }
+}
 
 /*! jQuery v2.2.2 | (c) jQuery Foundation | jquery.org/license */
 !function(a,b){"object"==typeof module&&"object"==typeof module.exports?module.exports=a.document?b(a,!0):function(a){if(!a.document)throw new Error("jQuery requires a window with a document");return b(a)}:b(a)}("undefined"!=typeof window?window:this,function(a,b){var c=[],d=a.document,e=c.slice,f=c.concat,g=c.push,h=c.indexOf,i={},j=i.toString,k=i.hasOwnProperty,l={},m="2.2.2",n=function(a,b){return new n.fn.init(a,b)},o=/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,p=/^-ms-/,q=/-([\da-z])/gi,r=function(a,b){return b.toUpperCase()};n.fn=n.prototype={jquery:m,constructor:n,selector:"",length:0,toArray:function(){return e.call(this)},get:function(a){return null!=a?0>a?this[a+this.length]:this[a]:e.call(this)},pushStack:function(a){var b=n.merge(this.constructor(),a);return b.prevObject=this,b.context=this.context,b},each:function(a){return n.each(this,a)},map:function(a){return this.pushStack(n.map(this,function(b,c){return a.call(b,c,b)}))},slice:function(){return this.pushStack(e.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(a){var b=this.length,c=+a+(0>a?b:0);return this.pushStack(c>=0&&b>c?[this[c]]:[])},end:function(){return this.prevObject||this.constructor()},push:g,sort:c.sort,splice:c.splice},n.extend=n.fn.extend=function(){var a,b,c,d,e,f,g=arguments[0]||{},h=1,i=arguments.length,j=!1;for("boolean"==typeof g&&(j=g,g=arguments[h]||{},h++),"object"==typeof g||n.isFunction(g)||(g={}),h===i&&(g=this,h--);i>h;h++)if(null!=(a=arguments[h]))for(b in a)c=g[b],d=a[b],g!==d&&(j&&d&&(n.isPlainObject(d)||(e=n.isArray(d)))?(e?(e=!1,f=c&&n.isArray(c)?c:[]):f=c&&n.isPlainObject(c)?c:{},g[b]=n.extend(j,f,d)):void 0!==d&&(g[b]=d));return g},n.extend({expando:"jQuery"+(m+Math.random()).replace(/\D/g,""),isReady:!0,error:function(a){throw new Error(a)},noop:function(){},isFunction:function(a){return"function"===n.type(a)},isArray:Array.isArray,isWindow:function(a){return null!=a&&a===a.window},isNumeric:function(a){var b=a&&a.toString();return!n.isArray(a)&&b-parseFloat(b)+1>=0},isPlainObject:function(a){var b;if("object"!==n.type(a)||a.nodeType||n.isWindow(a))return!1;if(a.constructor&&!k.call(a,"constructor")&&!k.call(a.constructor.prototype||{},"isPrototypeOf"))return!1;for(b in a);return void 0===b||k.call(a,b)},isEmptyObject:function(a){var b;for(b in a)return!1;return!0},type:function(a){return null==a?a+"":"object"==typeof a||"function"==typeof a?i[j.call(a)]||"object":typeof a},globalEval:function(a){var b,c=eval;a=n.trim(a),a&&(1===a.indexOf("use strict")?(b=d.createElement("script"),b.text=a,d.head.appendChild(b).parentNode.removeChild(b)):c(a))},camelCase:function(a){return a.replace(p,"ms-").replace(q,r)},nodeName:function(a,b){return a.nodeName&&a.nodeName.toLowerCase()===b.toLowerCase()},each:function(a,b){var c,d=0;if(s(a)){for(c=a.length;c>d;d++)if(b.call(a[d],d,a[d])===!1)break}else for(d in a)if(b.call(a[d],d,a[d])===!1)break;return a},trim:function(a){return null==a?"":(a+"").replace(o,"")},makeArray:function(a,b){var c=b||[];return null!=a&&(s(Object(a))?n.merge(c,"string"==typeof a?[a]:a):g.call(c,a)),c},inArray:function(a,b,c){return null==b?-1:h.call(b,a,c)},merge:function(a,b){for(var c=+b.length,d=0,e=a.length;c>d;d++)a[e++]=b[d];return a.length=e,a},grep:function(a,b,c){for(var d,e=[],f=0,g=a.length,h=!c;g>f;f++)d=!b(a[f],f),d!==h&&e.push(a[f]);return e},map:function(a,b,c){var d,e,g=0,h=[];if(s(a))for(d=a.length;d>g;g++)e=b(a[g],g,c),null!=e&&h.push(e);else for(g in a)e=b(a[g],g,c),null!=e&&h.push(e);return f.apply([],h)},guid:1,proxy:function(a,b){var c,d,f;return"string"==typeof b&&(c=a[b],b=a,a=c),n.isFunction(a)?(d=e.call(arguments,2),f=function(){return a.apply(b||this,d.concat(e.call(arguments)))},f.guid=a.guid=a.guid||n.guid++,f):void 0},now:Date.now,support:l}),"function"==typeof Symbol&&(n.fn[Symbol.iterator]=c[Symbol.iterator]),n.each("Boolean Number String Function Array Date RegExp Object Error Symbol".split(" "),function(a,b){i["[object "+b+"]"]=b.toLowerCase()});function s(a){var b=!!a&&"length"in a&&a.length,c=n.type(a);return"function"===c||n.isWindow(a)?!1:"array"===c||0===b||"number"==typeof b&&b>0&&b-1 in a}var t=function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u="sizzle"+1*new Date,v=a.document,w=0,x=0,y=ga(),z=ga(),A=ga(),B=function(a,b){return a===b&&(l=!0),0},C=1<<31,D={}.hasOwnProperty,E=[],F=E.pop,G=E.push,H=E.push,I=E.slice,J=function(a,b){for(var c=0,d=a.length;d>c;c++)if(a[c]===b)return c;return-1},K="checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",L="[\\x20\\t\\r\\n\\f]",M="(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",N="\\["+L+"*("+M+")(?:"+L+"*([*^$|!~]?=)"+L+"*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|("+M+"))|)"+L+"*\\]",O=":("+M+")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|"+N+")*)|.*)\\)|)",P=new RegExp(L+"+","g"),Q=new RegExp("^"+L+"+|((?:^|[^\\\\])(?:\\\\.)*)"+L+"+$","g"),R=new RegExp("^"+L+"*,"+L+"*"),S=new RegExp("^"+L+"*([>+~]|"+L+")"+L+"*"),T=new RegExp("="+L+"*([^\\]'\"]*?)"+L+"*\\]","g"),U=new RegExp(O),V=new RegExp("^"+M+"$"),W={ID:new RegExp("^#("+M+")"),CLASS:new RegExp("^\\.("+M+")"),TAG:new RegExp("^("+M+"|[*])"),ATTR:new RegExp("^"+N),PSEUDO:new RegExp("^"+O),CHILD:new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\("+L+"*(even|odd|(([+-]|)(\\d*)n|)"+L+"*(?:([+-]|)"+L+"*(\\d+)|))"+L+"*\\)|)","i"),bool:new RegExp("^(?:"+K+")$","i"),needsContext:new RegExp("^"+L+"*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\("+L+"*((?:-\\d)?\\d*)"+L+"*\\)|)(?=[^-]|$)","i")},X=/^(?:input|select|textarea|button)$/i,Y=/^h\d$/i,Z=/^[^{]+\{\s*\[native \w/,$=/^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,_=/[+~]/,aa=/'|\\/g,ba=new RegExp("\\\\([\\da-f]{1,6}"+L+"?|("+L+")|.)","ig"),ca=function(a,b,c){var d="0x"+b-65536;return d!==d||c?b:0>d?String.fromCharCode(d+65536):String.fromCharCode(d>>10|55296,1023&d|56320)},da=function(){m()};try{H.apply(E=I.call(v.childNodes),v.childNodes),E[v.childNodes.length].nodeType}catch(ea){H={apply:E.length?function(a,b){G.apply(a,I.call(b))}:function(a,b){var c=a.length,d=0;while(a[c++]=b[d++]);a.length=c-1}}}function fa(a,b,d,e){var f,h,j,k,l,o,r,s,w=b&&b.ownerDocument,x=b?b.nodeType:9;if(d=d||[],"string"!=typeof a||!a||1!==x&&9!==x&&11!==x)return d;if(!e&&((b?b.ownerDocument||b:v)!==n&&m(b),b=b||n,p)){if(11!==x&&(o=$.exec(a)))if(f=o[1]){if(9===x){if(!(j=b.getElementById(f)))return d;if(j.id===f)return d.push(j),d}else if(w&&(j=w.getElementById(f))&&t(b,j)&&j.id===f)return d.push(j),d}else{if(o[2])return H.apply(d,b.getElementsByTagName(a)),d;if((f=o[3])&&c.getElementsByClassName&&b.getElementsByClassName)return H.apply(d,b.getElementsByClassName(f)),d}if(c.qsa&&!A[a+" "]&&(!q||!q.test(a))){if(1!==x)w=b,s=a;else if("object"!==b.nodeName.toLowerCase()){(k=b.getAttribute("id"))?k=k.replace(aa,"\\$&"):b.setAttribute("id",k=u),r=g(a),h=r.length,l=V.test(k)?"#"+k:"[id='"+k+"']";while(h--)r[h]=l+" "+qa(r[h]);s=r.join(","),w=_.test(a)&&oa(b.parentNode)||b}if(s)try{return H.apply(d,w.querySelectorAll(s)),d}catch(y){}finally{k===u&&b.removeAttribute("id")}}}return i(a.replace(Q,"$1"),b,d,e)}function ga(){var a=[];function b(c,e){return a.push(c+" ")>d.cacheLength&&delete b[a.shift()],b[c+" "]=e}return b}function ha(a){return a[u]=!0,a}function ia(a){var b=n.createElement("div");try{return!!a(b)}catch(c){return!1}finally{b.parentNode&&b.parentNode.removeChild(b),b=null}}function ja(a,b){var c=a.split("|"),e=c.length;while(e--)d.attrHandle[c[e]]=b}function ka(a,b){var c=b&&a,d=c&&1===a.nodeType&&1===b.nodeType&&(~b.sourceIndex||C)-(~a.sourceIndex||C);if(d)return d;if(c)while(c=c.nextSibling)if(c===b)return-1;return a?1:-1}function la(a){return function(b){var c=b.nodeName.toLowerCase();return"input"===c&&b.type===a}}function ma(a){return function(b){var c=b.nodeName.toLowerCase();return("input"===c||"button"===c)&&b.type===a}}function na(a){return ha(function(b){return b=+b,ha(function(c,d){var e,f=a([],c.length,b),g=f.length;while(g--)c[e=f[g]]&&(c[e]=!(d[e]=c[e]))})})}function oa(a){return a&&"undefined"!=typeof a.getElementsByTagName&&a}c=fa.support={},f=fa.isXML=function(a){var b=a&&(a.ownerDocument||a).documentElement;return b?"HTML"!==b.nodeName:!1},m=fa.setDocument=function(a){var b,e,g=a?a.ownerDocument||a:v;return g!==n&&9===g.nodeType&&g.documentElement?(n=g,o=n.documentElement,p=!f(n),(e=n.defaultView)&&e.top!==e&&(e.addEventListener?e.addEventListener("unload",da,!1):e.attachEvent&&e.attachEvent("onunload",da)),c.attributes=ia(function(a){return a.className="i",!a.getAttribute("className")}),c.getElementsByTagName=ia(function(a){return a.appendChild(n.createComment("")),!a.getElementsByTagName("*").length}),c.getElementsByClassName=Z.test(n.getElementsByClassName),c.getById=ia(function(a){return o.appendChild(a).id=u,!n.getElementsByName||!n.getElementsByName(u).length}),c.getById?(d.find.ID=function(a,b){if("undefined"!=typeof b.getElementById&&p){var c=b.getElementById(a);return c?[c]:[]}},d.filter.ID=function(a){var b=a.replace(ba,ca);return function(a){return a.getAttribute("id")===b}}):(delete d.find.ID,d.filter.ID=function(a){var b=a.replace(ba,ca);return function(a){var c="undefined"!=typeof a.getAttributeNode&&a.getAttributeNode("id");return c&&c.value===b}}),d.find.TAG=c.getElementsByTagName?function(a,b){return"undefined"!=typeof b.getElementsByTagName?b.getElementsByTagName(a):c.qsa?b.querySelectorAll(a):void 0}:function(a,b){var c,d=[],e=0,f=b.getElementsByTagName(a);if("*"===a){while(c=f[e++])1===c.nodeType&&d.push(c);return d}return f},d.find.CLASS=c.getElementsByClassName&&function(a,b){return"undefined"!=typeof b.getElementsByClassName&&p?b.getElementsByClassName(a):void 0},r=[],q=[],(c.qsa=Z.test(n.querySelectorAll))&&(ia(function(a){o.appendChild(a).innerHTML="<a id='"+u+"'></a><select id='"+u+"-\r\\' msallowcapture=''><option selected=''></option></select>",a.querySelectorAll("[msallowcapture^='']").length&&q.push("[*^$]="+L+"*(?:''|\"\")"),a.querySelectorAll("[selected]").length||q.push("\\["+L+"*(?:value|"+K+")"),a.querySelectorAll("[id~="+u+"-]").length||q.push("~="),a.querySelectorAll(":checked").length||q.push(":checked"),a.querySelectorAll("a#"+u+"+*").length||q.push(".#.+[+~]")}),ia(function(a){var b=n.createElement("input");b.setAttribute("type","hidden"),a.appendChild(b).setAttribute("name","D"),a.querySelectorAll("[name=d]").length&&q.push("name"+L+"*[*^$|!~]?="),a.querySelectorAll(":enabled").length||q.push(":enabled",":disabled"),a.querySelectorAll("*,:x"),q.push(",.*:")})),(c.matchesSelector=Z.test(s=o.matches||o.webkitMatchesSelector||o.mozMatchesSelector||o.oMatchesSelector||o.msMatchesSelector))&&ia(function(a){c.disconnectedMatch=s.call(a,"div"),s.call(a,"[s!='']:x"),r.push("!=",O)}),q=q.length&&new RegExp(q.join("|")),r=r.length&&new RegExp(r.join("|")),b=Z.test(o.compareDocumentPosition),t=b||Z.test(o.contains)?function(a,b){var c=9===a.nodeType?a.documentElement:a,d=b&&b.parentNode;return a===d||!(!d||1!==d.nodeType||!(c.contains?c.contains(d):a.compareDocumentPosition&&16&a.compareDocumentPosition(d)))}:function(a,b){if(b)while(b=b.parentNode)if(b===a)return!0;return!1},B=b?function(a,b){if(a===b)return l=!0,0;var d=!a.compareDocumentPosition-!b.compareDocumentPosition;return d?d:(d=(a.ownerDocument||a)===(b.ownerDocument||b)?a.compareDocumentPosition(b):1,1&d||!c.sortDetached&&b.compareDocumentPosition(a)===d?a===n||a.ownerDocument===v&&t(v,a)?-1:b===n||b.ownerDocument===v&&t(v,b)?1:k?J(k,a)-J(k,b):0:4&d?-1:1)}:function(a,b){if(a===b)return l=!0,0;var c,d=0,e=a.parentNode,f=b.parentNode,g=[a],h=[b];if(!e||!f)return a===n?-1:b===n?1:e?-1:f?1:k?J(k,a)-J(k,b):0;if(e===f)return ka(a,b);c=a;while(c=c.parentNode)g.unshift(c);c=b;while(c=c.parentNode)h.unshift(c);while(g[d]===h[d])d++;return d?ka(g[d],h[d]):g[d]===v?-1:h[d]===v?1:0},n):n},fa.matches=function(a,b){return fa(a,null,null,b)},fa.matchesSelector=function(a,b){if((a.ownerDocument||a)!==n&&m(a),b=b.replace(T,"='$1']"),c.matchesSelector&&p&&!A[b+" "]&&(!r||!r.test(b))&&(!q||!q.test(b)))try{var d=s.call(a,b);if(d||c.disconnectedMatch||a.document&&11!==a.document.nodeType)return d}catch(e){}return fa(b,n,null,[a]).length>0},fa.contains=function(a,b){return(a.ownerDocument||a)!==n&&m(a),t(a,b)},fa.attr=function(a,b){(a.ownerDocument||a)!==n&&m(a);var e=d.attrHandle[b.toLowerCase()],f=e&&D.call(d.attrHandle,b.toLowerCase())?e(a,b,!p):void 0;return void 0!==f?f:c.attributes||!p?a.getAttribute(b):(f=a.getAttributeNode(b))&&f.specified?f.value:null},fa.error=function(a){throw new Error("Syntax error, unrecognized expression: "+a)},fa.uniqueSort=function(a){var b,d=[],e=0,f=0;if(l=!c.detectDuplicates,k=!c.sortStable&&a.slice(0),a.sort(B),l){while(b=a[f++])b===a[f]&&(e=d.push(f));while(e--)a.splice(d[e],1)}return k=null,a},e=fa.getText=function(a){var b,c="",d=0,f=a.nodeType;if(f){if(1===f||9===f||11===f){if("string"==typeof a.textContent)return a.textContent;for(a=a.firstChild;a;a=a.nextSibling)c+=e(a)}else if(3===f||4===f)return a.nodeValue}else while(b=a[d++])c+=e(b);return c},d=fa.selectors={cacheLength:50,createPseudo:ha,match:W,attrHandle:{},find:{},relative:{">":{dir:"parentNode",first:!0}," ":{dir:"parentNode"},"+":{dir:"previousSibling",first:!0},"~":{dir:"previousSibling"}},preFilter:{ATTR:function(a){return a[1]=a[1].replace(ba,ca),a[3]=(a[3]||a[4]||a[5]||"").replace(ba,ca),"~="===a[2]&&(a[3]=" "+a[3]+" "),a.slice(0,4)},CHILD:function(a){return a[1]=a[1].toLowerCase(),"nth"===a[1].slice(0,3)?(a[3]||fa.error(a[0]),a[4]=+(a[4]?a[5]+(a[6]||1):2*("even"===a[3]||"odd"===a[3])),a[5]=+(a[7]+a[8]||"odd"===a[3])):a[3]&&fa.error(a[0]),a},PSEUDO:function(a){var b,c=!a[6]&&a[2];return W.CHILD.test(a[0])?null:(a[3]?a[2]=a[4]||a[5]||"":c&&U.test(c)&&(b=g(c,!0))&&(b=c.indexOf(")",c.length-b)-c.length)&&(a[0]=a[0].slice(0,b),a[2]=c.slice(0,b)),a.slice(0,3))}},filter:{TAG:function(a){var b=a.replace(ba,ca).toLowerCase();return"*"===a?function(){return!0}:function(a){return a.nodeName&&a.nodeName.toLowerCase()===b}},CLASS:function(a){var b=y[a+" "];return b||(b=new RegExp("(^|"+L+")"+a+"("+L+"|$)"))&&y(a,function(a){return b.test("string"==typeof a.className&&a.className||"undefined"!=typeof a.getAttribute&&a.getAttribute("class")||"")})},ATTR:function(a,b,c){return function(d){var e=fa.attr(d,a);return null==e?"!="===b:b?(e+="","="===b?e===c:"!="===b?e!==c:"^="===b?c&&0===e.indexOf(c):"*="===b?c&&e.indexOf(c)>-1:"$="===b?c&&e.slice(-c.length)===c:"~="===b?(" "+e.replace(P," ")+" ").indexOf(c)>-1:"|="===b?e===c||e.slice(0,c.length+1)===c+"-":!1):!0}},CHILD:function(a,b,c,d,e){var f="nth"!==a.slice(0,3),g="last"!==a.slice(-4),h="of-type"===b;return 1===d&&0===e?function(a){return!!a.parentNode}:function(b,c,i){var j,k,l,m,n,o,p=f!==g?"nextSibling":"previousSibling",q=b.parentNode,r=h&&b.nodeName.toLowerCase(),s=!i&&!h,t=!1;if(q){if(f){while(p){m=b;while(m=m[p])if(h?m.nodeName.toLowerCase()===r:1===m.nodeType)return!1;o=p="only"===a&&!o&&"nextSibling"}return!0}if(o=[g?q.firstChild:q.lastChild],g&&s){m=q,l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),j=k[a]||[],n=j[0]===w&&j[1],t=n&&j[2],m=n&&q.childNodes[n];while(m=++n&&m&&m[p]||(t=n=0)||o.pop())if(1===m.nodeType&&++t&&m===b){k[a]=[w,n,t];break}}else if(s&&(m=b,l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),j=k[a]||[],n=j[0]===w&&j[1],t=n),t===!1)while(m=++n&&m&&m[p]||(t=n=0)||o.pop())if((h?m.nodeName.toLowerCase()===r:1===m.nodeType)&&++t&&(s&&(l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),k[a]=[w,t]),m===b))break;return t-=e,t===d||t%d===0&&t/d>=0}}},PSEUDO:function(a,b){var c,e=d.pseudos[a]||d.setFilters[a.toLowerCase()]||fa.error("unsupported pseudo: "+a);return e[u]?e(b):e.length>1?(c=[a,a,"",b],d.setFilters.hasOwnProperty(a.toLowerCase())?ha(function(a,c){var d,f=e(a,b),g=f.length;while(g--)d=J(a,f[g]),a[d]=!(c[d]=f[g])}):function(a){return e(a,0,c)}):e}},pseudos:{not:ha(function(a){var b=[],c=[],d=h(a.replace(Q,"$1"));return d[u]?ha(function(a,b,c,e){var f,g=d(a,null,e,[]),h=a.length;while(h--)(f=g[h])&&(a[h]=!(b[h]=f))}):function(a,e,f){return b[0]=a,d(b,null,f,c),b[0]=null,!c.pop()}}),has:ha(function(a){return function(b){return fa(a,b).length>0}}),contains:ha(function(a){return a=a.replace(ba,ca),function(b){return(b.textContent||b.innerText||e(b)).indexOf(a)>-1}}),lang:ha(function(a){return V.test(a||"")||fa.error("unsupported lang: "+a),a=a.replace(ba,ca).toLowerCase(),function(b){var c;do if(c=p?b.lang:b.getAttribute("xml:lang")||b.getAttribute("lang"))return c=c.toLowerCase(),c===a||0===c.indexOf(a+"-");while((b=b.parentNode)&&1===b.nodeType);return!1}}),target:function(b){var c=a.location&&a.location.hash;return c&&c.slice(1)===b.id},root:function(a){return a===o},focus:function(a){return a===n.activeElement&&(!n.hasFocus||n.hasFocus())&&!!(a.type||a.href||~a.tabIndex)},enabled:function(a){return a.disabled===!1},disabled:function(a){return a.disabled===!0},checked:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&!!a.checked||"option"===b&&!!a.selected},selected:function(a){return a.parentNode&&a.parentNode.selectedIndex,a.selected===!0},empty:function(a){for(a=a.firstChild;a;a=a.nextSibling)if(a.nodeType<6)return!1;return!0},parent:function(a){return!d.pseudos.empty(a)},header:function(a){return Y.test(a.nodeName)},input:function(a){return X.test(a.nodeName)},button:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&"button"===a.type||"button"===b},text:function(a){var b;return"input"===a.nodeName.toLowerCase()&&"text"===a.type&&(null==(b=a.getAttribute("type"))||"text"===b.toLowerCase())},first:na(function(){return[0]}),last:na(function(a,b){return[b-1]}),eq:na(function(a,b,c){return[0>c?c+b:c]}),even:na(function(a,b){for(var c=0;b>c;c+=2)a.push(c);return a}),odd:na(function(a,b){for(var c=1;b>c;c+=2)a.push(c);return a}),lt:na(function(a,b,c){for(var d=0>c?c+b:c;--d>=0;)a.push(d);return a}),gt:na(function(a,b,c){for(var d=0>c?c+b:c;++d<b;)a.push(d);return a})}},d.pseudos.nth=d.pseudos.eq;for(b in{radio:!0,checkbox:!0,file:!0,password:!0,image:!0})d.pseudos[b]=la(b);for(b in{submit:!0,reset:!0})d.pseudos[b]=ma(b);function pa(){}pa.prototype=d.filters=d.pseudos,d.setFilters=new pa,g=fa.tokenize=function(a,b){var c,e,f,g,h,i,j,k=z[a+" "];if(k)return b?0:k.slice(0);h=a,i=[],j=d.preFilter;while(h){c&&!(e=R.exec(h))||(e&&(h=h.slice(e[0].length)||h),i.push(f=[])),c=!1,(e=S.exec(h))&&(c=e.shift(),f.push({value:c,type:e[0].replace(Q," ")}),h=h.slice(c.length));for(g in d.filter)!(e=W[g].exec(h))||j[g]&&!(e=j[g](e))||(c=e.shift(),f.push({value:c,type:g,matches:e}),h=h.slice(c.length));if(!c)break}return b?h.length:h?fa.error(a):z(a,i).slice(0)};function qa(a){for(var b=0,c=a.length,d="";c>b;b++)d+=a[b].value;return d}function ra(a,b,c){var d=b.dir,e=c&&"parentNode"===d,f=x++;return b.first?function(b,c,f){while(b=b[d])if(1===b.nodeType||e)return a(b,c,f)}:function(b,c,g){var h,i,j,k=[w,f];if(g){while(b=b[d])if((1===b.nodeType||e)&&a(b,c,g))return!0}else while(b=b[d])if(1===b.nodeType||e){if(j=b[u]||(b[u]={}),i=j[b.uniqueID]||(j[b.uniqueID]={}),(h=i[d])&&h[0]===w&&h[1]===f)return k[2]=h[2];if(i[d]=k,k[2]=a(b,c,g))return!0}}}function sa(a){return a.length>1?function(b,c,d){var e=a.length;while(e--)if(!a[e](b,c,d))return!1;return!0}:a[0]}function ta(a,b,c){for(var d=0,e=b.length;e>d;d++)fa(a,b[d],c);return c}function ua(a,b,c,d,e){for(var f,g=[],h=0,i=a.length,j=null!=b;i>h;h++)(f=a[h])&&(c&&!c(f,d,e)||(g.push(f),j&&b.push(h)));return g}function va(a,b,c,d,e,f){return d&&!d[u]&&(d=va(d)),e&&!e[u]&&(e=va(e,f)),ha(function(f,g,h,i){var j,k,l,m=[],n=[],o=g.length,p=f||ta(b||"*",h.nodeType?[h]:h,[]),q=!a||!f&&b?p:ua(p,m,a,h,i),r=c?e||(f?a:o||d)?[]:g:q;if(c&&c(q,r,h,i),d){j=ua(r,n),d(j,[],h,i),k=j.length;while(k--)(l=j[k])&&(r[n[k]]=!(q[n[k]]=l))}if(f){if(e||a){if(e){j=[],k=r.length;while(k--)(l=r[k])&&j.push(q[k]=l);e(null,r=[],j,i)}k=r.length;while(k--)(l=r[k])&&(j=e?J(f,l):m[k])>-1&&(f[j]=!(g[j]=l))}}else r=ua(r===g?r.splice(o,r.length):r),e?e(null,g,r,i):H.apply(g,r)})}function wa(a){for(var b,c,e,f=a.length,g=d.relative[a[0].type],h=g||d.relative[" "],i=g?1:0,k=ra(function(a){return a===b},h,!0),l=ra(function(a){return J(b,a)>-1},h,!0),m=[function(a,c,d){var e=!g&&(d||c!==j)||((b=c).nodeType?k(a,c,d):l(a,c,d));return b=null,e}];f>i;i++)if(c=d.relative[a[i].type])m=[ra(sa(m),c)];else{if(c=d.filter[a[i].type].apply(null,a[i].matches),c[u]){for(e=++i;f>e;e++)if(d.relative[a[e].type])break;return va(i>1&&sa(m),i>1&&qa(a.slice(0,i-1).concat({value:" "===a[i-2].type?"*":""})).replace(Q,"$1"),c,e>i&&wa(a.slice(i,e)),f>e&&wa(a=a.slice(e)),f>e&&qa(a))}m.push(c)}return sa(m)}function xa(a,b){var c=b.length>0,e=a.length>0,f=function(f,g,h,i,k){var l,o,q,r=0,s="0",t=f&&[],u=[],v=j,x=f||e&&d.find.TAG("*",k),y=w+=null==v?1:Math.random()||.1,z=x.length;for(k&&(j=g===n||g||k);s!==z&&null!=(l=x[s]);s++){if(e&&l){o=0,g||l.ownerDocument===n||(m(l),h=!p);while(q=a[o++])if(q(l,g||n,h)){i.push(l);break}k&&(w=y)}c&&((l=!q&&l)&&r--,f&&t.push(l))}if(r+=s,c&&s!==r){o=0;while(q=b[o++])q(t,u,g,h);if(f){if(r>0)while(s--)t[s]||u[s]||(u[s]=F.call(i));u=ua(u)}H.apply(i,u),k&&!f&&u.length>0&&r+b.length>1&&fa.uniqueSort(i)}return k&&(w=y,j=v),t};return c?ha(f):f}return h=fa.compile=function(a,b){var c,d=[],e=[],f=A[a+" "];if(!f){b||(b=g(a)),c=b.length;while(c--)f=wa(b[c]),f[u]?d.push(f):e.push(f);f=A(a,xa(e,d)),f.selector=a}return f},i=fa.select=function(a,b,e,f){var i,j,k,l,m,n="function"==typeof a&&a,o=!f&&g(a=n.selector||a);if(e=e||[],1===o.length){if(j=o[0]=o[0].slice(0),j.length>2&&"ID"===(k=j[0]).type&&c.getById&&9===b.nodeType&&p&&d.relative[j[1].type]){if(b=(d.find.ID(k.matches[0].replace(ba,ca),b)||[])[0],!b)return e;n&&(b=b.parentNode),a=a.slice(j.shift().value.length)}i=W.needsContext.test(a)?0:j.length;while(i--){if(k=j[i],d.relative[l=k.type])break;if((m=d.find[l])&&(f=m(k.matches[0].replace(ba,ca),_.test(j[0].type)&&oa(b.parentNode)||b))){if(j.splice(i,1),a=f.length&&qa(j),!a)return H.apply(e,f),e;break}}}return(n||h(a,o))(f,b,!p,e,!b||_.test(a)&&oa(b.parentNode)||b),e},c.sortStable=u.split("").sort(B).join("")===u,c.detectDuplicates=!!l,m(),c.sortDetached=ia(function(a){return 1&a.compareDocumentPosition(n.createElement("div"))}),ia(function(a){return a.innerHTML="<a href='#'></a>","#"===a.firstChild.getAttribute("href")})||ja("type|href|height|width",function(a,b,c){return c?void 0:a.getAttribute(b,"type"===b.toLowerCase()?1:2)}),c.attributes&&ia(function(a){return a.innerHTML="<input/>",a.firstChild.setAttribute("value",""),""===a.firstChild.getAttribute("value")})||ja("value",function(a,b,c){return c||"input"!==a.nodeName.toLowerCase()?void 0:a.defaultValue}),ia(function(a){return null==a.getAttribute("disabled")})||ja(K,function(a,b,c){var d;return c?void 0:a[b]===!0?b.toLowerCase():(d=a.getAttributeNode(b))&&d.specified?d.value:null}),fa}(a);n.find=t,n.expr=t.selectors,n.expr[":"]=n.expr.pseudos,n.uniqueSort=n.unique=t.uniqueSort,n.text=t.getText,n.isXMLDoc=t.isXML,n.contains=t.contains;var u=function(a,b,c){var d=[],e=void 0!==c;while((a=a[b])&&9!==a.nodeType)if(1===a.nodeType){if(e&&n(a).is(c))break;d.push(a)}return d},v=function(a,b){for(var c=[];a;a=a.nextSibling)1===a.nodeType&&a!==b&&c.push(a);return c},w=n.expr.match.needsContext,x=/^<([\w-]+)\s*\/?>(?:<\/\1>|)$/,y=/^.[^:#\[\.,]*$/;function z(a,b,c){if(n.isFunction(b))return n.grep(a,function(a,d){return!!b.call(a,d,a)!==c});if(b.nodeType)return n.grep(a,function(a){return a===b!==c});if("string"==typeof b){if(y.test(b))return n.filter(b,a,c);b=n.filter(b,a)}return n.grep(a,function(a){return h.call(b,a)>-1!==c})}n.filter=function(a,b,c){var d=b[0];return c&&(a=":not("+a+")"),1===b.length&&1===d.nodeType?n.find.matchesSelector(d,a)?[d]:[]:n.find.matches(a,n.grep(b,function(a){return 1===a.nodeType}))},n.fn.extend({find:function(a){var b,c=this.length,d=[],e=this;if("string"!=typeof a)return this.pushStack(n(a).filter(function(){for(b=0;c>b;b++)if(n.contains(e[b],this))return!0}));for(b=0;c>b;b++)n.find(a,e[b],d);return d=this.pushStack(c>1?n.unique(d):d),d.selector=this.selector?this.selector+" "+a:a,d},filter:function(a){return this.pushStack(z(this,a||[],!1))},not:function(a){return this.pushStack(z(this,a||[],!0))},is:function(a){return!!z(this,"string"==typeof a&&w.test(a)?n(a):a||[],!1).length}});var A,B=/^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,C=n.fn.init=function(a,b,c){var e,f;if(!a)return this;if(c=c||A,"string"==typeof a){if(e="<"===a[0]&&">"===a[a.length-1]&&a.length>=3?[null,a,null]:B.exec(a),!e||!e[1]&&b)return!b||b.jquery?(b||c).find(a):this.constructor(b).find(a);if(e[1]){if(b=b instanceof n?b[0]:b,n.merge(this,n.parseHTML(e[1],b&&b.nodeType?b.ownerDocument||b:d,!0)),x.test(e[1])&&n.isPlainObject(b))for(e in b)n.isFunction(this[e])?this[e](b[e]):this.attr(e,b[e]);return this}return f=d.getElementById(e[2]),f&&f.parentNode&&(this.length=1,this[0]=f),this.context=d,this.selector=a,this}return a.nodeType?(this.context=this[0]=a,this.length=1,this):n.isFunction(a)?void 0!==c.ready?c.ready(a):a(n):(void 0!==a.selector&&(this.selector=a.selector,this.context=a.context),n.makeArray(a,this))};C.prototype=n.fn,A=n(d);var D=/^(?:parents|prev(?:Until|All))/,E={children:!0,contents:!0,next:!0,prev:!0};n.fn.extend({has:function(a){var b=n(a,this),c=b.length;return this.filter(function(){for(var a=0;c>a;a++)if(n.contains(this,b[a]))return!0})},closest:function(a,b){for(var c,d=0,e=this.length,f=[],g=w.test(a)||"string"!=typeof a?n(a,b||this.context):0;e>d;d++)for(c=this[d];c&&c!==b;c=c.parentNode)if(c.nodeType<11&&(g?g.index(c)>-1:1===c.nodeType&&n.find.matchesSelector(c,a))){f.push(c);break}return this.pushStack(f.length>1?n.uniqueSort(f):f)},index:function(a){return a?"string"==typeof a?h.call(n(a),this[0]):h.call(this,a.jquery?a[0]:a):this[0]&&this[0].parentNode?this.first().prevAll().length:-1},add:function(a,b){return this.pushStack(n.uniqueSort(n.merge(this.get(),n(a,b))))},addBack:function(a){return this.add(null==a?this.prevObject:this.prevObject.filter(a))}});function F(a,b){while((a=a[b])&&1!==a.nodeType);return a}n.each({parent:function(a){var b=a.parentNode;return b&&11!==b.nodeType?b:null},parents:function(a){return u(a,"parentNode")},parentsUntil:function(a,b,c){return u(a,"parentNode",c)},next:function(a){return F(a,"nextSibling")},prev:function(a){return F(a,"previousSibling")},nextAll:function(a){return u(a,"nextSibling")},prevAll:function(a){return u(a,"previousSibling")},nextUntil:function(a,b,c){return u(a,"nextSibling",c)},prevUntil:function(a,b,c){return u(a,"previousSibling",c)},siblings:function(a){return v((a.parentNode||{}).firstChild,a)},children:function(a){return v(a.firstChild)},contents:function(a){return a.contentDocument||n.merge([],a.childNodes)}},function(a,b){n.fn[a]=function(c,d){var e=n.map(this,b,c);return"Until"!==a.slice(-5)&&(d=c),d&&"string"==typeof d&&(e=n.filter(d,e)),this.length>1&&(E[a]||n.uniqueSort(e),D.test(a)&&e.reverse()),this.pushStack(e)}});var G=/\S+/g;function H(a){var b={};return n.each(a.match(G)||[],function(a,c){b[c]=!0}),b}n.Callbacks=function(a){a="string"==typeof a?H(a):n.extend({},a);var b,c,d,e,f=[],g=[],h=-1,i=function(){for(e=a.once,d=b=!0;g.length;h=-1){c=g.shift();while(++h<f.length)f[h].apply(c[0],c[1])===!1&&a.stopOnFalse&&(h=f.length,c=!1)}a.memory||(c=!1),b=!1,e&&(f=c?[]:"")},j={add:function(){return f&&(c&&!b&&(h=f.length-1,g.push(c)),function d(b){n.each(b,function(b,c){n.isFunction(c)?a.unique&&j.has(c)||f.push(c):c&&c.length&&"string"!==n.type(c)&&d(c)})}(arguments),c&&!b&&i()),this},remove:function(){return n.each(arguments,function(a,b){var c;while((c=n.inArray(b,f,c))>-1)f.splice(c,1),h>=c&&h--}),this},has:function(a){return a?n.inArray(a,f)>-1:f.length>0},empty:function(){return f&&(f=[]),this},disable:function(){return e=g=[],f=c="",this},disabled:function(){return!f},lock:function(){return e=g=[],c||(f=c=""),this},locked:function(){return!!e},fireWith:function(a,c){return e||(c=c||[],c=[a,c.slice?c.slice():c],g.push(c),b||i()),this},fire:function(){return j.fireWith(this,arguments),this},fired:function(){return!!d}};return j},n.extend({Deferred:function(a){var b=[["resolve","done",n.Callbacks("once memory"),"resolved"],["reject","fail",n.Callbacks("once memory"),"rejected"],["notify","progress",n.Callbacks("memory")]],c="pending",d={state:function(){return c},always:function(){return e.done(arguments).fail(arguments),this},then:function(){var a=arguments;return n.Deferred(function(c){n.each(b,function(b,f){var g=n.isFunction(a[b])&&a[b];e[f[1]](function(){var a=g&&g.apply(this,arguments);a&&n.isFunction(a.promise)?a.promise().progress(c.notify).done(c.resolve).fail(c.reject):c[f[0]+"With"](this===d?c.promise():this,g?[a]:arguments)})}),a=null}).promise()},promise:function(a){return null!=a?n.extend(a,d):d}},e={};return d.pipe=d.then,n.each(b,function(a,f){var g=f[2],h=f[3];d[f[1]]=g.add,h&&g.add(function(){c=h},b[1^a][2].disable,b[2][2].lock),e[f[0]]=function(){return e[f[0]+"With"](this===e?d:this,arguments),this},e[f[0]+"With"]=g.fireWith}),d.promise(e),a&&a.call(e,e),e},when:function(a){var b=0,c=e.call(arguments),d=c.length,f=1!==d||a&&n.isFunction(a.promise)?d:0,g=1===f?a:n.Deferred(),h=function(a,b,c){return function(d){b[a]=this,c[a]=arguments.length>1?e.call(arguments):d,c===i?g.notifyWith(b,c):--f||g.resolveWith(b,c)}},i,j,k;if(d>1)for(i=new Array(d),j=new Array(d),k=new Array(d);d>b;b++)c[b]&&n.isFunction(c[b].promise)?c[b].promise().progress(h(b,j,i)).done(h(b,k,c)).fail(g.reject):--f;return f||g.resolveWith(k,c),g.promise()}});var I;n.fn.ready=function(a){return n.ready.promise().done(a),this},n.extend({isReady:!1,readyWait:1,holdReady:function(a){a?n.readyWait++:n.ready(!0)},ready:function(a){(a===!0?--n.readyWait:n.isReady)||(n.isReady=!0,a!==!0&&--n.readyWait>0||(I.resolveWith(d,[n]),n.fn.triggerHandler&&(n(d).triggerHandler("ready"),n(d).off("ready"))))}});function J(){d.removeEventListener("DOMContentLoaded",J),a.removeEventListener("load",J),n.ready()}n.ready.promise=function(b){return I||(I=n.Deferred(),"complete"===d.readyState||"loading"!==d.readyState&&!d.documentElement.doScroll?a.setTimeout(n.ready):(d.addEventListener("DOMContentLoaded",J),a.addEventListener("load",J))),I.promise(b)},n.ready.promise();var K=function(a,b,c,d,e,f,g){var h=0,i=a.length,j=null==c;if("object"===n.type(c)){e=!0;for(h in c)K(a,b,h,c[h],!0,f,g)}else if(void 0!==d&&(e=!0,n.isFunction(d)||(g=!0),j&&(g?(b.call(a,d),b=null):(j=b,b=function(a,b,c){return j.call(n(a),c)})),b))for(;i>h;h++)b(a[h],c,g?d:d.call(a[h],h,b(a[h],c)));return e?a:j?b.call(a):i?b(a[0],c):f},L=function(a){return 1===a.nodeType||9===a.nodeType||!+a.nodeType};function M(){this.expando=n.expando+M.uid++}M.uid=1,M.prototype={register:function(a,b){var c=b||{};return a.nodeType?a[this.expando]=c:Object.defineProperty(a,this.expando,{value:c,writable:!0,configurable:!0}),a[this.expando]},cache:function(a){if(!L(a))return{};var b=a[this.expando];return b||(b={},L(a)&&(a.nodeType?a[this.expando]=b:Object.defineProperty(a,this.expando,{value:b,configurable:!0}))),b},set:function(a,b,c){var d,e=this.cache(a);if("string"==typeof b)e[b]=c;else for(d in b)e[d]=b[d];return e},get:function(a,b){return void 0===b?this.cache(a):a[this.expando]&&a[this.expando][b]},access:function(a,b,c){var d;return void 0===b||b&&"string"==typeof b&&void 0===c?(d=this.get(a,b),void 0!==d?d:this.get(a,n.camelCase(b))):(this.set(a,b,c),void 0!==c?c:b)},remove:function(a,b){var c,d,e,f=a[this.expando];if(void 0!==f){if(void 0===b)this.register(a);else{n.isArray(b)?d=b.concat(b.map(n.camelCase)):(e=n.camelCase(b),b in f?d=[b,e]:(d=e,d=d in f?[d]:d.match(G)||[])),c=d.length;while(c--)delete f[d[c]]}(void 0===b||n.isEmptyObject(f))&&(a.nodeType?a[this.expando]=void 0:delete a[this.expando])}},hasData:function(a){var b=a[this.expando];return void 0!==b&&!n.isEmptyObject(b)}};var N=new M,O=new M,P=/^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,Q=/[A-Z]/g;function R(a,b,c){var d;if(void 0===c&&1===a.nodeType)if(d="data-"+b.replace(Q,"-$&").toLowerCase(),c=a.getAttribute(d),"string"==typeof c){try{c="true"===c?!0:"false"===c?!1:"null"===c?null:+c+""===c?+c:P.test(c)?n.parseJSON(c):c;
@@ -17640,13 +17640,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 },{}]},{},[1]);
 
-
-function Dash(){
+function Dash () {
     this.html = $("<div></div>");
-    this.IsMobile = false;
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-        this.IsMobile = true;
-    };
+
+    this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     this.Context = DASH_CONTEXT;
     this.Local = new DashLocal();
     this.Math = new DashMath();
@@ -17655,20 +17652,19 @@ function Dash(){
     this.User = new DashUser();
     this.Gui = new DashGui();
     this.View = new DashView();
-    this.Animation = new DashAnimation();
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
     this.Utils = new DashUtils();
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
+    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
     this.width = 0;
     this.height = 0;
-    this.FormatTime = function(server_iso_string){
+    this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
         date = date.setHours(date.getHours()-server_offset_hours);
-        var time_ago = timeago.format(date);
-        return time_ago;
+        return timeago.format(date);
     };
     this.ReadableDateTime = function (iso_string) {
         var tz_label = "UTC";
@@ -17714,31 +17710,28 @@ function Dash(){
         if (str.length > 0 && (at_sign_count !== 1 || !(domain.includes(".")))) {
             return false;
         }
-        if (domain_start.length < 1 || domain_end.length < 1 || username.length < 1) {
-            return false;
-        }
-        return true;
+        return !(domain_start.length < 1 || domain_end.length < 1 || username.length < 1);
     };
     this.IsServerIsoDate = function (str) {
         return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
     };
-    this.ValidateResponse = function(response){
+    this.ValidateResponse = function (response) {
         // TODO: doc
         if (!response) {
             console.log("Dash.ValidateResponse(1)");
             console.log(response);
             alert("There was a server problem with this request");
             return null;
-        };
+        }
         if (response["error"]) {
             console.log("Dash.ValidateResponse(2)");
             console.log(response);
             alert(response["error"]);
             return null;
-        };
+        }
         return response;
     };
-    this.GetFormContainer = function(){
+    this.GetFormContainer = function () {
         var container = $("<div></div>");
         container.css({
             "background": ContainerColor,
@@ -17750,7 +17743,7 @@ function Dash(){
         });
         return container;
     };
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         $("body").css({
             "overflow": "hidden",
         });
@@ -17760,16 +17753,16 @@ function Dash(){
             "top": 0,
             "background": Dash.Color.GetVerticalGradient("#444", "#111", "#111"),
         });
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.draw();
             });
-            $(window).resize(function(){
+            $(window).on("resize", function () {
                 self.draw();
             });
         })(this);
     };
-    this.draw = function(){
+    this.draw = function () {
         this.width = $(window).width();
         this.height = $(window).height();
         this.html.css({
@@ -17777,7 +17770,7 @@ function Dash(){
             "height": this.height,
         });
     };
-    this.extend_js = function(){
+    this.extend_js = function () {
         // TODO: Move this into utils
         String.prototype.Title = function () {
             try {
@@ -17796,37 +17789,35 @@ function Dash(){
             }
         };
     };
-    this.Initialize = function(){
+    this.Initialize = function () {
         // Called once when document ready
         this.extend_js();
         this.setup_styles();
     };
-};
-$(document).ready(function() {
+}
+$(document).on("ready", function () {
     $.fn.extend({
-        animateStep: function(options) {
-            return this.each(function() {
+        animateStep: function (options) {
+            return this.each(function () {
                 var elementOptions = $.extend({}, options, {step: options.step.bind($(this))});
                 $({x: options.from}).animate({x: options.to}, elementOptions);
             });
         },
-        rotate: function(value) {
+        rotate: function (value) {
             return this.css("transform", "rotate(" + value + "deg)");
         }
     });
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
         console.log("Warning: URL Loaded with www -> Redirecting");
         window.location.href = window.location.href.replace("https://www.", "https://");
+    }
+    window.InverseLerp = function (min, max, val) {
+        return (val - min) / (max - min);
     };
-    window.InverseLerp = function(min, max, val){
-        var t = (val - min) / (max - min)
-        return t;
-    };
-    window.Lerp = function(valA, valB, t){
+    window.Lerp = function (valA, valB, t) {
         if (t > 1) {t = 1;}
         if (t < 0) {t = 0;}
-        var x = valA + t * (valB - valA);
-        return x;
+        return valA + t * (valB - valA);
     };
     window.Dash = new Dash();
     window.d = window.Dash;
@@ -17842,64 +17833,63 @@ $(document).ready(function() {
         }
         else {
             window.Dash.html.append(html);
-        };
-    };
+        }
+    }
 });
 
-
-function DashUser(){
+function DashUser () {
     this.__auth_authenticated_cb = null;
     this.__auth_not_authenticated_cb = null;
     this.Data = null;
     this.Init = null;
-    this.Authenticate = function(bind, on_user_authenticated, on_user_not_authenticated){
+    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
-        var token = d.Local.Get("token");
-        var email = d.Local.Get("email");
-        var user_json = d.Local.Get("user_json");
+        var token = Dash.Local.Get("token");
+        var email = Dash.Local.Get("email");
+        var user_json = Dash.Local.Get("user_json");
         if (token && email && user_json) {
             var params = {};
             params["f"] = "validate";
             params["token"] = token;
             params["init"] = true;
             params["gzip"] = true;
-            d.Request(this, this.on_auth_response, "Users", params);
+            Dash.Request(this, this.on_auth_response, "Users", params);
         }
         else {
             this.__auth_not_authenticated_cb();
-        };
+        }
     };
-    this.SetUserAuthentication = function(email, server_response){
+    this.SetUserAuthentication = function (email, server_response) {
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
-            d.Local.Set("email", email);
-            d.Local.Set("token", server_response["token"]);
-            d.Local.Set("user_json", JSON.stringify(server_response["user"]));
+            Dash.Local.Set("email", email);
+            Dash.Local.Set("token", server_response["token"]);
+            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]));
         }
         else {
             this.Data = null;
             this.Init = null;
-            d.Local.Set("email", "");
-            d.Local.Set("token", "");
-            d.Local.Set("user_json", "");
-        };
+            Dash.Local.Set("email", "");
+            Dash.Local.Set("token", "");
+            Dash.Local.Set("user_json", "");
+        }
         this.build_init_team_combo();
     };
-    this.build_init_team_combo = function(){
+    this.build_init_team_combo = function () {
         this.Init["team_combo"] = [];
         if (!this.Init["team"]) {
             return;
-        };
+        }
         for (var i in this.Init["team_sort"]) {
             var email = this.Init["team_sort"][i];
-            var data = this.Init["team"][email];
+            // var data = this.Init["team"][email];
             this.Init["team_combo"].push(this.Init["team"][email]);
-        };
+        }
     };
-    this.on_auth_response = function(response){
-        response["token"] = response["token"] || d.Local.Get("token");
+    this.on_auth_response = function (response) {
+        response["token"] = response["token"] || Dash.Local.Get("token");
         if (response["valid_login"] && response["user"]["email"]) {
             this.SetUserAuthentication(response["user"]["email"], response);
             this.__auth_authenticated_cb();
@@ -17909,12 +17899,11 @@ function DashUser(){
             console.log(response);
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
-        };
+        }
     };
-};
+}
 
-
-function DashSize(is_mobile){
+function DashSize (is_mobile) {
     this.Padding = 10;
     this.Stroke = 3;
     this.RowHeight = 20;
@@ -17928,64 +17917,28 @@ function DashSize(is_mobile){
         this.ButtonHeight = this.RowHeight + (this.Padding);
         this.ColumnWidth = 300;
         this.BorderRadius = 3;
-    };
-};
+    }
+}
 
-
-function DashView(){
+function DashView () {
     this.User = DashUserView;
     this.Style = DashStyleView;
     this.SiteSettings = DashAdminView;
     this.SiteSettingsTabs = new DashAdminTabs();
     this.Admin = DashAdminView;
     this.PDF = DashPDFView;
-};
+}
 
-
-function DashMath(){
-    this.InverseLerp = function(min, max, val){
+function DashMath () {
+    this.InverseLerp = function (min, max, val) {
         return (val - min) / (max - min);
     };
-    this.Lerp = function(a, b, t){
+    this.Lerp = function (a, b, t) {
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
-};
+}
 
-
-function DashAnimation(){
-    this.Curves = new DashAnimationCurves();
-    this.Eval = function(curve, t){
-        return curve(t);
-    };
-};
-
-
-function DashAnimationCurves(){
-    this.EaseInOut = function(t){
-        return t<.5 ? 2*t*t : -1+(4-2*t)*t;
-    };
-    this.EaseIn = function(t){
-        return t*t;
-    };
-    this.EaseOut = function(t){
-        return t*(2-t);
-    };
-    this.EaseOutBounce = function(t){
-        var b1 = 4 / 11,
-            b2 = 6 / 11,
-            b3 = 8 / 11,
-            b4 = 3 / 4,
-            b5 = 9 / 11,
-            b6 = 10 / 11,
-            b7 = 15 / 16,
-            b8 = 21 / 22,
-            b9 = 63 / 64,
-            b0 = 1 / b1 / b1;
-        return (t = +t) < b1 ? b0 * t * t : t < b3 ? b0 * (t -= b2) * t + b4 : t < b6 ? b0 * (t -= b5) * t + b7 : b0 * (t -= b8) * t + b9;
-    };
-};
-
-function DashColor(){
+function DashColor () {
     // this.DarkBackground = "#e6e6e6";
     // this.LightBackground = "#e6e6e6";
     // this.Background = "#e6e6e6";
@@ -17999,18 +17952,18 @@ function DashColor(){
     this.Warning = "#fab964";
     this.Light = null;
     this.Dark = null;
-    // this.SetFromJson = function(light_theme_json, dark_theme_json){
+    // this.SetFromJson = function (light_theme_json, dark_theme_json) {
     // };
-    // this.Set = function(light_theme, dark_theme){
+    // this.Set = function (light_theme, dark_theme) {
     //     console.log("SET");
     // };
-    // this.fill_set = function(color_set){
+    // this.fill_set = function (color_set) {
     //     // color_set = object
     //     console.log(color_set);
     //     // color_set["background"] = color_set["background"] || "";
 
     // };
-    this.setup_color_sets = function(){
+    this.setup_color_sets = function () {
         // var dark_bg = "rgb(30, 30, 30)";
         // var dark_bg_text = "rgb(200, 200, 200)";
         // var light_bg = "#e6e6e6";
@@ -18033,31 +17986,25 @@ function DashColor(){
         min_dark["button_selected"]  = "orange";
         // var light = this.fill_set(min_light);
         // var dark  = this.fill_set(min_dark);
-        var dark_bg = "#23262b";
+        // var dark_bg = "#23262b";
         var dark_bg_text = "rgb(245, 245, 245)";
-        var light_bg = "#e6e6e6";
+        // var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";
         var button_hover_color = this.Lighten(button_color);
         var button_text_color = "rgb(230, 230, 230)";
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
-        var text_header = "#95ae6c";
-        var text_header_dark = "#cfe1e7";
-        var light_accent_good = "green";
-        var light_accent_bad = "red";
-        var dark_accent_good = "#5b9fb7";
-        var dark_accent_bad = "#ff6144";
-        var dark_button = "#5ba0b8";
-
-
-
-
-
-
+        // var text_header = "#95ae6c";
+        // var text_header_dark = "#cfe1e7";
+        // var light_accent_good = "green";
+        // var light_accent_bad = "red";
+        // var dark_accent_good = "#5b9fb7";
+        // var dark_accent_bad = "#ff6144";
+        // var dark_button = "#5ba0b8";
         var light = new DashSiteColors({
-            "background": "#dcdbd9",
-            "background": "#e0dfde",
+            // "background": "#dcdbd9",
+            // "background": "#e0dfde",
             "background": "#e3e8ea",
             // "background": "red",
             "background_raised": "#e3e8ea",
@@ -18067,8 +18014,8 @@ function DashColor(){
             "accent_good": "#f3d057",
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
-            "tab_area_background": "#e4eaee",
-            "tab_area_background": "#659cba",
+            // "tab_area_background": "#e4eaee",
+            // "tab_area_background": "#659cba",
             // "tab_area_background": "#6a7f8a",
             // "tab_area_background": "#e0ccb4",
             // "tab_area_background": "#655f5d",
@@ -18106,11 +18053,11 @@ function DashColor(){
         //     ),
         // );
         // console.log(light);
-        this.Raise = function(cstr, raise_steps){
+        this.Raise = function (cstr, raise_steps) {
             raise_steps = raise_steps || 1;
             return cstr;
         };
-        this.Random = function(cstr, lighten_rgb){
+        this.Random = function (cstr, lighten_rgb) {
             var tmp_colors = ["red", "blue", "green", "orange"];
             return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
             // return "#" + Math.floor(Math.random()*16777215).toString(16);
@@ -18223,13 +18170,13 @@ function DashColor(){
             ),
         );
     };
-    this.GetHorizontalGradient = function(color_1, color_2, color_3, color_4){
+    this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
     };
-    this.GetVerticalGradient = function(color_1, color_2, color_3, color_4){
+    this.GetVerticalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(0, color_1, color_2, color_3, color_4);
     };
-    this.GetGradient = function(degrees, color_1, color_2, color_3, color_4){
+    this.GetGradient = function (degrees, color_1, color_2, color_3, color_4) {
         var colors = "";
         if (color_1 && color_2 && color_3 && color_4) {
             colors = this.ParseToRGB(color_4) + " 0%, " + this.ParseToRGB(color_3) + " 25%, ";
@@ -18237,7 +18184,7 @@ function DashColor(){
         }
         else if (color_1 && color_2 && color_3) {
             colors = this.ParseToRGB(color_3) + " 0%, " + this.ParseToRGB(color_2) + " 50%, ";
-            colors += this.ParseToRGB(color_1) + " 100%"
+            colors += this.ParseToRGB(color_1) + " 100%";
         }
         else if (color_1 && color_2) {
             colors = this.ParseToRGB(color_2) + " 0%, " + this.ParseToRGB(color_1) + " 100%";
@@ -18245,7 +18192,7 @@ function DashColor(){
         else {
             console.log("Error: At least 2 colors are required for a gradient");
             return "red";
-        };
+        }
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
     };
     this.Names = {
@@ -18398,19 +18345,19 @@ function DashColor(){
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
     };
-    this.to_rgba = function(color_data){
+    this.to_rgba = function (color_data) {
         return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
     };
-    this.to_rgb = function(color_data){
+    this.to_rgb = function (color_data) {
         return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
     };
-    this.ParseToRGB = function(cstr){
+    this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
-    this.ParseToRGBA = function(cstr){
+    this.ParseToRGBA = function (cstr) {
         return this.to_rgba(this.Parse(cstr));
     };
-    this.Lighten = function(cstr, lighten_rgb){
+    this.Lighten = function (cstr, lighten_rgb) {
         lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
         var pcolor = this.Parse(cstr);
         pcolor[0] += lighten_rgb;
@@ -18418,7 +18365,7 @@ function DashColor(){
         pcolor[2] += lighten_rgb;
         return this.to_rgb(pcolor);
     };
-    this.Darken = function(cstr, darken_rgb){
+    this.Darken = function (cstr, darken_rgb) {
         darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
         var pcolor = this.Parse(cstr);
         pcolor[0] -= darken_rgb;
@@ -18426,37 +18373,39 @@ function DashColor(){
         pcolor[2] -= darken_rgb;
         return this.to_rgb(pcolor);
     };
-    this.Parse = function(cstr) {
+    this.Parse = function (cstr) {
+        var base;
+        var size;
         var m = null;
         var parts = [];
-        var alpha = 1
+        var alpha = 1;
         var space = null;
         if (typeof cstr === 'string') {
             //keyword
             if (this.Names[cstr]) {
-                parts = this.Names[cstr].slice()
-                space = 'rgb'
+                parts = this.Names[cstr].slice();
+                space = 'rgb';
             }
             //reserved words
             else if (cstr === 'transparent') {
-                alpha = 0
-                space = 'rgb'
-                parts = [0,0,0]
+                alpha = 0;
+                space = 'rgb';
+                parts = [0,0,0];
             }
             //hex
             else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {
-                var base = cstr.slice(1)
-                var size = base.length
-                var isShort = size <= 4
-                alpha = 1
+                base = cstr.slice(1);
+                size = base.length;
+                var isShort = size <= 4;
+                alpha = 1;
                 if (isShort) {
                     parts = [
                         parseInt(base[0] + base[0], 16),
                         parseInt(base[1] + base[1], 16),
                         parseInt(base[2] + base[2], 16)
-                    ]
+                    ];
                     if (size === 4) {
-                        alpha = parseInt(base[3] + base[3], 16) / 255
+                        alpha = parseInt(base[3] + base[3], 16) / 255;
                     }
                 }
                 else {
@@ -18464,96 +18413,96 @@ function DashColor(){
                         parseInt(base[0] + base[1], 16),
                         parseInt(base[2] + base[3], 16),
                         parseInt(base[4] + base[5], 16)
-                    ]
+                    ];
                     if (size === 8) {
-                        alpha = parseInt(base[6] + base[7], 16) / 255
+                        alpha = parseInt(base[6] + base[7], 16) / 255;
                     }
                 }
-                if (!parts[0]) parts[0] = 0
-                if (!parts[1]) parts[1] = 0
-                if (!parts[2]) parts[2] = 0
-                space = 'rgb'
+                if (!parts[0]) parts[0] = 0;
+                if (!parts[1]) parts[1] = 0;
+                if (!parts[2]) parts[2] = 0;
+                space = 'rgb';
             }
             //color space
             else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {
-                var name = m[1]
-                var isRGB = name === 'rgb'
-                var base = name.replace(/a$/, '')
-                space = base
-                var size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3
+                var name = m[1];
+                var isRGB = name === 'rgb';
+                base = name.replace(/a$/, '');
+                space = base;
+                size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3;
                 parts = m[2].trim()
                     .split(/\s*[,\/]\s*|\s+/)
                     .map(function (x, i) {
                         //<percentage>
                         if (/%$/.test(x)) {
                             //alpha
-                            if (i === size) return parseFloat(x) / 100
+                            if (i === size) return parseFloat(x) / 100;
                             //rgb
-                            if (base === 'rgb') return parseFloat(x) * 255 / 100
-                            return parseFloat(x)
+                            if (base === 'rgb') return parseFloat(x) * 255 / 100;
+                            return parseFloat(x);
                         }
                         //hue
                         else if (base[i] === 'h') {
                             //<deg>
                             if (/deg$/.test(x)) {
-                                return parseFloat(x)
+                                return parseFloat(x);
                             }
                             //<base-hue>
                             else if (baseHues[x] !== undefined) {
-                                return baseHues[x]
+                                return baseHues[x];
                             }
                         }
-                        return parseFloat(x)
-                    })
-                if (name === base) parts.push(1)
-                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size]
-                parts = parts.slice(0, size)
+                        return parseFloat(x);
+                    });
+                if (name === base) parts.push(1);
+                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
+                parts = parts.slice(0, size);
             }
             //named channels case
             else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {
                 parts = cstr.match(/([0-9]+)/g).map(function (value) {
-                    return parseFloat(value)
-                })
-                space = cstr.match(/([a-z])/ig).join('').toLowerCase()
+                    return parseFloat(value);
+                });
+                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
             }
         }
         //numeric case
         else if (!isNaN(cstr)) {
-            space = 'rgb'
-            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff]
+            space = 'rgb';
+            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
         }
         //array-like
         else if (Array.isArray(cstr) || cstr.length) {
-            parts = [cstr[0], cstr[1], cstr[2]]
-            space = 'rgb'
-            alpha = cstr.length === 4 ? cstr[3] : 1
+            parts = [cstr[0], cstr[1], cstr[2]];
+            space = 'rgb';
+            alpha = cstr.length === 4 ? cstr[3] : 1;
         }
         //object case - detects css cases of rgb and hsl
         else if (cstr instanceof Object) {
             if (cstr.r != null || cstr.red != null || cstr.R != null) {
-                space = 'rgb'
+                space = 'rgb';
                 parts = [
                     cstr.r || cstr.red || cstr.R || 0,
                     cstr.g || cstr.green || cstr.G || 0,
                     cstr.b || cstr.blue || cstr.B || 0
-                ]
+                ];
             }
             else {
-                space = 'hsl'
+                space = 'hsl';
                 parts = [
                     cstr.h || cstr.hue || cstr.H || 0,
                     cstr.s || cstr.saturation || cstr.S || 0,
                     cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
-                ]
+                ];
             }
-            alpha = cstr.a || cstr.alpha || cstr.opacity || 1
-            if (cstr.opacity != null) alpha /= 100
-        };
-        return [parts[0], parts[1], parts[2], alpha, space]
+            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
+            if (cstr.opacity != null) alpha /= 100;
+        }
+        return [parts[0], parts[1], parts[2], alpha, space];
     };
-    this.SetPlaceholderColor = function(input_html, placeholder_color){
+    this.SetPlaceholderColor = function (input_html, placeholder_color) {
         // This function will set the placeholder text for an input element
-        var class_name = "placeholder_inline_style_" + parseInt(Math.random()*1000000);
+        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
         var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
         var node = document.createElement("style");
         node.innerHTML = style_str;
@@ -18562,7 +18511,7 @@ function DashColor(){
         return input_html;
     };
     this.setup_color_sets();
-};
+}
 
 class DashColorSet {
     constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
@@ -18634,7 +18583,7 @@ class DashColorSet {
     set Input(color_button_set) {
         this._input = color_button_set;
     };
-};
+}
 
 class DashColorButtonSet {
     constructor(area_background, background, text) {
@@ -18668,7 +18617,7 @@ class DashColorButtonSet {
         // error if an object does not have this method
         return this._selected_hover;
     };
-};
+}
 
 class DashColorStateSet {
     constructor(base, selected, base_hover, selected_hover) {
@@ -18695,15 +18644,15 @@ class DashColorStateSet {
         if (!this._base) {
             console.log("ERROR: DashColorStateSet() Requires at least one color");
             return;
-        };
+        }
         if (!this._selected) {
             console.log("Warning: Set a color for the 'Selected' property");
             this._selected = "red";
-        };
-        this._base_hover = this._base_hover || d.Color.Lighten(this._base, 50);
-        this._selected_hover = this._selected_hover || d.Color.Lighten(this._selected, 50);
+        }
+        this._base_hover = this._base_hover || Dash.Color.Lighten(this._base, 50);
+        this._selected_hover = this._selected_hover || Dash.Color.Lighten(this._selected, 50);
     };
-};
+}
 
 class DashSiteColors {
     constructor(color_obj) {
@@ -18733,93 +18682,120 @@ class DashSiteColors {
     get TextHeader() {
         return this._col["text_header"] || this._col["text"] || "red";
     };
-};
+}
 
-
-function DashUtils(){
-    // this.timers = [];
-    this.SetTimer = function(binder, callback, ms){
+function DashUtils () {
+    this.SetTimer = function (binder, callback, ms) {
         var timer = {};
         timer["callback"] = callback.bind(binder);
         timer["source"] = binder;
         timer["iterations"] = 0;
-        (function(self, timer){
+        (function (self, timer) {
             var iterations = 0;
-            timer["timer_id"] = setInterval(function(){
-                timer["iterations"] = iterations
-                self.manage_timer(timer);
-                iterations += 1;
-            }, ms);
+            timer["timer_id"] = setInterval(
+                function () {
+                    timer["iterations"] = iterations;
+                    self.manage_timer(timer);
+                    iterations += 1;
+                },
+                ms
+            );
         })(this, timer);
         this.manage_timer(timer);
     };
-    this.manage_timer = function(timer){
+    this.manage_timer = function (timer) {
         var still_active = true;
         if (timer.iterations && timer.iterations >= 1) {
             if (timer.source.html && !timer.source.html.is(":visible")) {
                 still_active = false;
-            };
-        };
+            }
+        }
         if (!still_active) {
             console.log("== CLEARING TIMER ==");
-            clearInterval(timer["timer_id"])
+            clearInterval(timer["timer_id"]);
             return;
-        };
+        }
         timer["callback"]();
     };
-};
+    this.OnAnimationFrame = function (binder, callback, html_key=null) {
+        var anim_frame = {};
+        anim_frame["callback"] = callback.bind(binder);
+        anim_frame["source"] = binder;
+        anim_frame["iterations"] = 0;
+        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
+        (function (self, anim_frame, binder, callback, html_key) {
+            var iterations = 0;
+            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
+                anim_frame["iterations"] = iterations;
+                self.OnAnimationFrame(binder, callback, html_key);
+                iterations += 1;
+            });
+        })(this, anim_frame, binder, callback, html_key);
+        this.manage_animation_frame(anim_frame);
+    };
+    this.manage_animation_frame = function (anim_frame) {
+        var still_active = true;
+        if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
+            still_active = false;
+        }
+        if (!still_active) {
+            console.log("== CLEARING ANIMATION FRAME ==");
+            window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
+            return;
+        }
+        anim_frame["callback"]();
+    };
+}
 
-
-function DashLocal(){
-    this.Set = function(key, value){
-        if (key.indexOf(d.Context["asset_path"] + "_") != 0) {
-            key = d.Context["asset_path"] + "_" + key;
-        };
+function DashLocal () {
+    this.Set = function (key, value) {
+        if (key.indexOf(Dash.Context["asset_path"] + "_") != 0) {
+            key = Dash.Context["asset_path"] + "_" + key;
+        }
         //console.log("Setting " + key + " to '" + value + "'");
         return localStorage.setItem(key, value);
     };
-    this.Get = function(key){
-        if (key.indexOf(d.Context["asset_path"] + "_") != 0) {
-            key = d.Context["asset_path"] + "_" + key;
-        };
+    this.Get = function (key) {
+        if (key.indexOf(Dash.Context["asset_path"] + "_") != 0) {
+            key = Dash.Context["asset_path"] + "_" + key;
+        }
         //console.log("Getting " + key + " <<- " + localStorage.getItem(key));
         return localStorage.getItem(key);
     };
-};
+}
 
-
-function DashRequest(){
+function DashRequest () {
     this.requests = [];
-    this.Request = function(binder, callback, endpoint, params){
-        var url = "https://" + d.Context["domain"] + "/" + endpoint;
+    this.Request = function (binder, callback, endpoint, params) {
+        var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
-    function DashRequestThread(dash_requests, url, params, binder, callback){
+    function DashRequestThread (dash_requests, url, params, binder, callback) {
         this.dash_requests = dash_requests;
         this.url = url;
         this.params = params || {};
-        this.params["token"] = d.Local.Get("token");
-        this.id = parseInt(Math.random() * (999999 - 100000) + 100000);
+        this.params["token"] = Dash.Local.Get("token");
+        this.id = Math.random() * (999999 - 100000) + 100000;
         this.callback = callback;
         this.binder = binder;
-        this.post = function(){
-            (function(self){
-                $.post(self.url, self.params, function(response_str) {
+        this.post = function () {
+            (function (self) {
+                $.post(self.url, self.params, function (response_str) {
                     self.dash_requests.on_response(self, $.parseJSON(response_str));
                 });
             })(this);
         };
         this.post();
-    };
-    this.on_no_further_requests_pending = function(){
+    }
+    this.on_no_further_requests_pending = function () {
         // Called when a request finishes, and there are no more requests queued
         //console.log(">> on_no_further_requests_pending <<");
     };
-    this.decompress_response = function(request, response){
+    this.decompress_response = function (request, response) {
         // This is called immediately before returning a
         // response that has been compressed with gzip
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
-        (function(self, gzip_bytes, request, response){
+        (function (self, gzip_bytes, request, response) {
             zlib.unzip(gzip_bytes, function (_, decompressed_data) {
                 delete response["gzip"];
                 response["dash_decompressed"] = true;
@@ -18828,7 +18804,7 @@ function DashRequest(){
                     var gzipped_data = JSON.parse(gzip_str);
                     for (var key in gzipped_data) {
                         response[key] = gzipped_data[key];
-                    };
+                    }
                 }
                 else {
                     console.log("Dash failed to decompress gzip content");
@@ -18838,45 +18814,46 @@ function DashRequest(){
                     }
                     else {
                         response["error_gzip"] = "Failed to decompress gzip data from server!";
-                    };
-                };
+                    }
+                }
                 self.on_response(request, response);
             });
         })(this, gzip_bytes, request, response);
     };
-    this.on_response = function(request, response){
+    this.on_response = function (request, response) {
         if (response["gzip"]) {
             this.decompress_response(request, response);
             return;
-        };
-        callback = request.callback.bind(request.binder);
+        }
+        var callback = request.callback.bind(request.binder);
         var requests = [];
         for (var i in this.requests) {
-            if (this.requests[i] == request) {continue};
+            if (this.requests[i] == request) {continue;}
             requests.push(this.requests[i]);
-        };
+        }
         this.requests = requests;
         if (this.requests.length == 0) {
             this.on_no_further_requests_pending();
-        };
+        }
         callback(response);
     };
-};
+}
 
 // Profile page layout for the currently logged in user
-function DashUserView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+function DashUserView () {
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html.append(new Dash.Gui.Layout.UserProfile().html);
-};
+}
+
 // Profile page layout for the currently logged in user
-function DashStyleView(){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+function DashStyleView () {
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html.append(new Dash.Gui.Layout.UserProfile().html);
     console.log("in");
-};
+}
 
-function DashPDFView(options){
-    this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+function DashPDFView (options) {
+    this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     options = options || {};
     this.on_uploaded_callback = null;
     this.content_key = options["content_key"] || null;
@@ -18886,54 +18863,54 @@ function DashPDFView(options){
     this.images_initialized = false;
     if (options["binder"] && options["callback"]) {
         this.on_uploaded_callback = options["callback"].bind(options["binder"]);
-    };
+    }
     this.upload_button = null;
     this.pages_area = $("<div></div>");
     this.data = null;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         if (!this.content_key) {
             console.log("Content key is missing for DashPDFView()");
             return;
-        };
-        this.upload_button = new d.Gui.Button("Upload PDF", this.upload_pdf, this);
+        }
+        this.upload_button = new Dash.Gui.Button("Upload PDF", this.upload_pdf, this);
         this.upload_button.html.css({"margin-bottom": Dash.Size.Padding});
-        this.params = {}
+        this.params = {};
         this.params["f"] = "upload_pdf";
         this.params["content_key"] = this.content_key;
-        this.params["token"] = d.Local.Get("token");
+        this.params["token"] = Dash.Local.Get("token");
         this.upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Api",
             this.params
         );
         this.html.append(this.upload_button.html);
         this.html.append(this.pages_area);
-        (function(self){
-            setInterval(function(){
+        (function (self) {
+            setInterval(function () {
                 self.check_width();
             }, 100);
         })(this);
     };
-    this.check_width = function(){
+    this.check_width = function () {
         if (this.pages_area.width() != this.content_width) {
             this.content_width = this.pages_area.width();
             this.update_sizes();
-        };
+        }
     };
-    this.upload_pdf = function(response){
+    this.upload_pdf = function (response) {
         if (response.originalEvent) {
             // TODO: Prevent this from being called inside of dash_gui_button_uploader.js
             return;
-        };
+        }
         console.log("Uploading pdf...");
         if (this.on_uploaded_callback) {
             this.on_uploaded_callback(response);
-        };
+        }
         this.on_data(response);
     };
-    this.update_sizes = function(){
+    this.update_sizes = function () {
         if (!this.images) {
             return;
-        };
+        }
         // A small timeout that lets the stack
         // of images fade in one by one
         var init_delay = 0;
@@ -18949,46 +18926,46 @@ function DashPDFView(options){
             });
             if (!this.images_initialized) {
                 if (init_delay > 10) {
-                    (function(self, i, init_delay, fade_in_duration){
-                        setTimeout(function(){
+                    (function (self, i, init_delay, fade_in_duration) {
+                        setTimeout(function () {
                             self.images[i].animate({"opacity": 1}, fade_in_duration);
                         }, init_delay);
                     })(this, i, init_delay, fade_in_duration);
                 }
                 else {
                     this.images[i].animate({"opacity": 1}, fade_in_duration);
-                };
+                }
                 init_delay += init_step;
-            };
-        };
+            }
+        }
         this.images_initialized = true;
     };
-    this.on_pdf_page_clicked = function(page_data){
+    this.on_pdf_page_clicked = function (page_data) {
         console.log(page_data);
         window.open(page_data["url"], '_blank');
     };
-    this.on_data = function(response){
-        if (!Dash.ValidateResponse(response)) {return};
+    this.on_data = function (response) {
+        if (!Dash.ValidateResponse(response)) {return;}
         this.data = null;
         if (!response["data"]) {
             this.pages_area.empty();
             this.pages_area.text(response);
             return;
-        };
+        }
         if (!response["data"]["pages"]) {
             this.pages_area.empty();
             this.pages_area.text("No Pages Converted");
             return;
-        };
+        }
         this.data = response["data"];
         this.content_width = this.pages_area.width();
         this.images = [];
         this.images_initialized = false;
         for (var i in this.data["pages"]) {
             var page_data = this.data["pages"][i];
-            var image = $("<img src='" + page_data["url"] + "'>");
+            var image = $("<img src='" + page_data["url"] + "' alt=''>");
             image.css({
-                "width": this.content_width-(d.Size.Padding*2),
+                "width": this.content_width-(Dash.Size.Padding*2),
                 "margin-bottom": Dash.Size.Padding,
                 "border-radius": Dash.Size.Padding*0.5,
                 "box-shadow": "0px 0px 10px 0px rgba(0, 0, 0, 0.2)",
@@ -18997,50 +18974,49 @@ function DashPDFView(options){
             });
             this.pages_area.append(image);
             this.images.push(image);
-            (function(self, image, page_data){
-                image.click(function(){
+            (function (self, image, page_data) {
+                image.on("click", function () {
                     self.on_pdf_page_clicked(page_data);
                 });
             })(this, image, page_data);
-        };
-        (function(self){
-            setTimeout(function(){
+        }
+        (function (self) {
+            setTimeout(function () {
                 if (!self.images_initialized) {
                     self.update_sizes();
-                };
+                }
             }, 300);
         })(this);
     };
     this.setup_styles();
     Dash.Request(this, this.on_data, "Api", {"f": "get_pdf", "content_key": this.content_key});
-};
+}
 
-function DashAdminView(){
+function DashAdminView () {
     this.layout = new Dash.Gui.Layout.Tabs.Top(this);
     this.html = this.layout.html;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.layout.Append("Users", DashAdminSettings);
         // this.layout.Append("Color", DashAdminColor);
         for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
             var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];
             this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
-        };
+        }
     };
-    this.AddTab = function(){
+    this.AddTab = function () {
         console.log("Adding tab");
     };
     this.setup_styles();
-};
+}
 
-
-function DashAdminSettings(){
-    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": d.Size.Padding});
+function DashAdminSettings () {
+    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
     this.property_box = null;
     this.data = null;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
     };
-    this.SetData = function(response){
-        if (!Dash.ValidateResponse(response)) {return};
+    this.SetData = function (response) {
+        if (!Dash.ValidateResponse(response)) {return;}
         this.html.empty();
         this.data = response;
         // this.add_site_settings_box();
@@ -19048,7 +19024,7 @@ function DashAdminSettings(){
         this.add_users_box();
         // console.log(response);
     };
-    this.add_site_settings_box = function(){
+    this.add_site_settings_box = function () {
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             null,  // Function to return live data
@@ -19062,7 +19038,7 @@ function DashAdminSettings(){
         this.property_box.AddInput("open_account_creation_bool", "Open Account Creation", "", null, true);
         // this.property_box.Load();
     };
-    this.add_user_groups_box = function(){
+    this.add_user_groups_box = function () {
         this.user_groups_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             null,           // Function to return live data
@@ -19076,11 +19052,11 @@ function DashAdminSettings(){
         this.user_groups_box.AddButton("Create Group", this.create_group);
         // this.user_groups_box.Load();
     };
-    this.add_users_box = function(){
+    this.add_users_box = function () {
         // this.users_box = Dash.Gui.GetHTMLBoxContext({});
         this.users_box = Dash.Gui.GetHTMLContext();
         this.html.append(this.users_box);
-        // var users_header = new d.Gui.Header("Users").html;
+        // var users_header = new Dash.Gui.Header("Users").html;
         // this.users_box.append(users_header);
         for (var i in this.data["users"]["order"]) {
             var email = this.data["users"]["order"][i];
@@ -19090,21 +19066,20 @@ function DashAdminSettings(){
             // user_box.html.css({
             //     "margin": Dash.Size.Padding*2,
             // });
-        };
+        }
     };
-    this.create_group = function(){
+    this.create_group = function () {
         console.log("Create Group");
     };
-    this.reload_data = function(){
+    this.reload_data = function () {
         Dash.Request(this, this.SetData, "Admin", {"f": "get"});
     };
     this.setup_styles();
     this.reload_data();
-};
+}
 
-
-function DashAdminColor(){
-    // this.html = Dash.Gui.GetHTMLContext("", {"margin": d.Size.Padding});
+function DashAdminColor () {
+    // this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html = Dash.Gui.GetHTMLContext("");
     this.property_box = null;
     this.data = null;
@@ -19113,7 +19088,7 @@ function DashAdminColor(){
     ////// Objects
     this.header = null;
     this.property_box = null;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
             "left": 0,
@@ -19124,13 +19099,13 @@ function DashAdminColor(){
         });
         this.draw_all();
     };
-    this.draw_all = function(){
+    this.draw_all = function () {
         if (this.display_theme == "light") {
             this.color = Dash.Color.Light;
         }
         else {
             this.color = Dash.Color.Dark;
-        };
+        }
         this.html.empty();
         this.html.css({
             "background": this.color.Background,
@@ -19142,10 +19117,10 @@ function DashAdminColor(){
         //
         //           ▽ - Color of the page/element background
         //           |
-        // d.Color.Dark.Button.Background.Main
-        // d.Color.Dark.Button.Background.Hover
-        // d.Color.Dark.Button.Background.Selected
-        // d.Color.Dark.Button.Background.SelectedHover
+        // Dash.Color.Dark.Button.Background.Main
+        // Dash.Color.Dark.Button.Background.Hover
+        // Dash.Color.Dark.Button.Background.Selected
+        // Dash.Color.Dark.Button.Background.SelectedHover
         // console.log(color_set);
         // console.log(color_set.Background);
         // console.log(color_set.Text);
@@ -19158,24 +19133,24 @@ function DashAdminColor(){
         //     console.log(color_root[color_set_name]);
         // };
     };
-    this.draw_header = function(color_set){
+    this.draw_header = function (color_set) {
         var label = "Header - " + this.display_theme.Title() + " Style (Switch to Dark)";
         if (this.display_theme != "light") {
             label = "Header - " + this.display_theme.Title() + " Style (Switch to Light)";
-        };
+        }
         this.header = new Dash.Gui.Header(label, this.color);
         this.html.append(this.header.html);
         this.header.html.css({
             "cursor": "pointer",
         });
-        (function(self){
-            self.header.html.click(function(){
+        (function (self) {
+            self.header.html.click(function () {
                 if (self.display_theme == "light") {
                     self.display_theme = "dark";
                 }
                 else {
                     self.display_theme = "light";
-                };
+                }
                 Dash.Local.Set("dash_admin_color_style", self.display_theme);
                 console.log("switch to " + self.display_theme);
                 self.draw_all();
@@ -19184,7 +19159,7 @@ function DashAdminColor(){
         var doc = new DashAdminColorDoc(this.color);
         this.html.append(doc.html);
     };
-    this.draw_property_box = function(color_set){
+    this.draw_property_box = function (color_set) {
         console.log("Adding property box");
         var params = {};
         params["color"] = this.color;
@@ -19201,29 +19176,28 @@ function DashAdminColor(){
         this.property_box.AddHeader(header_title, this.color);
         this.property_box.AddInput("email",       "E-mail Address", "", null, false);
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
-        this.new_password_row = new d.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
+        this.new_password_row = new Dash.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
         this.new_password_row.html.css("margin-left", Dash.Size.Padding*2);
         this.property_box.html.append(this.new_password_row.html);
         this.property_box.AddButton("Property Box Button", this.dummy_cb);
     };
-    this.get_data = function(){
+    this.get_data = function () {
         return "";
     };
-    this.set_data = function(){
+    this.set_data = function () {
         return "";
     };
-    this.dummy_cb = function(){
+    this.dummy_cb = function () {
         return "";
     };
 
     this.setup_styles();
-};
+}
 
-
-function DashAdminColorDoc(color){
+function DashAdminColorDoc (color) {
     this.html = Dash.Gui.GetHTMLContext("--");
     this.color = color || Dash.Color.Light;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
             "color": this.color.Text,
@@ -19234,19 +19208,18 @@ function DashAdminColorDoc(color){
         });
     };
     this.setup_styles();
-};
+}
 
-
-function DashAdminTabs(){
+function DashAdminTabs () {
     // This tiny class allows us to add overrides to the tabs in the Dash Admin page
     this.user_tabs = [];
-    this.Add = function(label_text, html_obj){
+    this.Add = function (label_text, html_obj) {
         var tab_details = {};
         tab_details["label_text"] = label_text;
         tab_details["html_obj"] = html_obj;
         this.user_tabs.push(tab_details);
     };
-};
+}
 
 function DashGui() {
     this.Layout = new DashGuiLayout();
@@ -19589,8 +19562,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.setup_styles();
 }
 
-
-function DashGuiButton(Label, Callback, Bind, color, options){
+function DashGuiButton (Label, Callback, Bind, color, options) {
     this.label      = Label;
     this.callback   = Callback;
     this.bind       = Bind;
@@ -19609,13 +19581,13 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     this.label_shown           = null;
     this.last_right_label_text = null;
     this.is_selected           = false;
-    this.initialize_style = function() {
+    this.initialize_style = function () {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
-        };
+        }
         if (this.style == "toolbar") {
             this.color_set  = this.color.Button;
             DashGuiButtonStyleToolbar.call(this);
@@ -19631,27 +19603,27 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         else {
             this.color_set  = this.color.Button;
             DashGuiButtonStyleDefault.call(this);
-        };
+        }
         if (!this.color instanceof DashColorSet) {
             console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
-        };
+        }
         this.setup_styles();
     };
-    this.ChangeLabel = function(label_text, width=null) {
+    this.ChangeLabel = function (label_text, width=null) {
         this.html[0].innerText = "";
         this.label = $("<div>" + label_text + "</div>");
         this.setup_styles();
         if (width) {
-            this.html.css({"width": width})
+            this.html.css({"width": width});
         }
-    }
+    };
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
     };
     this.Enable = function () {
         this.html.css({"opacity": 1.0, "pointer-events": "auto"});
     };
-    this.SetBorderRadius = function(border_radius){
+    this.SetBorderRadius = function (border_radius) {
         this.html.css({
             "border-radius": border_radius,
         });
@@ -19665,20 +19637,20 @@ function DashGuiButton(Label, Callback, Bind, color, options){
             "border-radius": border_radius,
         });
     };
-    this.SetTextAlign = function(text_alignment){
+    this.SetTextAlign = function (text_alignment) {
         this.label.css({
             "text-align": text_alignment,
         });
     };
-    this.SetFontSize = function(font_size){
+    this.SetFontSize = function (font_size) {
         this.label.css({
             "font-size": font_size,
         });
     };
-    this.SetSelected = function(is_selected){
+    this.SetSelected = function (is_selected) {
         if (is_selected == this.is_selected) {
             return;
-        };
+        }
         this.is_selected = is_selected;
         if (this.is_selected) {
             this.html.css({"background": this.color_set.Background.Selected});
@@ -19687,66 +19659,61 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         else {
             this.html.css({"background": this.color_set.Background.Base});
             this.highlight.css({"background": this.color_set.Background.BaseHover});
-        };
+        }
         this.on_hover_out();
     };
-    this.on_hover_in = function(){
+    this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.SelectedHover);
         }
         else {
             this.label.css("color", this.color_set.Text.BaseHover);
-        };
+        }
     };
-    this.on_hover_out = function(){
+    this.on_hover_out = function () {
         this.highlight.stop().animate({"opacity": 0}, 100);
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.Selected);
         }
         else {
             this.label.css("color", this.color_set.Text.Base);
-        };
+        }
     };
-    this.SetButtonVisibility = function(button_visible){
+    this.SetButtonVisibility = function (button_visible) {
         if (button_visible) {
             this.html.css({"opacity": 1, "pointer-events": "auto"});
         }
         else {
             this.html.css({"opacity": 0, "pointer-events": "none"});
-        };
+        }
     };
-    this.SetLoadBar = function(t){
+    this.SetLoadBar = function (t) {
         this.load_bar.css({"width": this.html.width()*t});
     };
-    this.IsLoading = function(){
-        if (this.load_dots) {
-            return true;
-        }
-        else {
-            return false;
-        };
+    this.IsLoading = function () {
+        return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
-    this.SetLoading = function(is_loading){
+    this.SetLoading = function (is_loading) {
         if (is_loading && this.load_dots) {
             return;
-        };
+        }
         if (!is_loading && !this.load_dots) {
             return;
-        };
+        }
         if (!is_loading && this.load_dots) {
             this.load_dots.Stop();
             this.load_dots = null;
             return;
-        };
-        this.load_dots = new d.Gui.LoadDots(this.html.outerHeight()-d.Size.Padding);
+        }
+        this.load_dots = new Dash.Gui.LoadDots(this.html.outerHeight()-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.html.append(this.load_dots.html);
-        var height = this.html.css("height");
-        var padding = this.html.css("padding");
+        // var height = this.html.css("height");
+        // var padding = this.html.css("padding");
         this.load_dots.html.css({
             "position": "absolute",
-            "top": d.Size.Padding*0.5,
+            "top": Dash.Size.Padding*0.5,
             "bottom": 0,
             "right": 0,
         });
@@ -19775,7 +19742,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         (function (self) {
             self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function (response) {
                 self.on_file_upload_response(response);
-            }, function(){
+            }, function () {
                 if (self.on_file_upload_start_callback) {
                     self.on_file_upload_start_callback();
                 }
@@ -19783,75 +19750,75 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         })(this);
         this.html.append(this.file_uploader.html);
     };
-    this.on_file_upload_response = function(response){
+    this.on_file_upload_response = function (response) {
         if (this.file_uploader.html) {
             this.file_uploader.html.remove();
-        };
+        }
         if (this.file_upload_api) {
             this.SetFileUploader(this.file_upload_api, this.file_upload_params);
-        };
+        }
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(response);
-        };
+        }
     };
-    this.Request = function(api, server_data, on_complete_callback, bind_to){
+    this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (this.load_dots) {
             return;
-        };
+        }
         this.on_request_response_callback = null;
         var binder = bind_to || this.bind;
         if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder)
-        };
+            this.on_request_response_callback = on_complete_callback.bind(binder);
+        }
         this.SetLoading(true);
         server_data = server_data || {};
-        server_data["token"] = d.Local.Get("token");
-        (function(self){
-            $.post(api, server_data, function(response) {
+        server_data["token"] = Dash.Local.Get("token");
+        (function (self) {
+            $.post(api, server_data, function (response) {
                 self.SetLoading(false);
                 var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
                     self.on_request_response_callback(response_json);
-                };
+                }
             });
         })(this);
     };
-    this.on_click = function(event){
+    this.on_click = function (event) {
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(event, this);
-        };
+        }
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.mouseenter(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
                 self.on_hover_in();
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_out();
             });
-            self.html.click(function(event){
+            self.html.on("click", function (event) {
                 self.manage_style_on_click();
                 self.on_click(event);
             });
         })(this);
     };
-    this.manage_style_on_click = function(label_text){
+    this.manage_style_on_click = function (label_text) {
         // Overridden in DashGuiButtonStyleTabTop
         this.highlight.stop().animate({"opacity": 0}, 50);
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);
     };
-    this.SetRightLabelText = function(label_text){
+    this.SetRightLabelText = function (label_text) {
         if (!this.right_label) {
             this.setup_right_label();
-        };
+        }
         if (label_text == this.last_right_label_text && this.label_shown) {
             return;
-        };
+        }
         if (this.label_shown) {
             // Was visible
-            (function(self){
-                self.right_label.animate({"opacity": 0}, 200, function(){
+            (function (self) {
+                self.right_label.animate({"opacity": 0}, 200, function () {
                     self.set_right_label_text(label_text);
                     self.right_label.animate({"opacity": 1}, 600);
                 });
@@ -19860,31 +19827,31 @@ function DashGuiButton(Label, Callback, Bind, color, options){
         else {
             // Was never visible
             this.set_right_label_text(label_text);
-            this.right_label.animate({"opacity": 1}, 200, function(){
+            this.right_label.animate({"opacity": 1}, 200, function () {
             });
         }
         this.label_shown = true;
     };
-    this.set_right_label_text = function(label_text) {
+    this.set_right_label_text = function (label_text) {
         // Called when the icon is not visible
         if (!label_text && label_text != 0 || label_text == this.last_right_label_text) {
             return;
-        };
+        }
         this.right_label.text(label_text);
         this.last_right_label_text = label_text;
     };
-    this.setup_right_label = function(){
+    this.setup_right_label = function () {
         this.right_label = $("<div>--</div>");
         this.html.append(this.right_label);
-        var size = Math.round(d.Size.RowHeight-d.Size.Padding);
+        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
         this.right_label.css({
             "position": "absolute",
-            "right": d.Size.Padding*0.5,
-            "top": d.Size.Padding*0.5,
+            "right": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding*0.5,
             "width": size,
             "height": size,
             "line-height": size + "px",
-            "background": d.Color.Dark,
+            "background": Dash.Color.Dark,
             "border-radius": 4,
             "font-size": (size*0.5) + "px",
             "text-align": "center",
@@ -19893,7 +19860,7 @@ function DashGuiButton(Label, Callback, Bind, color, options){
     };
     this.initialize_style();
     this.setup_connections();
-};
+}
 
 function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_callback) {
     this.button = GuiButton;
@@ -19901,7 +19868,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.params = params;
     this.filename = "unknown";
     this.type = this.button.file_upload_type;
-    this.callback = callback;;
+    this.callback = callback;
     this.file_id = null;
     this.save_folder = "files";
     this.dropzone_visible = false;
@@ -19917,43 +19884,43 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.html.append(this.upload_backing_bar);
     this.html.append(this.upload_progress_bar);
     this.dropzone_box.hide();
-    this.SetCallback = function(callback, bind_to){
+    this.SetCallback = function (callback, bind_to) {
         if (!bind_to) {
             // console.log("Warning: This SetCallback() callback should be passed a bind_to object");
             this.callback = callback;
         }
         else {
             this.callback = callback.bind(bind_to);
-        };
+        }
     };
-    this.SetDropzone = function(dropzone_visible){
+    this.SetDropzone = function (dropzone_visible) {
         this.dropzone_visible = dropzone_visible;
         this.draw();
     };
-    this.SetDropzoneLabel = function(label){
+    this.SetDropzoneLabel = function (label) {
         this.dropzone_label_text = label;
         this.dropzone_label.text(this.dropzone_label_text);
     };
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             // "background": "rgba(0, 0, 0, 0)",
             // "text-align": "center",
         });
         this.dropzone_box.css({
-        })
+        });
     };
-    this.draw = function(){
+    this.draw = function () {
         this.width = this.button.width;
-        this.height = d.Size.ButtonHeight;
+        this.height = Dash.Size.ButtonHeight;
         var border_width = 2;
         var margin_top = "";
         var dropzone_box_width = this.width - (border_width*2);
-        var dropzone_box_height = d.Size.ButtonHeight;
-        if (this.dropzone_visible){
+        var dropzone_box_height = Dash.Size.ButtonHeight;
+        if (this.dropzone_visible) {
             this.dropzone_box.show();
-            margin_top = d.Size.ButtonHeight;
-        };
+            margin_top = Dash.Size.ButtonHeight;
+        }
         this.upload_bar_css = {};
         this.upload_bar_css["height"] = 5;
         this.upload_bar_css["width"] = this.width;
@@ -19983,48 +19950,48 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.dropzone_label.css({
             "color": "rgba(0, 0, 0, 0.5)",
             // "font-size": Style.FontSize(),
-            "height": d.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight,
             "width": dropzone_box_width,
             "text-align": "center",
-            "top": (dropzone_box_height*0.5)-(d.Size.ButtonHeight*0.5),
+            "top": (dropzone_box_height*0.5)-(Dash.Size.ButtonHeight*0.5),
             "background": "green",
         });
         this.upload_backing_bar.css(this.upload_bar_css);
         this.upload_progress_bar.css(this.upload_bar_css);
         this.upload_progress_bar.css({"background": "rgba(255, 255, 255, 0.8)", "width": 0});
     };
-    this.added_file = function(file, dz){
+    this.added_file = function (file, dz) {
         this.html.hide();
     };
-    this.error_uploading = function(file, error){
+    this.error_uploading = function (file, error) {
         console.log("ERROR uploading");
         console.log(error);
     };
-    this.processing_upload = function(file){
+    this.processing_upload = function (file) {
         this.on_start_callback();
     };
-    this.upload_progress = function(file, progress){
+    this.upload_progress = function (file, progress) {
         var progress_t = parseInt(progress)*0.01;
         this.button.SetLoadBar(progress_t);
         this.upload_backing_bar.css({"background": "rgba(255, 255, 255, 0.2)", "opacity": 1});
         this.upload_progress_bar.css({"width": this.width*progress_t, "opacity": 1});
     };
-    this.upload_success = function(file, result){
+    this.upload_success = function (file, result) {
         this.button.SetLoadBar(0);
         result = $.parseJSON(result);
         this.upload_backing_bar.animate({"opacity": 0});
         this.upload_progress_bar.animate({"opacity": 0});
         this.callback(result);
     };
-    this.draw_dropzone = function(){
-        (function(self){
+    this.draw_dropzone = function () {
+        (function (self) {
             self.dropzone_options = {
-                "init": function() {
-                    this.on("addedfile", function(file){self.added_file(file);});
-                    this.on("error", function(file, error){self.error_uploading(file, error);});
-                    this.on("processing", function(file){self.processing_upload(file);});
-                    this.on("uploadprogress", function(file, progress){self.upload_progress(file, progress);});
-                    this.on("success", function(file, result){self.upload_success(file, result);});
+                "init": function () {
+                    this.on("addedfile", function (file) {self.added_file(file);});
+                    this.on("error", function (file, error) {self.error_uploading(file, error);});
+                    this.on("processing", function (file) {self.processing_upload(file);});
+                    this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
+                    this.on("success", function (file, result) {self.upload_success(file, result);});
                     },
                 "url": self.api,
                 "uploadMultiple": false,
@@ -20040,8 +20007,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.setup_styles();
     this.draw();
     this.draw_dropzone();
-};
-
+}
 
 function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon = null;
@@ -20113,9 +20079,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.setup_icon();
 }
 
-
-function DashGuiButtonStyleDefault(){
-    this.setup_styles = function() {
+function DashGuiButtonStyleDefault () {
+    this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
@@ -20123,10 +20088,10 @@ function DashGuiButtonStyleDefault(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "border-radius": d.Size.BorderRadius,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
+            "height": Dash.Size.ButtonHeight,
+            "border-radius": Dash.Size.BorderRadius,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
             // "width": 30,
@@ -20139,7 +20104,7 @@ function DashGuiButtonStyleDefault(){
             "bottom": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.load_bar.css({
             "position": "absolute",
@@ -20147,8 +20112,8 @@ function DashGuiButtonStyleDefault(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
-            "border-radius": d.Size.BorderRadius,
+            "background": Dash.Color.Primary,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20158,15 +20123,15 @@ function DashGuiButtonStyleDefault(){
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0.5)",
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.label.css({
             // "position": "absolute",
-            // "left": d.Size.Padding,
+            // "left": Dash.Size.Padding,
             // "top": 0,
-            // "right": d.Size.Padding,
+            // "right": Dash.Size.Padding,
             // "bottom": 0,
-            "line-height": (d.Size.ButtonHeight) + "px",
+            "line-height": (Dash.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
@@ -20174,11 +20139,10 @@ function DashGuiButtonStyleDefault(){
             "color": this.color_set.Text.Base,
         });
     };
-};
+}
 
-
-function DashGuiButtonStyleTabSide(){
-    this.setup_styles = function() {
+function DashGuiButtonStyleTabSide () {
+    this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
@@ -20186,9 +20150,9 @@ function DashGuiButtonStyleTabSide(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
+            "height": Dash.Size.ButtonHeight,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
             "margin-bottom": 1,
@@ -20208,7 +20172,7 @@ function DashGuiButtonStyleTabSide(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
+            "background": Dash.Color.Primary,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20221,11 +20185,11 @@ function DashGuiButtonStyleTabSide(){
         });
         this.label.css({
             "position": "absolute",
-            "left": d.Size.Padding,
+            "left": Dash.Size.Padding,
             "top": 0,
-            "right": d.Size.Padding,
+            "right": Dash.Size.Padding,
             "bottom": 0,
-            "line-height": (d.Size.ButtonHeight) + "px",
+            "line-height": (Dash.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
@@ -20233,11 +20197,10 @@ function DashGuiButtonStyleTabSide(){
             "color": this.color_set.Text.Base,
         });
     };
-};
+}
 
-
-function DashGuiButtonStyleTabTop(){
-    this.setup_styles = function() {
+function DashGuiButtonStyleTabTop () {
+    this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
@@ -20245,7 +20208,7 @@ function DashGuiButtonStyleTabTop(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight,
             "padding": 0,
             "margin": 0,
             "padding-left": Dash.Size.Padding*0.5,
@@ -20258,7 +20221,7 @@ function DashGuiButtonStyleTabTop(){
             "right": Dash.Size.Padding,
             "height": Dash.Size.Stroke,
             "background": this.color_set.Background.BaseHover,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.load_bar.css({
             "position": "absolute",
@@ -20266,8 +20229,8 @@ function DashGuiButtonStyleTabTop(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
-            "border-radius": d.Size.BorderRadius,
+            "background": Dash.Color.Primary,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20277,11 +20240,11 @@ function DashGuiButtonStyleTabTop(){
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0)",
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.label.css({
             "bottom": 0,
-            "line-height": (d.Size.ButtonHeight) + "px",
+            "line-height": (Dash.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
@@ -20293,31 +20256,30 @@ function DashGuiButtonStyleTabTop(){
             "font-size": "80%",
         });
     };
-    this.on_hover_in = function(){
+    this.on_hover_in = function () {
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.SelectedHover);
         }
         else {
             this.label.css("color", this.color_set.Text.BaseHover);
-        };
+        }
     };
-    this.on_hover_out = function(){
+    this.on_hover_out = function () {
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.Selected);
         }
         else {
             this.label.css("color", this.color_set.Text.Base);
-        };
+        }
     };
-    this.manage_style_on_click = function(label_text){
+    this.manage_style_on_click = function (label_text) {
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);
     };
-};
+}
 
-
-function DashGuiButtonStyleToolbar(){
-    this.setup_styles = function() {
+function DashGuiButtonStyleToolbar () {
+    this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
@@ -20325,16 +20287,16 @@ function DashGuiButtonStyleToolbar(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "border-radius": d.Size.BorderRadius,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
+            // "height": Dash.Size.ButtonHeight,
+            "border-radius": Dash.Size.BorderRadius,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
             "margin-right": Dash.Size.Padding*0.5,
-            // "width": d.Size.ColumnWidth,
+            // "width": Dash.Size.ColumnWidth,
         });
         this.highlight.css({
             "position": "absolute",
@@ -20344,7 +20306,7 @@ function DashGuiButtonStyleToolbar(){
             "bottom": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.load_bar.css({
             "position": "absolute",
@@ -20352,8 +20314,8 @@ function DashGuiButtonStyleToolbar(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
-            "border-radius": d.Size.BorderRadius,
+            "background": Dash.Color.Primary,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20363,7 +20325,7 @@ function DashGuiButtonStyleToolbar(){
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0.5)",
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.label.css({
             "white-space": "nowrap",
@@ -20376,9 +20338,9 @@ function DashGuiButtonStyleToolbar(){
             "padding-right": Dash.Size.Padding,
         });
     };
-};
+}
 
-function DashGuiSlider(color, label_text, callback, start_range, end_range, current_value){
+function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
     this.color = color;
     this.callback = callback;
     this.start_range = start_range;
@@ -20421,7 +20383,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
     this.value = null;
     this.manual_value = true;
     this.track_width = false;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.css({
             "display": "flex",
             "height": Dash.Size.RowHeight,
@@ -20471,13 +20433,13 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         });
         // this.value_label.text("0.5");
         this.make_connections();
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.SetValue(self.initial_value);
             });
         })(this);
     };
-    this.setup_sizing = function(){
+    this.setup_sizing = function () {
         this.track_width = true;
         this.height = Dash.Size.RowHeight;
         this.label_width = Dash.Size.ColumnWidth*0.75;
@@ -20507,15 +20469,15 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
             this.monitoring_width = true;
             this.last_width = -1;
             this.monitor_width();
-        };
+        }
     };
-    this.monitor_width = function(){
+    this.monitor_width = function () {
     };
-    this.draw = function(interactive_update){
-        if (interactive_update){
+    this.draw = function (interactive_update) {
+        if (interactive_update) {
             this.width = null;
             this.height = null;
-        };
+        }
         this.setup_sizing();
         this.html.css({
             "height": this.height,
@@ -20532,7 +20494,7 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
         });
         this.value_label.css({
-            "background": "pink",
+            // "background": "pink",
             "width": (this.label_width*0.5)-Dash.Size.Padding,
             "height": this.height,
             "line-height": this.height + "px",
@@ -20592,16 +20554,16 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
             "top": (this.container_height*0.5)-(this.mark_height*0.5),
         });
     };
-    this.SetSize = function(width, height){
+    this.SetSize = function (width, height) {
         this.width = width;
         this.height = height;
         // this.slider_width = this.width;
         this.setup_sizing();
     };
-    this.SetLabel = function(label){
+    this.SetLabel = function (label) {
         this.label_text = label;
     };
-    this.SetLock = function(locked){
+    this.SetLock = function (locked) {
         // When true, sliders can't be MANUALLY moved
         this.locked = locked;
         if (this.locked) {
@@ -20609,9 +20571,9 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         }
         else {
             this.slider.stop().animate({"opacity": 1});
-        };
+        }
     };
-    this.SetValue = function(value){
+    this.SetValue = function (value) {
         // The value is manually set, externally
         var valPx = Dash.Math.Lerp(0, this.slider_width, value);
         this.value = value;
@@ -20619,58 +20581,58 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         this.set_thumb(valPx, false);
         this.update_value_label();
     };
-    this.update_value_label = function(){
+    this.update_value_label = function () {
         var display = "" + Dash.Math.Lerp(this.start_range, this.end_range, this.value);
         if (display.length > 4) {
             display = display.slice(0, 4);
-        };
+        }
         this.value_label.text(display);
     };
-    this.GetValue = function(){
+    this.GetValue = function () {
         return Dash.Math.Lerp(this.start_range, this.end_range, this.value);
     };
-    this.SetExtraData = function(data){
+    this.SetExtraData = function (data) {
         this.extra_data = data;
     };
-    this.OnChange = function(on_change_callback){
+    this.OnChange = function (on_change_callback) {
         this.on_change_callback = on_change_callback;
     };
-    this.SetAnimate = function(animate){
+    this.SetAnimate = function (animate) {
         this.animate_initial_value = animate;
     };
-    this.SetValueLabelVisibility = function(visible){
+    this.SetValueLabelVisibility = function (visible) {
         this.value_label_visible = visible;
     };
-    this.on_mouse_up = function(event){
+    this.on_mouse_up = function (event) {
         if (!this.is_active) {return;}
         this.is_active = false;
     };
-    this.get_touch_w_offset = function(event){
+    this.get_touch_w_offset = function (event) {
         return event.pageX - $(this.slider).parent().offset().left - (this.label_width+Dash.Size.Padding);
     };
-    this.on_mouse_down = function(event){
+    this.on_mouse_down = function (event) {
         if (this.is_active) {return;}
         this.touch_start = this.get_touch_w_offset(event);
         this.slider_pos_touch_start = this.set_thumb(this.touch_start);
         this.is_active = true;
     };
-    this.on_mouse_move = function(event){
+    this.on_mouse_move = function (event) {
         if (!this.is_active) {return;}
         var now_pos = this.get_touch_w_offset(event) + (this.height*0.5);
         this.slider_pos = this.set_thumb(this.slider_pos_touch_start + (now_pos-this.touch_start));
         this.update_value_label();
         this.callback(this.GetValue());
     };
-    this.set_thumb = function(xPosPx, animate){
+    this.set_thumb = function (xPosPx, animate) {
         // Safely set the position of the slider. Returns a clamped value if provided value extends slider bounds
         animate = false;
         xPosPx = xPosPx-(this.slider_height*0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
-        };
+        }
         if (xPosPx > this.slider_max_px) {
             xPosPx = this.slider_max_px;
-        };
+        }
         if (animate) {
             this.thumb.stop().animate({"left": xPosPx}, 500);
             this.bar_fill.stop().animate({"width": xPosPx + (this.thumb_size*0.5)}, 500);
@@ -20678,22 +20640,22 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         else {
             this.thumb.css({"left": xPosPx});
             this.bar_fill.css({"width": xPosPx + (this.thumb_size*0.5)});
-        };
+        }
         if (this.setup_complete) {
             var value = Dash.Math.InverseLerp(0, this.slider_max_px, xPosPx);
             if (this.manual_value) {
                 value = this.value;
-            };
+            }
             if (!animate) {
                 this.value = value;
-            };
-            if (this.on_change_callback){
+            }
+            if (this.on_change_callback) {
                 this.on_change_callback(value, this.slider, this.extra_data, animate);
-            };
-        };
+            }
+        }
         return xPosPx;
     };
-    this.set_mark = function(xPosPx, animate){
+    this.set_mark = function (xPosPx, animate) {
         xPosPx = xPosPx-(this.slider_height*0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
@@ -20707,11 +20669,11 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
         }
         else {
             this.mark.css({"left": xPosPx + (this.thumb_size*0.5)});
-        };
+        }
     };
-    this.make_connections = function(){
-        (function(self){
-            self.slider.mousedown(function( event ) {
+    this.make_connections = function () {
+        (function (self) {
+            self.slider.on("mousedown", function ( event ) {
                 if (self.locked) {
                     return;
                 }
@@ -20721,24 +20683,24 @@ function DashGuiSlider(color, label_text, callback, start_range, end_range, curr
                 self.bar_fill.stop();
                 event.preventDefault();
             });
-            $(document).on('mousemove', self.slider, function(event) {
+            $(document).on('mousemove', self.slider, function (event) {
                 self.on_mouse_move(event);
                 event.preventDefault();
             });
-            $(document).on('mouseup', self.slider, function(event) {
+            $(document).on('mouseup', self.slider, function (event) {
                 self.on_mouse_up(event);
             });
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.draw();
             });
         })(this);
     };
     this.setup_styles();
-};
+}
 
 function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
-    this.column_width = window.ColumnWidth || (d.Size.RowHeight*5);
+    this.column_width = window.ColumnWidth || (Dash.Size.RowHeight*5);
     this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
     if (this.placeholder.toString().toLowerCase().includes("password")) {
@@ -20746,28 +20708,28 @@ function DashGuiInput (placeholder_text, color) {
     }
     else {
         this.input = $("<input placeholder='" + this.placeholder + "'>");
-    };
-    this.setup_styles = function(){
+    }
+    this.setup_styles = function () {
         this.html.append(this.input);
         this.html.css({
-            "height": d.Size.RowHeight,
+            "height": Dash.Size.RowHeight,
             "background": this.color.Input.Background.Base,
             "border-radius": 2,
-            "padding-right": d.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,
             "margin": 0,
         });
         this.input.css({
             "background": "rgba(0, 0, 0, 0)",
-            "line-height": d.Size.RowHeight + "px",
+            "line-height": Dash.Size.RowHeight + "px",
             "width": "100%",
             "height": "100%",
-            "padding-left": d.Size.Padding,
+            "padding-left": Dash.Size.Padding,
             "color": this.color.Input.Text.Base,
         });
     };
-    // this.SetHeight = function(height, optional_font_size){
+    // this.SetHeight = function (height, optional_font_size) {
     //     this.row_height = height;
     //     var font_size = optional_font_size || "100%";
     //     this.html.css({
@@ -20779,7 +20741,7 @@ function DashGuiInput (placeholder_text, color) {
     //         "font-size": font_size,
     //     });
     // };
-    this.SetLocked = function(is_locked){
+    this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
             // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
@@ -20789,9 +20751,9 @@ function DashGuiInput (placeholder_text, color) {
         else {
             this.input.css({"pointer-events": "auto"});
             // this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
-        };
+        }
     };
-    this.SetDarkMode = function(dark_mode_on){
+    this.SetDarkMode = function (dark_mode_on) {
         if (dark_mode_on) {
             this.html.css({
                 "box-shadow": "none",
@@ -20800,68 +20762,71 @@ function DashGuiInput (placeholder_text, color) {
             this.input.css({
                 "color": "rgba(255, 255, 255, 0.9)",
             });
-        };
+        }
     };
-    this.SetTransparent = function(is_transparent){
+    this.SetTransparent = function (is_transparent) {
         if (is_transparent) {
             this.html.css({
                 "box-shadow": "none",
                 "background": "rgba(0, 0, 0, 0)",
             });
-        };
+        }
         return this;
     };
-    this.Text = function(){
+    this.Text = function () {
         return this.input.val();
     };
-    this.SetText = function(text){
+    this.SetText = function (text) {
         this.last_val = text;
         return this.input.val(text);
     };
-    this.OnChange = function(callback, bind_to){
+    this.OnChange = function (callback, bind_to) {
         this.on_change_callback = callback.bind(bind_to);
     };
-    this.OnSubmit = function(callback, bind_to){
+    this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
-    this.on_change = function(){
+    this.on_change = function () {
         // Fired if the box is clicked on or the user is typing
         var changed = this.input.val() != this.last_val;
         this.last_val = this.input.val();
         if (changed && this.on_change_callback) {
             this.on_change_callback();
-        };
+        }
     };
-    this.on_submit = function(){
+    this.on_submit = function () {
         // Fired on 'enter' or 'paste'
         if (this.on_submit_callback) {
             this.on_submit_callback();
-        };
+        }
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.input.on('keypress',function(e) {
+    this.setup_connections = function () {
+        (function (self) {
+            self.input.on("click", function (event) {
+                event.preventDefault();
+                return false;
+            });
+            self.input.on("keypress",function (e) {
                 if (e.which == 13) {
                     self.on_submit();
-                };
+                }
             });
-            self.input.change(function(){
+            self.input.on("change", function () {
                 self.on_change();
             });
-            self.input.on("paste", function(){
+            self.input.on("paste", function () {
                 self.on_change();
             });
-            self.input.on("keyup click", function(){
+            self.input.on("keyup click", function () {
                 self.on_change();
             });
         })(this);
     };
     this.setup_styles();
     this.setup_connections();
-};
+}
 
-
-function DashGuiLoadDots(size, color){
+function DashGuiLoadDots (size, color) {
     this.size = size || Dash.Size.RowHeight;
     this.html = $("<div></div>");
     this.layout = "horizontal";
@@ -20873,10 +20838,10 @@ function DashGuiLoadDots(size, color){
     this.cycle_duration = 1000;
     this.is_active = false;
     this.show_t = 0;
-    this.IsActive = function(){
+    this.IsActive = function () {
         return this.is_active;
     };
-    this.Start = function(){
+    this.Start = function () {
         if (this.is_active) {return;}
         this.is_active = true;
         this.activation_t = this.t;
@@ -20884,88 +20849,87 @@ function DashGuiLoadDots(size, color){
         this.stop_requested = false;
         for (var x in this.dots) {
             this.dots[x].Start();
-        };
+        }
     };
-    this.Stop = function(callback, binder){
+    this.Stop = function (callback, binder) {
         if (!this.is_active) {return;}
         if (callback && binder) {
             callback = callback.bind(binder);
-        };
+        }
         if (callback) {
             this.on_stopped_callback = callback;
-        };
+        }
         this.is_active = false;
         this.stop_requested = true;
         for (var x in this.dots) {
             this.dots[x].Stop();
-        };
+        }
         if (this.on_stopped_callback) {
             // This is wrong. Obviously. But I don't have time
             // to hook up firing the callback correctly rn
-            (function(self){
-                setTimeout(function(){
+            (function (self) {
+                setTimeout(function () {
                     self.on_stopped_callback();
                     self.on_stopped_callback = null;
                 }, 500);
             })(this);
-        };
+        }
     };
-    this.SetOrientation = function(horizontal_or_vertical){
+    this.SetOrientation = function (horizontal_or_vertical) {
         this.layout = horizontal_or_vertical;
         for (var x in this.dots) {
             this.dots[x].SetOrientation();
-        };
+        }
     };
-    this.SetColor = function(color){
+    this.SetColor = function (color) {
         for (var x in this.dots) {
             this.dots[x].SetColor(color);
-        };
+        }
     };
-    this.setup_styles = function(){
-        var i = 0;
-        for (i = 0; i < this.num_dots; i++) {
+    this.setup_styles = function () {
+        for (var i = 0; i < this.num_dots; i++) {
             this.dots.push(new LoadDot(this));
-        };
+        }
         this.html.css({
             "width": this.size,
             "height": this.size,
         });
     };
-    this.update = function(t){
+    this.update = function (t) {
         if (this.stop_requested) {
             return;
-        };
-        (function(self){requestAnimationFrame(function(t){self.update(t);});})(this);
+        }
+        (function (self) {requestAnimationFrame(function (t) {self.update(t);});})(this);
         if (this.t >= 1) {
             this.iteration += 1;
-        };
+        }
         this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
-        if (this.t > 1) {this.t = 1};
+        if (this.t > 1) {this.t = 1;}
         if (!this.is_active) {
             return;
-        };
+        }
         this.show_t += 0.05;
         if (this.show_t > 1) {
             this.show_t = 1;
-        };
+        }
         for (var x in this.dots) {
             this.dots[x].Update(this.t);
-        };
+        }
     };
     this.setup_styles();
     this.update(0);
-};
-function LoadDot(dots){
+}
+function LoadDot(dots) {
     this.dots = dots;
     this.color = this.dots.color;
     this.html = $("<div></div>");
     this.index = this.dots.dots.length;
     this.hold_t = 0.25;
-    this.Update = function(cycle_t){
-        var t = 0;
+    this.Update = function (cycle_t) {
+        var t;
         var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
         cycle_t += cycle_offset;
-        if (cycle_t > 1) {cycle_t = cycle_t-1;};
+        if (cycle_t > 1) {cycle_t = cycle_t-1;}
         if (cycle_t < this.hold_t) {
             t = Dash.Math.InverseLerp(0, this.hold_t, cycle_t);
         }
@@ -20980,7 +20944,7 @@ function LoadDot(dots){
             "opacity": t
         });
     };
-    this.Start = function(cycle_t){
+    this.Start = function (cycle_t) {
         this.html.stop().css({
             "left": (this.dots.size*0.5)-(this.size*0.5),
             "top": (this.dots.size*0.5)-(this.size*0.5),
@@ -20990,14 +20954,14 @@ function LoadDot(dots){
             "top": this.top,
         }, 300);
     };
-    this.Stop = function(cycle_t){
+    this.Stop = function (cycle_t) {
         this.html.stop().animate({
             "left": (this.dots.size*0.5)-(this.size*0.5),
             "top": (this.dots.size*0.5)-(this.size*0.5),
             "opacity": 0,
         }, 300);
     };
-    this.SetOrientation = function(){
+    this.SetOrientation = function () {
         this.size = this.dots.size/(this.dots.num_dots+1.5);
         this.padding = (this.dots.size-((this.size*this.dots.num_dots)))/((this.dots.num_dots-1)+1);
         this.left = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
@@ -21005,14 +20969,14 @@ function LoadDot(dots){
         if (this.dots.layout != "horizontal") {
             this.left = (this.dots.size*0.5)-(this.size*0.5);
             this.top = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
-        };
+        }
     };
-    this.SetColor = function(color){
+    this.SetColor = function (color) {
         this.html.css({
             "background": color,
         });
     };
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.SetOrientation();
         this.html.css({
             "position": "absolute",
@@ -21027,10 +20991,9 @@ function LoadDot(dots){
         this.dots.html.append(this.html);
     };
     this.setup_styles();
-};
+}
 
-
-function DashGuiInputRow(label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key=""){
+function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="", autosave=false) {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
@@ -21038,6 +21001,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
     this.data_key = data_key;
+    this.autosave = autosave;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -21045,15 +21009,17 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     this.save_button_visible = false;
     this.autosave_timeout = null;
     this.color = color || Dash.Color.Light;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.append(this.invalid_input_highlight);
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
         this.label = $("<div>" + this.label_text + ": </div>");
-        this.input = new d.Gui.Input(this.placeholder_text, this.color);
+        this.input = new Dash.Gui.Input(this.placeholder_text, this.color);
         this.input.SetTransparent(true);
         this.set_initial_text();
-        this.input.input.css({"padding-left": d.Size.Padding*0.5});
+        this.input.input.css({
+            "padding-left": Dash.Size.Padding * 0.5
+        });
         this.input.OnChange(this.input_changed, this);
         this.html.append(this.label);
         this.html.append(this.input.html);
@@ -21065,7 +21031,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         else {
             this.input.SetLocked(true);
             highlight_color = this.color.AccentBad;
-        };
+        }
         this.html.css({
             "cursor": "pointer",
             "height": Dash.Size.RowHeight,
@@ -21074,7 +21040,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
         this.invalid_input_highlight.css({
             "position": "absolute",
-            "left": -d.Size.Padding,
+            "left": -Dash.Size.Padding,
             "top": 0,
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
@@ -21083,7 +21049,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
         this.highlight.css({
             "position": "absolute",
-            "left": -d.Size.Padding,
+            "left": -Dash.Size.Padding,
             "right": 0,
             "top": 0,
             "bottom": 0,
@@ -21092,11 +21058,11 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
         this.flash_save.css({
             "position": "absolute",
-            "left": -d.Size.Padding,
+            "left": -Dash.Size.Padding,
             "right": 0,
             "top": 0,
             "bottom": 0,
-            "background": d.Color.SaveHighlight,
+            "background": Dash.Color.SaveHighlight,
             "opacity": 0,
         });
         this.input.html.css({
@@ -21113,7 +21079,7 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         });
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
-        };
+        }
     };
     this.set_initial_text = function () {
         this.input.SetText(this.parse_value(this.initial_value));
@@ -21144,8 +21110,8 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         }
         return value;
     };
-    this.create_save_button = function(){
-        this.button = new d.Gui.Button(this.button_text, this.on_submit, this);
+    this.create_save_button = function () {
+        this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
         this.html.append(this.button.html);
         this.button.html.css({
             "position": "absolute",
@@ -21153,11 +21119,10 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             "top": 0,
             "margin": 0,
             "height": Dash.Size.RowHeight,
-            "width": d.Size.ColumnWidth,
+            "width": Dash.Size.ColumnWidth,
             "background": "none",
             "opacity": 0,
         });
-        // console.log(Dash.Color.Text);
         this.button.highlight.css({
             "background": "none",
         });
@@ -21165,35 +21130,26 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
-            // "color": Dash.Color.Dark.Text,
-            "color": "rgba(0, 0, 0, 0.9)",
-            // "position": "absolute",
-            // "right": 0,
-            // "top": 0,
-            // "margin": 0,
-            // "width": 200,
-            // "width": d.Size.ColumnWidth,
-            // "opacity": 0,
+            "color": "rgba(0, 0, 0, 0.9)"
         });
     };
-    this.SetInputValidity = function(input_is_valid){
-        console.log("input_is_valid: " + input_is_valid);
-        console.log(this.color);
+    this.SetInputValidity = function (input_is_valid) {
+        console.log("input_is_valid: " + input_is_valid, "\n", this.color);
         if (input_is_valid) {
             this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         }
         else {
             this.invalid_input_highlight.stop().animate({"opacity": 1}, 100);
-        };
+        }
     };
-    this.FlashSave = function(){
-        (function(self){
-            self.flash_save.stop().animate({"opacity": 1}, 100, function(){
+    this.FlashSave = function () {
+        (function (self) {
+            self.flash_save.stop().animate({"opacity": 1}, 100, function () {
                 self.flash_save.stop().animate({"opacity": 0}, 1000);
             });
         })(this);
     };
-    this.SetupCombo = function(combo_options){
+    this.SetupCombo = function (combo_options) {
         this.initial_value = this.initial_value || combo_options[0]["id"];
         this.input.html.css({
             "opacity": 0,
@@ -21213,12 +21169,14 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
         this.combo = new Combo(this, "", options, this.on_combo_changed, this);
         this.html.append(this.combo.html);
     };
-    this.on_combo_changed = function(option){
-        if (!this.combo) {return};
+    this.on_combo_changed = function (option) {
+        if (!this.combo) {
+            return;
+        }
         this.input.SetText(option["id"]);
         if (this.on_click) {
             this.on_submit();
-        };
+        }
     };
     this.on_label_clicked = function () {
         var active_text = this.input.Text();
@@ -21229,156 +21187,167 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
             window.open("mailto:" + active_text, "_blank");
         }
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.label.click(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.label.on("click", function () {
                 self.on_label_clicked();
             });
-            self.html.mouseenter(function(){
+            self.html.on("mouseenter", function () {
                 self.highlight.stop().animate({"opacity": 0.5}, 50);
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 250);
             });
         })(this);
     };
-    this.SetAutosave = function(use_autosave){
+    this.SetAutosave = function (use_autosave) {
         this.autosave = use_autosave;
         return this;
     };
-    this.input_changed = function(ignore_save_button_show){
-        if (!this.button) {return;}
-        if (ignore_save_button_show) {return;}
+    this.input_changed = function (ignore_save_button_show) {
+        if (!this.button || ignore_save_button_show) {
+            return;
+        }
         if (this.autosave) {
             if (this.autosave_timeout) {
                 clearTimeout(this.autosave_timeout);
                 this.autosave_timeout = null;
-            };
-            (function(self){
-                self.autosave_timeout = setTimeout(function(){self.trigger_autosave()}, 500);
+            }
+            (function (self) {
+                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 500);
             })(this);
         }
         else {
             this.show_save_button();
-        };
+        }
     };
-    this.trigger_autosave = function(){
+    this.trigger_autosave = function () {
         if (!this.load_dots) {
             this.setup_load_dots();
-        };
+        }
         if (this.load_dots.IsActive()) {
             this.input_changed();
             return;
-        };
+        }
         this.on_submit();
     };
-    this.setup_load_dots = function(){
-        if (this.load_dots) {return;}
-        this.load_dots = new LoadDots(this.height-d.Size.Padding);
+    this.setup_load_dots = function () {
+        if (this.load_dots) {
+            return;
+        }
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight - Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.8)");
         this.html.append(this.load_dots.html);
         this.load_dots.html.css({
             "position": "absolute",
-            "left": -d.Size.Padding,
-            "top": d.Size.Padding*0.5,
+            "left": -Dash.Size.Padding,
+            "top": Dash.Size.Padding * 0.5,
         });
     };
-    this.CanAutoUpdate = function(){
+    this.CanAutoUpdate = function () {
         var highlight_opacity = parseFloat("" + this.highlight.css("opacity"));
         if (highlight_opacity > 0.2) {
             return false;
-        };
+        }
         return !this.save_button_visible;
     };
-    this.show_save_button = function(){
-        if (this.save_button_visible || !this.button) {return;}
+    this.show_save_button = function () {
+        if (this.save_button_visible || !this.button) {
+            return;
+        }
         this.button.html.stop().animate({"opacity": 1});
         this.save_button_visible = true;
     };
-    this.hide_save_button = function(){
-        if (!this.save_button_visible || !this.button) {return;}
+    this.hide_save_button = function () {
+        if (!this.save_button_visible || !this.button) {
+            return;
+        }
         this.button.html.stop().animate({"opacity": 0});
         this.save_button_visible = false;
     };
-    this.SetText = function(text){
+    this.SetText = function (text) {
         text = this.parse_value(text);
         this.input.SetText(text);
         this.input_changed(true);
         if (this.autosave_timeout) {
             clearTimeout(this.autosave_timeout);
             this.autosave_timeout = null;
-        };
+        }
         if (this.load_dots) {
             this.load_dots.Stop();
-        };
+        }
         this.hide_save_button();
     };
-    this.Text = function(){
+    this.Text = function () {
         return this.input.Text();
     };
-    this.Request = function(api, server_data, callback, callback_binder){
+    this.Request = function (api, server_data, callback, callback_binder) {
         var request = null;
         this.request_callback = callback;
         this.request_callback_binder = callback_binder;
         if (!server_data["token"]) {
-            server_data["token"] = d.Local.Get("token");
-        };
-        (function(self){
-            request = self.button.Request(api, server_data, function(response_json){
+            server_data["token"] = Dash.Local.Get("token");
+        }
+        (function (self) {
+            request = self.button.Request(api, server_data, function (response_json) {
                 self.on_request_response(response_json);
             }, self);
         })(this);
         return request;
     };
-    this.on_request_response = function(response_json){
+    this.on_request_response = function (response_json) {
         this.hide_save_button();
         if (this.load_dots) {
             this.load_dots.Stop();
-        };
+        }
         this.request_callback.bind(this.request_callback_binder)(response_json);
     };
-    this.SetLocked = function(is_locked){
+    this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.DisableSaveButton();
         }
         else {
             this.EnableSaveButton();
-        };
+        }
     };
-    this.EnableSaveButton = function(){
-        if (!this.button) {return;}
+    this.EnableSaveButton = function () {
+        if (!this.button) {
+            return;
+        }
         // this.button.SetButtonVisibility(true);
         this.input.SetLocked(false);
         this.input.SetTransparent(true);
     };
-    this.DisableSaveButton = function(){
-        if (!this.button) {return;}
+    this.DisableSaveButton = function () {
+        if (!this.button) {
+            return;
+        }
         // this.button.SetButtonVisibility(false);
         this.input.SetLocked(true);
     };
-    this.IsLoading = function(){
+    this.IsLoading = function () {
         if (this.button) {
             return this.button.IsLoading();
         }
         else {
             return false;
-        };
+        }
     };
-    this.SetAlignRight = function(){
+    this.SetAlignRight = function () {
         var spacer = $("<div></div>");
         this.html.prepend(spacer);
         spacer.css({
             "flex-grow": 1,
         });
         this.html.css({
-            "padding-right": d.Size.Padding,
+            "padding-right": Dash.Size.Padding,
         });
         this.label.css({
             "width": "auto",
         });
     };
-    this.on_submit = function(){
+    this.on_submit = function () {
         this.hide_save_button();
         this.highlight.stop().animate({"opacity": 0}, 100);
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
@@ -21387,9 +21356,9 @@ function DashGuiInputRow(label_text, initial_value, placeholder_text, button_tex
     };
     this.setup_styles();
     this.setup_connections();
-};
+}
 
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options){
+function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
     this.binder = binder;
     this.get_data_cb = null;
     this.set_data_cb = null;
@@ -21408,17 +21377,17 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
     this.num_headers = 0;
     this.update_inputs = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.setup_styles = function(){
+    this.setup_styles = function () {
     };
-    this.Load = function(){
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+    this.Load = function () {
+        // var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "get_property_set";
         params["obj_id"] = this.dash_obj_id;
         // binder, callback, endpoint, params
         Dash.Request(this, this.on_server_property_set, this.endpoint, params);
     };
-    this.Update = function(){
+    this.Update = function () {
         // Do we have new data?
         for (var data_key in this.update_inputs) {
             var row_input = this.update_inputs[data_key];
@@ -21430,11 +21399,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row_input.SetText(this.property_set_data[data_key]);
             }
             else {
-                row_input.SetText(this.get_data_cb()[data_key])
+                row_input.SetText(this.get_data_cb()[data_key]);
             }
         }
     };
-    this.on_server_property_set = function(property_set_data){
+    this.on_server_property_set = function (property_set_data) {
         if (property_set_data["error"]) {
             alert("There was a problem accessing data");
             return;
@@ -21442,7 +21411,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.property_set_data = property_set_data;
         this.Update();
     };
-    this.add_top_right_label = function(){
+    this.add_top_right_label = function () {
         this.top_right_label = Dash.Gui.GetHTMLAbsContext();
         this.html.append(this.top_right_label);
         this.top_right_label.css({
@@ -21457,7 +21426,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             "z-index": 1,
         });
     };
-    this.SetTopRightLabel = function(label_text){
+    this.SetTopRightLabel = function (label_text) {
         if (!this.top_right_label) {
             this.add_top_right_label();
         }
@@ -21514,11 +21483,11 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         this.html.append(this.top_right_delete_button);
     };
-    this.AddHTML = function(html){
+    this.AddHTML = function (html) {
         this.html.append(html);
     };
-    this.AddHeader = function(label_text){
-        var header_obj = new d.Gui.Header(label_text, this.color);
+    this.AddHeader = function (label_text) {
+        var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
         if (this.num_headers > 0) {
             header.css("margin-top", Dash.Size.Padding*0.5);
@@ -21527,7 +21496,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.num_headers += 1;
         return header_obj;
     };
-    this.AddButtonBar = function(label_text){
+    this.AddButtonBar = function (label_text) {
         var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
         bar.html.css({
             "margin-top": Dash.Size.Padding,
@@ -21535,13 +21504,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.AddHTML(bar.html);
         return bar;
     };
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
         }
-        (function(self, callback){
-            var button = new d.Gui.Button(label_text, function(){
+        (function (self, callback) {
+            var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);
             }, self, self.color);
             self.buttons.push(button);
@@ -21550,18 +21519,18 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, callback);
         return this.buttons[this.buttons.length-1];
     };
-    this.AddCombo = function(label_text, combo_options, property_key, default_value=null, bool=false){
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
         if (this.num_headers > 0) {
             indent_row = true;
         }
-        var row = new d.Gui.InputRow(
+        var row = new Dash.Gui.InputRow(
             label_text,
             "",
             "",
             "",
-            function(row_input){console.log("Do nothing, dummy row");},
+            function (row_input) {console.log("Do nothing, dummy row");},
             self
         );
         row.input.input.css("pointer-events", "none");
@@ -21570,8 +21539,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             row.html.css("margin-left", indent_px);
         }
         var selected_key = default_value || this.get_data_cb()[property_key];
-        (function(self, row, selected_key, property_key, combo_options, bool){
-            var callback = function(selected_option){
+        (function (self, row, selected_key, property_key, combo_options, bool) {
+            var callback = function (selected_option) {
                 self.on_combo_updated(property_key, selected_option["id"]);
             };
             var combo = new Dash.Gui.Combo (
@@ -21598,7 +21567,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, row, selected_key, property_key, combo_options, bool);
         return row;
     };
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
+    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}, autosave=false) {
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
         }
@@ -21612,7 +21581,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
-        (function(self, row_details, callback){
+        row_details["autosave"] = autosave;
+        (function (self, row_details, callback) {
             var _callback;
             if (callback) {
                 _callback = function (row_input) {
@@ -21624,7 +21594,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                     self.on_row_updated(row_input, row_details);
                 };
             }
-            var row = new d.Gui.InputRow(
+            var row = new Dash.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
                 row_details["default_value"] || row_details["label_text"],
@@ -21632,7 +21602,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                row_details["key"]
+                row_details["key"],
+                row_details["autosave"]
             );
             self.update_inputs[row_details["key"]] = row;
             var indent_px = Dash.Size.Padding*2;
@@ -21664,7 +21635,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
     };
-    this.add_combo = function(row, combo_params, bool=false, add_button_margin=false){
+    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
         var combo_options = combo_params["combo_options"];
         var property_key = combo_params["property_key"];
         var default_value = combo_params["default_value"] || null;
@@ -21707,15 +21678,15 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         })(this, row, selected_key, property_key, combo_options, bool, callback);
         return row;
     };
-    this.add_delete_button = function(row, callback, data_key){
+    this.add_delete_button = function (row, callback, data_key) {
         // Note: This function was initially intended for PropertyBox
         // rows - it may not work well with other styles without modification
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
         }
-        (function(self, row, callback, data_key){
-            var button = new d.Gui.IconButton("trash", function(){
+        (function (self, row, callback, data_key) {
+            var button = new Dash.Gui.IconButton("trash", function () {
                 callback(data_key);
             }, self, self.color);
             self.buttons.push(button);
@@ -21735,7 +21706,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         return row;
     };
-    this.on_combo_updated = function(property_key, selected_option){
+    this.on_combo_updated = function (property_key, selected_option) {
         if (this.dash_obj_id) {
             var params = {};
             params["f"] = "set_property";
@@ -21751,7 +21722,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         }
         console.log("Error: Property Box has no callback and no endpoint information!");
     };
-    this.on_row_updated = function(row_input, row_details){
+    this.on_row_updated = function (row_input, row_details) {
         var new_value = row_input.Text();
         if (new_value == row_details["value"]) {
             console.log("The data didn't change");
@@ -21779,13 +21750,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             params["f"] = "update_password";
             params["p"] = new_value;
         }
-        (function(self, row_input, row_details){
-            row_input.Request(url, params, function(response){
+        (function (self, row_input, row_details) {
+            row_input.Request(url, params, function (response) {
                 self.on_server_response(response, row_details, row_input);
             }, self);
         })(this, row_input, row_details);
     };
-    this.on_server_response = function(response, row_details, row_input){
+    this.on_server_response = function (response, row_details, row_input) {
         if (!Dash.ValidateResponse(response)) {
             if (row_input) {
                 row_input.SetInputValidity(false);
@@ -21797,7 +21768,6 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_input.FlashSave();
         if (this.set_data_cb) {
             this.set_data_cb(response);
-            return;
         }
     };
     this.setup_styles();
@@ -21863,17 +21833,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click_skirt = null;
-    this.hide_skirt = function() {
+    this.hide_skirt = function () {
         if (!this.click_skirt) {
             return;
-        };
+        }
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];
             panel.remove();
-        };
+        }
         this.click_skirt = null;
     };
-    this.draw_click_skirt = function(height, width) {
+    this.draw_click_skirt = function (height, width) {
         this.hide_skirt();
         this.click_skirt = [];
         this.click_skirt = [
@@ -21895,19 +21865,18 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "top": set_top[i],
                 "width": set_width[i],
                 "height": set_height[i],
-                // "background": "red",
                 "z-index": 100,
             });
             this.html.append(panel);
-        };
+        }
     };
-    this.initialize_style = function() {
+    this.initialize_style = function () {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "row", "standalone"];
         if (!this.styles.includes(this.style)) {
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
-        };
+        }
         if (this.style == "row") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleRow.call(this);
@@ -21919,47 +21888,49 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         else {
             this.color_set  = this.color.Button;
             DashGuiComboStyleDefault.call(this);
-        };
+        }
         this.setup_styles();
         this.initialize_rows();
     };
-    this.initialize_rows = function(){
+    this.initialize_rows = function () {
         var selected_obj = null;
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
-        };
+        }
         for (var x in this.option_list) {
             if (this.option_list[x]["id"] == this.selected_option_id) {
                 selected_obj = this.option_list[x];
                 break;
-            };
-        };
+            }
+        }
         if (selected_obj) {
             this.on_selection(selected_obj);
         }
         else {
             this.label.text("No Options");
-        };
+        }
     };
-    this.GetActiveID = function(){
+    this.GetActiveID = function () {
         return this.selected_option_id;
     };
-    this.SetModeOff = function(){
+    this.SetModeOff = function () {
         var cmd_options = {"command": "TurnModeOff", "mindtwin_id": "markiplier", "mode": ""};
         this.link.tab_view.send_trigger("json_command", cmd_options);
     };
-    this.Update = function(label_list, selected){
+    this.Update = function (label_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
-        var ignore_callback = (selected["id"] == this.selected_option_id);
+        if (!ignore_callback) {
+            ignore_callback = (selected["id"] == this.selected_option_id);
+        }
         this.option_list = label_list;
         this.selected_option_id = selected;
         this.on_selection(this.selected_option_id, ignore_callback);
         if (this.bool) {
-            this.option_list.reverse()
+            this.option_list.reverse();
         }
     };
-    this.setup_load_dots = function(){
-        this.load_dots = new LoadDots(d.Size.ButtonHeight-Dash.Size.Padding);
+    this.setup_load_dots = function () {
+        this.load_dots = new LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
         this.html.append(this.load_dots.html);
@@ -21967,42 +21938,42 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
-                "right": -(d.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "right": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
             });
         }
         else {
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
-                "left": -(d.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "left": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
             });
-        };
+        }
     };
-    this.Request = function(api, server_data, on_complete_callback, bind_to){
+    this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (!this.load_dots) {
             this.setup_load_dots();
-        };
+        }
         if (this.load_dots.IsActive()) {
             console.log("Request active...");
             return;
-        };
+        }
         this.load_dots.Start();
         this.on_request_response_callback = null;
         var binder = bind_to || this.binder;
         if (binder && on_complete_callback) {
             this.on_request_response_callback = on_complete_callback.bind(binder);
-        };
-        (function(self){
-            $.post(api, server_data, function(response) {
+        }
+        (function (self) {
+            $.post(api, server_data, function (response) {
                 self.load_dots.Stop();
                 var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
                     self.on_request_response_callback(response_json);
-                };
+                }
             });
         })(this);
     };
-    this.setup_label_list = function(){
+    this.setup_label_list = function () {
         this.rows.css({
             "background": this.color_set.Background.Base,
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
@@ -22011,38 +21982,38 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "top": 0,
             "width": "auto", // This is important so it can auto-size
         });
-        // console.log("TODO: Make this.rows grab focus while active");
+        // TODO: Make this.rows grab focus while active
         this.rows.empty();
         this.row_buttons = [];
         for (var i in this.option_list) {
-            var content = this.option_list[i];
+            // var content = this.option_list[i];
             var button = new DashGuiComboRow(this, this.option_list[i]);
             this.rows.append(button.html);
             this.row_buttons.push(button);
-        };
+        }
     };
-    this.on_click = function(){
+    this.on_click = function () {
         this.flash();
         if (this.expanded) {
             this.hide();
         }
         else {
             this.show();
-        };
+        }
     };
-    this.SetLabel = function(content){
+    this.SetLabel = function (content) {
         this.label.text(content["label"]);
     };
-    this.SetID = function(combo_id){
+    this.SetID = function (combo_id) {
         this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
         this.on_selection(this.selected_option_id, true);
         this.flash();
     };
-    this.flash = function(){
+    this.flash = function () {
         this.click.stop().css({"opacity": 1});
         this.click.stop().animate({"opacity": 0}, 2000);
     };
-    this.on_selection = function(selected_option, ignore_callback){
+    this.on_selection = function (selected_option, ignore_callback) {
         // Called when a selection in the combo is made
         var previous_selected_option = this.selected_option_id;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
@@ -22051,7 +22022,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             console.log("this.initialized: " + this.initialized);
             this.label.text("ERROR");
             return;
-        };
+        }
         this.hide();
         this.label.text(label_text);
         this.selected_option_id = selected_option;
@@ -22062,10 +22033,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             else {
                 this.callback(selected_option, previous_selected_option);
             }
-        };
+        }
         this.initialized = true;
     };
-    this.pre_show_size_set = function(){
+    this.pre_show_size_set = function () {
         // Prior to showing, set the width of rows
         this.setup_label_list();
         var width = this.rows.width() + Dash.Size.Padding;
@@ -22086,7 +22057,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.row_buttons[i].SetWidthToFit(label_width); // This is important so it can auto-size
         }
     };
-    this.show = function(){
+    this.show = function () {
         this.pre_show_size_set();
         this.rows.detach();
         this.html.append(this.rows);
@@ -22104,56 +22075,59 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         });
         this.rows.animate({"height": end_height}, 150);
     };
-    this.SetWidth = function(width){
+    this.SetWidth = function (width) {
         this.html.css({"width": width});
         this.rows.css({"width": width});
     };
-    this.hide = function(){
+    this.hide = function () {
         this.expanded = false;
         this.hide_skirt();
         this.rows.stop();
-        this.rows.animate({"height": 0, "opacity": 0}, 250, function(){$(this).css({"z-index": 10})});
+        this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
     };
-    this.setup_connections = function(){
-        (function(self){
-            $(window).click(function(event) {
-                if (!self.expanded) {return;};
-                if (!self.html.is(":visible")) {return;};
+    this.setup_connections = function () {
+        (function (self) {
+            $(window).on("click", function (event) {
+                if (!self.expanded) {
+                    return;
+                }
+                if (!self.html.is(":visible")) {
+                    return;
+                }
                 if (!$(event.target).hasClass("Combo")) {
                     self.hide();
                     event.preventDefault();
                     if (event.originalEvent) {
                         event.originalEvent.preventDefault();
-                    };
+                    }
                     return false;
-                };
+                }
             });
-            self.html.mouseenter(function(){
+            self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 200);
             });
-            self.html.click(function(e){
+            self.html.on("click", function (e) {
                 if ($(e.target).hasClass("ComboLabel")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                };
+                }
                 if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                };
+                }
             });
         })(this);
     };
     this.initialize_style();
     this.setup_connections();
-};
+}
 
-
-function DashGuiComboRow(Combo, option){
+function DashGuiComboRow (Combo, option) {
     this.combo = Combo;
     this.option = option;
     this.color_set = this.combo.color_set;
@@ -22162,7 +22136,7 @@ function DashGuiComboRow(Combo, option){
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.label);
         this.html.css({
@@ -22202,7 +22176,7 @@ function DashGuiComboRow(Combo, option){
             "padding-right": Dash.Size.Padding * 0.5,
         });
     };
-    this.SetWidth = function(width){
+    this.SetWidth = function (width) {
         // Prior to showing, set the width of rows
         this.html.css({
             "width": width,
@@ -22213,15 +22187,15 @@ function DashGuiComboRow(Combo, option){
             "padding-right": Dash.Size.Padding*0.5,
         });
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.label.mouseenter(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.label.on("mouseenter", function () {
                 self.highlight.stop().animate({"opacity": 1}, 50);
             });
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 100);
             });
-            self.label.click(function(e){
+            self.label.on("click", function (e) {
                 self.combo.on_selection(self.option);
                 e.preventDefault();
                 return false;
@@ -22230,7 +22204,7 @@ function DashGuiComboRow(Combo, option){
     };
     this.setup_styles();
     this.setup_connections();
-};
+}
 
 function DashGuiComboStyleDefault () {
     this.dropdown_icon = null;
@@ -22283,12 +22257,12 @@ function DashGuiComboStyleDefault () {
         this.label_container.append(this.dropdown_icon.html);
         this.html.css({
             "display": "flex",
-            "height": d.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight,
         });
         this.inner_html.css({
             "background": this.label_background,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
         });
@@ -22299,12 +22273,12 @@ function DashGuiComboStyleDefault () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
+            "line-height": Dash.Size.ButtonHeight + "px",
             "background": this.color_set.Background.Base,
             "opacity": 0,
         });
         this.label.css({
-            "line-height": d.Size.ButtonHeight + "px",
+            "line-height": Dash.Size.ButtonHeight + "px",
             "text-align": this.text_alignment,
             "font-size": this.font_size,
             "color": this.color_set.Text.Base,
@@ -22325,11 +22299,10 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-
-function DashGuiComboStyleRow(){
+function DashGuiComboStyleRow () {
     this.dropdown_icon = null;
-    this.setup_styles = function() {
-        this.dropdown_icon = new DashIcon(this.color, "arrow_down", d.Size.RowHeight, 0.5);
+    this.setup_styles = function () {
+        this.dropdown_icon = new DashIcon(this.color, "arrow_down", Dash.Size.RowHeight, 0.5);
         this.dropdown_icon.html.addClass("ComboLabel");
         this.dropdown_icon.html.addClass("Combo");
         this.font_size = "100%";
@@ -22350,11 +22323,11 @@ function DashGuiComboStyleRow(){
         });
         this.html.css({
             "margin-right": Dash.Size.Padding*0.5,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
-            // "width": d.Size.ColumnWidth * 2,
+            // "width": Dash.Size.ColumnWidth * 2,
         });
         this.highlight.css({
             "position": "absolute",
@@ -22382,7 +22355,7 @@ function DashGuiComboStyleRow(){
             "display": "flex",
         });
         this.label.css({
-            "line-height": d.Size.RowHeight + "px",
+            "line-height": Dash.Size.RowHeight + "px",
             "text-align": "left",
             "color": this.color.Text,
             "white-space": "nowrap",
@@ -22390,7 +22363,7 @@ function DashGuiComboStyleRow(){
         });
         this.rows.css({
             "position": "absolute",
-            "width": d.Size.ColumnWidth,
+            "width": Dash.Size.ColumnWidth,
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
@@ -22398,9 +22371,9 @@ function DashGuiComboStyleRow(){
             "background": "orange",
         });
     };
-};
+}
 
-function DashGuiLayout(){
+function DashGuiLayout () {
     this.UserProfile = DashGuiLayoutUserProfile;
     this.List = DashGuiList;
     this.List.ColumnConfig = DashGuiListColumnConfig;
@@ -22410,11 +22383,10 @@ function DashGuiLayout(){
     this.Tabs.Side = DashGuiLayoutTabsSide;
     this.Toolbar = DashGuiLayoutToolbar;
     this.ButtonBar = DashGuiButtonBar;
-};
-
+}
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile(user_data, options){
+function DashGuiLayoutUserProfile (user_data, options) {
     this.options = options || {};
     this.user_data = user_data || Dash.User.Data;
     this.as_overview = false;
@@ -22423,7 +22395,7 @@ function DashGuiLayoutUserProfile(user_data, options){
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.img_box = $("<div></div>");
     this.img_box_size = Dash.Size.ColumnWidth;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.add_header();
         this.setup_property_box();
         this.add_logout_button();
@@ -22433,7 +22405,7 @@ function DashGuiLayoutUserProfile(user_data, options){
             "min-height": min_height,
         });
     };
-    this.add_logout_button = function(){
+    this.add_logout_button = function () {
         this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
         this.html.append(this.logout_button.html);
         this.logout_button.html.css({
@@ -22443,15 +22415,15 @@ function DashGuiLayoutUserProfile(user_data, options){
             "left": this.img_box_size + (Dash.Size.Padding * 2),
         });
     };
-    this.add_header = function(){
+    this.add_header = function () {
         var header_title = "User Settings";
         if (this.user_data["first_name"]) {
             header_title = this.user_data["first_name"] + "'s User Settings";
-        };
+        }
         this.header = new Dash.Gui.Header(header_title);
         this.html.append(this.header.html);
     };
-    this.setup_property_box = function(){
+    this.setup_property_box = function () {
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
@@ -22484,15 +22456,15 @@ function DashGuiLayoutUserProfile(user_data, options){
                     null,
                     property_details["editable"]
                 );
-            };
-        };
+            }
+        }
         this.add_user_image_box();
     };
-    this.add_user_image_box = function(){
+    this.add_user_image_box = function () {
         var img_url = "dash/fonts/user_default.jpg";
         if (this.user_data["img"]) {
             img_url = this.user_data["img"]["thumb_url"];
-        };
+        }
         this.html.append(this.img_box);
         this.img_box.css({
             "position": "absolute",
@@ -22508,10 +22480,10 @@ function DashGuiLayoutUserProfile(user_data, options){
         });
         this.add_user_image_upload_button();
     };
-    this.on_user_img_uploaded = function(response){
+    this.on_user_img_uploaded = function (response) {
         if (response.timeStamp) {
             return;
-        };
+        }
         console.log("<< on_user_img_uploaded >>");
         console.log(response);
         if (this.img_box && response["img"]) {
@@ -22519,14 +22491,14 @@ function DashGuiLayoutUserProfile(user_data, options){
             this.img_box.css({
                 "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
             });
-        };
+        }
     };
-    this.add_user_image_upload_button = function(){
+    this.add_user_image_upload_button = function () {
         this.user_image_upload_button = new Dash.Gui.Button("Upload Image", this.on_user_img_uploaded, this, this.color);
         this.img_box.append(this.user_image_upload_button.html);
-        this.params = {}
+        this.params = {};
         this.params["f"] = "upload_image";
-        this.params["token"] = d.Local.Get("token");
+        this.params["token"] = Dash.Local.Get("token");
         this.params["user_data"] = JSON.stringify(this.user_data);
         this.user_image_upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Users",
@@ -22539,20 +22511,20 @@ function DashGuiLayoutUserProfile(user_data, options){
             "left": Dash.Size.Padding,
         });
     };
-    this.get_data = function(){
+    this.get_data = function () {
         return this.user_data;
     };
-    this.set_data = function(){
+    this.set_data = function () {
         console.log("set data");
         // return {};
     };
-    this.log_out = function(button){
-        d.Local.Set("email", "");
-        d.Local.Set("token", "");
-        d.Local.Set("user_json", "");
+    this.log_out = function (button) {
+        Dash.Local.Set("email", "");
+        Dash.Local.Set("token", "");
+        Dash.Local.Set("user_json", "");
         location.reload();
     };
-    this.set_group = function(button, group_name, group_option){
+    this.set_group = function (button, group_name, group_option) {
         console.log("this.set_group");
         // var api = "https://altona.io/Users";
         // var server_data = {};
@@ -22563,29 +22535,29 @@ function DashGuiLayoutUserProfile(user_data, options){
         // server_data["group_option"] = group_option;
         // button.Request(api, server_data, this.on_info_saved, this);
     };
-    this.update_password = function(){
+    this.update_password = function () {
         if (!this.new_password_row.Text()) {
             return;
-        };
+        }
         var params = {};
         params["f"] = "update_password";
         params["p"] = this.new_password_row.Text();
-        (function(self, params){
-            d.Request(self, function(response){
+        (function (self, params) {
+            Dash.Request(self, function (response) {
                 self.on_info_saved(response, self.new_password_row);
             }, "Users", params);
         })(this, params);
     };
-    this.update_first_name = function(){
+    this.update_first_name = function () {
         this.update_personal_information(this.first_name);
     };
-    this.update_last_name = function(){
+    this.update_last_name = function () {
         this.update_personal_information(this.last_name);
     };
-    this.update_hidden_mindtwins = function(){
+    this.update_hidden_mindtwins = function () {
         this.update_personal_information(this.hidden_mindtwins_csv);
     };
-    this.update_personal_information = function(button){
+    this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
         console.log(response);
 
@@ -22601,19 +22573,19 @@ function DashGuiLayoutUserProfile(user_data, options){
         // };
         // button.Request(api, server_data, this.on_info_saved, this);
     };
-    this.on_info_saved = function(response, input_row){
+    this.on_info_saved = function (response, input_row) {
         if (response.error) {
             console.log(response);
             alert(response.error);
             return;
-        };
+        }
         console.log("** Info saved successfully **");
         input_row.FlashSave();
     };
     this.setup_styles();
-};
+}
 
-function DashGuiPaneSlider(binder, is_vertical, default_size){
+function DashGuiPaneSlider (binder, is_vertical, default_size) {
     this.binder = binder;
     this.is_vertical = is_vertical || false;
     this.default_size = default_size || Dash.Size.ColumnWidth;
@@ -22622,31 +22594,31 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
     this.content_b = $("<div></div>");
     this.divider = $("<div></div>");
     this.divider_hover = $("<div></div>");
-    this.recall_id = "dash_pane_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "")
+    this.recall_id = "dash_pane_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
     if (this.is_vertical) {
         this.recall_id += "_v";
     }
     else {
         this.recall_id += "_h";
-    };
+    }
     this.locked_width = this.default_size;
     if (Dash.Local.Get(this.recall_id)) {
         this.locked_width = parseInt(Dash.Local.Get(this.recall_id));
-    };
+    }
     this.divider_size = Dash.Size.Padding*0.1;
     this.divider_hover_size = Dash.Size.Padding*1.5; // A slightly larger size for dragging
     this.min_width = this.default_size || Dash.Size.ColumnWidth*0.5;
     this.divider_color = "rgba(0, 0, 0, 0.2)";
     this.divider_color_active = "rgba(0, 0, 0, 0.6)";
     this.drag_properties = {};
-    this.SetPaneContentA = function(html){
+    this.SetPaneContentA = function (html) {
         this.content_a.empty().append(html);
     };
-    this.SetPaneContentB = function(html){
+    this.SetPaneContentB = function (html) {
         this.content_b.empty().append(html);
     };
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.append(this.content_a);
         this.html.append(this.content_b);
         this.html.append(this.divider);
@@ -22663,10 +22635,10 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
         }
         else {
             this.setup_horizontal();
-        };
+        }
         this.draw();
     };
-    this.setup_vertical = function(){
+    this.setup_vertical = function () {
         this.content_a.css({
             "position": "absolute",
             "left": 0,
@@ -22700,7 +22672,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
             "cursor": "ns-resize",
         });
     };
-    this.setup_horizontal = function(){
+    this.setup_horizontal = function () {
         this.content_a.css({
             "position": "absolute",
             "left": 0,
@@ -22736,30 +22708,30 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
             "cursor": "ew-resize",
         });
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.divider_hover.mouseenter(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.divider_hover.on("mouseenter", function () {
                 self.divider.css({
                     "background": self.divider_color_active,
                 });
             });
-            self.divider_hover.mouseleave(function(){
+            self.divider_hover.on("mouseleave", function () {
                 self.divider.css({
                     "background": self.divider_color,
                 });
             });
-            self.html.mousemove(function(e){
+            self.html.on("mousemove", function (e) {
                 if (self.drag_active) {
                     if (self.is_vertical) {
                         self.drag_properties["last_pos"] = e.screenY;
                     }
                     else {
                         self.drag_properties["last_pos"] = e.screenX;
-                    };
+                    }
                     self.on_drag();
-                };
+                }
             });
-            self.divider_hover.mousedown(function(e){
+            self.divider_hover.on("mousedown", function (e) {
                 if (!self.drag_active) {
                     self.drag_active = true;
                     self.drag_properties["start_locked_width"] = self.locked_width;
@@ -22768,56 +22740,56 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
                     }
                     else {
                         self.drag_properties["start_pos"] = e.screenX;
-                    };
+                    }
                     self.on_draw_start();
-                };
+                }
             });
-            self.html.mouseup(function(e){
-                if (!self.drag_active) {return;};
+            self.html.on("mouseup", function (e) {
+                if (!self.drag_active) {return;}
                 if (self.drag_active) {
                     self.drag_active = false;
                     self.on_draw_end();
-                };
+                }
             });
         })(this);
     };
-    this.on_draw_start = function(){
+    this.on_draw_start = function () {
         // Called when dragging starts
     };
-    this.on_draw_end = function(){
+    this.on_draw_end = function () {
         // Called when dragging ends
         Dash.Local.Set(this.recall_id, this.locked_width);
     };
-    this.on_drag = function(){
+    this.on_drag = function () {
         this.drag_properties["change"] = this.drag_properties["start_pos"]-this.drag_properties["last_pos"];
         var width_now = this.locked_width;
         this.locked_width = this.drag_properties["start_locked_width"] + this.drag_properties["change"];
-        var content_a_size = 0;
+        var content_a_size;
         if (this.is_vertical) {
             content_a_size = this.html.height()-this.locked_width;
         }
         else {
             content_a_size = this.html.width()-this.locked_width;
-        };
+        }
         if (content_a_size < this.min_width) {
             // Clamp content A
             this.locked_width = width_now;
-        };
+        }
         if (this.locked_width < this.min_width) {
             // Clamp content B
             this.locked_width = this.min_width;
-        };
+        }
         this.draw();
     };
-    this.draw = function(){
+    this.draw = function () {
         if (this.is_vertical) {
             this.draw_vertical();
         }
         else {
             this.draw_horizontal();
-        };
+        }
     };
-    this.draw_vertical = function(){
+    this.draw_vertical = function () {
         this.content_a.css({
             "bottom": this.locked_width+(this.divider_size*0.5),
         });
@@ -22833,7 +22805,7 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
             "top": "auto",
         });
     };
-    this.draw_horizontal = function(){
+    this.draw_horizontal = function () {
         this.content_a.css({
             "right": this.locked_width+(this.divider_size*0.5),
         });
@@ -22852,17 +22824,16 @@ function DashGuiPaneSlider(binder, is_vertical, default_size){
     };
     this.setup_styles();
     this.setup_connections();
-};
-
+}
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutToolbar(binder, color){
+function DashGuiLayoutToolbar (binder, color) {
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.html = new Dash.Gui.GetHTMLContext("", {});
     this.stroke_sep = new Dash.Gui.GetHTMLAbsContext("", {});
     this.objects = [];
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.css({
             "background": this.color.Background,
             "height": Dash.Size.ButtonHeight+1, // +1 for the bottom stroke
@@ -22872,14 +22843,14 @@ function DashGuiLayoutToolbar(binder, color){
             // "box-shadow": "0px 0px 5px 1px rgba(0, 0, 0, 0.2)",
         });
         this.stroke_sep.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
             "background": this.color.AccentGood,
             "top": "auto",
             "height": 1,
         });
         this.html.append(this.stroke_sep);
     };
-    this.AddExpander = function(placeholder_label, callback){
+    this.AddExpander = function (placeholder_label, callback) {
         var expander = $("<div></div>");
         expander.css({
             "flex-grow": 2,
@@ -22887,7 +22858,7 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(expander);
         return expander;
     };
-    this.AddSpace = function(width){
+    this.AddSpace = function (width) {
         var spacer = $("<div></div>");
         spacer.css({
             "width": width,
@@ -22897,7 +22868,7 @@ function DashGuiLayoutToolbar(binder, color){
     this.AddIconButton = function (icon_name, callback, width=null, data=null) {
         var obj_index = this.objects.length;
         var button = null;
-        (function(self, obj_index, data){
+        (function (self, obj_index, data) {
             button = new Dash.Gui.IconButton(
                 icon_name,
                 function () {
@@ -22919,7 +22890,7 @@ function DashGuiLayoutToolbar(binder, color){
     this.AddButton = function (label_text, callback, width=null, data=null) {
         var obj_index = this.objects.length;
         var button = null;
-        (function(self, obj_index, data){
+        (function (self, obj_index, data) {
             button = new Dash.Gui.Button(
                 label_text,
                 function () {
@@ -22938,10 +22909,10 @@ function DashGuiLayoutToolbar(binder, color){
         })(this, obj_index, data);
         return button;
     };
-    this.AddHTML = function(html){
+    this.AddHTML = function (html) {
         this.html.append(html);
     };
-    this.AddUploadButton = function(label_text, callback, bind, api, params){
+    this.AddUploadButton = function (label_text, callback, bind, api, params) {
         var button = new Dash.Gui.Button(
             label_text,
             callback,
@@ -23021,10 +22992,10 @@ function DashGuiLayoutToolbar(binder, color){
     };
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
         var obj_index = this.objects.length;
-        var input = new d.Gui.Input(placeholder_label, this.color);
+        var input = new Dash.Gui.Input(placeholder_label, this.color);
         input.html.css({
-            "padding-left": d.Size.Padding*0.5,
-            "margin-top": d.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding*0.5,
+            "margin-top": Dash.Size.Padding*0.5,
         });
         input.input.css({
             "padding-left": 0,
@@ -23039,16 +23010,16 @@ function DashGuiLayoutToolbar(binder, color){
             obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
         }
         this.objects.push(obj);
-        (function(self, input, obj_index, obj) {
-            input.OnChange(function(){
+        (function (self, input, obj_index, obj) {
+            input.OnChange(function () {
                 self.on_input_changed(obj_index);
             }, self);
             if (obj["on_enter_callback"]) {
-                input.OnSubmit(function(){
+                input.OnSubmit(function () {
                     self.on_input_submitted(obj_index);
                 }, self);
-            };
-            input.input.dblclick(function(){
+            }
+            input.input.on("dblclick", function () {
                 input.SetText("");
                 self.on_input_changed(obj_index);
             });
@@ -23056,13 +23027,13 @@ function DashGuiLayoutToolbar(binder, color){
         this.html.append(input.html);
         return input;
     };
-    this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
+    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
         var obj_index = this.objects.length;
         if (callback) {
             callback = callback.bind(this.binder);
         }
-        (function(self, selected_id, combo_options, callback, return_full_option, additional_data){
-            var _callback = function(selected_option, previous_selected_option, additional_data){
+        (function (self, selected_id, combo_options, callback, return_full_option, additional_data) {
+            var _callback = function (selected_option, previous_selected_option, additional_data) {
                 self.on_combo_updated(
                     callback,
                     return_full_option ? selected_option : selected_option["id"],
@@ -23096,8 +23067,7 @@ function DashGuiLayoutToolbar(binder, color){
             self.objects.push(obj);
         })(this, selected_id, combo_options, callback, return_full_option, additional_data);
         var obj = this.objects[obj_index];
-        var combo = obj["html"];
-        return combo;
+        return obj["html"];
     };
     this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
         if (callback) {
@@ -23107,15 +23077,15 @@ function DashGuiLayoutToolbar(binder, color){
             console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
         }
     };
-    this.on_input_changed = function(obj_index){
+    this.on_input_changed = function (obj_index) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
-    this.on_input_submitted = function(obj_index){
+    this.on_input_submitted = function (obj_index) {
         var obj = this.objects[obj_index];
         obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
-    this.on_button_clicked = function(obj_index, data=null){
+    this.on_button_clicked = function (obj_index, data=null) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
@@ -23134,7 +23104,7 @@ class DashGuiLayoutTabs {
     }
     else {
         this.color = Dash.Color.Light;
-    };
+    }
     this.list_backing = $("<div></div>");
     this.list_top = $("<div></div>");
     this.list_bottom = $("<div></div>");
@@ -23143,7 +23113,7 @@ class DashGuiLayoutTabs {
     this.selected_index = -1;
     this.size = Dash.Size.ColumnWidth; // Thickness
     this.current_index = null;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.append(this.list_backing);
         this.html.append(this.list_top);
         this.html.append(this.list_bottom);
@@ -23160,18 +23130,18 @@ class DashGuiLayoutTabs {
         }
         else {
             this.set_styles_for_top_tabs();
-        };
+        }
         this.update_styles();
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.load_last_selection();
             });
         })(this);
     };
-    this.OnTabChanged = function(callback){
+    this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
-    this.set_styles_for_side_tabs = function(){
+    this.set_styles_for_side_tabs = function () {
         this.list_backing.css({
             "position": "absolute",
             "left": 0,
@@ -23199,7 +23169,7 @@ class DashGuiLayoutTabs {
             "background": Dash.Color.Light.Background,
         });
     };
-    this.set_styles_for_top_tabs = function(){
+    this.set_styles_for_top_tabs = function () {
         this.list_backing.css({
             "position": "absolute",
             "left": 0,
@@ -23230,10 +23200,9 @@ class DashGuiLayoutTabs {
             "background": Dash.Color.Light.Background,
         });
     };
-    this.update_styles_for_side_tabs = function(){
-        var sub_border = "none";
-        var box_shadow = "none";
-        box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
+    this.update_styles_for_side_tabs = function () {
+        // var sub_border = "none";
+        var box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
         this.size = Dash.Size.ColumnWidth;
         this.list_backing.css({
             "width": this.size,
@@ -23250,10 +23219,9 @@ class DashGuiLayoutTabs {
             "box-shadow": box_shadow,
         });
     };
-    this.update_styles_for_top_tabs = function(){
-        var sub_border = "none";
-        var box_shadow = "none";
-        box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
+    this.update_styles_for_top_tabs = function () {
+        // var sub_border = "none";
+        // var box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
         this.size = Dash.Size.RowHeight+(Dash.Size.Padding);
         this.list_backing.css({
             "height": this.size,
@@ -23271,7 +23239,7 @@ class DashGuiLayoutTabs {
             "top": this.size,
         });
     };
-    this.update_styles = function(){
+    this.update_styles = function () {
         // Called to style anything that might change between
         // the default behavior and the sub style
         if (this.side_tabs) {
@@ -23279,30 +23247,30 @@ class DashGuiLayoutTabs {
         }
         else {
             this.update_styles_for_top_tabs();
-        };
+        }
     };
-    this.load_last_selection = function(){
+    this.load_last_selection = function () {
         if (this.selected_index != -1) {
             // A selection was already made externally
             return;
-        };
+        }
         if (this.all_content.length == 0) {
             return;
-        };
-        var last_index = parseInt(d.Local.Get("sidebar_index_" + this.recall_id)) || 0;
+        }
+        var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
         if (last_index > this.all_content.length-1) {
             last_index = 0;
-        };
+        }
         this.LoadIndex(last_index);
     };
     this.GetCurrentIndex = function () {
         return this.current_index;
     };
-    this.LoadIndex = function(index){
+    this.LoadIndex = function (index) {
         if (index > this.all_content.length-1) {
             return;
-        };
-        d.Local.Set("sidebar_index_" + this.recall_id, index);
+        }
+        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
         this.current_index = index;
         var button = null;
         for (var i in this.all_content) {
@@ -23313,10 +23281,10 @@ class DashGuiLayoutTabs {
             }
             else {
                 content_data["button"].SetSelected(false);
-            };
-        };
+            }
+        }
         this.content.empty();
-        var content_html = null;
+        var content_html;
         if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
             content_html = this.all_content[index]["content_div_html_class"];
         }
@@ -23325,23 +23293,23 @@ class DashGuiLayoutTabs {
         }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        };
+        }
         if (!content_html) {
             console.log("ERROR: Unknown content!");
             content_html = $("<div>Error Loading Content</div>");
-        };
+        }
         this.content.append(content_html);
         if (this.on_tab_changed_cb) {
             this.on_tab_changed_cb(this.all_content[index]);
-        };
+        }
     };
-    this.AppendHTML = function(html){
+    this.AppendHTML = function (html) {
         html.css({
             "margin-bottom": 1,
         });
         this.list_top.append(html);
     };
-    this.AppendImage = function(img_url){
+    this.AppendImage = function (img_url) {
         // TODO: Move the concept of an 'Image' into dash as a light
         // abstraction for managing aspect ratios
         // TODO: This AppendImage is a hack. We need to revise the
@@ -23357,13 +23325,13 @@ class DashGuiLayoutTabs {
         });
         this.list_top.append(image);
     };
-    this.Append = function(label_text, content_div_html_class, optional_params){
+    this.Append = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.list_top, optional_params);
     };
-    this.Prepend = function(label_text, content_div_html_class, optional_params){
+    this.Prepend = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
-    this._add = function(label_text, content_div_html_class, anchor_div, optional_params){
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_params) {
         optional_params = optional_params || {};
         var content_data = {};
         content_data["label_text"] = label_text;
@@ -23376,11 +23344,11 @@ class DashGuiLayoutTabs {
         }
         else {
             button_options["style"] = "tab_top";
-        };
-        (function(self, index, button_options){
-            content_data["button"] = new d.Gui.Button(
+        }
+        (function (self, index, button_options) {
+            content_data["button"] = new Dash.Gui.Button(
                 label_text,                         // Label
-                function(){self.LoadIndex(index);}, // Callback
+                function () {self.LoadIndex(index);}, // Callback
                 self,                               // Binder
                 self.color,                         // Dash Color Set
                 button_options                      // Options
@@ -23393,35 +23361,35 @@ class DashGuiLayoutTabs {
     };
     this.setup_styles();
     };
-};
+}
 
 class DashGuiLayoutTabsSide extends DashGuiLayoutTabs {
     constructor(Binder) {
         super(Binder, true);
     };
-};
+}
 
 class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
     constructor(Binder) {
         super(Binder, false);
     };
-};
+}
 
-function DashGuiButtonBar(binder, color){
+function DashGuiButtonBar (binder, color) {
     this.html = $("<div></div>");
     this.binder = binder;
     this.color = color || Dash.Color.Light;
     this.buttons = [];
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         this.html.css({
             "display": "flex",
             "height": Dash.Size.ButtonHeight,
         });
     };
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
-        (function(self, callback){
-            var button = new d.Gui.Button(label_text, function(){
+        (function (self, callback) {
+            var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);
             }, self, self.color);
             self.buttons.push(button);
@@ -23434,7 +23402,7 @@ function DashGuiButtonBar(binder, color){
         this.update_spacing();
         return this.buttons[this.buttons.length-1];
     };
-    this.update_spacing = function(){
+    this.update_spacing = function () {
         // TODO: Make this more efficient - we don't need to hit
         // this multiple times on the same frame
         for (var i in this.buttons) {
@@ -23442,60 +23410,72 @@ function DashGuiButtonBar(binder, color){
             var right_padding = Dash.Size.Padding;
             if (i == this.buttons.length-1) {
                 right_padding = 0;
-            };
+            }
             button.html.css({
                 "margin": 0,
                 "flex-grow": 1,
                 "margin-right": right_padding,
             });
-        };
+        }
     };
     this.setup_styles();
-};
+}
 
-function DashGuiList(binder, selected_callback, column_config, color){
-    this.html = $("<div></div>");
+function DashGuiList (binder, selected_callback, column_config, color) {
     this.binder = binder;
-    this.column_config = column_config;
     this.selected_callback = selected_callback.bind(this.binder);
-    this.last_selection_id = null;
+    this.column_config = column_config;
     this.color = color || Dash.Color.Light;
     if (!(column_config instanceof DashGuiListColumnConfig)) {
         console.log("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
         return;
-    };
+    }
     if (!this.binder.GetDataForKey) {
         console.log("Error: Calling class must contain a function named GetDataForKey()");
         return;
-    };
-    this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "")
-    this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
+    }
     this.rows = [];
-    this.setup_styles = function(){
+    this.html = $("<div></div>");
+    this.last_selection_id = null;
+    this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
+    this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
+    this.setup_styles = function () {
         this.html.css({
-            "background": Dash.Color.Light.Background,
-            "background": "orange",
-            // "padding-bottom": Dash.Size.Padding,
-            // "padding-top": Dash.Size.Padding,
+            "background": Dash.Color.Light.Background
         });
     };
-    this.AddRow = function(arbitrary_id){
+    this.AddRow = function (arbitrary_id) {
         var row = new DashGuiListRow(this, arbitrary_id);
         this.rows.push(row);
         this.html.append(row.html);
         return row;
     };
-    this.Clear = function(){
+    this.Update = function () {
+        for (var i in this.rows) {
+            this.rows[i].Update();
+        }
+    };
+    this.Clear = function () {
         this.html.empty();
         this.rows = [];
     };
-    this.SetSelection = function(row_id){
+    this.SetColumnConfig = function (column_config, clear=true) {
+        if (!(column_config instanceof DashGuiListColumnConfig)) {
+            console.log("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+            return;
+        }
+        this.column_config = column_config;
+        if (clear) {
+            this.Clear();
+        }
+    };
+    this.SetSelection = function (row_id) {
         var is_selected = true;
         var cb_id = row_id;
         if (row_id == this.last_selection_id) {
             row_id = null;
             is_selected = false;
-        };
+        }
         for (var i in this.rows) {
             var row = this.rows[i];
             if (row.id == row_id) {
@@ -23503,20 +23483,20 @@ function DashGuiList(binder, selected_callback, column_config, color){
             }
             else {
                 row.SetSelected(false);
-            };
-        };
+            }
+        }
         this.selected_callback(cb_id, is_selected);
         this.last_selection_id = row_id;
     };
     this.setup_styles();
-};
+}
 
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
-    this.columns = [];
+    this.columns = {};
     this.is_shown = true;
     this.id = arbitrary_id;
-    this.is_selected = false;
+    // this.is_selected = false;
     this.is_expanded = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
@@ -23609,12 +23589,35 @@ function DashGuiListRow (list, arbitrary_id) {
         this.html.css("display", "block");
     };
     this.Update = function () {
-        for (var i in this.columns) {
-            this.columns[i].Update();
+        var i;
+        for (var type in this.columns) {
+            if (!this.columns[type] || this.columns[type].length < 1) {
+                continue;
+            }
+            if (type === "default") {
+                for (i in this.columns[type]) {
+                    var column = this.columns[type][i];
+                    column["obj"].Update();
+                }
+            }
+            else if (type === "inputs") {
+                for (i in this.columns[type]) {
+                    var input = this.columns[type][i];
+                    var new_value = this.list.binder.GetDataForKey(this.id, input["column_config_data"]["data_key"]);
+                    if (new_value) {
+                        input["obj"].SetText(new_value);
+                    }
+                }
+            }
+            // else if (type === "combos") {
+            //     for (i in this.columns[type]) {
+            //         var combo = this.columns[type][i];
+            //     }
+            // }
         }
     };
     // Expand an html element below this row
-    this.Expand = function(html){
+    this.Expand = function (html) {
         if (this.is_expanded) {
             console.log("Already expanded");
             this.Collapse();
@@ -23638,9 +23641,9 @@ function DashGuiListRow (list, arbitrary_id) {
             "height": size_now,
             "overflow-y": "hidden",
         });
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": target_size}, 180, function () {
-                self.expand_content.css({"overflow-y": "auto"});
+                self.expand_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
                 self.is_expanded = true;
             });
         })(this);
@@ -23658,7 +23661,7 @@ function DashGuiListRow (list, arbitrary_id) {
         this.expand_content.stop().css({
             "overflow-y": "hidden",
         });
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": 0}, 180, function () {
                 self.expand_content.stop().css({
                     "overflow-y": "hidden",
@@ -23698,19 +23701,77 @@ function DashGuiListRow (list, arbitrary_id) {
         var left_aligned = true;
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
-            if (column_config_data["type"] == "spacer") {
-                this.column_box.append(this.get_spacer());
+            if (column_config_data["type"] === "spacer") {
+                var spacer = this.get_spacer();
+                this.column_box.append(spacer);
+                if (!this.columns["spacers"]) {
+                    this.columns["spacers"] = [];
+                }
+                this.columns["spacers"].push({
+                    "obj": spacer,
+                    "column_config_data": column_config_data
+                });
                 left_aligned = false;
             }
-            else if (column_config_data["type"] == "divider") {
-                this.column_box.append(this.get_divider());
+            else if (column_config_data["type"] === "divider") {
+                var divider = this.get_divider();
+                this.column_box.append(divider);
+                if (!this.columns["dividers"]) {
+                    this.columns["dividers"] = [];
+                }
+                this.columns["dividers"].push({
+                    "obj": divider,
+                    "column_config_data": column_config_data
+                });
                 left_aligned = false;
+            }
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "combo") {
+                var combo = this.get_combo(column_config_data);
+                this.column_box.append(combo.html);
+                if (!this.columns["combos"]) {
+                    this.columns["combos"] = [];
+                }
+                this.columns["combos"].push({
+                    "obj": combo,
+                    "column_config_data": column_config_data
+                });
+            }
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "input") {
+                var input = this.get_input(column_config_data);
+                this.column_box.append(input.html);
+                if (!this.columns["inputs"]) {
+                    this.columns["inputs"] = [];
+                }
+                this.columns["inputs"].push({
+                    "obj": input,
+                    "column_config_data": column_config_data
+                });
+            }
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "icon_button") {
+                var icon_button = this.get_icon_button(column_config_data);
+                this.column_box.append(icon_button.html);
+                if (!this.columns["icon_buttons"]) {
+                    this.columns["icon_buttons"] = [];
+                }
+                this.columns["icon_buttons"].push({
+                    "obj": icon_button,
+                    "column_config_data": column_config_data
+                });
             }
             else {
                 column_config_data["left_aligned"] = left_aligned;
                 var column = new DashGuiListRowColumn(this, column_config_data);
                 this.column_box.append(column.html);
-                this.columns.push(column);
+                if (!this.columns["default"]) {
+                    this.columns["default"] = [];
+                }
+                this.columns["default"].push({
+                    "obj": column,
+                    "column_config_data": column_config_data
+                });
             }
         }
     };
@@ -23732,16 +23793,90 @@ function DashGuiListRow (list, arbitrary_id) {
         });
         return divider_line.html;
     };
+    this.get_combo = function (column_config_data) {
+        var combo = new Dash.Gui.Combo (
+            column_config_data["options"]["label_text"] || "",                                             // Label
+            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
+            column_config_data["options"]["binder"] || null,                                               // Binder
+            column_config_data["options"]["combo_options"] || null,                                        // Option List
+            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], true) || "",           // Selected ID
+            this.color,                                                                                    // Color set
+            {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
+        );
+        combo.html.css({
+            "height": Dash.Size.RowHeight
+        });
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
+        return combo;
+    };
+    this.get_input = function (column_config_data) {
+        var input = new Dash.Gui.Input(
+            column_config_data["options"]["placeholder_label"] || "",
+            column_config_data["options"]["color"] || this.color
+        );
+        input.html.css({
+            "height": Dash.Size.RowHeight * 0.9
+        });
+        if (column_config_data["width"]) {
+            input.html.css({
+                "width": column_config_data["width"]
+            });
+        }
+        input.input.css({
+            "height": Dash.Size.RowHeight * 0.9,
+            "line-height": (Dash.Size.RowHeight * 0.9) + "px",
+            "padding-left": Dash.Size.Padding * 0.35
+        });
+        var starting_value = this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || null;
+        if (starting_value) {
+            input.SetText(starting_value.toString());
+        }
+        if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
+            var row_id = this.id;
+            (function (self, column_config_data, row_id, input) {
+                input.OnSubmit(
+                    function () {
+                        var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+                        callback(row_id, input.Text());
+                    },
+                    column_config_data["options"]["binder"]
+                );
+            })(this, column_config_data, row_id, input);
+        }
+        return input;
+    };
+    this.get_icon_button = function (column_config_data) {
+        var  row_id = this.id;
+        var icon_button = new Dash.Gui.IconButton(
+            column_config_data["options"]["icon_name"],
+            function () {
+                var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+                callback(row_id);
+            },
+            column_config_data["options"]["binder"],
+            column_config_data["options"]["color"] || this.color,
+            column_config_data["options"]["options"] || {}
+        );
+        if (column_config_data["css"]) {
+            for (var key in column_config_data["css"]) {
+                icon_button.html.css(key, column_config_data["css"][key]);
+            }
+        }
+        return icon_button;
+    };
     this.setup_styles();
 }
 
-function DashGuiListRowColumn(list_row, column_config_data){
+function DashGuiListRowColumn (list_row, column_config_data) {
     this.list_row = list_row;
-    this.list = this.list_row.list;
     this.column_config_data = column_config_data;
+    this.list = this.list_row.list;
     this.html = $("<div></div>");
     this.width = this.column_config_data["width"] || -1;
-    this.setup_styles = function(){
+    this.setup_styles = function () {
         var css = {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
@@ -23753,53 +23888,51 @@ function DashGuiListRowColumn(list_row, column_config_data){
         };
         if (this.width > 0) {
             css["width"] = this.width;
-        };
+        }
         if (this.column_config_data["left_aligned"]) {
             css["margin-right"] = Dash.Size.Padding;
         }
         else {
             css["margin-left"] = Dash.Size.Padding;
-        };
+        }
         if (this.column_config_data["css"]) {
             for (var key in this.column_config_data["css"]) {
                 css[key] = this.column_config_data["css"][key];
-            };
-        };
+            }
+        }
         if (this.column_config_data["on_click_callback"]) {
             var binder = this.list.binder;
             this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
-            (function(self){
-                self.html.click(function(e){
+            (function (self) {
+                self.html.on("click", function (e) {
                     self.column_config_data["on_click_callback"](self.list_row.id);
                     e.preventDefault();
                     return false;
                 });
             })(this);
-        };
+        }
         this.html.css(css);
     };
-    this.Update = function(){
+    this.Update = function () {
         var column_value = this.list.binder.GetDataForKey(
             this.list_row.id,
-            this.column_config_data["data_key"],
+            this.column_config_data["data_key"]
         );
         if (column_value && column_value.length > 0) {
             this.html.css({
-                // "color": Dash.Color.Light.Text,
                 "font-family": "sans_serif_normal",
             });
         }
         else {
             this.html.css({
-                // "color": "rgba(0, 0, 0, 0.5)",
                 "font-family": "sans_serif_italic",
             });
-        };
+        }
         column_value = column_value || this.column_config_data["display_name"];
         this.html.text(column_value);
     };
     this.setup_styles();
-};
+}
 
 function DashGuiListColumnConfig () {
     this.columns = [];
@@ -23810,13 +23943,14 @@ function DashGuiListColumnConfig () {
         options = options || {};
         var optional_css = options["css"] || null;
         var column_details = {};
-        column_details["type"] = "input";
+        column_details["type"] = options["type"] || "";
         column_details["display_name"] = display_name;
         column_details["data_key"] = data_key;
         column_details["can_edit"] = can_edit;
         column_details["width"] = width;
         column_details["css"] = optional_css;
         column_details["on_click_callback"] = options["on_click_callback"];
+        column_details["options"] = options["options"] || {};
         this.columns.push(column_details);
     };
     this.AddSpacer = function () {

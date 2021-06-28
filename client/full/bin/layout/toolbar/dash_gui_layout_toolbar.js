@@ -1,6 +1,5 @@
-
 // Profile page layout for the currently logged in user
-function DashGuiLayoutToolbar(binder, color){
+function DashGuiLayoutToolbar (binder, color) {
 
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
@@ -9,7 +8,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.objects = [];
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.css({
             "background": this.color.Background,
@@ -21,7 +20,7 @@ function DashGuiLayoutToolbar(binder, color){
         });
 
         this.stroke_sep.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
             "background": this.color.AccentGood,
             "top": "auto",
             "height": 1,
@@ -31,7 +30,7 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
-    this.AddExpander = function(placeholder_label, callback){
+    this.AddExpander = function (placeholder_label, callback) {
         var expander = $("<div></div>");
 
         expander.css({
@@ -43,7 +42,7 @@ function DashGuiLayoutToolbar(binder, color){
         return expander;
     };
 
-    this.AddSpace = function(width){
+    this.AddSpace = function (width) {
         var spacer = $("<div></div>");
 
         spacer.css({
@@ -58,7 +57,7 @@ function DashGuiLayoutToolbar(binder, color){
         var obj_index = this.objects.length;
         var button = null;
 
-        (function(self, obj_index, data){
+        (function (self, obj_index, data) {
             button = new Dash.Gui.IconButton(
                 icon_name,
                 function () {
@@ -88,7 +87,7 @@ function DashGuiLayoutToolbar(binder, color){
         var obj_index = this.objects.length;
         var button = null;
 
-        (function(self, obj_index, data){
+        (function (self, obj_index, data) {
             button = new Dash.Gui.Button(
                 label_text,
                 function () {
@@ -113,11 +112,11 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
-    this.AddHTML = function(html){
+    this.AddHTML = function (html) {
         this.html.append(html);
     };
 
-    this.AddUploadButton = function(label_text, callback, bind, api, params){
+    this.AddUploadButton = function (label_text, callback, bind, api, params) {
 
         var button = new Dash.Gui.Button(
             label_text,
@@ -216,11 +215,11 @@ function DashGuiLayoutToolbar(binder, color){
 
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
         var obj_index = this.objects.length;
-        var input = new d.Gui.Input(placeholder_label, this.color);
+        var input = new Dash.Gui.Input(placeholder_label, this.color);
 
         input.html.css({
-            "padding-left": d.Size.Padding*0.5,
-            "margin-top": d.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding*0.5,
+            "margin-top": Dash.Size.Padding*0.5,
         });
 
         input.input.css({
@@ -240,21 +239,21 @@ function DashGuiLayoutToolbar(binder, color){
 
         this.objects.push(obj);
 
-        (function(self, input, obj_index, obj) {
+        (function (self, input, obj_index, obj) {
 
-            input.OnChange(function(){
+            input.OnChange(function () {
                 self.on_input_changed(obj_index);
             }, self);
 
             if (obj["on_enter_callback"]) {
 
-                input.OnSubmit(function(){
+                input.OnSubmit(function () {
                     self.on_input_submitted(obj_index);
                 }, self);
 
-            };
+            }
 
-            input.input.dblclick(function(){
+            input.input.on("dblclick", function () {
                 input.SetText("");
                 self.on_input_changed(obj_index);
             });
@@ -266,16 +265,16 @@ function DashGuiLayoutToolbar(binder, color){
         return input;
     };
 
-    this.AddCombo = function(label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
+    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
         var obj_index = this.objects.length;
 
         if (callback) {
             callback = callback.bind(this.binder);
         }
 
-        (function(self, selected_id, combo_options, callback, return_full_option, additional_data){
+        (function (self, selected_id, combo_options, callback, return_full_option, additional_data) {
 
-            var _callback = function(selected_option, previous_selected_option, additional_data){
+            var _callback = function (selected_option, previous_selected_option, additional_data) {
                 self.on_combo_updated(
                     callback,
                     return_full_option ? selected_option : selected_option["id"],
@@ -316,9 +315,8 @@ function DashGuiLayoutToolbar(binder, color){
         })(this, selected_id, combo_options, callback, return_full_option, additional_data);
 
         var obj = this.objects[obj_index];
-        var combo = obj["html"];
 
-        return combo;
+        return obj["html"];
     };
 
     this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
@@ -331,17 +329,17 @@ function DashGuiLayoutToolbar(binder, color){
 
     };
 
-    this.on_input_changed = function(obj_index){
+    this.on_input_changed = function (obj_index) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
 
-    this.on_input_submitted = function(obj_index){
+    this.on_input_submitted = function (obj_index) {
         var obj = this.objects[obj_index];
         obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
 
-    this.on_button_clicked = function(obj_index, data=null){
+    this.on_button_clicked = function (obj_index, data=null) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };

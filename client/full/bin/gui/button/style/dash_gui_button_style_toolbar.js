@@ -1,7 +1,6 @@
+function DashGuiButtonStyleToolbar () {
 
-function DashGuiButtonStyleToolbar(){
-
-    this.setup_styles = function() {
+    this.setup_styles = function () {
 
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
@@ -11,16 +10,16 @@ function DashGuiButtonStyleToolbar(){
         this.html.css({
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
-            "height": d.Size.ButtonHeight,
-            "border-radius": d.Size.BorderRadius,
-            "padding-left": d.Size.Padding,
-            "padding-right": d.Size.Padding,
+            // "height": Dash.Size.ButtonHeight,
+            "border-radius": Dash.Size.BorderRadius,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
             "margin-top": Dash.Size.Padding*0.5,
             "height": Dash.Size.RowHeight,
             "margin-right": Dash.Size.Padding*0.5,
-            // "width": d.Size.ColumnWidth,
+            // "width": Dash.Size.ColumnWidth,
         });
 
         this.highlight.css({
@@ -31,7 +30,7 @@ function DashGuiButtonStyleToolbar(){
             "bottom": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
 
         this.load_bar.css({
@@ -40,8 +39,8 @@ function DashGuiButtonStyleToolbar(){
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": d.Color.Primary,
-            "border-radius": d.Size.BorderRadius,
+            "background": Dash.Color.Primary,
+            "border-radius": Dash.Size.BorderRadius,
         });
 
         this.click_highlight.css({
@@ -52,7 +51,7 @@ function DashGuiButtonStyleToolbar(){
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0.5)",
             "opacity": 0,
-            "border-radius": d.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius,
         });
 
         this.label.css({
@@ -68,4 +67,4 @@ function DashGuiButtonStyleToolbar(){
 
     };
 
-};
+}

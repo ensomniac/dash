@@ -1,4 +1,4 @@
-function DashGuiLayout(){
+function DashGuiLayout () {
 
     this.UserProfile = DashGuiLayoutUserProfile;
 
@@ -15,4 +15,4 @@ function DashGuiLayout(){
 
     this.ButtonBar = DashGuiButtonBar;
 
-};
+}

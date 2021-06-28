@@ -1,4 +1,4 @@
-function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options){
+function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
     this.binder = binder;
 
     this.get_data_cb = null;
@@ -24,12 +24,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
     };
 
-    this.Load = function(){
+    this.Load = function () {
 
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+        // var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {};
         params["f"] = "get_property_set";
         params["obj_id"] = this.dash_obj_id;
@@ -39,7 +39,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.Update = function(){
+    this.Update = function () {
         // Do we have new data?
 
         for (var data_key in this.update_inputs) {
@@ -54,12 +54,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 row_input.SetText(this.property_set_data[data_key]);
             }
             else {
-                row_input.SetText(this.get_data_cb()[data_key])
+                row_input.SetText(this.get_data_cb()[data_key]);
             }
         }
     };
 
-    this.on_server_property_set = function(property_set_data){
+    this.on_server_property_set = function (property_set_data) {
 
         if (property_set_data["error"]) {
             alert("There was a problem accessing data");
@@ -71,7 +71,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.add_top_right_label = function(){
+    this.add_top_right_label = function () {
 
         this.top_right_label = Dash.Gui.GetHTMLAbsContext();
         this.html.append(this.top_right_label);
@@ -90,7 +90,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.SetTopRightLabel = function(label_text){
+    this.SetTopRightLabel = function (label_text) {
 
         if (!this.top_right_label) {
             this.add_top_right_label();
@@ -166,13 +166,13 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         this.html.append(this.top_right_delete_button);
     };
 
-    this.AddHTML = function(html){
+    this.AddHTML = function (html) {
         this.html.append(html);
     };
 
-    this.AddHeader = function(label_text){
+    this.AddHeader = function (label_text) {
 
-        var header_obj = new d.Gui.Header(label_text, this.color);
+        var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
 
         if (this.num_headers > 0) {
@@ -186,7 +186,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.AddButtonBar = function(label_text){
+    this.AddButtonBar = function (label_text) {
         var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
 
         bar.html.css({
@@ -197,16 +197,16 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         return bar;
     };
 
-    this.AddButton = function(label_text, callback){
+    this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
 
         if (!this.buttons) {
             this.buttons = [];
         }
 
-        (function(self, callback){
+        (function (self, callback) {
 
-            var button = new d.Gui.Button(label_text, function(){
+            var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);
             }, self, self.color);
 
@@ -222,7 +222,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.AddCombo = function(label_text, combo_options, property_key, default_value=null, bool=false){
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
 
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
@@ -231,12 +231,12 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             indent_row = true;
         }
 
-        var row = new d.Gui.InputRow(
+        var row = new Dash.Gui.InputRow(
             label_text,
             "",
             "",
             "",
-            function(row_input){console.log("Do nothing, dummy row");},
+            function (row_input) {console.log("Do nothing, dummy row");},
             self
         );
 
@@ -249,9 +249,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         var selected_key = default_value || this.get_data_cb()[property_key];
 
-        (function(self, row, selected_key, property_key, combo_options, bool){
+        (function (self, row, selected_key, property_key, combo_options, bool) {
 
-            var callback = function(selected_option){
+            var callback = function (selected_option) {
                 self.on_combo_updated(property_key, selected_option["id"]);
             };
 
@@ -285,7 +285,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         return row;
     };
 
-    this.AddInput = function(data_key, label_text, default_value, combo_options, can_edit, options={}){
+    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}, autosave=false) {
 
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
@@ -301,8 +301,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
+        row_details["autosave"] = autosave;
 
-        (function(self, row_details, callback){
+        (function (self, row_details, callback) {
             var _callback;
 
             if (callback) {
@@ -317,7 +318,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 };
             }
 
-            var row = new d.Gui.InputRow(
+            var row = new Dash.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
                 row_details["default_value"] || row_details["label_text"],
@@ -325,7 +326,8 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
                 _callback,
                 self,
                 self.color,
-                row_details["key"]
+                row_details["key"],
+                row_details["autosave"]
             );
 
             self.update_inputs[row_details["key"]] = row;
@@ -369,7 +371,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         return this.update_inputs[data_key];
     };
 
-    this.add_combo = function(row, combo_params, bool=false, add_button_margin=false){
+    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
         var combo_options = combo_params["combo_options"];
         var property_key = combo_params["property_key"];
         var default_value = combo_params["default_value"] || null;
@@ -422,7 +424,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
         return row;
     };
 
-    this.add_delete_button = function(row, callback, data_key){
+    this.add_delete_button = function (row, callback, data_key) {
         // Note: This function was initially intended for PropertyBox
         // rows - it may not work well with other styles without modification
 
@@ -432,9 +434,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             this.buttons = [];
         }
 
-        (function(self, row, callback, data_key){
+        (function (self, row, callback, data_key) {
 
-            var button = new d.Gui.IconButton("trash", function(){
+            var button = new Dash.Gui.IconButton("trash", function () {
                 callback(data_key);
             }, self, self.color);
 
@@ -462,7 +464,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.on_combo_updated = function(property_key, selected_option){
+    this.on_combo_updated = function (property_key, selected_option) {
 
         if (this.dash_obj_id) {
             var params = {};
@@ -483,7 +485,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.on_row_updated = function(row_input, row_details){
+    this.on_row_updated = function (row_input, row_details) {
 
         var new_value = row_input.Text();
 
@@ -521,9 +523,9 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
             params["p"] = new_value;
         }
 
-        (function(self, row_input, row_details){
+        (function (self, row_input, row_details) {
 
-            row_input.Request(url, params, function(response){
+            row_input.Request(url, params, function (response) {
                 self.on_server_response(response, row_details, row_input);
             }, self);
 
@@ -531,7 +533,7 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
     };
 
-    this.on_server_response = function(response, row_details, row_input){
+    this.on_server_response = function (response, row_details, row_input) {
         if (!Dash.ValidateResponse(response)) {
 
             if (row_input) {
@@ -548,7 +550,6 @@ function DashGuiPropertyBox(binder, get_data_cb, set_data_cb, endpoint, dash_obj
 
         if (this.set_data_cb) {
             this.set_data_cb(response);
-            return;
         }
 
     };

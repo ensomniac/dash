@@ -62,13 +62,13 @@ function DashGuiComboStyleDefault () {
 
         this.html.css({
             "display": "flex",
-            "height": d.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight,
         });
 
         this.inner_html.css({
             "background": this.label_background,
-            "height": d.Size.ButtonHeight,
-            "line-height": d.Size.ButtonHeight + "px",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
             "border-radius": 3,
         });
@@ -81,13 +81,13 @@ function DashGuiComboStyleDefault () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "line-height": d.Size.ButtonHeight + "px",
+            "line-height": Dash.Size.ButtonHeight + "px",
             "background": this.color_set.Background.Base,
             "opacity": 0,
         });
 
         this.label.css({
-            "line-height": d.Size.ButtonHeight + "px",
+            "line-height": Dash.Size.ButtonHeight + "px",
             "text-align": this.text_alignment,
             "font-size": this.font_size,
             "color": this.color_set.Text.Base,

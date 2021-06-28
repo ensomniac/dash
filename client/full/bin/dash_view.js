@@ -1,5 +1,4 @@
-
-function DashView(){
+function DashView () {
 
     this.User = DashUserView;
     this.Style = DashStyleView;
@@ -8,4 +7,4 @@ function DashView(){
     this.Admin = DashAdminView;
     this.PDF = DashPDFView;
 
-};
+}

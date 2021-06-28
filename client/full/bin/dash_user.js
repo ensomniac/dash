@@ -1,5 +1,4 @@
-
-function DashUser(){
+function DashUser () {
 
     this.__auth_authenticated_cb = null;
     this.__auth_not_authenticated_cb = null;
@@ -7,13 +6,13 @@ function DashUser(){
     this.Data = null;
     this.Init = null;
 
-    this.Authenticate = function(bind, on_user_authenticated, on_user_not_authenticated){
+    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
 
-        var token = d.Local.Get("token");
-        var email = d.Local.Get("email");
-        var user_json = d.Local.Get("user_json");
+        var token = Dash.Local.Get("token");
+        var email = Dash.Local.Get("email");
+        var user_json = Dash.Local.Get("user_json");
 
         if (token && email && user_json) {
 
@@ -23,54 +22,54 @@ function DashUser(){
             params["init"] = true;
             params["gzip"] = true;
 
-            d.Request(this, this.on_auth_response, "Users", params);
+            Dash.Request(this, this.on_auth_response, "Users", params);
 
         }
         else {
             this.__auth_not_authenticated_cb();
-        };
+        }
 
     };
 
-    this.SetUserAuthentication = function(email, server_response){
+    this.SetUserAuthentication = function (email, server_response) {
 
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
-            d.Local.Set("email", email);
-            d.Local.Set("token", server_response["token"]);
-            d.Local.Set("user_json", JSON.stringify(server_response["user"]));
+            Dash.Local.Set("email", email);
+            Dash.Local.Set("token", server_response["token"]);
+            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]));
         }
         else {
             this.Data = null;
             this.Init = null;
-            d.Local.Set("email", "");
-            d.Local.Set("token", "");
-            d.Local.Set("user_json", "");
-        };
+            Dash.Local.Set("email", "");
+            Dash.Local.Set("token", "");
+            Dash.Local.Set("user_json", "");
+        }
 
         this.build_init_team_combo();
 
     };
 
-    this.build_init_team_combo = function(){
+    this.build_init_team_combo = function () {
         this.Init["team_combo"] = [];
 
         if (!this.Init["team"]) {
             return;
-        };
+        }
 
         for (var i in this.Init["team_sort"]) {
             var email = this.Init["team_sort"][i];
-            var data = this.Init["team"][email];
+            // var data = this.Init["team"][email];
             this.Init["team_combo"].push(this.Init["team"][email]);
-        };
+        }
 
     };
 
-    this.on_auth_response = function(response){
+    this.on_auth_response = function (response) {
 
-        response["token"] = response["token"] || d.Local.Get("token");
+        response["token"] = response["token"] || Dash.Local.Get("token");
 
         if (response["valid_login"] && response["user"]["email"]) {
             this.SetUserAuthentication(response["user"]["email"], response);
@@ -84,8 +83,8 @@ function DashUser(){
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
 
-        };
+        }
 
     };
 
-};
+}

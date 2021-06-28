@@ -1,29 +1,28 @@
-
-function DashRequest(){
+function DashRequest () {
 
     this.requests = [];
 
-    this.Request = function(binder, callback, endpoint, params){
-        var url = "https://" + d.Context["domain"] + "/" + endpoint;
+    this.Request = function (binder, callback, endpoint, params) {
+        var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
 
-    function DashRequestThread(dash_requests, url, params, binder, callback){
+    function DashRequestThread (dash_requests, url, params, binder, callback) {
 
         this.dash_requests = dash_requests;
         this.url = url;
         this.params = params || {};
-        this.params["token"] = d.Local.Get("token");
+        this.params["token"] = Dash.Local.Get("token");
 
-        this.id = parseInt(Math.random() * (999999 - 100000) + 100000);
+        this.id = Math.random() * (999999 - 100000) + 100000;
         this.callback = callback;
         this.binder = binder;
 
-        this.post = function(){
+        this.post = function () {
 
-            (function(self){
+            (function (self) {
 
-                $.post(self.url, self.params, function(response_str) {
+                $.post(self.url, self.params, function (response_str) {
                     self.dash_requests.on_response(self, $.parseJSON(response_str));
                 });
 
@@ -33,20 +32,20 @@ function DashRequest(){
 
         this.post();
 
-    };
+    }
 
-    this.on_no_further_requests_pending = function(){
+    this.on_no_further_requests_pending = function () {
         // Called when a request finishes, and there are no more requests queued
         //console.log(">> on_no_further_requests_pending <<");
     };
 
-    this.decompress_response = function(request, response){
+    this.decompress_response = function (request, response) {
         // This is called immediately before returning a
         // response that has been compressed with gzip
 
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
 
-        (function(self, gzip_bytes, request, response){
+        (function (self, gzip_bytes, request, response) {
 
             zlib.unzip(gzip_bytes, function (_, decompressed_data) {
 
@@ -59,7 +58,7 @@ function DashRequest(){
 
                     for (var key in gzipped_data) {
                         response[key] = gzipped_data[key];
-                    };
+                    }
 
                 }
                 else {
@@ -72,9 +71,9 @@ function DashRequest(){
                     }
                     else {
                         response["error_gzip"] = "Failed to decompress gzip data from server!";
-                    };
+                    }
 
-                };
+                }
 
                 self.on_response(request, response);
 
@@ -84,29 +83,29 @@ function DashRequest(){
 
     };
 
-    this.on_response = function(request, response){
+    this.on_response = function (request, response) {
 
         if (response["gzip"]) {
             this.decompress_response(request, response);
             return;
-        };
+        }
 
-        callback = request.callback.bind(request.binder);
+        var callback = request.callback.bind(request.binder);
 
         var requests = [];
         for (var i in this.requests) {
-            if (this.requests[i] == request) {continue};
+            if (this.requests[i] == request) {continue;}
             requests.push(this.requests[i]);
-        };
+        }
 
         this.requests = requests;
 
         if (this.requests.length == 0) {
             this.on_no_further_requests_pending();
-        };
+        }
 
         callback(response);
 
     };
 
-};
+}

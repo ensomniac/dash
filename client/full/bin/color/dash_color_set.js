@@ -90,4 +90,4 @@ class DashColorSet {
         this._input = color_button_set;
     };
 
-};
+}

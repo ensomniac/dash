@@ -1,5 +1,4 @@
-
-function DashGuiComboRow(Combo, option){
+function DashGuiComboRow (Combo, option) {
 
     this.combo = Combo;
     this.option = option;
@@ -11,7 +10,7 @@ function DashGuiComboRow(Combo, option){
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
 
-    this.setup_styles = function(){
+    this.setup_styles = function () {
 
         this.html.append(this.highlight);
         this.html.append(this.label);
@@ -61,7 +60,7 @@ function DashGuiComboRow(Combo, option){
         });
     };
 
-    this.SetWidth = function(width){
+    this.SetWidth = function (width) {
         // Prior to showing, set the width of rows
 
         this.html.css({
@@ -76,19 +75,19 @@ function DashGuiComboRow(Combo, option){
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.label.mouseenter(function(){
+            self.label.on("mouseenter", function () {
                 self.highlight.stop().animate({"opacity": 1}, 50);
             });
 
-            self.html.mouseleave(function(){
+            self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 100);
             });
 
-            self.label.click(function(e){
+            self.label.on("click", function (e) {
                 self.combo.on_selection(self.option);
                 e.preventDefault();
                 return false;
@@ -101,4 +100,4 @@ function DashGuiComboRow(Combo, option){
     this.setup_styles();
     this.setup_connections();
 
-};
+}

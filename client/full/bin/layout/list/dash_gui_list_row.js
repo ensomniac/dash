@@ -1,9 +1,9 @@
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
-    this.columns = [];
+    this.columns = {};
     this.is_shown = true;
     this.id = arbitrary_id;
-    this.is_selected = false;
+    // this.is_selected = false;
     this.is_expanded = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
@@ -112,16 +112,47 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     this.Update = function () {
-        for (var i in this.columns) {
-            this.columns[i].Update();
+        var i;
+
+        for (var type in this.columns) {
+            if (!this.columns[type] || this.columns[type].length < 1) {
+                continue;
+            }
+
+            if (type === "default") {
+                for (i in this.columns[type]) {
+                    var column = this.columns[type][i];
+
+                    column["obj"].Update();
+                }
+            }
+
+            else if (type === "inputs") {
+                for (i in this.columns[type]) {
+                    var input = this.columns[type][i];
+                    var new_value = this.list.binder.GetDataForKey(this.id, input["column_config_data"]["data_key"]);
+
+                    if (new_value) {
+                        input["obj"].SetText(new_value);
+                    }
+                }
+            }
+
+            // else if (type === "combos") {
+            //     for (i in this.columns[type]) {
+            //         var combo = this.columns[type][i];
+            //     }
+            // }
         }
     };
 
     // Expand an html element below this row
-    this.Expand = function(html){
+    this.Expand = function (html) {
         if (this.is_expanded) {
             console.log("Already expanded");
+
             this.Collapse();
+
             return;
         }
 
@@ -151,9 +182,9 @@ function DashGuiListRow (list, arbitrary_id) {
             "overflow-y": "hidden",
         });
 
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": target_size}, 180, function () {
-                self.expand_content.css({"overflow-y": "auto"});
+                self.expand_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
                 self.is_expanded = true;
             });
         })(this);
@@ -177,7 +208,7 @@ function DashGuiListRow (list, arbitrary_id) {
             "overflow-y": "hidden",
         });
 
-        (function(self){
+        (function (self) {
             self.expand_content.animate({"height": 0}, 180, function () {
                 self.expand_content.stop().css({
                     "overflow-y": "hidden",
@@ -225,16 +256,86 @@ function DashGuiListRow (list, arbitrary_id) {
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
 
-            if (column_config_data["type"] == "spacer") {
-                this.column_box.append(this.get_spacer());
+            if (column_config_data["type"] === "spacer") {
+                var spacer = this.get_spacer();
+
+                this.column_box.append(spacer);
+
+                if (!this.columns["spacers"]) {
+                    this.columns["spacers"] = [];
+                }
+
+                this.columns["spacers"].push({
+                    "obj": spacer,
+                    "column_config_data": column_config_data
+                });
 
                 left_aligned = false;
             }
 
-            else if (column_config_data["type"] == "divider") {
-                this.column_box.append(this.get_divider());
+            else if (column_config_data["type"] === "divider") {
+                var divider = this.get_divider();
+
+                this.column_box.append(divider);
+
+                if (!this.columns["dividers"]) {
+                    this.columns["dividers"] = [];
+                }
+
+                this.columns["dividers"].push({
+                    "obj": divider,
+                    "column_config_data": column_config_data
+                });
 
                 left_aligned = false;
+            }
+
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "combo") {
+                var combo = this.get_combo(column_config_data);
+
+                this.column_box.append(combo.html);
+
+                if (!this.columns["combos"]) {
+                    this.columns["combos"] = [];
+                }
+
+                this.columns["combos"].push({
+                    "obj": combo,
+                    "column_config_data": column_config_data
+                });
+            }
+
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "input") {
+                var input = this.get_input(column_config_data);
+
+                this.column_box.append(input.html);
+
+                if (!this.columns["inputs"]) {
+                    this.columns["inputs"] = [];
+                }
+
+                this.columns["inputs"].push({
+                    "obj": input,
+                    "column_config_data": column_config_data
+                });
+            }
+
+            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            else if (column_config_data["type"] === "icon_button") {
+                var icon_button = this.get_icon_button(column_config_data);
+
+                this.column_box.append(icon_button.html);
+
+                if (!this.columns["icon_buttons"]) {
+                    this.columns["icon_buttons"] = [];
+                }
+
+                this.columns["icon_buttons"].push({
+                    "obj": icon_button,
+                    "column_config_data": column_config_data
+                });
             }
 
             else {
@@ -243,7 +344,15 @@ function DashGuiListRow (list, arbitrary_id) {
                 var column = new DashGuiListRowColumn(this, column_config_data);
 
                 this.column_box.append(column.html);
-                this.columns.push(column);
+
+                if (!this.columns["default"]) {
+                    this.columns["default"] = [];
+                }
+
+                this.columns["default"].push({
+                    "obj": column,
+                    "column_config_data": column_config_data
+                });
             }
         }
     };
@@ -271,6 +380,99 @@ function DashGuiListRow (list, arbitrary_id) {
         });
 
         return divider_line.html;
+    };
+
+    this.get_combo = function (column_config_data) {
+        var combo = new Dash.Gui.Combo (
+            column_config_data["options"]["label_text"] || "",                                             // Label
+            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
+            column_config_data["options"]["binder"] || null,                                               // Binder
+            column_config_data["options"]["combo_options"] || null,                                        // Option List
+            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], true) || "",           // Selected ID
+            this.color,                                                                                    // Color set
+            {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
+        );
+
+        combo.html.css({
+            "height": Dash.Size.RowHeight
+        });
+
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
+
+        return combo;
+    };
+
+    this.get_input = function (column_config_data) {
+        var input = new Dash.Gui.Input(
+            column_config_data["options"]["placeholder_label"] || "",
+            column_config_data["options"]["color"] || this.color
+        );
+
+        input.html.css({
+            "height": Dash.Size.RowHeight * 0.9
+        });
+
+        if (column_config_data["width"]) {
+            input.html.css({
+                "width": column_config_data["width"]
+            });
+        }
+
+        input.input.css({
+            "height": Dash.Size.RowHeight * 0.9,
+            "line-height": (Dash.Size.RowHeight * 0.9) + "px",
+            "padding-left": Dash.Size.Padding * 0.35
+        });
+
+        var starting_value = this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || null;
+
+        if (starting_value) {
+            input.SetText(starting_value.toString());
+        }
+
+        if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
+            var row_id = this.id;
+
+            (function (self, column_config_data, row_id, input) {
+                input.OnSubmit(
+                    function () {
+                        var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+
+                        callback(row_id, input.Text());
+                    },
+                    column_config_data["options"]["binder"]
+                );
+            })(this, column_config_data, row_id, input);
+        }
+
+        return input;
+    };
+
+    this.get_icon_button = function (column_config_data) {
+        var  row_id = this.id;
+
+        var icon_button = new Dash.Gui.IconButton(
+            column_config_data["options"]["icon_name"],
+            function () {
+                var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+
+                callback(row_id);
+            },
+            column_config_data["options"]["binder"],
+            column_config_data["options"]["color"] || this.color,
+            column_config_data["options"]["options"] || {}
+        );
+
+        if (column_config_data["css"]) {
+            for (var key in column_config_data["css"]) {
+                icon_button.html.css(key, column_config_data["css"][key]);
+            }
+        }
+
+        return icon_button;
     };
 
     this.setup_styles();
