@@ -352,7 +352,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
 
             if (options["add_combo"]) {
-                row = self.add_combo(
+                row = self.add_combo_to_row(
                     row,
                     options["add_combo"],
                     false,
@@ -361,7 +361,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
 
             if (options["on_delete"]) {
-                row = self.add_delete_button(row, options["on_delete"], row_details["key"]);
+                row = self.add_delete_button_to_row(row, options["on_delete"], row_details["key"]);
             }
 
             self.html.append(row.html);
@@ -371,7 +371,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         return this.update_inputs[data_key];
     };
 
-    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
+    this.add_combo_to_row = function (row, combo_params, bool=false, add_button_margin=false) {
         var combo_options = combo_params["combo_options"];
         var property_key = combo_params["property_key"];
         var default_value = combo_params["default_value"] || null;
@@ -424,35 +424,17 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         return row;
     };
 
-    this.add_delete_button = function (row, callback, data_key) {
+    this.add_delete_button_to_row = function (row, callback, data_key) {
         // Note: This function was initially intended for PropertyBox
         // rows - it may not work well with other styles without modification
-
-        callback = callback.bind(this.binder);
 
         if (!this.buttons) {
             this.buttons = [];
         }
 
-        (function (self, row, callback, data_key) {
-
-            var button = new Dash.Gui.IconButton("trash", function () {
-                callback(data_key);
-            }, self, self.color);
-
-            self.buttons.push(button);
-
-            button.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-                "width": Dash.Size.RowHeight,
-            });
-
-            row.html.append(button.html);
-
-        })(this, row, callback, data_key);
+        (function (self, row, callback, binder, data_key) {
+            self.buttons.push(row.AddIconButton("trash", callback, binder, data_key));
+        })(this, row, callback, this.binder, data_key);
 
 
         if (row.button) {

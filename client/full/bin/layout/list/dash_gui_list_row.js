@@ -402,6 +402,12 @@ function DashGuiListRow (list, arbitrary_id) {
             "line-height": Dash.Size.RowHeight + "px"
         });
 
+        if (column_config_data["css"]) {
+            for (var key in column_config_data["css"]) {
+                combo.html.css(key, column_config_data["css"][key]);
+            }
+        }
+
         return combo;
     };
 

@@ -469,6 +469,32 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         response_callback(this);
     };
 
+    this.AddIconButton = function (icon_name, callback, binder, data_key=null) {
+        callback = callback.bind(binder);
+
+        var button = new Dash.Gui.IconButton(
+            icon_name,
+            function () {
+                callback(data_key);
+            },
+            this,
+            this.color,
+            {"size_mult": 0.9}
+        );
+
+        button.html.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "height": Dash.Size.RowHeight,
+            "width": Dash.Size.RowHeight,
+        });
+
+        this.html.append(button.html);
+
+        return button;
+    };
+
     this.setup_styles();
     this.setup_connections();
 }

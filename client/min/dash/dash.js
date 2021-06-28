@@ -159,6 +159,7 @@ function GuiIcons(icon) {
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
     this.icon_map["unlink"]                = new GuiIconDefinition(this.icon, "Unlink", this.weight.regular, "unlink");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");
+    this.icon_map["unlock_alt"]            = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "lock-open");
     this.icon_map["upload"]                = new GuiIconDefinition(this.icon, "Upload", this.weight.light, "upload");
     this.icon_map["user"]                  = new GuiIconDefinition(this.icon, "Climber", this.weight.regular, "user");
     this.icon_map["video"]                 = new GuiIconDefinition(this.icon, "Video", this.weight.regular, "video", 0.85);
@@ -21389,6 +21390,27 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         var response_callback = this.on_click.bind(this.on_click_bind);
         response_callback(this);
     };
+    this.AddIconButton = function (icon_name, callback, binder, data_key=null) {
+        callback = callback.bind(binder);
+        var button = new Dash.Gui.IconButton(
+            icon_name,
+            function () {
+                callback(data_key);
+            },
+            this,
+            this.color,
+            {"size_mult": 0.9}
+        );
+        button.html.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "height": Dash.Size.RowHeight,
+            "width": Dash.Size.RowHeight,
+        });
+        this.html.append(button.html);
+        return button;
+    };
     this.setup_styles();
     this.setup_connections();
 }
@@ -21656,7 +21678,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row.SetLocked(true);
             }
             if (options["add_combo"]) {
-                row = self.add_combo(
+                row = self.add_combo_to_row(
                     row,
                     options["add_combo"],
                     false,
@@ -21664,13 +21686,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 );
             }
             if (options["on_delete"]) {
-                row = self.add_delete_button(row, options["on_delete"], row_details["key"]);
+                row = self.add_delete_button_to_row(row, options["on_delete"], row_details["key"]);
             }
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
     };
-    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
+    this.add_combo_to_row = function (row, combo_params, bool=false, add_button_margin=false) {
         var combo_options = combo_params["combo_options"];
         var property_key = combo_params["property_key"];
         var default_value = combo_params["default_value"] || null;
@@ -21713,27 +21735,15 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         })(this, row, selected_key, property_key, combo_options, bool, callback);
         return row;
     };
-    this.add_delete_button = function (row, callback, data_key) {
+    this.add_delete_button_to_row = function (row, callback, data_key) {
         // Note: This function was initially intended for PropertyBox
         // rows - it may not work well with other styles without modification
-        callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
         }
-        (function (self, row, callback, data_key) {
-            var button = new Dash.Gui.IconButton("trash", function () {
-                callback(data_key);
-            }, self, self.color);
-            self.buttons.push(button);
-            button.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-                "width": Dash.Size.RowHeight,
-            });
-            row.html.append(button.html);
-        })(this, row, callback, data_key);
+        (function (self, row, callback, binder, data_key) {
+            self.buttons.push(row.AddIconButton("trash", callback, binder, data_key));
+        })(this, row, callback, this.binder, data_key);
 
         if (row.button) {
             // We need to leave space for this button to coexist with this new button
@@ -23845,6 +23855,11 @@ function DashGuiListRow (list, arbitrary_id) {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px"
         });
+        if (column_config_data["css"]) {
+            for (var key in column_config_data["css"]) {
+                combo.html.css(key, column_config_data["css"][key]);
+            }
+        }
         return combo;
     };
     this.get_input = function (column_config_data) {
