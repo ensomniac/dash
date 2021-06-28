@@ -15,6 +15,7 @@ function Dash(){
     this.User = new DashUser();
     this.Gui = new DashGui();
     this.View = new DashView();
+    this.Animation = new DashAnimation();
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
 
