@@ -17652,6 +17652,7 @@ function Dash () {
     this.User = new DashUser();
     this.Gui = new DashGui();
     this.View = new DashView();
+    this.Animation = new DashAnimation();
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
     this.Utils = new DashUtils();
@@ -17937,6 +17938,40 @@ function DashMath () {
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
 }
+
+
+function DashAnimation(){
+    this.Curves = new DashAnimationCurves();
+    this.Eval = function(curve, t){
+        return curve(t);
+    };
+};
+
+
+function DashAnimationCurves(){
+    this.EaseInOut = function(t){
+        return t<.5 ? 2*t*t : -1+(4-2*t)*t;
+    };
+    this.EaseIn = function(t){
+        return t*t;
+    };
+    this.EaseOut = function(t){
+        return t*(2-t);
+    };
+    this.EaseOutBounce = function(t){
+        var b1 = 4 / 11,
+            b2 = 6 / 11,
+            b3 = 8 / 11,
+            b4 = 3 / 4,
+            b5 = 9 / 11,
+            b6 = 10 / 11,
+            b7 = 15 / 16,
+            b8 = 21 / 22,
+            b9 = 63 / 64,
+            b0 = 1 / b1 / b1;
+        return (t = +t) < b1 ? b0 * t * t : t < b3 ? b0 * (t -= b2) * t + b4 : t < b6 ? b0 * (t -= b5) * t + b7 : b0 * (t -= b8) * t + b9;
+    };
+};
 
 function DashColor () {
     // this.DarkBackground = "#e6e6e6";
