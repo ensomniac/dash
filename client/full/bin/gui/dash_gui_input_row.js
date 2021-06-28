@@ -14,6 +14,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.invalid_input_highlight = $("<div></div>");
     this.save_button_visible = false;
     this.autosave_timeout = null;
+    this.icon_button_count = 0;
+
+    // For lock toggle
+    this.locked = false;
+    this.lock_button = null;
 
     this.color = color || Dash.Color.Light;
 
@@ -458,6 +463,14 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
 
     this.on_submit = function () {
+        if (this.lock_button && this.locked) {
+            // Initially thought to add this check in this.input_changed(), but it that would trigger even during any
+            // initialization of values, or programmatic changes of values, where this only triggers if the user saves.
+            alert("This row is locked. Please unlock it by clicking the lock icon at the end of the row, then try again.");
+
+            return;
+        }
+
         this.hide_save_button();
 
         this.highlight.stop().animate({"opacity": 0}, 100);
@@ -465,6 +478,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
 
         var response_callback = this.on_click.bind(this.on_click_bind);
+
+        // Leaving this disabled for now - enable this to lock the row as soon as it receives input
+        // if (this.lock_button && this.Text() && !this.locked) {
+        //     this.toggle_lock();
+        // }
 
         response_callback(this);
     };
@@ -492,7 +510,43 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         this.html.append(button.html);
 
+        this.icon_button_count += 1;
+
+        // We need to leave space for the save button to coexist with this new button
+        if (this.button) {
+            this.button.html.css("margin-right", Dash.Size.Padding * (3 * this.icon_button_count));
+        }
+
         return button;
+    };
+
+    this.AddLockToggle = function (data_key) {
+        var icon_name = "unlock_alt";
+
+        // Only start locked if text exists already
+        if (this.Text()) {
+            this.locked = true;
+
+            icon_name = "lock";
+        }
+
+        this.lock_button = this.AddIconButton(icon_name, this.toggle_lock, this, data_key);
+    };
+
+    this.toggle_lock = function (data_key) {
+        this.locked = !this.locked;
+
+        var icon_name = "lock";
+
+        if (!this.locked) {
+            icon_name = "unlock_alt";
+        }
+
+        this.lock_button.html.remove();
+
+        this.icon_button_count -= 1;
+
+        this.lock_button = this.AddIconButton(icon_name, this.toggle_lock, this, data_key);
     };
 
     this.setup_styles();
