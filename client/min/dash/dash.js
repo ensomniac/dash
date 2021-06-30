@@ -18746,10 +18746,9 @@ function DashUtils () {
             }
         }
         if (!still_active) {
-            console.log("== CLEARING TIMER ==");
             clearInterval(timer["timer_id"]);
             return;
-        }
+        };
         timer["callback"]();
     };
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
@@ -18772,12 +18771,11 @@ function DashUtils () {
         var still_active = true;
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
             still_active = false;
-        }
+        };
         if (!still_active) {
-            console.log("== CLEARING ANIMATION FRAME ==");
             window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
             return;
-        }
+        };
         anim_frame["callback"]();
     };
 }
@@ -20738,12 +20736,13 @@ function DashGuiInput (placeholder_text, color) {
     this.column_width = window.ColumnWidth || (Dash.Size.RowHeight*5);
     this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
+    this.last_submitted_text = "";
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
     }
     else {
         this.input = $("<input placeholder='" + this.placeholder + "'>");
-    }
+    };
     this.setup_styles = function () {
         this.html.append(this.input);
         this.html.css({
@@ -20764,18 +20763,6 @@ function DashGuiInput (placeholder_text, color) {
             "color": this.color.Input.Text.Base,
         });
     };
-    // this.SetHeight = function (height, optional_font_size) {
-    //     this.row_height = height;
-    //     var font_size = optional_font_size || "100%";
-    //     this.html.css({
-    //         "height": this.row_height,
-    //         "font-size": font_size,
-    //     });
-    //     this.input.css({
-    //         "line-height": this.row_height + "px",
-    //         "font-size": font_size,
-    //     });
-    // };
     this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
@@ -20813,6 +20800,7 @@ function DashGuiInput (placeholder_text, color) {
     };
     this.SetText = function (text) {
         this.last_val = text;
+        this.last_submitted_text = text;
         return this.input.val(text);
     };
     this.OnChange = function (callback, bind_to) {
@@ -20827,12 +20815,13 @@ function DashGuiInput (placeholder_text, color) {
         this.last_val = this.input.val();
         if (changed && this.on_change_callback) {
             this.on_change_callback();
-        }
+        };
     };
     this.on_submit = function () {
         // Fired on 'enter' or 'paste'
         if (this.on_submit_callback) {
             this.on_submit_callback();
+            this.last_submitted_text = this.input.val();
         }
     };
     this.setup_connections = function () {
@@ -20855,7 +20844,16 @@ function DashGuiInput (placeholder_text, color) {
             self.input.on("keyup click", function () {
                 self.on_change();
             });
+            self.input.on("blur", function () {
+                var changed = self.input.val() != self.last_submitted_text;
+                if (changed) {
+                    self.on_submit();
+                };
+            });
         })(this);
+    };
+    this.Focus = function () {
+        this.input.focus();
     };
     this.setup_styles();
     this.setup_connections();
@@ -21036,7 +21034,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
     this.data_key = data_key;
-    this.autosave = autosave;
+    this.autosave = true;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -21247,14 +21245,17 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             if (this.autosave_timeout) {
                 clearTimeout(this.autosave_timeout);
                 this.autosave_timeout = null;
-            }
+            };
             (function (self) {
-                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 500);
+                // This timeout is intentionally pretty long since the field will auto save if the
+                // box was changed when the user clicks out of it as well. This longer timeout
+                // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
+                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 1500);
             })(this);
         }
         else {
             this.show_save_button();
-        }
+        };
     };
     this.trigger_autosave = function () {
         if (!this.load_dots) {
@@ -21318,6 +21319,12 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         return this.input.Text();
     };
     this.Request = function (api, server_data, callback, callback_binder) {
+        console.log("RE");
+        if (this.autosave_timeout) {
+            console.log("Cleared timeout");
+            clearTimeout(this.autosave_timeout);
+            this.autosave_timeout = null;
+        };
         var request = null;
         this.request_callback = callback;
         this.request_callback_binder = callback_binder;
@@ -21393,6 +21400,44 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.setup_connections();
 }
 
+function DashGuiHeader (label_text, color, include_border=true) {
+    this.label_text = label_text;
+    this.color = color || Dash.Color.Light;
+    this.include_border = include_border;
+    this.html = $("<div></div>");
+    this.border = $("<div></div>");
+    this.label = $("<div>" + this.label_text + "</div>");
+    this.setup_styles = function () {
+        this.html.append(this.label);
+        this.html.append(this.border);
+        this.html.css({
+            "height": Dash.Size.RowHeight,
+            "margin-bottom": Dash.Size.Padding,
+        });
+        this.label.css({
+            "text-align": "left",
+            "color": this.color.TextHeader,
+            "padding-left": Dash.Size.Padding,
+            "line-height": Dash.Size.RowHeight + "px",
+            "font-family": "sans_serif_bold",
+        });
+        if (this.include_border) {
+            this.border.css({
+                "position": "absolute",
+                "left": -Dash.Size.Padding * 0.25,
+                "top": 0,
+                "bottom": 0,
+                "width": Dash.Size.Padding * 0.5,
+                "background": this.color.AccentGood,
+            });
+        }
+    };
+    this.SetText = function (label_text) {
+        this.label.text(label_text);
+    };
+    this.setup_styles();
+}
+
 function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
     this.binder = binder;
     this.get_data_cb = null;
@@ -21412,6 +21457,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.num_headers = 0;
     this.update_inputs = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
     };
     this.Load = function () {
@@ -21461,26 +21507,166 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             "z-index": 1,
         });
     };
+    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
+        var combo_options = combo_params["combo_options"];
+        var property_key = combo_params["property_key"];
+        var default_value = combo_params["default_value"] || null;
+        var callback = combo_params["callback"] || null;
+        var selected_key = default_value || this.get_data_cb()[property_key];
+        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
+            var _callback;
+            if (callback) {
+                _callback = function (selected_option) {
+                    callback(property_key, selected_option["id"]);
+                };
+            }
+            else {
+                _callback = function (selected_option) {
+                    self.on_combo_updated(property_key, selected_option["id"]);
+                };
+            }
+            var combo = new Dash.Gui.Combo (
+                selected_key,     // Label
+                _callback,         // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_key,     // Selected
+                self.color,       // Color set
+                {"style": "row"}, // Options
+                bool              // Bool (Toggle)
+            );
+            combo.html.css({
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+                "margin-right": add_button_margin ? Dash.Size.RowHeight * 2.5 : 0
+            });
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px"
+            });
+            row.html.append(combo.html);
+        })(this, row, selected_key, property_key, combo_options, bool, callback);
+        return row;
+    };
+    this.add_delete_button = function (row, callback, data_key) {
+        // Note: This function was initially intended for PropertyBox
+        // rows - it may not work well with other styles without modification
+        callback = callback.bind(this.binder);
+        if (!this.buttons) {
+            this.buttons = [];
+        }
+        (function (self, row, callback, data_key) {
+            var button = new Dash.Gui.IconButton("trash", function () {
+                callback(data_key);
+            }, self, self.color);
+            self.buttons.push(button);
+            button.html.css({
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+                "height": Dash.Size.RowHeight,
+                "width": Dash.Size.RowHeight,
+            });
+            row.html.append(button.html);
+        })(this, row, callback, data_key);
+
+        if (row.button) {
+            // We need to leave space for this button to coexist with this new button
+            row.button.html.css("margin-right", Dash.Size.RowHeight);
+        }
+        return row;
+    };
+    this.on_combo_updated = function (property_key, selected_option) {
+        if (this.dash_obj_id) {
+            var params = {};
+            params["f"] = "set_property";
+            params["key"] = property_key;
+            params["value"] = selected_option;
+            params["obj_id"] = this.dash_obj_id;
+            Dash.Request(this, this.on_server_response, this.endpoint, params);
+            return;
+        }
+        if (this.set_data_cb) {
+            this.set_data_cb(property_key, selected_option);
+            return;
+        }
+        console.log("Error: Property Box has no callback and no endpoint information!");
+    };
+    this.on_row_updated = function (row_input, row_details) {
+        var new_value = row_input.Text();
+        // if (new_value == row_details["value"]) {
+        //     console.log("The data didn't change");
+        //     console.log("Was: " + row_details["value"]);
+        //     console.log("Now: " + new_value);
+        //     return;
+        // };
+        if (this.dash_obj_id == null) {
+            if (this.set_data_cb) {
+                this.set_data_cb(row_details["key"], new_value);
+            }
+            else {
+                console.log("Error: Property Box has no callback and no endpoint information!");
+            }
+            return;
+        };
+        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
+        var params = {};
+        params["f"] = "set_property";
+        params["key"] = row_details["key"];
+        params["value"] = new_value;
+        params["obj_id"] = this.dash_obj_id;
+        for (var key in this.additional_request_params) {
+            params[key] = this.additional_request_params[key];
+        }
+        if (row_details["key"].includes("password") && this.endpoint == "Users") {
+            params["f"] = "update_password";
+            params["p"] = new_value;
+        }
+        (function (self, row_input, row_details) {
+            row_input.Request(url, params, function (response) {
+                self.on_server_response(response, row_details, row_input);
+            }, self);
+        })(this, row_input, row_details);
+    };
+    this.on_server_response = function (response, row_details, row_input) {
+        if (!Dash.ValidateResponse(response)) {
+            if (row_input) {
+                row_input.SetInputValidity(false);
+            }
+            return;
+        }
+        console.log("SERVER RESPONSE");
+        console.log(response);
+        row_input.FlashSave();
+        if (this.set_data_cb) {
+            this.set_data_cb(response);
+        }
+    };
+    this.setup_styles();
+};
+
+function DashGuiPropertyBoxInterface () {
     this.SetTopRightLabel = function (label_text) {
         if (!this.top_right_label) {
             this.add_top_right_label();
         }
         this.top_right_label.text(label_text);
-
     };
     this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
         var icon_id = "trash";
         if (alt_icon_id && typeof alt_icon_id === "string") {
             icon_id = alt_icon_id;
-        }
+        };
         if (this.top_right_delete_button) {
             return;
-        }
+        };
         if (this.top_right_label) {
             this.top_right_label.css({
                 "right": Dash.Size.Padding * 5
             });
-        }
+        };
         this.top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
         this.top_right_delete_button.css({
             "left": "auto",
@@ -21495,9 +21681,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        }
+        };
         (function (self, callback, data_key, additional_data) {
-            var button = new Dash.Gui.IconButton(
+            var button = new window.Dash.Gui.IconButton(
                 icon_id,
                 function () {
                     callback(data_key, additional_data);
@@ -21510,7 +21696,6 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             });
             self.top_right_delete_button.append(button.html);
         })(this, callback, data_key, additional_data);
-
         if (this.top_right_delete_button.button) {
             this.top_right_delete_button.button.html.css({
                 "margin-right": Dash.Size.RowHeight
@@ -21670,181 +21855,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
     };
-    this.add_combo = function (row, combo_params, bool=false, add_button_margin=false) {
-        var combo_options = combo_params["combo_options"];
-        var property_key = combo_params["property_key"];
-        var default_value = combo_params["default_value"] || null;
-        var callback = combo_params["callback"] || null;
-        var selected_key = default_value || this.get_data_cb()[property_key];
-        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
-            var _callback;
-            if (callback) {
-                _callback = function (selected_option) {
-                    callback(property_key, selected_option["id"]);
-                };
-            }
-            else {
-                _callback = function (selected_option) {
-                    self.on_combo_updated(property_key, selected_option["id"]);
-                };
-            }
-            var combo = new Dash.Gui.Combo (
-                selected_key,     // Label
-                _callback,         // Callback
-                self,             // Binder
-                combo_options,    // Option List
-                selected_key,     // Selected
-                self.color,       // Color set
-                {"style": "row"}, // Options
-                bool              // Bool (Toggle)
-            );
-            combo.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-                "margin-right": add_button_margin ? Dash.Size.RowHeight * 2.5 : 0
-            });
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px"
-            });
-            row.html.append(combo.html);
-        })(this, row, selected_key, property_key, combo_options, bool, callback);
-        return row;
-    };
-    this.add_delete_button = function (row, callback, data_key) {
-        // Note: This function was initially intended for PropertyBox
-        // rows - it may not work well with other styles without modification
-        callback = callback.bind(this.binder);
-        if (!this.buttons) {
-            this.buttons = [];
-        }
-        (function (self, row, callback, data_key) {
-            var button = new Dash.Gui.IconButton("trash", function () {
-                callback(data_key);
-            }, self, self.color);
-            self.buttons.push(button);
-            button.html.css({
-                "position": "absolute",
-                "right": 0,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-                "width": Dash.Size.RowHeight,
-            });
-            row.html.append(button.html);
-        })(this, row, callback, data_key);
 
-        if (row.button) {
-            // We need to leave space for this button to coexist with this new button
-            row.button.html.css("margin-right", Dash.Size.RowHeight);
-        }
-        return row;
-    };
-    this.on_combo_updated = function (property_key, selected_option) {
-        if (this.dash_obj_id) {
-            var params = {};
-            params["f"] = "set_property";
-            params["key"] = property_key;
-            params["value"] = selected_option;
-            params["obj_id"] = this.dash_obj_id;
-            Dash.Request(this, this.on_server_response, this.endpoint, params);
-            return;
-        }
-        if (this.set_data_cb) {
-            this.set_data_cb(property_key, selected_option);
-            return;
-        }
-        console.log("Error: Property Box has no callback and no endpoint information!");
-    };
-    this.on_row_updated = function (row_input, row_details) {
-        var new_value = row_input.Text();
-        if (new_value == row_details["value"]) {
-            console.log("The data didn't change");
-            return;
-        }
-        if (this.dash_obj_id == null) {
-            if (this.set_data_cb) {
-                this.set_data_cb(row_details["key"], new_value);
-            }
-            else {
-                console.log("Error: Property Box has no callback and no endpoint information!");
-            }
-            return;
-        }
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
-        var params = {};
-        params["f"] = "set_property";
-        params["key"] = row_details["key"];
-        params["value"] = new_value;
-        params["obj_id"] = this.dash_obj_id;
-        for (var key in this.additional_request_params) {
-            params[key] = this.additional_request_params[key];
-        }
-        if (row_details["key"].includes("password") && this.endpoint == "Users") {
-            params["f"] = "update_password";
-            params["p"] = new_value;
-        }
-        (function (self, row_input, row_details) {
-            row_input.Request(url, params, function (response) {
-                self.on_server_response(response, row_details, row_input);
-            }, self);
-        })(this, row_input, row_details);
-    };
-    this.on_server_response = function (response, row_details, row_input) {
-        if (!Dash.ValidateResponse(response)) {
-            if (row_input) {
-                row_input.SetInputValidity(false);
-            }
-            return;
-        }
-        console.log("SERVER RESPONSE");
-        console.log(response);
-        row_input.FlashSave();
-        if (this.set_data_cb) {
-            this.set_data_cb(response);
-        }
-    };
-    this.setup_styles();
-}
 
-function DashGuiHeader (label_text, color, include_border=true) {
-    this.label_text = label_text;
-    this.color = color || Dash.Color.Light;
-    this.include_border = include_border;
-    this.html = $("<div></div>");
-    this.border = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
-    this.setup_styles = function () {
-        this.html.append(this.label);
-        this.html.append(this.border);
-        this.html.css({
-            "height": Dash.Size.RowHeight,
-            "margin-bottom": Dash.Size.Padding,
-        });
-        this.label.css({
-            "text-align": "left",
-            "color": this.color.TextHeader,
-            "padding-left": Dash.Size.Padding,
-            "line-height": Dash.Size.RowHeight + "px",
-            "font-family": "sans_serif_bold",
-        });
-        if (this.include_border) {
-            this.border.css({
-                "position": "absolute",
-                "left": -Dash.Size.Padding * 0.25,
-                "top": 0,
-                "bottom": 0,
-                "width": Dash.Size.Padding * 0.5,
-                "background": this.color.AccentGood,
-            });
-        }
-    };
-    this.SetText = function (label_text) {
-        this.label.text(label_text);
-    };
-    this.setup_styles();
-}
+};
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
     this.label              = label;

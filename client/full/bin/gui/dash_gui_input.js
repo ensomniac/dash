@@ -3,13 +3,14 @@ function DashGuiInput (placeholder_text, color) {
     this.column_width = window.ColumnWidth || (Dash.Size.RowHeight*5);
     this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
+    this.last_submitted_text = "";
 
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
     }
     else {
         this.input = $("<input placeholder='" + this.placeholder + "'>");
-    }
+    };
 
     this.setup_styles = function () {
 
@@ -35,24 +36,6 @@ function DashGuiInput (placeholder_text, color) {
         });
 
     };
-
-    // this.SetHeight = function (height, optional_font_size) {
-
-    //     this.row_height = height;
-
-    //     var font_size = optional_font_size || "100%";
-
-    //     this.html.css({
-    //         "height": this.row_height,
-    //         "font-size": font_size,
-    //     });
-
-    //     this.input.css({
-    //         "line-height": this.row_height + "px",
-    //         "font-size": font_size,
-    //     });
-
-    // };
 
     this.SetLocked = function (is_locked) {
         if (is_locked) {
@@ -103,6 +86,7 @@ function DashGuiInput (placeholder_text, color) {
 
     this.SetText = function (text) {
         this.last_val = text;
+        this.last_submitted_text = text;
         return this.input.val(text);
     };
 
@@ -122,7 +106,7 @@ function DashGuiInput (placeholder_text, color) {
 
         if (changed && this.on_change_callback) {
             this.on_change_callback();
-        }
+        };
 
     };
 
@@ -131,6 +115,7 @@ function DashGuiInput (placeholder_text, color) {
 
         if (this.on_submit_callback) {
             this.on_submit_callback();
+            this.last_submitted_text = this.input.val();
         }
 
     };
@@ -141,7 +126,6 @@ function DashGuiInput (placeholder_text, color) {
 
             self.input.on("click", function (event) {
                 event.preventDefault();
-
                 return false;
             });
 
@@ -163,8 +147,22 @@ function DashGuiInput (placeholder_text, color) {
                 self.on_change();
             });
 
+            self.input.on("blur", function () {
+
+                var changed = self.input.val() != self.last_submitted_text;
+
+                if (changed) {
+                    self.on_submit();
+                };
+
+            });
+
         })(this);
 
+    };
+
+    this.Focus = function () {
+        this.input.focus();
     };
 
     this.setup_styles();

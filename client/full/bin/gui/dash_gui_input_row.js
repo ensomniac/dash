@@ -6,7 +6,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
     this.data_key = data_key;
-    this.autosave = autosave;
+    this.autosave = true;
 
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
@@ -269,20 +269,24 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         if (this.autosave) {
+
             if (this.autosave_timeout) {
                 clearTimeout(this.autosave_timeout);
-
                 this.autosave_timeout = null;
-            }
+            };
 
             (function (self) {
-                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 500);
+                // This timeout is intentionally pretty long since the field will auto save if the
+                // box was changed when the user clicks out of it as well. This longer timeout
+                // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
+                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 1500);
             })(this);
-        }
 
+        }
         else {
             this.show_save_button();
-        }
+        };
+
     };
 
     this.trigger_autosave = function () {
@@ -370,6 +374,15 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
 
     this.Request = function (api, server_data, callback, callback_binder) {
+
+        console.log("RE");
+
+        if (this.autosave_timeout) {
+            console.log("Cleared timeout");
+            clearTimeout(this.autosave_timeout);
+            this.autosave_timeout = null;
+        };
+
         var request = null;
 
         this.request_callback = callback;

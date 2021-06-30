@@ -33,12 +33,9 @@ function DashUtils () {
         }
 
         if (!still_active) {
-            console.log("== CLEARING TIMER ==");
-
             clearInterval(timer["timer_id"]);
-
             return;
-        }
+        };
 
         timer["callback"]();
     };
@@ -70,16 +67,14 @@ function DashUtils () {
 
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
             still_active = false;
-        }
+        };
 
         if (!still_active) {
-            console.log("== CLEARING ANIMATION FRAME ==");
-
             window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
-
             return;
-        }
+        };
 
         anim_frame["callback"]();
+
     };
 }
