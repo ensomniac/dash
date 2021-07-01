@@ -210,13 +210,6 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         var new_value = row_input.Text();
 
-        // if (new_value == row_details["value"]) {
-        //     console.log("The data didn't change");
-        //     console.log("Was: " + row_details["value"]);
-        //     console.log("Now: " + new_value);
-        //     return;
-        // };
-
         if (this.dash_obj_id == null) {
 
             if (this.set_data_cb) {
@@ -224,7 +217,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
             else {
                 console.log("Error: Property Box has no callback and no endpoint information!");
-            }
+            };
 
             return;
 

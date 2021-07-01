@@ -88,6 +88,7 @@ function GuiIcons(icon) {
     this.icon_map["unknown"]               = new GuiIconDefinition(this.icon, "Unknown Icon", this.weight.light, "spider-black-widow");
     this.icon_map["unlink"]                = new GuiIconDefinition(this.icon, "Unlink", this.weight.regular, "unlink");
     this.icon_map["unlock"]                = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "unlock");
+    this.icon_map["unlock_alt"]            = new GuiIconDefinition(this.icon, "Unlocked", this.weight.regular, "lock-open");
     this.icon_map["upload"]                = new GuiIconDefinition(this.icon, "Upload", this.weight.light, "upload");
     this.icon_map["user"]                  = new GuiIconDefinition(this.icon, "Climber", this.weight.regular, "user");
     this.icon_map["video"]                 = new GuiIconDefinition(this.icon, "Video", this.weight.regular, "video", 0.85);
