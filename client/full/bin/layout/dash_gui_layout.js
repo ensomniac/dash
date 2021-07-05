@@ -1,5 +1,4 @@
 function DashGuiLayout () {
-
     this.UserProfile = DashGuiLayoutUserProfile;
 
     this.List = DashGuiList;
@@ -13,6 +12,8 @@ function DashGuiLayout () {
 
     this.Toolbar = DashGuiLayoutToolbar;
 
-    this.ButtonBar = DashGuiButtonBar;
+    this.Dashboard = DashGuiLayoutDashboard;
+    this.Dashboard.Module = DashGuiLayoutDashboardModule;
 
+    this.ButtonBar = DashGuiButtonBar;
 }

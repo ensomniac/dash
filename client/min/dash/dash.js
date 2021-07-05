@@ -22484,6 +22484,8 @@ function DashGuiLayout () {
     this.Tabs.Top = DashGuiLayoutTabsTop;
     this.Tabs.Side = DashGuiLayoutTabsSide;
     this.Toolbar = DashGuiLayoutToolbar;
+    this.Dashboard = DashGuiLayoutDashboard;
+    this.Dashboard.Module = DashGuiLayoutDashboardModule;
     this.ButtonBar = DashGuiButtonBar;
 }
 
@@ -24065,5 +24067,118 @@ function DashGuiListColumnConfig () {
     };
     this.AddDivider = function () {
         this.columns.push({"type": "divider"});
+    };
+}
+
+function DashGuiLayoutDashboard (binder, color=null) {
+    this.binder = binder;
+    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.modules = [];
+    this.html = Dash.Gui.GetHTMLAbsContext();
+    // TODO: How can we make this collapsible?
+    this.setup_styles = function () {
+        this.html.css({
+            // "background": "red",
+            "background": this.color.Background,
+            "display": "flex"
+        });
+    };
+    this.AddSingleModule = function () {
+        var index = this.modules.length;
+        var module = new Dash.Gui.Layout.Dashboard.Module(this, "square");
+        this.html.append(module.html);
+        this.modules.push({
+            "module": module,
+            "index": index
+        });
+        return module;
+    };
+    this.AddDoubleModule = function () {
+        var index = this.modules.length;
+        var module = new Dash.Gui.Layout.Dashboard.Module(this, "rectangle");
+        this.html.append(module.html);
+        this.modules.push({
+            "module": module,
+            "index": index
+        });
+        return module;
+    };
+    this.AddFlexModule = function () {
+        var index = this.modules.length;
+        var module = new Dash.Gui.Layout.Dashboard.Module(this, "flex");
+        this.html.append(module.html);
+        this.modules.push({
+            "module": module,
+            "index": index
+        });
+        return module;
+    };
+    this.setup_styles();
+}
+
+function DashGuiLayoutDashboardModule (binder, style="flex") {
+    this.binder = binder;
+    this.style = style;
+    this.color = this.binder.color || Dash.Color.Dark;
+    this.padding = Dash.Size.Padding;
+    this.html = Dash.Gui.GetHTMLBoxContext();
+    this.initialize_style = function () {
+        if (this.style === "flex") {
+            DashGuiLayoutDashboardModuleFlex.call(this);
+        }
+        else if (this.style === "square") {
+            DashGuiLayoutDashboardModuleSingle.call(this);
+        }
+        else if (this.style === "rectangle") {
+            DashGuiLayoutDashboardModuleDouble.call(this);
+        }
+        else {
+            console.log("ERROR: Invalid Module Style:", this.style);
+            return;
+        }
+        this.setup_styles();
+        this.html.css({
+            "background": this.color.BackgroundRaised
+        });
+        // When called from DashGuiLayoutDashboard
+        if (this.binder.modules && this.binder.modules.length > 0) {
+            this.html.css({
+                "margin-left": 0
+            });
+        }
+    };
+    this.initialize_style();
+}
+
+/**@member DashGuiLayoutDashboardModule*/
+function DashGuiLayoutDashboardModuleFlex () {
+    this.setup_styles = function () {
+        this.html.css({
+            // "background": "green",
+            "margin": this.padding,
+            "flex-grow": 1
+        });
+    };
+}
+
+/**@member DashGuiLayoutDashboardModule*/
+function DashGuiLayoutDashboardModuleSingle () {
+    this.setup_styles = function () {
+        this.html.css({
+            // "background": "blue",
+            "margin": this.padding,
+            "aspect-ratio": "1 / 1"
+        });
+    };
+}
+
+/**@member DashGuiLayoutDashboardModule*/
+function DashGuiLayoutDashboardModuleDouble () {
+    this.setup_styles = function () {
+        this.html.css({
+            // "background": "orange",
+            "margin": this.padding,
+            "aspect-ratio": "2 / 1"
+        });
     };
 }
