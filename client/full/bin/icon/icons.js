@@ -14,6 +14,7 @@ function GuiIcons(icon) {
     this.icon_map["add_phone"]             = new GuiIconDefinition(this.icon, "Add Phone", this.weight.light, "phone-plus", 1.3, 0.15, 0.15);
     this.icon_map["admin_tools"]           = new GuiIconDefinition(this.icon, "Admin Tools", this.weight.regular, "shield-alt");
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
+    this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert Triangle", this.weight.solid, "exclamation-triangle", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
     this.icon_map["arrow_left"]            = new GuiIconDefinition(this.icon, "Arrow Left", this.weight.regular, "angle-left", 1.5);
     this.icon_map["arrow_left_alt"]        = new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight.regular, "arrow-left");
@@ -69,16 +70,19 @@ function GuiIcons(icon) {
     this.icon_map["link"]                  = new GuiIconDefinition(this.icon, "Link", this.weight.light, "external-link");
     this.icon_map["list"]                  = new GuiIconDefinition(this.icon, "List", this.weight.regular, "bars");
     this.icon_map["lock"]                  = new GuiIconDefinition(this.icon, "Lock", this.weight.regular, "lock");
+    this.icon_map["log_out"]               = new GuiIconDefinition(this.icon, "Log Out", this.weight.regular, "sign-out");
     this.icon_map["more"]                  = new GuiIconDefinition(this.icon, "More", this.weight.regular, "window-restore");
     this.icon_map["navigation"]            = new GuiIconDefinition(this.icon, "Navigation - Top Level", this.weight.regular, "tasks");
     this.icon_map["newsfeed"]              = new GuiIconDefinition(this.icon, "Newsfeed", this.weight.regular, "newspaper");
     this.icon_map["note"]                  = new GuiIconDefinition(this.icon, "Note", this.weight.regular, "sticky-note", 1.05);
     this.icon_map["notify"]                = new GuiIconDefinition(this.icon, "Notify", this.weight.regular, "bell");
     this.icon_map["phone"]                 = new GuiIconDefinition(this.icon, "Phone", this.weight.regular, "phone");
+    this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
     this.icon_map["portal_editor"]         = new GuiIconDefinition(this.icon, "Content Builder", this.weight.regular, "toolbox");
     this.icon_map["read"]                  = new GuiIconDefinition(this.icon, "Read", this.weight.regular, "book-reader");
     this.icon_map["refresh"]               = new GuiIconDefinition(this.icon, "Refresh", this.weight.regular, "redo");
     this.icon_map["search"]                = new GuiIconDefinition(this.icon, "Search", this.weight.regular,"search");
+    this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
     this.icon_map["toggle_off"]            = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-off");
     this.icon_map["toggle_on"]             = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-on");
     this.icon_map["tools"]                 = new GuiIconDefinition(this.icon, "Tools", this.weight.light, "tools");
@@ -94,9 +98,6 @@ function GuiIcons(icon) {
     this.icon_map["video"]                 = new GuiIconDefinition(this.icon, "Video", this.weight.regular, "video", 0.85);
     this.icon_map["view"]                  = new GuiIconDefinition(this.icon, "View", this.weight.regular, "eye");
     this.icon_map["web"]                   = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "spider-web");
-    this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
-    this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
-    this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation-triangle", 0.9);
 
     if (this.icon.name == "icon_map") {
         // Return icon map for use in portal editor > font icons

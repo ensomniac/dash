@@ -85,6 +85,7 @@ function GuiIcons(icon) {
     this.icon_map["add_phone"]             = new GuiIconDefinition(this.icon, "Add Phone", this.weight.light, "phone-plus", 1.3, 0.15, 0.15);
     this.icon_map["admin_tools"]           = new GuiIconDefinition(this.icon, "Admin Tools", this.weight.regular, "shield-alt");
     this.icon_map["alert"]                 = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation", 0.9);
+    this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert Triangle", this.weight.solid, "exclamation-triangle", 0.9);
     this.icon_map["arrow_down"]            = new GuiIconDefinition(this.icon, "Arrow Down", this.weight.regular, "angle-down", 1.5);
     this.icon_map["arrow_left"]            = new GuiIconDefinition(this.icon, "Arrow Left", this.weight.regular, "angle-left", 1.5);
     this.icon_map["arrow_left_alt"]        = new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight.regular, "arrow-left");
@@ -140,16 +141,19 @@ function GuiIcons(icon) {
     this.icon_map["link"]                  = new GuiIconDefinition(this.icon, "Link", this.weight.light, "external-link");
     this.icon_map["list"]                  = new GuiIconDefinition(this.icon, "List", this.weight.regular, "bars");
     this.icon_map["lock"]                  = new GuiIconDefinition(this.icon, "Lock", this.weight.regular, "lock");
+    this.icon_map["log_out"]               = new GuiIconDefinition(this.icon, "Log Out", this.weight.regular, "sign-out");
     this.icon_map["more"]                  = new GuiIconDefinition(this.icon, "More", this.weight.regular, "window-restore");
     this.icon_map["navigation"]            = new GuiIconDefinition(this.icon, "Navigation - Top Level", this.weight.regular, "tasks");
     this.icon_map["newsfeed"]              = new GuiIconDefinition(this.icon, "Newsfeed", this.weight.regular, "newspaper");
     this.icon_map["note"]                  = new GuiIconDefinition(this.icon, "Note", this.weight.regular, "sticky-note", 1.05);
     this.icon_map["notify"]                = new GuiIconDefinition(this.icon, "Notify", this.weight.regular, "bell");
     this.icon_map["phone"]                 = new GuiIconDefinition(this.icon, "Phone", this.weight.regular, "phone");
+    this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
     this.icon_map["portal_editor"]         = new GuiIconDefinition(this.icon, "Content Builder", this.weight.regular, "toolbox");
     this.icon_map["read"]                  = new GuiIconDefinition(this.icon, "Read", this.weight.regular, "book-reader");
     this.icon_map["refresh"]               = new GuiIconDefinition(this.icon, "Refresh", this.weight.regular, "redo");
     this.icon_map["search"]                = new GuiIconDefinition(this.icon, "Search", this.weight.regular,"search");
+    this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
     this.icon_map["toggle_off"]            = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-off");
     this.icon_map["toggle_on"]             = new GuiIconDefinition(this.icon, "Toggle", this.weight.regular, "toggle-on");
     this.icon_map["tools"]                 = new GuiIconDefinition(this.icon, "Tools", this.weight.light, "tools");
@@ -165,9 +169,6 @@ function GuiIcons(icon) {
     this.icon_map["video"]                 = new GuiIconDefinition(this.icon, "Video", this.weight.regular, "video", 0.85);
     this.icon_map["view"]                  = new GuiIconDefinition(this.icon, "View", this.weight.regular, "eye");
     this.icon_map["web"]                   = new GuiIconDefinition(this.icon, "Windows Logo", this.weight.solid, "spider-web");
-    this.icon_map["play"]                  = new GuiIconDefinition(this.icon, "Play", this.weight.solid, "play");
-    this.icon_map["stop"]                  = new GuiIconDefinition(this.icon, "Stop", this.weight.solid, "stop");
-    this.icon_map["alert_triangle"]        = new GuiIconDefinition(this.icon, "Alert", this.weight.solid, "exclamation-triangle", 0.9);
     if (this.icon.name == "icon_map") {
         // Return icon map for use in portal editor > font icons
         return this.icon_map;
@@ -18749,7 +18750,7 @@ function DashUtils () {
         if (!still_active) {
             clearInterval(timer["timer_id"]);
             return;
-        };
+        }
         timer["callback"]();
     };
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
@@ -18762,6 +18763,8 @@ function DashUtils () {
             var iterations = 0;
             anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
                 anim_frame["iterations"] = iterations;
+                // TODO: Ryan, I think (unable to confirm) that this may be causing some excessive looping...
+                //  Can you please take a look at this logic and see if everything looks correct?
                 self.OnAnimationFrame(binder, callback, html_key);
                 iterations += 1;
             });
@@ -18772,11 +18775,11 @@ function DashUtils () {
         var still_active = true;
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
             still_active = false;
-        };
+        }
         if (!still_active) {
             window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
             return;
-        };
+        }
         anim_frame["callback"]();
     };
 }
@@ -22491,8 +22494,8 @@ function DashGuiLayout () {
 
 // Profile page layout for the currently logged in user
 function DashGuiLayoutUserProfile (user_data, options) {
-    this.options = options || {};
     this.user_data = user_data || Dash.User.Data;
+    this.options = options || {};
     this.as_overview = false;
     this.property_box = null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -22503,21 +22506,23 @@ function DashGuiLayoutUserProfile (user_data, options) {
         this.add_header();
         this.setup_property_box();
         this.add_logout_button();
-        var min_height = this.img_box_size + Dash.Size.RowHeight;
-        min_height += Dash.Size.Padding;
+        var min_height = this.img_box_size + Dash.Size.RowHeight + Dash.Size.Padding;
         this.html.css({
             "min-height": min_height,
         });
     };
     this.add_logout_button = function () {
-        this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
-        this.html.append(this.logout_button.html);
-        this.logout_button.html.css({
-            "position": "absolute",
-            "bottom": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "left": this.img_box_size + (Dash.Size.Padding * 2),
-        });
+        // this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
+        // this.html.append(this.logout_button.html);
+        //
+        // this.logout_button.html.css({
+        //     "position": "absolute",
+        //     "bottom": Dash.Size.Padding,
+        //     "right": Dash.Size.Padding,
+        //     "left": this.img_box_size + (Dash.Size.Padding * 2),
+        // });
+        this.logout_button = Dash.Gui.AddTopRightDeleteButton(this, this.log_out, "log_out");
+        this.html.append(this.logout_button);
     };
     this.add_header = function () {
         var header_title = "User Settings";
@@ -22608,21 +22613,44 @@ function DashGuiLayoutUserProfile (user_data, options) {
             "https://" + Dash.Context.domain + "/Users",
             this.params
         );
-        this.user_image_upload_button.html.css({
+        // this.user_image_upload_button.html.css({
+        //     "position": "absolute",
+        //     "bottom": Dash.Size.Padding,
+        //     "right": Dash.Size.Padding,
+        //     "left": Dash.Size.Padding,
+        // });
+        var button_css = {
             "position": "absolute",
-            "bottom": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "left": Dash.Size.Padding,
-        });
+            "width": this.img_box_size,
+            "height": this.img_box_size,
+            // "opacity": 0
+        };
+        var hidden_css = {...button_css, "opacity": 0};
+        this.user_image_upload_button.html.css({...button_css, "background": "none"});
+        this.user_image_upload_button.label.css(hidden_css);
+        this.user_image_upload_button.file_uploader.html.css(hidden_css);
+        (function (user_image_upload_button) {
+            user_image_upload_button.html.on("mouseenter", function () {
+                user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);
+                if (user_image_upload_button.is_selected) {
+                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.SelectedHover);
+                }
+                else {
+                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.BaseHover);
+                }
+            });
+        })(this.user_image_upload_button);
     };
     this.get_data = function () {
         return this.user_data;
     };
     this.set_data = function () {
         console.log("set data");
-        // return {};
     };
     this.log_out = function (button) {
+        if (!window.confirm("Log out?")) {
+            return;
+        }
         Dash.Local.Set("email", "");
         Dash.Local.Set("token", "");
         Dash.Local.Set("user_json", "");
@@ -22663,8 +22691,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
     };
     this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
-        console.log(response);
-
+        // console.log(response);
         // var api = "https://altona.io/Users";
         // var server_data = {};
         // server_data["f"] = "update_personal_information";

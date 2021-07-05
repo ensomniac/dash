@@ -1,10 +1,9 @@
 // Profile page layout for the currently logged in user
 function DashGuiLayoutUserProfile (user_data, options) {
-
-    this.options = options || {};
     this.user_data = user_data || Dash.User.Data;
-    this.as_overview = false;
+    this.options = options || {};
 
+    this.as_overview = false;
     this.property_box = null;
     this.color = this.options["color"] || Dash.Color.Light;
 
@@ -13,36 +12,34 @@ function DashGuiLayoutUserProfile (user_data, options) {
     this.img_box_size = Dash.Size.ColumnWidth;
 
     this.setup_styles = function () {
-
         this.add_header();
         this.setup_property_box();
         this.add_logout_button();
 
-        var min_height = this.img_box_size + Dash.Size.RowHeight;
-        min_height += Dash.Size.Padding;
+        var min_height = this.img_box_size + Dash.Size.RowHeight + Dash.Size.Padding;
 
         this.html.css({
             "min-height": min_height,
         });
-
     };
 
     this.add_logout_button = function () {
+        // this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
+        // this.html.append(this.logout_button.html);
+        //
+        // this.logout_button.html.css({
+        //     "position": "absolute",
+        //     "bottom": Dash.Size.Padding,
+        //     "right": Dash.Size.Padding,
+        //     "left": this.img_box_size + (Dash.Size.Padding * 2),
+        // });
 
-        this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
-        this.html.append(this.logout_button.html);
+        this.logout_button = Dash.Gui.AddTopRightDeleteButton(this, this.log_out, "log_out");
 
-        this.logout_button.html.css({
-            "position": "absolute",
-            "bottom": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "left": this.img_box_size + (Dash.Size.Padding * 2),
-        });
-
+        this.html.append(this.logout_button);
     };
 
     this.add_header = function () {
-
         var header_title = "User Settings";
 
         if (this.user_data["first_name"]) {
@@ -51,11 +48,9 @@ function DashGuiLayoutUserProfile (user_data, options) {
 
         this.header = new Dash.Gui.Header(header_title);
         this.html.append(this.header.html);
-
     };
 
     this.setup_property_box = function () {
-
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
@@ -94,17 +89,13 @@ function DashGuiLayoutUserProfile (user_data, options) {
                     null,
                     property_details["editable"]
                 );
-
             }
-
         }
 
         this.add_user_image_box();
-
     };
 
     this.add_user_image_box = function () {
-
         var img_url = "dash/fonts/user_default.jpg";
 
         if (this.user_data["img"]) {
@@ -127,11 +118,9 @@ function DashGuiLayoutUserProfile (user_data, options) {
         });
 
         this.add_user_image_upload_button();
-
     };
 
     this.on_user_img_uploaded = function (response) {
-
         if (response.timeStamp) {
             return;
         }
@@ -145,13 +134,10 @@ function DashGuiLayoutUserProfile (user_data, options) {
             this.img_box.css({
                 "background-image": "url(" + this.user_data["img"]["thumb_url"] + ")",
             });
-
         }
-
     };
 
     this.add_user_image_upload_button = function () {
-
         this.user_image_upload_button = new Dash.Gui.Button("Upload Image", this.on_user_img_uploaded, this, this.color);
         this.img_box.append(this.user_image_upload_button.html);
 
@@ -165,13 +151,39 @@ function DashGuiLayoutUserProfile (user_data, options) {
             this.params
         );
 
-        this.user_image_upload_button.html.css({
-            "position": "absolute",
-            "bottom": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "left": Dash.Size.Padding,
-        });
+        // this.user_image_upload_button.html.css({
+        //     "position": "absolute",
+        //     "bottom": Dash.Size.Padding,
+        //     "right": Dash.Size.Padding,
+        //     "left": Dash.Size.Padding,
+        // });
 
+        var button_css = {
+            "position": "absolute",
+            "width": this.img_box_size,
+            "height": this.img_box_size,
+            // "opacity": 0
+        };
+
+        var hidden_css = {...button_css, "opacity": 0};
+
+        this.user_image_upload_button.html.css({...button_css, "background": "none"});
+        this.user_image_upload_button.label.css(hidden_css);
+        this.user_image_upload_button.file_uploader.html.css(hidden_css);
+
+        (function (user_image_upload_button) {
+            user_image_upload_button.html.on("mouseenter", function () {
+                user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);
+
+                if (user_image_upload_button.is_selected) {
+                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.SelectedHover);
+                }
+
+                else {
+                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.BaseHover);
+                }
+            });
+        })(this.user_image_upload_button);
     };
 
     this.get_data = function () {
@@ -180,18 +192,21 @@ function DashGuiLayoutUserProfile (user_data, options) {
 
     this.set_data = function () {
         console.log("set data");
-        // return {};
     };
 
     this.log_out = function (button) {
+        if (!window.confirm("Log out?")) {
+            return;
+        }
+
         Dash.Local.Set("email", "");
         Dash.Local.Set("token", "");
         Dash.Local.Set("user_json", "");
+
         location.reload();
     };
 
     this.set_group = function (button, group_name, group_option) {
-
         console.log("this.set_group");
 
         // var api = "https://altona.io/Users";
@@ -203,11 +218,9 @@ function DashGuiLayoutUserProfile (user_data, options) {
         // server_data["group_option"] = group_option;
 
         // button.Request(api, server_data, this.on_info_saved, this);
-
     };
 
     this.update_password = function () {
-
         if (!this.new_password_row.Text()) {
             return;
         }
@@ -221,7 +234,6 @@ function DashGuiLayoutUserProfile (user_data, options) {
                 self.on_info_saved(response, self.new_password_row);
             }, "Users", params);
         })(this, params);
-
     };
 
     this.update_first_name = function () {
@@ -238,8 +250,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
 
     this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
-        console.log(response);
-
+        // console.log(response);
 
         // var api = "https://altona.io/Users";
         // var server_data = {};
@@ -254,22 +265,21 @@ function DashGuiLayoutUserProfile (user_data, options) {
         // };
 
         // button.Request(api, server_data, this.on_info_saved, this);
-
     };
 
     this.on_info_saved = function (response, input_row) {
-
         if (response.error) {
             console.log(response);
+
             alert(response.error);
+
             return;
         }
 
         console.log("** Info saved successfully **");
-        input_row.FlashSave();
 
+        input_row.FlashSave();
     };
 
     this.setup_styles();
-
 }

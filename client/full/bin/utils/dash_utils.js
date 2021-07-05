@@ -35,7 +35,7 @@ function DashUtils () {
         if (!still_active) {
             clearInterval(timer["timer_id"]);
             return;
-        };
+        }
 
         timer["callback"]();
     };
@@ -53,6 +53,9 @@ function DashUtils () {
             anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
                 anim_frame["iterations"] = iterations;
 
+                // TODO: Ryan, I think (unable to confirm) that this may be causing some excessive looping...
+                //  Can you please take a look at this logic and see if everything looks correct?
+
                 self.OnAnimationFrame(binder, callback, html_key);
 
                 iterations += 1;
@@ -67,12 +70,12 @@ function DashUtils () {
 
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
             still_active = false;
-        };
+        }
 
         if (!still_active) {
             window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
             return;
-        };
+        }
 
         anim_frame["callback"]();
 
