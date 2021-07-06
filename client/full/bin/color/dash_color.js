@@ -1,112 +1,35 @@
 function DashColor () {
-
-    // this.DarkBackground = "#e6e6e6";
-    // this.LightBackground = "#e6e6e6";
-
-    // this.Background = "#e6e6e6";
-    // this.Text = "#333";
-
-    // this.DarkText = "#333";
-    // this.LightText = "#e3d5ca";
-
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.Warning = "#fab964";
-
     this.Light = null;
     this.Dark = null;
 
-    // this.SetFromJson = function (light_theme_json, dark_theme_json) {
-
-    // };
-
-    // this.Set = function (light_theme, dark_theme) {
-    //     console.log("SET");
-    // };
-
-    // this.fill_set = function (color_set) {
-    //     // color_set = object
-    //     console.log(color_set);
-
-    //     // color_set["background"] = color_set["background"] || "";
-
-
-    // };
-
     this.setup_color_sets = function () {
-
-        // var dark_bg = "rgb(30, 30, 30)";
-        // var dark_bg_text = "rgb(200, 200, 200)";
-        // var light_bg = "#e6e6e6";
-        // var light_bg_text = "rgb(30, 30, 30)";
-        // var button_color = "#3e9bb7";
-        // var button_hover_color = "#4dc1e4";
-        // var button_text_color = "rgb(230, 230, 230)";
-        // var button_selected = "#ac4ac6";
-        // var button_selected_hover = "#d468f0";
-        // var text_header = "#5e448a";
-
-        var min_light = {};
-        min_light["background"]      = "#e6e6e6";
-        min_light["text"]            = "rgb(80, 80, 80)";
-        min_light["button"]          = "blue";
-        min_light["button_selected"] = "red";
-
-        var min_dark = {};
-        min_dark["background"]       = "rgb(50, 50, 50)";
-        min_dark["text"]             = "rgb(200, 200, 200)";
-        min_dark["button"]           = "pink";
-        min_dark["button_selected"]  = "orange";
-
-        // var light = this.fill_set(min_light);
-        // var dark  = this.fill_set(min_dark);
-
-        // var dark_bg = "#23262b";
         var dark_bg_text = "rgb(245, 245, 245)";
-        // var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
-
         var button_color = "#4d505f";
         var button_hover_color = this.Lighten(button_color);
         var button_text_color = "rgb(230, 230, 230)";
-
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
-
-        // var text_header = "#95ae6c";
-        // var text_header_dark = "#cfe1e7";
-
-        // var light_accent_good = "green";
-        // var light_accent_bad = "red";
-
-        // var dark_accent_good = "#5b9fb7";
-        // var dark_accent_bad = "#ff6144";
-
-        // var dark_button = "#5ba0b8";
+        var dark_input_background = "rgba(255, 255, 255, 0.8)";
+        var light_input_background = "rgba(0, 0, 0, 0)";
+        var dark_input_text = "rgba(0, 0, 0, 0.8)";
+        var light_input_text = "rgba(0, 0, 0, 0.8)";
 
         var light = new DashSiteColors({
-            // "background": "#dcdbd9",
-            // "background": "#e0dfde",
             "background": "#e3e8ea",
-            // "background": "red",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
-            // "accent_good": "#e0ccb4",
             "accent_good": "#f3d057",
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
-            // "tab_area_background": "#e4eaee",
-            // "tab_area_background": "#659cba",
-            // "tab_area_background": "#6a7f8a",
-            // "tab_area_background": "#e0ccb4",
-            // "tab_area_background": "#655f5d",
             "tab_area_background": "#333",
         });
-
-        // 659cba
 
         var dark = new DashSiteColors({
             "background": "#23262b",
@@ -116,46 +39,8 @@ function DashColor () {
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
-            "tab_area_background": "red",
+            "tab_area_background": "#333",
         });
-
-        var dark_input_background = "rgba(255, 255, 255, 0.8)";
-        var light_input_background = "rgba(0, 0, 0, 0)";
-
-        var dark_input_text = "rgba(0, 0, 0, 0.8)";
-        var light_input_text = "rgba(0, 0, 0, 0.8)";
-
-        // var tabs_top_dark = new DashColorButtonSet( // Top Tabs
-        //     // authentic_modern_black, // The color of the area behind a set of buttons, if applicable
-        //     "rgba(0, 0, 0, 0.2)", // The color of the area behind a set of buttons, if applicable
-        //     new DashColorStateSet(
-        //         "none", // Dark.Tabs.Background.Base
-        //         background_color_light, // Dark.Tabs.Background.Selected
-        //         "rgba(0, 0, 0, 0.0)", // Stroke under inactive tab
-        //         authentic_magenta, // Dark.Tabs.Background.SelectedHover
-        //     ),
-        //     new DashColorStateSet(
-        //         "rgba(0, 0, 0, 0.5)",   // Dark.Tabs.Text.Base
-        //         "rgba(0, 0, 0, 0.8)",  // Dark.Tabs.Text.Selected
-        //         "rgba(0, 0, 0, 0.7)",  // Dark.Tabs.Text.BaseHover
-        //         "rgba(0, 0, 0, 0.9)",  // Dark.Tabs.Text.SelectedHover
-        //     ),
-        // );
-
-        // console.log(light);
-
-        this.Raise = function (cstr, raise_steps) {
-            raise_steps = raise_steps || 1;
-
-            return cstr;
-
-        };
-
-        this.Random = function (cstr, lighten_rgb) {
-            var tmp_colors = ["red", "blue", "green", "orange"];
-            return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
-            // return "#" + Math.floor(Math.random()*16777215).toString(16);
-        };
 
         this.Light = new DashColorSet(
             light.Background,       // Background color
@@ -235,7 +120,7 @@ function DashColor () {
                 ),
             ),
             new DashColorButtonSet(    // Tab
-                "red", // The color of the area behind a set of tabs, if applicable
+                dark.TabAreaBackground, // The color of the area behind a set of tabs, if applicable
                 new DashColorStateSet( // Tab Background
                     dark.Button,    // Tab.Background.Base
                     button_selected,    // Tab.Background.Selected
@@ -249,7 +134,6 @@ function DashColor () {
                     dark.ButtonText, // Tab.Text.SelectedHover
                 ),
             ),
-
             new DashColorButtonSet(     // Input
                 light.TabAreaBackground, // area background
                 new DashColorStateSet(  // Input Background
@@ -265,9 +149,19 @@ function DashColor () {
                     dark_input_text,     // Input.Text.SelectedHover
                 ),
             ),
-
         );
+    };
 
+    this.Raise = function (cstr, raise_steps) {
+        raise_steps = raise_steps || 1;
+
+        return cstr;
+    };
+
+    this.Random = function (cstr, lighten_rgb) {
+        var tmp_colors = ["red", "blue", "green", "orange"];
+
+        return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
     };
 
     this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
@@ -279,7 +173,6 @@ function DashColor () {
     };
 
     this.GetGradient = function (degrees, color_1, color_2, color_3, color_4) {
-
         var colors = "";
 
         if (color_1 && color_2 && color_3 && color_4) {
@@ -299,7 +192,6 @@ function DashColor () {
         }
 
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
-
     };
 
     this.Names = {
@@ -470,7 +362,6 @@ function DashColor () {
     };
 
     this.Lighten = function (cstr, lighten_rgb) {
-
         lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
 
         var pcolor = this.Parse(cstr);
@@ -479,11 +370,9 @@ function DashColor () {
         pcolor[2] += lighten_rgb;
 
         return this.to_rgb(pcolor);
-
     };
 
     this.Darken = function (cstr, darken_rgb) {
-
         darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
 
         var pcolor = this.Parse(cstr);
@@ -492,7 +381,6 @@ function DashColor () {
         pcolor[2] -= darken_rgb;
 
         return this.to_rgb(pcolor);
-
     };
 
     this.Parse = function (cstr) {
@@ -637,12 +525,10 @@ function DashColor () {
         }
 
         return [parts[0], parts[1], parts[2], alpha, space];
-
     };
 
+    // This function will set the placeholder text for an input element
     this.SetPlaceholderColor = function (input_html, placeholder_color) {
-        // This function will set the placeholder text for an input element
-
         var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
         var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
         var node = document.createElement("style");
@@ -653,9 +539,7 @@ function DashColor () {
         input_html.addClass(class_name);
 
         return input_html;
-
     };
 
     this.setup_color_sets();
-
 }
