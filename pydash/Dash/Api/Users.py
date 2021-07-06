@@ -170,14 +170,30 @@ class ApiUsers:
 
         response = {}
         response["users"] = []
-
+        sorted_users = []
+        pairs_to_sort = []
         users_root = os.path.join(self.DashContext["srv_path_local"], "users/")
 
         for email in os.listdir(users_root):
             user_path = os.path.join(users_root, email, "usr.data")
             user_data = self.conform_user_data(LocalStorage.Read(user_path))
+
+            pairs_to_sort.append([user_data.get("first_name") or user_data.get("email"), user_data.get("id")])
+
             response["users"].append(user_data)
 
+        pairs_to_sort.sort()
+
+        for pair in pairs_to_sort:
+            for user in response["users"]:
+                if pair[1] != user.get("id"):
+                    continue
+
+                sorted_users.append(user)
+
+                break
+
+        response["users"] = sorted_users
         response["record_path"] = self.DashContext["srv_path_local"]
 
         return self.SetResponse(response)
