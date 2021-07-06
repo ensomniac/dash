@@ -23223,8 +23223,8 @@ function DashGuiLayoutToolbar (binder, color) {
     this.setup_styles();
 }
 
+// TODO - convert this to a proper class
 class DashGuiLayoutTabs {
-    // TODO - convert this to a proper class
     constructor(Binder, side_tabs) {
     this.html = $("<div></div>");
     this.binder = Binder;
@@ -23332,7 +23332,6 @@ class DashGuiLayoutTabs {
         });
     };
     this.update_styles_for_side_tabs = function () {
-        // var sub_border = "none";
         var box_shadow = "0px 0px 20px 10px rgba(0, 0, 0, 0.2)";
         this.size = Dash.Size.ColumnWidth;
         this.list_backing.css({
@@ -23351,14 +23350,10 @@ class DashGuiLayoutTabs {
         });
     };
     this.update_styles_for_top_tabs = function () {
-        // var sub_border = "none";
-        // var box_shadow = "inset 0px 0px 10px 1px rgba(0, 0, 0, 0.2)";
         this.size = Dash.Size.RowHeight+(Dash.Size.Padding);
         this.list_backing.css({
             "height": this.size,
-            // "background": this.color.TabBackground,
             "background": this.color.Tab.AreaBackground,
-            // "box-shadow": box_shadow,
         });
         this.list_top.css({
             "height": this.size,
@@ -23370,9 +23365,8 @@ class DashGuiLayoutTabs {
             "top": this.size,
         });
     };
+    // Called to style anything that might change between the default behavior and the sub style
     this.update_styles = function () {
-        // Called to style anything that might change between
-        // the default behavior and the sub style
         if (this.side_tabs) {
             this.update_styles_for_side_tabs();
         }
@@ -23440,21 +23434,23 @@ class DashGuiLayoutTabs {
         });
         this.list_top.append(html);
     };
-    this.AppendImage = function (img_url) {
-        // TODO: Move the concept of an 'Image' into dash as a light
-        // abstraction for managing aspect ratios
-        // TODO: This AppendImage is a hack. We need to revise the
-        // stack of objects in this container so they derive from
-        // some abstraction to simplify append/prepend
+    this.AppendImage = function (img_url, height=null) {
+        // TODO:
+        //  - Move the concept of an 'Image' into dash as a light
+        //    abstraction for managing aspect ratios
+        //  - This AppendImage is a hack. We need to revise the
+        //    stack of objects in this container so they derive from
+        //    some abstraction to simplify append/prepend
         var image = $("<div></div>");
         image.css({
-            "height": Dash.Size.RowHeight*2,
+            "height": height || Dash.Size.RowHeight * 2,
             "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "background-position": "center",
         });
         this.list_top.append(image);
+        return image;
     };
     this.Append = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.list_top, optional_params);
@@ -24102,10 +24098,9 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.modules = [];
     this.html = Dash.Gui.GetHTMLAbsContext();
-    // TODO: How can we make this collapsible?
+    // TODO: Ryan, how can we make this collapsible?
     this.setup_styles = function () {
         this.html.css({
-            // "background": "red",
             "background": this.color.Background,
             "display": "flex"
         });
@@ -24181,7 +24176,6 @@ function DashGuiLayoutDashboardModule (binder, style="flex") {
 function DashGuiLayoutDashboardModuleFlex () {
     this.setup_styles = function () {
         this.html.css({
-            // "background": "green",
             "margin": this.padding,
             "flex-grow": 1
         });
@@ -24192,7 +24186,6 @@ function DashGuiLayoutDashboardModuleFlex () {
 function DashGuiLayoutDashboardModuleSingle () {
     this.setup_styles = function () {
         this.html.css({
-            // "background": "blue",
             "margin": this.padding,
             "aspect-ratio": "1 / 1"
         });
@@ -24203,7 +24196,6 @@ function DashGuiLayoutDashboardModuleSingle () {
 function DashGuiLayoutDashboardModuleDouble () {
     this.setup_styles = function () {
         this.html.css({
-            // "background": "orange",
             "margin": this.padding,
             "aspect-ratio": "2 / 1"
         });

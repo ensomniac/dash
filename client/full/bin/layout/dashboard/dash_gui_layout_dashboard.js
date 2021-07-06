@@ -5,11 +5,10 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.modules = [];
     this.html = Dash.Gui.GetHTMLAbsContext();
 
-    // TODO: How can we make this collapsible?
+    // TODO: Ryan, how can we make this collapsible?
 
     this.setup_styles = function () {
         this.html.css({
-            // "background": "red",
             "background": this.color.Background,
             "display": "flex"
         });
