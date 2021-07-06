@@ -24069,6 +24069,15 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.primary_color = this.color.AccentGood;
     this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
+    this.text_css = {
+        "font-family": this.bold_font,
+        "overflow": "hidden",
+        "text-overflow": "ellipsis",
+        "white-space": "nowrap",
+        "text-align": "center",
+        "margin-left": "auto",
+        "margin-right": "auto"
+    };
     this.initialize_style = function () {
         if (this.color === Dash.Color.Dark) {
             this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
@@ -24094,6 +24103,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             return;
         }
         this.html = Dash.Gui.GetHTMLBoxContext();
+        this.add_header_text();
         this.setup_styles();
         this.modify_styles();
     };
@@ -24107,15 +24117,12 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
                 "margin-left": 0
             });
         }
+    };
+    this.add_header_text = function () {
         this.header_text.css({
+            ...this.text_css,
             "color": this.secondary_color,
-            "font-family": this.bold_font,
-            "margin": "0 auto",
             "width": "95%",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "text-align": "center",
             // TODO: How can we make the text auto-scale with the div without using vh?
             //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
             //  the answers online use ready functions. Using vh, however, works perfectly
@@ -24167,17 +24174,27 @@ function DashGuiLayoutDashboardModuleSquare () {
         else if (this.sub_style === "radial") {
             this.setup_radial_style();
         }
-        // this.html.append(this.label_text);
-        // this.html.append(this.main_text);
+        this.html.append(this.label_text);
+        this.html.append(this.main_text);
     };
     this.setup_tag_style = function () {
         this.label_text.css({
+            ...this.text_css,
             "color": this.primary_color,
-            "font-family": this.bold_font,
+            "width": "95%",
+            "margin-top": "18%",
+            // TODO
+            "font-size": "1.5vh",  // TEMP
+            "height": "1.5vh",  // TEMP
         });
         this.main_text.css({
+            ...this.text_css,
             "color": this.primary_color,
-            "font-family": this.bold_font,
+            "width": "95%",
+            // TODO
+            "font-size": "4.5vh",  // TEMP
+            "height": "4.5vh",  // TEMP
+            "line-height": "5vh",  // TEMP
         });
     };
     this.setup_radial_style = function () {
@@ -24192,9 +24209,23 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
+        this.label_text.text(text.toString().toUpperCase());
     };
     // Works for both "tag" and "radial" sub-styles
     this.SetMainText = function (text) {
+        text = text.toString().toUpperCase();
+        if (text.length > 4) {
+            console.log("WARNING: Square Module SetMainText is intended to be four characters or less - any more may introduce cut-off.");
+        }
+        if (text.length <= 3 && this.sub_style === "tag") {
+            this.main_text.css({
+                // TODO
+                "font-size": "5.5vh",  // TEMP
+                "height": "5.5vh",  // TEMP
+                "line-height": "6vh",  // TEMP
+            });
+        }
+        this.main_text.text(text);
     };
 }
 

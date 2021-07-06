@@ -13,6 +13,16 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
 
+    this.text_css = {
+        "font-family": this.bold_font,
+        "overflow": "hidden",
+        "text-overflow": "ellipsis",
+        "white-space": "nowrap",
+        "text-align": "center",
+        "margin-left": "auto",
+        "margin-right": "auto"
+    };
+
     this.initialize_style = function () {
         if (this.color === Dash.Color.Dark) {
             this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
@@ -48,6 +58,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
 
         this.html = Dash.Gui.GetHTMLBoxContext();
 
+        this.add_header_text();
         this.setup_styles();
         this.modify_styles();
     };
@@ -63,16 +74,13 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
                 "margin-left": 0
             });
         }
+    };
 
+    this.add_header_text = function () {
         this.header_text.css({
+            ...this.text_css,
             "color": this.secondary_color,
-            "font-family": this.bold_font,
-            "margin": "0 auto",
             "width": "95%",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "text-align": "center",
 
             // TODO: How can we make the text auto-scale with the div without using vh?
             //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
