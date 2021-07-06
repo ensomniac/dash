@@ -17976,12 +17976,6 @@ function DashAnimationCurves(){
 };
 
 function DashColor () {
-    // this.DarkBackground = "#e6e6e6";
-    // this.LightBackground = "#e6e6e6";
-    // this.Background = "#e6e6e6";
-    // this.Text = "#333";
-    // this.DarkText = "#333";
-    // this.LightText = "#e3d5ca";
     this.Primary = "#95ae6c";
     this.Dark = "#202229";
     this.Light = "rgb(230, 230, 230)";
@@ -17989,76 +17983,28 @@ function DashColor () {
     this.Warning = "#fab964";
     this.Light = null;
     this.Dark = null;
-    // this.SetFromJson = function (light_theme_json, dark_theme_json) {
-    // };
-    // this.Set = function (light_theme, dark_theme) {
-    //     console.log("SET");
-    // };
-    // this.fill_set = function (color_set) {
-    //     // color_set = object
-    //     console.log(color_set);
-    //     // color_set["background"] = color_set["background"] || "";
-
-    // };
     this.setup_color_sets = function () {
-        // var dark_bg = "rgb(30, 30, 30)";
-        // var dark_bg_text = "rgb(200, 200, 200)";
-        // var light_bg = "#e6e6e6";
-        // var light_bg_text = "rgb(30, 30, 30)";
-        // var button_color = "#3e9bb7";
-        // var button_hover_color = "#4dc1e4";
-        // var button_text_color = "rgb(230, 230, 230)";
-        // var button_selected = "#ac4ac6";
-        // var button_selected_hover = "#d468f0";
-        // var text_header = "#5e448a";
-        var min_light = {};
-        min_light["background"]      = "#e6e6e6";
-        min_light["text"]            = "rgb(80, 80, 80)";
-        min_light["button"]          = "blue";
-        min_light["button_selected"] = "red";
-        var min_dark = {};
-        min_dark["background"]       = "rgb(50, 50, 50)";
-        min_dark["text"]             = "rgb(200, 200, 200)";
-        min_dark["button"]           = "pink";
-        min_dark["button_selected"]  = "orange";
-        // var light = this.fill_set(min_light);
-        // var dark  = this.fill_set(min_dark);
-        // var dark_bg = "#23262b";
         var dark_bg_text = "rgb(245, 245, 245)";
-        // var light_bg = "#e6e6e6";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";
         var button_hover_color = this.Lighten(button_color);
         var button_text_color = "rgb(230, 230, 230)";
         var button_selected = "#95ae6c";
         var button_selected_hover = this.Lighten(button_selected);
-        // var text_header = "#95ae6c";
-        // var text_header_dark = "#cfe1e7";
-        // var light_accent_good = "green";
-        // var light_accent_bad = "red";
-        // var dark_accent_good = "#5b9fb7";
-        // var dark_accent_bad = "#ff6144";
-        // var dark_button = "#5ba0b8";
+        var dark_input_background = "rgba(255, 255, 255, 0.8)";
+        var light_input_background = "rgba(0, 0, 0, 0)";
+        var dark_input_text = "rgba(0, 0, 0, 0.8)";
+        var light_input_text = "rgba(0, 0, 0, 0.8)";
         var light = new DashSiteColors({
-            // "background": "#dcdbd9",
-            // "background": "#e0dfde",
             "background": "#e3e8ea",
-            // "background": "red",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
-            // "accent_good": "#e0ccb4",
             "accent_good": "#f3d057",
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
-            // "tab_area_background": "#e4eaee",
-            // "tab_area_background": "#659cba",
-            // "tab_area_background": "#6a7f8a",
-            // "tab_area_background": "#e0ccb4",
-            // "tab_area_background": "#655f5d",
             "tab_area_background": "#333",
         });
-        // 659cba
         var dark = new DashSiteColors({
             "background": "#23262b",
             "background_raised": "#444b54",
@@ -18067,38 +18013,8 @@ function DashColor () {
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
-            "tab_area_background": "red",
+            "tab_area_background": "#333",
         });
-        var dark_input_background = "rgba(255, 255, 255, 0.8)";
-        var light_input_background = "rgba(0, 0, 0, 0)";
-        var dark_input_text = "rgba(0, 0, 0, 0.8)";
-        var light_input_text = "rgba(0, 0, 0, 0.8)";
-        // var tabs_top_dark = new DashColorButtonSet( // Top Tabs
-        //     // authentic_modern_black, // The color of the area behind a set of buttons, if applicable
-        //     "rgba(0, 0, 0, 0.2)", // The color of the area behind a set of buttons, if applicable
-        //     new DashColorStateSet(
-        //         "none", // Dark.Tabs.Background.Base
-        //         background_color_light, // Dark.Tabs.Background.Selected
-        //         "rgba(0, 0, 0, 0.0)", // Stroke under inactive tab
-        //         authentic_magenta, // Dark.Tabs.Background.SelectedHover
-        //     ),
-        //     new DashColorStateSet(
-        //         "rgba(0, 0, 0, 0.5)",   // Dark.Tabs.Text.Base
-        //         "rgba(0, 0, 0, 0.8)",  // Dark.Tabs.Text.Selected
-        //         "rgba(0, 0, 0, 0.7)",  // Dark.Tabs.Text.BaseHover
-        //         "rgba(0, 0, 0, 0.9)",  // Dark.Tabs.Text.SelectedHover
-        //     ),
-        // );
-        // console.log(light);
-        this.Raise = function (cstr, raise_steps) {
-            raise_steps = raise_steps || 1;
-            return cstr;
-        };
-        this.Random = function (cstr, lighten_rgb) {
-            var tmp_colors = ["red", "blue", "green", "orange"];
-            return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
-            // return "#" + Math.floor(Math.random()*16777215).toString(16);
-        };
         this.Light = new DashColorSet(
             light.Background,       // Background color
             light.BackgroundRaised, // Background color for raised boxes
@@ -18176,7 +18092,7 @@ function DashColor () {
                 ),
             ),
             new DashColorButtonSet(    // Tab
-                "red", // The color of the area behind a set of tabs, if applicable
+                dark.TabAreaBackground, // The color of the area behind a set of tabs, if applicable
                 new DashColorStateSet( // Tab Background
                     dark.Button,    // Tab.Background.Base
                     button_selected,    // Tab.Background.Selected
@@ -18206,6 +18122,14 @@ function DashColor () {
                 ),
             ),
         );
+    };
+    this.Raise = function (cstr, raise_steps) {
+        raise_steps = raise_steps || 1;
+        return cstr;
+    };
+    this.Random = function (cstr, lighten_rgb) {
+        var tmp_colors = ["red", "blue", "green", "orange"];
+        return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
     };
     this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
@@ -18537,8 +18461,8 @@ function DashColor () {
         }
         return [parts[0], parts[1], parts[2], alpha, space];
     };
+    // This function will set the placeholder text for an input element
     this.SetPlaceholderColor = function (input_html, placeholder_color) {
-        // This function will set the placeholder text for an input element
         var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
         var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
         var node = document.createElement("style");
@@ -24098,39 +24022,33 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.modules = [];
     this.html = Dash.Gui.GetHTMLAbsContext();
-    // TODO: Ryan, how can we make this collapsible?
+    // TODO: How can we make this collapsible?
     this.setup_styles = function () {
         this.html.css({
             "background": this.color.Background,
             "display": "flex"
         });
     };
-    this.AddSingleModule = function () {
-        var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "square");
-        this.html.append(module.html);
-        this.modules.push({
-            "module": module,
-            "index": index
-        });
-        return module;
+    this.AddSquareTagModule = function () {
+        return this.add_module("square", "tag");
     };
-    this.AddDoubleModule = function () {
-        var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "rectangle");
-        this.html.append(module.html);
-        this.modules.push({
-            "module": module,
-            "index": index
-        });
-        return module;
+    this.AddSquareRadialModule = function () {
+        return this.add_module("square", "radial");
     };
-    this.AddFlexModule = function () {
+    this.AddRectListModule = function () {
+        return this.add_module("rect", "list");
+    };
+    this.AddFlexBarModule = function () {
+        return this.add_module("flex", "bar");
+    };
+    this.add_module = function (style, sub_style) {
         var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "flex");
+        var module = new Dash.Gui.Layout.Dashboard.Module(this, style, sub_style);
         this.html.append(module.html);
         this.modules.push({
             "module": module,
+            "style": style,
+            "sub_style": sub_style,
             "index": index
         });
         return module;
@@ -24138,66 +24056,163 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.setup_styles();
 }
 
-function DashGuiLayoutDashboardModule (binder, style="flex") {
+function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.binder = binder;
     this.style = style;
+    this.sub_style = sub_style;
     this.color = this.binder.color || Dash.Color.Dark;
     this.padding = Dash.Size.Padding;
-    this.html = Dash.Gui.GetHTMLBoxContext();
+    this.html = null;
+    this.styles = [];
+    this.header_text = $("<div>SetHeaderText()</div>");
+    this.bold_font = "sans_serif_bold";
+    this.primary_color = this.color.AccentGood;
+    this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
+    this.secondary_color = this.color.Tab.AreaBackground;
     this.initialize_style = function () {
+        if (this.color === Dash.Color.Dark) {
+            this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
+        }
+        else if (this.color === Dash.Color.Light) {
+            this.secondary_color = Dash.Color.Dark.Tab.AreaBackground;
+        }
         if (this.style === "flex") {
             DashGuiLayoutDashboardModuleFlex.call(this);
         }
         else if (this.style === "square") {
-            DashGuiLayoutDashboardModuleSingle.call(this);
+            DashGuiLayoutDashboardModuleSquare.call(this);
         }
-        else if (this.style === "rectangle") {
-            DashGuiLayoutDashboardModuleDouble.call(this);
+        else if (this.style === "rect") {
+            DashGuiLayoutDashboardModuleRect.call(this);
         }
         else {
             console.log("ERROR: Invalid Module Style:", this.style);
             return;
         }
+        if (!this.styles.includes(this.sub_style)) {
+            console.log("ERROR: Invalid Module Sub-Style:", this.sub_style);
+            return;
+        }
+        this.html = Dash.Gui.GetHTMLBoxContext();
         this.setup_styles();
+        this.modify_styles();
+    };
+    this.modify_styles = function () {
         this.html.css({
-            "background": this.color.BackgroundRaised
+            "background": this.color.BackgroundRaised,
+            "padding": Dash.Size.Padding * 0.4
         });
-        // When called from DashGuiLayoutDashboard
         if (this.binder.modules && this.binder.modules.length > 0) {
             this.html.css({
                 "margin-left": 0
             });
         }
+        this.header_text.css({
+            "color": this.secondary_color,
+            "font-family": this.bold_font,
+            "margin": "0 auto",
+            "width": "95%",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "text-align": "center",
+            // TODO: How can we make the text auto-scale with the div without using vh?
+            //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
+            //  the answers online use ready functions. Using vh, however, works perfectly
+            //  for this purpose. What is the reason for being so against using those units?
+            "font-size": "1vh",  // TEMP
+            "height": "1vh",  // TEMP
+        });
+        this.html.append(this.header_text);
+    };
+    // Applies to all module styles
+    this.SetHeaderText = function (text) {
+        this.header_text.text(text.toString().toUpperCase());
     };
     this.initialize_style();
 }
 
 /**@member DashGuiLayoutDashboardModule*/
 function DashGuiLayoutDashboardModuleFlex () {
+    this.styles = ["bar"];
     this.setup_styles = function () {
         this.html.css({
             "margin": this.padding,
             "flex-grow": 1
         });
     };
+    // Expects dict with key/value pairs (value should be a number), where the key
+    // displays on the bottom of the bar graph, and value sets the height of the bar
+    this.SetBarData = function (data) {
+        if (this.sub_style !== "bar") {
+            console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
+            return;
+        }
+    };
 }
 
 /**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleSingle () {
+function DashGuiLayoutDashboardModuleSquare () {
+    this.styles = ["tag", "radial"];
+    this.label_text = $("<div>-label-</div>");
+    this.main_text = $("<div>-main-</div>");
     this.setup_styles = function () {
         this.html.css({
             "margin": this.padding,
             "aspect-ratio": "1 / 1"
         });
+        if (this.sub_style === "tag") {
+            this.setup_tag_style();
+        }
+        else if (this.sub_style === "radial") {
+            this.setup_radial_style();
+        }
+        // this.html.append(this.label_text);
+        // this.html.append(this.main_text);
+    };
+    this.setup_tag_style = function () {
+        this.label_text.css({
+            "color": this.primary_color,
+            "font-family": this.bold_font,
+        });
+        this.main_text.css({
+            "color": this.primary_color,
+            "font-family": this.bold_font,
+        });
+    };
+    this.setup_radial_style = function () {
+        this.label_text.css({
+            "color": this.primary_color,
+            "font-family": this.bold_font,
+        });
+        this.main_text.css({
+            "color": this.primary_color,
+            "font-family": this.bold_font,
+        });
+    };
+    // Works for both "tag" and "radial" sub-styles
+    this.SetLabelText = function (text) {
+    };
+    // Works for both "tag" and "radial" sub-styles
+    this.SetMainText = function (text) {
     };
 }
 
 /**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleDouble () {
+function DashGuiLayoutDashboardModuleRect () {
+    this.styles = ["list"];
     this.setup_styles = function () {
         this.html.css({
             "margin": this.padding,
             "aspect-ratio": "2 / 1"
         });
+    };
+    // Expects dict with key/value pairs (value should be a string), where the key
+    // displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data) {
+        if (this.sub_style !== "list") {
+            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+            return;
+        }
     };
 }

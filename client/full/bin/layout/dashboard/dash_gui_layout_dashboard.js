@@ -5,7 +5,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.modules = [];
     this.html = Dash.Gui.GetHTMLAbsContext();
 
-    // TODO: Ryan, how can we make this collapsible?
+    // TODO: How can we make this collapsible?
 
     this.setup_styles = function () {
         this.html.css({
@@ -14,42 +14,32 @@ function DashGuiLayoutDashboard (binder, color=null) {
         });
     };
 
-    this.AddSingleModule = function () {
-        var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "square");
-
-        this.html.append(module.html);
-
-        this.modules.push({
-            "module": module,
-            "index": index
-        });
-
-        return module;
+    this.AddSquareTagModule = function () {
+        return this.add_module("square", "tag");
     };
 
-    this.AddDoubleModule = function () {
-        var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "rectangle");
-
-        this.html.append(module.html);
-
-        this.modules.push({
-            "module": module,
-            "index": index
-        });
-
-        return module;
+    this.AddSquareRadialModule = function () {
+        return this.add_module("square", "radial");
     };
 
-    this.AddFlexModule = function () {
+    this.AddRectListModule = function () {
+        return this.add_module("rect", "list");
+    };
+
+    this.AddFlexBarModule = function () {
+        return this.add_module("flex", "bar");
+    };
+
+    this.add_module = function (style, sub_style) {
         var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, "flex");
+        var module = new Dash.Gui.Layout.Dashboard.Module(this, style, sub_style);
 
         this.html.append(module.html);
 
         this.modules.push({
             "module": module,
+            "style": style,
+            "sub_style": sub_style,
             "index": index
         });
 
