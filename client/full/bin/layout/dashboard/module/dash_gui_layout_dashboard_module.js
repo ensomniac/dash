@@ -7,7 +7,8 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.padding = Dash.Size.Padding;
     this.html = null;
     this.styles = [];
-    this.header_text = $("<div>SetHeaderText()</div>");
+    this.header = $("<div>SetHeaderText()</div>");
+    this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
     this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
@@ -17,7 +18,11 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         "font-family": this.bold_font,
         "overflow": "hidden",
         "text-overflow": "ellipsis",
-        "white-space": "nowrap",
+        "white-space": "nowrap"
+    };
+
+    this.centered_text_css = {
+        ...this.text_css,
         "text-align": "center",
         "margin-left": "auto",
         "margin-right": "auto"
@@ -58,7 +63,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
 
         this.html = Dash.Gui.GetHTMLBoxContext();
 
-        this.add_header_text();
+        this.add_header();
         this.setup_styles();
         this.modify_styles();
     };
@@ -76,9 +81,9 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         }
     };
 
-    this.add_header_text = function () {
-        this.header_text.css({
-            ...this.text_css,
+    this.add_header = function () {
+        this.header.css({
+            ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
 
@@ -91,12 +96,20 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             "height": "1vh",  // TEMP
         });
 
-        this.html.append(this.header_text);
+        if (this.header_text) {
+            this.SetHeaderText(this.header_text);
+        }
+
+        this.html.append(this.header);
     };
 
     // Applies to all module styles
     this.SetHeaderText = function (text) {
-        this.header_text.text(text.toString().toUpperCase());
+        text = text.toString().toUpperCase();
+
+        this.header_text = text;
+
+        this.header.text(text);
     };
 
     this.initialize_style();
