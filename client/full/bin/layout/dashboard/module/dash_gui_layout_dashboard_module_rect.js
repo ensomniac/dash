@@ -2,12 +2,18 @@
 
 function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
-    this.list_data = null;
-    this.list_rows = null;
+    this.list_rows = [];
+
+    this.list_data = {
+        "SetListData() - Key1": "Value1",
+        "SetListData() - Key2": "Value2",
+        "SetListData() - Key3": "Value3",
+    };
+
+    // TODO: Update all uses of VH
 
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "aspect-ratio": "2 / 1"
         });
 
@@ -17,17 +23,7 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.setup_list_style = function () {
-        this.list_data = {
-            "SetListData() - Key1": "Value1",
-            "SetListData() - Key2": "Value2",
-            "SetListData() - Key3": "Value3",
-        };
-
-        this.setup_list_rows();
-    };
-
-    this.setup_list_rows = function () {
-        if (!this.list_data) {
+        if (!Dash.ValidateObject(this.list_data)) {
             console.log("ERROR: No list data for Rect List Module - use SetListData()");
 
             return;
@@ -45,10 +41,10 @@ function DashGuiLayoutDashboardModuleRect () {
             this.list_rows.push(this.get_list_row(key, this.list_data[key]));
         }
 
-        this.redraw();
+        this.redraw_list_rows();
     };
 
-    this.redraw = function () {
+    this.redraw_list_rows = function () {
         this.html.empty();
 
         this.add_header();
@@ -60,37 +56,82 @@ function DashGuiLayoutDashboardModuleRect () {
 
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
-
-        list_row.css({
-            "display": "flex"
-        });
+        var content = $("<div></div>");
+        var line = $("<div></div>");
+        var key_text = $("<div>" + key + "</div>");
+        var value_text = $("<div>" + value + "</div>");
 
         var dot_icon = new Dash.Gui.Icon(
             this.color,
             "circle_dot",
-            Dash.Size.ButtonHeight,
-            0.5,
+            Dash.Size.ButtonHeight
         );
 
-        dot_icon.icon_html.css({
-            "color": this.primary_color
+        list_row.css({
+            "width": "95%",
+            "margin-top": "3%",
+            "margin-bottom": "3%",
+
+            // TODO
+            "height": "2.75vh"  // TEMP
         });
 
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
+        content.css({
+            "display": "flex",
 
-        var text_css = {
+            // TODO
+            "height": "2.75vh"  // TEMP
+        });
+
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            // "background": "red",
+
+            // TODO
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+
+        key_text.css({
             ...this.text_css,
-            "color": this.primary_color
-        };
+            "color": this.primary_color,
+            // "background": "blue",
 
-        key_text.css(text_css);
-        value_text.css(text_css);
+            // TODO
+            "font-size": "1.5vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
 
-        list_row.append(dot_icon.html);
-        list_row.append(key_text);
-        list_row.append(Dash.Gui.GetFlexSpacer());
-        list_row.append(value_text);
+        value_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            // "background": "green",
+
+            // TODO
+            "font-size": "2.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+
+        line.css({
+            "background": this.secondary_color,
+
+            // TODO
+            "height": "0.1vh"  // TEMP
+        });
+
+        content.append(dot_icon.html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+
+        list_row.append(content);
+        list_row.append(line);
 
         return list_row;
     };
@@ -104,6 +145,14 @@ function DashGuiLayoutDashboardModuleRect () {
             return;
         }
 
+        if (!Dash.ValidateObject(data)) {
+            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+
+            return;
+        }
+
         this.list_data = data;
+
+        this.setup_list_style();
     };
 }

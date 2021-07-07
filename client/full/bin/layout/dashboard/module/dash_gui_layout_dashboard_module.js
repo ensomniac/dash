@@ -3,8 +3,13 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.style = style;
     this.sub_style = sub_style;
 
+    // TODO: Update all uses of VH
+    //  How can we make the text auto-scale with the div without using vh?
+    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
+    //  the answers online use ready functions. Using vh, however, works perfectly
+    //  for this purpose. What is the reason for not allowing those units?
+
     this.color = this.binder.color || Dash.Color.Dark;
-    this.padding = Dash.Size.Padding;
     this.html = null;
     this.styles = [];
     this.header = $("<div>SetHeaderText()</div>");
@@ -71,6 +76,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
+            "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding * 0.4
         });
 
@@ -87,11 +93,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             "color": this.secondary_color,
             "width": "95%",
 
-            // TODO: How can we make the text auto-scale with the div without using vh?
-            //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-            //  the answers online use ready functions. Using vh, however, works perfectly
-            //  for this purpose. What is the reason for being so against using those units?
-
+            // TODO
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });

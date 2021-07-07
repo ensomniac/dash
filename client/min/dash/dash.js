@@ -17672,6 +17672,9 @@ function Dash () {
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
     this.width = 0;
     this.height = 0;
+    this.ValidateObject = function (data_object) {
+        return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
+    };
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
@@ -24069,8 +24072,12 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.binder = binder;
     this.style = style;
     this.sub_style = sub_style;
+    // TODO: Update all uses of VH
+    //  How can we make the text auto-scale with the div without using vh?
+    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
+    //  the answers online use ready functions. Using vh, however, works perfectly
+    //  for this purpose. What is the reason for not allowing those units?
     this.color = this.binder.color || Dash.Color.Dark;
-    this.padding = Dash.Size.Padding;
     this.html = null;
     this.styles = [];
     this.header = $("<div>SetHeaderText()</div>");
@@ -24123,6 +24130,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
+            "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding * 0.4
         });
         if (this.binder.modules && this.binder.modules.length > 0) {
@@ -24136,10 +24144,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            // TODO: How can we make the text auto-scale with the div without using vh?
-            //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-            //  the answers online use ready functions. Using vh, however, works perfectly
-            //  for this purpose. What is the reason for being so against using those units?
+            // TODO
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -24160,11 +24165,21 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
 /**@member DashGuiLayoutDashboardModule*/
 function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
+    this.bar_data = {};
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "flex-grow": 1
         });
+        if (this.sub_style === "bar") {
+            this.setup_bar_style();
+        }
+    };
+    this.setup_bar_style = function () {
+        if (!Dash.ValidateObject(this.bar_data)) {
+            console.log("ERROR: No list data for Rect List Module - use SetListData()");
+            return;
+        }
+        // TODO: Setup bar graph gui element using this.bar_data
     };
     // Expects dict with key/value pairs (value should be a number), where the key
     // displays on the bottom of the bar graph, and value sets the height of the bar
@@ -24173,6 +24188,12 @@ function DashGuiLayoutDashboardModuleFlex () {
             console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
             return;
         }
+        if (!Dash.ValidateObject(data)) {
+            console.log("ERROR: SetBarData() requires a dictionary to be passed in");
+            return;
+        }
+        this.bar_data = data;
+        this.setup_bar_style();
     };
 }
 
@@ -24181,9 +24202,9 @@ function DashGuiLayoutDashboardModuleSquare () {
     this.styles = ["tag", "radial"];
     this.label_text = $("<div>SetLabelText()</div>");
     this.main_text = $("<div>SetMainText()</div>");
+    // TODO: Update all uses of VH
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "aspect-ratio": "1 / 1"
         });
         if (this.sub_style === "tag") {
@@ -24230,9 +24251,9 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             // TODO
-            "font-size": "2.5vh",  // TEMP
-            "height": "2.5vh",  // TEMP
-            "line-height": "3vh",  // TEMP
+            "font-size": "2.75vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "3.25vh",  // TEMP
         });
         var radial_value = this.get_radial_value();
         this.main_text.text(radial_value);
@@ -24271,11 +24292,15 @@ function DashGuiLayoutDashboardModuleSquare () {
 /**@member DashGuiLayoutDashboardModule*/
 function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
-    this.list_data = null;
-    this.list_rows = null;
+    this.list_rows = [];
+    this.list_data = {
+        "SetListData() - Key1": "Value1",
+        "SetListData() - Key2": "Value2",
+        "SetListData() - Key3": "Value3",
+    };
+    // TODO: Update all uses of VH
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "aspect-ratio": "2 / 1"
         });
         if (this.sub_style === "list") {
@@ -24283,15 +24308,7 @@ function DashGuiLayoutDashboardModuleRect () {
         }
     };
     this.setup_list_style = function () {
-        this.list_data = {
-            "SetListData() - Key1": "Value1",
-            "SetListData() - Key2": "Value2",
-            "SetListData() - Key3": "Value3",
-        };
-        this.setup_list_rows();
-    };
-    this.setup_list_rows = function () {
-        if (!this.list_data) {
+        if (!Dash.ValidateObject(this.list_data)) {
             console.log("ERROR: No list data for Rect List Module - use SetListData()");
             return;
         }
@@ -24303,9 +24320,9 @@ function DashGuiLayoutDashboardModuleRect () {
             }
             this.list_rows.push(this.get_list_row(key, this.list_data[key]));
         }
-        this.redraw();
+        this.redraw_list_rows();
     };
-    this.redraw = function () {
+    this.redraw_list_rows = function () {
         this.html.empty();
         this.add_header();
         for (var i in this.list_rows) {
@@ -24314,30 +24331,67 @@ function DashGuiLayoutDashboardModuleRect () {
     };
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
-        list_row.css({
-            "display": "flex"
-        });
+        var content = $("<div></div>");
+        var line = $("<div></div>");
+        var key_text = $("<div>" + key + "</div>");
+        var value_text = $("<div>" + value + "</div>");
         var dot_icon = new Dash.Gui.Icon(
             this.color,
             "circle_dot",
-            Dash.Size.ButtonHeight,
-            0.5,
+            Dash.Size.ButtonHeight
         );
-        dot_icon.icon_html.css({
-            "color": this.primary_color
+        list_row.css({
+            "width": "95%",
+            "margin-top": "3%",
+            "margin-bottom": "3%",
+            // TODO
+            "height": "2.75vh"  // TEMP
         });
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
-        var text_css = {
+        content.css({
+            "display": "flex",
+            // TODO
+            "height": "2.75vh"  // TEMP
+        });
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            // "background": "red",
+            // TODO
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        key_text.css({
             ...this.text_css,
-            "color": this.primary_color
-        };
-        key_text.css(text_css);
-        value_text.css(text_css);
-        list_row.append(dot_icon.html);
-        list_row.append(key_text);
-        list_row.append(Dash.Gui.GetFlexSpacer());
-        list_row.append(value_text);
+            "color": this.primary_color,
+            // "background": "blue",
+            // TODO
+            "font-size": "1.5vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        value_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            // "background": "green",
+            // TODO
+            "font-size": "2.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        line.css({
+            "background": this.secondary_color,
+            // TODO
+            "height": "0.1vh"  // TEMP
+        });
+        content.append(dot_icon.html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+        list_row.append(content);
+        list_row.append(line);
         return list_row;
     };
     // Expects dict with key/value pairs (value should be a string), where the key
@@ -24347,6 +24401,11 @@ function DashGuiLayoutDashboardModuleRect () {
             console.log("ERROR: SetListData() only applies to Rect-List Modules");
             return;
         }
+        if (!Dash.ValidateObject(data)) {
+            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+            return;
+        }
         this.list_data = data;
+        this.setup_list_style();
     };
 }

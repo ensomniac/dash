@@ -2,12 +2,26 @@
 
 function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
+    this.bar_data = {};
 
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "flex-grow": 1
         });
+
+        if (this.sub_style === "bar") {
+            this.setup_bar_style();
+        }
+    };
+
+    this.setup_bar_style = function () {
+        if (!Dash.ValidateObject(this.bar_data)) {
+            console.log("ERROR: No list data for Rect List Module - use SetListData()");
+
+            return;
+        }
+
+        // TODO: Setup bar graph gui element using this.bar_data
     };
 
     // Expects dict with key/value pairs (value should be a number), where the key
@@ -18,5 +32,15 @@ function DashGuiLayoutDashboardModuleFlex () {
 
             return;
         }
+
+        if (!Dash.ValidateObject(data)) {
+            console.log("ERROR: SetBarData() requires a dictionary to be passed in");
+
+            return;
+        }
+
+        this.bar_data = data;
+
+        this.setup_bar_style();
     };
 }

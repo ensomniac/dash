@@ -5,9 +5,10 @@ function DashGuiLayoutDashboardModuleSquare () {
     this.label_text = $("<div>SetLabelText()</div>");
     this.main_text = $("<div>SetMainText()</div>");
 
+    // TODO: Update all uses of VH
+
     this.setup_styles = function () {
         this.html.css({
-            "margin": this.padding,
             "aspect-ratio": "1 / 1"
         });
 
@@ -65,9 +66,9 @@ function DashGuiLayoutDashboardModuleSquare () {
             "width": "50%",
 
             // TODO
-            "font-size": "2.5vh",  // TEMP
-            "height": "2.5vh",  // TEMP
-            "line-height": "3vh",  // TEMP
+            "font-size": "2.75vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "3.25vh",  // TEMP
         });
 
         var radial_value = this.get_radial_value();

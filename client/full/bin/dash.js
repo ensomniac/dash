@@ -24,6 +24,10 @@ function Dash () {
     this.width = 0;
     this.height = 0;
 
+    this.ValidateObject = function (data_object) {
+        return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
+    };
+
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
