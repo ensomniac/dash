@@ -15,8 +15,8 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 
     this.setup_bar_style = function () {
-        if (!Dash.ValidateObject(this.bar_data)) {
-            console.log("ERROR: No list data for Rect List Module - use SetListData()");
+        if (!Dash.IsValidObject(this.bar_data)) {
+            console.log("No list data for Flex Bar Module - use SetBarData()");
 
             return;
         }
@@ -33,7 +33,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             return;
         }
 
-        if (!Dash.ValidateObject(data)) {
+        if (!Dash.IsValidObject(data)) {
             console.log("ERROR: SetBarData() requires a dictionary to be passed in");
 
             return;

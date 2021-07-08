@@ -5,9 +5,15 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.modules = [];
     this.html = Dash.Gui.GetHTMLAbsContext();
 
+    this.VerticalSpaceTakenPercent = null;
+    this.VerticalSpaceAvailablePercent = null;
+
     // TODO: How can we make this collapsible?
 
     this.setup_styles = function () {
+        this.VerticalSpaceTakenPercent = "15%";
+        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+
         this.html.css({
             "background": this.color.Background,
             "display": "flex"
@@ -44,6 +50,23 @@ function DashGuiLayoutDashboard (binder, color=null) {
         });
 
         return module;
+    };
+
+    this.get_available_vertical_space_percent = function () {
+        return (100 - parseInt(this.VerticalSpaceTakenPercent)).toString() + "%";
+    };
+
+    this.SetVerticalSpacePercent = function (num) {
+        num = parseInt(num);
+
+        if (isNaN(num)) {
+            console.log("ERROR: Invalid number passed to SetVerticalSpacePercent()");
+
+            return;
+        }
+
+        this.VerticalSpaceTakenPercent = num.toString() + "%";
+        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
     };
 
     this.setup_styles();

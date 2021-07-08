@@ -23,8 +23,8 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.setup_list_style = function () {
-        if (!Dash.ValidateObject(this.list_data)) {
-            console.log("ERROR: No list data for Rect List Module - use SetListData()");
+        if (!Dash.IsValidObject(this.list_data)) {
+            console.log("No list data for Rect List Module - use SetListData()");
 
             return;
         }
@@ -45,6 +45,8 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.redraw_list_rows = function () {
+        // TODO: Should we add animation?
+
         this.html.empty();
 
         this.add_header();
@@ -145,7 +147,7 @@ function DashGuiLayoutDashboardModuleRect () {
             return;
         }
 
-        if (!Dash.ValidateObject(data)) {
+        if (!Dash.IsValidObject(data)) {
             console.log("ERROR: SetListData() requires a dictionary to be passed in");
 
             return;
