@@ -8,6 +8,6 @@ function DashMath () {
     };
 
     this.RandomNumber = function (min=10000000, max=99999999) {
-        return min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min);
+        return parseInt((min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min)).toString());
     };
 }

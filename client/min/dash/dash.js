@@ -17966,7 +17966,7 @@ function DashMath () {
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
     this.RandomNumber = function (min=10000000, max=99999999) {
-        return min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min);
+        return parseInt((min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min)).toString());
     };
 }
 
@@ -24050,18 +24050,20 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.modules = [];
+    this.canvas_containers = [];
+    this.margin = 1;
+    this.padding = Dash.Size.Padding * 0.4;  // TODO: Update all uses of this in the same way I update all margin usages
+    this.rect_aspect_ratio = "2 / 1";
+    this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
     // TODO: How can we make this collapsible?
-    this.setup_styles = function () {
-        this.VerticalSpaceTakenPercent = "15%";
-        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
-        this.html.css({
-            "background": this.color.Background,
-            "display": "flex"
-        });
-    };
+    // TODO: Update all uses of VH/VW
+    //  How can we make the text auto-scale with the div without using vh?
+    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
+    //  the answers online use ready functions. Using vh, however, works perfectly
+    //  for this purpose. What is the reason for not allowing those units?
     this.AddSquareTagModule = function () {
         return this.add_module("square", "tag");
     };
@@ -24074,6 +24076,23 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.AddFlexBarModule = function () {
         return this.add_module("flex", "bar");
     };
+    this.SetVerticalSpacePercent = function (num) {
+        num = parseInt(num);
+        if (isNaN(num)) {
+            console.log("ERROR: Invalid number passed to SetVerticalSpacePercent()");
+            return;
+        }
+        this.VerticalSpaceTakenPercent = num.toString() + "%";
+        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+    };
+    this.setup_styles = function () {
+        this.VerticalSpaceTakenPercent = "15%";
+        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+        this.html.css({
+            "background": this.color.Background,
+            "display": "flex"
+        });
+    };
     this.add_module = function (style, sub_style) {
         var index = this.modules.length;
         var module = new Dash.Gui.Layout.Dashboard.Module(this, style, sub_style);
@@ -24084,33 +24103,105 @@ function DashGuiLayoutDashboard (binder, color=null) {
             "sub_style": sub_style,
             "index": index
         });
+        // TODO: Should do a resize check here for any flex modules (and maybe canvases) based on new module total?
+        this.update_canvas_containers();
         return module;
     };
     this.get_available_vertical_space_percent = function () {
         return (100 - parseInt(this.VerticalSpaceTakenPercent)).toString() + "%";
     };
-    this.SetVerticalSpacePercent = function (num) {
-        num = parseInt(num);
-        if (isNaN(num)) {
-            console.log("ERROR: Invalid number passed to SetVerticalSpacePercent()");
+    // Document scope
+    this.update_canvas_containers = function () {
+        var i;
+        var styles = [];
+        for (i in this.modules) {
+            styles.push(this.modules[i]["style"]);
+        }
+        for (i in this.canvas_containers) {
+            try {
+                document.body.removeChild(this.canvas_containers[i]["container"]);
+                document.body.removeChild(this.canvas_containers[i]["script"]);
+            }
+            catch {
+                // Not a child, continue/pass
+            }
+            if (window[this.canvas_containers[i]["id"]]) {
+                delete window[this.canvas_containers[i]["id"]];
+            }
+        }
+        
+        this.canvas_containers = [];
+        for (i in this.modules) {
+            var canvas = this.modules[i]["module"].canvas;
+            if (!canvas) {
+                continue;
+            }
+            this.add_canvas(canvas, styles, this.modules[i]["index"]);
+        }
+    };
+    // Document scope
+    this.add_canvas = function (canvas, styles, index) {
+        var canvas_container = canvas["container"];
+        var canvas_script = canvas["script"];
+        if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
+            console.log("ERROR: Something went wrong when updating canvas containers x0741");
             return;
         }
-        this.VerticalSpaceTakenPercent = num.toString() + "%";
-        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+        var top_container = document.createElement("div");
+        top_container.style.display = "flex";
+        top_container.style.position = "absolute";
+        top_container.style.width = "100%";
+        // TODO: These values need to be somehow tied to the VerticalSpace stuff
+        top_container.style.top = "85vh";  // TEMP
+        top_container.style.height = "14.9vh";  // TEMP
+        for (var i in styles) {
+            if (parseInt(i) === index) {
+                top_container.appendChild(canvas_container);
+            }
+            
+            else {
+                top_container.appendChild(this.get_placeholder_container(styles[i], i));
+            }
+        }
+        // IMPORTANT: Must be at document level (added dynamically) for Chart script objects to properly display
+        document.body.appendChild(top_container);
+        document.body.appendChild(canvas_script);
+        var new_container_data = {...canvas};
+        new_container_data["container"] = top_container;
+        this.canvas_containers.push(new_container_data);
+    };
+    // Document scope
+    this.get_placeholder_container = function (type, index) {
+        var container = document.createElement("div");
+        container.style.padding = this.padding.toString() + "px";
+        // TODO: Replace units if absolutely necessary
+        container.style.margin = this.margin.toString() + "vh";  // TEMP
+        if (type === "square") {
+            container.style.aspectRatio = this.square_aspect_ratio;
+        }
+        else if (type === "rect") {
+            container.style.aspectRatio = this.rect_aspect_ratio;
+        }
+        else if (type === "flex") {
+            container.style.flex = "1";
+        }
+        if (parseInt(index) > 0) {
+            container.style.marginLeft = "0px";
+        }
+        return container;
     };
     this.setup_styles();
 }
 
-function DashGuiLayoutDashboardModule (binder, style, sub_style) {
-    this.binder = binder;
+function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
+    this.dashboard = dashboard;
     this.style = style;
     this.sub_style = sub_style;
     // TODO: Update all uses of VH
-    //  How can we make the text auto-scale with the div without using vh?
-    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use ready functions. Using vh, however, works perfectly
-    //  for this purpose. What is the reason for not allowing those units?
-    this.color = this.binder.color || Dash.Color.Dark;
+    this.color = this.dashboard.color || Dash.Color.Dark;
+    this.modules = this.dashboard.modules;
+    this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
+    this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
     this.styles = [];
     this.header = $("<div>SetHeaderText()</div>");
@@ -24119,6 +24210,9 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.primary_color = this.color.AccentGood;
     this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
+    this.margin = this.dashboard.margin;
+    this.padding = this.dashboard.padding;
+    this.canvas = null;
     this.text_css = {
         "font-family": this.bold_font,
         "overflow": "hidden",
@@ -24130,6 +24224,12 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         "text-align": "center",
         "margin-left": "auto",
         "margin-right": "auto"
+    };
+    // Applies to all module styles
+    this.SetHeaderText = function (text) {
+        text = text.toString().toUpperCase();
+        this.header_text = text;
+        this.header.text(text);
     };
     this.initialize_style = function () {
         if (this.color === Dash.Color.Dark) {
@@ -24163,10 +24263,11 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": Dash.Size.Padding,
-            "padding": Dash.Size.Padding * 0.4
+            // TODO: Replace units if absolutely necessary
+            "margin": this.margin.toString() + "vh",  // TEMP
+            "padding": this.padding
         });
-        if (this.binder.modules && this.binder.modules.length > 0) {
+        if (this.modules && this.modules.length > 0) {
             this.html.css({
                 "margin-left": 0
             });
@@ -24177,7 +24278,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -24186,12 +24287,6 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         }
         this.html.append(this.header);
     };
-    // Applies to all module styles
-    this.SetHeaderText = function (text) {
-        text = text.toString().toUpperCase();
-        this.header_text = text;
-        this.header.text(text);
-    };
     this.initialize_style();
 }
 
@@ -24199,21 +24294,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
 function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
-    this.setup_styles = function () {
-        this.html.css({
-            "flex-grow": 1
-        });
-        if (this.sub_style === "bar") {
-            this.setup_bar_style();
-        }
-    };
-    this.setup_bar_style = function () {
-        if (!Dash.IsValidObject(this.bar_data)) {
-            console.log("No list data for Flex Bar Module - use SetBarData()");
-            return;
-        }
-        // TODO: Setup bar graph gui element using this.bar_data
-    };
+    // TODO: Update all uses of VH/VW
     // Expects dict with key/value pairs (value should be a number), where the key
     // displays on the bottom of the bar graph, and value sets the height of the bar
     this.SetBarData = function (data) {
@@ -24226,101 +24307,74 @@ function DashGuiLayoutDashboardModuleFlex () {
             return;
         }
         this.bar_data = data;
+        // TODO: needs to redraw
         this.setup_bar_style();
     };
-}
-
-/**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleSquare () {
-    this.styles = ["tag", "radial"];
-    this.label_text = "SetLabelText()";
-    this.label_header_text = "SetLabelHeaderText()";
-    this.label = $("<div>" + this.label_text + "</div>");
-    this.label_header = $("<div>" + this.label_header_text + "</div>");
-    // TODO: Update all uses of VH
     this.setup_styles = function () {
         this.html.css({
-            "aspect-ratio": "1 / 1"
+            "flex": 1
         });
-        if (this.sub_style === "tag") {
-            this.setup_tag_style();
+        if (this.sub_style === "bar") {
+            this.setup_bar_style();
         }
-        else if (this.sub_style === "radial") {
-            this.setup_radial_style();
-        }
-        this.html.append(this.label_header);
-        this.html.append(this.label);
     };
-    this.setup_tag_style = function () {
-        // TODO: Should we add animation?
-        this.label_header.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "95%",
-            "margin-top": "18%",
-            // TODO
-            "font-size": "1.5vh",  // TEMP
-            "height": "1.5vh",  // TEMP
-        });
-        this.label.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "95%",
-            // TODO
-            "font-size": "4.5vh",  // TEMP
-            "height": "4.5vh",  // TEMP
-            "line-height": "5vh",  // TEMP
-        });
+    this.setup_bar_style = function () {
+        // TODO: Make sure we have data? Setup a default data set?
+        // if (!Dash.IsValidObject(this.bar_data)) {
+        //     console.log("No list data for Flex Bar Module - use SetBarData()");
+        //
+        //     return;
+        // }
+        // TODO: Create functionality to redraw when data is updated
+        //  (might need to use (or may be as simple as using) update_canvas_containers()?)
+        this.setup_bar_graph_gui();
     };
-    this.setup_radial_style = function () {
-        this.label_header.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "50%",
-            "margin-top": "32%",
-            // TODO
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
-        });
-        this.label.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "50%",
-            // TODO
-            "font-size": "2.75vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "3.25vh",  // TEMP
-        });
-        var radial_value = this.get_radial_value();
-        this.label.text(radial_value);
-        this.setup_radial_gui();
-    };
-    this.setup_radial_gui = function () {
+    this.setup_bar_graph_gui = function () {
+        // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
         var config = {
-            "type": "doughnut",
+            "type": "bar",
             "data": {
-                "labels": ["Invoiced", "Not Invoiced"],
+                "labels": ["C", "D", "H", "J", "K", "L", "M", "S", "T", "W", "Z"],  // TODO: This needs to come from data
                 "datasets": [{
-                    "label": "Dataset 1",
-                    // "data": this.get_numbers({"count": 2, "min": 0, "max": 100}),
-                    "data": [62, 38],  // TODO: This needs to come from radial value data (percent full, percent empty)
-                    "backgroundColor": Object.values({
-                        "invoiced": this.primary_color,
-                        "not_invoiced": this.secondary_color,
-                    }),
-                    "borderWidth": Object.values({
-                        "invoiced": 5,
-                        "not_invoiced": 0,
-                    }),
-                    "borderColor": Object.values({
-                        "invoiced": this.primary_color
-                    }),
+                    "label": "My First Dataset",
+                    "data": [70, 15, 20, 45, 78, 30, 10, 37, 13, 60, 14],  // TODO: This needs to come from data
+                    "backgroundColor": this.primary_color,
+                    "barPercentage": 0.75
                 }]
             },
             "options": {
-                "cutout": "80%",
                 "responsive": true,
-                "aspectRatio": 1,
+                "maintainAspectRatio": false,
+                "scales": {
+                    "y": {
+                        "beginAtZero": true,
+                        "grid": {
+                            "color": this.secondary_color,
+                            "borderColor": this.secondary_color,
+                            "tickLength": 4
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": 4,
+                            "font": {
+                                "family": this.bold_font
+                            }
+                        }
+                    },
+                    "x": {
+                        "grid": {
+                            "display": false
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": -5,
+                            "font": {
+                                "family": this.bold_font,
+                                "size": 16
+                            }
+                        }
+                    },
+                },
                 "plugins": {
                     "legend": {
                         "display": false
@@ -24332,59 +24386,217 @@ function DashGuiLayoutDashboardModuleSquare () {
                         "display": false
                     }
                 }
-            },
+            }
         };
-        // TODO: Since the canvas has to be at document level and added dynamically for Chart objects to
-        //  actually display, need to work out a way that we can programmatically determine where to position
-        //  the Chart object based on the positioning of this.html (the current dashboard square module)
-        var id = "canvas" + Dash.Math.RandomNumber();
-        var div = document.createElement("div");
-        // TODO
-        div.style.width = "10.5vh";  // TEMP
-        div.style.height = "10.5vh";  // TEMP
-        div.style.top = "88vh";  // TEMP
-        div.style.left = "16.25vh";  // TEMP
+        // TODO: Flex responsiveness is not working properly because the percentage of the screen that
+        //  the flex module box takes up changes when the screen size changes, and then the gui container
+        //  doesn't reflect that percentage change, still thinking the width/height vw/vh values are the same.
+        //  Need a way to maybe calculate the screen percentage of the flex box before setting the initial
+        //  vw/vh width/height values. It wouldn't be able to accurately adapt in real time, but each time
+        //  the page is reloaded, it will be the correct width/height. Shouldn't need to be able to adjust for
+        //  realtime window changes anyway, as long as it's accurate on load for any size.
         var canvas = document.createElement("canvas");
-        canvas.id = id;
-        div.appendChild(canvas);
-        document.body.appendChild(div);
-        var ctx = document.getElementById(id).getContext("2d");
-        ctx.canvas.width = 10;
-        ctx.canvas.height = 10;
-        var text = "new Chart(document.getElementById('" + id + "').getContext('2d')," + JSON.stringify(config) + ");";
-        var script = $("<script type='text/javascript'></script>");
-        script.text(text);
-        this.html.append(script);
+        var script = document.createElement("script");
+        var canvas_container = document.createElement("div");
+        var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+        // TODO: Replace units if absolutely necessary
+        canvas_container.style.width = "37.75vw";  // TEMP
+        canvas_container.style.height = "11.25vh";  // TEMP
+        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
+        canvas_container.style.marginLeft = this.margin.toString() + "vw";  // TEMP
+        canvas_container.style.marginRight = (this.margin * 1.75).toString() + "vw";  // TEMP
+        canvas_container.style.overflow = "hidden";
+        canvas.id = canvas_id;
+        script.type = "text/javascript";
+        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+        canvas_container.appendChild(canvas);
+        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
     };
-    this.get_radial_value = function () {
-        // TODO: Need to do some sort of calculation here based on provided
-        //  data that gets the percentage fill value of the radial gui
-        return "62%";  // PLACEHOLDER
-    };
+}
+
+/**@member DashGuiLayoutDashboardModule*/
+function DashGuiLayoutDashboardModuleSquare () {
+    this.styles = ["tag", "radial"];
+    this.label_text = "SetLabelText()";
+    this.label_header_text = "SetLabelHeaderText()";
+    this.label = $("<div>" + this.label_text + "</div>");
+    this.label_header = $("<div>" + this.label_header_text + "</div>");
+    this.radial_fill_percent = 0;
+    // TODO: Update all uses of VH
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
         this.label_header_text = text.toString().toUpperCase();
-        
         this.label_header.text(this.label_header_text);
     };
+    // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
-        if (this.sub_style !== "tag") {
-            console.log("ERROR: SetMainText() can only be used for Square Tag Modules, not", this.sub_style.Title());
-            return;
-        }
         this.label_text = text.toString().toUpperCase();
         if (this.label_text.length > 4) {
             console.log("WARNING: Square Module SetMainText is intended to be four characters or less - any more may introduce cut-off.");
         }
-        if (this.label_text.length <= 3) {
+        if (this.sub_style === "tag" && this.label_text.length <= 3) {
             this.label.css({
-                // TODO
+                // TODO: Replace units if absolutely necessary
                 "font-size": "5.5vh",  // TEMP
                 "height": "5.5vh",  // TEMP
                 "line-height": "6vh",  // TEMP
             });
         }
         this.label.text(this.label_text);
+    };
+    this.SetRadialFillPercent = function (percent) {
+        if (this.sub_style !== "radial") {
+            console.log("ERROR: SetRadialFillPercent() only works for Square Radial Modules");
+            return;
+        }
+        percent = parseInt(percent);
+        if (isNaN(percent)) {
+            console.log("ERROR: SetRadialFillPercent requires a number!");
+        }
+        if (percent > 100) {
+            percent = 100;
+        }
+        if (percent < 0) {
+            percent = 0;
+        }
+        this.radial_fill_percent = percent;
+        this.SetLabelText(this.radial_fill_percent.toString() + "%");
+        if (!this.canvas) {
+            return;
+        }
+        var radial_gui = window[this.canvas["id"]];
+        // Try again if gui hasn't loaded yet (should only happen when initializing)
+        if (!radial_gui.data) {
+            (function (self, percent) {
+                setTimeout(
+                    function () {
+                        self.SetRadialFillPercent(percent);
+                        },
+                    250
+                );
+            })(this, percent);
+            return;
+        }
+        radial_gui.data.datasets[0].data = this.get_radial_fill_data();
+        radial_gui.update();
+    };
+    this.setup_styles = function () {
+        this.html.css({
+            "aspect-ratio": this.square_aspect_ratio
+        });
+        if (this.sub_style === "tag") {
+            this.setup_tag_style();
+        }
+        else if (this.sub_style === "radial") {
+            this.setup_radial_style();
+        }
+        this.html.append(this.label_header);
+        this.html.append(this.label);
+    };
+    this.setup_tag_style = function () {
+        // TODO: Add some sort of animation?
+        this.label_header.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "95%",
+            "margin-top": "18%",
+            // TODO: Replace units if absolutely necessary
+            "font-size": "1.5vh",  // TEMP
+            "height": "1.5vh",  // TEMP
+        });
+        this.label.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "95%",
+            // TODO: Replace units if absolutely necessary
+            "font-size": "4.5vh",  // TEMP
+            "height": "4.5vh",  // TEMP
+            "line-height": "5vh",  // TEMP
+        });
+    };
+    this.setup_radial_style = function () {
+        // TODO: Create functionality to redraw when data is updated
+        //  (might need to use (or may be as simple as using) update_canvas_containers()?)
+        this.label_header.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "50%",
+            "margin-top": "32%",
+            // TODO: Replace units if absolutely necessary
+            "font-size": "1vh",  // TEMP
+            "height": "1vh",  // TEMP
+        });
+        this.label.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "50%",
+            // TODO: Replace units if absolutely necessary
+            "font-size": "2.75vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "3.25vh",  // TEMP
+        });
+        this.SetLabelText(this.radial_fill_percent.toString() + "%");
+        this.setup_radial_gui();
+    };
+    this.get_radial_fill_data = function () {
+        return [this.radial_fill_percent, 100 - this.radial_fill_percent];
+    };
+    this.setup_radial_gui = function () {
+        // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
+        var config = {
+            "type": "doughnut",
+            "data": {
+                "datasets": [{
+                    "data": this.get_radial_fill_data(),
+                    "backgroundColor": [
+                        this.primary_color,  // Filled
+                        this.secondary_color  // Unfilled
+                    ],
+                    "borderWidth": [
+                        5,  // Filled
+                        0,  // Unfilled
+                    ],
+                    "borderColor": [
+                        this.primary_color  // Filled
+                    ]
+                }]
+            },
+            "options": {
+                "cutout": "80%",
+                "responsive": true,
+                "aspectRatio": 1,
+                "maintainAspectRatio": true,
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
+        var canvas = document.createElement("canvas");
+        var script = document.createElement("script");
+        var canvas_container = document.createElement("div");
+        var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
+        canvas_container.style.overflow = "hidden";
+        // TODO: Replace units if absolutely necessary
+        canvas_container.style.width = "10.5vh";  // TEMP
+        canvas_container.style.height = "10.5vh";  // TEMP
+        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        canvas_container.style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
+        canvas_container.style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
+        canvas_container.style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
+        canvas.id = canvas_id;
+        script.type = "text/javascript";
+        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+        canvas_container.appendChild(canvas);
+        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
     };
 }
 
@@ -24398,9 +24610,23 @@ function DashGuiLayoutDashboardModuleRect () {
         "SetListData() - Key3": "Value3",
     };
     // TODO: Update all uses of VH
+    // Expects dict with key/value pairs (value should be a string), where the key
+    // displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data) {
+        if (this.sub_style !== "list") {
+            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+            return;
+        }
+        if (!Dash.IsValidObject(data)) {
+            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+            return;
+        }
+        this.list_data = data;
+        this.setup_list_style();
+    };
     this.setup_styles = function () {
         this.html.css({
-            "aspect-ratio": "2 / 1"
+            "aspect-ratio": this.rect_aspect_ratio
         });
         if (this.sub_style === "list") {
             this.setup_list_style();
@@ -24422,7 +24648,7 @@ function DashGuiLayoutDashboardModuleRect () {
         this.redraw_list_rows();
     };
     this.redraw_list_rows = function () {
-        // TODO: Should we add animation?
+        // TODO: Add some sort of animation?
         this.html.empty();
         this.add_header();
         for (var i in this.list_rows) {
@@ -24441,15 +24667,15 @@ function DashGuiLayoutDashboardModuleRect () {
             Dash.Size.ButtonHeight
         );
         list_row.css({
-            "width": "95%",
+            "width": "98%",
             "margin-top": "3%",
             "margin-bottom": "3%",
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "2.75vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "2.75vh"  // TEMP
         });
         dot_icon.icon_html.css({
@@ -24457,8 +24683,7 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            // "background": "red",
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -24466,24 +24691,25 @@ function DashGuiLayoutDashboardModuleRect () {
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // "background": "blue",
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
+            "width": "17vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
         });
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // "background": "green",
-            // TODO
+            "text-align": "right",
+            // TODO: Replace units if absolutely necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
+            "width": "4vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
         });
         line.css({
             "background": this.secondary_color,
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "0.1vh"  // TEMP
         });
         content.append(dot_icon.html);
@@ -24493,19 +24719,5 @@ function DashGuiLayoutDashboardModuleRect () {
         list_row.append(content);
         list_row.append(line);
         return list_row;
-    };
-    // Expects dict with key/value pairs (value should be a string), where the key
-    // displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data) {
-        if (this.sub_style !== "list") {
-            console.log("ERROR: SetListData() only applies to Rect-List Modules");
-            return;
-        }
-        if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetListData() requires a dictionary to be passed in");
-            return;
-        }
-        this.list_data = data;
-        this.setup_list_style();
     };
 }

@@ -12,9 +12,29 @@ function DashGuiLayoutDashboardModuleRect () {
 
     // TODO: Update all uses of VH
 
+    // Expects dict with key/value pairs (value should be a string), where the key
+    // displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data) {
+        if (this.sub_style !== "list") {
+            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+
+            return;
+        }
+
+        if (!Dash.IsValidObject(data)) {
+            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+
+            return;
+        }
+
+        this.list_data = data;
+
+        this.setup_list_style();
+    };
+
     this.setup_styles = function () {
         this.html.css({
-            "aspect-ratio": "2 / 1"
+            "aspect-ratio": this.rect_aspect_ratio
         });
 
         if (this.sub_style === "list") {
@@ -45,7 +65,7 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.redraw_list_rows = function () {
-        // TODO: Should we add animation?
+        // TODO: Add some sort of animation?
 
         this.html.empty();
 
@@ -70,18 +90,18 @@ function DashGuiLayoutDashboardModuleRect () {
         );
 
         list_row.css({
-            "width": "95%",
+            "width": "98%",
             "margin-top": "3%",
             "margin-bottom": "3%",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "2.75vh"  // TEMP
         });
 
         content.css({
             "display": "flex",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "2.75vh"  // TEMP
         });
 
@@ -90,9 +110,8 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            // "background": "red",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -101,29 +120,30 @@ function DashGuiLayoutDashboardModuleRect () {
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // "background": "blue",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
+            "width": "17vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
         });
 
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // "background": "green",
+            "text-align": "right",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
+            "width": "4vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
         });
 
         line.css({
             "background": this.secondary_color,
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "height": "0.1vh"  // TEMP
         });
 
@@ -136,25 +156,5 @@ function DashGuiLayoutDashboardModuleRect () {
         list_row.append(line);
 
         return list_row;
-    };
-
-    // Expects dict with key/value pairs (value should be a string), where the key
-    // displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data) {
-        if (this.sub_style !== "list") {
-            console.log("ERROR: SetListData() only applies to Rect-List Modules");
-
-            return;
-        }
-
-        if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetListData() requires a dictionary to be passed in");
-
-            return;
-        }
-
-        this.list_data = data;
-
-        this.setup_list_style();
     };
 }

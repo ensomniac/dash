@@ -1,15 +1,14 @@
-function DashGuiLayoutDashboardModule (binder, style, sub_style) {
-    this.binder = binder;
+function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
+    this.dashboard = dashboard;
     this.style = style;
     this.sub_style = sub_style;
 
     // TODO: Update all uses of VH
-    //  How can we make the text auto-scale with the div without using vh?
-    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use ready functions. Using vh, however, works perfectly
-    //  for this purpose. What is the reason for not allowing those units?
 
-    this.color = this.binder.color || Dash.Color.Dark;
+    this.color = this.dashboard.color || Dash.Color.Dark;
+    this.modules = this.dashboard.modules;
+    this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
+    this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
     this.styles = [];
     this.header = $("<div>SetHeaderText()</div>");
@@ -18,6 +17,9 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.primary_color = this.color.AccentGood;
     this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
+    this.margin = this.dashboard.margin;
+    this.padding = this.dashboard.padding;
+    this.canvas = null;
 
     this.text_css = {
         "font-family": this.bold_font,
@@ -31,6 +33,15 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         "text-align": "center",
         "margin-left": "auto",
         "margin-right": "auto"
+    };
+
+    // Applies to all module styles
+    this.SetHeaderText = function (text) {
+        text = text.toString().toUpperCase();
+
+        this.header_text = text;
+
+        this.header.text(text);
     };
 
     this.initialize_style = function () {
@@ -76,11 +87,14 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": Dash.Size.Padding,
-            "padding": Dash.Size.Padding * 0.4
+
+            // TODO: Replace units if absolutely necessary
+            "margin": this.margin.toString() + "vh",  // TEMP
+
+            "padding": this.padding
         });
 
-        if (this.binder.modules && this.binder.modules.length > 0) {
+        if (this.modules && this.modules.length > 0) {
             this.html.css({
                 "margin-left": 0
             });
@@ -93,7 +107,7 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
             "color": this.secondary_color,
             "width": "95%",
 
-            // TODO
+            // TODO: Replace units if absolutely necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -103,15 +117,6 @@ function DashGuiLayoutDashboardModule (binder, style, sub_style) {
         }
 
         this.html.append(this.header);
-    };
-
-    // Applies to all module styles
-    this.SetHeaderText = function (text) {
-        text = text.toString().toUpperCase();
-
-        this.header_text = text;
-
-        this.header.text(text);
     };
 
     this.initialize_style();
