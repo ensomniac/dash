@@ -12,29 +12,40 @@ function DashGuiLayoutDashboardModuleSquare () {
 
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
-        this.label_header_text = text.toString().toUpperCase();
+        (function (self, text) {
+            self.label_header.fadeOut(1000);
 
-        this.label_header.text(this.label_header_text);
+            self.label_header_text = text.toString().toUpperCase();
+            self.label_header.text(self.label_header_text);
+
+            self.label_header.fadeIn(1000);
+        })(this, text);
     };
 
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
-        this.label_text = text.toString().toUpperCase();
+        (function (self, text) {
+            self.label.fadeOut(1000);
 
-        if (this.label_text.length > 4) {
-            console.log("WARNING: Square Module SetMainText is intended to be four characters or less - any more may introduce cut-off.");
-        }
+            self.label_text = text.toString().toUpperCase();
 
-        if (this.sub_style === "tag" && this.label_text.length <= 3) {
-            this.label.css({
-                // TODO: Replace units if absolutely necessary
-                "font-size": "5.5vh",  // TEMP
-                "height": "5.5vh",  // TEMP
-                "line-height": "6vh",  // TEMP
-            });
-        }
+            if (self.label_text.length > 4) {
+                console.log("WARNING: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+            }
 
-        this.label.text(this.label_text);
+            if (self.sub_style === "tag" && self.label_text.length <= 3) {
+                self.label.css({
+                    // TODO: Replace units if absolutely necessary
+                    "font-size": "5.5vh",  // TEMP
+                    "height": "5.5vh",  // TEMP
+                    "line-height": "6vh",  // TEMP
+                });
+            }
+
+            self.label.text(self.label_text);
+
+            self.label.fadeIn(1000);
+        })(this, text);
     };
 
     this.SetRadialFillPercent = function (percent) {
@@ -62,29 +73,7 @@ function DashGuiLayoutDashboardModuleSquare () {
 
         this.SetLabelText(this.radial_fill_percent.toString() + "%");
 
-        if (!this.canvas) {
-            return;
-        }
-
-        var radial_gui = window[this.canvas["id"]];
-
-        // Try again if gui hasn't loaded yet (should only happen when initializing)
-        if (!radial_gui.data) {
-            (function (self, percent) {
-                setTimeout(
-                    function () {
-                        self.SetRadialFillPercent(percent);
-                        },
-                    250
-                );
-            })(this, percent);
-
-            return;
-        }
-
-        radial_gui.data.datasets[0].data = this.get_radial_fill_data();
-
-        radial_gui.update();
+        this.update_radial_fill_percent(percent);
     };
 
     this.setup_styles = function () {
@@ -105,8 +94,6 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
 
     this.setup_tag_style = function () {
-        // TODO: Add some sort of animation?
-
         this.label_header.css({
             ...this.centered_text_css,
             "color": this.primary_color,
@@ -131,9 +118,6 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
 
     this.setup_radial_style = function () {
-        // TODO: Create functionality to redraw when data is updated
-        //  (might need to use (or may be as simple as using) update_canvas_containers()?)
-
         this.label_header.css({
             ...this.centered_text_css,
             "color": this.primary_color,
@@ -156,13 +140,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             "line-height": "3.25vh",  // TEMP
         });
 
-        this.SetLabelText(this.radial_fill_percent.toString() + "%");
-
         this.setup_radial_gui();
-    };
-
-    this.get_radial_fill_data = function () {
-        return [this.radial_fill_percent, 100 - this.radial_fill_percent];
     };
 
     this.setup_radial_gui = function () {
@@ -227,5 +205,35 @@ function DashGuiLayoutDashboardModuleSquare () {
         canvas_container.appendChild(canvas);
 
         this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+    };
+
+    this.get_radial_fill_data = function () {
+        return [this.radial_fill_percent, 100 - this.radial_fill_percent];
+    };
+
+    this.update_radial_fill_percent = function (percent) {
+        if (!this.canvas) {
+            return;
+        }
+
+        var radial_gui = window[this.canvas["id"]];
+
+        // Try again if gui hasn't loaded yet (should only happen when initializing)
+        if (!radial_gui.data) {
+            (function (self, percent) {
+                setTimeout(
+                    function () {
+                        self.SetRadialFillPercent(percent);
+                    },
+                    250
+                );
+            })(this, percent);
+
+            return;
+        }
+
+        radial_gui.data.datasets[0].data = this.get_radial_fill_data();
+
+        radial_gui.update();
     };
 }

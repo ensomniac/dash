@@ -23,8 +23,7 @@ function DashGuiLayoutDashboardModuleFlex () {
 
         this.bar_data = data;
 
-        // TODO: needs to redraw
-        this.setup_bar_style();
+        this.update_bar_data(data);
     };
 
     this.setup_styles = function () {
@@ -38,29 +37,22 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 
     this.setup_bar_style = function () {
+        var [labels, values] = this.get_bar_data_sets();
 
-        // TODO: Make sure we have data? Setup a default data set?
-        // if (!Dash.IsValidObject(this.bar_data)) {
-        //     console.log("No list data for Flex Bar Module - use SetBarData()");
-        //
-        //     return;
-        // }
+        if (labels.length < 1 && values.length < 1) {
+            labels = ["(Default)", "Use", "SetBarData()"];
+            values = [1, 2, 3];
+        }
 
-        // TODO: Create functionality to redraw when data is updated
-        //  (might need to use (or may be as simple as using) update_canvas_containers()?)
-
-        this.setup_bar_graph_gui();
-    };
-
-    this.setup_bar_graph_gui = function () {
         // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
+
         var config = {
             "type": "bar",
             "data": {
-                "labels": ["C", "D", "H", "J", "K", "L", "M", "S", "T", "W", "Z"],  // TODO: This needs to come from data
+                "labels": labels,
                 "datasets": [{
                     "label": "My First Dataset",
-                    "data": [70, 15, 20, 45, 78, 30, 10, 37, 13, 60, 14],  // TODO: This needs to come from data
+                    "data": values,
                     "backgroundColor": this.primary_color,
                     "barPercentage": 0.75
                 }]
@@ -143,5 +135,56 @@ function DashGuiLayoutDashboardModuleFlex () {
         canvas_container.appendChild(canvas);
 
         this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+    };
+
+    this.update_bar_data = function (data) {
+        if (!this.canvas) {
+            return;
+        }
+
+        var bar_gui = window[this.canvas["id"]];
+
+        // Try again if gui hasn't loaded yet (should only happen when initializing)
+        if (!bar_gui.data) {
+            (function (self, data) {
+                setTimeout(
+                    function () {
+                        self.SetBarData(data);
+                    },
+                    250
+                );
+            })(this, data);
+
+            return;
+        }
+
+        [bar_gui.data.labels, bar_gui.data.datasets[0].data] = this.get_bar_data_sets(data);
+
+        bar_gui.update();
+    };
+
+    this.get_bar_data_sets = function (data) {
+        if (!Dash.IsValidObject(data)) {
+            data = this.bar_data;
+        }
+
+        var labels = [];
+        var values = [];
+
+        for (var key in data) {
+            labels.push(key.toString());
+
+            var value = parseInt(data[key]);
+
+            if (isNaN(value)) {
+                console.log("ERROR: Bar data object values must be numbers");
+
+                return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
+            }
+
+            values.push(data[key]);
+        }
+
+        return [labels, values];
     };
 }

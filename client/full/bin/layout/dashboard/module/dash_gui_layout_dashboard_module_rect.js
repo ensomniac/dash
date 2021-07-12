@@ -3,12 +3,7 @@
 function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
-
-    this.list_data = {
-        "SetListData() - Key1": "Value1",
-        "SetListData() - Key2": "Value2",
-        "SetListData() - Key3": "Value3",
-    };
+    this.list_data = {};
 
     // TODO: Update all uses of VH
 
@@ -29,7 +24,7 @@ function DashGuiLayoutDashboardModuleRect () {
 
         this.list_data = data;
 
-        this.setup_list_style();
+        this.redraw_list_rows();
     };
 
     this.setup_styles = function () {
@@ -43,13 +38,19 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.setup_list_style = function () {
-        if (!Dash.IsValidObject(this.list_data)) {
-            console.log("No list data for Rect List Module - use SetListData()");
+        this.redraw_list_rows();
+    };
 
-            return;
-        }
-
+    this.get_list_rows = function () {
         this.list_rows = [];
+
+        if (!Dash.IsValidObject(this.list_data)) {
+            this.list_data = {
+                "Placeholder 1": "--",
+                "Placeholder 2": "--",
+                "Placeholder 3": "--",
+            };
+        }
 
         for (var key in this.list_data) {
             if (this.list_rows.length >= 3) {
@@ -60,19 +61,20 @@ function DashGuiLayoutDashboardModuleRect () {
 
             this.list_rows.push(this.get_list_row(key, this.list_data[key]));
         }
-
-        this.redraw_list_rows();
     };
 
     this.redraw_list_rows = function () {
-        // TODO: Add some sort of animation?
+        this.get_list_rows();
 
         this.html.empty();
 
         this.add_header();
 
         for (var i in this.list_rows) {
+            // TODO: Add some sort of animation?
             this.html.append(this.list_rows[i]);
+
+            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
         }
     };
 
@@ -93,6 +95,7 @@ function DashGuiLayoutDashboardModuleRect () {
             "width": "98%",
             "margin-top": "3%",
             "margin-bottom": "3%",
+            "opacity": 0,  // For animation
 
             // TODO: Replace units if absolutely necessary
             "height": "2.75vh"  // TEMP
