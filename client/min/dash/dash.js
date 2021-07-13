@@ -24137,6 +24137,12 @@ function DashGuiLayoutDashboard (binder, color=null) {
                 continue;
             }
             this.add_canvas(canvas, styles, this.modules[i]["index"]);
+            if (!this.modules[i]["module"].canvas["gui"]) {
+                var gui = window[this.modules[i]["module"].canvas["id"]];
+                if (gui) {
+                    this.modules[i]["module"].canvas["gui"] = gui;
+                }
+            }
         }
     };
     // Document scope
@@ -24318,11 +24324,21 @@ function DashGuiLayoutDashboardModuleFlex () {
         }
     };
     this.setup_bar_style = function () {
+        this.setup_bar_gui();
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!Dash.IsValidObject(self.bar_data)) {
+                        self.update_bar_data({"-": 1, "--": 2, "---": 3});
+                    }
+                },
+                1000
+            );
+        })(this);
+    };
+    this.setup_bar_gui = function () {
         var [labels, values] = this.get_bar_data_sets();
-        if (labels.length < 1 && values.length < 1) {
-            labels = ["(Default)", "Use", "SetBarData()"];
-            values = [1, 2, 3];
-        }
         // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
         var config = {
             "type": "bar",
@@ -24400,6 +24416,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         canvas_container.style.marginLeft = this.margin.toString() + "vw";  // TEMP
         canvas_container.style.marginRight = (this.margin * 1.75).toString() + "vw";  // TEMP
         canvas_container.style.overflow = "hidden";
+        canvas_container.style.opacity = "0";
         canvas.id = canvas_id;
         script.type = "text/javascript";
         script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
@@ -24410,7 +24427,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         if (!this.canvas) {
             return;
         }
-        var bar_gui = window[this.canvas["id"]];
+        var bar_gui = this.canvas["gui"] || window[this.canvas["id"]];
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!bar_gui.data) {
             (function (self, data) {
@@ -24422,6 +24439,13 @@ function DashGuiLayoutDashboardModuleFlex () {
                 );
             })(this, data);
             return;
+        }
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = bar_gui;
+        }
+        if (this.canvas["container"].style.opacity !== "1") {
+            this.canvas["container"].animate({"opacity": 1}, 1000);
+            this.canvas["container"].style.opacity = "1";
         }
         [bar_gui.data.labels, bar_gui.data.datasets[0].data] = this.get_bar_data_sets(data);
         bar_gui.update();
@@ -24448,25 +24472,25 @@ function DashGuiLayoutDashboardModuleFlex () {
 /**@member DashGuiLayoutDashboardModule*/
 function DashGuiLayoutDashboardModuleSquare () {
     this.styles = ["tag", "radial"];
-    this.label_text = "SetLabelText()";
-    this.label_header_text = "SetLabelHeaderText()";
-    this.label = $("<div>" + this.label_text + "</div>");
-    this.label_header = $("<div>" + this.label_header_text + "</div>");
+    this.label_text = "";
+    this.label_header_text = "";
+    this.label = $("<div></div>");
+    this.label_header = $("<div></div>");
     this.radial_fill_percent = 0;
     // TODO: Update all uses of VH
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
         (function (self, text) {
-            self.label_header.fadeOut(1000);
+            self.label_header.fadeOut(500);
             self.label_header_text = text.toString().toUpperCase();
             self.label_header.text(self.label_header_text);
-            self.label_header.fadeIn(1000);
+            self.label_header.fadeIn(500);
         })(this, text);
     };
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
         (function (self, text) {
-            self.label.fadeOut(1000);
+            self.label.fadeOut(500);
             self.label_text = text.toString().toUpperCase();
             if (self.label_text.length > 4) {
                 console.log("WARNING: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
@@ -24480,7 +24504,7 @@ function DashGuiLayoutDashboardModuleSquare () {
                 });
             }
             self.label.text(self.label_text);
-            self.label.fadeIn(1000);
+            self.label.fadeIn(500);
         })(this, text);
     };
     this.SetRadialFillPercent = function (percent) {
@@ -24534,6 +24558,17 @@ function DashGuiLayoutDashboardModuleSquare () {
             "height": "4.5vh",  // TEMP
             "line-height": "5vh",  // TEMP
         });
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.label_text.length < 1) {
+                        self.SetLabelText("--");
+                    }
+                },
+                1000
+            );
+        })(this);
     };
     this.setup_radial_style = function () {
         this.label_header.css({
@@ -24619,7 +24654,7 @@ function DashGuiLayoutDashboardModuleSquare () {
         if (!this.canvas) {
             return;
         }
-        var radial_gui = window[this.canvas["id"]];
+        var radial_gui = this.canvas["gui"] || window[this.canvas["id"]];
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!radial_gui.data) {
             (function (self, percent) {
@@ -24632,6 +24667,9 @@ function DashGuiLayoutDashboardModuleSquare () {
             })(this, percent);
             return;
         }
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = radial_gui;
+        }
         radial_gui.data.datasets[0].data = this.get_radial_fill_data();
         radial_gui.update();
     };
@@ -24641,20 +24679,20 @@ function DashGuiLayoutDashboardModuleSquare () {
 function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
-    this.list_data = {};
+    this.list_data = [];
     // TODO: Update all uses of VH
-    // Expects dict with key/value pairs (value should be a string), where the key
-    // displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data) {
+    // Expects list of dicts with a single key/value pair (value should be a string), where
+    // the key displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
             console.log("ERROR: SetListData() only applies to Rect-List Modules");
             return;
         }
-        if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+        if (!Array.isArray(data_list)) {
+            console.log("ERROR: SetListData() requires a list of dicts to be passed in");
             return;
         }
-        this.list_data = data;
+        this.list_data = data_list;
         this.redraw_list_rows();
     };
     this.setup_styles = function () {
@@ -24666,23 +24704,39 @@ function DashGuiLayoutDashboardModuleRect () {
         }
     };
     this.setup_list_style = function () {
-        this.redraw_list_rows();
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.list_rows.length < 1) {
+                        self.redraw_list_rows();
+                    }
+                },
+                1000
+            );
+        })(this);
     };
     this.get_list_rows = function () {
         this.list_rows = [];
-        if (!Dash.IsValidObject(this.list_data)) {
-            this.list_data = {
-                "Placeholder 1": "--",
-                "Placeholder 2": "--",
-                "Placeholder 3": "--",
-            };
+        if (this.list_data.length < 1) {
+            this.list_data = [
+                {"-": "--"},
+                {"--": "--"},
+                {"---": "--"},
+            ];
         }
-        for (var key in this.list_data) {
+        for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
                 console.log("WARNING: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
-            this.list_rows.push(this.get_list_row(key, this.list_data[key]));
+            var data = this.list_data[i];
+            if (!Dash.IsValidObject(data)) {
+                console.log("ERROR: Rect List Module data expects a list of dicts");
+                return;
+            }
+            var key = Object.keys(data)[0];
+            this.list_rows.push(this.get_list_row(key, data[key]));
         }
     };
     this.redraw_list_rows = function () {
@@ -24690,7 +24744,6 @@ function DashGuiLayoutDashboardModuleRect () {
         this.html.empty();
         this.add_header();
         for (var i in this.list_rows) {
-            // TODO: Add some sort of animation?
             this.html.append(this.list_rows[i]);
             this.list_rows[i].stop().animate({"opacity": 1}, 1000);
         }

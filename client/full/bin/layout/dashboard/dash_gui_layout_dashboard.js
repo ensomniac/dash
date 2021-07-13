@@ -118,6 +118,14 @@ function DashGuiLayoutDashboard (binder, color=null) {
             }
 
             this.add_canvas(canvas, styles, this.modules[i]["index"]);
+
+            if (!this.modules[i]["module"].canvas["gui"]) {
+                var gui = window[this.modules[i]["module"].canvas["id"]];
+
+                if (gui) {
+                    this.modules[i]["module"].canvas["gui"] = gui;
+                }
+            }
         }
     };
 

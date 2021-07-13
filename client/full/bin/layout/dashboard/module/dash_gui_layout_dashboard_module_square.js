@@ -2,10 +2,10 @@
 
 function DashGuiLayoutDashboardModuleSquare () {
     this.styles = ["tag", "radial"];
-    this.label_text = "SetLabelText()";
-    this.label_header_text = "SetLabelHeaderText()";
-    this.label = $("<div>" + this.label_text + "</div>");
-    this.label_header = $("<div>" + this.label_header_text + "</div>");
+    this.label_text = "";
+    this.label_header_text = "";
+    this.label = $("<div></div>");
+    this.label_header = $("<div></div>");
     this.radial_fill_percent = 0;
 
     // TODO: Update all uses of VH
@@ -13,19 +13,19 @@ function DashGuiLayoutDashboardModuleSquare () {
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
         (function (self, text) {
-            self.label_header.fadeOut(1000);
+            self.label_header.fadeOut(500);
 
             self.label_header_text = text.toString().toUpperCase();
             self.label_header.text(self.label_header_text);
 
-            self.label_header.fadeIn(1000);
+            self.label_header.fadeIn(500);
         })(this, text);
     };
 
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
         (function (self, text) {
-            self.label.fadeOut(1000);
+            self.label.fadeOut(500);
 
             self.label_text = text.toString().toUpperCase();
 
@@ -44,7 +44,7 @@ function DashGuiLayoutDashboardModuleSquare () {
 
             self.label.text(self.label_text);
 
-            self.label.fadeIn(1000);
+            self.label.fadeIn(500);
         })(this, text);
     };
 
@@ -115,6 +115,18 @@ function DashGuiLayoutDashboardModuleSquare () {
             "height": "4.5vh",  // TEMP
             "line-height": "5vh",  // TEMP
         });
+
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.label_text.length < 1) {
+                        self.SetLabelText("--");
+                    }
+                },
+                1000
+            );
+        })(this);
     };
 
     this.setup_radial_style = function () {
@@ -216,7 +228,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             return;
         }
 
-        var radial_gui = window[this.canvas["id"]];
+        var radial_gui = this.canvas["gui"] || window[this.canvas["id"]];
 
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!radial_gui.data) {
@@ -230,6 +242,10 @@ function DashGuiLayoutDashboardModuleSquare () {
             })(this, percent);
 
             return;
+        }
+
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = radial_gui;
         }
 
         radial_gui.data.datasets[0].data = this.get_radial_fill_data();

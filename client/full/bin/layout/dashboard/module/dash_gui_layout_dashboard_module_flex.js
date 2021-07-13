@@ -37,12 +37,23 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 
     this.setup_bar_style = function () {
-        var [labels, values] = this.get_bar_data_sets();
+        this.setup_bar_gui();
 
-        if (labels.length < 1 && values.length < 1) {
-            labels = ["(Default)", "Use", "SetBarData()"];
-            values = [1, 2, 3];
-        }
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!Dash.IsValidObject(self.bar_data)) {
+                        self.update_bar_data({"-": 1, "--": 2, "---": 3});
+                    }
+                },
+                1000
+            );
+        })(this);
+    };
+
+    this.setup_bar_gui = function () {
+        var [labels, values] = this.get_bar_data_sets();
 
         // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
 
@@ -126,6 +137,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         canvas_container.style.marginRight = (this.margin * 1.75).toString() + "vw";  // TEMP
 
         canvas_container.style.overflow = "hidden";
+        canvas_container.style.opacity = "0";
 
         canvas.id = canvas_id;
 
@@ -142,7 +154,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             return;
         }
 
-        var bar_gui = window[this.canvas["id"]];
+        var bar_gui = this.canvas["gui"] || window[this.canvas["id"]];
 
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!bar_gui.data) {
@@ -156,6 +168,16 @@ function DashGuiLayoutDashboardModuleFlex () {
             })(this, data);
 
             return;
+        }
+
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = bar_gui;
+        }
+
+        if (this.canvas["container"].style.opacity !== "1") {
+            this.canvas["container"].animate({"opacity": 1}, 1000);
+
+            this.canvas["container"].style.opacity = "1";
         }
 
         [bar_gui.data.labels, bar_gui.data.datasets[0].data] = this.get_bar_data_sets(data);

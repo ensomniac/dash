@@ -3,26 +3,26 @@
 function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
-    this.list_data = {};
+    this.list_data = [];
 
     // TODO: Update all uses of VH
 
-    // Expects dict with key/value pairs (value should be a string), where the key
-    // displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data) {
+    // Expects list of dicts with a single key/value pair (value should be a string), where
+    // the key displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
             console.log("ERROR: SetListData() only applies to Rect-List Modules");
 
             return;
         }
 
-        if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetListData() requires a dictionary to be passed in");
+        if (!Array.isArray(data_list)) {
+            console.log("ERROR: SetListData() requires a list of dicts to be passed in");
 
             return;
         }
 
-        this.list_data = data;
+        this.list_data = data_list;
 
         this.redraw_list_rows();
     };
@@ -38,28 +38,48 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 
     this.setup_list_style = function () {
-        this.redraw_list_rows();
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.list_rows.length < 1) {
+                        self.redraw_list_rows();
+                    }
+                },
+                1000
+            );
+        })(this);
     };
 
     this.get_list_rows = function () {
         this.list_rows = [];
 
-        if (!Dash.IsValidObject(this.list_data)) {
-            this.list_data = {
-                "Placeholder 1": "--",
-                "Placeholder 2": "--",
-                "Placeholder 3": "--",
-            };
+        if (this.list_data.length < 1) {
+            this.list_data = [
+                {"-": "--"},
+                {"--": "--"},
+                {"---": "--"},
+            ];
         }
 
-        for (var key in this.list_data) {
+        for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
                 console.log("WARNING: Rect List Module will only display 3 key/value pairs from list data");
 
                 break;
             }
 
-            this.list_rows.push(this.get_list_row(key, this.list_data[key]));
+            var data = this.list_data[i];
+
+            if (!Dash.IsValidObject(data)) {
+                console.log("ERROR: Rect List Module data expects a list of dicts");
+
+                return;
+            }
+
+            var key = Object.keys(data)[0];
+
+            this.list_rows.push(this.get_list_row(key, data[key]));
         }
     };
 
@@ -71,7 +91,6 @@ function DashGuiLayoutDashboardModuleRect () {
         this.add_header();
 
         for (var i in this.list_rows) {
-            // TODO: Add some sort of animation?
             this.html.append(this.list_rows[i]);
 
             this.list_rows[i].stop().animate({"opacity": 1}, 1000);
