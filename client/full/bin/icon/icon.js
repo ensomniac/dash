@@ -23,12 +23,18 @@ function DashIcon (color, icon_name, container_size, icon_size_mult) {
             "margin": 0,
             "padding": 0,
             "cursor": "pointer",
-            "-webkit-user-select": "none",
+            "-webkit-user-select": "none"
         });
 
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
 
         this.icon_html.css(this.icon_definition.get_css());
+
+        if (this.color.Button.Background.Icon) {
+            this.icon_html.css({
+                "color": this.color.Button.Background.Icon
+            });
+        }
 
         this.html.append(this.icon_html);
     };

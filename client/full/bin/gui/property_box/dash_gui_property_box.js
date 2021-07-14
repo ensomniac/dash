@@ -159,7 +159,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
             var button = new Dash.Gui.IconButton("trash", function () {
                 callback(data_key);
-            }, self, self.color);
+            }, self, self.color, {"size_mult": 0.9});
 
             self.buttons.push(button);
 

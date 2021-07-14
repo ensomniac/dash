@@ -8,10 +8,10 @@ function GuiIcons (icon) {
     };
     
     this.icon_map = {
-        "add":                   new GuiIconDefinition(this.icon, "Add", this.weight["light"], "plus", 1.3, 0.15, 0.15),
-        "add_layer":             new GuiIconDefinition(this.icon, "Add Layer", this.weight["light"], "layer-plus", 1.3, 0.15, 0.15),
-        "add_person":            new GuiIconDefinition(this.icon, "Add Person", this.weight["light"], "user-plus", 1.3, 0.15, 0.15),
-        "add_phone":             new GuiIconDefinition(this.icon, "Add Phone", this.weight["light"], "phone-plus", 1.3, 0.15, 0.15),
+        "add":                   new GuiIconDefinition(this.icon, "Add", this.weight["regular"], "plus", 1.3, 0.15, 0.15),
+        "add_layer":             new GuiIconDefinition(this.icon, "Add Layer", this.weight["regular"], "layer-plus", 1.3, 0.15, 0.15),
+        "add_person":            new GuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus", 1.3, 0.15, 0.15),
+        "add_phone":             new GuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus", 1.3, 0.15, 0.15),
         "admin_tools":           new GuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new GuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation", 0.9),
         "alert_triangle":        new GuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle", 0.9),
@@ -68,7 +68,7 @@ function GuiIcons (icon) {
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image", 0.9),
         "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
-        "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["light"], "external-link"),
+        "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
         "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
@@ -87,7 +87,7 @@ function GuiIcons (icon) {
         "toggle_off":            new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
         "toggle_on":             new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
         "tools":                 new GuiIconDefinition(this.icon, "Tools", this.weight["light"], "tools"),
-        "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash-alt"),
+        "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash-alt"),
         "unchecked_box":         new GuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
         "undo":                  new GuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new GuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
