@@ -24185,7 +24185,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
         container.style.padding = this.padding.toString() + "px";
-        // TODO: Replace units if absolutely necessary
+        // TODO: Replace units if necessary
         container.style.margin = this.margin.toString() + "vh";  // TEMP
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;
@@ -24274,7 +24274,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
             "padding": this.padding
         });
@@ -24289,7 +24289,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -24353,7 +24353,7 @@ function DashGuiLayoutDashboardModuleFlex () {
                     "label": "My First Dataset",
                     "data": values,
                     "backgroundColor": this.primary_color,
-                    "barPercentage": 0.75
+                    "barPercentage": 1.15
                 }]
             },
             "options": {
@@ -24413,13 +24413,13 @@ function DashGuiLayoutDashboardModuleFlex () {
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
         var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
-        // TODO: Replace units if absolutely necessary
-        canvas_container.style.width = "37.75vw";  // TEMP
+        // TODO: Replace units if necessary
         canvas_container.style.height = "11.25vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
         canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = this.margin.toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * 1.75).toString() + "vw";  // TEMP
+        canvas_container.style.marginLeft = (this.margin * 0.3).toString() + "vw";  // TEMP
+        canvas_container.style.marginRight = (this.margin * 1.25).toString() + "vw";  // TEMP
+        canvas_container.style.width = "inherit";  // MUST remain inherited to flex properly
         canvas_container.style.overflow = "hidden";
         canvas_container.style.opacity = "0";
         canvas.id = canvas_id;
@@ -24502,7 +24502,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             }
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
                 self.label.css({
-                    // TODO: Replace units if absolutely necessary
+                    // TODO: Replace units if necessary
                     "font-size": "5.5vh",  // TEMP
                     "height": "5.5vh",  // TEMP
                     "line-height": "6vh",  // TEMP
@@ -24550,7 +24550,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "1.5vh",  // TEMP
         });
@@ -24558,7 +24558,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "95%",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "4.5vh",  // TEMP
             "height": "4.5vh",  // TEMP
             "line-height": "5vh",  // TEMP
@@ -24581,7 +24581,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -24589,7 +24589,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "2.75vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "3.25vh",  // TEMP
@@ -24639,7 +24639,7 @@ function DashGuiLayoutDashboardModuleSquare () {
         var canvas_container = document.createElement("div");
         var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
         canvas_container.style.overflow = "hidden";
-        // TODO: Replace units if absolutely necessary
+        // TODO: Replace units if necessary
         canvas_container.style.width = "10.5vh";  // TEMP
         canvas_container.style.height = "10.5vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
@@ -24769,12 +24769,12 @@ function DashGuiLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         dot_icon.icon_html.css({
@@ -24782,7 +24782,7 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -24790,7 +24790,7 @@ function DashGuiLayoutDashboardModuleRect () {
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "17vh",  // TEMP
@@ -24800,7 +24800,7 @@ function DashGuiLayoutDashboardModuleRect () {
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "4vh",  // TEMP
@@ -24808,7 +24808,7 @@ function DashGuiLayoutDashboardModuleRect () {
         });
         line.css({
             "background": this.secondary_color,
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "height": "0.1vh"  // TEMP
         });
         content.append(dot_icon.html);

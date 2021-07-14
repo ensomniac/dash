@@ -65,7 +65,7 @@ function DashGuiLayoutDashboardModuleFlex () {
                     "label": "My First Dataset",
                     "data": values,
                     "backgroundColor": this.primary_color,
-                    "barPercentage": 0.75
+                    "barPercentage": 1.15
                 }]
             },
             "options": {
@@ -128,14 +128,14 @@ function DashGuiLayoutDashboardModuleFlex () {
         var canvas_container = document.createElement("div");
         var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
 
-        // TODO: Replace units if absolutely necessary
-        canvas_container.style.width = "37.75vw";  // TEMP
+        // TODO: Replace units if necessary
         canvas_container.style.height = "11.25vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
         canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = this.margin.toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * 1.75).toString() + "vw";  // TEMP
+        canvas_container.style.marginLeft = (this.margin * 0.3).toString() + "vw";  // TEMP
+        canvas_container.style.marginRight = (this.margin * 1.25).toString() + "vw";  // TEMP
 
+        canvas_container.style.width = "inherit";  // MUST remain inherited to flex properly
         canvas_container.style.overflow = "hidden";
         canvas_container.style.opacity = "0";
 

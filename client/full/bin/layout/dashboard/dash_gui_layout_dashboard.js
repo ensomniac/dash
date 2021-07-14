@@ -174,7 +174,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         var container = document.createElement("div");
         container.style.padding = this.padding.toString() + "px";
 
-        // TODO: Replace units if absolutely necessary
+        // TODO: Replace units if necessary
         container.style.margin = this.margin.toString() + "vh";  // TEMP
 
         if (type === "square") {

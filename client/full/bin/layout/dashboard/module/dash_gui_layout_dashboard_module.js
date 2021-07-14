@@ -88,7 +88,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
         this.html.css({
             "background": this.color.BackgroundRaised,
 
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
 
             "padding": this.padding
@@ -107,7 +107,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             "color": this.secondary_color,
             "width": "95%",
 
-            // TODO: Replace units if absolutely necessary
+            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
