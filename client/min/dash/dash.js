@@ -23392,6 +23392,12 @@ class DashGuiLayoutTabs {
         });
         this.list_top.append(html);
     };
+    this.PrependHTML = function (html) {
+        html.css({
+            "margin-top": 1,
+        });
+        this.list_bottom.append(html);
+    };
     this.AppendImage = function (img_url, height=null) {
         // TODO:
         //  - Move the concept of an 'Image' into dash as a light
