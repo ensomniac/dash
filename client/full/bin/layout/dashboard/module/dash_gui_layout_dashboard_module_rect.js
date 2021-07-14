@@ -100,15 +100,8 @@ function DashGuiLayoutDashboardModuleRect () {
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
         var content = $("<div></div>");
-        var line = $("<div></div>");
         var key_text = $("<div>" + key + "</div>");
         var value_text = $("<div>" + value + "</div>");
-
-        var dot_icon = new Dash.Gui.Icon(
-            this.color,
-            "circle_dot",
-            Dash.Size.ButtonHeight
-        );
 
         list_row.css({
             "width": "98%",
@@ -125,18 +118,6 @@ function DashGuiLayoutDashboardModuleRect () {
 
             // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
-        });
-
-        dot_icon.icon_html.css({
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "color": this.primary_color,
-
-            // TODO: Replace units if necessary
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
         });
 
         key_text.css({
@@ -162,6 +143,42 @@ function DashGuiLayoutDashboardModuleRect () {
             "line-height": "2.75vh"  // TEMP
         });
 
+        content.append(this.get_dot_icon().html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+
+        list_row.append(content);
+        list_row.append(this.get_divider_line());
+
+        return list_row;
+    };
+
+    this.get_dot_icon = function () {
+        var dot_icon = new Dash.Gui.Icon(
+            this.color,
+            "circle_dot",
+            Dash.Size.ButtonHeight
+        );
+
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+
+            // TODO: Replace units if necessary
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+
+        return dot_icon;
+    };
+
+    this.get_divider_line = function () {
+        var line = $("<div></div>");
+
         line.css({
             "background": this.secondary_color,
 
@@ -169,14 +186,6 @@ function DashGuiLayoutDashboardModuleRect () {
             "height": "0.1vh"  // TEMP
         });
 
-        content.append(dot_icon.html);
-        content.append(key_text);
-        content.append(Dash.Gui.GetFlexSpacer());
-        content.append(value_text);
-
-        list_row.append(content);
-        list_row.append(line);
-
-        return list_row;
+        return line;
     };
 }

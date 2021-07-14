@@ -53,75 +53,7 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 
     this.setup_bar_gui = function () {
-        var [labels, values] = this.get_bar_data_sets();
-
-        // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
-
-        var config = {
-            "type": "bar",
-            "data": {
-                "labels": labels,
-                "datasets": [{
-                    "label": "My First Dataset",
-                    "data": values,
-                    "backgroundColor": this.primary_color,
-                    "barPercentage": 1.15
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "maintainAspectRatio": false,
-                "scales": {
-                    "y": {
-                        "beginAtZero": true,
-                        "grid": {
-                            "color": this.secondary_color,
-                            "borderColor": this.secondary_color,
-                            "tickLength": 4
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": 4,
-                            "font": {
-                                "family": this.bold_font
-                            }
-                        }
-                    },
-                    "x": {
-                        "grid": {
-                            "display": false
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": -5,
-                            "font": {
-                                "family": this.bold_font,
-                                "size": 16
-                            }
-                        }
-                    },
-                },
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
-        };
-
-        // TODO: Flex responsiveness is not working properly because the percentage of the screen that
-        //  the flex module box takes up changes when the screen size changes, and then the gui container
-        //  doesn't reflect that percentage change, still thinking the width/height vw/vh values are the same.
-        //  Need a way to maybe calculate the screen percentage of the flex box before setting the initial
-        //  vw/vh width/height values. It wouldn't be able to accurately adapt in real time, but each time
-        //  the page is reloaded, it will be the correct width/height. Shouldn't need to be able to adjust for
-        //  realtime window changes anyway, as long as it's accurate on load for any size.
+        var config = this.get_bar_config();
 
         var canvas = document.createElement("canvas");
         var script = document.createElement("script");
@@ -208,5 +140,68 @@ function DashGuiLayoutDashboardModuleFlex () {
         }
 
         return [labels, values];
+    };
+
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
+    this.get_bar_config = function () {
+        var [labels, values] = this.get_bar_data_sets();
+
+        return {
+            "type": "bar",
+            "data": {
+                "labels": labels,
+                "datasets": [{
+                    "label": "My First Dataset",
+                    "data": values,
+                    "backgroundColor": this.primary_color,
+                    "barPercentage": 1.15
+                }]
+            },
+            "options": {
+                "responsive": true,
+                "maintainAspectRatio": false,
+                "scales": {
+                    "y": {
+                        "beginAtZero": true,
+                        "grid": {
+                            "color": this.secondary_color,
+                            "borderColor": this.secondary_color,
+                            "tickLength": 4
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": 4,
+                            "font": {
+                                "family": this.bold_font
+                            }
+                        }
+                    },
+                    "x": {
+                        "grid": {
+                            "display": false
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": -5,
+                            "font": {
+                                "family": this.bold_font,
+                                "size": 16
+                            }
+                        }
+                    },
+                },
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
     };
 }

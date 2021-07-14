@@ -5,7 +5,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.modules = [];
     this.canvas_containers = [];
     this.margin = 1;
-    this.padding = Dash.Size.Padding * 0.4;  // TODO: Update all uses of this in the same way I update all margin usages
+    this.padding = 0.4;
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
@@ -13,12 +13,12 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
 
-    // TODO: How can we make this collapsible?
+    // TODO: How can we make this collapsible? Is that feasible when using canvas elements?
 
     // TODO: Update all uses of VH/VW
     //  How can we make the text auto-scale with the div without using vh?
     //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use ready functions. Using vh, however, works perfectly
+    //  the answers online use "ready" functions. Using vh, however, works perfectly
     //  for this purpose. What is the reason for not allowing those units?
 
     this.AddSquareTagModule = function () {
@@ -51,8 +51,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     };
 
     this.setup_styles = function () {
-        this.VerticalSpaceTakenPercent = "15%";
-        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+        this.SetVerticalSpacePercent(15);
 
         this.html.css({
             "background": this.color.Background,
@@ -72,8 +71,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
             "sub_style": sub_style,
             "index": index
         });
-
-        // TODO: Should do a resize check here for any flex modules (and maybe canvases) based on new module total?
 
         this.update_canvas_containers();
 
@@ -145,9 +142,8 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
 
-        // TODO: These values need to be somehow tied to the VerticalSpace stuff
-        top_container.style.top = "85vh";  // TEMP
-        top_container.style.height = "14.9vh";  // TEMP
+        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
+        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
 
         for (var i in styles) {
             if (parseInt(i) === index) {
@@ -172,9 +168,9 @@ function DashGuiLayoutDashboard (binder, color=null) {
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
-        container.style.padding = this.padding.toString() + "px";
 
         // TODO: Replace units if necessary
+        container.style.padding = this.padding.toString() + "vh";  // TEMP
         container.style.margin = this.margin.toString() + "vh";  // TEMP
 
         if (type === "square") {

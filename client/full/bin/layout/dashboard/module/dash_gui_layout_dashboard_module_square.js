@@ -156,44 +156,7 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
 
     this.setup_radial_gui = function () {
-        // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
-        var config = {
-            "type": "doughnut",
-            "data": {
-                "datasets": [{
-                    "data": this.get_radial_fill_data(),
-                    "backgroundColor": [
-                        this.primary_color,  // Filled
-                        this.secondary_color  // Unfilled
-                    ],
-                    "borderWidth": [
-                        5,  // Filled
-                        0,  // Unfilled
-                    ],
-                    "borderColor": [
-                        this.primary_color  // Filled
-                    ]
-                }]
-            },
-            "options": {
-                "cutout": "80%",
-                "responsive": true,
-                "aspectRatio": 1,
-                "maintainAspectRatio": true,
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
-        };
-
+        var config = this.get_radial_config();
         var canvas = document.createElement("canvas");
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
@@ -251,5 +214,45 @@ function DashGuiLayoutDashboardModuleSquare () {
         radial_gui.data.datasets[0].data = this.get_radial_fill_data();
 
         radial_gui.update();
+    };
+
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
+    this.get_radial_config = function () {
+        return {
+            "type": "doughnut",
+            "data": {
+                "datasets": [{
+                    "data": this.get_radial_fill_data(),
+                    "backgroundColor": [
+                        this.primary_color,  // Filled
+                        this.secondary_color  // Unfilled
+                    ],
+                    "borderWidth": [
+                        5,  // Filled
+                        0,  // Unfilled
+                    ],
+                    "borderColor": [
+                        this.primary_color  // Filled
+                    ]
+                }]
+            },
+            "options": {
+                "cutout": "80%",
+                "responsive": true,
+                "aspectRatio": 1,
+                "maintainAspectRatio": true,
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
     };
 }

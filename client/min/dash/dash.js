@@ -24057,17 +24057,17 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.modules = [];
     this.canvas_containers = [];
     this.margin = 1;
-    this.padding = Dash.Size.Padding * 0.4;  // TODO: Update all uses of this in the same way I update all margin usages
+    this.padding = 0.4;
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
-    // TODO: How can we make this collapsible?
+    // TODO: How can we make this collapsible? Is that feasible when using canvas elements?
     // TODO: Update all uses of VH/VW
     //  How can we make the text auto-scale with the div without using vh?
     //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use ready functions. Using vh, however, works perfectly
+    //  the answers online use "ready" functions. Using vh, however, works perfectly
     //  for this purpose. What is the reason for not allowing those units?
     this.AddSquareTagModule = function () {
         return this.add_module("square", "tag");
@@ -24091,8 +24091,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
     };
     this.setup_styles = function () {
-        this.VerticalSpaceTakenPercent = "15%";
-        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+        this.SetVerticalSpacePercent(15);
         this.html.css({
             "background": this.color.Background,
             "display": "flex"
@@ -24108,7 +24107,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
             "sub_style": sub_style,
             "index": index
         });
-        // TODO: Should do a resize check here for any flex modules (and maybe canvases) based on new module total?
         this.update_canvas_containers();
         return module;
     };
@@ -24162,9 +24160,8 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
-        // TODO: These values need to be somehow tied to the VerticalSpace stuff
-        top_container.style.top = "85vh";  // TEMP
-        top_container.style.height = "14.9vh";  // TEMP
+        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
+        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
         for (var i in styles) {
             if (parseInt(i) === index) {
                 top_container.appendChild(canvas_container);
@@ -24184,8 +24181,8 @@ function DashGuiLayoutDashboard (binder, color=null) {
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
-        container.style.padding = this.padding.toString() + "px";
         // TODO: Replace units if necessary
+        container.style.padding = this.padding.toString() + "vh";  // TEMP
         container.style.margin = this.margin.toString() + "vh";  // TEMP
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;
@@ -24276,7 +24273,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             "background": this.color.BackgroundRaised,
             // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
-            "padding": this.padding
+            "padding": this.padding.toString() + "vh"  // TEMP
         });
         if (this.modules && this.modules.length > 0) {
             this.html.css({
@@ -24343,72 +24340,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         })(this);
     };
     this.setup_bar_gui = function () {
-        var [labels, values] = this.get_bar_data_sets();
-        // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
-        var config = {
-            "type": "bar",
-            "data": {
-                "labels": labels,
-                "datasets": [{
-                    "label": "My First Dataset",
-                    "data": values,
-                    "backgroundColor": this.primary_color,
-                    "barPercentage": 1.15
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "maintainAspectRatio": false,
-                "scales": {
-                    "y": {
-                        "beginAtZero": true,
-                        "grid": {
-                            "color": this.secondary_color,
-                            "borderColor": this.secondary_color,
-                            "tickLength": 4
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": 4,
-                            "font": {
-                                "family": this.bold_font
-                            }
-                        }
-                    },
-                    "x": {
-                        "grid": {
-                            "display": false
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": -5,
-                            "font": {
-                                "family": this.bold_font,
-                                "size": 16
-                            }
-                        }
-                    },
-                },
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
-        };
-        // TODO: Flex responsiveness is not working properly because the percentage of the screen that
-        //  the flex module box takes up changes when the screen size changes, and then the gui container
-        //  doesn't reflect that percentage change, still thinking the width/height vw/vh values are the same.
-        //  Need a way to maybe calculate the screen percentage of the flex box before setting the initial
-        //  vw/vh width/height values. It wouldn't be able to accurately adapt in real time, but each time
-        //  the page is reloaded, it will be the correct width/height. Shouldn't need to be able to adjust for
-        //  realtime window changes anyway, as long as it's accurate on load for any size.
+        var config = this.get_bar_config();
         var canvas = document.createElement("canvas");
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
@@ -24471,6 +24403,67 @@ function DashGuiLayoutDashboardModuleFlex () {
             values.push(data[key]);
         }
         return [labels, values];
+    };
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
+    this.get_bar_config = function () {
+        var [labels, values] = this.get_bar_data_sets();
+        return {
+            "type": "bar",
+            "data": {
+                "labels": labels,
+                "datasets": [{
+                    "label": "My First Dataset",
+                    "data": values,
+                    "backgroundColor": this.primary_color,
+                    "barPercentage": 1.15
+                }]
+            },
+            "options": {
+                "responsive": true,
+                "maintainAspectRatio": false,
+                "scales": {
+                    "y": {
+                        "beginAtZero": true,
+                        "grid": {
+                            "color": this.secondary_color,
+                            "borderColor": this.secondary_color,
+                            "tickLength": 4
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": 4,
+                            "font": {
+                                "family": this.bold_font
+                            }
+                        }
+                    },
+                    "x": {
+                        "grid": {
+                            "display": false
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": -5,
+                            "font": {
+                                "family": this.bold_font,
+                                "size": 16
+                            }
+                        }
+                    },
+                },
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
     };
 }
 
@@ -24597,43 +24590,7 @@ function DashGuiLayoutDashboardModuleSquare () {
         this.setup_radial_gui();
     };
     this.setup_radial_gui = function () {
-        // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
-        var config = {
-            "type": "doughnut",
-            "data": {
-                "datasets": [{
-                    "data": this.get_radial_fill_data(),
-                    "backgroundColor": [
-                        this.primary_color,  // Filled
-                        this.secondary_color  // Unfilled
-                    ],
-                    "borderWidth": [
-                        5,  // Filled
-                        0,  // Unfilled
-                    ],
-                    "borderColor": [
-                        this.primary_color  // Filled
-                    ]
-                }]
-            },
-            "options": {
-                "cutout": "80%",
-                "responsive": true,
-                "aspectRatio": 1,
-                "maintainAspectRatio": true,
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
-        };
+        var config = this.get_radial_config();
         var canvas = document.createElement("canvas");
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
@@ -24677,6 +24634,45 @@ function DashGuiLayoutDashboardModuleSquare () {
         }
         radial_gui.data.datasets[0].data = this.get_radial_fill_data();
         radial_gui.update();
+    };
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
+    this.get_radial_config = function () {
+        return {
+            "type": "doughnut",
+            "data": {
+                "datasets": [{
+                    "data": this.get_radial_fill_data(),
+                    "backgroundColor": [
+                        this.primary_color,  // Filled
+                        this.secondary_color  // Unfilled
+                    ],
+                    "borderWidth": [
+                        5,  // Filled
+                        0,  // Unfilled
+                    ],
+                    "borderColor": [
+                        this.primary_color  // Filled
+                    ]
+                }]
+            },
+            "options": {
+                "cutout": "80%",
+                "responsive": true,
+                "aspectRatio": 1,
+                "maintainAspectRatio": true,
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
     };
 }
 
@@ -24756,14 +24752,8 @@ function DashGuiLayoutDashboardModuleRect () {
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
         var content = $("<div></div>");
-        var line = $("<div></div>");
         var key_text = $("<div>" + key + "</div>");
         var value_text = $("<div>" + value + "</div>");
-        var dot_icon = new Dash.Gui.Icon(
-            this.color,
-            "circle_dot",
-            Dash.Size.ButtonHeight
-        );
         list_row.css({
             "width": "98%",
             "margin-top": "3%",
@@ -24776,16 +24766,6 @@ function DashGuiLayoutDashboardModuleRect () {
             "display": "flex",
             // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
-        });
-        dot_icon.icon_html.css({
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "color": this.primary_color,
-            // TODO: Replace units if necessary
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
         });
         key_text.css({
             ...this.text_css,
@@ -24806,17 +24786,39 @@ function DashGuiLayoutDashboardModuleRect () {
             "width": "4vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
         });
+        content.append(this.get_dot_icon().html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+        list_row.append(content);
+        list_row.append(this.get_divider_line());
+        return list_row;
+    };
+    this.get_dot_icon = function () {
+        var dot_icon = new Dash.Gui.Icon(
+            this.color,
+            "circle_dot",
+            Dash.Size.ButtonHeight
+        );
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            // TODO: Replace units if necessary
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        return dot_icon;
+    };
+    this.get_divider_line = function () {
+        var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
             // TODO: Replace units if necessary
             "height": "0.1vh"  // TEMP
         });
-        content.append(dot_icon.html);
-        content.append(key_text);
-        content.append(Dash.Gui.GetFlexSpacer());
-        content.append(value_text);
-        list_row.append(content);
-        list_row.append(line);
-        return list_row;
+        return line;
     };
 }

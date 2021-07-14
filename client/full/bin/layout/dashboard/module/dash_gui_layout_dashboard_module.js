@@ -90,8 +90,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
 
             // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
-
-            "padding": this.padding
+            "padding": this.padding.toString() + "vh"  // TEMP
         });
 
         if (this.modules && this.modules.length > 0) {
