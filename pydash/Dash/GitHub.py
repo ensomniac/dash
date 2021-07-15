@@ -125,7 +125,7 @@ class GitHub:
             cmds.append(f"cp -r {local_git_path}* {dest_path}")
 
         cmds.append(f"chmod 755 {dest_path} -R")
-        cmds.append(f"chown katie {dest_path} -R")
+        cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
         cmd = ";".join(cmds)
