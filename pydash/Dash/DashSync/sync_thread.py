@@ -62,6 +62,9 @@ class SyncThread:
             if "/.git/" in abspath or ".pyc" in abspath or "/.D" in abspath:
                 continue
 
+            if ".idea" in abspath:
+                continue
+
             # files[abspath.split("/")[-1]] = {"abspath": abspath}
             files[abspath] = {"abspath": abspath}
 

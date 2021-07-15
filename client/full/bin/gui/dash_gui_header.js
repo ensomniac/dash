@@ -41,4 +41,4 @@ function DashGuiHeader (label_text, color, include_border=true) {
     };
 
     this.setup_styles();
-}
+};
