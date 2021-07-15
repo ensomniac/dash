@@ -21457,7 +21457,7 @@ function DashGuiHeader (label_text, color, include_border=true) {
         this.label.text(label_text);
     };
     this.setup_styles();
-}
+};
 
 function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
     this.binder = binder;
@@ -21985,8 +21985,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (!ignore_callback) {
             ignore_callback = (selected["id"] == this.selected_option_id);
         }
-        this.option_list = label_list;
-        this.selected_option_id = selected;
+        if (label_list) {
+            this.option_list = label_list;
+        }
+        if (selected) {
+            this.selected_option_id = selected;
+        }
         this.on_selection(this.selected_option_id, ignore_callback);
         if (this.bool) {
             this.option_list.reverse();

@@ -140,8 +140,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             ignore_callback = (selected["id"] == this.selected_option_id);
         }
 
-        this.option_list = label_list;
-        this.selected_option_id = selected;
+        if (label_list) {
+            this.option_list = label_list;
+        }
+
+        if (selected) {
+            this.selected_option_id = selected;
+        }
 
         this.on_selection(this.selected_option_id, ignore_callback);
 
