@@ -17,6 +17,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     }
 
     this.rows = [];
+    this.header_row = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
@@ -38,6 +39,27 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return row;
     };
 
+    this.AddHeaderRow = function () {
+        if (this.header_row) {
+            console.log("Error: This list already has a header row, can't add another.");
+
+            return;
+        }
+
+        this.add_header_row();
+
+        return this.header_row;
+    };
+
+    this.add_header_row = function () {
+        this.header_row = new DashGuiListRow(this, "_top_header_row");
+
+        this.html.prepend(this.header_row.html);
+
+        // Always update it by default - can still update later in the code that calls this
+        this.header_row.Update();
+    };
+
     this.Update = function () {
         for (var i in this.rows) {
             this.rows[i].Update();
@@ -46,6 +68,11 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
     this.Clear = function () {
         this.html.empty();
+
+        // Always keep the header row, even when clearing the list
+        if (this.header_row) {
+            this.add_header_row();
+        }
 
         this.rows = [];
     };

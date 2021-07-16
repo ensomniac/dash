@@ -23538,6 +23538,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return;
     }
     this.rows = [];
+    this.header_row = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
@@ -23553,6 +23554,20 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.html.append(row.html);
         return row;
     };
+    this.AddHeaderRow = function () {
+        if (this.header_row) {
+            console.log("Error: This list already has a header row, can't add another.");
+            return;
+        }
+        this.add_header_row();
+        return this.header_row;
+    };
+    this.add_header_row = function () {
+        this.header_row = new DashGuiListRow(this, "_top_header_row");
+        this.html.prepend(this.header_row.html);
+        // Always update it by default - can still update later in the code that calls this
+        this.header_row.Update();
+    };
     this.Update = function () {
         for (var i in this.rows) {
             this.rows[i].Update();
@@ -23560,6 +23575,10 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
     this.Clear = function () {
         this.html.empty();
+        // Always keep the header row, even when clearing the list
+        if (this.header_row) {
+            this.add_header_row();
+        }
         this.rows = [];
     };
     this.SetColumnConfig = function (column_config, clear=true) {
@@ -23596,10 +23615,9 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
+    this.id = arbitrary_id;
     this.columns = {};
     this.is_shown = true;
-    this.id = arbitrary_id;
-    // this.is_selected = false;
     this.is_expanded = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
@@ -23608,11 +23626,44 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
+    this.is_header = this.id === "_top_header_row";
     this.setup_styles = function () {
-        // this.html.append(this.expand_content);
-        this.html.append(this.highlight);
-        this.html.append(this.selected_highlight);
-        this.html.append(this.expand_content);
+        if (this.is_header) {
+            this.column_box.css({
+                "background": this.color.AccentGood
+            });
+        }
+        else {
+            this.html.append(this.highlight);
+            this.html.append(this.selected_highlight);
+            this.html.append(this.expand_content);
+            this.expand_content.css({
+                "margin-left": -Dash.Size.Padding,
+                "margin-right": -Dash.Size.Padding,
+                "overflow-y": "hidden",
+                "height": 0,
+            });
+            this.selected_highlight.css({
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "height": Dash.Size.RowHeight,
+                "background": "rgb(240, 240, 240)", // Not correct
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+            this.highlight.css({
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "height": Dash.Size.RowHeight,
+                "background": this.color.AccentGood, // Not correct
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+        }
         this.html.append(this.column_box);
         this.column_box.css({
             "position": "absolute",
@@ -23623,39 +23674,11 @@ function DashGuiListRow (list, arbitrary_id) {
             "display": "flex",
             "cursor": "pointer",
         });
-        this.expand_content.css({
-            "margin-left": -Dash.Size.Padding,
-            "margin-right": -Dash.Size.Padding,
-            "overflow-y": "hidden",
-            "height": 0,
-        });
-        this.selected_highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": Dash.Size.RowHeight,
-            "background": "rgb(240, 240, 240)", // Not correct
-            "pointer-events": "none",
-            "opacity": 0,
-        });
-        this.highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": Dash.Size.RowHeight,
-            "background": this.color.AccentGood, // Not correct
-            "pointer-events": "none",
-            "opacity": 0,
-            // "cursor": "pointer",
-        });
         this.html.css({
             "background": this.color.Background,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            // "cursor": "pointer",
             "min-height": Dash.Size.RowHeight,
         });
         this.setup_columns();
@@ -23670,10 +23693,6 @@ function DashGuiListRow (list, arbitrary_id) {
             "top": -1,
             "bottom": -1,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
-            // "z-index": 2000,
-        });
-        this.html.css({
-            // "border-bottom": "1px solid rgb(200, 200, 200)",
         });
         this.html.prepend(this.expanded_highlight);
     };
@@ -23706,18 +23725,23 @@ function DashGuiListRow (list, arbitrary_id) {
             else if (type === "inputs") {
                 for (i in this.columns[type]) {
                     var input = this.columns[type][i];
-                    var new_value = this.list.binder.GetDataForKey(this.id, input["column_config_data"]["data_key"]);
+                    var new_value = this.get_data_for_key(input["column_config_data"]);
                     if (new_value) {
                         input["obj"].SetText(new_value);
                     }
                 }
             }
-            // else if (type === "combos") {
-            //     for (i in this.columns[type]) {
-            //         var combo = this.columns[type][i];
-            //     }
-            // }
         }
+    };
+    // Helper/handler for external GetDataForKey functions
+    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
+        if (this.is_header) {
+            return column_config_data["data_key"].Title();
+        }
+        if (third_param !== null) {
+            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+        }
+        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
     // Expand an html element below this row
     this.Expand = function (html) {
@@ -23759,8 +23783,6 @@ function DashGuiListRow (list, arbitrary_id) {
         if (this.expanded_highlight) {
             this.expanded_highlight.stop().animate({"opacity": 0}, 270);
         }
-        // var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
-        // var target_height = 0;
         this.expand_content.stop().css({
             "overflow-y": "hidden",
         });
@@ -23777,6 +23799,7 @@ function DashGuiListRow (list, arbitrary_id) {
         })(this);
     };
     this.SetSelected = function (is_selected) {
+        console.log("TODO? SetSelected()");
         // this.is_selected = is_selected;
         // if (this.is_selected) {
         //     this.selected_highlight.stop().animate({"opacity": 1}, 100);
@@ -23902,7 +23925,7 @@ function DashGuiListRow (list, arbitrary_id) {
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
             column_config_data["options"]["binder"] || null,                                               // Binder
             column_config_data["options"]["combo_options"] || null,                                        // Option List
-            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], true) || "",           // Selected ID
+            this.get_data_for_key(column_config_data, "", true),           // Selected ID
             this.color,                                                                                    // Color set
             {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
         );
@@ -23938,7 +23961,7 @@ function DashGuiListRow (list, arbitrary_id) {
             "line-height": (Dash.Size.RowHeight * 0.9) + "px",
             "padding-left": Dash.Size.Padding * 0.35
         });
-        var starting_value = this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || null;
+        var starting_value = this.get_data_for_key(column_config_data);
         if (starting_value) {
             input.SetText(starting_value.toString());
         }
@@ -24003,7 +24026,7 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         else {
             css["margin-left"] = Dash.Size.Padding;
         }
-        if (this.column_config_data["css"]) {
+        if (this.column_config_data["css"] && !this.list_row.is_header) {
             for (var key in this.column_config_data["css"]) {
                 css[key] = this.column_config_data["css"][key];
             }
@@ -24019,24 +24042,43 @@ function DashGuiListRowColumn (list_row, column_config_data) {
                 });
             })(this);
         }
+        if (this.list_row.is_header) {
+            var color;
+            if (this.list.color === Dash.Color.Dark) {
+                color = Dash.Color.Light.BackgroundRaised;
+            }
+            else if (this.list.color === Dash.Color.Light) {
+                color = Dash.Color.Dark.BackgroundRaised;
+            }
+            css["color"] = color;
+        }
         this.html.css(css);
     };
     this.Update = function () {
-        var column_value = this.list.binder.GetDataForKey(
-            this.list_row.id,
-            this.column_config_data["data_key"]
-        );
-        if (column_value && column_value.length > 0) {
-            this.html.css({
-                "font-family": "sans_serif_normal"
-            });
+        var column_value;
+        var font_family;
+        if (this.list_row.is_header) {
+            column_value = this.column_config_data["data_key"].Title();
         }
         else {
-            this.html.css({
-                "font-family": "sans_serif_italic"
-            });
+            column_value = this.list.binder.GetDataForKey(
+                this.list_row.id,
+                this.column_config_data["data_key"]
+            );
         }
         column_value = column_value || this.column_config_data["display_name"];
+        if (this.list_row.is_header) {
+            font_family = "sans_serif_bold";
+        }
+        else if (column_value && column_value.length > 0) {
+            font_family = "sans_serif_normal";
+        }
+        else {
+            font_family = "sans_serif_italic";
+        }
+        this.html.css({
+            "font-family": font_family
+        });
         this.html.text(column_value);
     };
     this.setup_styles();

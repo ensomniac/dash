@@ -28,7 +28,7 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             css["margin-left"] = Dash.Size.Padding;
         }
 
-        if (this.column_config_data["css"]) {
+        if (this.column_config_data["css"] && !this.list_row.is_header) {
             for (var key in this.column_config_data["css"]) {
                 css[key] = this.column_config_data["css"][key];
             }
@@ -51,28 +51,55 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             })(this);
         }
 
+        if (this.list_row.is_header) {
+            var color;
+
+            if (this.list.color === Dash.Color.Dark) {
+                color = Dash.Color.Light.BackgroundRaised;
+            }
+
+            else if (this.list.color === Dash.Color.Light) {
+                color = Dash.Color.Dark.BackgroundRaised;
+            }
+
+            css["color"] = color;
+        }
+
         this.html.css(css);
     };
 
     this.Update = function () {
-        var column_value = this.list.binder.GetDataForKey(
-            this.list_row.id,
-            this.column_config_data["data_key"]
-        );
+        var column_value;
+        var font_family;
 
-        if (column_value && column_value.length > 0) {
-            this.html.css({
-                "font-family": "sans_serif_normal"
-            });
+        if (this.list_row.is_header) {
+            column_value = this.column_config_data["data_key"].Title();
         }
 
         else {
-            this.html.css({
-                "font-family": "sans_serif_italic"
-            });
+            column_value = this.list.binder.GetDataForKey(
+                this.list_row.id,
+                this.column_config_data["data_key"]
+            );
         }
 
         column_value = column_value || this.column_config_data["display_name"];
+
+        if (this.list_row.is_header) {
+            font_family = "sans_serif_bold";
+        }
+
+        else if (column_value && column_value.length > 0) {
+            font_family = "sans_serif_normal";
+        }
+
+        else {
+            font_family = "sans_serif_italic";
+        }
+
+        this.html.css({
+            "font-family": font_family
+        });
 
         this.html.text(column_value);
     };

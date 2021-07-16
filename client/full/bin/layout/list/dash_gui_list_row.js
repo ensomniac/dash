@@ -1,9 +1,9 @@
 function DashGuiListRow (list, arbitrary_id) {
     this.list = list;
+    this.id = arbitrary_id;
+
     this.columns = {};
     this.is_shown = true;
-    this.id = arbitrary_id;
-    // this.is_selected = false;
     this.is_expanded = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
@@ -12,12 +12,50 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expand_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
+    this.is_header = this.id === "_top_header_row";
 
     this.setup_styles = function () {
-        // this.html.append(this.expand_content);
-        this.html.append(this.highlight);
-        this.html.append(this.selected_highlight);
-        this.html.append(this.expand_content);
+        if (this.is_header) {
+            this.column_box.css({
+                "background": this.color.AccentGood
+            });
+        }
+
+        else {
+            this.html.append(this.highlight);
+            this.html.append(this.selected_highlight);
+            this.html.append(this.expand_content);
+
+            this.expand_content.css({
+                "margin-left": -Dash.Size.Padding,
+                "margin-right": -Dash.Size.Padding,
+                "overflow-y": "hidden",
+                "height": 0,
+            });
+
+            this.selected_highlight.css({
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "height": Dash.Size.RowHeight,
+                "background": "rgb(240, 240, 240)", // Not correct
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+
+            this.highlight.css({
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "height": Dash.Size.RowHeight,
+                "background": this.color.AccentGood, // Not correct
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+        }
+
         this.html.append(this.column_box);
 
         this.column_box.css({
@@ -30,42 +68,11 @@ function DashGuiListRow (list, arbitrary_id) {
             "cursor": "pointer",
         });
 
-        this.expand_content.css({
-            "margin-left": -Dash.Size.Padding,
-            "margin-right": -Dash.Size.Padding,
-            "overflow-y": "hidden",
-            "height": 0,
-        });
-
-        this.selected_highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": Dash.Size.RowHeight,
-            "background": "rgb(240, 240, 240)", // Not correct
-            "pointer-events": "none",
-            "opacity": 0,
-        });
-
-        this.highlight.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": Dash.Size.RowHeight,
-            "background": this.color.AccentGood, // Not correct
-            "pointer-events": "none",
-            "opacity": 0,
-            // "cursor": "pointer",
-        });
-
         this.html.css({
             "background": this.color.Background,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            // "cursor": "pointer",
             "min-height": Dash.Size.RowHeight,
         });
 
@@ -83,11 +90,6 @@ function DashGuiListRow (list, arbitrary_id) {
             "top": -1,
             "bottom": -1,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
-            // "z-index": 2000,
-        });
-
-        this.html.css({
-            // "border-bottom": "1px solid rgb(200, 200, 200)",
         });
 
         this.html.prepend(this.expanded_highlight);
@@ -130,20 +132,27 @@ function DashGuiListRow (list, arbitrary_id) {
             else if (type === "inputs") {
                 for (i in this.columns[type]) {
                     var input = this.columns[type][i];
-                    var new_value = this.list.binder.GetDataForKey(this.id, input["column_config_data"]["data_key"]);
+                    var new_value = this.get_data_for_key(input["column_config_data"]);
 
                     if (new_value) {
                         input["obj"].SetText(new_value);
                     }
                 }
             }
-
-            // else if (type === "combos") {
-            //     for (i in this.columns[type]) {
-            //         var combo = this.columns[type][i];
-            //     }
-            // }
         }
+    };
+
+    // Helper/handler for external GetDataForKey functions
+    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
+        if (this.is_header) {
+            return column_config_data["data_key"].Title();
+        }
+
+        if (third_param !== null) {
+            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+        }
+
+        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
 
     // Expand an html element below this row
@@ -201,9 +210,6 @@ function DashGuiListRow (list, arbitrary_id) {
             this.expanded_highlight.stop().animate({"opacity": 0}, 270);
         }
 
-        // var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
-        // var target_height = 0;
-
         this.expand_content.stop().css({
             "overflow-y": "hidden",
         });
@@ -222,6 +228,8 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     this.SetSelected = function (is_selected) {
+        console.log("TODO? SetSelected()");
+
         // this.is_selected = is_selected;
 
         // if (this.is_selected) {
@@ -388,7 +396,7 @@ function DashGuiListRow (list, arbitrary_id) {
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
             column_config_data["options"]["binder"] || null,                                               // Binder
             column_config_data["options"]["combo_options"] || null,                                        // Option List
-            this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], true) || "",           // Selected ID
+            this.get_data_for_key(column_config_data, "", true),           // Selected ID
             this.color,                                                                                    // Color set
             {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
         );
@@ -433,7 +441,7 @@ function DashGuiListRow (list, arbitrary_id) {
             "padding-left": Dash.Size.Padding * 0.35
         });
 
-        var starting_value = this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || null;
+        var starting_value = this.get_data_for_key(column_config_data);
 
         if (starting_value) {
             input.SetText(starting_value.toString());
