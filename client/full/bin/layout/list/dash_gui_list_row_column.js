@@ -62,17 +62,21 @@ function DashGuiListRowColumn (list_row, column_config_data) {
 
         if (column_value && column_value.length > 0) {
             this.html.css({
-                "font-family": "sans_serif_normal",
+                "font-family": "sans_serif_normal"
             });
         }
 
         else {
             this.html.css({
-                "font-family": "sans_serif_italic",
+                "font-family": "sans_serif_italic"
             });
         }
 
         column_value = column_value || this.column_config_data["display_name"];
+
+        if (Dash.IsServerIsoDate(column_value)) {
+            column_value = Dash.ReadableDateTime(column_value, false);
+        }
 
         this.html.text(column_value);
     };

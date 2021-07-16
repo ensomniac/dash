@@ -17697,7 +17697,7 @@ function Dash () {
         date = date.setHours(date.getHours()-server_offset_hours);
         return timeago.format(date);
     };
-    this.ReadableDateTime = function (iso_string) {
+    this.ReadableDateTime = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
         if (this.Context["domain"] === "altona.io") {
@@ -17725,7 +17725,10 @@ function Dash () {
         }
         // Return readable without seconds
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
-        return readable + " " + tz_label;
+        if (include_tz_label) {
+            return readable + " " + tz_label;
+        }
+        return readable;
     };
     this.IsValidEmail = function (str) {
         if (typeof str !== "string") {
@@ -17747,7 +17750,12 @@ function Dash () {
         return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
     };
     this.IsServerIsoDate = function (str) {
-        return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+        str = str.toString();
+        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+        if (!test) {
+            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str);
+        }
+        return test;
     };
     this.ValidateResponse = function (response) {
         // TODO: doc
@@ -24020,15 +24028,18 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         );
         if (column_value && column_value.length > 0) {
             this.html.css({
-                "font-family": "sans_serif_normal",
+                "font-family": "sans_serif_normal"
             });
         }
         else {
             this.html.css({
-                "font-family": "sans_serif_italic",
+                "font-family": "sans_serif_italic"
             });
         }
         column_value = column_value || this.column_config_data["display_name"];
+        if (Dash.IsServerIsoDate(column_value)) {
+            column_value = Dash.ReadableDateTime(column_value, false);
+        }
         this.html.text(column_value);
     };
     this.setup_styles();

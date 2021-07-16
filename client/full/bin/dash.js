@@ -31,7 +31,7 @@ function Dash () {
         return timeago.format(date);
     };
 
-    this.ReadableDateTime = function (iso_string) {
+    this.ReadableDateTime = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
 
@@ -70,7 +70,11 @@ function Dash () {
         // Return readable without seconds
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
 
-        return readable + " " + tz_label;
+        if (include_tz_label) {
+            return readable + " " + tz_label;
+        }
+
+        return readable;
     };
 
     this.IsValidEmail = function (str) {
@@ -98,7 +102,15 @@ function Dash () {
     };
 
     this.IsServerIsoDate = function (str) {
-        return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+        str = str.toString();
+
+        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+
+        if (!test) {
+            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str);
+        }
+
+        return test;
     };
 
     this.ValidateResponse = function (response) {
