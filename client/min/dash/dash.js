@@ -24037,9 +24037,6 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             });
         }
         column_value = column_value || this.column_config_data["display_name"];
-        if (Dash.IsServerIsoDate(column_value)) {
-            column_value = Dash.ReadableDateTime(column_value, false);
-        }
         this.html.text(column_value);
     };
     this.setup_styles();
