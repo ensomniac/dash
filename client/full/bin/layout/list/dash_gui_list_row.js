@@ -17,7 +17,12 @@ function DashGuiListRow (list, arbitrary_id) {
     this.setup_styles = function () {
         if (this.is_header) {
             this.column_box.css({
-                "background": this.color.AccentGood
+                "background": this.color.AccentGood,
+                "pointer-events": "none",
+                "left": 0,
+                "right": 0,
+                "padding-left": Dash.Size.Padding,
+                "padding-right": Dash.Size.Padding,
             });
         }
 
@@ -54,18 +59,21 @@ function DashGuiListRow (list, arbitrary_id) {
                 "pointer-events": "none",
                 "opacity": 0,
             });
+
+            this.column_box.css({
+                "left": Dash.Size.Padding,
+                "right": Dash.Size.Padding,
+                "cursor": "pointer",
+            });
         }
 
         this.html.append(this.column_box);
 
         this.column_box.css({
             "position": "absolute",
-            "left": Dash.Size.Padding,
             "top": 0,
-            "right": Dash.Size.Padding,
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "cursor": "pointer",
         });
 
         this.html.css({
@@ -145,7 +153,7 @@ function DashGuiListRow (list, arbitrary_id) {
     // Helper/handler for external GetDataForKey functions
     this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
         if (this.is_header) {
-            return column_config_data["data_key"].Title();
+            return column_config_data["display_name"] || column_config_data["data_key"].Title();
         }
 
         if (third_param !== null) {

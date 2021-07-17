@@ -73,7 +73,7 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         var font_family;
 
         if (this.list_row.is_header) {
-            column_value = this.column_config_data["data_key"].Title();
+            column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
         }
 
         else {
@@ -83,8 +83,6 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             );
         }
 
-        column_value = column_value || this.column_config_data["display_name"];
-
         if (this.list_row.is_header) {
             font_family = "sans_serif_bold";
         }
@@ -93,7 +91,13 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             font_family = "sans_serif_normal";
         }
 
-        else {
+        if (!column_value) {
+            var options = this.column_config_data["options"];
+
+            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
+                column_value = this.column_config_data["display_name"];
+            }
+
             font_family = "sans_serif_italic";
         }
 

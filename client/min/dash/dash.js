@@ -23630,7 +23630,12 @@ function DashGuiListRow (list, arbitrary_id) {
     this.setup_styles = function () {
         if (this.is_header) {
             this.column_box.css({
-                "background": this.color.AccentGood
+                "background": this.color.AccentGood,
+                "pointer-events": "none",
+                "left": 0,
+                "right": 0,
+                "padding-left": Dash.Size.Padding,
+                "padding-right": Dash.Size.Padding,
             });
         }
         else {
@@ -23663,16 +23668,18 @@ function DashGuiListRow (list, arbitrary_id) {
                 "pointer-events": "none",
                 "opacity": 0,
             });
+            this.column_box.css({
+                "left": Dash.Size.Padding,
+                "right": Dash.Size.Padding,
+                "cursor": "pointer",
+            });
         }
         this.html.append(this.column_box);
         this.column_box.css({
             "position": "absolute",
-            "left": Dash.Size.Padding,
             "top": 0,
-            "right": Dash.Size.Padding,
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "cursor": "pointer",
         });
         this.html.css({
             "background": this.color.Background,
@@ -23736,7 +23743,7 @@ function DashGuiListRow (list, arbitrary_id) {
     // Helper/handler for external GetDataForKey functions
     this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
         if (this.is_header) {
-            return column_config_data["data_key"].Title();
+            return column_config_data["display_name"] || column_config_data["data_key"].Title();
         }
         if (third_param !== null) {
             return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
@@ -24058,7 +24065,7 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         var column_value;
         var font_family;
         if (this.list_row.is_header) {
-            column_value = this.column_config_data["data_key"].Title();
+            column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
         }
         else {
             column_value = this.list.binder.GetDataForKey(
@@ -24066,14 +24073,17 @@ function DashGuiListRowColumn (list_row, column_config_data) {
                 this.column_config_data["data_key"]
             );
         }
-        column_value = column_value || this.column_config_data["display_name"];
         if (this.list_row.is_header) {
             font_family = "sans_serif_bold";
         }
         else if (column_value && column_value.length > 0) {
             font_family = "sans_serif_normal";
         }
-        else {
+        if (!column_value) {
+            var options = this.column_config_data["options"];
+            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
+                column_value = this.column_config_data["display_name"];
+            }
             font_family = "sans_serif_italic";
         }
         this.html.css({
