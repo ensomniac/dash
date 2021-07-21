@@ -142,6 +142,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
 
+        // TODO: Replace units if necessary
         top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
         top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
 

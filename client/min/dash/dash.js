@@ -24230,6 +24230,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
+        // TODO: Replace units if necessary
         top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
         top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
         for (var i in styles) {
@@ -24373,8 +24374,6 @@ function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
     // TODO: Update all uses of VH/VW
-    // Expects dict with key/value pairs (value should be a number), where the key
-    // displays on the bottom of the bar graph, and value sets the height of the bar
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
             console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
@@ -24382,6 +24381,10 @@ function DashGuiLayoutDashboardModuleFlex () {
         }
         if (!Dash.IsValidObject(data)) {
             console.log("ERROR: SetBarData() requires a dictionary to be passed in");
+            return;
+        }
+        if (!data["data"] || !data["order"]) {
+            console.log("ERROR: SetBarData() expects a dict that contains 'data' and 'order' keys");
             return;
         }
         this.bar_data = data;
@@ -24415,15 +24418,18 @@ function DashGuiLayoutDashboardModuleFlex () {
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
         var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+        var prev_mod_is_flex = this.modules[this.modules.length - 1]["style"] === "flex";
+        var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
+        var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
         // TODO: Replace units if necessary
         canvas_container.style.height = "11.25vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
         canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = (this.margin * 0.3).toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * 1.25).toString() + "vw";  // TEMP
-        canvas_container.style.width = "inherit";  // MUST remain inherited to flex properly
+        canvas_container.style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
+        canvas_container.style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
         canvas_container.style.overflow = "hidden";
         canvas_container.style.opacity = "0";
+        canvas_container.style.flex = "1";
         canvas.id = canvas_id;
         script.type = "text/javascript";
         script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
@@ -24461,16 +24467,16 @@ function DashGuiLayoutDashboardModuleFlex () {
         if (!Dash.IsValidObject(data)) {
             data = this.bar_data;
         }
-        var labels = [];
+        var labels = data["order"];
         var values = [];
-        for (var key in data) {
-            labels.push(key.toString());
-            var value = parseInt(data[key]);
+        for (var i in data["order"]) {
+            var key = data["order"][i];
+            var value = parseInt(data["data"][key]);
             if (isNaN(value)) {
                 console.log("ERROR: Bar data object values must be numbers");
                 return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
             }
-            values.push(data[key]);
+            values.push(value);
         }
         return [labels, values];
     };
