@@ -14,16 +14,13 @@ function DashGui() {
     this.PropertyBox = DashGuiPropertyBox;
     this.Slider =      DashGuiSlider;
 
-    this.GetHTMLContext = function (optional_label_text, optional_style_css) {
-        optional_label_text = optional_label_text || "";
-        optional_style_css = optional_style_css || {};
-
+    this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=Dash.Color.Light) {
         var html = $("<div>" + optional_label_text + "</div>");
 
         var css = {
-            "color": Dash.Color.Light.Text,
+            "color": color.Text,
             "font-family": "sans_serif_normal",
-            "background": Dash.Color.Light.Background,
+            "background": color.Background,
         };
 
         for (var key in optional_style_css) {
@@ -35,9 +32,7 @@ function DashGui() {
         return html;
     };
 
-    this.GetHTMLAbsContext = function (optional_label_text) {
-        optional_label_text = optional_label_text || "";
-
+    this.GetHTMLAbsContext = function (optional_label_text="") {
         var html = $("<div>" + optional_label_text + "</div>");
 
         html.css({
@@ -54,12 +49,7 @@ function DashGui() {
         return html;
     };
 
-    this.GetHTMLBoxContext = function (optional_style_css, color) {
-        color = color || Dash.Color.Light;
-
-        // optional_label_text = optional_label_text || "";
-        optional_style_css = optional_style_css || {};
-
+    this.GetHTMLBoxContext = function (optional_style_css={}, color=Dash.Color.Light) {
         var html = $("<div></div>");
 
         var css = {
@@ -67,7 +57,7 @@ function DashGui() {
             "margin-bottom": Dash.Size.Padding,
             "background": color.BackgroundRaised,
             "color": color.Background,
-            "border-radius": Dash.Size.Padding*0.5,
+            "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         };
 
