@@ -6,7 +6,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback) {
     this.stack = new Dash.Gui.Layout.Mobile.CardStack(this);
     this.html = this.stack.html;
 
-    this.setup_styles = function () {
+    this.setup_styles = function () { 
 
         this.user_banner = this.stack.AddBanner();
         this.user_banner.SetHeadlineText("User Settings", "Ryan Martin");
