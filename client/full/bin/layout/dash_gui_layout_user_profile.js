@@ -34,7 +34,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         //     "left": this.img_box_size + (Dash.Size.Padding * 2),
         // });
 
-        this.logout_button = Dash.Gui.AddTopRightDeleteButton(this, this.log_out, "log_out");
+        this.logout_button = Dash.Gui.AddTopRightIconButton(this, this.log_out, "log_out");
 
         this.html.append(this.logout_button);
     };

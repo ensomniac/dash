@@ -1,5 +1,4 @@
 function DashGuiPropertyBoxInterface () {
-
     this.SetTopRightLabel = function (label_text) {
 
         if (!this.top_right_label) {
@@ -10,22 +9,22 @@ function DashGuiPropertyBoxInterface () {
 
     };
 
-    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
+    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
         var icon_id = "trash";
 
         if (alt_icon_id && typeof alt_icon_id === "string") {
             icon_id = alt_icon_id;
-        };
+        }
 
         if (this.top_right_delete_button) {
             return;
-        };
+        }
 
         if (this.top_right_label) {
             this.top_right_label.css({
                 "right": Dash.Size.Padding * 5
             });
-        };
+        }
 
         this.top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
 
@@ -44,7 +43,7 @@ function DashGuiPropertyBoxInterface () {
 
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
 
         (function (self, callback, data_key, additional_data) {
 
@@ -279,8 +278,4 @@ function DashGuiPropertyBoxInterface () {
 
         return this.update_inputs[data_key];
     };
-
-
-
-
-};
+}
