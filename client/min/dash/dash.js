@@ -19225,19 +19225,20 @@ function DashAdminTabs () {
 }
 
 function DashGui() {
-    this.Layout = new DashGuiLayout();
-    this.Login = DashGuiLogin;
-    this.Button = DashGuiButton;
-    this.Slider = DashGuiSlider;
-    this.IconButton = DashGuiIconButton;
-    this.Icon = DashIcon;
-    this.Input = DashGuiInput;
+    this.Button =      DashGuiButton;
+    this.ChatBox =     DashGuiChatBox;
+    this.Combo =       DashGuiCombo;
+    this.Header =      DashGuiHeader;
+    this.Icon =        DashIcon;
+    this.IconButton =  DashGuiIconButton;
+    this.Input =       DashGuiInput;
+    this.InputRow =    DashGuiInputRow;
+    this.Layout =      new DashGuiLayout();
+    this.LoadDots =    DashGuiLoadDots;
+    this.Login =       DashGuiLogin;
+    this.PaneSlider =  DashGuiPaneSlider;
     this.PropertyBox = DashGuiPropertyBox;
-    this.LoadDots = DashGuiLoadDots;
-    this.InputRow = DashGuiInputRow;
-    this.Header = DashGuiHeader;
-    this.Combo = DashGuiCombo;
-    this.PaneSlider = DashGuiPaneSlider;
+    this.Slider =      DashGuiSlider;
     this.GetHTMLContext = function (optional_label_text, optional_style_css) {
         optional_label_text = optional_label_text || "";
         optional_style_css = optional_style_css || {};
@@ -19349,7 +19350,7 @@ function DashGui() {
         })(color_picker.input, callback);
         return color_picker;
     };
-    this.AddTopRightDeleteButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
+    this.AddTopRightIconButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
         var icon_id = "trash";
         if (alt_icon_id && typeof alt_icon_id === "string") {
             icon_id = alt_icon_id;
@@ -19392,177 +19393,6 @@ function DashGui() {
         }
         return top_right_delete_button;
     };
-}
-
-function DashGuiLogin (on_login_binder, on_login_callback, color) {
-    this.html = $("<div></div>");
-    this.login_box = $("<div></div>");
-    this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
-    this.email_row = $("<div></div>");
-    this.password_row = $("<div></div>");
-    this.button_bar = $("<div></div>");
-    this.color = color || Dash.Color.Dark;
-    this.on_login_callback = null;
-    
-    if (on_login_binder && on_login_callback) {
-        this.on_login_callback = on_login_callback.bind(on_login_binder);
-    }
-    this.setup_styles = function () {
-        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
-        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
-        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
-        this.password_input = new Dash.Gui.Input("Password", this.color);
-        this.email_input.html.css({
-            "padding": Dash.Size.Padding * 0.5,
-        });
-        this.password_input.html.css({
-            "padding": Dash.Size.Padding * 0.5,
-        });
-        this.email_input.OnSubmit(this.Submit, this);
-        this.password_input.OnSubmit(this.Submit, this);
-        this.email_input.OnChange(this.store_input, this);
-        this.password_input.OnChange(this.store_input, this);
-        this.email_row.append(this.email_input.html);
-        this.password_row.append(this.password_input.html);
-        this.html.append(this.login_box);
-        this.login_box.append(this.header_label);
-        this.login_box.append(this.email_row);
-        this.login_box.append(this.password_row);
-        this.login_box.append(this.button_bar);
-        this.button_bar.append(this.reset_button.html);
-        this.button_bar.append(this.login_button.html);
-        var login_box_width = window.outerWidth * 0.5;
-        if (!Dash.IsMobile && login_box_width > 350) {
-            login_box_width = 350;
-        }
-        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
-        this.html.css({
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "text-align": "center",
-        });
-        this.login_box.css({
-            "width": login_box_width,
-            "height": "auto",
-            "margin-left": "auto",
-            "margin-right": "auto",
-            "margin-top": Dash.Size.Padding * 2,
-            "padding-bottom": Dash.Size.Padding * 2,
-            "background": this.color.BackgroundRaised,
-            "border-radius": 4,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
-            "opacity": 0,
-        });
-        this.header_label.css({
-            "text-align": "center",
-            "font-family": "sans_serif_bold",
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
-            "padding": Dash.Size.Padding,
-        });
-        this.button_bar.css({
-            "display": "flex",
-            "height": Dash.Size.RowHeight,
-        });
-        this.email_row.css({
-            "margin": Dash.Size.Padding,
-            "margin-top": 0,
-        });
-        this.password_row.css({
-            "margin": Dash.Size.Padding,
-            "margin-top": 0,
-        });
-        this.login_button.html.css({
-            "margin-left": Dash.Size.Padding,
-            // "margin-top": 0,
-            // "padding": Dash.Size.Padding * 0.5,
-            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
-            // "background": Dash.Color.Primary,
-        });
-        this.reset_button.html.css({
-            // "margin": Dash.Size.Padding,
-            "margin-left": Dash.Size.Padding,
-            // "margin-right": 0,
-            // "padding": Dash.Size.Padding * 0.5,
-            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
-        });
-        this.email_input.SetText(Dash.Local.Get("email") || "");
-        this.show_login_box();
-    };
-    this.show_login_box = function () {
-        this.login_box.css({"opacity": 1});
-    };
-    this.store_input = function () {
-        Dash.Local.Set("email", this.email_input.Text());
-    };
-    this.Submit = function () {
-        var email = this.email_input.Text();
-        var pass = this.password_input.Text();
-        if (email && pass) {
-            this.Login();
-        }
-        // Disabling this to prevent accidental resets, better if they deliberately click the button
-        // else {
-        //     this.ResetLogin();
-        // }
-    };
-    this.Login = function () {
-        var email = this.email_input.Text();
-        var pass = this.password_input.Text();
-        if (!Dash.IsValidEmail(email)) {
-            alert("Please enter a valid email");
-            return;
-        }
-        if (!pass) {
-            alert("Please enter a valid password");
-            return;
-        }
-        var api = "https://" + Dash.Context["domain"] + "/Users";
-        var server_data = {};
-        server_data["f"] = "login";
-        server_data["email"] = email;
-        server_data["pass"] = pass;
-        this.login_button.Request(api, server_data, this.on_login_response, this);
-    };
-    this.ResetLogin = function () {
-        var email = this.email_input.Text();
-        var api = "https://" + Dash.Context["domain"] + "/Users";
-        if (!Dash.IsValidEmail(email)) {
-            alert("Please enter a valid email");
-            return;
-        }
-        var server_data = {};
-        server_data["f"] = "reset";
-        server_data["email"] = email;
-        this.reset_button.Request(api, server_data, this.on_reset_response, this);
-    };
-    this.on_reset_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
-            return;
-        }
-        if (response["success"]) {
-            alert("Your password link has been sent to " + response["email"] + ". Click that link to receive a new temporary password and log in");
-        }
-    };
-    this.on_login_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
-            
-            return;
-        }
-        console.log("******* LOG IN *******", response);
-        Dash.User.SetUserAuthentication(this.email_input.Text(), response);
-        (function (self) {
-            self.html.animate({"opacity": 0}, 150, function () {
-                self.html.remove();
-                self.on_login_callback();
-            });
-        })(this);
-    };
-    this.setup_styles();
 }
 
 function DashGuiButton (Label, Callback, Bind, color, options) {
@@ -20341,6 +20171,177 @@ function DashGuiButtonStyleToolbar () {
             "padding-right": Dash.Size.Padding,
         });
     };
+}
+
+function DashGuiLogin (on_login_binder, on_login_callback, color) {
+    this.html = $("<div></div>");
+    this.login_box = $("<div></div>");
+    this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
+    this.email_row = $("<div></div>");
+    this.password_row = $("<div></div>");
+    this.button_bar = $("<div></div>");
+    this.color = color || Dash.Color.Dark;
+    this.on_login_callback = null;
+    
+    if (on_login_binder && on_login_callback) {
+        this.on_login_callback = on_login_callback.bind(on_login_binder);
+    }
+    this.setup_styles = function () {
+        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
+        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.password_input = new Dash.Gui.Input("Password", this.color);
+        this.email_input.html.css({
+            "padding": Dash.Size.Padding * 0.5,
+        });
+        this.password_input.html.css({
+            "padding": Dash.Size.Padding * 0.5,
+        });
+        this.email_input.OnSubmit(this.Submit, this);
+        this.password_input.OnSubmit(this.Submit, this);
+        this.email_input.OnChange(this.store_input, this);
+        this.password_input.OnChange(this.store_input, this);
+        this.email_row.append(this.email_input.html);
+        this.password_row.append(this.password_input.html);
+        this.html.append(this.login_box);
+        this.login_box.append(this.header_label);
+        this.login_box.append(this.email_row);
+        this.login_box.append(this.password_row);
+        this.login_box.append(this.button_bar);
+        this.button_bar.append(this.reset_button.html);
+        this.button_bar.append(this.login_button.html);
+        var login_box_width = window.outerWidth * 0.5;
+        if (!Dash.IsMobile && login_box_width > 350) {
+            login_box_width = 350;
+        }
+        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
+        this.html.css({
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "text-align": "center",
+        });
+        this.login_box.css({
+            "width": login_box_width,
+            "height": "auto",
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding * 2,
+            "padding-bottom": Dash.Size.Padding * 2,
+            "background": this.color.BackgroundRaised,
+            "border-radius": 4,
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "opacity": 0,
+        });
+        this.header_label.css({
+            "text-align": "center",
+            "font-family": "sans_serif_bold",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding": Dash.Size.Padding,
+        });
+        this.button_bar.css({
+            "display": "flex",
+            "height": Dash.Size.RowHeight,
+        });
+        this.email_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+        this.password_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+        this.login_button.html.css({
+            "margin-left": Dash.Size.Padding,
+            // "margin-top": 0,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+            // "background": Dash.Color.Primary,
+        });
+        this.reset_button.html.css({
+            // "margin": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
+            // "margin-right": 0,
+            // "padding": Dash.Size.Padding * 0.5,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+        });
+        this.email_input.SetText(Dash.Local.Get("email") || "");
+        this.show_login_box();
+    };
+    this.show_login_box = function () {
+        this.login_box.css({"opacity": 1});
+    };
+    this.store_input = function () {
+        Dash.Local.Set("email", this.email_input.Text());
+    };
+    this.Submit = function () {
+        var email = this.email_input.Text();
+        var pass = this.password_input.Text();
+        if (email && pass) {
+            this.Login();
+        }
+        // Disabling this to prevent accidental resets, better if they deliberately click the button
+        // else {
+        //     this.ResetLogin();
+        // }
+    };
+    this.Login = function () {
+        var email = this.email_input.Text();
+        var pass = this.password_input.Text();
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+            return;
+        }
+        if (!pass) {
+            alert("Please enter a valid password");
+            return;
+        }
+        var api = "https://" + Dash.Context["domain"] + "/Users";
+        var server_data = {};
+        server_data["f"] = "login";
+        server_data["email"] = email;
+        server_data["pass"] = pass;
+        this.login_button.Request(api, server_data, this.on_login_response, this);
+    };
+    this.ResetLogin = function () {
+        var email = this.email_input.Text();
+        var api = "https://" + Dash.Context["domain"] + "/Users";
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+            return;
+        }
+        var server_data = {};
+        server_data["f"] = "reset";
+        server_data["email"] = email;
+        this.reset_button.Request(api, server_data, this.on_reset_response, this);
+    };
+    this.on_reset_response = function (response) {
+        if (response["error"]) {
+            alert(response["error"]);
+            return;
+        }
+        if (response["success"]) {
+            alert("Your password link has been sent to " + response["email"] + ". Click that link to receive a new temporary password and log in");
+        }
+    };
+    this.on_login_response = function (response) {
+        if (response["error"]) {
+            alert(response["error"]);
+            
+            return;
+        }
+        console.log("******* LOG IN *******", response);
+        Dash.User.SetUserAuthentication(this.email_input.Text(), response);
+        (function (self) {
+            self.html.animate({"opacity": 0}, 150, function () {
+                self.html.remove();
+                self.on_login_callback();
+            });
+        })(this);
+    };
+    this.setup_styles();
 }
 
 function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
@@ -21467,6 +21468,17 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.setup_styles();
 };
 
+function DashGuiChatBox (color=Dash.Color.Light) {
+    this.color = color;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "red"
+        });
+    };
+    this.setup_styles();
+}
+
 function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
     this.binder = binder;
     this.get_data_cb = null;
@@ -21677,19 +21689,19 @@ function DashGuiPropertyBoxInterface () {
         }
         this.top_right_label.text(label_text);
     };
-    this.AddTopRightDeleteButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
+    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
         var icon_id = "trash";
         if (alt_icon_id && typeof alt_icon_id === "string") {
             icon_id = alt_icon_id;
-        };
+        }
         if (this.top_right_delete_button) {
             return;
-        };
+        }
         if (this.top_right_label) {
             this.top_right_label.css({
                 "right": Dash.Size.Padding * 5
             });
-        };
+        }
         this.top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
         this.top_right_delete_button.css({
             "left": "auto",
@@ -21704,7 +21716,7 @@ function DashGuiPropertyBoxInterface () {
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
         (function (self, callback, data_key, additional_data) {
             var button = new window.Dash.Gui.IconButton(
                 icon_id,
@@ -21878,9 +21890,7 @@ function DashGuiPropertyBoxInterface () {
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
     };
-
-
-};
+}
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color, options, bool) {
     this.label              = label;
@@ -22491,7 +22501,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         //     "right": Dash.Size.Padding,
         //     "left": this.img_box_size + (Dash.Size.Padding * 2),
         // });
-        this.logout_button = Dash.Gui.AddTopRightDeleteButton(this, this.log_out, "log_out");
+        this.logout_button = Dash.Gui.AddTopRightIconButton(this, this.log_out, "log_out");
         this.html.append(this.logout_button);
     };
     this.add_header = function () {

@@ -1,18 +1,18 @@
 function DashGui() {
-
-    this.Layout = new DashGuiLayout();
-    this.Login = DashGuiLogin;
-    this.Button = DashGuiButton;
-    this.Slider = DashGuiSlider;
-    this.IconButton = DashGuiIconButton;
-    this.Icon = DashIcon;
-    this.Input = DashGuiInput;
+    this.Button =      DashGuiButton;
+    this.ChatBox =     DashGuiChatBox;
+    this.Combo =       DashGuiCombo;
+    this.Header =      DashGuiHeader;
+    this.Icon =        DashIcon;
+    this.IconButton =  DashGuiIconButton;
+    this.Input =       DashGuiInput;
+    this.InputRow =    DashGuiInputRow;
+    this.Layout =      new DashGuiLayout();
+    this.LoadDots =    DashGuiLoadDots;
+    this.Login =       DashGuiLogin;
+    this.PaneSlider =  DashGuiPaneSlider;
     this.PropertyBox = DashGuiPropertyBox;
-    this.LoadDots = DashGuiLoadDots;
-    this.InputRow = DashGuiInputRow;
-    this.Header = DashGuiHeader;
-    this.Combo = DashGuiCombo;
-    this.PaneSlider = DashGuiPaneSlider;
+    this.Slider =      DashGuiSlider;
 
     this.GetHTMLContext = function (optional_label_text, optional_style_css) {
         optional_label_text = optional_label_text || "";
@@ -163,7 +163,7 @@ function DashGui() {
         return color_picker;
     };
 
-    this.AddTopRightDeleteButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
+    this.AddTopRightIconButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
         var icon_id = "trash";
 
         if (alt_icon_id && typeof alt_icon_id === "string") {
