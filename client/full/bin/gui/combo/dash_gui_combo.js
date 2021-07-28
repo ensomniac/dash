@@ -23,24 +23,34 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click_skirt = null;
+    this.list_width = -1;
 
     this.hide_skirt = function () {
+
         if (!this.click_skirt) {
             return;
         }
 
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];
-
             panel.remove();
-        }
+        };
 
         this.click_skirt = null;
 
     };
 
+    this.EnableSearchSelection = function (enable_search) {
+        DashGuiComboSearch.call(this, this);
+        this.setup_search_selection();
+    };
+
     this.draw_click_skirt = function (height, width) {
         this.hide_skirt();
+
+        if (this.is_searchable) {
+            height = this.html.height();
+        };
 
         this.click_skirt = [];
 
@@ -67,6 +77,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "width": set_width[i],
                 "height": set_height[i],
                 "z-index": 100,
+                // "background": "rgba(51,135,208,0.24)",
+                "cursor": "pointer",
             });
 
             this.html.append(panel);
@@ -99,6 +111,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
         this.setup_styles();
         this.initialize_rows();
+
     };
 
     this.initialize_rows = function () {
@@ -236,19 +249,26 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
             this.rows.append(button.html);
             this.row_buttons.push(button);
-        }
+        };
+
     };
 
     this.on_click = function () {
+
         this.flash();
+
+        if (this.is_searchable && this.search_active) {
+            this.hide_searchable();
+            // return;
+        };
 
         if (this.expanded) {
             this.hide();
         }
-
         else {
             this.show();
-        }
+        };
+
     };
 
     this.SetLabel = function (content) {
@@ -273,8 +293,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         var label_text = selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
-            console.log("label_text == null");
-            console.log("this.initialized: " + this.initialized);
             this.label.text("ERROR");
             return;
         }
@@ -300,12 +318,29 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         // Prior to showing, set the width of rows
         this.setup_label_list();
 
-        var width = this.rows.width() + Dash.Size.Padding;
+        this.list_width = this.rows.width() + Dash.Size.Padding;
         var label_width = 0;
         var i;
 
+        // if (this.is_searchable) {
+        //     // Hard out if we're searching. This function
+        //     // is called when the combo is searchable only
+        //     // to discern the max width of all items with
+        //     // their current styles. It's possible this is
+        //     // prohibitively expensive since technically the
+        //     // rows are still drawn but never used. An alternative
+        //     // approach looks like finding the item in the list
+        //     // with the longest length. The only trouble with that
+        //     // approach is that you still don't really know the
+        //     // pixel width with styling. A possible solution
+        //     // to that issue might be drawing a single row with
+        //     // the item that is the longest length. Yeah, that's
+        //     // more sensible than doing this. Do that, Ryan!
+        //     return;
+        // };
+
         this.rows.css({
-            "width": width,
+            "width": this.list_width,
         });
 
         for (i in this.row_buttons) {
@@ -325,7 +360,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.show = function () {
+
         this.pre_show_size_set();
+
+        if (this.is_searchable) {
+            this.activate_search();
+            // return;
+        };
 
         this.rows.detach();
         this.html.append(this.rows);
@@ -348,6 +389,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         });
 
         this.rows.animate({"height": end_height}, 150);
+
+        if (this.is_searchable) {
+
+            this.rows.css({
+                "top": this.html.height(),
+            });
+
+            this.manage_search_list();
+
+        };
+
     };
 
     this.SetWidth = function (width) {
@@ -356,10 +408,16 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.hide = function () {
+
         this.expanded = false;
         this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
+
+        if (this.is_searchable && this.search_active) {
+            this.hide_searchable();
+        };
+
     };
 
     this.setup_connections = function () {
@@ -400,17 +458,34 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     self.on_click();
                     e.preventDefault();
                     return false;
-                }
+                };
 
                 if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                }
+                };
+
             });
+
+            if (self.option_list.length > 20) {
+
+                setTimeout(function(){
+
+                    if (!self.is_searchable) {
+                        console.log("Dash > Converting combo to be a searchable list since it contains over 20 items");
+                        self.EnableSearchSelection();
+                    };
+
+                }, 200);
+
+            };
+
+
         })(this);
     };
 
     this.initialize_style();
     this.setup_connections();
-}
+
+};

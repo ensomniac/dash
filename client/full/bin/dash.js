@@ -20,9 +20,15 @@ function Dash () {
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
+    this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
 
     this.width = 0;
     this.height = 0;
+
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log("Load mobile css");
+    };
 
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different

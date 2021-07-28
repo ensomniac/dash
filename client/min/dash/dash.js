@@ -1,4 +1,4 @@
-function DashIcon (color, icon_name, container_size, icon_size_mult) {
+function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=null) {
     this.color = color || Dash.Color.Light;
     this.theme = "light";
     this.html = $("<div class='GuiIcon'></div>");
@@ -7,6 +7,10 @@ function DashIcon (color, icon_name, container_size, icon_size_mult) {
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult || 1;
     this.icon_definition = new GuiIcons(this);
+    this.icon_color = icon_color ||this.color.Text;
+    if (this.color.Button.Background.Icon && !icon_color) {
+        this.icon_color = this.color.Button.Background.Icon;
+    };
     if (!this.color.Text) {
         console.log("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
@@ -23,17 +27,23 @@ function DashIcon (color, icon_name, container_size, icon_size_mult) {
         });
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
-        if (this.color.Button.Background.Icon) {
-            this.icon_html.css({
-                "color": this.color.Button.Background.Icon
-            });
-        }
         this.html.append(this.icon_html);
     };
-    this.update = function (icon_id) {
-        this.id = icon_id;
-        this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
-        this.default_size = ICON_MAP["icons"][this.id][1];
+    // this.update = function (icon_id) {
+    //     this.id = icon_id;
+    //     this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
+    //     this.default_size = ICON_MAP["icons"][this.id][1];
+    // };
+    this.SetIcon = function(icon_name, color=this.icon_color){
+        this.name = icon_name || "unknown";
+        this.icon_definition = new GuiIcons(this);
+        var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        icon_html.css(this.icon_definition.get_css());
+        this.html.append(icon_html);
+        if (this.icon_html) {
+            this.icon_html.remove();
+        };
+        this.icon_html = icon_html;
     };
     this.setup_styles();
 }
@@ -66,10 +76,10 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
             "font-size": icon_fnt_size + "px",
             "line-height": this.icon.size + "px",
             "text-align": "center",
-            "color": this.icon.color.Text
+            "color": this.icon.icon_color,
         };
-        if (!this.icon.color.Text) {
-            console.log("Error: Incorrect color object passed to DashIcon:", this.color);
+        if (!this.icon.icon_color) {
+            console.log("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
             console.trace();
             debugger;
         }
@@ -17689,8 +17699,13 @@ function Dash () {
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
+    this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
     this.width = 0;
     this.height = 0;
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log("Load mobile css");
+    };
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
@@ -17958,7 +17973,7 @@ function DashSize (is_mobile) {
         this.RowHeight = 40;
         this.ButtonHeight = this.RowHeight + (this.Padding);
         this.ColumnWidth = 300;
-        this.BorderRadius = 3;
+        this.BorderRadius = 9;
     }
 }
 
@@ -18688,6 +18703,9 @@ class DashSiteColors {
 }
 
 function DashUtils () {
+    this.animation_frame_workers = [];
+    this.animation_frame_manager_running = false;
+    this.animation_frame_iter = 0;
     this.SetTimer = function (binder, callback, ms) {
         var timer = {};
         timer["callback"] = callback.bind(binder);
@@ -18719,6 +18737,82 @@ function DashUtils () {
         }
         timer["callback"]();
     };
+    this.OnHTMLResized = function (binder, callback) {
+        // Very similar to OnFrame, except we capture the size of binder.html
+        // and only fire the callback if the size changes
+        var anim_frame_worker = {};
+        anim_frame_worker["callback"] = callback.bind(binder);
+        anim_frame_worker["source"] = binder;
+        anim_frame_worker["width"] = binder.html.width();
+        anim_frame_worker["height"] = binder.html.height();
+        anim_frame_worker["on_resize"] = true;
+        this.register_anim_frame_worker(anim_frame_worker);
+    };
+    this.OnFrame = function (binder, callback) {
+        // Store a tiny bit of information about this request
+        var anim_frame_worker = {};
+        anim_frame_worker["callback"] = callback.bind(binder);
+        anim_frame_worker["source"] = binder;
+        this.register_anim_frame_worker(anim_frame_worker);
+    };
+    this.register_anim_frame_worker = function (anim_frame_worker) {
+        if (!this.animation_frame_manager_running) {
+            // This only needs to be started once, and it will run forever
+            this.animation_frame_manager_running = true;
+            this.draw_anim_frame_workers();
+        };
+        // This is intentionally called after we start the worker so that
+        // the behavior of Dash.OnFrame is similar to Window.RequestAnimationFrame in that
+        // you would not expect the callback to fire until the next frame...
+        this.animation_frame_workers.push(anim_frame_worker);
+    };
+    this.draw_anim_frame_workers = function () {
+        this.animation_frame_iter += 1;
+        if (this.animation_frame_iter >= 30) {
+            // Coarse timeout
+            this.animation_frame_iter = 0;
+            this.manage_anim_frame_workers();
+        };
+        // Actually fire each callback
+        for (var x in this.animation_frame_workers) {
+            if (this.animation_frame_workers[x]["on_resize"]) {
+                this.manage_on_resize_worker(x);
+            }
+            else {
+                this.animation_frame_workers[x]["callback"]();
+            };
+        };
+        (function(self){
+            // Call this function again
+            requestAnimationFrame(function(){
+                self.draw_anim_frame_workers()
+            });
+        })(this);
+    };
+    this.manage_on_resize_worker = function (index) {
+        var width = this.animation_frame_workers[index]["source"].html.width();
+        var height = this.animation_frame_workers[index]["source"].html.height();
+        if (width == this.animation_frame_workers[index]["width"] && height == this.animation_frame_workers[index]["height"]) {
+            // Nothing to do, height and width are the same
+            return;
+        };
+        this.animation_frame_workers[index]["width"] = width;
+        this.animation_frame_workers[index]["height"] = height;
+        this.animation_frame_workers[index]["callback"](width, height);
+    };
+    this.manage_anim_frame_workers = function () {
+        // This breakout function is not called on every frame, but on
+        // approximately every 30 frames. This is so we're not doing anything
+        // too heavy on each frame. Check each worker to see if we should
+        // still be processing frame updates
+        // console.log("Manage them all....");
+        // console.log(this.animation_frame_workers.length);
+        // TODO: Round out this function to clean up stale html objects
+    };
+
+
+
+
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
         var anim_frame = {};
         anim_frame["callback"] = callback.bind(binder);
@@ -18731,6 +18825,11 @@ function DashUtils () {
                 anim_frame["iterations"] = iterations;
                 // TODO: Ryan, I think (unable to confirm) that this may be causing some excessive looping...
                 //  Can you please take a look at this logic and see if everything looks correct?
+                //
+                // TODO: Andrew: I don't think this is implemented in the way you were expecting
+                //  I wrote a slightly different version in this file as an example
+                //  of what I was thinking. When you see this and have some time,
+                //  let's hop on a call to discus!
                 self.OnAnimationFrame(binder, callback, html_key);
                 iterations += 1;
             });
@@ -21904,6 +22003,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click_skirt = null;
+    this.list_width = -1;
     this.hide_skirt = function () {
         if (!this.click_skirt) {
             return;
@@ -21911,11 +22011,18 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];
             panel.remove();
-        }
+        };
         this.click_skirt = null;
+    };
+    this.EnableSearchSelection = function (enable_search) {
+        DashGuiComboSearch.call(this, this);
+        this.setup_search_selection();
     };
     this.draw_click_skirt = function (height, width) {
         this.hide_skirt();
+        if (this.is_searchable) {
+            height = this.html.height();
+        };
         this.click_skirt = [];
         this.click_skirt = [
             $("<div class='ComboClickSkirt Combo'></div>"),
@@ -21937,6 +22044,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "width": set_width[i],
                 "height": set_height[i],
                 "z-index": 100,
+                // "background": "rgba(51,135,208,0.24)",
+                "cursor": "pointer",
             });
             this.html.append(panel);
         }
@@ -22065,16 +22174,20 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             var button = new DashGuiComboRow(this, this.option_list[i]);
             this.rows.append(button.html);
             this.row_buttons.push(button);
-        }
+        };
     };
     this.on_click = function () {
         this.flash();
+        if (this.is_searchable && this.search_active) {
+            this.hide_searchable();
+            // return;
+        };
         if (this.expanded) {
             this.hide();
         }
         else {
             this.show();
-        }
+        };
     };
     this.SetLabel = function (content) {
         this.label.text(content["label"]);
@@ -22093,8 +22206,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         var previous_selected_option = this.selected_option_id;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
-            console.log("label_text == null");
-            console.log("this.initialized: " + this.initialized);
             this.label.text("ERROR");
             return;
         }
@@ -22114,11 +22225,27 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.pre_show_size_set = function () {
         // Prior to showing, set the width of rows
         this.setup_label_list();
-        var width = this.rows.width() + Dash.Size.Padding;
+        this.list_width = this.rows.width() + Dash.Size.Padding;
         var label_width = 0;
         var i;
+        // if (this.is_searchable) {
+        //     // Hard out if we're searching. This function
+        //     // is called when the combo is searchable only
+        //     // to discern the max width of all items with
+        //     // their current styles. It's possible this is
+        //     // prohibitively expensive since technically the
+        //     // rows are still drawn but never used. An alternative
+        //     // approach looks like finding the item in the list
+        //     // with the longest length. The only trouble with that
+        //     // approach is that you still don't really know the
+        //     // pixel width with styling. A possible solution
+        //     // to that issue might be drawing a single row with
+        //     // the item that is the longest length. Yeah, that's
+        //     // more sensible than doing this. Do that, Ryan!
+        //     return;
+        // };
         this.rows.css({
-            "width": width,
+            "width": this.list_width,
         });
         for (i in this.row_buttons) {
             var scroll_width = this.row_buttons[i].html[0]["scrollWidth"];
@@ -22134,6 +22261,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     this.show = function () {
         this.pre_show_size_set();
+        if (this.is_searchable) {
+            this.activate_search();
+            // return;
+        };
         this.rows.detach();
         this.html.append(this.rows);
         this.expanded = true;
@@ -22149,6 +22280,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "z-index": 2000,
         });
         this.rows.animate({"height": end_height}, 150);
+        if (this.is_searchable) {
+            this.rows.css({
+                "top": this.html.height(),
+            });
+            this.manage_search_list();
+        };
     };
     this.SetWidth = function (width) {
         this.html.css({"width": width});
@@ -22159,6 +22296,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
+        if (this.is_searchable && this.search_active) {
+            this.hide_searchable();
+        };
     };
     this.setup_connections = function () {
         (function (self) {
@@ -22189,18 +22329,27 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     self.on_click();
                     e.preventDefault();
                     return false;
-                }
+                };
                 if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
                     e.preventDefault();
                     return false;
-                }
+                };
             });
+            if (self.option_list.length > 20) {
+                setTimeout(function(){
+                    if (!self.is_searchable) {
+                        console.log("Dash > Converting combo to be a searchable list since it contains over 20 items");
+                        self.EnableSearchSelection();
+                    };
+                }, 200);
+            };
+
         })(this);
     };
     this.initialize_style();
     this.setup_connections();
-}
+};
 
 function DashGuiComboRow (Combo, option) {
     this.combo = Combo;
@@ -22262,13 +22411,24 @@ function DashGuiComboRow (Combo, option) {
             "padding-right": Dash.Size.Padding*0.5,
         });
     };
+    this.SetSearchResultActive = function (is_active) {
+        this.set_highlight_active(is_active);
+    };
+    this.set_highlight_active = function (is_active) {
+        if (is_active) {
+            this.highlight.stop().animate({"opacity": 1}, 50);
+        }
+        else {
+            this.highlight.stop().animate({"opacity": 0}, 100);
+        };
+    };
     this.setup_connections = function () {
         (function (self) {
             self.label.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 1}, 50);
+                self.set_highlight_active(true);
             });
             self.html.on("mouseleave", function () {
-                self.highlight.stop().animate({"opacity": 0}, 100);
+                self.set_highlight_active(false);
             });
             self.label.on("click", function (e) {
                 self.combo.on_selection(self.option);
@@ -22280,6 +22440,215 @@ function DashGuiComboRow (Combo, option) {
     this.setup_styles();
     this.setup_connections();
 }
+
+function DashGuiComboSearch () {
+    this.is_searchable = true;
+    this.search_active = false;
+    this.search_input = null;
+    this.search_container = null;
+    this.search_max_results = 10;
+    this.search_results = [];
+    this.search_result_rows = [];
+    this.search_result_ids = [];
+    this.search_result_index = 0;
+    this.setup_search_selection = function () {
+        this.html.css({
+            "cursor": "text",
+        });
+        if (this.highlight) {
+            this.highlight.css({
+                "cursor": "text",
+            });
+        };
+        if (this.inner_html) {
+            this.inner_html.css({
+                "cursor": "text",
+            });
+        };
+        (function(self){
+            self.html[0].addEventListener("keydown", function (event) {
+                if (event.defaultPrevented) {
+                    return; // Do nothing if the event was already processed
+                };
+                if (!self.html.is(":visible")) {
+                    return;
+                };
+                if (self.search_result_ids.length < 1) {
+                    return;
+                };
+                switch (event.key) {
+                    case "Down":
+                        self.on_search_arrow_down();
+                        break;
+                    case "ArrowDown":
+                        self.on_search_arrow_down();
+                        break;
+                    case "Up":
+                        self.on_search_arrow_up();
+                        break;
+                    case "ArrowUp":
+                        self.on_search_arrow_up();
+                        break;
+                    default:
+                        return;
+                };
+                event.preventDefault();
+            }, true);
+        })(this);
+    };
+    this.on_search_arrow_up = function () {
+        if (this.search_result_index == 0) {
+            return;
+        };
+        this.search_result_index -= 1;
+        this.draw_search_button_index_selection();
+    };
+    this.on_search_arrow_down = function () {
+        var new_index = this.search_result_index+1;
+        if (new_index > this.search_result_ids.length-1) {
+            return;
+        };
+        this.search_result_index = new_index;
+        this.draw_search_button_index_selection();
+    };
+    this.draw_search_button_index_selection = function () {
+        for (var i in this.search_result_rows) {
+            var button = this.search_result_rows[i];
+            if (i == this.search_result_index) {
+                button.SetSearchResultActive(true);
+            }
+            else {
+                button.SetSearchResultActive(false);
+            };
+        };
+    };
+    this.activate_search = function () {
+        this.search_active = true;
+        if (!this.search_input) {
+            this.create_search_input();
+        };
+        this.label_container.css({
+            "opacity": 0,
+        });
+    };
+    this.hide_searchable = function () {
+        this.hide_skirt();
+        this.search_active = false;
+        if (this.search_container) {
+            this.search_container.remove();
+            this.search_container = null;
+        };
+        if (this.search_input) {
+            this.search_input.html.remove();
+            this.search_input = null;
+        };
+        this.search_results = [];
+        this.search_result_rows = [];
+        this.search_result_ids = [];
+        this.search_result_index = 0;
+        this.label_container.css({
+            "opacity": 1,
+        });
+    };
+    this.create_search_input = function () {
+        this.search_container = $("<div></div>");
+        this.html.append(this.search_container);
+        this.search_container.css({
+            "position": "absolute",
+            // "background": "orange",
+            "left": 0,
+            "top": 0,
+            "width": this.list_width,
+            "height": this.html.height(),
+        });
+        this.search_input = new Dash.Gui.Input(" Type to search...", this.color);
+        this.search_input.SetText(this.selected_option_id["label_text"]);
+        this.search_input.OnChange(this.on_search_text_changed, this);
+        this.search_input.OnSubmit(this.on_search_text_selected, this);
+        this.search_container.append(this.search_input.html);
+        this.search_input.html.css({
+            "left": -Dash.Size.Padding,
+            "top": -Dash.Size.Padding*0.5,
+            "box-shadow": "none",
+            "background": "none",
+        });
+        (function(self){
+            requestAnimationFrame(function(){
+                self.search_input.input.select();
+            });
+        })(this);
+    };
+    this.on_search_text_changed = function () {
+        var search = this.search_input.Text().toLocaleLowerCase();
+        this.search_results = [];
+        for (var i in this.option_list) {
+            var opt = this.option_list[i]["label_text"].toLocaleLowerCase();
+            if (search.length < 3) {
+                // For a short search, only match the beginning
+                if (opt.startsWith(search)) {
+                    this.search_results.push(this.option_list[i]["id"]);
+                };
+            }
+            else {
+                if (opt.includes(search)) {
+                    this.search_results.push(this.option_list[i]["id"]);
+                };
+            };
+            if (this.search_results.length >= this.search_max_results) {
+                break;
+            };
+        };
+        if (search.length < 1) {
+            this.search_results = [];
+        };
+        this.manage_search_list();
+    };
+    this.on_search_text_selected = function () {
+        var search = this.search_input.Text();
+        if (search.length < 1) {
+            this.on_click();
+            return;
+        };
+        var selected_id = this.search_result_ids[this.search_result_index];
+        var selected_option = null;
+        for (var i in this.option_list) {
+            var content = this.option_list[i];
+            if (content["id"] == selected_id) {
+                selected_option = content;
+                break;
+            };
+        };
+        if (selected_option) {
+            this.on_selection(selected_option);
+        };
+    };
+    this.manage_search_list = function () {
+        this.rows.stop().css({"height": "auto"});
+        this.search_result_rows = [];
+        this.search_result_ids = [];
+        this.search_result_index = 0;
+        for (var i in this.option_list) {
+            var content = this.option_list[i];
+            var button = this.row_buttons[i];
+            button.SetSearchResultActive(false);
+            if (this.search_results.includes(content["id"])) {
+                this.search_result_ids.push(content["id"]);
+                this.search_result_rows.push(button);
+                button.html.css({
+                    "display": "block",
+                });
+            }
+            else {
+                button.html.css({
+                    "display": "none",
+                });
+            };
+        };
+        if (this.search_result_rows.length > 0) {
+            this.search_result_rows[0].SetSearchResultActive(true);
+        };
+    };
+};
 
 function DashGuiComboStyleDefault () {
     this.dropdown_icon = null;
@@ -22460,7 +22829,10 @@ function DashGuiLayout () {
     this.Dashboard = DashGuiLayoutDashboard;
     this.Dashboard.Module = DashGuiLayoutDashboardModule;
     this.ButtonBar = DashGuiButtonBar;
-}
+    this.Mobile = {};
+    this.Mobile.CardStack = DashMobileLayoutCardStack;
+    this.Mobile.UserProfile = DashMobileLayoutUserProfile;
+};
 
 // Profile page layout for the currently logged in user
 function DashGuiLayoutUserProfile (user_data, options) {
@@ -24898,3 +25270,742 @@ function DashGuiLayoutDashboardModuleRect () {
         return line;
     };
 }
+
+/**@member DashGuiLayoutDashboardModule*/
+function DashGuiLayoutDashboardModuleRect () {
+    this.styles = ["list"];
+    this.list_rows = [];
+    this.list_data = [];
+    // TODO: Update all uses of VH
+    // Expects list of dicts with a single key/value pair (value should be a string), where
+    // the key displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data_list) {
+        if (this.sub_style !== "list") {
+            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+            return;
+        }
+        if (!Array.isArray(data_list)) {
+            console.log("ERROR: SetListData() requires a list of dicts to be passed in");
+            return;
+        }
+        this.list_data = data_list;
+        this.redraw_list_rows();
+    };
+    this.setup_styles = function () {
+        this.html.css({
+            "aspect-ratio": this.rect_aspect_ratio
+        });
+        if (this.sub_style === "list") {
+            this.setup_list_style();
+        }
+    };
+    this.setup_list_style = function () {
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.list_rows.length < 1) {
+                        self.redraw_list_rows();
+                    }
+                },
+                1000
+            );
+        })(this);
+    };
+    this.get_list_rows = function () {
+        this.list_rows = [];
+        if (this.list_data.length < 1) {
+            this.list_data = [
+                {"-": "--"},
+                {"--": "--"},
+                {"---": "--"},
+            ];
+        }
+        for (var i in this.list_data) {
+            if (this.list_rows.length >= 3) {
+                console.log("WARNING: Rect List Module will only display 3 key/value pairs from list data");
+                break;
+            }
+            var data = this.list_data[i];
+            if (!Dash.IsValidObject(data)) {
+                console.log("ERROR: Rect List Module data expects a list of dicts");
+                return;
+            }
+            var key = Object.keys(data)[0];
+            this.list_rows.push(this.get_list_row(key, data[key]));
+        }
+    };
+    this.redraw_list_rows = function () {
+        this.get_list_rows();
+        this.html.empty();
+        this.add_header();
+        for (var i in this.list_rows) {
+            this.html.append(this.list_rows[i]);
+            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
+        }
+    };
+    this.get_list_row = function (key, value) {
+        var list_row = $("<div></div>");
+        var content = $("<div></div>");
+        var key_text = $("<div>" + key + "</div>");
+        var value_text = $("<div>" + value + "</div>");
+        list_row.css({
+            "width": "98%",
+            "margin-top": "3%",
+            "margin-bottom": "3%",
+            "opacity": 0,  // For animation
+            // TODO: Replace units if necessary
+            "height": "2.75vh"  // TEMP
+        });
+        content.css({
+            "display": "flex",
+            // TODO: Replace units if necessary
+            "height": "2.75vh"  // TEMP
+        });
+        key_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            // TODO: Replace units if necessary
+            "font-size": "1.5vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "17vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        value_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            "text-align": "right",
+            // TODO: Replace units if necessary
+            "font-size": "2.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "4vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        content.append(this.get_dot_icon().html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+        list_row.append(content);
+        list_row.append(this.get_divider_line());
+        return list_row;
+    };
+    this.get_dot_icon = function () {
+        var dot_icon = new Dash.Gui.Icon(
+            this.color,
+            "circle_dot",
+            Dash.Size.ButtonHeight
+        );
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            // TODO: Replace units if necessary
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        return dot_icon;
+    };
+    this.get_divider_line = function () {
+        var line = $("<div></div>");
+        line.css({
+            "background": this.secondary_color,
+            // TODO: Replace units if necessary
+            "height": "0.1vh"  // TEMP
+        });
+        return line;
+    };
+}
+
+function DashMobileLayoutCardStack (binder, color) {
+    this.binder = binder;
+    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.html = Dash.Gui.GetHTMLAbsContext();
+    this.slider = null;
+    this.center_content = null;
+    this.left_content = null;
+    this.right_content = null;
+    this.anim_duration = 400;
+    this.backing_gradient = null;
+    this.width = 0;
+    this.height = 0;
+    this.frame = 0;
+    this.active_panel_index = 1; // Center
+    this.panel_offsets = [0, 0, 0];
+    this.slider_offsets = [0, 0, 0];
+    this.setup_styles = function () {
+        this.slider = $("<div></div>");
+        this.slider.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            // "background": Dash.Color.GetHorizontalGradient("red", "yellow"),
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+        });
+        this.left_content = this.make_content_panel("yellow");
+        this.center_content = this.make_content_panel("red");
+        this.right_content = this.make_content_panel("blue");
+        this.center_content.css({
+            "display": "block",
+        });
+        this.html.css({
+            "color": this.color.Text,
+            "overflow": "hidden",
+            "overflow-y": "auto",
+            "background": "none",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+        });
+        this.html.append(this.slider);
+        Dash.OnHTMLResized(this, this.on_resized);
+        this.on_resized(window.innerWidth, window.innerHeight);
+    };
+    this.on_resized = function (width, height) {
+        //console.log("Resized to " + width + " x " + height);
+        this.panel_offsets = [0, -width, -width*2];
+        this.slider.css({
+            "width": width*3,
+            "height": height,
+            "left": this.panel_offsets[this.active_panel_index],
+        });
+        this.left_content.css({
+            "left": 0,
+            "width": width,
+            "height": height,
+        });
+        this.center_content.css({
+            "left": width,
+            "width": width,
+            "height": height,
+        });
+        this.right_content.css({
+            "left": width*2,
+            "width": width,
+            "height": height,
+        });
+        this.width = width;
+        this.height = height;
+    };
+    this.make_content_panel = function (tmp_color) {
+        var content = $("<div></div>");
+        content.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "text-align": "center",
+            "color": this.color.Text,
+            "overflow-y": "auto",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+            "background": "none",
+            "display": "none",
+        });
+        this.slider.append(content);
+        return content;
+    };
+    this.AddBanner = function(){
+        var banner = new DashCardStackBanner(this);
+        this.AppendHTML(banner.html);
+        return banner;
+    };
+    this.AddUserBanner = function(){
+        var banner = new DashCardStackUserBanner(this);
+        this.AppendHTML(banner.html);
+        return banner;
+    };
+    this.AppendHTML = function(html){
+        // Force hardware acceleration
+        html.css({
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+        });
+        this.center_content.append(html);
+    };
+    this.AddLeftContent = function(html){
+        if (this.active_panel_index == 0) {
+            console.error("The left panel is already loaded");
+        };
+        // Force hardware acceleration
+        html.css({
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+        });
+        this.left_content.empty();
+        this.left_content.append(html);
+        this.slide_to_index(0);
+    };
+    this.ShowCenterContent = function(){
+        this.slide_to_index(1);
+    };
+    this.AddRightContent = function(html){
+        if (this.active_panel_index == 2) {
+            console.error("The right panel is already loaded");
+        };
+        // Force hardware acceleration
+        html.css({
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
+        });
+        this.right_content.empty();
+        this.right_content.append(html);
+        this.slide_to_index(2);
+    };
+    this.slide_to_index = function(target_index){
+        var backing_opacity = 0;
+        if (target_index == 0) {
+            this.left_content.css({"display": "block"});
+        }
+        else if (target_index == 2) {
+            this.right_content.css({"display": "block"});
+        }
+        else {
+            this.center_content.css({"display": "block"});
+            backing_opacity = 1;
+        };
+        (function(self){
+            self.slider.stop().animate({
+                "left": self.panel_offsets[target_index],
+            }, self.anim_duration, function(){
+                self.cleanup_hidden_panels();
+            });
+            if (self.backing_gradient) {
+                self.backing_gradient.stop().animate({
+                    "opacity": backing_opacity,
+                }, self.anim_duration);
+            };
+        })(this);
+        this.active_panel_index = target_index;
+    };
+    this.reset_center_column = function(){
+        this.slide_to_index(1);
+    };
+    this.cleanup_hidden_panels = function(){
+        if (this.active_panel_index == 0) {
+            // Left is visible
+            console.log("Left is visible");
+            this.center_content.css({"display": "none"});
+            this.right_content.css({"display": "none"});
+        }
+        else if (this.active_panel_index == 2) {
+            // Center is visible
+            console.log("Center is visible");
+            this.left_content.css({"display": "none"});
+            this.center_content.css({"display": "none"});
+        }
+        else {
+            // Right is visible
+            console.log("Right is visible");
+            this.left_content.css({"display": "none"});
+            this.right_content.css({"display": "none"});
+        };
+    };
+    this.setup_styles();
+};
+
+function DashCardStackUserBanner (stack) {
+    DashCardStackBanner.call(this, this);
+    this.setup_styles = function () {
+        this.SetBackground(this.DefaultBackgroundGradient);
+        this.SetLeftIcon("user", this.on_user_clicked);
+        // this.SetRightIcon("list", this.on_right_clicked);
+    };
+    this.on_user_clicked = function () {
+        var user_modal = new Dash.Gui.Layout.Mobile.UserProfile(this, this.on_show_main);
+        stack.AddLeftContent(user_modal.html);
+    };
+    // this.on_right_clicked = function () {
+    //     var html = $("<div>RIGHT</div>");
+    //     stack.AddRightContent(html);
+    // };
+    this.on_show_main = function () {
+        // var html = $("<div>MAIN</div>");
+        stack.ShowCenterContent();
+    };
+    this.setup_styles();
+};
+
+function DashCardStackBanner (stack) {
+    this.stack = stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.top_button_row = new DashCardStackBannerTopButtonRow(this);
+    // this.footer_content = Dash.Gui.GetHTMLAbsContext();
+    this.headline = new DashCardStackBannerHeadline(this);
+    this.background_skirt = $("<div></div>");
+    // Garbage hardcode:
+    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient("#ffae4c", "#ff684c");
+    this.setup_styles = function () {
+        this.html.append(this.background_skirt);
+        this.html.append(this.top_button_row.html);
+        this.html.append(this.headline.html);
+        // this.html.append(this.footer_content);
+        this.html.css({
+            "background": "none",
+            "margin-bottom": Dash.Size.Padding,
+        });
+        this.background_skirt.css({
+            "background": "orange",
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "bottom": -Dash.Size.ButtonHeight,
+            "top": 0,
+            "pointer-events": "none",
+            "display": "none",
+        });
+        this.top_button_row.html.css({
+            "display": "none",
+        });
+        this.headline.html.css({
+            "background": "red",
+        });
+
+        // this.footer_content.css({
+        //     "height": Dash.Size.ButtonHeight,
+        //     "top": "auto",
+        //     "bottom": 0,
+        //     "opacity": 0,
+        // });
+    };
+    this.SetBackground = function (html_color) {
+        if (!html_color || html_color == "none") {
+            this.background_skirt.css({
+                "display": "none",
+                "background": "none",
+            });
+            return;
+        };
+        this.background_skirt.css({
+            "display": "block",
+            "background": html_color,
+        });
+    };
+    // text_secondary = optional
+    this.SetHeadlineText = function(text_primary, text_secondary){
+        this.top_button_row.html.css({
+            "display": "flex",
+        });
+        this.headline.SetHeadlineText(text_primary, text_secondary);
+    };
+    this.SetLeftIcon = function(icon_name, callback){
+        this.top_button_row.html.css({
+            "display": "flex",
+        });
+
+        this.top_button_row.SetLeftIcon(icon_name, callback);
+    };
+    this.SetRightIcon = function(icon_name, callback){
+        // this.top_button_row.html.css({
+        //     "display": "block",
+        // });
+        this.top_button_row.SetRightIcon(icon_name, callback);
+    };
+    this.setup_styles();
+};
+
+function DashCardStackBannerTopButtonRow (banner) {
+    this.banner = banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.left_button_content = Dash.Gui.GetHTMLContext();
+    this.right_button_content = Dash.Gui.GetHTMLContext();
+    this.center_content = Dash.Gui.GetHTMLContext();
+    this.row_height = Dash.Size.ButtonHeight;
+    this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
+    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.left_icon_callback = null;
+    this.right_icon_callback = null;
+    this.left_icon_click_active = false;
+    this.right_icon_click_active = false;
+    this.setup_styles = function () {
+        this.html.append(this.left_button_content);
+        this.html.append(this.center_content);
+        this.html.append(this.right_button_content);
+        this.left_button_content.append(this.left_icon.html);
+        this.right_button_content.append(this.right_icon.html);
+        this.html.css({
+            "background": "none",
+            "height": this.row_height,
+            "display": "flex",
+            "background": "yellow",
+            // "overflow": "hidden",
+        });
+        this.left_button_content.css({
+            "height": this.button_size,
+            "width": this.button_size,
+            "margin": (this.row_height-this.button_size)*0.5,
+            "border-radius": this.button_size*0.5,
+            "background": "none",
+            "display": "none",
+            // "background": "blue",
+            "flex-grow": 0,
+        });
+        this.right_button_content.css({
+            "height": this.button_size,
+            "width": this.button_size,
+            "margin": (this.row_height-this.button_size)*0.5,
+            "border-radius": this.button_size*0.5,
+            "background": "none",
+            "display": "none",
+            // "background": "blue",
+            "flex-grow": 0,
+        });
+        this.center_content.css({
+            // "background": "none",
+            "height": this.row_height,
+            "flex-grow": 2,
+            "background": "purple",
+        });
+        console.log(this.button_size);
+        this.setup_connections();
+    };
+    this.setup_connections = function(){
+        (function(self){
+            self.left_button_content.click(function(){
+                self.on_left_button_clicked();
+            });
+            self.right_button_content.click(function(){
+                self.on_right_button_clicked();
+            });
+        })(this);
+    };
+    this.on_left_button_clicked = function() {
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.left_icon_callback && !this.left_icon_click_active) {
+            this.left_icon_click_active = true;
+            this.left_button_content.css("opacity", 0.75);
+            (function(self){
+                setTimeout(function(){
+                    self.left_icon_click_active = false;
+                    self.left_button_content.stop().animate({"opacity": 1.0}, 400);
+                }, 750);
+            })(this);
+            this.left_icon_callback();
+        };
+    };
+    this.on_right_button_clicked = function(){
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.right_icon_callback && !this.right_icon_click_active) {
+            this.right_icon_click_active = true;
+            this.right_button_content.css("opacity", 0.75);
+            (function(self){
+                setTimeout(function(){
+                    self.right_icon_click_active = false;
+                    self.right_button_content.stop().animate({"opacity": 1.0}, 400);
+                }, 750);
+            })(this);
+            this.right_icon_callback();
+        };
+    };
+    this.SetLeftIcon = function(icon_name="gear", callback=null){
+        this.set_icon(this.left_button_content, this.left_icon, icon_name);
+        this.left_icon_callback = callback.bind(this.banner);
+        console.log("Creating left icon");
+        this.left_button_content.css({
+            "display": "block",
+        });
+    };
+    this.SetRightIcon = function(icon_name="gear", callback=null){
+        this.set_icon(this.right_button_content, this.right_icon, icon_name);
+        this.right_icon_callback = callback.bind(this.banner);
+        this.right_button_content.css({
+            "display": "block",
+        });
+    };
+    this.set_icon = function(container, icon, icon_name){
+        icon.SetIcon(icon_name);
+    };
+    this.setup_styles();
+};
+
+function DashCardStackBannerHeadline (banner) {
+    this.banner = banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.label_top = Dash.Gui.GetHTMLContext();
+    this.label_bottom = Dash.Gui.GetHTMLContext();
+    this.setup_styles = function () {
+        this.html.append(this.label_top);
+        this.html.append(this.label_bottom);
+        this.label_top.text("Top");
+        this.label_bottom.text("Bottom");
+        this.html.css({
+            "background": "none",
+            "padding-top": Dash.Size.Padding*2,
+            "padding-bottom": Dash.Size.Padding*2,
+        });
+        this.label_top.css({
+            "background": "none",
+            "color": "white",
+            "font-size": "175%",
+        });
+        this.label_bottom.css({
+            "background": "none",
+            "color": "white",
+            "font-family": "sans_serif_bold",
+            "font-size": "175%",
+        });
+    };
+    this.SetHeadlineText = function(text_primary, text_secondary){
+        this.label_top.text(text_primary);
+        this.label_bottom.text(text_secondary);
+    };
+    this.setup_styles();
+};
+
+function DashMobileLayoutUserProfile (binder, on_exit_callback) {
+    this.binder = binder;
+    this.on_exit_callback = on_exit_callback.bind(this.binder);
+    this.color = Dash.Color.Dark;
+    this.stack = new Dash.Gui.Layout.Mobile.CardStack(this);
+    this.html = this.stack.html;
+    this.setup_styles = function () {
+        this.user_banner = this.stack.AddBanner();
+        this.user_banner.SetHeadlineText("User Settings", "Ryan Martin");
+        this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+        this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
+        this.test_element = $("<div>Test Element</div>");
+        this.test_element.css({
+            "background": "rgba(0, 0, 0, 0.3)",
+        });
+        this.stack.AppendHTML(this.test_element);
+    };
+    this.exit_stack = function () {
+        if (this.on_exit_callback) {
+            this.on_exit_callback();
+        };
+    };
+    this.setup_styles();
+};
+
+function DashCardStackBannerFooterButtonRow (banner) {
+    this.banner = banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.left_button_content = Dash.Gui.GetHTMLContext();
+    this.right_button_content = Dash.Gui.GetHTMLContext();
+    this.center_content = Dash.Gui.GetHTMLContext();
+    this.row_height = Dash.Size.ButtonHeight;
+    this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
+    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.left_icon_callback = null;
+    this.right_icon_callback = null;
+    this.left_icon_click_active = false;
+    this.right_icon_click_active = false;
+    this.setup_styles = function () {
+        this.html.append(this.left_button_content);
+        this.html.append(this.center_content);
+        this.html.append(this.right_button_content);
+        this.left_button_content.append(this.left_icon.html);
+        this.right_button_content.append(this.right_icon.html);
+        this.html.css({
+            "background": "none",
+            "height": this.row_height,
+            "display": "flex",
+        });
+        this.left_button_content.css({
+            "height": this.button_size,
+            "width": this.button_size,
+            "margin": (this.row_height-this.button_size)*0.5,
+            "border-radius": this.button_size*0.5,
+            "background": "none",
+            "display": "none",
+        });
+        this.right_button_content.css({
+            "height": this.button_size,
+            "width": this.button_size,
+            "margin": (this.row_height-this.button_size)*0.5,
+            "border-radius": this.button_size*0.5,
+            "background": "none",
+            "display": "none",
+        });
+        this.center_content.css({
+            "background": "none",
+            "height": this.row_height,
+            "flex-grow": 2,
+        });
+        this.setup_connections();
+    };
+    this.setup_connections = function(){
+        (function(self){
+            self.left_button_content.click(function(){
+                self.on_left_button_clicked();
+            });
+            self.right_button_content.click(function(){
+                self.on_right_button_clicked();
+            });
+        })(this);
+    };
+    this.on_left_button_clicked = function() {
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.left_icon_callback && !this.left_icon_click_active) {
+            this.left_icon_click_active = true;
+            this.left_button_content.css("opacity", 0.75);
+            (function(self){
+                setTimeout(function(){
+                    self.left_icon_click_active = false;
+                    self.left_button_content.stop().animate({"opacity": 1.0}, 400);
+                }, 750);
+            })(this);
+            this.left_icon_callback();
+        };
+    };
+    this.on_right_button_clicked = function(){
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.right_icon_callback && !this.right_icon_click_active) {
+            this.right_icon_click_active = true;
+            this.right_button_content.css("opacity", 0.75);
+            (function(self){
+                setTimeout(function(){
+                    self.right_icon_click_active = false;
+                    self.right_button_content.stop().animate({"opacity": 1.0}, 400);
+                }, 750);
+            })(this);
+            this.right_icon_callback();
+        };
+    };
+    this.SetLeftIcon = function(icon_name="gear", callback=null){
+        this.set_icon(this.left_button_content, this.left_icon, icon_name);
+        this.left_icon_callback = callback.bind(this.banner);
+        console.log("Creating left icon");
+        this.left_button_content.css({
+            "display": "block",
+        });
+    };
+    this.SetRightIcon = function(icon_name="gear", callback=null){
+        this.set_icon(this.right_button_content, this.right_icon, icon_name);
+        this.right_icon_callback = callback.bind(this.banner);
+        this.right_button_content.css({
+            "display": "block",
+        });
+    };
+    this.set_icon = function(container, icon, icon_name){
+        icon.SetIcon(icon_name);
+    };
+    this.setup_styles();
+};

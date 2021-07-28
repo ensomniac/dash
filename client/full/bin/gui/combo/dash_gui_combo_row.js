@@ -75,16 +75,31 @@ function DashGuiComboRow (Combo, option) {
 
     };
 
+    this.SetSearchResultActive = function (is_active) {
+        this.set_highlight_active(is_active);
+    };
+
+    this.set_highlight_active = function (is_active) {
+
+        if (is_active) {
+            this.highlight.stop().animate({"opacity": 1}, 50);
+        }
+        else {
+            this.highlight.stop().animate({"opacity": 0}, 100);
+        };
+
+    };
+
     this.setup_connections = function () {
 
         (function (self) {
 
             self.label.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 1}, 50);
+                self.set_highlight_active(true);
             });
 
             self.html.on("mouseleave", function () {
-                self.highlight.stop().animate({"opacity": 0}, 100);
+                self.set_highlight_active(false);
             });
 
             self.label.on("click", function (e) {

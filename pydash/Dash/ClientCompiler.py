@@ -41,7 +41,7 @@ class ClientCompiler:
 
     @property
     def ClientPathFull(self):
-        # The uncompiled client code
+        # The un-compiled client code
         return SyncUtils.FindDashClientPaths(self.Packages)[0]
 
     @property
@@ -91,6 +91,7 @@ class ClientCompiler:
         index_path = os.path.join(self.ClientPathMin, "index.html")
         js_path = os.path.join(self.ClientPathMin, "dash", "dash.js")
         css_path = os.path.join(self.ClientPathMin, "dash", "dash.css")
+        css_mobile_path = os.path.join(self.ClientPathMin, "dash", "mdash.css")
 
         fonts_src = os.path.join(self.ClientPathFull, "bin", "css", "fonts")
         fonts_dst = os.path.join(self.ClientPathMin, "dash", "fonts")
@@ -101,6 +102,7 @@ class ClientCompiler:
 
         js_source_paths = []
         css_source_paths = []
+        css_mobile_source_paths = []
 
         js_anchor_found = False
         css_anchor_found = False
@@ -119,12 +121,23 @@ class ClientCompiler:
                 continue
 
             if ".css" in line:
-                if not css_anchor_found:
-                    css_anchor_found = True
-                    index_content.append(css_anchor)
 
-                path = self.parse_source_path(line)
-                if path: css_source_paths.append(path)
+                if "_mobile" in line:
+
+                    path = self.parse_source_path(line)
+                    if path:
+                        # At the time of writing, there is only one css file
+                        # but we run it through with all the rest for compatibility
+                        css_mobile_source_paths.append(path)
+
+                else:
+
+                    if not css_anchor_found:
+                        css_anchor_found = True
+                        index_content.append(css_anchor)
+
+                    path = self.parse_source_path(line)
+                    if path: css_source_paths.append(path)
 
                 continue
 
@@ -142,14 +155,17 @@ class ClientCompiler:
 
         js_content = self.combine_jscss(js_source_paths)
         css_content = self.combine_jscss(css_source_paths)
-
-        print("CC -> COMP -> Dash Client -> Wrote: " + index_path)
-        print("CC -> COMP -> Dash Client -> Wrote: " + js_path)
-        print("CC -> COMP -> Dash Client -> Wrote: " + css_path)
+        mobile_css_content = self.combine_jscss(css_mobile_source_paths)
 
         open(index_path, "w").write("\n".join(index_content))
         open(js_path, "w").write("\n".join(js_content))
         open(css_path, "w").write("\n".join(css_content))
+        open(css_mobile_path, "w").write("\n".join(mobile_css_content))
+
+        print("CC -> COMP -> Dash Client -> Wrote: " + index_path)
+        print("CC -> COMP -> Dash Client -> Wrote: " + js_path)
+        print("CC -> COMP -> Dash Client -> Wrote: " + css_path)
+        print("CC -> COMP -> Dash Client -> Wrote: " + css_mobile_path)
 
     def parse_source_path(self, line):
         # Extract the full path of either css or js
@@ -298,6 +314,19 @@ class ClientCompiler:
             """""",
         ]
 
+    def get_mobile_css_include(self):
+        lines = []
+
+        nav_desc = "/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/"
+
+        lines.append('''<script type="text/javascript">''')
+        lines.append('''    if (''' + nav_desc + '''i.test(navigator.userAgent)) {''')
+        lines.append('''        document.write('<link rel="stylesheet" type="text/css" href="dash/mdash.css?v=''' + str(self.VersionInfo["version"]) + '''"/>');''')
+        lines.append('''    };''')
+        lines.append('''</script>''')
+
+        return lines
+
     def update_publish_index_source(self, package, index_path):
         path_root = index_path.split("index.h")[0].replace("index.h", "")
 
@@ -328,6 +357,7 @@ class ClientCompiler:
         header.append('''</script>''')
         header.append('''<script src='dash/dash.js?v=''' + str(self.VersionInfo["version"]) + ''''></script>''')
         header.append('''<link rel="stylesheet" href="dash/dash.css?v=''' + str(self.VersionInfo["version"]) + '''">''')
+        header.extend(self.get_mobile_css_include())
         header.append('''<!-- DASH END -->''')
         header.append('''''')
 

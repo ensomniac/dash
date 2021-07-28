@@ -16,4 +16,9 @@ function DashGuiLayout () {
     this.Dashboard.Module = DashGuiLayoutDashboardModule;
 
     this.ButtonBar = DashGuiButtonBar;
-}
+
+    this.Mobile = {};
+    this.Mobile.CardStack = DashMobileLayoutCardStack;
+    this.Mobile.UserProfile = DashMobileLayoutUserProfile;
+
+};

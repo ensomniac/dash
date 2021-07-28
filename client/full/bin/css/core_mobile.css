@@ -1,0 +1,11 @@
+html, body, * {
+    font-size: 16px;
+}
+
+@font-face {
+    font-family: 'sans_serif_normal';
+    src: url('fonts/proximanova-regular.woff2') format('woff2'),
+        url('fonts/proximanova-regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
