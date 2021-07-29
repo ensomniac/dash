@@ -87,4 +87,18 @@ function DashUser () {
 
     };
 
-}
+    this.Logout = function () {
+
+        if (!window.confirm("Log out?")) {
+            return;
+        }
+
+        Dash.Local.Set("email", "");
+        Dash.Local.Set("token", "");
+        Dash.Local.Set("user_json", "");
+
+        location.reload();
+
+    };
+
+};

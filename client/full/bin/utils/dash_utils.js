@@ -4,6 +4,43 @@ function DashUtils () {
     this.animation_frame_manager_running = false;
     this.animation_frame_iter = 0;
 
+    this.start_background_update_loop = function(){
+        // This function is called when this class is instantiated. It calls a
+        // few global update functions that keep certain time elements current.
+
+        (function(self){
+            setInterval(function(){
+                self.manage_background_update_loop_5_min();
+            // }, 300000); // 5 Minutes
+            }, 1000); // 5 Minutes
+        })(this);
+
+        this.manage_background_update_loop_5_min();
+
+    };
+
+    this.manage_background_update_loop_5_min = function () {
+        // Called once every 5 minutes, and upon instantiation of Dash
+
+        Dash.Daypart = "Day";
+
+        var hrs = new Date().getHours();
+
+        if (hrs < 12) {
+            Dash.Daypart = "Morning";
+        }
+        else if (hrs >= 12 && hrs <= 17) {
+            Dash.Daypart = "Afternoon";
+        }
+        else if (hrs >= 17 && hrs <= 24) {
+            Dash.Daypart = "Evening";
+        }
+        else {
+            console.log("Error - Unknown hour set");
+        };
+
+    };
+
     this.SetTimer = function (binder, callback, ms) {
         var timer = {};
         timer["callback"] = callback.bind(binder);
@@ -144,13 +181,6 @@ function DashUtils () {
         // TODO: Round out this function to clean up stale html objects
     };
 
-
-
-
-
-
-
-
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
         var anim_frame = {};
         anim_frame["callback"] = callback.bind(binder);
@@ -182,6 +212,7 @@ function DashUtils () {
     };
 
     this.manage_animation_frame = function (anim_frame) {
+
         var still_active = true;
 
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
@@ -196,4 +227,16 @@ function DashUtils () {
         anim_frame["callback"]();
 
     };
-}
+
+    // This is called on the next frame because window.Dash.<> is not
+    // the correct instance / valid until the next frame
+
+    (function(self){
+
+        requestAnimationFrame(function(){
+            self.start_background_update_loop();
+        });
+
+    })(this);
+
+};

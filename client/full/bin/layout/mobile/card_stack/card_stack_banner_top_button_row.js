@@ -9,7 +9,7 @@ function DashCardStackBannerTopButtonRow (banner) {
     this.right_button_content = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
 
-    this.row_height = Dash.Size.ButtonHeight;
+    this.row_height = this.banner.HeaderHeight;
     this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
 
     this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
@@ -34,7 +34,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             "background": "none",
             "height": this.row_height,
             "display": "flex",
-            "background": "yellow",
+            // "background": "yellow",
             // "overflow": "hidden",
         });
 
@@ -61,13 +61,10 @@ function DashCardStackBannerTopButtonRow (banner) {
         });
 
         this.center_content.css({
-            // "background": "none",
+            "background": "none",
             "height": this.row_height,
             "flex-grow": 2,
-            "background": "purple",
         });
-
-        console.log(this.button_size);
 
         this.setup_connections();
 
@@ -131,8 +128,6 @@ function DashCardStackBannerTopButtonRow (banner) {
     this.SetLeftIcon = function(icon_name="gear", callback=null){
         this.set_icon(this.left_button_content, this.left_icon, icon_name);
         this.left_icon_callback = callback.bind(this.banner);
-
-        console.log("Creating left icon");
 
         this.left_button_content.css({
             "display": "block",

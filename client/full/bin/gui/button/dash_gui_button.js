@@ -400,7 +400,7 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             "height": size,
             "line-height": size + "px",
             "background": Dash.Color.Dark,
-            "border-radius": 4,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "font-size": (size*0.5) + "px",
             "text-align": "center",
             "opacity": 0,

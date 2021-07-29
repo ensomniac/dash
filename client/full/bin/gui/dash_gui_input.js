@@ -19,7 +19,7 @@ function DashGuiInput (placeholder_text, color) {
         this.html.css({
             "height": Dash.Size.RowHeight,
             "background": this.color.Input.Background.Base,
-            "border-radius": 2,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "padding-right": Dash.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,

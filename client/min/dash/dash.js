@@ -17682,8 +17682,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 function Dash () {
     this.html = $("<div></div>");
-
     this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5 minute background update interval
+    this.width = 0;
+    this.height = 0;
     this.Context = DASH_CONTEXT;
     this.Local = new DashLocal();
     this.Math = new DashMath();
@@ -17695,17 +17697,13 @@ function Dash () {
     this.Animation = new DashAnimation();
     this.Requests = new DashRequest();
     this.Request = this.Requests.Request.bind(this.Requests);
+    this.Logout = this.User.Logout;
     this.Utils = new DashUtils();
     this.SetTimer = this.Utils.SetTimer.bind(this.Utils);
     this.SetInterval = this.Utils.SetTimer.bind(this.Utils);
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
     this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
     this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
-    this.width = 0;
-    this.height = 0;
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        console.log("Load mobile css");
-    };
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
@@ -17958,7 +17956,16 @@ function DashUser () {
             this.__auth_not_authenticated_cb();
         }
     };
-}
+    this.Logout = function () {
+        if (!window.confirm("Log out?")) {
+            return;
+        }
+        Dash.Local.Set("email", "");
+        Dash.Local.Set("token", "");
+        Dash.Local.Set("user_json", "");
+        location.reload();
+    };
+};
 
 function DashSize (is_mobile) {
     this.Padding = 10;
@@ -17966,16 +17973,18 @@ function DashSize (is_mobile) {
     this.RowHeight = 20;
     this.ButtonHeight = this.RowHeight + (this.Padding);
     this.ColumnWidth = 150;
-    this.BorderRadius = 3;
+    this.BorderRadius = 3; // For containers
+    this.BorderRadiusInteractive = 3; // For interactive elements (buttons, inputs, combos, etc)
     if (is_mobile) {
         this.Padding = 20;
         this.Stroke = 6;
         this.RowHeight = 40;
         this.ButtonHeight = this.RowHeight + (this.Padding);
         this.ColumnWidth = 300;
-        this.BorderRadius = 9;
-    }
-}
+        this.BorderRadius = 9; // For containers
+        this.BorderRadiusInteractive = 30; // For interactive elements (buttons, inputs, combos, etc)
+    };
+};
 
 function DashView () {
     this.User = DashUserView;
@@ -18706,6 +18715,34 @@ function DashUtils () {
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
     this.animation_frame_iter = 0;
+    this.start_background_update_loop = function(){
+        // This function is called when this class is instantiated. It calls a
+        // few global update functions that keep certain time elements current.
+        (function(self){
+            setInterval(function(){
+                self.manage_background_update_loop_5_min();
+            // }, 300000); // 5 Minutes
+            }, 1000); // 5 Minutes
+        })(this);
+        this.manage_background_update_loop_5_min();
+    };
+    this.manage_background_update_loop_5_min = function () {
+        // Called once every 5 minutes, and upon instantiation of Dash
+        Dash.Daypart = "Day";
+        var hrs = new Date().getHours();
+        if (hrs < 12) {
+            Dash.Daypart = "Morning";
+        }
+        else if (hrs >= 12 && hrs <= 17) {
+            Dash.Daypart = "Afternoon";
+        }
+        else if (hrs >= 17 && hrs <= 24) {
+            Dash.Daypart = "Evening";
+        }
+        else {
+            console.log("Error - Unknown hour set");
+        };
+    };
     this.SetTimer = function (binder, callback, ms) {
         var timer = {};
         timer["callback"] = callback.bind(binder);
@@ -18809,10 +18846,6 @@ function DashUtils () {
         // console.log(this.animation_frame_workers.length);
         // TODO: Round out this function to clean up stale html objects
     };
-
-
-
-
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
         var anim_frame = {};
         anim_frame["callback"] = callback.bind(binder);
@@ -18847,7 +18880,14 @@ function DashUtils () {
         }
         anim_frame["callback"]();
     };
-}
+    // This is called on the next frame because window.Dash.<> is not
+    // the correct instance / valid until the next frame
+    (function(self){
+        requestAnimationFrame(function(){
+            self.start_background_update_loop();
+        });
+    })(this);
+};
 
 function DashLocal () {
     this.Set = function (key, value) {
@@ -19784,7 +19824,7 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             "height": size,
             "line-height": size + "px",
             "background": Dash.Color.Dark,
-            "border-radius": 4,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "font-size": (size*0.5) + "px",
             "text-align": "center",
             "opacity": 0,
@@ -20021,7 +20061,7 @@ function DashGuiButtonStyleDefault () {
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
             "padding": 0,
@@ -20036,7 +20076,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
         this.load_bar.css({
             "position": "absolute",
@@ -20045,7 +20085,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "width": 0,
             "background": Dash.Color.Primary,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20055,7 +20095,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0.5)",
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
         this.label.css({
             // "position": "absolute",
@@ -20281,14 +20321,13 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
     this.on_login_callback = null;
-    
     if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
     }
     this.setup_styles = function () {
-        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
-        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
-        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.login_button = new Dash.Gui.Button("Login", this.Login, this, this.color);
+        this.reset_button = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
         this.password_input = new Dash.Gui.Input("Password", this.color);
         this.email_input.html.css({
             "padding": Dash.Size.Padding * 0.5,
@@ -20309,11 +20348,19 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         this.login_box.append(this.button_bar);
         this.button_bar.append(this.reset_button.html);
         this.button_bar.append(this.login_button.html);
+        if (Dash.IsMobile) {
+            this.setup_mobile_sizing();
+        } else {
+            this.setup_desktop_sizing();
+        };
+        this.email_input.SetText(Dash.Local.Get("email") || "");
+        this.show_login_box();
+    };
+    this.setup_desktop_sizing = function () {
         var login_box_width = window.outerWidth * 0.5;
-        if (!Dash.IsMobile && login_box_width > 350) {
+        if (login_box_width > 350) {
             login_box_width = 350;
-        }
-        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
+        };
         this.html.css({
             "left": 0,
             "top": 0,
@@ -20354,21 +20401,66 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         });
         this.login_button.html.css({
             "margin-left": Dash.Size.Padding,
-            // "margin-top": 0,
-            // "padding": Dash.Size.Padding * 0.5,
             "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
-            // "background": Dash.Color.Primary,
         });
         this.reset_button.html.css({
-            // "margin": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding,
-            // "margin-right": 0,
-            // "padding": Dash.Size.Padding * 0.5,
             "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
         });
-        this.email_input.SetText(Dash.Local.Get("email") || "");
-        this.show_login_box();
     };
+    this.setup_mobile_sizing = function () {
+        var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
+        this.html.css({
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "text-align": "center",
+            "background": "none",
+        });
+        this.login_box.css({
+            "width": login_box_width,
+            "height": "auto",
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding,
+            "padding-bottom": Dash.Size.Padding*2,
+            "background": this.color.BackgroundRaised,
+            "border-radius": Dash.Size.BorderRadius,
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "opacity": 0,
+        });
+        this.header_label.css({
+            "text-align": "center",
+            "font-family": "sans_serif_bold",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding": Dash.Size.Padding,
+        });
+        this.button_bar.css({
+            "display": "flex",
+            "height": Dash.Size.RowHeight,
+        });
+        this.email_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+        this.password_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+        this.login_button.html.css({
+            "margin-left": Dash.Size.Padding,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+        });
+        this.reset_button.html.css({
+            "margin-left": Dash.Size.Padding,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+        });
+    };
+
+
+
     this.show_login_box = function () {
         this.login_box.css({"opacity": 1});
     };
@@ -20428,7 +20520,6 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
-            
             return;
         }
         console.log("******* LOG IN *******", response);
@@ -20818,7 +20909,7 @@ function DashGuiInput (placeholder_text, color) {
         this.html.css({
             "height": Dash.Size.RowHeight,
             "background": this.color.Input.Background.Base,
-            "border-radius": 2,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "padding-right": Dash.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,
@@ -21138,7 +21229,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         else {
             this.input.SetLocked(true);
             highlight_color = this.color.AccentBad;
-        }
+        };
         this.html.css({
             "cursor": "pointer",
             "height": Dash.Size.RowHeight,
@@ -21220,6 +21311,14 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.create_save_button = function () {
         this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
         this.html.append(this.button.html);
+        if (Dash.IsMobile) {
+            // No submit button on mobile - but it's used to process the result, so we'll hide it
+            this.button.html.css({
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+            return;
+        };
         this.button.html.css({
             "position": "absolute",
             "right": 0,
@@ -21404,7 +21503,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.request_callback_binder = callback_binder;
         if (!server_data["token"]) {
             server_data["token"] = Dash.Local.Get("token");
-        }
+        };
         (function (self) {
             request = self.button.Request(api, server_data, function (response_json) {
                 self.on_request_response(response_json);
@@ -21599,6 +21698,20 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
+        if (Dash.IsMobile) {
+            this.setup_mobile_styles();
+        };
+    };
+    this.setup_mobile_styles = function () {
+        this.html.css({
+            "background": "none",
+            "border-radius": 0,
+            "margin": 0,
+            "padding": 0,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
+            "box-shadow": "none",
+        });
     };
     this.Load = function () {
         // var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
@@ -21736,6 +21849,16 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
     this.on_row_updated = function (row_input, row_details) {
         var new_value = row_input.Text();
+        if (!row_details["can_edit"]) {
+            return;
+        };
+        if (this.get_data_cb) {
+            var old_value = this.get_data_cb()[row_details["key"]];
+            if (old_value == new_value) {
+                // Values are unchanged!
+                return;
+            };
+        };
         if (this.dash_obj_id == null) {
             if (this.set_data_cb) {
                 this.set_data_cb(row_details["key"], new_value);
@@ -21751,13 +21874,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         params["key"] = row_details["key"];
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
+        console.log("updated - uploading...");
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
-        }
+        };
         if (row_details["key"].includes("password") && this.endpoint == "Users") {
             params["f"] = "update_password";
             params["p"] = new_value;
-        }
+        };
         (function (self, row_input, row_details) {
             row_input.Request(url, params, function (response) {
                 self.on_server_response(response, row_details, row_input);
@@ -22864,15 +22988,6 @@ function DashGuiLayoutUserProfile (user_data, options) {
         });
     };
     this.add_logout_button = function () {
-        // this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
-        // this.html.append(this.logout_button.html);
-        //
-        // this.logout_button.html.css({
-        //     "position": "absolute",
-        //     "bottom": Dash.Size.Padding,
-        //     "right": Dash.Size.Padding,
-        //     "left": this.img_box_size + (Dash.Size.Padding * 2),
-        // });
         this.logout_button = Dash.Gui.AddTopRightIconButton(this, this.log_out, "log_out");
         this.html.append(this.logout_button);
     };
@@ -23000,13 +23115,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         console.log("set data");
     };
     this.log_out = function (button) {
-        if (!window.confirm("Log out?")) {
-            return;
-        }
-        Dash.Local.Set("email", "");
-        Dash.Local.Set("token", "");
-        Dash.Local.Set("user_json", "");
-        location.reload();
+        Dash.Logout();
     };
     this.set_group = function (button, group_name, group_option) {
         console.log("this.set_group");
@@ -25436,6 +25545,7 @@ function DashMobileLayoutCardStack (binder, color) {
     this.center_content = null;
     this.left_content = null;
     this.right_content = null;
+    this.footer_button_overlay = null;
     this.anim_duration = 400;
     this.backing_gradient = null;
     this.width = 0;
@@ -25468,6 +25578,7 @@ function DashMobileLayoutCardStack (binder, color) {
             "overflow": "hidden",
             "overflow-y": "auto",
             "background": "none",
+            "background": this.color.Background,
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
@@ -25479,7 +25590,6 @@ function DashMobileLayoutCardStack (binder, color) {
         this.on_resized(window.innerWidth, window.innerHeight);
     };
     this.on_resized = function (width, height) {
-        //console.log("Resized to " + width + " x " + height);
         this.panel_offsets = [0, -width, -width*2];
         this.slider.css({
             "width": width*3,
@@ -25520,6 +25630,8 @@ function DashMobileLayoutCardStack (binder, color) {
             "transform": "translateZ(0)",
             "background": "none",
             "display": "none",
+            // "margin-left": Dash.Size.Padding*4,
+            // "margin-right": Dash.Size.Padding,
         });
         this.slider.append(content);
         return content;
@@ -25580,6 +25692,32 @@ function DashMobileLayoutCardStack (binder, color) {
         this.right_content.append(html);
         this.slide_to_index(2);
     };
+    this.AddFooterButton = function () {
+        // WIP!
+        
+        if (!this.footer_button_overlay) {
+            this.create_footer_overlay();
+        };
+        console.log("Add footer");
+    };
+    this.create_footer_overlay = function () {
+        this.footer_button_overlay = Dash.Gui.GetHTMLAbsContext();
+        this.footer_button_overlay.text("Continue without images...");
+        this.footer_button_overlay.css({
+            "position": "fixed",
+            "background": "#222",
+            "height": Dash.Size.ButtonHeight,
+            "top": "auto",
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "color": "white",
+        });
+        this.html.append(this.footer_button_overlay);
+    };
+    this.AddCard = function () {
+        var card = new DashMobileLayoutCard(this);
+        this.AppendHTML(card.html);
+        return card;
+    };
     this.slide_to_index = function(target_index){
         var backing_opacity = 0;
         if (target_index == 0) {
@@ -25612,19 +25750,16 @@ function DashMobileLayoutCardStack (binder, color) {
     this.cleanup_hidden_panels = function(){
         if (this.active_panel_index == 0) {
             // Left is visible
-            console.log("Left is visible");
             this.center_content.css({"display": "none"});
             this.right_content.css({"display": "none"});
         }
         else if (this.active_panel_index == 2) {
             // Center is visible
-            console.log("Center is visible");
             this.left_content.css({"display": "none"});
             this.center_content.css({"display": "none"});
         }
         else {
             // Right is visible
-            console.log("Right is visible");
             this.left_content.css({"display": "none"});
             this.right_content.css({"display": "none"});
         };
@@ -25633,22 +25768,17 @@ function DashMobileLayoutCardStack (binder, color) {
 };
 
 function DashCardStackUserBanner (stack) {
+    this.color = stack.color;
     DashCardStackBanner.call(this, this);
     this.setup_styles = function () {
         this.SetBackground(this.DefaultBackgroundGradient);
         this.SetLeftIcon("user", this.on_user_clicked);
-        // this.SetRightIcon("list", this.on_right_clicked);
     };
     this.on_user_clicked = function () {
         var user_modal = new Dash.Gui.Layout.Mobile.UserProfile(this, this.on_show_main);
         stack.AddLeftContent(user_modal.html);
     };
-    // this.on_right_clicked = function () {
-    //     var html = $("<div>RIGHT</div>");
-    //     stack.AddRightContent(html);
-    // };
     this.on_show_main = function () {
-        // var html = $("<div>MAIN</div>");
         stack.ShowCenterContent();
     };
     this.setup_styles();
@@ -25658,77 +25788,160 @@ function DashCardStackBanner (stack) {
     this.stack = stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
-    this.top_button_row = new DashCardStackBannerTopButtonRow(this);
-    // this.footer_content = Dash.Gui.GetHTMLAbsContext();
+    this.header_row = null;
     this.headline = new DashCardStackBannerHeadline(this);
     this.background_skirt = $("<div></div>");
+    this.content = $("<div></div>");
+    this.last_sizing_mode = -1;
     // Garbage hardcode:
-    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient("#ffae4c", "#ff684c");
+    this.DefaultColorA = "#ffae4c";
+    this.DefaultColorB = "#ff684c";
+    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient(this.DefaultColorA, this.DefaultColorB);
+    this.row_height = Dash.Size.ButtonHeight;
+    this.footer_height = Dash.Size.ButtonHeight*2;
+    this.footer_button_width = Dash.Size.ButtonHeight + Dash.Size.Padding;
+    this.HeaderHeight = this.row_height;
+    this.FooterHeight = this.footer_height;
+    this.FooterHeight = this.footer_height;
+    this.FooterButtonWidth = this.footer_button_width;
     this.setup_styles = function () {
         this.html.append(this.background_skirt);
-        this.html.append(this.top_button_row.html);
-        this.html.append(this.headline.html);
-        // this.html.append(this.footer_content);
+        this.html.append(this.content);
+        this.content.append(this.headline.html);
         this.html.css({
             "background": "none",
-            "margin-bottom": Dash.Size.Padding,
+            // "background": "black",
+        });
+        this.content.css({
+            // "background": "purple",
         });
         this.background_skirt.css({
             "background": "orange",
             "position": "absolute",
             "left": 0,
             "right": 0,
-            "bottom": -Dash.Size.ButtonHeight,
             "top": 0,
             "pointer-events": "none",
             "display": "none",
         });
-        this.top_button_row.html.css({
-            "display": "none",
-        });
-        this.headline.html.css({
-            "background": "red",
-        });
-
-        // this.footer_content.css({
-        //     "height": Dash.Size.ButtonHeight,
-        //     "top": "auto",
-        //     "bottom": 0,
-        //     "opacity": 0,
-        // });
     };
-    this.SetBackground = function (html_color) {
-        if (!html_color || html_color == "none") {
+    this.SetBackground = function (html_color_or_url) {
+        if (!html_color_or_url || html_color_or_url == "none") {
             this.background_skirt.css({
                 "display": "none",
                 "background": "none",
             });
             return;
         };
-        this.background_skirt.css({
-            "display": "block",
-            "background": html_color,
-        });
+        if (html_color_or_url.includes("http")) {
+            this.background_skirt.css({
+                "display": "block",
+                "background": "#000",
+                "background-image": "url(" + html_color_or_url + ")",
+                "background-size": "cover",
+                "background-position": "center",
+            });
+        }
+        else {
+            this.background_skirt.css({
+                "display": "block",
+                "background": html_color_or_url,
+            });
+        };
     };
     // text_secondary = optional
     this.SetHeadlineText = function(text_primary, text_secondary){
-        this.top_button_row.html.css({
-            "display": "flex",
-        });
         this.headline.SetHeadlineText(text_primary, text_secondary);
+        this.adjust_margins();
     };
     this.SetLeftIcon = function(icon_name, callback){
-        this.top_button_row.html.css({
-            "display": "flex",
-        });
-
-        this.top_button_row.SetLeftIcon(icon_name, callback);
+        this.assert_header_row();
+        this.header_row.SetLeftIcon(icon_name, callback);
     };
     this.SetRightIcon = function(icon_name, callback){
-        // this.top_button_row.html.css({
-        //     "display": "block",
-        // });
-        this.top_button_row.SetRightIcon(icon_name, callback);
+        this.assert_header_row();
+        this.header_row.SetRightIcon(icon_name, callback);
+    };
+    this.AddFooterIcon = function(icon_name, label_text, callback){
+        this.assert_footer_row();
+        return this.footer_row.AddIcon(icon_name, label_text, callback);
+    };
+    this.assert_header_row = function() {
+        // Create the button row if it doesn't exist yet
+        if (this.header_row) {
+            // Header already exists
+            return;
+        };
+        this.header_row = new DashCardStackBannerTopButtonRow(this);
+        this.content.prepend(this.header_row.html);
+        this.adjust_margins();
+    };
+    this.assert_footer_row = function() {
+        // Create the button row if it doesn't exist yet
+        if (this.footer_row) {
+            // Footer already exists
+            return;
+        };
+        this.footer_row = new DashCardStackBannerFooterButtonRow(this);
+        this.content.append(this.footer_row.html);
+        this.adjust_margins();
+    };
+    this.adjust_margins = function() {
+        // Whenever core content is added or removed, we need to adjust some values
+        // + If headline only (no header, no footer)
+        //   - MODE: 0
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        //   -
+        // + If headline & top row
+        //   - MODE: 1
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        // + If headline & bottom row
+        //   - MODE: 2
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        var mode = 0;
+        var headline_top_margin = Dash.Size.Padding*2;
+        var headline_bottom_margin = 0;
+        var bottom_margin = 0;
+        var background_skirt_bottom = Dash.Size.ButtonHeight;
+        if (this.header_row && !this.footer_row) {
+            mode = 1;
+            headline_top_margin = Dash.Size.Padding*0.25;
+            headline_bottom_margin = Dash.Size.Padding*0.25;
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            bottom_margin = Dash.Size.ButtonHeight;
+            background_skirt_bottom = Dash.Size.ButtonHeight*2;
+        };
+        if (this.header_row && this.footer_row) {
+            mode = 2;
+            headline_top_margin = Dash.Size.Padding*0.25;
+            headline_bottom_margin = (Dash.Size.Padding*0.25);
+            headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            // bottom_margin = Dash.Size.ButtonHeight;
+            bottom_margin = Dash.Size.Padding;
+            background_skirt_bottom = Dash.Size.ButtonHeight*2;
+            background_skirt_bottom = -(this.footer_height-(this.footer_button_width*0.5));
+        };
+        if (mode == this.last_sizing_mode) {
+            // Correct properties are already set
+            return;
+        };
+        this.headline.SetTopBottomMargins(
+            headline_top_margin,
+            headline_bottom_margin
+        );
+        this.html.css({
+            "margin-bottom": bottom_margin,
+        });
+        this.background_skirt.css({
+            "bottom": -background_skirt_bottom,
+        });
+        this.last_sizing_mode = mode;
     };
     this.setup_styles();
 };
@@ -25741,7 +25954,7 @@ function DashCardStackBannerTopButtonRow (banner) {
     this.left_button_content = Dash.Gui.GetHTMLContext();
     this.right_button_content = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
-    this.row_height = Dash.Size.ButtonHeight;
+    this.row_height = this.banner.HeaderHeight;
     this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
     this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
     this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
@@ -25759,7 +25972,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             "background": "none",
             "height": this.row_height,
             "display": "flex",
-            "background": "yellow",
+            // "background": "yellow",
             // "overflow": "hidden",
         });
         this.left_button_content.css({
@@ -25783,12 +25996,10 @@ function DashCardStackBannerTopButtonRow (banner) {
             "flex-grow": 0,
         });
         this.center_content.css({
-            // "background": "none",
+            "background": "none",
             "height": this.row_height,
             "flex-grow": 2,
-            "background": "purple",
         });
-        console.log(this.button_size);
         this.setup_connections();
     };
     this.setup_connections = function(){
@@ -25832,7 +26043,6 @@ function DashCardStackBannerTopButtonRow (banner) {
     this.SetLeftIcon = function(icon_name="gear", callback=null){
         this.set_icon(this.left_button_content, this.left_icon, icon_name);
         this.left_icon_callback = callback.bind(this.banner);
-        console.log("Creating left icon");
         this.left_button_content.css({
             "display": "block",
         });
@@ -25883,30 +26093,124 @@ function DashCardStackBannerHeadline (banner) {
         this.label_top.text(text_primary);
         this.label_bottom.text(text_secondary);
     };
+    this.SetTopBottomMargins = function(margin_top, margin_bottom) {
+        this.html.css({
+            "padding-top": margin_top,
+            "padding-bottom": margin_bottom,
+        });
+    };
     this.setup_styles();
 };
 
-function DashMobileLayoutUserProfile (binder, on_exit_callback) {
+function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) {
     this.binder = binder;
     this.on_exit_callback = on_exit_callback.bind(this.binder);
-    this.color = Dash.Color.Dark;
+    this.color = this.binder.color || Dash.Color.Dark;
     this.stack = new Dash.Gui.Layout.Mobile.CardStack(this);
     this.html = this.stack.html;
-    this.setup_styles = function () { 
+    this.user_data = user_data || Dash.User.Data;
+    this.profile_button = null;
+    this.user_image_upload_button = null;
+    this.setup_styles = function () {
+        var name = this.user_data["first_name"] + " " + this.user_data["last_name"];
         this.user_banner = this.stack.AddBanner();
-        this.user_banner.SetHeadlineText("User Settings", "Ryan Martin");
-        this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+        this.user_banner.SetHeadlineText("User Settings", name);
         this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
-        this.test_element = $("<div>Test Element</div>");
-        this.test_element.css({
-            "background": "rgba(0, 0, 0, 0.3)",
-        });
-        this.stack.AppendHTML(this.test_element);
+        this.user_banner.AddFooterIcon("log_out", "Log Out",        this.log_user_out.bind(this));
+        this.user_banner.AddFooterIcon("refresh", "Update App",     this.reload.bind(this));
+        this.profile_button = this.user_banner.AddFooterIcon("image",   "Change Profile", this.test_footer_callback.bind(this));
+        this.setup_property_box();
+        this.add_user_image_upload_button();
+        if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
+            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
+        }
+        else {
+            this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+        };
+    };
+    this.reload = function () {
+        location.reload();
     };
     this.exit_stack = function () {
         if (this.on_exit_callback) {
             this.on_exit_callback();
         };
+    };
+    this.add_user_image_upload_button = function () {
+        this.user_image_upload_button = new Dash.Gui.Button(
+            "Upload Image",
+            this.on_user_img_uploaded,
+            this,
+            this.color
+        );
+        this.profile_button.icon_circle.append(this.user_image_upload_button.html);
+        this.params = {};
+        this.params["f"] = "upload_image";
+        this.params["token"] = Dash.Local.Get("token");
+        this.params["user_data"] = JSON.stringify(this.user_data);
+        this.user_image_upload_button.SetFileUploader(
+            "https://" + Dash.Context.domain + "/Users",
+            this.params
+        );
+        this.user_image_upload_button.html.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+            "right": 0,
+            "top": 0,
+            "width": "auto",
+            "height": "auto",
+            "background": "rgba(0, 0, 0, 0)",
+        });
+        this.user_image_upload_button.highlight.css({
+            "position": "absolute",
+            "left": 0,
+            "bottom": 0,
+            "right": 0,
+            "top": 0,
+            "width": "auto",
+            "height": "auto",
+        });
+        this.user_image_upload_button.label.css({
+            "opacity": 0,
+        });
+    };
+    this.on_user_img_uploaded = function (response) {
+        if (response.timeStamp) {
+            return;
+        };
+        console.log("<< on_user_img_uploaded >>");
+        console.log(response);
+        if (response["img"]) {
+            this.user_data["img"] = response["img"];
+            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
+        };
+    };
+    this.test_footer_callback = function () {
+        // slug function
+    };
+    this.setup_property_box = function () {
+        this.property_box = new Dash.Gui.PropertyBox(
+            this,           // For binding
+            this.get_data,  // Function to return live data
+            this.set_data,  // Function to set saved data locally
+            "Users",        // Endpoint
+            this.user_data["email"], // Dash obj_id (unique for users)
+        );
+        this.stack.AppendHTML(this.property_box.html);
+        this.property_box.AddInput("email",       "E-mail Address",  "", null, false);
+        this.property_box.AddInput("first_name",  "First Name",      "", null, true);
+        this.property_box.AddInput("last_name",   "Last Name",       "", null, true);
+        this.property_box.AddInput("password",    "Update Password", "", null, true);
+    };
+    this.get_data = function () {
+        return this.user_data;
+    };
+    this.set_data = function () {
+        console.log("set data");
+    };
+    this.log_user_out = function () {
+        Dash.Logout();
     };
     this.setup_styles();
 };
@@ -25916,106 +26220,199 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.stack = this.banner.stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
-    this.left_button_content = Dash.Gui.GetHTMLContext();
-    this.right_button_content = Dash.Gui.GetHTMLContext();
+    this.left_spacer = Dash.Gui.GetHTMLContext();
+    this.right_spacer = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
-    this.row_height = Dash.Size.ButtonHeight;
-    this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
-    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
-    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
-    this.left_icon_callback = null;
-    this.right_icon_callback = null;
-    this.left_icon_click_active = false;
-    this.right_icon_click_active = false;
+    this.row_height = this.banner.FooterHeight;
+    this.button_size = this.banner.FooterHeight;
+    this.buttons = [];
     this.setup_styles = function () {
-        this.html.append(this.left_button_content);
+        this.html.append(this.left_spacer);
         this.html.append(this.center_content);
-        this.html.append(this.right_button_content);
-        this.left_button_content.append(this.left_icon.html);
-        this.right_button_content.append(this.right_icon.html);
+        this.html.append(this.right_spacer);
         this.html.css({
             "background": "none",
             "height": this.row_height,
             "display": "flex",
+            // "background": "orange",
         });
-        this.left_button_content.css({
-            "height": this.button_size,
-            "width": this.button_size,
-            "margin": (this.row_height-this.button_size)*0.5,
-            "border-radius": this.button_size*0.5,
+        this.left_spacer.css({
+            "height": this.row_height,
             "background": "none",
-            "display": "none",
+            "flex-grow": 2,
         });
-        this.right_button_content.css({
-            "height": this.button_size,
-            "width": this.button_size,
-            "margin": (this.row_height-this.button_size)*0.5,
-            "border-radius": this.button_size*0.5,
+        this.right_spacer.css({
+            "height": this.row_height,
             "background": "none",
-            "display": "none",
+            "flex-grow": 2,
         });
         this.center_content.css({
+            "display": "flex",
             "background": "none",
             "height": this.row_height,
-            "flex-grow": 2,
         });
         this.setup_connections();
     };
     this.setup_connections = function(){
         (function(self){
-            self.left_button_content.click(function(){
-                self.on_left_button_clicked();
-            });
-            self.right_button_content.click(function(){
-                self.on_right_button_clicked();
-            });
+            // self.left_button_content.click(function(){
+            //     self.on_left_button_clicked();
+            // });
+            //
+            // self.right_button_content.click(function(){
+            //     self.on_right_button_clicked();
+            // });
         })(this);
     };
-    this.on_left_button_clicked = function() {
+    this.on_button_clicked = function() {
         // Button presses have a short timeout to prevent accidental multiple taps
-        if (this.left_icon_callback && !this.left_icon_click_active) {
-            this.left_icon_click_active = true;
-            this.left_button_content.css("opacity", 0.75);
-            (function(self){
-                setTimeout(function(){
-                    self.left_icon_click_active = false;
-                    self.left_button_content.stop().animate({"opacity": 1.0}, 400);
-                }, 750);
-            })(this);
-            this.left_icon_callback();
+        // if (this.left_icon_callback && !this.left_icon_click_active) {
+        //     this.left_icon_click_active = true;
+        //     this.left_button_content.css("opacity", 0.75);
+        //
+        //     (function(self){
+        //         setTimeout(function(){
+        //             self.left_icon_click_active = false;
+        //             self.left_button_content.stop().animate({"opacity": 1.0}, 400);
+        //         }, 750);
+        //     })(this);
+        //
+        //     this.left_icon_callback();
+        //
+        // };
+    };
+    this.AddIcon = function(icon_name="gear", label_text="--", callback=null){
+        var button = new DashCardStackBannerFooterButtonRowButton(
+            this,
+            icon_name,
+            label_text,
+            callback
+        );
+        if (this.buttons.length > 0) {
+            this.buttons[this.buttons.length-1].html.css({
+                "margin-right": Dash.Size.Padding*2,
+            });
         };
-    };
-    this.on_right_button_clicked = function(){
-        // Button presses have a short timeout to prevent accidental multiple taps
-        if (this.right_icon_callback && !this.right_icon_click_active) {
-            this.right_icon_click_active = true;
-            this.right_button_content.css("opacity", 0.75);
-            (function(self){
-                setTimeout(function(){
-                    self.right_icon_click_active = false;
-                    self.right_button_content.stop().animate({"opacity": 1.0}, 400);
-                }, 750);
-            })(this);
-            this.right_icon_callback();
-        };
-    };
-    this.SetLeftIcon = function(icon_name="gear", callback=null){
-        this.set_icon(this.left_button_content, this.left_icon, icon_name);
-        this.left_icon_callback = callback.bind(this.banner);
-        console.log("Creating left icon");
-        this.left_button_content.css({
-            "display": "block",
-        });
-    };
-    this.SetRightIcon = function(icon_name="gear", callback=null){
-        this.set_icon(this.right_button_content, this.right_icon, icon_name);
-        this.right_icon_callback = callback.bind(this.banner);
-        this.right_button_content.css({
-            "display": "block",
-        });
+        this.center_content.append(button.html);
+        this.buttons.push(button);
+        return button;
     };
     this.set_icon = function(container, icon, icon_name){
         icon.SetIcon(icon_name);
+    };
+    this.setup_styles();
+};
+
+function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
+    this.footer = footer;
+    this.banner = this.footer.banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
+    this.icon_name = icon_name;
+    this.label_text = label_text;
+    this.callback = callback;
+    this.row_height = this.banner.FooterHeight;
+    this.width = this.banner.FooterButtonWidth;
+    this.label_height = Dash.Size.RowHeight;
+    this.click_active = false;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.icon_circle = Dash.Gui.GetHTMLAbsContext();
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
+    this.label = Dash.Gui.GetHTMLAbsContext();
+    if ((this.row_height-this.width) < this.label_height) {
+        this.label_height = this.row_height-this.width;
+    };
+    this.setup_styles = function () {
+        this.html.append(this.icon_circle);
+        this.html.append(this.label);
+        this.label.text(this.label_text);
+        this.icon_circle.append(this.icon.html);
+        this.icon.icon_html.css({
+            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
+        });
+        this.html.css({
+            "height": this.row_height,
+            "width": this.width,
+            "background": "none",
+            // "overflow": "visible",
+        });
+        this.icon_circle.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "bottom": "auto",
+            "background": "rgb(250, 250, 250)",
+            "height": this.width,
+            "width": this.width,
+            "border-radius": this.width*0.5,
+            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)",
+        });
+        this.label.css({
+            "position": "absolute",
+            "left": -Dash.Size.Padding,
+            "bottom": 0,
+            "top": "auto",
+            "height": this.label_height,
+            "line-height": this.label_height + "px",
+            "width": this.width + (Dash.Size.Padding*2),
+            "font-size": "80%",
+            "background": "none",
+        });
+        this.setup_connections();
+    };
+    this.setup_connections = function(){
+        (function(self){
+            self.html.mousedown(function(event){
+                self.on_button_clicked();
+                event.preventDefault();
+                return false;
+            });
+        })(this);
+    };
+    this.on_button_clicked = function() {
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.click_active) {
+            return;
+        };
+        if (this.callback) {
+            this.callback();
+        }
+        else {
+            console.log("ERROR: No callback associated with button!");
+        };
+        this.click_active = true;
+        (function(self){
+            setTimeout(function(){
+                self.click_active = false;
+            }, 750);
+        })(this);
+    };
+    this.setup_styles();
+};
+
+function DashMobileLayoutCard (stack) {
+    this.stack = stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.content = Dash.Gui.GetHTMLContext();
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "white",
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "border-radius": Dash.Size.BorderRadius,
+            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)",
+        });
+        this.content.css({
+            "background": "none",
+            "color": this.color.Text,
+        });
+        this.html.append(this.content);
+    };
+    this.SetText = function(text) {
+        this.content.text(text);
     };
     this.setup_styles();
 };

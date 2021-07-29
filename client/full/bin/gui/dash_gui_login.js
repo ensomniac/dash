@@ -7,15 +7,15 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
     this.on_login_callback = null;
-    
+
     if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
     }
 
     this.setup_styles = function () {
-        this.login_button   = new Dash.Gui.Button("Login", this.Login, this, this.color);
-        this.reset_button   = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
-        this.email_input    = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.login_button = new Dash.Gui.Button("Login", this.Login, this, this.color);
+        this.reset_button = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
+        this.email_input = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
         this.password_input = new Dash.Gui.Input("Password", this.color);
 
         this.email_input.html.css({
@@ -44,13 +44,24 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         this.button_bar.append(this.reset_button.html);
         this.button_bar.append(this.login_button.html);
 
+        if (Dash.IsMobile) {
+            this.setup_mobile_sizing();
+        } else {
+            this.setup_desktop_sizing();
+        };
+
+        this.email_input.SetText(Dash.Local.Get("email") || "");
+        this.show_login_box();
+
+    };
+
+    this.setup_desktop_sizing = function () {
+
         var login_box_width = window.outerWidth * 0.5;
 
-        if (!Dash.IsMobile && login_box_width > 350) {
+        if (login_box_width > 350) {
             login_box_width = 350;
-        }
-
-        // var login_box_height = (Dash.Size.RowHeight * 4) + (Dash.Size.Padding * 3);
+        };
 
         this.html.css({
             "left": 0,
@@ -98,24 +109,82 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
 
         this.login_button.html.css({
             "margin-left": Dash.Size.Padding,
-            // "margin-top": 0,
-            // "padding": Dash.Size.Padding * 0.5,
             "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
-            // "background": Dash.Color.Primary,
         });
 
         this.reset_button.html.css({
-            // "margin": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding,
-            // "margin-right": 0,
-            // "padding": Dash.Size.Padding * 0.5,
             "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
         });
 
-        this.email_input.SetText(Dash.Local.Get("email") || "");
-
-        this.show_login_box();
     };
+
+    this.setup_mobile_sizing = function () {
+
+        var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
+
+        this.html.css({
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "text-align": "center",
+            "background": "none",
+        });
+
+        this.login_box.css({
+            "width": login_box_width,
+            "height": "auto",
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding,
+            "padding-bottom": Dash.Size.Padding*2,
+            "background": this.color.BackgroundRaised,
+            "border-radius": Dash.Size.BorderRadius,
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "opacity": 0,
+        });
+
+        this.header_label.css({
+            "text-align": "center",
+            "font-family": "sans_serif_bold",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding": Dash.Size.Padding,
+        });
+
+        this.button_bar.css({
+            "display": "flex",
+            "height": Dash.Size.RowHeight,
+        });
+
+        this.email_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+
+        this.password_row.css({
+            "margin": Dash.Size.Padding,
+            "margin-top": 0,
+        });
+
+        this.login_button.html.css({
+            "margin-left": Dash.Size.Padding,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+        });
+
+        this.reset_button.html.css({
+            "margin-left": Dash.Size.Padding,
+            "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
+        });
+
+    };
+
+
+
+
+
+
 
     this.show_login_box = function () {
         this.login_box.css({"opacity": 1});
@@ -197,7 +266,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
-            
+
             return;
         }
 

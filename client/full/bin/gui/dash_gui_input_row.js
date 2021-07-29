@@ -47,15 +47,12 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
-
             this.create_save_button();
         }
-
         else {
             this.input.SetLocked(true);
-
             highlight_color = this.color.AccentBad;
-        }
+        };
 
         this.html.css({
             "cursor": "pointer",
@@ -150,9 +147,18 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
 
     this.create_save_button = function () {
-        this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
 
+        this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
         this.html.append(this.button.html);
+
+        if (Dash.IsMobile) {
+            // No submit button on mobile - but it's used to process the result, so we'll hide it
+            this.button.html.css({
+                "pointer-events": "none",
+                "opacity": 0,
+            });
+            return;
+        };
 
         this.button.html.css({
             "position": "absolute",
@@ -395,7 +401,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         if (!server_data["token"]) {
             server_data["token"] = Dash.Local.Get("token");
-        }
+        };
 
         (function (self) {
             request = self.button.Request(api, server_data, function (response_json) {

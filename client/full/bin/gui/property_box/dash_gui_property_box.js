@@ -27,6 +27,25 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     DashGuiPropertyBoxInterface.call(this);
 
     this.setup_styles = function () {
+
+        if (Dash.IsMobile) {
+            this.setup_mobile_styles();
+        };
+
+    };
+
+    this.setup_mobile_styles = function () {
+
+        this.html.css({
+            "background": "none",
+            "border-radius": 0,
+            "margin": 0,
+            "padding": 0,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
+            "box-shadow": "none",
+        });
+
     };
 
     this.Load = function () {
@@ -210,6 +229,20 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         var new_value = row_input.Text();
 
+        if (!row_details["can_edit"]) {
+            return;
+        };
+
+        if (this.get_data_cb) {
+            var old_value = this.get_data_cb()[row_details["key"]];
+
+            if (old_value == new_value) {
+                // Values are unchanged!
+                return;
+            };
+
+        };
+
         if (this.dash_obj_id == null) {
 
             if (this.set_data_cb) {
@@ -230,14 +263,16 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         params["value"] = new_value;
         params["obj_id"] = this.dash_obj_id;
 
+        console.log("updated - uploading...");
+
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
-        }
+        };
 
         if (row_details["key"].includes("password") && this.endpoint == "Users") {
             params["f"] = "update_password";
             params["p"] = new_value;
-        }
+        };
 
         (function (self, row_input, row_details) {
 

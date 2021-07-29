@@ -42,6 +42,15 @@ function DashCardStackBannerHeadline (banner) {
         this.label_bottom.text(text_secondary);
     };
 
+    this.SetTopBottomMargins = function(margin_top, margin_bottom) {
+
+        this.html.css({
+            "padding-top": margin_top,
+            "padding-bottom": margin_bottom,
+        });
+
+    };
+
     this.setup_styles();
 
 };

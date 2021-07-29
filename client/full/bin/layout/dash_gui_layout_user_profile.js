@@ -24,18 +24,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
     };
 
     this.add_logout_button = function () {
-        // this.logout_button = new Dash.Gui.Button("Log Out", this.log_out, this, this.color);
-        // this.html.append(this.logout_button.html);
-        //
-        // this.logout_button.html.css({
-        //     "position": "absolute",
-        //     "bottom": Dash.Size.Padding,
-        //     "right": Dash.Size.Padding,
-        //     "left": this.img_box_size + (Dash.Size.Padding * 2),
-        // });
-
         this.logout_button = Dash.Gui.AddTopRightIconButton(this, this.log_out, "log_out");
-
         this.html.append(this.logout_button);
     };
 
@@ -195,15 +184,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
     };
 
     this.log_out = function (button) {
-        if (!window.confirm("Log out?")) {
-            return;
-        }
-
-        Dash.Local.Set("email", "");
-        Dash.Local.Set("token", "");
-        Dash.Local.Set("user_json", "");
-
-        location.reload();
+        Dash.Logout();
     };
 
     this.set_group = function (button, group_name, group_option) {

@@ -11,7 +11,7 @@ function DashGuiButtonStyleDefault () {
             "background": this.color_set.Background.Base,
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
             "padding": 0,
@@ -27,7 +27,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
 
         this.load_bar.css({
@@ -37,7 +37,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "width": 0,
             "background": Dash.Color.Primary,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
 
         this.click_highlight.css({
@@ -48,7 +48,7 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "background": "rgba(255, 255, 255, 0.5)",
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
         });
 
         this.label.css({

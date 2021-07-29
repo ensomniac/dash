@@ -10,6 +10,8 @@ function DashMobileLayoutCardStack (binder, color) {
     this.left_content = null;
     this.right_content = null;
 
+    this.footer_button_overlay = null;
+
     this.anim_duration = 400;
     this.backing_gradient = null;
 
@@ -50,6 +52,7 @@ function DashMobileLayoutCardStack (binder, color) {
             "overflow": "hidden",
             "overflow-y": "auto",
             "background": "none",
+            "background": this.color.Background,
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
@@ -65,8 +68,6 @@ function DashMobileLayoutCardStack (binder, color) {
     };
 
     this.on_resized = function (width, height) {
-
-        //console.log("Resized to " + width + " x " + height);
 
         this.panel_offsets = [0, -width, -width*2];
 
@@ -117,6 +118,8 @@ function DashMobileLayoutCardStack (binder, color) {
             "transform": "translateZ(0)",
             "background": "none",
             "display": "none",
+            // "margin-left": Dash.Size.Padding*4,
+            // "margin-right": Dash.Size.Padding,
         });
 
         this.slider.append(content);
@@ -200,6 +203,46 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
+    this.AddFooterButton = function () {
+        // WIP!
+        
+        if (!this.footer_button_overlay) {
+            this.create_footer_overlay();
+        };
+
+        console.log("Add footer");
+
+    };
+
+    this.create_footer_overlay = function () {
+
+        this.footer_button_overlay = Dash.Gui.GetHTMLAbsContext();
+        this.footer_button_overlay.text("Continue without images...");
+
+        this.footer_button_overlay.css({
+            "position": "fixed",
+            "background": "#222",
+            "height": Dash.Size.ButtonHeight,
+            "top": "auto",
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "color": "white",
+
+        });
+
+        this.html.append(this.footer_button_overlay);
+
+    };
+
+    this.AddCard = function () {
+
+        var card = new DashMobileLayoutCard(this);
+
+        this.AppendHTML(card.html);
+
+        return card;
+
+    };
+
     this.slide_to_index = function(target_index){
 
         var backing_opacity = 0;
@@ -245,19 +288,16 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.active_panel_index == 0) {
             // Left is visible
-            console.log("Left is visible");
             this.center_content.css({"display": "none"});
             this.right_content.css({"display": "none"});
         }
         else if (this.active_panel_index == 2) {
             // Center is visible
-            console.log("Center is visible");
             this.left_content.css({"display": "none"});
             this.center_content.css({"display": "none"});
         }
         else {
             // Right is visible
-            console.log("Right is visible");
             this.left_content.css({"display": "none"});
             this.right_content.css({"display": "none"});
         };
