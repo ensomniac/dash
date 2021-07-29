@@ -52,7 +52,7 @@ function DashUser () {
 
     };
 
-    this.GetImage = function (user_email) {
+    this.GetImageByEmail = function (user_email) {
         var img = null;
 
         if (Dash.User.Init["team"][user_email]) {
@@ -75,6 +75,10 @@ function DashUser () {
         }
 
         return img;
+    };
+    
+    this.GetByEmail = function (user_email) {
+        return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
     };
 
     this.build_init_team_combo = function () {

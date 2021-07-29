@@ -17,7 +17,7 @@ function DashColor () {
         var button_selected_hover = this.Lighten(button_selected);
         var dark_input_background = "rgba(255, 255, 255, 0.8)";
         var light_input_background = "rgba(0, 0, 0, 0)";
-        var dark_input_text = "rgba(0, 0, 0, 0.8)";
+        var dark_input_text = "rgba(255, 255, 255, 0.8)";
         var light_input_text = "rgba(0, 0, 0, 0.8)";
 
         var light = new DashSiteColors({
