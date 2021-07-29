@@ -24578,8 +24578,11 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         else {
             css["margin-left"] = Dash.Size.Padding;
         }
-        if (this.column_config_data["css"] && !this.list_row.is_header) {
+        if (this.column_config_data["css"]) {
             for (var key in this.column_config_data["css"]) {
+                if (!key.includes("width") && this.list_row.is_header) {
+                    continue;
+                }
                 css[key] = this.column_config_data["css"][key];
             }
         }
