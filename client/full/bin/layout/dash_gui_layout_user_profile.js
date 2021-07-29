@@ -20,6 +20,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
 
         this.html.css({
             "min-height": min_height,
+            // "background": this.color.Background,
         });
     };
 
@@ -35,7 +36,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
             header_title = this.user_data["first_name"] + "'s User Settings";
         }
 
-        this.header = new Dash.Gui.Header(header_title);
+        this.header = new Dash.Gui.Header(header_title, this.color);
         this.html.append(this.header.html);
     };
 
@@ -46,7 +47,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
             this.set_data,  // Function to set saved data locally
             "Users",        // Endpoint
             this.user_data["email"], // Dash obj_id (unique for users)
-            // {"indent_properties": Dash.Size.ColumnWidth}
+            {"color": this.color}
         );
 
         this.html.append(this.property_box.html);

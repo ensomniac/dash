@@ -10,6 +10,7 @@ class DashColorSet {
         this._button      = button;           // DashColorButtonSet()
         this._tab         = tab;              // DashColorButtonSet()
         this._input       = input;            // DashColorButtonSet()
+        this._placeholder_class = "";         // DashColorButtonSet()
     };
 
     get Background() {
@@ -46,6 +47,10 @@ class DashColorSet {
 
     get Input() {
         return this._input;
+    };
+
+    get PlaceholderClass() {
+        return this._placeholder_class;
     };
 
     /////////////////////////
@@ -90,4 +95,7 @@ class DashColorSet {
         this._input = color_button_set;
     };
 
+    SetPlaceholderClass(placeholder_class_name) {
+        this._placeholder_class = placeholder_class_name;
+    };
 }

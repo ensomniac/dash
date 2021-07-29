@@ -142,6 +142,10 @@ textarea:focus, input:focus{
   -ms-user-select: none;
   -webkit-touch-callout: none;
 }
+.placeholder_dark {
+}
+.placeholder_light {
+}
 ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
   color: rgba(0, 0, 0, 0.5);
 }
@@ -153,6 +157,30 @@ textarea:focus, input:focus{
 }
 :-moz-placeholder { /* Firefox 18- */
   color: rgba(0, 0, 0, 0.5);
+}
+.placeholder_light::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: rgba(0, 0, 0, 0.5);
+}
+.placeholder_light::-moz-placeholder { /* Firefox 19+ */
+    color: rgba(0, 0, 0, 0.5);
+}
+.placeholder_light:-ms-input-placeholder { /* IE 10+ */
+    color: rgba(0, 0, 0, 0.5);
+}
+.placeholder_light:-moz-placeholder { /* Firefox 18- */
+    color: rgba(0, 0, 0, 0.5);
+}
+.placeholder_dark::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: rgba(255, 255, 255, 0.5);
+}
+.placeholder_dark::-moz-placeholder { /* Firefox 19+ */
+    color: rgba(255, 255, 255, 0.5);
+}
+.placeholder_dark:-ms-input-placeholder { /* IE 10+ */
+    color: rgba(255, 255, 255, 0.5);
+}
+.placeholder_dark:-moz-placeholder { /* Firefox 18- */
+    color: rgba(255, 255, 255, 0.5);
 }
 .no_pointer_events {
     user-select: none;

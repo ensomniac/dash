@@ -224,7 +224,7 @@ function DashGuiPropertyBoxInterface () {
                 _callback = function (row_input) {
                     self.on_row_updated(row_input, row_details);
                 };
-            }
+            };
 
             var row = new Dash.Gui.InputRow(
                 row_details["label_text"],

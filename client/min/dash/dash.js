@@ -18211,6 +18211,8 @@ function DashColor () {
                 ),
             ),
         );
+        this.Light.SetPlaceholderClass("placeholder_light");
+        this.Dark.SetPlaceholderClass("placeholder_dark");
     };
     this.Raise = function (cstr, raise_steps) {
         raise_steps = raise_steps || 1;
@@ -18574,6 +18576,7 @@ class DashColorSet {
         this._button      = button;           // DashColorButtonSet()
         this._tab         = tab;              // DashColorButtonSet()
         this._input       = input;            // DashColorButtonSet()
+        this._placeholder_class = "";         // DashColorButtonSet()
     };
     get Background() {
         return this._background;
@@ -18601,6 +18604,9 @@ class DashColorSet {
     };
     get Input() {
         return this._input;
+    };
+    get PlaceholderClass() {
+        return this._placeholder_class;
     };
     /////////////////////////
     ///// INTERMEDIATES /////
@@ -18632,6 +18638,9 @@ class DashColorSet {
     };
     set Input(color_button_set) {
         this._input = color_button_set;
+    };
+    SetPlaceholderClass(placeholder_class_name) {
+        this._placeholder_class = placeholder_class_name;
     };
 }
 
@@ -20916,10 +20925,10 @@ function DashGuiInput (placeholder_text, color) {
     this.html = $("<div></div>");
     this.last_submitted_text = "";
     if (this.placeholder.toString().toLowerCase().includes("password")) {
-        this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
+        this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
     }
     else {
-        this.input = $("<input placeholder='" + this.placeholder + "'>");
+        this.input = $("<input class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder + "'>");
     };
     this.setup_styles = function () {
         this.html.append(this.input);
@@ -20938,7 +20947,7 @@ function DashGuiInput (placeholder_text, color) {
             "width": "100%",
             "height": "100%",
             "padding-left": Dash.Size.Padding,
-            "color": this.color.Input.Text.Base,
+            "color": this.color.Text,
         });
     };
     this.SetLocked = function (is_locked) {
@@ -22234,7 +22243,7 @@ function DashGuiPropertyBoxInterface () {
                 _callback = function (row_input) {
                     self.on_row_updated(row_input, row_details);
                 };
-            }
+            };
             var row = new Dash.Gui.InputRow(
                 row_details["label_text"],
                 row_details["value"],
@@ -23148,6 +23157,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         var min_height = this.img_box_size + Dash.Size.RowHeight + Dash.Size.Padding;
         this.html.css({
             "min-height": min_height,
+            // "background": this.color.Background,
         });
     };
     this.add_logout_button = function () {
@@ -23159,7 +23169,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         if (this.user_data["first_name"]) {
             header_title = this.user_data["first_name"] + "'s User Settings";
         }
-        this.header = new Dash.Gui.Header(header_title);
+        this.header = new Dash.Gui.Header(header_title, this.color);
         this.html.append(this.header.html);
     };
     this.setup_property_box = function () {
@@ -23169,7 +23179,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
             this.set_data,  // Function to set saved data locally
             "Users",        // Endpoint
             this.user_data["email"], // Dash obj_id (unique for users)
-            // {"indent_properties": Dash.Size.ColumnWidth}
+            {"color": this.color}
         );
         this.html.append(this.property_box.html);
         this.property_box.html.css({
@@ -25860,7 +25870,6 @@ function DashMobileLayoutCardStack (binder, color) {
     };
     this.AddFooterButton = function () {
         // WIP!
-        
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
         };

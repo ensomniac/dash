@@ -6,10 +6,10 @@ function DashGuiInput (placeholder_text, color) {
     this.last_submitted_text = "";
 
     if (this.placeholder.toString().toLowerCase().includes("password")) {
-        this.input = $("<input type=password placeholder='" + this.placeholder + "'>");
+        this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
     }
     else {
-        this.input = $("<input placeholder='" + this.placeholder + "'>");
+        this.input = $("<input class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder + "'>");
     };
 
     this.setup_styles = function () {
@@ -32,7 +32,7 @@ function DashGuiInput (placeholder_text, color) {
             "width": "100%",
             "height": "100%",
             "padding-left": Dash.Size.Padding,
-            "color": this.color.Input.Text.Base,
+            "color": this.color.Text,
         });
 
     };

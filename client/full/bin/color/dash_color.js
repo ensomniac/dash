@@ -150,6 +150,10 @@ function DashColor () {
                 ),
             ),
         );
+
+        this.Light.SetPlaceholderClass("placeholder_light");
+        this.Dark.SetPlaceholderClass("placeholder_dark");
+
     };
 
     this.Raise = function (cstr, raise_steps) {

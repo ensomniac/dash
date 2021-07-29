@@ -205,7 +205,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     this.AddFooterButton = function () {
         // WIP!
-        
+
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
         };
