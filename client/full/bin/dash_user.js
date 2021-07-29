@@ -52,6 +52,31 @@ function DashUser () {
 
     };
 
+    this.GetImage = function (user_email) {
+        var img = null;
+
+        if (Dash.User.Init["team"][user_email]) {
+            if (Dash.User.Init["team"][user_email]["img"]) {
+                img = Dash.User.Init["team"][user_email]["img"];
+            }
+        }
+
+        if (!img) {
+            // TODO: Allow dash to always return a stub for a user
+            //  image along with the init data on the auth call
+
+            img = {
+                "default": true,
+                "aspect": 1,
+                "height": 512,
+                "width": 512,
+                "thumb_url": "dash/fonts/user_default.jpg",
+            };
+        }
+
+        return img;
+    };
+
     this.build_init_team_combo = function () {
         this.Init["team_combo"] = [];
 
