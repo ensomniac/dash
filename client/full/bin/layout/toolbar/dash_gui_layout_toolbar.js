@@ -142,6 +142,8 @@ function DashGuiLayoutToolbar (binder, color) {
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
         });
+
+        return divider_line;
     };
 
     // Intended to be the first item, if you want a header-style label starting the toolbar

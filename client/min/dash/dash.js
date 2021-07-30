@@ -23517,9 +23517,9 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
     if (Dash.Local.Get(this.recall_id)) {
         this.locked_width = parseInt(Dash.Local.Get(this.recall_id));
     }
-    this.divider_size = Dash.Size.Padding*0.1;
-    this.divider_hover_size = Dash.Size.Padding*1.5; // A slightly larger size for dragging
-    this.min_width = this.default_size || Dash.Size.ColumnWidth*0.5;
+    this.divider_size = Dash.Size.Padding * 0.1;
+    this.divider_hover_size = Dash.Size.Padding * 1.5; // A slightly larger size for dragging
+    this.min_width = this.default_size || Dash.Size.ColumnWidth * 0.5;
     this.divider_color = "rgba(0, 0, 0, 0.2)";
     this.divider_color_active = "rgba(0, 0, 0, 0.6)";
     this.drag_properties = {};
@@ -23528,6 +23528,9 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
     };
     this.SetPaneContentB = function (html) {
         this.content_b.empty().append(html);
+    };
+    this.SetMinWidth = function (size) {
+        this.min_width = size;
     };
     this.setup_styles = function () {
         this.html.append(this.content_a);
@@ -23656,7 +23659,9 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
                 }
             });
             self.html.on("mouseup", function (e) {
-                if (!self.drag_active) {return;}
+                if (!self.drag_active) {
+                    return;
+                }
                 if (self.drag_active) {
                     self.drag_active = false;
                     self.on_draw_end();
@@ -23843,6 +23848,7 @@ function DashGuiLayoutToolbar (binder, color) {
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
         });
+        return divider_line;
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
     this.AddLabel = function (text, add_end_border=true, color=null) {
