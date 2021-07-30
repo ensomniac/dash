@@ -21696,11 +21696,12 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.setup_styles();
 };
 
-function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color.Light) {
+function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color.Light, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
     this.add_msg_callback = add_msg_callback.bind(this.binder);
     this.color = color;
+    this.dual_sided = dual_sided;
     this.html = null;
     this.header = null;
     this.message_area = null;
@@ -21734,26 +21735,32 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         }
         return this.header;
     };
-    this.AddMessage = function (text, user_email=null, timestamp=null, fire_callback=false) {
+    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false) {
         if (!text) {
             console.log("ERROR: AddMessage() requires a 'text' param");
             return;
         }
-        if (!timestamp) {
-            timestamp = new Date().toISOString();
+        if (align_right && !this.dual_sided) {
+            console.log("WARNING: ChatBox.dual_sided has been changed to 'true' to accommodate an AddMessage() call with the 'align_right' param set to 'true'");
+            this.dual_sided = true;
+        }
+        if (!iso_ts) {
+            iso_ts = new Date().toISOString();
         }
         if (!user_email) {
             user_email = Dash.User.Data["email"];
         }
-        timestamp = Dash.ReadableDateTime(timestamp, false);
+        iso_ts = Dash.ReadableDateTime(iso_ts, false);
         if (fire_callback) {
             this.add_msg_callback(text);
         }
-        this.message_area.append(this.get_message_box(text, user_email, timestamp));
+        var message_box = this.get_message_box(text, user_email, iso_ts, align_right);
+        this.message_area.append(message_box);
         // If overflow, auto-scroll to bottom
         if (this.message_area[0].offsetHeight < this.message_area[0].scrollHeight) {
             this.ScrollToBottom();
         }
+        return message_box;
     };
     this.ScrollToBottom = function () {
         this.message_area[0].scrollTop = this.message_area[0].scrollHeight;
@@ -21774,47 +21781,87 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         );
         this.html.append(this.message_area);
     };
-    this.get_message_box = function (text, user_email, timestamp) {
+    this.get_message_box = function (text, user_email, iso_ts, align_right=false) {
+        var side_margin = Dash.Size.Padding * 4.2;
         var message_box = Dash.Gui.GetHTMLContext(
             "",
             {
-                "margin-top": Dash.Size.Padding * 0.75,
+                "margin-top": Dash.Size.Padding,
                 "padding": 0,
                 "display": "flex",
                 "background": "none"
             },
             this.color
         );
-        var timestamp_label = Dash.Gui.GetHTMLContext(
-            (Dash.User.GetByEmail(user_email)["first_name"] || "") + " - " + timestamp,
-            {
-                "color": this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray",
-                "font-family": "sans_serif_italic",
-                "background": "none",
-                "position": "absolute",
-                "top": 0,
-                "right": 0,
-                "text-align": "right",
-                "height": Dash.Size.RowHeight * 0.7,
-                "font-size": (Dash.Size.Padding * 1.2) + "px"
-            },
-            this.color
-        );
-        message_box.append(this.get_user_icon(user_email));
-        message_box.append(this.get_message_content_container(text));
-        message_box.append(timestamp_label);
+        if (align_right) {
+            message_box.css({
+                "flex-direction": "row-reverse",
+                "margin-left": side_margin
+            });
+            if (this.dual_sided) {
+                message_box.css({
+                    "margin-left": side_margin
+                });
+            }
+        }
+        else {
+            if (this.dual_sided) {
+                message_box.css({
+                    "margin-right": side_margin
+                });
+            }
+        }
+        message_box.append(this.get_user_icon(user_email, align_right));
+        message_box.append(this.get_message_content_container(text, align_right));
+        message_box.append(this.get_iso_ts_label(user_email, iso_ts, align_right));
         return message_box;
     };
-    this.get_message_content_container = function (text) {
+    this.get_iso_ts_label = function (user_email, iso_ts, align_right=false) {
+        var iso_ts_label;
+        var side_padding = Dash.Size.Padding * 4.9;
+        var iso_ts_css = {
+            "color": this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray",
+            "font-family": "sans_serif_italic",
+            "background": "none",
+            "position": "absolute",
+            "top": 0,
+            "height": Dash.Size.RowHeight * 0.7,
+            "font-size": (Dash.Size.Padding * 1.2) + "px"
+        };
+        if (align_right) {
+            iso_ts_label = Dash.Gui.GetHTMLContext(
+                iso_ts + " - " + (Dash.User.GetByEmail(user_email)["first_name"] || ""),
+                {
+                    ...iso_ts_css,
+                    "right": side_padding,
+                    "text-align": "right",
+                },
+                this.color
+            );
+        }
+        else {
+            iso_ts_label = Dash.Gui.GetHTMLContext(
+                (Dash.User.GetByEmail(user_email)["first_name"] || "") + " - " + iso_ts,
+                {
+                    ...iso_ts_css,
+                    "left": side_padding,
+                    "text-align": "left",
+                },
+                this.color
+            );
+        }
+        return iso_ts_label;
+    };
+    this.get_message_content_container = function (text, align_right=false) {
         var content_label = Dash.Gui.GetHTMLContext(text, {"background": "none"}, this.color);
         var content_container = Dash.Gui.GetHTMLContext(
             "",
             {
                 "margin": 0,
                 "padding": 0,
-                "margin-left": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5),
                 "margin-top": Dash.Size.RowHeight * 0.7,
-                "display": "flex"
+                "display": "flex",
+                "background": "none"
             },
             this.color
         );
@@ -21823,24 +21870,38 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
                 "margin": Dash.Size.Padding * 0.2,
                 "padding": Dash.Size.Padding,
                 "border-radius": Dash.Size.Padding,
-                "border-top-left-radius": Dash.Size.Padding * 0.1,
                 "box-shadow": this.dark_mode ? "0px 2px 2px 1px rgba(255, 255, 255, 0.2)" : "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
                 "background": this.color.BackgroundRaisedTop || this.color.BackgroundRaised,
                 "display": "flex"
             },
             this.color
         );
+        if (align_right) {
+            content_container.css({
+                "margin-right": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5),
+            });
+            content_box.css({
+                "border-top-right-radius": Dash.Size.Padding * 0.1,
+            });
+        }
+        else {
+            content_container.css({
+                "margin-left": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5)
+            });
+            content_box.css({
+                "border-top-left-radius": Dash.Size.Padding * 0.1
+            });
+        }
         content_box.append(content_label);
         content_container.append(content_box);
         return content_container;
     };
-    this.get_user_icon = function (user_email) {
+    this.get_user_icon = function (user_email, align_right=false) {
         var user_icon = $("<div></div>");
         var user_icon_size = Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.25);
         var img = Dash.User.GetImageByEmail(user_email);
         user_icon.css({
             "position": "absolute",
-            "left": 0,
             "top": Dash.Size.RowHeight * 0.65,
             "width": user_icon_size,
             "height": user_icon_size,
@@ -21851,10 +21912,20 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             "background-image": "url(" + img["thumb_url"] + ")",
             "background-size": "cover"
         });
+        if (align_right) {
+            user_icon.css({
+                "right": 0
+            });
+        }
+        else {
+            user_icon.css({
+                "left": 0
+            });
+        }
         return user_icon;
     };
     this.add_message = function () {
-        this.AddMessage(this.message_input.Text(), null, null, true);
+        this.AddMessage(this.message_input.Text(), null, null, false, true);
         this.message_input.SetText("");
     };
     this.add_message_input = function () {
