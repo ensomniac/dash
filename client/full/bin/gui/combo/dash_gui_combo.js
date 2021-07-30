@@ -421,6 +421,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.setup_connections = function () {
+
         (function (self) {
 
             $(window).on("click", function (event) {
@@ -472,8 +473,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
                 setTimeout(function(){
 
-                    if (!self.is_searchable) {
-                        console.log("Dash > Converting combo to be a searchable list since it contains over 20 items");
+                    // This secondary check is important because the option_list
+                    // size may have changed after the first frame
+                    if (!self.is_searchable && self.option_list.length > 20) {
                         self.EnableSearchSelection();
                     };
 
