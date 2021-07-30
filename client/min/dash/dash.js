@@ -22794,7 +22794,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     if (!self.is_searchable && self.option_list.length > 20) {
                         self.EnableSearchSelection();
                     };
-                }, 200);
+                }, 200); 
             };
 
         })(this);

@@ -479,7 +479,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                         self.EnableSearchSelection();
                     };
 
-                }, 200);
+                }, 200); 
 
             };
 
