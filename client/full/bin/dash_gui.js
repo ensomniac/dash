@@ -1,19 +1,20 @@
 function DashGui() {
-    this.Button =      DashGuiButton;
-    this.ChatBox =     DashGuiChatBox;
-    this.Checkbox =    DashGuiCheckbox;
-    this.Combo =       DashGuiCombo;
-    this.Header =      DashGuiHeader;
-    this.Icon =        DashIcon;
-    this.IconButton =  DashGuiIconButton;
-    this.Input =       DashGuiInput;
-    this.InputRow =    DashGuiInputRow;
-    this.Layout =      new DashGuiLayout();
-    this.LoadDots =    DashGuiLoadDots;
-    this.Login =       DashGuiLogin;
-    this.PaneSlider =  DashGuiPaneSlider;
-    this.PropertyBox = DashGuiPropertyBox;
-    this.Slider =      DashGuiSlider;
+    this.Button =          DashGuiButton;
+    this.ChatBox =         DashGuiChatBox;
+    this.ChatBox.Message = DashGuiChatBoxMessage;
+    this.Checkbox =        DashGuiCheckbox;
+    this.Combo =           DashGuiCombo;
+    this.Header =          DashGuiHeader;
+    this.Icon =            DashIcon;
+    this.IconButton =      DashGuiIconButton;
+    this.Input =           DashGuiInput;
+    this.InputRow =        DashGuiInputRow;
+    this.Layout =          new DashGuiLayout();
+    this.LoadDots =        DashGuiLoadDots;
+    this.Login =           DashGuiLogin;
+    this.PaneSlider =      DashGuiPaneSlider;
+    this.PropertyBox =     DashGuiPropertyBox;
+    this.Slider =          DashGuiSlider;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=Dash.Color.Light) {
         var html = $("<div>" + optional_label_text + "</div>");
