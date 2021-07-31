@@ -19402,6 +19402,7 @@ function DashAdminTabs () {
 function DashGui() {
     this.Button =      DashGuiButton;
     this.ChatBox =     DashGuiChatBox;
+    this.Checkbox =    DashGuiCheckbox;
     this.Combo =       DashGuiCombo;
     this.Header =      DashGuiHeader;
     this.Icon =        DashIcon;
@@ -21703,9 +21704,14 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     this.color = color;
     this.dual_sided = dual_sided;
     this.html = null;
+    this.messages = [];
     this.header = null;
+    this.header_area = null;
+    this.toggle_hide_side = null;
     this.message_area = null;
+    this.toggle_hide_button = null;
     this.message_input = null;
+    this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
     // TODO: This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
@@ -21730,11 +21736,12 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             this.header.SetText(this.header_text);
         }
         else {
-            this.header = new Dash.Gui.Header(this.header_text, this.color);
-            this.html.append(this.header.html);
+            this.add_header_area();
         }
         return this.header;
     };
+    // TODO: Abstract the concept of a message to its own class so we can have easily update the elements
+    //  within it, such as the text, which currently is not easy to access because of all the wrappers
     this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false) {
         if (!text) {
             console.log("ERROR: AddMessage() requires a 'text' param");
@@ -21755,15 +21762,97 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             this.add_msg_callback(text);
         }
         var message_box = this.get_message_box(text, user_email, iso_ts, align_right);
-        this.message_area.append(message_box);
-        // If overflow, auto-scroll to bottom
-        if (this.message_area[0].offsetHeight < this.message_area[0].scrollHeight) {
-            this.ScrollToBottom();
+        if (this.check_to_show_message(align_right)) {
+            this.message_area.append(message_box);
         }
+        this.scroll_to_bottom_on_overflow();
+        this.messages.push({"message_box": message_box, "align_right": align_right});
         return message_box;
     };
     this.ScrollToBottom = function () {
         this.message_area[0].scrollTop = this.message_area[0].scrollHeight;
+    };
+    this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
+        if (this.toggle_hide_button) {
+            console.log("WARNING: Toggle button already added to ChatBox, can't add another at this time.");
+            return;
+        }
+        this.toggle_local_storage_key = local_storage_key;
+        if (toggle_right_side) {
+            this.toggle_hide_side = "right";
+        }
+        else {
+            this.toggle_hide_side = "left";
+        }
+
+        this.toggle_hide_button = new Dash.Gui.Checkbox(
+            "Activity",                     // Label text
+            this,                           // Binder
+            this.on_button_toggled,         // Callback
+            this.toggle_local_storage_key,  // Local storage key
+            default_state,                  // Default state
+            true,                           // Label first
+            include_border,                 // Include border
+            this.color                      // Color
+        );
+        this.toggle_hide_button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "right": 0
+        });
+        this.toggle_hide_button.label.label.css({
+            "font-family": "sans_serif_bold"
+        });
+        this.header_area.append(this.toggle_hide_button.html);
+    };
+    this.on_button_toggled = function () {
+        this.message_area.empty();
+        for (var i in this.messages) {
+            var message = this.messages[i];
+            if (this.check_to_show_message(message["align_right"])) {
+                this.message_area.append(message["message_box"]);
+            }
+        }
+        this.scroll_to_bottom_on_overflow();
+    };
+    this.check_to_show_message = function (align_right) {
+        if (this.toggle_hide_button.IsChecked()) {
+            return true;
+        }
+        else {
+            if (this.toggle_hide_side === "right" && !align_right) {
+                return true;
+            }
+            if (this.toggle_hide_side === "left" && align_right) {
+                return true;
+            }
+        }
+        return false;
+    };
+    this.add_header_area = function () {
+        this.header_area = Dash.Gui.GetHTMLContext(
+            "",
+            {
+                "margin-bottom": Dash.Size.Padding * 3,
+                "margin-left": Dash.Size.Padding * 0.25,
+                "height": Dash.Size.RowHeight
+            },
+            this.color
+        );
+        this.header = new Dash.Gui.Header(this.header_text, this.color);
+        this.header.html.css({
+            "position": "absolute",
+            "top": 0,
+            "left": 0
+        });
+        this.header_area.append(this.header.html);
+        this.html.append(this.header_area);
+    };
+    // If overflow, auto-scroll to bottom
+    this.scroll_to_bottom_on_overflow = function () {
+        if (this.message_area[0].offsetHeight < this.message_area[0].scrollHeight) {
+            this.ScrollToBottom();
+        }
     };
     this.add_message_area = function () {
         this.message_area = Dash.Gui.GetHTMLBoxContext(
@@ -21990,6 +22079,95 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             "transform": "scale(-1, 1)"  // Flip the icon horizontally
         });
         return pen_icon;
+    };
+    this.setup_styles();
+}
+
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=Dash.Color.Light) {
+    this.label_text = label_text;
+    this.binder = binder;
+    this.callback = callback.bind(this.binder);
+    this.local_storage_key = local_storage_key;
+    this.default_state = default_state;
+    this.label_first = label_first;
+    this.include_border = include_border;
+    this.color = color;
+    this.html = null;
+    this.label = null;
+    this.icon_button = null;
+    this.checked = this.default_state;
+    // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
+    this.setup_styles = function () {
+        this.checked = this.get_checked_state();
+        this.html = $("<div></div>");
+        this.html.css({
+            "display": "flex",
+            "height": Dash.Size.RowHeight
+        });
+        this.draw_label();
+        this.redraw();
+    };
+    this.IsChecked = function () {
+        return this.checked;
+    };
+    this.Toggle = function () {
+        this.checked = !this.checked;
+        if (this.checked) {
+            Dash.Local.Set(this.local_storage_key, "true");
+        }
+        else {
+            Dash.Local.Set(this.local_storage_key, "false");
+        }
+        this.html.empty();
+        this.redraw();
+        this.callback();
+    };
+    this.redraw = function () {
+        this.icon_button = new Dash.Gui.IconButton(
+            this.checked ? "checked_box" : "unchecked_box",
+            this.Toggle,
+            this,
+            this.color
+        );
+        if (this.label_first) {
+            this.html.append(this.label.html);
+            this.html.append(this.icon_button.html);
+        }
+        else {
+            this.html.append(this.icon_button.html);
+            this.html.append(this.label.html);
+        }
+    };
+    this.draw_label = function () {
+        this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
+        this.label.label.css({
+            "font-family": "sans_serif_normal",
+            "padding-left": 0,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
+        });
+        var padding_to_icon = Dash.Size.Padding * 0.5;
+        if (this.label_first) {
+            this.label.label.css({
+                "margin-right": padding_to_icon
+            });
+        }
+        else {
+            this.label.label.css({
+                "margin-left": padding_to_icon
+            });
+        }
+    };
+    this.get_checked_state = function () {
+        var local = Dash.Local.Get(this.local_storage_key);
+        if (local === "true") {
+            return true;
+        }
+        if (local === "false") {
+            return false;
+        }
+        return this.default_state;
     };
     this.setup_styles();
 }

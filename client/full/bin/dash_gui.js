@@ -1,6 +1,7 @@
 function DashGui() {
     this.Button =      DashGuiButton;
     this.ChatBox =     DashGuiChatBox;
+    this.Checkbox =    DashGuiCheckbox;
     this.Combo =       DashGuiCombo;
     this.Header =      DashGuiHeader;
     this.Icon =        DashIcon;
