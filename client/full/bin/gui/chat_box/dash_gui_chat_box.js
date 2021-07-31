@@ -9,12 +9,14 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     this.messages = [];
     this.header = null;
     this.header_area = null;
-    this.toggle_hide_side = null;
     this.message_area = null;
-    this.toggle_hide_button = null;
     this.message_input = null;
+    this.toggle_hide_side = null;
+    this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
+    this.iso_label_height = Dash.Size.RowHeight * 0.7;
+    this.secondary_css_color = this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray";
 
     // TODO: This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
@@ -52,7 +54,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
 
     // TODO: Abstract the concept of a message to its own class so we can have easily update the elements
     //  within it, such as the text, which currently is not easy to access because of all the wrappers
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false) {
+    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false) {
         if (!text) {
             console.log("ERROR: AddMessage() requires a 'text' param");
 
@@ -69,17 +71,19 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             iso_ts = new Date().toISOString();
         }
 
-        if (!user_email) {
+        if (!user_email && fire_callback) {
             user_email = Dash.User.Data["email"];
         }
 
-        iso_ts = Dash.ReadableDateTime(iso_ts, false);
+        if (Dash.IsServerIsoDate(iso_ts)) {
+            iso_ts = Dash.ReadableDateTime(iso_ts, false);
+        }
 
         if (fire_callback) {
             this.add_msg_callback(text);
         }
 
-        var message_box = this.get_message_box(text, user_email, iso_ts, align_right);
+        var message_box = this.get_message_box(text, user_email, iso_ts, align_right, delete_button);
 
         if (this.check_to_show_message(align_right)) {
             this.message_area.append(message_box);
@@ -219,7 +223,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         this.html.append(this.message_area);
     };
 
-    this.get_message_box = function (text, user_email, iso_ts, align_right=false) {
+    this.get_message_box = function (text, user_email, iso_ts, align_right=false, delete_button=false) {
         var side_margin = Dash.Size.Padding * 4.2;
 
         var message_box = Dash.Gui.GetHTMLContext(
@@ -258,26 +262,79 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         message_box.append(this.get_message_content_container(text, align_right));
         message_box.append(this.get_iso_ts_label(user_email, iso_ts, align_right));
 
+        // if (delete_button) {
+        //     message_box.append(this.get_delete_button(align_right).html);
+        // }
+
         return message_box;
+    };
+
+    this.get_delete_button = function (align_right=false) {
+        var height = this.iso_label_height;
+        var side_padding = Dash.Size.Padding * 3.2;
+
+        var icon_button = new Dash.Gui.IconButton(
+            this.dark_mode ? "trash_solid" : "trash",
+            this.delete_message,
+            this,
+            this.color,
+            {"container_size": height, "size_mult": 0.75}
+        );
+
+        icon_button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "height": height
+        });
+
+        icon_button.icon.icon_html.css({
+            "color": this.secondary_css_color
+        });
+
+        if (align_right) {
+            icon_button.html.css({
+                "right": side_padding
+            });
+        }
+
+        else {
+            icon_button.html.css({
+                "left": side_padding
+            });
+        }
+
+        return icon_button;
+    };
+
+    this.delete_message = function (c, a, b) {
+        // TODO
+
+        if (!window.confirm("Are you sure you want to delete this message? This cannot be undone.")) {
+            return;
+        }
+
+        console.log("TEST delete message", c, a, b);
     };
 
     this.get_iso_ts_label = function (user_email, iso_ts, align_right=false) {
         var iso_ts_label;
         var side_padding = Dash.Size.Padding * 4.9;
+        var user = Dash.User.GetByEmail(user_email);
+        var name = user ? user["first_name"] : "Unknown";
 
         var iso_ts_css = {
-            "color": this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray",
+            "color": this.secondary_css_color,
             "font-family": "sans_serif_italic",
             "background": "none",
             "position": "absolute",
             "top": 0,
-            "height": Dash.Size.RowHeight * 0.7,
+            "height": this.iso_label_height,
             "font-size": (Dash.Size.Padding * 1.2) + "px"
         };
 
         if (align_right) {
             iso_ts_label = Dash.Gui.GetHTMLContext(
-                iso_ts + " - " + (Dash.User.GetByEmail(user_email)["first_name"] || ""),
+                iso_ts + " - " + name,
                 {
                     ...iso_ts_css,
                     "right": side_padding,
@@ -289,7 +346,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
 
         else {
             iso_ts_label = Dash.Gui.GetHTMLContext(
-                (Dash.User.GetByEmail(user_email)["first_name"] || "") + " - " + iso_ts,
+                name + " - " + iso_ts,
                 {
                     ...iso_ts_css,
                     "left": side_padding,
@@ -303,6 +360,8 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     };
 
     this.get_message_content_container = function (text, align_right=false) {
+        var corner_radius = Dash.Size.Padding * 0.05;
+        var side_margin = Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5);
         var content_label = Dash.Gui.GetHTMLContext(text, {"background": "none"}, this.color);
 
         var content_container = Dash.Gui.GetHTMLContext(
@@ -310,7 +369,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             {
                 "margin": 0,
                 "padding": 0,
-                "margin-top": Dash.Size.RowHeight * 0.7,
+                "margin-top": this.iso_label_height,
                 "display": "flex",
                 "background": "none"
             },
@@ -331,21 +390,21 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
 
         if (align_right) {
             content_container.css({
-                "margin-right": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5),
+                "margin-right": side_margin
             });
 
             content_box.css({
-                "border-top-right-radius": Dash.Size.Padding * 0.1,
+                "border-top-right-radius": corner_radius
             });
         }
 
         else {
             content_container.css({
-                "margin-left": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5)
+                "margin-left": side_margin
             });
 
             content_box.css({
-                "border-top-left-radius": Dash.Size.Padding * 0.1
+                "border-top-left-radius": corner_radius
             });
         }
 
@@ -460,7 +519,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             "pen",
             null,
             0.9,
-            this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray"
+            this.secondary_css_color
         );
 
         pen_icon.html.css({

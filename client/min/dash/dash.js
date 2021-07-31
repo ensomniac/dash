@@ -114,6 +114,7 @@ function GuiIcons (icon) {
         "arrow_up":              new GuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up", 1.5),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
+        "cancel":                new GuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
         "cdn_tool_accordion":    new GuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new GuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
         "cdn_tool_career_path":  new GuiIconDefinition(this.icon, "Career Path Tool", this.weight["regular"], "shoe-prints"),
@@ -160,6 +161,8 @@ function GuiIcons (icon) {
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
         "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
+        "minus_circle":          new GuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
+        "minus_square":          new GuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
         "more":                  new GuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
         "navigation":            new GuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
         "newsfeed":              new GuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
@@ -178,7 +181,9 @@ function GuiIcons (icon) {
         "toggle_off":            new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
         "toggle_on":             new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
         "tools":                 new GuiIconDefinition(this.icon, "Tools", this.weight["light"], "tools"),
-        "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash-alt"),
+        "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
+        "trash_solid":           new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
+        "trash_alt":             new GuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
         "unchecked_box":         new GuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
         "undo":                  new GuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new GuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
@@ -21697,6 +21702,95 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.setup_styles();
 };
 
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=Dash.Color.Light) {
+    this.label_text = label_text;
+    this.binder = binder;
+    this.callback = callback.bind(this.binder);
+    this.local_storage_key = local_storage_key;
+    this.default_state = default_state;
+    this.label_first = label_first;
+    this.include_border = include_border;
+    this.color = color;
+    this.html = null;
+    this.label = null;
+    this.icon_button = null;
+    this.checked = this.default_state;
+    // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
+    this.setup_styles = function () {
+        this.checked = this.get_checked_state();
+        this.html = $("<div></div>");
+        this.html.css({
+            "display": "flex",
+            "height": Dash.Size.RowHeight
+        });
+        this.draw_label();
+        this.redraw();
+    };
+    this.IsChecked = function () {
+        return this.checked;
+    };
+    this.Toggle = function () {
+        this.checked = !this.checked;
+        if (this.checked) {
+            Dash.Local.Set(this.local_storage_key, "true");
+        }
+        else {
+            Dash.Local.Set(this.local_storage_key, "false");
+        }
+        this.html.empty();
+        this.redraw();
+        this.callback();
+    };
+    this.redraw = function () {
+        this.icon_button = new Dash.Gui.IconButton(
+            this.checked ? "checked_box" : "unchecked_box",
+            this.Toggle,
+            this,
+            this.color
+        );
+        if (this.label_first) {
+            this.html.append(this.label.html);
+            this.html.append(this.icon_button.html);
+        }
+        else {
+            this.html.append(this.icon_button.html);
+            this.html.append(this.label.html);
+        }
+    };
+    this.draw_label = function () {
+        this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
+        this.label.label.css({
+            "font-family": "sans_serif_normal",
+            "padding-left": 0,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
+        });
+        var padding_to_icon = Dash.Size.Padding * 0.5;
+        if (this.label_first) {
+            this.label.label.css({
+                "margin-right": padding_to_icon
+            });
+        }
+        else {
+            this.label.label.css({
+                "margin-left": padding_to_icon
+            });
+        }
+    };
+    this.get_checked_state = function () {
+        var local = Dash.Local.Get(this.local_storage_key);
+        if (local === "true") {
+            return true;
+        }
+        if (local === "false") {
+            return false;
+        }
+        return this.default_state;
+    };
+    this.setup_styles();
+}
+
 function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color.Light, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
@@ -21707,12 +21801,14 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     this.messages = [];
     this.header = null;
     this.header_area = null;
-    this.toggle_hide_side = null;
     this.message_area = null;
-    this.toggle_hide_button = null;
     this.message_input = null;
+    this.toggle_hide_side = null;
+    this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
+    this.iso_label_height = Dash.Size.RowHeight * 0.7;
+    this.secondary_css_color = this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray";
     // TODO: This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
     this.setup_styles = function () {
@@ -21742,7 +21838,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     };
     // TODO: Abstract the concept of a message to its own class so we can have easily update the elements
     //  within it, such as the text, which currently is not easy to access because of all the wrappers
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false) {
+    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false) {
         if (!text) {
             console.log("ERROR: AddMessage() requires a 'text' param");
             return;
@@ -21754,14 +21850,16 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         if (!iso_ts) {
             iso_ts = new Date().toISOString();
         }
-        if (!user_email) {
+        if (!user_email && fire_callback) {
             user_email = Dash.User.Data["email"];
         }
-        iso_ts = Dash.ReadableDateTime(iso_ts, false);
+        if (Dash.IsServerIsoDate(iso_ts)) {
+            iso_ts = Dash.ReadableDateTime(iso_ts, false);
+        }
         if (fire_callback) {
             this.add_msg_callback(text);
         }
-        var message_box = this.get_message_box(text, user_email, iso_ts, align_right);
+        var message_box = this.get_message_box(text, user_email, iso_ts, align_right, delete_button);
         if (this.check_to_show_message(align_right)) {
             this.message_area.append(message_box);
         }
@@ -21870,7 +21968,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         );
         this.html.append(this.message_area);
     };
-    this.get_message_box = function (text, user_email, iso_ts, align_right=false) {
+    this.get_message_box = function (text, user_email, iso_ts, align_right=false, delete_button=false) {
         var side_margin = Dash.Size.Padding * 4.2;
         var message_box = Dash.Gui.GetHTMLContext(
             "",
@@ -21903,23 +22001,65 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         message_box.append(this.get_user_icon(user_email, align_right));
         message_box.append(this.get_message_content_container(text, align_right));
         message_box.append(this.get_iso_ts_label(user_email, iso_ts, align_right));
+        // if (delete_button) {
+        //     message_box.append(this.get_delete_button(align_right).html);
+        // }
         return message_box;
+    };
+    this.get_delete_button = function (align_right=false) {
+        var height = this.iso_label_height;
+        var side_padding = Dash.Size.Padding * 3.2;
+        var icon_button = new Dash.Gui.IconButton(
+            this.dark_mode ? "trash_solid" : "trash",
+            this.delete_message,
+            this,
+            this.color,
+            {"container_size": height, "size_mult": 0.75}
+        );
+        icon_button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "height": height
+        });
+        icon_button.icon.icon_html.css({
+            "color": this.secondary_css_color
+        });
+        if (align_right) {
+            icon_button.html.css({
+                "right": side_padding
+            });
+        }
+        else {
+            icon_button.html.css({
+                "left": side_padding
+            });
+        }
+        return icon_button;
+    };
+    this.delete_message = function (c, a, b) {
+        // TODO
+        if (!window.confirm("Are you sure you want to delete this message? This cannot be undone.")) {
+            return;
+        }
+        console.log("TEST delete message", c, a, b);
     };
     this.get_iso_ts_label = function (user_email, iso_ts, align_right=false) {
         var iso_ts_label;
         var side_padding = Dash.Size.Padding * 4.9;
+        var user = Dash.User.GetByEmail(user_email);
+        var name = user ? user["first_name"] : "Unknown";
         var iso_ts_css = {
-            "color": this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray",
+            "color": this.secondary_css_color,
             "font-family": "sans_serif_italic",
             "background": "none",
             "position": "absolute",
             "top": 0,
-            "height": Dash.Size.RowHeight * 0.7,
+            "height": this.iso_label_height,
             "font-size": (Dash.Size.Padding * 1.2) + "px"
         };
         if (align_right) {
             iso_ts_label = Dash.Gui.GetHTMLContext(
-                iso_ts + " - " + (Dash.User.GetByEmail(user_email)["first_name"] || ""),
+                iso_ts + " - " + name,
                 {
                     ...iso_ts_css,
                     "right": side_padding,
@@ -21930,7 +22070,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         }
         else {
             iso_ts_label = Dash.Gui.GetHTMLContext(
-                (Dash.User.GetByEmail(user_email)["first_name"] || "") + " - " + iso_ts,
+                name + " - " + iso_ts,
                 {
                     ...iso_ts_css,
                     "left": side_padding,
@@ -21942,13 +22082,15 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         return iso_ts_label;
     };
     this.get_message_content_container = function (text, align_right=false) {
+        var corner_radius = Dash.Size.Padding * 0.05;
+        var side_margin = Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5);
         var content_label = Dash.Gui.GetHTMLContext(text, {"background": "none"}, this.color);
         var content_container = Dash.Gui.GetHTMLContext(
             "",
             {
                 "margin": 0,
                 "padding": 0,
-                "margin-top": Dash.Size.RowHeight * 0.7,
+                "margin-top": this.iso_label_height,
                 "display": "flex",
                 "background": "none"
             },
@@ -21967,18 +22109,18 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
         );
         if (align_right) {
             content_container.css({
-                "margin-right": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5),
+                "margin-right": side_margin
             });
             content_box.css({
-                "border-top-right-radius": Dash.Size.Padding * 0.1,
+                "border-top-right-radius": corner_radius
             });
         }
         else {
             content_container.css({
-                "margin-left": Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5)
+                "margin-left": side_margin
             });
             content_box.css({
-                "border-top-left-radius": Dash.Size.Padding * 0.1
+                "border-top-left-radius": corner_radius
             });
         }
         content_box.append(content_label);
@@ -22069,7 +22211,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
             "pen",
             null,
             0.9,
-            this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray"
+            this.secondary_css_color
         );
         pen_icon.html.css({
             "height": Dash.Size.RowHeight,
@@ -22083,93 +22225,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, color=Dash.Color
     this.setup_styles();
 }
 
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=Dash.Color.Light) {
-    this.label_text = label_text;
-    this.binder = binder;
-    this.callback = callback.bind(this.binder);
-    this.local_storage_key = local_storage_key;
-    this.default_state = default_state;
-    this.label_first = label_first;
-    this.include_border = include_border;
-    this.color = color;
-    this.html = null;
-    this.label = null;
-    this.icon_button = null;
-    this.checked = this.default_state;
-    // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
-    this.setup_styles = function () {
-        this.checked = this.get_checked_state();
-        this.html = $("<div></div>");
-        this.html.css({
-            "display": "flex",
-            "height": Dash.Size.RowHeight
-        });
-        this.draw_label();
-        this.redraw();
-    };
-    this.IsChecked = function () {
-        return this.checked;
-    };
-    this.Toggle = function () {
-        this.checked = !this.checked;
-        if (this.checked) {
-            Dash.Local.Set(this.local_storage_key, "true");
-        }
-        else {
-            Dash.Local.Set(this.local_storage_key, "false");
-        }
-        this.html.empty();
-        this.redraw();
-        this.callback();
-    };
-    this.redraw = function () {
-        this.icon_button = new Dash.Gui.IconButton(
-            this.checked ? "checked_box" : "unchecked_box",
-            this.Toggle,
-            this,
-            this.color
-        );
-        if (this.label_first) {
-            this.html.append(this.label.html);
-            this.html.append(this.icon_button.html);
-        }
-        else {
-            this.html.append(this.icon_button.html);
-            this.html.append(this.label.html);
-        }
-    };
-    this.draw_label = function () {
-        this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
-        this.label.label.css({
-            "font-family": "sans_serif_normal",
-            "padding-left": 0,
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis"
-        });
-        var padding_to_icon = Dash.Size.Padding * 0.5;
-        if (this.label_first) {
-            this.label.label.css({
-                "margin-right": padding_to_icon
-            });
-        }
-        else {
-            this.label.label.css({
-                "margin-left": padding_to_icon
-            });
-        }
-    };
-    this.get_checked_state = function () {
-        var local = Dash.Local.Get(this.local_storage_key);
-        if (local === "true") {
-            return true;
-        }
-        if (local === "false") {
-            return false;
-        }
-        return this.default_state;
-    };
-    this.setup_styles();
+function DashGuiChatBoxMessage () {
 }
 
 function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
