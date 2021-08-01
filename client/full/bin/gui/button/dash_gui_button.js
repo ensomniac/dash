@@ -299,11 +299,17 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
     };
 
     this.on_click = function (event) {
-
         if (this.callback && this.bind) {
             this.callback.bind(this.bind)(event, this);
         }
 
+    };
+
+    this.RefreshConnections  = function () {
+        // This may be necessary in certain cases when the parent html is emptied
+        // and then this button is then re-appended to that parent.
+
+        this.setup_connections();
     };
 
     this.setup_connections = function () {

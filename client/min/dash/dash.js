@@ -19797,6 +19797,11 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             this.callback.bind(this.bind)(event, this);
         }
     };
+    this.RefreshConnections  = function () {
+        // This may be necessary in certain cases when the parent html is emptied
+        // and then this button is then re-appended to that parent.
+        this.setup_connections();
+    };
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {
@@ -21934,6 +21939,9 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             var message = this.messages[i];
             if (this.check_to_show_message(message.RightAligned())) {
                 this.message_area.append(message.html);
+                if (message.delete_button) {
+                    message.delete_button.RefreshConnections();
+                }
             }
         }
         this.scroll_to_bottom_on_overflow();

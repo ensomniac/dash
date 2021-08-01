@@ -177,6 +177,10 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
 
             if (this.check_to_show_message(message.RightAligned())) {
                 this.message_area.append(message.html);
+
+                if (message.delete_button) {
+                    message.delete_button.RefreshConnections();
+                }
             }
         }
 
