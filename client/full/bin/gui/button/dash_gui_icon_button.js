@@ -2,7 +2,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon = null;
     this.icon_height = options["container_size"] || null;
     this.icon_name = icon_name;
-    this.icon_default_opacity = 0.8;
+    // this.icon_default_opacity = 0.8;
+    this.icon_default_opacity = 1;
     this.icon_size_mult = options["size_mult"] || 1.0;
     this.style = options["style"] || "default";
 

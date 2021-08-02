@@ -1,8 +1,9 @@
-function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback, color=Dash.Color.Light, dual_sided=true) {
+function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
     this.add_msg_callback = add_msg_callback.bind(this.binder);
     this.del_msg_callback = del_msg_callback.bind(this.binder);
+    this.at_combo_options = at_combo_options;
     this.color = color;
     this.dual_sided = dual_sided;
 
@@ -53,8 +54,10 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
     };
 
     this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null) {
-        if (!text) {
-            console.log("ERROR: AddMessage() requires a 'text' param");
+        if (!text || text.length < 1) {
+            if (user_email || iso_ts) {
+                console.log("ERROR: AddMessage() requires a 'text' param");
+            }
 
             return;
         }
@@ -148,7 +151,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         this.toggle_hide_button = new Dash.Gui.Checkbox(
             "Activity",                     // Label text
             this,                           // Binder
-            this.on_button_toggled,         // Callback
+            this.on_checkbox_toggled,       // Callback
             this.toggle_local_storage_key,  // Local storage key
             default_state,                  // Default state
             true,                           // Label first
@@ -169,7 +172,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         this.header_area.append(this.toggle_hide_button.html);
     };
 
-    this.on_button_toggled = function () {
+    this.on_checkbox_toggled = function () {
         this.message_area.empty();
 
         for (var i in this.messages) {
@@ -276,82 +279,14 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
     };
 
     this.add_message_input = function () {
-        var message_input_row = Dash.Gui.GetHTMLContext(
-            "",
-            {
-                "display": "flex",
-                "height": Dash.Size.RowHeight
-            },
-            this.color
-        );
-
-        message_input_row.css({
-            "background": "none"
-        });
-
-        var pen_icon = this.get_pen_icon();
-        var send_button = this.get_send_button();
-
-        this.message_input = new Dash.Gui.Input("Leave a note...", this.color);
-
-        this.message_input.html.css({
-            "box-shadow": this.dark_mode ? "0px 5px 0px -4px rgba(245, 245, 245, 0.4)" : "0px 5px 0px -4px rgba(0, 0, 0, 0.2)",
-            "flex-grow": 2,
-            "background": "none"
-        });
-
-        this.message_input.input.css({
-            "flex-grow": 2
-        });
-
-        if (this.dark_mode) {
-            Dash.Color.SetPlaceholderColor(this.message_input.input, "red");
-        }
-
-        this.message_input.OnSubmit(this.add_message, this);
-
-        message_input_row.append(pen_icon.html);
-        message_input_row.append(this.message_input.html);
-        message_input_row.append(send_button.html);
-
-        this.html.append(message_input_row);
-    };
-
-    this.get_send_button = function () {
-        var send_button = new Dash.Gui.IconButton(
-            "share",
-            this.add_message,
+        this.message_input = new Dash.Gui.ChatBox.Input(
             this,
+            this.add_message,
+            this.at_combo_options,
             this.color
         );
 
-        send_button.html.css({
-            "height": Dash.Size.RowHeight,
-            "margin-left": Dash.Size.Padding,
-            "margin-right": Dash.Size.Padding * 0.3
-        });
-
-        return send_button;
-    };
-
-    this.get_pen_icon = function () {
-        var pen_icon = new Dash.Gui.Icon(
-            this.color,
-            "pen",
-            null,
-            0.9,
-            this.secondary_css_color
-        );
-
-        pen_icon.html.css({
-            "height": Dash.Size.RowHeight,
-            "margin-left": Dash.Size.Padding * 0.25,
-            "margin-right": 0,
-            "pointer-events": "none",
-            "transform": "scale(-1, 1)"  // Flip the icon horizontally
-        });
-
-        return pen_icon;
+        this.html.append(this.message_input.html);
     };
 
     this.setup_styles();
