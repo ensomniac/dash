@@ -1,8 +1,9 @@
-function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
+function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
-    this.add_msg_callback = add_msg_callback.bind(this.binder);
-    this.del_msg_callback = del_msg_callback.bind(this.binder);
+    this.add_msg_callback = add_msg_cb.bind(this.binder);
+    this.del_msg_callback = del_msg_cb.bind(this.binder);
+    this.mention_callback = mention_cb.bind(this.binder);
     this.at_combo_options = at_combo_options;
     this.color = color;
     this.dual_sided = dual_sided;
@@ -13,6 +14,8 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
     this.header_area = null;
     this.message_area = null;
     this.message_input = null;
+    this.valid_mentions = null;
+    this.callback_mentions = [];
     this.toggle_hide_side = null;
     this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
@@ -32,6 +35,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             this.color
         );
 
+        this.set_valid_mentions();
         this.SetHeaderText();
         this.add_message_area();
         this.add_message_input();
@@ -53,7 +57,9 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         return this.header;
     };
 
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null) {
+    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
+        text = text.trim();
+
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
                 console.log("ERROR: AddMessage() requires a 'text' param");
@@ -89,7 +95,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
 
         var message = new Dash.Gui.ChatBox.Message(
             this,
-            text,
+            this.bold_mentions(text, track_mentions),
             user_email,
             iso_ts,
             align_right,
@@ -98,6 +104,8 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             this.color,
             id
         );
+
+        this.handle_mentions();
 
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;
@@ -170,6 +178,91 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         });
 
         this.header_area.append(this.toggle_hide_button.html);
+    };
+
+    this.handle_mentions = function () {
+        if (this.callback_mentions.length < 1) {
+            return;
+        }
+
+        var ids = [];
+
+        for (var i in this.callback_mentions) {
+            var mention = this.callback_mentions[i];
+
+            for (var x in this.at_combo_options) {
+                var name = this.message_input.FormatMentionName(this.at_combo_options[x]["label_text"]);
+
+                if (name === mention) {
+                    ids.push(this.at_combo_options[x]["id"]);
+
+                    break;
+                }
+            }
+        }
+
+        this.mention_callback(ids);
+    };
+
+    this.bold_mentions = function (text, track=false) {
+        if (!text.includes("@")) {
+            return text;
+        }
+
+        var new_text = "";
+        var text_split = [...text];
+        var bold_open = false;
+
+        for (var i in text_split) {
+            i = parseInt(i);
+            var char = text_split[i];
+
+            if (char === "@" && text_split[i + 1] !== " ") {
+                var mention = "";
+
+                for (var x = i + 1; x < text_split.length; x++) {
+                    if (text_split[x] === " ") {
+                        break;
+                    }
+
+                    mention += text_split[x];
+                }
+
+                if (this.valid_mentions.includes(mention)) {
+                    char = "<b style='color: " + this.color.AccentGood + "'>@";
+                    bold_open = true;
+
+                    if (track && !this.callback_mentions.includes(mention)) {
+                        this.callback_mentions.push(mention);
+                    }
+                }
+            }
+
+            else if (bold_open && char === " ") {
+                char = "</b> ";
+                bold_open = false;
+            }
+
+            new_text += char;
+        }
+
+        if (bold_open) {
+            new_text += "</b>";
+        }
+
+        return new_text;
+    };
+
+    this.set_valid_mentions = function () {
+        if (!this.at_combo_options) {
+            return;
+        }
+
+        this.valid_mentions = [];
+
+        for (var i in this.at_combo_options) {
+            this.valid_mentions.push(this.at_combo_options[i]["label_text"]);
+        }
     };
 
     this.on_checkbox_toggled = function () {
@@ -273,9 +366,19 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
     };
 
     this.add_message = function () {
-        this.AddMessage(this.message_input.Text(), null, null, false, true);
+        this.AddMessage(
+            this.message_input.Text(),
+            null,
+            null,
+            false,
+            true,
+            true,
+            null,
+            true
+        );
 
         this.message_input.SetText("");
+        this.callback_mentions = [];
     };
 
     this.add_message_input = function () {

@@ -7,6 +7,18 @@ function DashGuiComboInterface () {
         this.setup_search_selection();
     };
 
+    this.ShowTray = function () {
+        if (!this.expanded) {
+            this.show();
+        }
+    };
+
+    this.HideTray = function () {
+        if (this.expanded) {
+            this.hide();
+        }
+    };
+
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null) {
         if (icon_name || icon_size_mult) {

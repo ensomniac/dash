@@ -20948,7 +20948,7 @@ function DashGuiInput (placeholder_text, color) {
     }
     else {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder + "'>");
-    };
+    }
     this.setup_styles = function () {
         this.html.append(this.input);
         this.html.css({
@@ -20969,16 +20969,20 @@ function DashGuiInput (placeholder_text, color) {
             "color": this.color.Text,
         });
     };
+    this.InFocus = function () {
+        return $(this.input).is(":focus");
+    };
+    this.DisableBlurSubmit = function () {
+        this.input.off("blur");
+    };
     this.SetLocked = function (is_locked) {
         if (is_locked) {
             this.input.css({"pointer-events": "none"});
-            // this.html.css({"background": "rgba(255, 255, 255, 0.1)"});
-            // prevent navigating to locked box via tab
+            // Prevent navigating to locked box via tab
             this.input[0].tabIndex = "-1";
         }
         else {
             this.input.css({"pointer-events": "auto"});
-            // this.html.css({"background": "rgba(255, 255, 255, 0.7)"});
         }
     };
     this.SetDarkMode = function (dark_mode_on) {
@@ -21015,19 +21019,22 @@ function DashGuiInput (placeholder_text, color) {
     this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
+    this.Focus = function () {
+        this.input.trigger("focus");
+    };
     this.on_change = function () {
         // Fired if the box is clicked on or the user is typing
-        var changed = this.input.val() != this.last_val;
-        this.last_val = this.input.val();
+        var changed = this.Text() !== this.last_val;
+        this.last_val = this.Text();
         if (changed && this.on_change_callback) {
             this.on_change_callback();
-        };
+        }
     };
     this.on_submit = function () {
         // Fired on 'enter' or 'paste'
         if (this.on_submit_callback) {
             this.on_submit_callback();
-            this.last_submitted_text = this.input.val();
+            this.last_submitted_text = this.Text();
         }
     };
     this.setup_connections = function () {
@@ -21037,7 +21044,7 @@ function DashGuiInput (placeholder_text, color) {
                 return false;
             });
             self.input.on("keypress",function (e) {
-                if (e.which == 13) {
+                if (e.key === "Enter") {
                     self.on_submit();
                 }
             });
@@ -21051,15 +21058,11 @@ function DashGuiInput (placeholder_text, color) {
                 self.on_change();
             });
             self.input.on("blur", function () {
-                var changed = self.input.val() != self.last_submitted_text;
-                if (changed) {
+                if (self.input.val() !== self.last_submitted_text) {
                     self.on_submit();
-                };
+                }
             });
         })(this);
-    };
-    this.Focus = function () {
-        this.input.focus();
     };
     this.setup_styles();
     this.setup_connections();
@@ -21800,11 +21803,12 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.setup_styles();
 }
 
-function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
+function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
-    this.add_msg_callback = add_msg_callback.bind(this.binder);
-    this.del_msg_callback = del_msg_callback.bind(this.binder);
+    this.add_msg_callback = add_msg_cb.bind(this.binder);
+    this.del_msg_callback = del_msg_cb.bind(this.binder);
+    this.mention_callback = mention_cb.bind(this.binder);
     this.at_combo_options = at_combo_options;
     this.color = color;
     this.dual_sided = dual_sided;
@@ -21814,6 +21818,8 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
     this.header_area = null;
     this.message_area = null;
     this.message_input = null;
+    this.valid_mentions = null;
+    this.callback_mentions = [];
     this.toggle_hide_side = null;
     this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
@@ -21830,6 +21836,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             },
             this.color
         );
+        this.set_valid_mentions();
         this.SetHeaderText();
         this.add_message_area();
         this.add_message_input();
@@ -21846,7 +21853,8 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         }
         return this.header;
     };
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null) {
+    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
+        text = text.trim();
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
                 console.log("ERROR: AddMessage() requires a 'text' param");
@@ -21874,7 +21882,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         }
         var message = new Dash.Gui.ChatBox.Message(
             this,
-            text,
+            this.bold_mentions(text, track_mentions),
             user_email,
             iso_ts,
             align_right,
@@ -21883,6 +21891,7 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             this.color,
             id
         );
+        this.handle_mentions();
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;
             if (align_right) {
@@ -21938,6 +21947,69 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
             "font-family": "sans_serif_bold"
         });
         this.header_area.append(this.toggle_hide_button.html);
+    };
+    this.handle_mentions = function () {
+        if (this.callback_mentions.length < 1) {
+            return;
+        }
+        var ids = [];
+        for (var i in this.callback_mentions) {
+            var mention = this.callback_mentions[i];
+            for (var x in this.at_combo_options) {
+                var name = this.message_input.FormatMentionName(this.at_combo_options[x]["label_text"]);
+                if (name === mention) {
+                    ids.push(this.at_combo_options[x]["id"]);
+                    break;
+                }
+            }
+        }
+        this.mention_callback(ids);
+    };
+    this.bold_mentions = function (text, track=false) {
+        if (!text.includes("@")) {
+            return text;
+        }
+        var new_text = "";
+        var text_split = [...text];
+        var bold_open = false;
+        for (var i in text_split) {
+            i = parseInt(i);
+            var char = text_split[i];
+            if (char === "@" && text_split[i + 1] !== " ") {
+                var mention = "";
+                for (var x = i + 1; x < text_split.length; x++) {
+                    if (text_split[x] === " ") {
+                        break;
+                    }
+                    mention += text_split[x];
+                }
+                if (this.valid_mentions.includes(mention)) {
+                    char = "<b style='color: " + this.color.AccentGood + "'>@";
+                    bold_open = true;
+                    if (track && !this.callback_mentions.includes(mention)) {
+                        this.callback_mentions.push(mention);
+                    }
+                }
+            }
+            else if (bold_open && char === " ") {
+                char = "</b> ";
+                bold_open = false;
+            }
+            new_text += char;
+        }
+        if (bold_open) {
+            new_text += "</b>";
+        }
+        return new_text;
+    };
+    this.set_valid_mentions = function () {
+        if (!this.at_combo_options) {
+            return;
+        }
+        this.valid_mentions = [];
+        for (var i in this.at_combo_options) {
+            this.valid_mentions.push(this.at_combo_options[i]["label_text"]);
+        }
     };
     this.on_checkbox_toggled = function () {
         this.message_area.empty();
@@ -22019,8 +22091,18 @@ function DashGuiChatBox (header_text, binder, add_msg_callback, del_msg_callback
         this.del_msg_callback(message);
     };
     this.add_message = function () {
-        this.AddMessage(this.message_input.Text(), null, null, false, true);
+        this.AddMessage(
+            this.message_input.Text(),
+            null,
+            null,
+            false,
+            true,
+            true,
+            null,
+            true
+        );
         this.message_input.SetText("");
+        this.callback_mentions = [];
     };
     this.add_message_input = function () {
         this.message_input = new Dash.Gui.ChatBox.Input(
@@ -22069,8 +22151,11 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.Text = function () {
         return this.input.Text();
     };
-    this.SetText = function () {
-        return this.input.SetText();
+    this.SetText = function (text) {
+        return this.input.SetText(text);
+    };
+    this.Focus = function () {
+        this.input.Focus();
     };
     this.add_input = function () {
         this.input = new Dash.Gui.Input("Leave a note...", this.color);
@@ -22082,10 +22167,38 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.input.input.css({
             "flex-grow": 2
         });
+        this.input.DisableBlurSubmit();
         this.input.OnSubmit(this.msg_submit_callback, this.chat_box);
+        this.input.OnChange(this.on_input, this);
         this.html.append(this.input.html);
     };
+    this.on_input = function () {
+        // Expand the combo if user typed "@", but hide it if they keep typing or backspace
+        if (this.Text().endsWith("@")) {
+            this.at_button.ShowTray();
+        }
+        else {
+            if (this.input.InFocus()) {
+                this.at_button.HideTray();
+            }
+        }
+    };
+    this.FormatMentionName = function (name) {
+        return name.split(" ").join("");
+    };
     this.add_at_button = function () {
+        var labels = [];
+        for (var i in this.at_combo_options) {
+            var label_text = this.at_combo_options[i]["label_text"];
+            if (label_text.includes(" ")) {
+                this.at_combo_options[i]["label_text"] = this.FormatMentionName(label_text);
+            }
+            if (labels.includes(label_text)) {
+                console.log("ERROR: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
+                return;
+            }
+            labels.push(label_text);
+        }
         this.at_button = new Dash.Gui.Combo(
             "",
             this.on_combo_changed,
@@ -22100,7 +22213,18 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.html.append(this.at_button.html);
     };
     this.on_combo_changed = function (combo_key, selection) {
-        console.log("TEST", combo_key, selection);
+        var new_text = "";
+        var old_text = this.Text();
+        if (old_text.endsWith("@")) {
+            old_text = old_text.substring(0, old_text.length - 1);
+        }
+        new_text += old_text;
+        if (old_text && old_text.length > 0 && !old_text.endsWith(" ")) {
+            new_text += " ";
+        }
+        new_text += "@" + selection["label_text"] + " ";
+        this.SetText(new_text);
+        this.Focus();
     };
     this.add_submit_button = function () {
         this.submit_button = new Dash.Gui.IconButton(
@@ -23172,6 +23296,16 @@ function DashGuiComboInterface () {
     this.EnableSearchSelection = function () {
         DashGuiComboSearch.call(this, this);
         this.setup_search_selection();
+    };
+    this.ShowTray = function () {
+        if (!this.expanded) {
+            this.show();
+        }
+    };
+    this.HideTray = function () {
+        if (this.expanded) {
+            this.hide();
+        }
     };
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null) {

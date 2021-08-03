@@ -38,8 +38,12 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         return this.input.Text();
     };
 
-    this.SetText = function () {
-        return this.input.SetText();
+    this.SetText = function (text) {
+        return this.input.SetText(text);
+    };
+
+    this.Focus = function () {
+        this.input.Focus();
     };
 
     this.add_input = function () {
@@ -55,12 +59,49 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "flex-grow": 2
         });
 
+        this.input.DisableBlurSubmit();
         this.input.OnSubmit(this.msg_submit_callback, this.chat_box);
+        this.input.OnChange(this.on_input, this);
 
         this.html.append(this.input.html);
     };
 
+    this.on_input = function () {
+        // Expand the combo if user typed "@", but hide it if they keep typing or backspace
+        if (this.Text().endsWith("@")) {
+            this.at_button.ShowTray();
+        }
+
+        else {
+            if (this.input.InFocus()) {
+                this.at_button.HideTray();
+            }
+        }
+    };
+
+    this.FormatMentionName = function (name) {
+        return name.split(" ").join("");
+    };
+
     this.add_at_button = function () {
+        var labels = [];
+
+        for (var i in this.at_combo_options) {
+            var label_text = this.at_combo_options[i]["label_text"];
+
+            if (label_text.includes(" ")) {
+                this.at_combo_options[i]["label_text"] = this.FormatMentionName(label_text);
+            }
+
+            if (labels.includes(label_text)) {
+                console.log("ERROR: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
+
+                return;
+            }
+
+            labels.push(label_text);
+        }
+
         this.at_button = new Dash.Gui.Combo(
             "",
             this.on_combo_changed,
@@ -78,7 +119,23 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     };
 
     this.on_combo_changed = function (combo_key, selection) {
-        console.log("TEST", combo_key, selection);
+        var new_text = "";
+        var old_text = this.Text();
+
+        if (old_text.endsWith("@")) {
+            old_text = old_text.substring(0, old_text.length - 1);
+        }
+
+        new_text += old_text;
+
+        if (old_text && old_text.length > 0 && !old_text.endsWith(" ")) {
+            new_text += " ";
+        }
+
+        new_text += "@" + selection["label_text"] + " ";
+
+        this.SetText(new_text);
+        this.Focus();
     };
 
     this.add_submit_button = function () {
