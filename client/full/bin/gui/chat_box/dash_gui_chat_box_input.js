@@ -28,7 +28,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.add_input();
 
         if (this.at_combo_options) {
-            // this.add_at_button();
+            this.add_at_button();
         }
 
         this.add_submit_button();
@@ -71,6 +71,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         );
 
         this.at_button.UseAsIconButtonCombo("at_sign", 1);
+        this.at_button.DisableFlash();
+        this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
 
         this.html.append(this.at_button.html);
     };

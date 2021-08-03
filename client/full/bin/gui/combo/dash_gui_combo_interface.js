@@ -32,6 +32,22 @@ function DashGuiComboInterface () {
         this.highlight.remove();
     };
 
+    this.DisableFlash = function () {
+        this.flash_enabled = false;
+    };
+
+    this.SetListVerticalOffset = function (offset) {
+        offset = parseInt(offset);
+
+        if (!Number.isInteger(offset)) {
+            console.log("ERROR: SetListVerticalOffset() requires an integer:", offset, typeof offset);
+
+            return;
+        }
+
+        this.list_offset_vertical = offset;
+    };
+
     this.GetActiveID = function () {
         return this.selected_option_id;
     };
