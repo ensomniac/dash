@@ -12,6 +12,38 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
+        if (!base && !highlight && !load_bar && !click_highlight) {
+            this.reset_background_colors();
+
+            return;
+        }
+
+        if (base) {
+            this.html.css({
+                "background": base
+            });
+        }
+
+        if (highlight) {
+            this.highlight.css({
+                "background": highlight
+            });
+        }
+
+        if (load_bar) {
+            this.load_bar.css({
+                "background": load_bar
+            });
+        }
+
+        if (click_highlight) {
+            this.click_highlight.css({
+                "background": click_highlight
+            });
+        }
+    };
+
     this.Disable = function () {
         this.html.css({"opacity": 0.5, "pointer-events": "none"});
     };

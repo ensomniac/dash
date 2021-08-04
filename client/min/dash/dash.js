@@ -19653,6 +19653,20 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         }
         this.setup_styles();
     };
+    this.reset_background_colors = function () {
+        this.html.css({
+            "background": this.default_html_background
+        });
+        this.highlight.css({
+            "background": this.default_highlight_background
+        });
+        this.load_bar.css({
+            "background": this.default_load_bar_background
+        });
+        this.click_highlight.css({
+            "background": this.default_click_highlight_background
+        });
+    };
     this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
         if (this.is_selected) {
@@ -19745,6 +19759,32 @@ function DashGuiButtonInterface () {
         this.setup_styles();
         if (width) {
             this.html.css({"width": width});
+        }
+    };
+    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
+        if (!base && !highlight && !load_bar && !click_highlight) {
+            this.reset_background_colors();
+            return;
+        }
+        if (base) {
+            this.html.css({
+                "background": base
+            });
+        }
+        if (highlight) {
+            this.highlight.css({
+                "background": highlight
+            });
+        }
+        if (load_bar) {
+            this.load_bar.css({
+                "background": load_bar
+            });
+        }
+        if (click_highlight) {
+            this.click_highlight.css({
+                "background": click_highlight
+            });
         }
     };
     this.Disable = function () {
@@ -20131,14 +20171,19 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.setup_icon();
 }
 
+/** @member DashGuiButton*/
 function DashGuiButtonStyleDefault () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
+        this.default_html_background = this.color_set.Background.Base;
+        this.default_highlight_background = this.color_set.Background.BaseHover;
+        this.default_load_bar_background = Dash.Color.Primary;
+        this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
         this.html.css({
-            "background": this.color_set.Background.Base,
+            "background": this.default_html_background,
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
             "border-radius": Dash.Size.BorderRadiusInteractive,
@@ -20146,7 +20191,6 @@ function DashGuiButtonStyleDefault () {
             "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
-            // "width": 30,
         });
         this.highlight.css({
             "position": "absolute",
@@ -20154,7 +20198,7 @@ function DashGuiButtonStyleDefault () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
+            "background": this.default_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadiusInteractive,
         });
@@ -20164,7 +20208,7 @@ function DashGuiButtonStyleDefault () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": Dash.Color.Primary,
+            "background": this.default_load_bar_background,
             "border-radius": Dash.Size.BorderRadiusInteractive,
         });
         this.click_highlight.css({
@@ -20173,16 +20217,11 @@ function DashGuiButtonStyleDefault () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": "rgba(255, 255, 255, 0.5)",
+            "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadiusInteractive,
         });
         this.label.css({
-            // "position": "absolute",
-            // "left": Dash.Size.Padding,
-            // "top": 0,
-            // "right": Dash.Size.Padding,
-            // "bottom": 0,
             "line-height": (Dash.Size.ButtonHeight) + "px",
             "white-space": "nowrap",
             "overflow": "hidden",
@@ -20193,14 +20232,19 @@ function DashGuiButtonStyleDefault () {
     };
 }
 
+/** @member DashGuiButton*/
 function DashGuiButtonStyleTabSide () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
+        this.default_html_background = this.color_set.Background.Base;
+        this.default_highlight_background = this.color_set.Background.BaseHover;
+        this.default_load_bar_background = Dash.Color.Primary;
+        this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
         this.html.css({
-            "background": this.color_set.Background.Base,
+            "background": this.default_html_background,
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
             "padding-left": Dash.Size.Padding,
@@ -20215,7 +20259,7 @@ function DashGuiButtonStyleTabSide () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
+            "background": this.default_highlight_background,
             "opacity": 0,
         });
         this.load_bar.css({
@@ -20224,7 +20268,7 @@ function DashGuiButtonStyleTabSide () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": Dash.Color.Primary,
+            "background": this.default_load_bar_background,
         });
         this.click_highlight.css({
             "position": "absolute",
@@ -20232,7 +20276,7 @@ function DashGuiButtonStyleTabSide () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": "rgba(255, 255, 255, 0.5)",
+            "background": this.default_click_highlight_background,
             "opacity": 0,
         });
         this.label.css({
@@ -20251,14 +20295,19 @@ function DashGuiButtonStyleTabSide () {
     };
 }
 
+/** @member DashGuiButton*/
 function DashGuiButtonStyleTabTop () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
+        this.default_html_background = this.color_set.Background.Base;
+        this.default_highlight_background = this.color_set.Background.BaseHover;
+        this.default_load_bar_background = Dash.Color.Primary;
+        this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
         this.html.css({
-            "background": this.color_set.Background.Base,
+            "background": this.default_html_background,
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
             "padding": 0,
@@ -20272,7 +20321,7 @@ function DashGuiButtonStyleTabTop () {
             "bottom": 0,
             "right": Dash.Size.Padding,
             "height": Dash.Size.Stroke,
-            "background": this.color_set.Background.BaseHover,
+            "background": this.default_highlight_background,
             "border-radius": Dash.Size.BorderRadius,
         });
         this.load_bar.css({
@@ -20281,7 +20330,7 @@ function DashGuiButtonStyleTabTop () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": Dash.Color.Primary,
+            "background": this.default_load_bar_background,
             "border-radius": Dash.Size.BorderRadius,
         });
         this.click_highlight.css({
@@ -20290,7 +20339,7 @@ function DashGuiButtonStyleTabTop () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": "rgba(255, 255, 255, 0)",
+            "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
         });
@@ -20324,22 +20373,26 @@ function DashGuiButtonStyleTabTop () {
             this.label.css("color", this.color_set.Text.Base);
         }
     };
-    this.manage_style_on_click = function (label_text) {
+    this.manage_style_on_click = function () {
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);
     };
 }
 
+/** @member DashGuiButton*/
 function DashGuiButtonStyleToolbar () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
+        this.default_html_background = this.color_set.Background.Base;
+        this.default_highlight_background = this.color_set.Background.BaseHover;
+        this.default_load_bar_background = Dash.Color.Primary;
+        this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
         this.html.css({
-            "background": this.color_set.Background.Base,
+            "background": this.default_html_background,
             "cursor": "pointer",
-            // "height": Dash.Size.ButtonHeight,
             "border-radius": Dash.Size.BorderRadius,
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
@@ -20356,7 +20409,7 @@ function DashGuiButtonStyleToolbar () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": this.color_set.Background.BaseHover,
+            "background": this.default_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
         });
@@ -20366,7 +20419,7 @@ function DashGuiButtonStyleToolbar () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": Dash.Color.Primary,
+            "background": this.default_load_bar_background,
             "border-radius": Dash.Size.BorderRadius,
         });
         this.click_highlight.css({
@@ -20375,7 +20428,7 @@ function DashGuiButtonStyleToolbar () {
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": "rgba(255, 255, 255, 0.5)",
+            "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
         });
@@ -21922,8 +21975,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         );
         if (fire_callback) {
             this.add_msg_callback(text, message.ID());
+            this.handle_mentions(text, message);
         }
-        this.handle_mentions(text, message);
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;
             if (align_right) {

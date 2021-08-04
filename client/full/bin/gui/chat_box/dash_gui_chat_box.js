@@ -99,9 +99,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
 
         if (fire_callback) {
             this.add_msg_callback(text, message.ID());
+            this.handle_mentions(text, message);
         }
-
-        this.handle_mentions(text, message);
 
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;

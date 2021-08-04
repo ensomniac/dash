@@ -63,6 +63,24 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         this.setup_styles();
     };
 
+    this.reset_background_colors = function () {
+        this.html.css({
+            "background": this.default_html_background
+        });
+
+        this.highlight.css({
+            "background": this.default_highlight_background
+        });
+
+        this.load_bar.css({
+            "background": this.default_load_bar_background
+        });
+
+        this.click_highlight.css({
+            "background": this.default_click_highlight_background
+        });
+    };
+
     this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
 
