@@ -1,11 +1,11 @@
-function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
+function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=null, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
     this.add_msg_callback = add_msg_cb.bind(this.binder);
     this.del_msg_callback = del_msg_cb.bind(this.binder);
     this.mention_callback = mention_cb.bind(this.binder);
     this.at_combo_options = at_combo_options;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     this.dual_sided = dual_sided;
 
     this.html = null;

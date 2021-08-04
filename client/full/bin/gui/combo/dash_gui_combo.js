@@ -1,10 +1,10 @@
-function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=Dash.Color.Light, options={}, bool=false) {
+function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
     this.label              = label;
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
     this.option_list        = option_list;
     this.selected_option_id = selected_option_id;
-    this.color              = color;
+    this.color              = color || Dash.Color.Light;
     this.color_set          = null;
     this.initialized        = false;
     this.options            = options;

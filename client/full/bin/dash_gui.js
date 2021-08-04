@@ -17,7 +17,11 @@ function DashGui() {
     this.PropertyBox =     DashGuiPropertyBox;
     this.Slider =          DashGuiSlider;
 
-    this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=Dash.Color.Light) {
+    this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
+        if (!color) {
+            color = Dash.Color.Light;
+        }
+
         var html = $("<div>" + optional_label_text + "</div>");
 
         var css = {
@@ -52,7 +56,11 @@ function DashGui() {
         return html;
     };
 
-    this.GetHTMLBoxContext = function (optional_style_css={}, color=Dash.Color.Light) {
+    this.GetHTMLBoxContext = function (optional_style_css={}, color=null) {
+        if (!color) {
+            color = Dash.Color.Light;
+        }
+
         var html = $("<div></div>");
 
         var css = {

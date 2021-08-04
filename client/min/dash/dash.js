@@ -19449,7 +19449,10 @@ function DashGui() {
     this.PaneSlider =      DashGuiPaneSlider;
     this.PropertyBox =     DashGuiPropertyBox;
     this.Slider =          DashGuiSlider;
-    this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=Dash.Color.Light) {
+    this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
+        if (!color) {
+            color = Dash.Color.Light;
+        }
         var html = $("<div>" + optional_label_text + "</div>");
         var css = {
             "color": color.Text,
@@ -19476,7 +19479,10 @@ function DashGui() {
         });
         return html;
     };
-    this.GetHTMLBoxContext = function (optional_style_css={}, color=Dash.Color.Light) {
+    this.GetHTMLBoxContext = function (optional_style_css={}, color=null) {
+        if (!color) {
+            color = Dash.Color.Light;
+        }
         var html = $("<div></div>");
         var css = {
             "padding": Dash.Size.Padding,
@@ -19599,14 +19605,12 @@ function DashGui() {
     };
 }
 
-function DashGuiButton (Label, Callback, Bind, color, options) {
-    this.label      = Label;
-    this.callback   = Callback;
-    this.bind       = Bind;
-    this.options    = options || {};
-    this.style      = this.options["style"] || "default";
-    this.in_toolbar = this.style == "toolbar";
+function DashGuiButton (label, callback, bind, color=null, options={}) {
+    this.label      = label;
+    this.callback   = callback;
+    this.bind       = bind;
     this.color      = color || Dash.Color.Light;
+    this.options    = options;
     this.html            = $("<div></div>");
     this.highlight       = $("<div></div>");
     this.click_highlight = $("<div></div>");
@@ -19618,6 +19622,9 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
     this.label_shown           = null;
     this.last_right_label_text = null;
     this.is_selected           = false;
+    this.style                 = this.options["style"] || "default";
+    this.in_toolbar            = this.style === "toolbar";
+    DashGuiButtonInterface.call(this);
     this.initialize_style = function () {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
@@ -19625,15 +19632,15 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             console.log("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
         }
-        if (this.style == "toolbar") {
+        if (this.style === "toolbar") {
             this.color_set  = this.color.Button;
             DashGuiButtonStyleToolbar.call(this);
         }
-        else if (this.style == "tab_top") {
+        else if (this.style === "tab_top") {
             this.color_set  = this.color.Tab;
             DashGuiButtonStyleTabTop.call(this);
         }
-        else if (this.style == "tab_side") {
+        else if (this.style === "tab_side") {
             this.color_set  = this.color.Tab;
             DashGuiButtonStyleTabSide.call(this);
         }
@@ -19646,6 +19653,92 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
         }
         this.setup_styles();
     };
+    this.on_hover_in = function () {
+        this.highlight.stop().animate({"opacity": 1}, 50);
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.SelectedHover);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.BaseHover);
+        }
+    };
+    this.on_hover_out = function () {
+        this.highlight.stop().animate({"opacity": 0}, 100);
+        if (this.is_selected) {
+            this.label.css("color", this.color_set.Text.Selected);
+        }
+        else {
+            this.label.css("color", this.color_set.Text.Base);
+        }
+    };
+    this.on_file_upload_response = function (response) {
+        if (this.file_uploader.html) {
+            this.file_uploader.html.remove();
+        }
+        if (this.file_upload_api) {
+            this.SetFileUploader(this.file_upload_api, this.file_upload_params);
+        }
+        if (this.callback && this.bind) {
+            this.callback.bind(this.bind)(response);
+        }
+    };
+    this.on_click = function (event) {
+        if (this.callback && this.bind) {
+            this.callback.bind(this.bind)(event, this);
+        }
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
+                self.on_hover_in();
+            });
+            self.html.on("mouseleave", function () {
+                self.on_hover_out();
+            });
+            self.html.on("click", function (event) {
+                self.manage_style_on_click();
+                self.on_click(event);
+            });
+        })(this);
+    };
+    this.manage_style_on_click = function () {
+        // Overridden in DashGuiButtonStyleTabTop
+        this.highlight.stop().animate({"opacity": 0}, 50);
+        this.click_highlight.stop().css({"opacity": 1});
+        this.click_highlight.stop().animate({"opacity": 0}, 150);
+    };
+    this.set_right_label_text = function (label_text) {
+        // Called when the icon is not visible
+        if (!label_text && label_text != 0 || label_text === this.last_right_label_text) {
+            return;
+        }
+        this.right_label.text(label_text);
+        this.last_right_label_text = label_text;
+    };
+    this.setup_right_label = function () {
+        this.right_label = $("<div>--</div>");
+        this.html.append(this.right_label);
+        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
+        this.right_label.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding*0.5,
+            "width": size,
+            "height": size,
+            "line-height": size + "px",
+            "background": Dash.Color.Dark,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
+            "font-size": (size*0.5) + "px",
+            "text-align": "center",
+            "opacity": 0,
+        });
+    };
+    this.initialize_style();
+    this.setup_connections();
+}
+
+/** @member DashGuiButton*/
+function DashGuiButtonInterface () {
     this.ChangeLabel = function (label_text, width=null) {
         this.html[0].innerText = "";
         this.label = $("<div>" + label_text + "</div>");
@@ -19685,7 +19778,7 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
         });
     };
     this.SetSelected = function (is_selected) {
-        if (is_selected == this.is_selected) {
+        if (is_selected === this.is_selected) {
             return;
         }
         this.is_selected = is_selected;
@@ -19698,24 +19791,6 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             this.highlight.css({"background": this.color_set.Background.BaseHover});
         }
         this.on_hover_out();
-    };
-    this.on_hover_in = function () {
-        this.highlight.stop().animate({"opacity": 1}, 50);
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.SelectedHover);
-        }
-        else {
-            this.label.css("color", this.color_set.Text.BaseHover);
-        }
-    };
-    this.on_hover_out = function () {
-        this.highlight.stop().animate({"opacity": 0}, 100);
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.Selected);
-        }
-        else {
-            this.label.css("color", this.color_set.Text.Base);
-        }
     };
     this.SetButtonVisibility = function (button_visible) {
         if (button_visible) {
@@ -19746,8 +19821,6 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
         this.load_dots = new Dash.Gui.LoadDots(this.html.outerHeight()-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.html.append(this.load_dots.html);
-        // var height = this.html.css("height");
-        // var padding = this.html.css("padding");
         this.load_dots.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding*0.5,
@@ -19787,17 +19860,6 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
         })(this);
         this.html.append(this.file_uploader.html);
     };
-    this.on_file_upload_response = function (response) {
-        if (this.file_uploader.html) {
-            this.file_uploader.html.remove();
-        }
-        if (this.file_upload_api) {
-            this.SetFileUploader(this.file_upload_api, this.file_upload_params);
-        }
-        if (this.callback && this.bind) {
-            this.callback.bind(this.bind)(response);
-        }
-    };
     this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (this.load_dots) {
             return;
@@ -19820,41 +19882,16 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
             });
         })(this);
     };
-    this.on_click = function (event) {
-        if (this.callback && this.bind) {
-            this.callback.bind(this.bind)(event, this);
-        }
-    };
     this.RefreshConnections  = function () {
         // This may be necessary in certain cases when the parent html is emptied
         // and then this button is then re-appended to that parent.
         this.setup_connections();
     };
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.on("mouseenter", function () {
-                self.on_hover_in();
-            });
-            self.html.on("mouseleave", function () {
-                self.on_hover_out();
-            });
-            self.html.on("click", function (event) {
-                self.manage_style_on_click();
-                self.on_click(event);
-            });
-        })(this);
-    };
-    this.manage_style_on_click = function (label_text) {
-        // Overridden in DashGuiButtonStyleTabTop
-        this.highlight.stop().animate({"opacity": 0}, 50);
-        this.click_highlight.stop().css({"opacity": 1});
-        this.click_highlight.stop().animate({"opacity": 0}, 150);
-    };
     this.SetRightLabelText = function (label_text) {
         if (!this.right_label) {
             this.setup_right_label();
         }
-        if (label_text == this.last_right_label_text && this.label_shown) {
+        if (label_text === this.last_right_label_text && this.label_shown) {
             return;
         }
         if (this.label_shown) {
@@ -19874,34 +19911,6 @@ function DashGuiButton (Label, Callback, Bind, color, options) {
         }
         this.label_shown = true;
     };
-    this.set_right_label_text = function (label_text) {
-        // Called when the icon is not visible
-        if (!label_text && label_text != 0 || label_text == this.last_right_label_text) {
-            return;
-        }
-        this.right_label.text(label_text);
-        this.last_right_label_text = label_text;
-    };
-    this.setup_right_label = function () {
-        this.right_label = $("<div>--</div>");
-        this.html.append(this.right_label);
-        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
-        this.right_label.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding*0.5,
-            "top": Dash.Size.Padding*0.5,
-            "width": size,
-            "height": size,
-            "line-height": size + "px",
-            "background": Dash.Color.Dark,
-            "border-radius": Dash.Size.BorderRadiusInteractive,
-            "font-size": (size*0.5) + "px",
-            "text-align": "center",
-            "opacity": 0,
-        });
-    };
-    this.initialize_style();
-    this.setup_connections();
 }
 
 function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_callback) {
@@ -21740,7 +21749,7 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.setup_styles();
 };
 
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=Dash.Color.Light) {
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null) {
     this.label_text = label_text;
     this.binder = binder;
     this.callback = callback.bind(this.binder);
@@ -21748,7 +21757,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.default_state = default_state;
     this.label_first = label_first;
     this.include_border = include_border;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     this.html = null;
     this.label = null;
     this.icon_button = null;
@@ -21829,14 +21838,14 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.setup_styles();
 }
 
-function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=Dash.Color.Light, dual_sided=true) {
+function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=null, dual_sided=true) {
     this.header_text = header_text;
     this.binder = binder;
     this.add_msg_callback = add_msg_cb.bind(this.binder);
     this.del_msg_callback = del_msg_cb.bind(this.binder);
     this.mention_callback = mention_cb.bind(this.binder);
     this.at_combo_options = at_combo_options;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     this.dual_sided = dual_sided;
     this.html = null;
     this.messages = [];
@@ -22139,11 +22148,11 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.setup_styles();
 }
 
-function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=null, color=Dash.Color.Light) {
+function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=null, color=null) {
     this.chat_box = chat_box;  // Also acts as binder
     this.msg_submit_callback = msg_submit_callback.bind(this.chat_box);
     this.at_combo_options = at_combo_options;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     
     this.html = null;
     this.input = null;
@@ -22284,7 +22293,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.setup_styles();
 }
 
-function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=false, include_delete_button=false, index=0, color=Dash.Color.Light, id=null) {
+function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=false, include_delete_button=false, index=0, color=null, id=null) {
     this.chat_box = chat_box;
     this.text = text;
     this.user_email = user_email;
@@ -22292,7 +22301,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.align_right = align_right;
     this.include_delete_button = include_delete_button;
     this.index = index;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     this.id = id || Dash.RandomID();
     this.html = null;
     this.user_icon = null;
@@ -22955,13 +22964,13 @@ function DashGuiPropertyBoxInterface () {
     };
 }
 
-function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=Dash.Color.Light, options={}, bool=false) {
+function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
     this.label              = label;
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
     this.option_list        = option_list;
     this.selected_option_id = selected_option_id;
-    this.color              = color;
+    this.color              = color || Dash.Color.Light;
     this.color_set          = null;
     this.initialized        = false;
     this.options            = options;

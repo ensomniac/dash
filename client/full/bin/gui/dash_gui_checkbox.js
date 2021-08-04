@@ -1,4 +1,4 @@
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=Dash.Color.Light) {
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null) {
     this.label_text = label_text;
     this.binder = binder;
     this.callback = callback.bind(this.binder);
@@ -6,7 +6,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.default_state = default_state;
     this.label_first = label_first;
     this.include_border = include_border;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
 
     this.html = null;
     this.label = null;

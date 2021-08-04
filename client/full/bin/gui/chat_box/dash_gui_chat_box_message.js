@@ -1,4 +1,4 @@
-function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=false, include_delete_button=false, index=0, color=Dash.Color.Light, id=null) {
+function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=false, include_delete_button=false, index=0, color=null, id=null) {
     this.chat_box = chat_box;
     this.text = text;
     this.user_email = user_email;
@@ -6,7 +6,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.align_right = align_right;
     this.include_delete_button = include_delete_button;
     this.index = index;
-    this.color = color;
+    this.color = color || Dash.Color.Light;
     this.id = id || Dash.RandomID();
 
     this.html = null;
