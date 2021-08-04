@@ -17719,6 +17719,22 @@ function Dash () {
         date = date.setHours(date.getHours()-server_offset_hours);
         return timeago.format(date);
     };
+    // Get a random ID in the same format as PyDash Utils GetRandomID
+    this.RandomID = function () {
+        var date = new Date();
+        var random_id = "";
+        // Python datetime.datetime.today() format: 2021-08-04 03:48:11.866289
+        // Converted to PyDash Utils GetRandomID format: 202108032117088034
+        random_id += date.getFullYear().toString();
+        random_id += this.ensure_double_digit(date.getMonth() + 1);  // Add one because Date() months start at 0
+        random_id += this.ensure_double_digit(date.getDay() + 1);  // Add one because Date() days start at 0
+        random_id += this.ensure_double_digit(date.getHours());
+        random_id += this.ensure_double_digit(date.getMinutes());
+        random_id += this.ensure_double_digit(date.getSeconds());
+        random_id += this.ensure_double_digit(date.getMilliseconds()).substring(0, 3);
+        random_id += Math.floor(Math.random() * 99).toString();
+        return random_id;
+    };
     this.ReadableDateTime = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
@@ -17825,6 +17841,16 @@ function Dash () {
                 self.draw();
             });
         })(this);
+    };
+    this.ensure_double_digit = function (number) {
+        number = number.toString();
+        if (number.length === 1) {
+            number = "0" + number;
+        }
+        else if (number.length === 0) {
+            number = "00";
+        }
+        return number;
     };
     this.draw = function () {
         this.width = $(window).width();
@@ -21874,12 +21900,6 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         if (!user_email && fire_callback) {
             user_email = Dash.User.Data["email"];
         }
-        if (Dash.IsServerIsoDate(iso_ts)) {
-            iso_ts = Dash.ReadableDateTime(iso_ts, false);
-        }
-        if (fire_callback) {
-            this.add_msg_callback(text);
-        }
         var message = new Dash.Gui.ChatBox.Message(
             this,
             this.bold_mentions(text, track_mentions),
@@ -21891,7 +21911,10 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             this.color,
             id
         );
-        this.handle_mentions();
+        if (fire_callback) {
+            this.add_msg_callback(text, message.ID());
+        }
+        this.handle_mentions(text, message);
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;
             if (align_right) {
@@ -21948,7 +21971,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         });
         this.header_area.append(this.toggle_hide_button.html);
     };
-    this.handle_mentions = function () {
+    this.handle_mentions = function (text, message_obj) {
         if (this.callback_mentions.length < 1) {
             return;
         }
@@ -21963,7 +21986,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
                 }
             }
         }
-        this.mention_callback(ids);
+        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp());
     };
     this.bold_mentions = function (text, track=false) {
         if (!text.includes("@")) {
@@ -22270,7 +22293,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.include_delete_button = include_delete_button;
     this.index = index;
     this.color = color;
-    this.id = id;
+    this.id = id || Dash.RandomID();
     this.html = null;
     this.user_icon = null;
     this.text_label = null;
@@ -22315,6 +22338,9 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     };
     this.ID = function () {
         return this.id;
+    };
+    this.IsoTimestamp = function () {
+        return this.iso_ts;
     };
     this.SetIndex = function (index) {
         index = parseInt(index);
@@ -22423,9 +22449,13 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             "height": this.iso_label_height,
             "font-size": (Dash.Size.Padding * 1.2) + "px"
         };
+        var timestamp = this.iso_ts;
+        if (Dash.IsServerIsoDate(timestamp)) {
+            timestamp = Dash.ReadableDateTime(timestamp, false);
+        }
         if (this.align_right) {
             this.iso_ts_label = Dash.Gui.GetHTMLContext(
-                this.iso_ts + " - " + name,
+                timestamp + " - " + name,
                 {
                     ...iso_ts_css,
                     "right": side_padding,
@@ -22436,7 +22466,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         }
         else {
             this.iso_ts_label = Dash.Gui.GetHTMLContext(
-                name + " - " + this.iso_ts,
+                name + " - " + timestamp,
                 {
                     ...iso_ts_css,
                     "left": side_padding,

@@ -7,7 +7,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.include_delete_button = include_delete_button;
     this.index = index;
     this.color = color;
-    this.id = id;
+    this.id = id || Dash.RandomID();
 
     this.html = null;
     this.user_icon = null;
@@ -61,6 +61,10 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
     this.ID = function () {
         return this.id;
+    };
+
+    this.IsoTimestamp = function () {
+        return this.iso_ts;
     };
 
     this.SetIndex = function (index) {
@@ -193,9 +197,15 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             "font-size": (Dash.Size.Padding * 1.2) + "px"
         };
 
+        var timestamp = this.iso_ts;
+
+        if (Dash.IsServerIsoDate(timestamp)) {
+            timestamp = Dash.ReadableDateTime(timestamp, false);
+        }
+
         if (this.align_right) {
             this.iso_ts_label = Dash.Gui.GetHTMLContext(
-                this.iso_ts + " - " + name,
+                timestamp + " - " + name,
                 {
                     ...iso_ts_css,
                     "right": side_padding,
@@ -207,7 +217,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
         else {
             this.iso_ts_label = Dash.Gui.GetHTMLContext(
-                name + " - " + this.iso_ts,
+                name + " - " + timestamp,
                 {
                     ...iso_ts_css,
                     "left": side_padding,

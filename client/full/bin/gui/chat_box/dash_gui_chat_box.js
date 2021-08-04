@@ -85,14 +85,6 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             user_email = Dash.User.Data["email"];
         }
 
-        if (Dash.IsServerIsoDate(iso_ts)) {
-            iso_ts = Dash.ReadableDateTime(iso_ts, false);
-        }
-
-        if (fire_callback) {
-            this.add_msg_callback(text);
-        }
-
         var message = new Dash.Gui.ChatBox.Message(
             this,
             this.bold_mentions(text, track_mentions),
@@ -105,7 +97,11 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             id
         );
 
-        this.handle_mentions();
+        if (fire_callback) {
+            this.add_msg_callback(text, message.ID());
+        }
+
+        this.handle_mentions(text, message);
 
         if (this.dual_sided) {
             var side_margin = Dash.Size.Padding * 4.2;
@@ -180,7 +176,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.header_area.append(this.toggle_hide_button.html);
     };
 
-    this.handle_mentions = function () {
+    this.handle_mentions = function (text, message_obj) {
         if (this.callback_mentions.length < 1) {
             return;
         }
@@ -201,7 +197,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             }
         }
 
-        this.mention_callback(ids);
+        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp());
     };
 
     this.bold_mentions = function (text, track=false) {
