@@ -22242,6 +22242,9 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.Focus = function () {
         this.input.Focus();
     };
+    this.FormatMentionName = function (name) {
+        return name.split(" ").join("");
+    };
     this.add_input = function () {
         this.input = new Dash.Gui.Input("Leave a note...", this.color);
         this.input.html.css({
@@ -22267,9 +22270,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
                 this.at_button.HideTray();
             }
         }
-    };
-    this.FormatMentionName = function (name) {
-        return name.split(" ").join("");
     };
     this.add_at_button = function () {
         var labels = [];
@@ -22297,7 +22297,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
         this.html.append(this.at_button.html);
     };
-    this.on_combo_changed = function (combo_key, selection) {
+    this.on_combo_changed = function (selected_combo) {
         var new_text = "";
         var old_text = this.Text();
         if (old_text.endsWith("@")) {
@@ -22307,7 +22307,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         if (old_text && old_text.length > 0 && !old_text.endsWith(" ")) {
             new_text += " ";
         }
-        new_text += "@" + selection["label_text"] + " ";
+        new_text += "@" + selected_combo["label_text"] + " ";
         this.SetText(new_text);
         this.Focus();
     };
@@ -23018,7 +23018,7 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this.label              = label;
+    this._label             = label;  // Unused
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
     this.option_list        = option_list;
@@ -23031,11 +23031,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
     this.list_width = -1;
-    this.gravity_vertical = 0;
-    this.gravity_horizontal = 0;
     this.click_skirt = null;
+    this.searchable_min = 20;
     this.dropdown_icon = null;
     this.flash_enabled = true;
+    this.gravity_vertical = 0;
+    this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -23125,11 +23126,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             console.log("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
         }
-        if (this.style == "row") {
+        if (this.style === "row") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleRow.call(this);
         }
-        else if (this.style == "default") {
+        else if (this.style === "default") {
             this.color_set  = this.color.Button;
             DashGuiComboStyleDefault.call(this);
         }
@@ -23297,6 +23298,15 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     this.show = function () {
         this.pre_show_size_set();
+        // This is an extra safety check in case the combo was updated after setup
+        // (very unlikely to be triggered, but just in case)
+        if (!this.is_searchable && this.option_list.length > this.searchable_min) {
+            this.EnableSearchSelection();
+        }
+        if (this.is_searchable && this.option_list.length < this.searchable_min) {
+            // TODO: DisableSearchSelection() - function needs to be written
+            // This is important for cases where the combo option list changes after setup
+        }
         if (this.is_searchable) {
             this.activate_search();
         }
@@ -23368,15 +23378,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return false;
                 }
             });
-            if (self.option_list.length > 20) {
-                setTimeout(function(){
-                    // This secondary check is important because the option_list
-                    // size may have changed after the first frame
-                    if (!self.is_searchable && self.option_list.length > 20) {
-                        self.EnableSearchSelection();
-                    }
-                }, 200);
-            }
+            // This delayed check is important because the option_list size may have changed after the first frame
+            setTimeout(function () {
+                if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                    self.EnableSearchSelection();
+                }
+            }, 300);
         })(this);
     };
     this.initialize_style();
@@ -23389,6 +23396,7 @@ function DashGuiComboInterface () {
         DashGuiComboSearch.call(this, this);
         this.setup_search_selection();
     };
+    // TODO: Function to disable search selection if option list is reduced below this.searchable_min
     this.ShowTray = function () {
         if (!this.expanded) {
             this.show();
@@ -23417,6 +23425,7 @@ function DashGuiComboInterface () {
         });
         this.label.remove();
         this.highlight.remove();
+        // TODO: Add a variation of the arrow key tracking system in the search code for this use case
     };
     this.DisableFlash = function () {
         this.flash_enabled = false;
@@ -23580,6 +23589,7 @@ function DashGuiComboRow (Combo, option) {
     this.setup_connections();
 }
 
+/** @member DashGuiCombo*/
 function DashGuiComboSearch () {
     this.is_searchable = true;
     this.search_active = false;
@@ -23598,23 +23608,23 @@ function DashGuiComboSearch () {
             this.highlight.css({
                 "cursor": "text",
             });
-        };
+        }
         if (this.inner_html) {
             this.inner_html.css({
                 "cursor": "text",
             });
-        };
-        (function(self){
+        }
+        (function (self) {
             self.html[0].addEventListener("keydown", function (event) {
                 if (event.defaultPrevented) {
                     return; // Do nothing if the event was already processed
-                };
+                }
                 if (!self.html.is(":visible")) {
                     return;
-                };
+                }
                 if (self.search_result_ids.length < 1) {
                     return;
-                };
+                }
                 switch (event.key) {
                     case "Down":
                         self.on_search_arrow_down();
@@ -23630,15 +23640,15 @@ function DashGuiComboSearch () {
                         break;
                     default:
                         return;
-                };
+                }
                 event.preventDefault();
             }, true);
         })(this);
     };
     this.on_search_arrow_up = function () {
-        if (this.search_result_index == 0) {
+        if (parseInt(this.search_result_index) === 0) {
             return;
-        };
+        }
         this.search_result_index -= 1;
         this.draw_search_button_index_selection();
     };
@@ -23646,26 +23656,26 @@ function DashGuiComboSearch () {
         var new_index = this.search_result_index+1;
         if (new_index > this.search_result_ids.length-1) {
             return;
-        };
+        }
         this.search_result_index = new_index;
         this.draw_search_button_index_selection();
     };
     this.draw_search_button_index_selection = function () {
         for (var i in this.search_result_rows) {
             var button = this.search_result_rows[i];
-            if (i == this.search_result_index) {
+            if (parseInt(i) === parseInt(this.search_result_index)) {
                 button.SetSearchResultActive(true);
             }
             else {
                 button.SetSearchResultActive(false);
-            };
-        };
+            }
+        }
     };
     this.activate_search = function () {
         this.search_active = true;
         if (!this.search_input) {
             this.create_search_input();
-        };
+        }
         this.label_container.css({
             "opacity": 0,
         });
@@ -23676,11 +23686,11 @@ function DashGuiComboSearch () {
         if (this.search_container) {
             this.search_container.remove();
             this.search_container = null;
-        };
+        }
         if (this.search_input) {
             this.search_input.html.remove();
             this.search_input = null;
-        };
+        }
         this.search_results = [];
         this.search_result_rows = [];
         this.search_result_ids = [];
@@ -23694,31 +23704,48 @@ function DashGuiComboSearch () {
         this.html.append(this.search_container);
         this.search_container.css({
             "position": "absolute",
-            // "background": "orange",
             "left": 0,
             "top": 0,
             "width": this.list_width,
-            "height": this.html.height(),
+            "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input(" Type to search...", this.color);
         this.search_input.SetText(this.selected_option_id["label_text"]);
         this.search_input.OnChange(this.on_search_text_changed, this);
         this.search_input.OnSubmit(this.on_search_text_selected, this);
+        this.search_input.DisableBlurSubmit();
         this.search_container.append(this.search_input.html);
         this.search_input.html.css({
-            "left": -Dash.Size.Padding,
-            "top": -Dash.Size.Padding*0.5,
             "box-shadow": "none",
             "background": "none",
         });
-        (function(self){
-            requestAnimationFrame(function(){
+        if (this.style === "row") {
+            this.search_input.html.css({
+                "left": -Dash.Size.Padding,
+                "top": -Dash.Size.Padding * 0.5
+            });
+        }
+        else {
+            this.search_input.html.css({
+                "top": Dash.Size.Padding * 0.5
+            });
+            this.search_input.input.css({
+                "color": this.color_set.Text.Base
+            });
+        }
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.search_input.input.select();
+                self.manage_search_list(true);
             });
         })(this);
     };
     this.on_search_text_changed = function () {
         var search = this.search_input.Text().toLocaleLowerCase();
+        if (search.length === 0) {
+            this.manage_search_list(true);
+            return;
+        }
         this.search_results = [];
         for (var i in this.option_list) {
             var opt = this.option_list[i]["label_text"].toLocaleLowerCase();
@@ -23726,20 +23753,17 @@ function DashGuiComboSearch () {
                 // For a short search, only match the beginning
                 if (opt.startsWith(search)) {
                     this.search_results.push(this.option_list[i]["id"]);
-                };
+                }
             }
             else {
                 if (opt.includes(search)) {
                     this.search_results.push(this.option_list[i]["id"]);
-                };
-            };
+                }
+            }
             if (this.search_results.length >= this.search_max_results) {
                 break;
-            };
-        };
-        if (search.length < 1) {
-            this.search_results = [];
-        };
+            }
+        }
         this.manage_search_list();
     };
     this.on_search_text_selected = function () {
@@ -23747,21 +23771,21 @@ function DashGuiComboSearch () {
         if (search.length < 1) {
             this.on_click();
             return;
-        };
+        }
         var selected_id = this.search_result_ids[this.search_result_index];
         var selected_option = null;
         for (var i in this.option_list) {
             var content = this.option_list[i];
-            if (content["id"] == selected_id) {
+            if (content["id"] === selected_id) {
                 selected_option = content;
                 break;
-            };
-        };
+            }
+        }
         if (selected_option) {
             this.on_selection(selected_option);
-        };
+        }
     };
-    this.manage_search_list = function () {
+    this.manage_search_list = function (show_all=false) {
         this.rows.stop().css({"height": "auto"});
         this.search_result_rows = [];
         this.search_result_ids = [];
@@ -23770,7 +23794,10 @@ function DashGuiComboSearch () {
             var content = this.option_list[i];
             var button = this.row_buttons[i];
             button.SetSearchResultActive(false);
-            if (this.search_results.includes(content["id"])) {
+            if (show_all || this.search_results.includes(content["id"])) {
+                if (show_all && !this.search_results.includes(content["id"])) {
+                    this.search_results.push(content["id"]);
+                }
                 this.search_result_ids.push(content["id"]);
                 this.search_result_rows.push(button);
                 button.html.css({
@@ -23781,13 +23808,13 @@ function DashGuiComboSearch () {
                 button.html.css({
                     "display": "none",
                 });
-            };
-        };
+            }
+        }
         if (this.search_result_rows.length > 0) {
             this.search_result_rows[0].SetSearchResultActive(true);
-        };
+        }
     };
-};
+}
 
 /**@member DashGuiCombo*/
 function DashGuiComboStyleDefault () {

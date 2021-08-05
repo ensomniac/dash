@@ -7,6 +7,8 @@ function DashGuiComboInterface () {
         this.setup_search_selection();
     };
 
+    // TODO: Function to disable search selection if option list is reduced below this.searchable_min
+
     this.ShowTray = function () {
         if (!this.expanded) {
             this.show();
@@ -42,6 +44,8 @@ function DashGuiComboInterface () {
 
         this.label.remove();
         this.highlight.remove();
+
+        // TODO: Add a variation of the arrow key tracking system in the search code for this use case
     };
 
     this.DisableFlash = function () {

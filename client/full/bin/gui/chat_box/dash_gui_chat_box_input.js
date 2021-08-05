@@ -46,6 +46,10 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.input.Focus();
     };
 
+    this.FormatMentionName = function (name) {
+        return name.split(" ").join("");
+    };
+
     this.add_input = function () {
         this.input = new Dash.Gui.Input("Leave a note...", this.color);
 
@@ -77,10 +81,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
                 this.at_button.HideTray();
             }
         }
-    };
-
-    this.FormatMentionName = function (name) {
-        return name.split(" ").join("");
     };
 
     this.add_at_button = function () {
@@ -118,7 +118,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.html.append(this.at_button.html);
     };
 
-    this.on_combo_changed = function (combo_key, selection) {
+    this.on_combo_changed = function (selected_combo) {
         var new_text = "";
         var old_text = this.Text();
 
@@ -132,7 +132,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             new_text += " ";
         }
 
-        new_text += "@" + selection["label_text"] + " ";
+        new_text += "@" + selected_combo["label_text"] + " ";
 
         this.SetText(new_text);
         this.Focus();

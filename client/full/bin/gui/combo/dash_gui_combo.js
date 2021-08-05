@@ -1,5 +1,5 @@
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this.label              = label;
+    this._label             = label;  // Unused
     this.binder             = binder;
     this.callback           = callback.bind(this.binder);
     this.option_list        = option_list;
@@ -13,11 +13,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.bool               = bool;
 
     this.list_width = -1;
-    this.gravity_vertical = 0;
-    this.gravity_horizontal = 0;
     this.click_skirt = null;
+    this.searchable_min = 20;
     this.dropdown_icon = null;
     this.flash_enabled = true;
+    this.gravity_vertical = 0;
+    this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -131,13 +132,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.style = "default";
         }
 
-        if (this.style == "row") {
+        if (this.style === "row") {
             this.color_set  = this.color.Button;
 
             DashGuiComboStyleRow.call(this);
         }
 
-        else if (this.style == "default") {
+        else if (this.style === "default") {
             this.color_set  = this.color.Button;
 
             DashGuiComboStyleDefault.call(this);
@@ -360,6 +361,18 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.show = function () {
         this.pre_show_size_set();
 
+        // This is an extra safety check in case the combo was updated after setup
+        // (very unlikely to be triggered, but just in case)
+        if (!this.is_searchable && this.option_list.length > this.searchable_min) {
+            this.EnableSearchSelection();
+        }
+
+        if (this.is_searchable && this.option_list.length < this.searchable_min) {
+            // TODO: DisableSearchSelection() - function needs to be written
+
+            // This is important for cases where the combo option list changes after setup
+        }
+
         if (this.is_searchable) {
             this.activate_search();
         }
@@ -459,17 +472,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 }
             });
 
-            if (self.option_list.length > 20) {
-                setTimeout(function(){
-
-                    // This secondary check is important because the option_list
-                    // size may have changed after the first frame
-                    if (!self.is_searchable && self.option_list.length > 20) {
-                        self.EnableSearchSelection();
-                    }
-
-                }, 200);
-            }
+            // This delayed check is important because the option_list size may have changed after the first frame
+            setTimeout(function () {
+                if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                    self.EnableSearchSelection();
+                }
+            }, 300);
         })(this);
     };
 
