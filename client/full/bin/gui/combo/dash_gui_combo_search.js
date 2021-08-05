@@ -1,14 +1,14 @@
 /** @member DashGuiCombo*/
 
 function DashGuiComboSearch () {
+    this.search_input = null;
+    this.search_results = [];
     this.is_searchable = true;
     this.search_active = false;
-    this.search_input = null;
+    this.search_result_ids = [];
     this.search_container = null;
     this.search_max_results = 10;
-    this.search_results = [];
     this.search_result_rows = [];
-    this.search_result_ids = [];
     this.search_result_index = 0;
 
     this.setup_search_selection = function () {
@@ -254,7 +254,7 @@ function DashGuiComboSearch () {
         }
 
         if (selected_option) {
-            this.on_selection(selected_option);
+            this.on_selection(selected_option, false, search);
         }
     };
 
@@ -268,16 +268,22 @@ function DashGuiComboSearch () {
         for (var i in this.option_list) {
             var content = this.option_list[i];
             var button = this.row_buttons[i];
+            var include_default = this.default_search_submit_combo && this.default_search_submit_combo["id"] === content["id"];
 
             button.SetSearchResultActive(false);
 
-            if (show_all || this.search_results.includes(content["id"])) {
+            if (show_all || this.search_results.includes(content["id"]) || include_default) {
                 if (show_all && !this.search_results.includes(content["id"])) {
                     this.search_results.push(content["id"]);
                 }
 
-                this.search_result_ids.push(content["id"]);
-                this.search_result_rows.push(button);
+                if (!this.search_result_ids.includes(content["id"])) {
+                    this.search_result_ids.push(content["id"]);
+                }
+
+                if (!this.search_result_rows.includes(button)) {
+                    this.search_result_rows.push(button);
+                }
 
                 button.html.css({
                     "display": "block",
@@ -289,6 +295,10 @@ function DashGuiComboSearch () {
                     "display": "none",
                 });
             }
+        }
+
+        if (this.search_result_rows.length === 0 && this.default_search_submit_combo) {
+
         }
 
         if (this.search_result_rows.length > 0) {

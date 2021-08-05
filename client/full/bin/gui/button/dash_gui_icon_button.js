@@ -9,6 +9,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     DashGuiButton.call(this, "", callback, binder, color, options);
 
+    this.SetIconColor = function (color) {
+        this.icon.SetColor(color);
+    };
+
     this.setup_icon = function () {
         if (this.style === "toolbar") {
             if (!this.icon_height) {

@@ -1,6 +1,19 @@
 /**@member DashGuiCombo*/
 
 function DashGuiComboInterface () {
+    this.SetDefaultSearchSubmitCombo = function (combo_option) {
+        // If the user has entered text in the search bar and has no results,
+        // but hits enter/submits the entry anyway, this combo will be the result
+
+        if (!Dash.IsValidObject(combo_option) || !combo_option["id"] || !combo_option["label_text"]) {
+            console.log("Invalid combo option, cannot set default search submit combo:", combo_option);
+
+            return;
+        }
+
+        this.default_search_submit_combo = combo_option;
+    };
+
     this.EnableSearchSelection = function () {
         DashGuiComboSearch.call(this, this);
 
@@ -44,6 +57,10 @@ function DashGuiComboInterface () {
 
         this.label.remove();
         this.highlight.remove();
+
+        if (this.color_set.Background.Icon) {
+            this.dropdown_icon.SetColor(this.color_set.Background.Icon);
+        }
 
         // TODO: Add a variation of the arrow key tracking system in the search code for this use case
     };
