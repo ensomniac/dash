@@ -20472,9 +20472,11 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         this.password_input = new Dash.Gui.Input("Password", this.color);
         this.email_input.html.css({
             "padding": Dash.Size.Padding * 0.5,
+            "background": this.color.Background
         });
         this.password_input.html.css({
             "padding": Dash.Size.Padding * 0.5,
+            "background": this.color.Background
         });
         this.email_input.OnSubmit(this.Submit, this);
         this.password_input.OnSubmit(this.Submit, this);
