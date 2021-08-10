@@ -12,14 +12,18 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
 
+    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
+    this.is_searchable = false;
+    this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
+    this.button_is_highlighted = false;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -406,10 +410,22 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
             this.manage_search_list();
         }
+
+        if (!this.is_searchable) {
+            (function (self) {
+                $(window).on(
+                    "keydown." + self.random_id,
+                    function (event) {
+                        self.handle_arrow_input(self, event);
+                    }
+                );
+            })(this);
+        }
     };
 
     this.hide = function () {
         this.expanded = false;
+        this.button_is_highlighted = false;
 
         this.hide_skirt();
 
@@ -419,16 +435,22 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.is_searchable && this.search_active) {
             this.hide_searchable();
         }
+
+        if (!this.is_searchable) {
+            $(window).off("keydown." + this.random_id);
+        }
     };
 
     this.setup_connections = function () {
         (function (self) {
-            $(window).on("click", function (event) {
-                if (!self.expanded) {
+            $(window).on("click." + self.random_id, function (event) {
+                if (!self.html.is(":visible")) {
+                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
+
                     return;
                 }
 
-                if (!self.html.is(":visible")) {
+                if (!self.expanded) {
                     return;
                 }
 
@@ -456,6 +478,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             self.html.on("click", function (e) {
                 if ($(e.target).hasClass("ComboLabel")) {
                     self.on_click();
+
                     e.preventDefault();
 
                     return false;
@@ -463,6 +486,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
                 if ($(e.target).hasClass("ComboClickSkirt")) {
                     self.on_click();
+
                     e.preventDefault();
 
                     return false;
@@ -470,12 +494,109 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             });
 
             // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(function () {
-                if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                    self.EnableSearchSelection();
-                }
-            }, 300);
+            setTimeout(
+                function () {
+                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                      self.EnableSearchSelection();
+                    }
+                },
+                300
+            );
         })(this);
+    };
+
+    this.handle_arrow_input = function (self, event) {
+        if (!self.html.is(":visible")) {
+            $(window).off("keydown." + self.random_id);  // Kill this when leaving the page
+
+            return;
+        }
+
+        if (event.defaultPrevented) {
+            return; // Do nothing if the event was already processed
+        }
+
+        if (self.is_searchable) {
+            if (self.search_result_ids.length < 1) {
+                return;  // No search results
+            }
+        }
+
+        else {
+            if (!self.expanded) {
+                return;  // No combo option rows
+            }
+        }
+
+        var i;
+        var draw = false;
+        var buttons = self.row_buttons;
+
+        if (self.is_searchable) {
+            buttons = self.search_result_rows;
+        }
+
+        if (event.key === "Down" || event.key === "ArrowDown") {
+            var new_index = self.combo_option_index + 1;
+
+            if (new_index > buttons.length - 1) {
+                return;
+            }
+
+            self.combo_option_index = new_index;
+
+            draw = true;
+        }
+
+        else if (event.key === "Up" || event.key === "ArrowUp") {
+            if (self.combo_option_index === 0) {
+                return;
+            }
+
+            self.combo_option_index -= 1;
+
+            draw = true;
+        }
+
+        else if (event.key === "Escape") {
+            self.hide();
+
+            return;
+        }
+
+        else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+            for (i in self.option_list) {
+                var option = self.option_list[i];
+
+                if (parseInt(i) === self.combo_option_index) {
+                    self.on_selection(option);
+
+                    break;
+                }
+            }
+        }
+
+        else {
+            return;
+        }
+
+        if (draw) {
+            for (i in buttons) {
+                var button = buttons[i];
+
+                if (parseInt(i) === parseInt(self.combo_option_index)) {
+                    self.button_is_highlighted = true;
+
+                    button.SetSearchResultActive(true);
+                }
+
+                else {
+                    button.SetSearchResultActive(false);
+                }
+            }
+        }
+
+        event.preventDefault();
     };
 
     this.initialize_style();

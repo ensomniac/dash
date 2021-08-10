@@ -61,8 +61,6 @@ function DashGuiComboInterface () {
         if (this.color_set.Background.Icon) {
             this.dropdown_icon.SetColor(this.color_set.Background.Icon);
         }
-
-        // TODO: Add a variation of the arrow key tracking system in the search code for this use case
     };
 
     this.DisableFlash = function () {

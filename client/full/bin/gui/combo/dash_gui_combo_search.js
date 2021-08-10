@@ -9,7 +9,6 @@ function DashGuiComboSearch () {
     this.search_container = null;
     this.search_max_results = 10;
     this.search_result_rows = [];
-    this.search_result_index = 0;
 
     this.setup_search_selection = function () {
         this.html.css({
@@ -29,81 +28,13 @@ function DashGuiComboSearch () {
         }
 
         (function (self) {
-            self.html[0].addEventListener("keydown", function (event) {
-                if (event.defaultPrevented) {
-                    return; // Do nothing if the event was already processed
+            self.html.on(
+                "keydown." + self.random_id,
+                function (event) {
+                    self.handle_arrow_input(self, event);
                 }
-
-                if (!self.html.is(":visible")) {
-                    return;
-                }
-
-                if (self.search_result_ids.length < 1) {
-                    return;
-                }
-
-                switch (event.key) {
-                    case "Down":
-                        self.on_search_arrow_down();
-
-                        break;
-
-                    case "ArrowDown":
-                        self.on_search_arrow_down();
-
-                        break;
-
-                    case "Up":
-                        self.on_search_arrow_up();
-
-                        break;
-
-                    case "ArrowUp":
-                        self.on_search_arrow_up();
-
-                        break;
-
-                    default:
-                        return;
-                }
-                event.preventDefault();
-            }, true);
+            );
         })(this);
-    };
-
-    this.on_search_arrow_up = function () {
-        if (parseInt(this.search_result_index) === 0) {
-            return;
-        }
-
-        this.search_result_index -= 1;
-        this.draw_search_button_index_selection();
-    };
-
-    this.on_search_arrow_down = function () {
-        var new_index = this.search_result_index+1;
-
-        if (new_index > this.search_result_ids.length-1) {
-            return;
-        }
-
-        this.search_result_index = new_index;
-        this.draw_search_button_index_selection();
-    };
-
-    this.draw_search_button_index_selection = function () {
-        for (var i in this.search_result_rows) {
-
-            var button = this.search_result_rows[i];
-
-            if (parseInt(i) === parseInt(this.search_result_index)) {
-                button.SetSearchResultActive(true);
-            }
-
-            else {
-                button.SetSearchResultActive(false);
-            }
-        }
     };
 
     this.activate_search = function () {
@@ -135,9 +66,9 @@ function DashGuiComboSearch () {
         }
 
         this.search_results = [];
-        this.search_result_rows = [];
         this.search_result_ids = [];
-        this.search_result_index = 0;
+        this.search_result_rows = [];
+        this.combo_option_index = 0;
 
         this.label_container.css({
             "opacity": 1,
@@ -160,7 +91,7 @@ function DashGuiComboSearch () {
         this.search_input.SetText(this.selected_option_id["label_text"]);
 
         this.search_input.OnChange(this.on_search_text_changed, this);
-        this.search_input.OnSubmit(this.on_search_text_selected, this);
+        this.search_input.OnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
 
         this.search_container.append(this.search_input.html);
@@ -231,7 +162,7 @@ function DashGuiComboSearch () {
         this.manage_search_list();
     };
 
-    this.on_search_text_selected = function () {
+    this.on_search_text_submitted = function () {
         var search = this.search_input.Text();
 
         if (search.length < 1) {
@@ -240,7 +171,7 @@ function DashGuiComboSearch () {
             return;
         }
 
-        var selected_id = this.search_result_ids[this.search_result_index];
+        var selected_id = this.search_result_ids[this.combo_option_index];
         var selected_option = null;
 
         for (var i in this.option_list) {
@@ -263,7 +194,7 @@ function DashGuiComboSearch () {
 
         this.search_result_rows = [];
         this.search_result_ids = [];
-        this.search_result_index = 0;
+        this.combo_option_index = 0;
 
         for (var i in this.option_list) {
             var content = this.option_list[i];

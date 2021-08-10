@@ -23037,14 +23037,18 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.style              = this.options["style"] || "default";
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
+    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
+    this.is_searchable = false;
+    this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
+    this.button_is_highlighted = false;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -23337,23 +23341,38 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             });
             this.manage_search_list();
         }
+        if (!this.is_searchable) {
+            (function (self) {
+                $(window).on(
+                    "keydown." + self.random_id,
+                    function (event) {
+                        self.handle_arrow_input(self, event);
+                    }
+                );
+            })(this);
+        }
     };
     this.hide = function () {
         this.expanded = false;
+        this.button_is_highlighted = false;
         this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
         if (this.is_searchable && this.search_active) {
             this.hide_searchable();
         }
+        if (!this.is_searchable) {
+            $(window).off("keydown." + this.random_id);
+        }
     };
     this.setup_connections = function () {
         (function (self) {
-            $(window).on("click", function (event) {
-                if (!self.expanded) {
+            $(window).on("click." + self.random_id, function (event) {
+                if (!self.html.is(":visible")) {
+                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
                     return;
                 }
-                if (!self.html.is(":visible")) {
+                if (!self.expanded) {
                     return;
                 }
                 if (!$(event.target).hasClass("Combo")) {
@@ -23384,12 +23403,84 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 }
             });
             // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(function () {
-                if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                    self.EnableSearchSelection();
-                }
-            }, 300);
+            setTimeout(
+                function () {
+                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                      self.EnableSearchSelection();
+                    }
+                },
+                300
+            );
         })(this);
+    };
+    this.handle_arrow_input = function (self, event) {
+        if (!self.html.is(":visible")) {
+            $(window).off("keydown." + self.random_id);  // Kill this when leaving the page
+            return;
+        }
+        if (event.defaultPrevented) {
+            return; // Do nothing if the event was already processed
+        }
+        if (self.is_searchable) {
+            if (self.search_result_ids.length < 1) {
+                return;  // No search results
+            }
+        }
+        else {
+            if (!self.expanded) {
+                return;  // No combo option rows
+            }
+        }
+        var i;
+        var draw = false;
+        var buttons = self.row_buttons;
+        if (self.is_searchable) {
+            buttons = self.search_result_rows;
+        }
+        if (event.key === "Down" || event.key === "ArrowDown") {
+            var new_index = self.combo_option_index + 1;
+            if (new_index > buttons.length - 1) {
+                return;
+            }
+            self.combo_option_index = new_index;
+            draw = true;
+        }
+        else if (event.key === "Up" || event.key === "ArrowUp") {
+            if (self.combo_option_index === 0) {
+                return;
+            }
+            self.combo_option_index -= 1;
+            draw = true;
+        }
+        else if (event.key === "Escape") {
+            self.hide();
+            return;
+        }
+        else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+            for (i in self.option_list) {
+                var option = self.option_list[i];
+                if (parseInt(i) === self.combo_option_index) {
+                    self.on_selection(option);
+                    break;
+                }
+            }
+        }
+        else {
+            return;
+        }
+        if (draw) {
+            for (i in buttons) {
+                var button = buttons[i];
+                if (parseInt(i) === parseInt(self.combo_option_index)) {
+                    self.button_is_highlighted = true;
+                    button.SetSearchResultActive(true);
+                }
+                else {
+                    button.SetSearchResultActive(false);
+                }
+            }
+        }
+        event.preventDefault();
     };
     this.initialize_style();
     this.setup_connections();
@@ -23442,7 +23533,6 @@ function DashGuiComboInterface () {
         if (this.color_set.Background.Icon) {
             this.dropdown_icon.SetColor(this.color_set.Background.Icon);
         }
-        // TODO: Add a variation of the arrow key tracking system in the search code for this use case
     };
     this.DisableFlash = function () {
         this.flash_enabled = false;
@@ -23616,7 +23706,6 @@ function DashGuiComboSearch () {
     this.search_container = null;
     this.search_max_results = 10;
     this.search_result_rows = [];
-    this.search_result_index = 0;
     this.setup_search_selection = function () {
         this.html.css({
             "cursor": "text",
@@ -23632,61 +23721,13 @@ function DashGuiComboSearch () {
             });
         }
         (function (self) {
-            self.html[0].addEventListener("keydown", function (event) {
-                if (event.defaultPrevented) {
-                    return; // Do nothing if the event was already processed
+            self.html.on(
+                "keydown." + self.random_id,
+                function (event) {
+                    self.handle_arrow_input(self, event);
                 }
-                if (!self.html.is(":visible")) {
-                    return;
-                }
-                if (self.search_result_ids.length < 1) {
-                    return;
-                }
-                switch (event.key) {
-                    case "Down":
-                        self.on_search_arrow_down();
-                        break;
-                    case "ArrowDown":
-                        self.on_search_arrow_down();
-                        break;
-                    case "Up":
-                        self.on_search_arrow_up();
-                        break;
-                    case "ArrowUp":
-                        self.on_search_arrow_up();
-                        break;
-                    default:
-                        return;
-                }
-                event.preventDefault();
-            }, true);
+            );
         })(this);
-    };
-    this.on_search_arrow_up = function () {
-        if (parseInt(this.search_result_index) === 0) {
-            return;
-        }
-        this.search_result_index -= 1;
-        this.draw_search_button_index_selection();
-    };
-    this.on_search_arrow_down = function () {
-        var new_index = this.search_result_index+1;
-        if (new_index > this.search_result_ids.length-1) {
-            return;
-        }
-        this.search_result_index = new_index;
-        this.draw_search_button_index_selection();
-    };
-    this.draw_search_button_index_selection = function () {
-        for (var i in this.search_result_rows) {
-            var button = this.search_result_rows[i];
-            if (parseInt(i) === parseInt(this.search_result_index)) {
-                button.SetSearchResultActive(true);
-            }
-            else {
-                button.SetSearchResultActive(false);
-            }
-        }
     };
     this.activate_search = function () {
         this.search_active = true;
@@ -23709,9 +23750,9 @@ function DashGuiComboSearch () {
             this.search_input = null;
         }
         this.search_results = [];
-        this.search_result_rows = [];
         this.search_result_ids = [];
-        this.search_result_index = 0;
+        this.search_result_rows = [];
+        this.combo_option_index = 0;
         this.label_container.css({
             "opacity": 1,
         });
@@ -23729,7 +23770,7 @@ function DashGuiComboSearch () {
         this.search_input = new Dash.Gui.Input(" Type to search...", this.color);
         this.search_input.SetText(this.selected_option_id["label_text"]);
         this.search_input.OnChange(this.on_search_text_changed, this);
-        this.search_input.OnSubmit(this.on_search_text_selected, this);
+        this.search_input.OnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
         this.search_container.append(this.search_input.html);
         this.search_input.html.css({
@@ -23783,13 +23824,13 @@ function DashGuiComboSearch () {
         }
         this.manage_search_list();
     };
-    this.on_search_text_selected = function () {
+    this.on_search_text_submitted = function () {
         var search = this.search_input.Text();
         if (search.length < 1) {
             this.on_click();
             return;
         }
-        var selected_id = this.search_result_ids[this.search_result_index];
+        var selected_id = this.search_result_ids[this.combo_option_index];
         var selected_option = null;
         for (var i in this.option_list) {
             var content = this.option_list[i];
@@ -23806,7 +23847,7 @@ function DashGuiComboSearch () {
         this.rows.stop().css({"height": "auto"});
         this.search_result_rows = [];
         this.search_result_ids = [];
-        this.search_result_index = 0;
+        this.combo_option_index = 0;
         for (var i in this.option_list) {
             var content = this.option_list[i];
             var button = this.row_buttons[i];
