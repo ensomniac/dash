@@ -133,6 +133,10 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.message_area[0].scrollTop = this.message_area[0].scrollHeight;
     };
 
+    this.ClearMessages = function () {
+        this.message_area.empty();
+    };
+
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
             console.log("WARNING: Toggle button already added to ChatBox, can't add another at this time.");
