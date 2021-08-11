@@ -30,7 +30,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             {
                 "background": this.color.Background,
                 "display": "flex",
-                "flex-direction": "column"
+                "flex-direction": "column",
+                "overflow": "hidden"
             },
             this.color
         );

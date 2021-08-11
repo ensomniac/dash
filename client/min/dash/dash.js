@@ -21930,7 +21930,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             {
                 "background": this.color.Background,
                 "display": "flex",
-                "flex-direction": "column"
+                "flex-direction": "column",
+                "overflow": "hidden"
             },
             this.color
         );
@@ -22484,7 +22485,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "margin": Dash.Size.Padding * 0.2,
                 "padding": Dash.Size.Padding,
                 "border-radius": Dash.Size.Padding,
-                "box-shadow": this.dark_mode ? "0px 2px 2px 1px rgba(255, 255, 255, 0.2)" : "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
+                "box-shadow": "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
                 "background": this.color.BackgroundRaisedTop || this.color.BackgroundRaised,
                 "display": "flex"
             },
