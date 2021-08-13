@@ -17716,14 +17716,11 @@ function Dash () {
     this.ReadableDateTime = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
+        // TODO: Move this to dash.guide as a context property
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
             dt.setHours(dt.getHours() - 4);
-        }
-        else if (this.Context["domain"] === "authentic.tools") {
-            tz_label = "PST";
-            dt.setHours(dt.getHours() - 7);
-        }
+        };
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
         var readable = date + " at " + time;
@@ -22794,7 +22791,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     if (!self.is_searchable && self.option_list.length > 20) {
                         self.EnableSearchSelection();
                     };
-                }, 200); 
+                }, 200);
             };
 
         })(this);
