@@ -90,8 +90,6 @@ function DashGuiComboInterface () {
     this.SetID = function (combo_id) {
         this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
 
-        console.log("DEBUG: Expanded combo was closed by a selection being made (SetID)");
-
         this.on_selection(this.selected_option_id, true);
         this.flash();
     };

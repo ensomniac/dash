@@ -23223,7 +23223,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.hide_searchable();
         }
         if (this.expanded) {
-            console.log("DEBUG: Expanded combo was closed by clicking on the click skirt (clicking outside the combo still in the combo html)");
             this.hide();
         }
         else {
@@ -23381,7 +23380,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return;
                 }
                 if (!$(event.target).hasClass("Combo")) {
-                    console.log("DEBUG: Expanded combo was closed by clicking outside the click skirt (clicking outside the combo in the window)");
                     self.hide();
                     event.preventDefault();
                     if (event.originalEvent) {
@@ -23459,7 +23457,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             draw = true;
         }
         else if (event.key === "Escape") {
-            console.log("DEBUG: Expanded combo was closed by the Escape key");
             self.hide();
             return;
         }
@@ -23467,7 +23464,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             for (i in self.option_list) {
                 var option = self.option_list[i];
                 if (parseInt(i) === self.combo_option_index) {
-                    console.log("DEBUG: Expanded combo was closed by a selection being made (not searchable - Enter key)");
                     self.on_selection(option);
                     break;
                 }
@@ -23561,7 +23557,6 @@ function DashGuiComboInterface () {
     };
     this.SetID = function (combo_id) {
         this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
-        console.log("DEBUG: Expanded combo was closed by a selection being made (SetID)");
         this.on_selection(this.selected_option_id, true);
         this.flash();
     };
@@ -23615,8 +23610,8 @@ function DashGuiComboInterface () {
     };
 }
 
-function DashGuiComboRow (Combo, option) {
-    this.combo = Combo;
+function DashGuiComboRow (combo, option) {
+    this.combo = combo;
     this.option = option;
     this.color_set = this.combo.color_set;
     this.label_text = this.option["label_text"] || this.option["display_name"];
@@ -23650,8 +23645,8 @@ function DashGuiComboRow (Combo, option) {
             "color": this.color_set.Text.Base,
         });
     };
+    // Prior to showing, set the width of rows to fit the content
     this.SetWidthToFit = function (label_width=null) {
-        // Prior to showing, set the width of rows to fit the content
         if (!label_width) {
             label_width = "fit-content";
         }
@@ -23664,8 +23659,8 @@ function DashGuiComboRow (Combo, option) {
             "padding-right": Dash.Size.Padding * 0.5,
         });
     };
+    // Prior to showing, set the width of rows
     this.SetWidth = function (width) {
-        // Prior to showing, set the width of rows
         this.html.css({
             "width": width,
         });
@@ -23684,7 +23679,7 @@ function DashGuiComboRow (Combo, option) {
         }
         else {
             this.highlight.stop().animate({"opacity": 0}, 100);
-        };
+        }
     };
     this.setup_connections = function () {
         (function (self) {
@@ -23695,7 +23690,6 @@ function DashGuiComboRow (Combo, option) {
                 self.set_highlight_active(false);
             });
             self.label.on("click", function (e) {
-                console.log("DEBUG: Expanded combo was closed by a selection being made (clicked)");
                 self.combo.on_selection(self.option);
                 e.preventDefault();
                 return false;
@@ -23850,7 +23844,6 @@ function DashGuiComboSearch () {
             }
         }
         if (selected_option) {
-            console.log("DEBUG: Expanded combo was closed by a selection being made (searchable - Enter key)");
             this.on_selection(selected_option, false, search);
         }
     };
