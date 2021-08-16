@@ -23223,7 +23223,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.hide_searchable();
         }
         if (this.expanded) {
-            console.log("DEBUG: Expanded combo was closed by a click");
+            console.log("DEBUG: Expanded combo was closed by clicking on the click skirt (clicking outside the combo still in the combo html)");
             this.hide();
         }
         else {
@@ -23242,8 +23242,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.label.text("ERROR");
             return;
         }
-
-        console.log("DEBUG: Expanded combo was closed by a selection being made");
         this.hide();
         this.label.text(label_text);
         this.selected_option_id = selected_option;
@@ -23383,7 +23381,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return;
                 }
                 if (!$(event.target).hasClass("Combo")) {
-                    console.log("DEBUG: Expanded combo was closed by window.on('click')");
+                    console.log("DEBUG: Expanded combo was closed by clicking outside the click skirt (clicking outside the combo in the window)");
                     self.hide();
                     event.preventDefault();
                     if (event.originalEvent) {
@@ -23469,6 +23467,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             for (i in self.option_list) {
                 var option = self.option_list[i];
                 if (parseInt(i) === self.combo_option_index) {
+                    console.log("DEBUG: Expanded combo was closed by a selection being made (not searchable - Enter key)");
                     self.on_selection(option);
                     break;
                 }
@@ -23562,6 +23561,7 @@ function DashGuiComboInterface () {
     };
     this.SetID = function (combo_id) {
         this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
+        console.log("DEBUG: Expanded combo was closed by a selection being made (SetID)");
         this.on_selection(this.selected_option_id, true);
         this.flash();
     };
@@ -23695,6 +23695,7 @@ function DashGuiComboRow (Combo, option) {
                 self.set_highlight_active(false);
             });
             self.label.on("click", function (e) {
+                console.log("DEBUG: Expanded combo was closed by a selection being made (clicked)");
                 self.combo.on_selection(self.option);
                 e.preventDefault();
                 return false;
@@ -23849,6 +23850,7 @@ function DashGuiComboSearch () {
             }
         }
         if (selected_option) {
+            console.log("DEBUG: Expanded combo was closed by a selection being made (searchable - Enter key)");
             this.on_selection(selected_option, false, search);
         }
     };

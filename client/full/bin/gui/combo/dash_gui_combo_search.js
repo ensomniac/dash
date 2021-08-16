@@ -185,6 +185,8 @@ function DashGuiComboSearch () {
         }
 
         if (selected_option) {
+            console.log("DEBUG: Expanded combo was closed by a selection being made (searchable - Enter key)");
+
             this.on_selection(selected_option, false, search);
         }
     };

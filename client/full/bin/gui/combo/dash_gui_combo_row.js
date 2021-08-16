@@ -103,6 +103,8 @@ function DashGuiComboRow (Combo, option) {
             });
 
             self.label.on("click", function (e) {
+                console.log("DEBUG: Expanded combo was closed by a selection being made (clicked)");
+
                 self.combo.on_selection(self.option);
                 e.preventDefault();
                 return false;
