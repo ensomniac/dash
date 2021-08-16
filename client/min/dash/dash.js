@@ -23223,6 +23223,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.hide_searchable();
         }
         if (this.expanded) {
+            console.log("DEBUG: Expanded combo was closed by a click");
             this.hide();
         }
         else {
@@ -23241,6 +23242,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.label.text("ERROR");
             return;
         }
+
+        console.log("DEBUG: Expanded combo was closed by a selection being made");
         this.hide();
         this.label.text(label_text);
         this.selected_option_id = selected_option;
@@ -23380,6 +23383,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return;
                 }
                 if (!$(event.target).hasClass("Combo")) {
+                    console.log("DEBUG: Expanded combo was closed by window.on('click')");
                     self.hide();
                     event.preventDefault();
                     if (event.originalEvent) {
@@ -23457,6 +23461,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             draw = true;
         }
         else if (event.key === "Escape") {
+            console.log("DEBUG: Expanded combo was closed by the Escape key");
             self.hide();
             return;
         }
