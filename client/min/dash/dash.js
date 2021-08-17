@@ -17743,14 +17743,11 @@ function Dash () {
     this.ReadableDateTime = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt = new Date(Date.parse(iso_string));
+        // TODO: Move this to dash.guide as a context property
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
             dt.setHours(dt.getHours() - 4);
-        }
-        else if (this.Context["domain"] === "authentic.tools") {
-            tz_label = "PST";
-            dt.setHours(dt.getHours() - 7);
-        }
+        };
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
         var readable = date + " at " + time;
@@ -17937,7 +17934,7 @@ function DashUser () {
     this.__auth_not_authenticated_cb = null;
     this.Data = null;
     this.Init = null;
-    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated) {
+    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated, optional_params={}) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
         var token = Dash.Local.Get("token");
@@ -17949,6 +17946,9 @@ function DashUser () {
             params["token"] = token;
             params["init"] = true;
             params["gzip"] = true;
+            for (var key in optional_params) {
+                params[key] = optional_params[key];
+            };
             Dash.Request(this, this.on_auth_response, "Users", params);
         }
         else {
@@ -17992,7 +17992,6 @@ function DashUser () {
         }
         return img;
     };
-    
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
     };
@@ -20453,7 +20452,7 @@ function DashGuiButtonStyleToolbar () {
     };
 }
 
-function DashGuiLogin (on_login_binder, on_login_callback, color) {
+function DashGuiLogin (on_login_binder, on_login_callback, color, optional_params={}) {
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
@@ -20462,6 +20461,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
     this.on_login_callback = null;
+    this.optional_params = optional_params;
     if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
     }
@@ -20637,6 +20637,9 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         server_data["f"] = "login";
         server_data["email"] = email;
         server_data["pass"] = pass;
+        for (var key in this.optional_params) {
+            server_data[key] = this.optional_params[key];
+        };
         this.login_button.Request(api, server_data, this.on_login_response, this);
     };
     this.ResetLogin = function () {
@@ -20664,7 +20667,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         if (response["error"]) {
             alert(response["error"]);
             return;
-        }
+        };
         console.log("******* LOG IN *******", response);
         Dash.User.SetUserAuthentication(this.email_input.Text(), response);
         (function (self) {
@@ -27430,6 +27433,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
     this.label = Dash.Gui.GetHTMLAbsContext();
+    this.notification_icon = null;
     if ((this.row_height-this.width) < this.label_height) {
         this.label_height = this.row_height-this.width;
     };
@@ -27497,6 +27501,31 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
                 self.click_active = false;
             }, 750);
         })(this);
+    };
+    this.SetNotificationActive = function (is_active) {
+        if (is_active && !this.notification_icon) {
+            this.create_notification_icon();
+        };
+        if (!is_active && this.notification_icon) {
+            this.notification_icon.remove();
+            this.notification_icon = null;
+        };
+    };
+    this.create_notification_icon = function () {
+        var icon_size = this.width*0.3;
+        this.notification_icon = $("<div></div>");
+        this.html.append(this.notification_icon);
+        this.notification_icon.css({
+            "background": "red",
+            "position": "absolute",
+            "top": 0,
+            "right": 0,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size*0.5,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+        });
+
     };
     this.setup_styles();
 };

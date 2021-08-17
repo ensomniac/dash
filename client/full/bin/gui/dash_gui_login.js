@@ -1,4 +1,4 @@
-function DashGuiLogin (on_login_binder, on_login_callback, color) {
+function DashGuiLogin (on_login_binder, on_login_callback, color, optional_params={}) {
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
@@ -7,6 +7,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.button_bar = $("<div></div>");
     this.color = color || Dash.Color.Dark;
     this.on_login_callback = null;
+    this.optional_params = optional_params;
 
     if (on_login_binder && on_login_callback) {
         this.on_login_callback = on_login_callback.bind(on_login_binder);
@@ -233,6 +234,10 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
         server_data["email"] = email;
         server_data["pass"] = pass;
 
+        for (var key in this.optional_params) {
+            server_data[key] = this.optional_params[key];
+        };
+
         this.login_button.Request(api, server_data, this.on_login_response, this);
     };
 
@@ -268,12 +273,10 @@ function DashGuiLogin (on_login_binder, on_login_callback, color) {
     this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
-
             return;
-        }
+        };
 
         console.log("******* LOG IN *******", response);
-
         Dash.User.SetUserAuthentication(this.email_input.Text(), response);
 
         (function (self) {

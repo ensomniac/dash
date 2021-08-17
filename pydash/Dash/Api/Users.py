@@ -136,7 +136,9 @@ class ApiUsers:
         return self.SetResponse(DashUsers(self.Params, self.DashContext).ResetResponse())
 
     def login(self):
-        return self.SetResponse(DashUsers(self.Params, self.DashContext).Login())
+        response = self.SetResponse(DashUsers(self.Params, self.DashContext).Login())
+        response = self.merge_addl_into_init(response)
+        return response
 
     def OnInit(self, callback):
         # When passed a callback, this function will be called whenever
@@ -146,14 +148,22 @@ class ApiUsers:
 
     def validate(self):
         response = DashUsers(self.Params, self.DashContext).Validate()
-
-        if response.get("init") and self._on_init_callback:
-            additional = self._on_init_callback()
-
-            for key in additional:
-                response["init"][key] = additional[key]
-
+        response = self.merge_addl_into_init(response)
         return self.SetResponse(response)
+
+    def merge_addl_into_init(self, response):
+        if "init" not in response:
+            return response
+
+        if not self._on_init_callback:
+            return response
+
+        additional = self._on_init_callback()
+
+        for key in additional:
+            response["init"][key] = additional[key]
+
+        return response
 
     def update_password(self):
         return self.SetResponse(DashUsers(self.Params, self.DashContext).UpdatePassword())

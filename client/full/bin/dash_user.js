@@ -6,7 +6,7 @@ function DashUser () {
     this.Data = null;
     this.Init = null;
 
-    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated) {
+    this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated, optional_params={}) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
 
@@ -21,6 +21,10 @@ function DashUser () {
             params["token"] = token;
             params["init"] = true;
             params["gzip"] = true;
+
+            for (var key in optional_params) {
+                params[key] = optional_params[key];
+            };
 
             Dash.Request(this, this.on_auth_response, "Users", params);
 
@@ -76,7 +80,7 @@ function DashUser () {
 
         return img;
     };
-    
+
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
     };

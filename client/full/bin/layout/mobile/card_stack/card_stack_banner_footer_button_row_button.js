@@ -18,6 +18,8 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
     this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
     this.label = Dash.Gui.GetHTMLAbsContext();
 
+    this.notification_icon = null;
+
     if ((this.row_height-this.width) < this.label_height) {
         this.label_height = this.row_height-this.width;
     };
@@ -103,6 +105,39 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
                 self.click_active = false;
             }, 750);
         })(this);
+
+    };
+
+    this.SetNotificationActive = function (is_active) {
+
+        if (is_active && !this.notification_icon) {
+            this.create_notification_icon();
+        };
+
+        if (!is_active && this.notification_icon) {
+            this.notification_icon.remove();
+            this.notification_icon = null;
+        };
+
+    };
+
+    this.create_notification_icon = function () {
+        var icon_size = this.width*0.3;
+
+        this.notification_icon = $("<div></div>");
+        this.html.append(this.notification_icon);
+
+        this.notification_icon.css({
+            "background": "red",
+            "position": "absolute",
+            "top": 0,
+            "right": 0,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size*0.5,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+        });
+
 
     };
 
