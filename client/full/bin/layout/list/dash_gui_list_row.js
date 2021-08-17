@@ -494,6 +494,11 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
 
+        if (this.is_header) {
+            // Keep the container so the header stays properly aligned, but don't add an icon
+            icon_button.icon.icon_html.remove();
+        }
+
         return icon_button;
     };
 

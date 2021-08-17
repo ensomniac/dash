@@ -1,13 +1,14 @@
-function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="", autosave=false) {
+function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="") {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
+    this.color = color || Dash.Color.Light;
     this.data_key = data_key;
-    this.autosave = true;
 
+    this.autosave = true;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
@@ -20,7 +21,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.locked = false;
     this.lock_button = null;
 
-    this.color = color || Dash.Color.Light;
+    DashGuiInputRowInterface.call(this);
 
     this.setup_styles = function () {
         this.html.append(this.invalid_input_highlight);
@@ -49,10 +50,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             this.input.OnSubmit(this.on_submit, this);
             this.create_save_button();
         }
+
         else {
             this.input.SetLocked(true);
             highlight_color = this.color.AccentBad;
-        };
+        }
 
         this.html.css({
             "cursor": "pointer",
@@ -158,7 +160,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
                 "opacity": 0,
             });
             return;
-        };
+        }
 
         this.button.html.css({
             "position": "absolute",
@@ -181,51 +183,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "line-height": Dash.Size.RowHeight + "px",
             "color": "rgba(0, 0, 0, 0.9)"
         });
-    };
-
-    this.SetInputValidity = function (input_is_valid) {
-        console.log("input_is_valid: " + input_is_valid, "\n", this.color);
-
-        if (input_is_valid) {
-            this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
-        }
-
-        else {
-            this.invalid_input_highlight.stop().animate({"opacity": 1}, 100);
-        }
-    };
-
-    this.FlashSave = function () {
-        (function (self) {
-            self.flash_save.stop().animate({"opacity": 1}, 100, function () {
-                self.flash_save.stop().animate({"opacity": 0}, 1000);
-            });
-        })(this);
-    };
-
-    this.SetupCombo = function (combo_options) {
-        this.initial_value = this.initial_value || combo_options[0]["id"];
-
-        this.input.html.css({
-            "opacity": 0,
-            "user-select": "none",
-            "pointer-events": "none",
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-
-        });
-
-        var options = {};
-        options["list"] = combo_options;
-        options["selected"] = ComboUtils.GetDataFromID(combo_options, this.initial_value);
-        options["thin_style"] = true;
-        options["text_alignment"] = "left";
-        options["label_style"] = "light";
-        options["label_transparent"] = true;
-
-        this.combo = new Combo(this, "", options, this.on_combo_changed, this);
-        this.html.append(this.combo.html);
     };
 
     this.on_combo_changed = function (option) {
@@ -268,23 +225,16 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         })(this);
     };
 
-    this.SetAutosave = function (use_autosave) {
-        this.autosave = use_autosave;
-
-        return this;
-    };
-
     this.input_changed = function (ignore_save_button_show) {
         if (!this.button || ignore_save_button_show) {
             return;
         }
 
         if (this.autosave) {
-
             if (this.autosave_timeout) {
                 clearTimeout(this.autosave_timeout);
                 this.autosave_timeout = null;
-            };
+            }
 
             (function (self) {
                 // This timeout is intentionally pretty long since the field will auto save if the
@@ -292,12 +242,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
                 // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
                 self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 1500);
             })(this);
-
         }
+
         else {
             this.show_save_button();
-        };
-
+        }
     };
 
     this.trigger_autosave = function () {
@@ -331,16 +280,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         });
     };
 
-    this.CanAutoUpdate = function () {
-        var highlight_opacity = parseFloat("" + this.highlight.css("opacity"));
-
-        if (highlight_opacity > 0.2) {
-            return false;
-        }
-
-        return !this.save_button_visible;
-    };
-
     this.show_save_button = function () {
         if (this.save_button_visible || !this.button) {
             return;
@@ -361,57 +300,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.save_button_visible = false;
     };
 
-    this.SetText = function (text) {
-        text = this.parse_value(text);
-
-        this.input.SetText(text);
-        this.input_changed(true);
-
-        if (this.autosave_timeout) {
-            clearTimeout(this.autosave_timeout);
-
-            this.autosave_timeout = null;
-        }
-
-        if (this.load_dots) {
-            this.load_dots.Stop();
-        }
-
-        this.hide_save_button();
-    };
-
-    this.Text = function () {
-        return this.input.Text();
-    };
-
-    this.Request = function (api, server_data, callback, callback_binder) {
-
-        console.log("RE");
-
-        if (this.autosave_timeout) {
-            console.log("Cleared timeout");
-            clearTimeout(this.autosave_timeout);
-            this.autosave_timeout = null;
-        };
-
-        var request = null;
-
-        this.request_callback = callback;
-        this.request_callback_binder = callback_binder;
-
-        if (!server_data["token"]) {
-            server_data["token"] = Dash.Local.Get("token");
-        };
-
-        (function (self) {
-            request = self.button.Request(api, server_data, function (response_json) {
-                self.on_request_response(response_json);
-            }, self);
-        })(this);
-
-        return request;
-    };
-
     this.on_request_response = function (response_json) {
         this.hide_save_button();
 
@@ -420,65 +308,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         this.request_callback.bind(this.request_callback_binder)(response_json);
-    };
-
-    this.SetLocked = function (is_locked) {
-        if (is_locked) {
-            this.DisableSaveButton();
-        }
-
-        else {
-            this.EnableSaveButton();
-        }
-    };
-
-    this.EnableSaveButton = function () {
-        if (!this.button) {
-            return;
-        }
-
-        // this.button.SetButtonVisibility(true);
-
-        this.input.SetLocked(false);
-        this.input.SetTransparent(true);
-    };
-
-    this.DisableSaveButton = function () {
-        if (!this.button) {
-            return;
-        }
-
-        // this.button.SetButtonVisibility(false);
-
-        this.input.SetLocked(true);
-    };
-
-    this.IsLoading = function () {
-        if (this.button) {
-            return this.button.IsLoading();
-        }
-
-        else {
-            return false;
-        }
-    };
-
-    this.SetAlignRight = function () {
-        var spacer = $("<div></div>");
-
-        this.html.prepend(spacer);
-
-        spacer.css({
-            "flex-grow": 1,
-        });
-
-        this.html.css({
-            "padding-right": Dash.Size.Padding,
-        });
-
-        this.label.css({
-            "width": "auto",
-        });
     };
 
     this.on_submit = function () {
@@ -504,52 +333,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         // }
 
         response_callback(this);
-    };
-
-    this.AddIconButton = function (icon_name, callback, binder, data_key=null) {
-        callback = callback.bind(binder);
-
-        var button = new Dash.Gui.IconButton(
-            icon_name,
-            function () {
-                callback(data_key);
-            },
-            this,
-            this.color,
-            {"size_mult": 0.9}
-        );
-
-        button.html.css({
-            "position": "absolute",
-            "right": 0,
-            "top": 0,
-            "height": Dash.Size.RowHeight,
-            "width": Dash.Size.RowHeight,
-        });
-
-        this.html.append(button.html);
-
-        this.icon_button_count += 1;
-
-        // We need to leave space for the save button to coexist with this new button
-        if (this.button) {
-            this.button.html.css("margin-right", Dash.Size.Padding * (3 * this.icon_button_count));
-        }
-
-        return button;
-    };
-
-    this.AddLockToggle = function (data_key) {
-        var icon_name = "unlock_alt";
-
-        // Only start locked if text exists already
-        if (this.Text()) {
-            this.locked = true;
-
-            icon_name = "lock";
-        }
-
-        this.lock_button = this.AddIconButton(icon_name, this.toggle_lock, this, data_key);
     };
 
     this.toggle_lock = function (data_key) {
