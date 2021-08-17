@@ -21257,6 +21257,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label = null;
     this.icon_button = null;
     this.checked = this.default_state;
+    this.icon_button_redraw_styling = null;
     // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
@@ -21283,6 +21284,19 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.redraw();
         this.callback();
     };
+    this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {
+        this.icon_button_redraw_styling = {};
+        if (Dash.IsValidObject(button_container_css)) {
+            this.icon_button_redraw_styling["button_container_css"] = button_container_css;
+        }
+        if (Dash.IsValidObject(icon_container_css)) {
+            this.icon_button_redraw_styling["icon_container_css"] = icon_container_css;
+        }
+        if (Dash.IsValidObject(icon_css)) {
+            this.icon_button_redraw_styling["icon_css"] = icon_css;
+        }
+        this.restyle_icon_button();
+    };
     this.redraw = function () {
         this.icon_button = new Dash.Gui.IconButton(
             this.checked ? "checked_box" : "unchecked_box",
@@ -21297,6 +21311,21 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         else {
             this.html.append(this.icon_button.html);
             this.html.append(this.label.html);
+        }
+        this.restyle_icon_button();
+    };
+    this.restyle_icon_button = function () {
+        if (!Dash.IsValidObject(this.icon_button_redraw_styling)) {
+            return;
+        }
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["button_container_css"])) {
+            this.icon_button.html.css(this.icon_button_redraw_styling["button_container_css"]);
+        }
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_container_css"])) {
+            this.icon_button.icon.html.css(this.icon_button_redraw_styling["icon_container_css"]);
+        }
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_css"])) {
+            this.icon_button.icon.icon_html.css(this.icon_button_redraw_styling["icon_css"]);
         }
     };
     this.draw_label = function () {
@@ -21609,7 +21638,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.button.highlight.css({
             "background": "none",
         });
-
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
@@ -21627,11 +21655,15 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
     this.on_label_clicked = function () {
         var active_text = this.input.Text();
+        var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
         if (active_text.slice(0, 8) === "https://") {
             window.open(active_text, "_blank");
         }
-        if (Dash.IsValidEmail(active_text)) {
+        else if (Dash.IsValidEmail(active_text)) {
             window.open("mailto:" + active_text, "_blank");
+        }
+        else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+            window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
         }
     };
     this.setup_connections = function () {
