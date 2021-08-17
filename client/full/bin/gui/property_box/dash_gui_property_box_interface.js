@@ -195,11 +195,11 @@ function DashGuiPropertyBoxInterface () {
         return row;
     };
 
-    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}, autosave=false) {
-
+    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
         if (this.get_data_cb) {
             this.data = this.get_data_cb();
         }
+
         else {
             this.data = {};
         }
@@ -211,7 +211,6 @@ function DashGuiPropertyBoxInterface () {
         row_details["combo_options"] = combo_options || null;
         row_details["value"] = this.data[data_key]   || default_value;
         row_details["can_edit"] = can_edit;
-        row_details["autosave"] = autosave;
 
         (function (self, row_details, callback) {
             var _callback;
@@ -226,7 +225,7 @@ function DashGuiPropertyBoxInterface () {
                 _callback = function (row_input) {
                     self.on_row_updated(row_input, row_details);
                 };
-            };
+            }
 
             var row = new Dash.Gui.InputRow(
                 row_details["label_text"],
@@ -236,8 +235,7 @@ function DashGuiPropertyBoxInterface () {
                 _callback,
                 self,
                 self.color,
-                row_details["key"],
-                row_details["autosave"]
+                row_details["key"]
             );
 
             self.update_inputs[row_details["key"]] = row;

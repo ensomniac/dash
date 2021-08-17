@@ -87,6 +87,7 @@ function GuiIcons (icon) {
         "portal_editor":         new GuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
         "read":                  new GuiIconDefinition(this.icon, "Read", this.weight["regular"], "book-reader"),
         "refresh":               new GuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
+        "remove_person":         new GuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash", 1.3, 0.55, 0.15),
         "search":                new GuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new GuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "share":                 new GuiIconDefinition(this.icon, "Share", this.weight["regular"],"share"),

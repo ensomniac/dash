@@ -135,7 +135,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "width": icon_size,
             "height": icon_size,
             "border-radius": icon_size,
-            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)", 
             "border": "2px solid white",
         });
 
