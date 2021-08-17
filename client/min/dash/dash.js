@@ -23613,8 +23613,8 @@ function DashGuiComboInterface () {
     };
 }
 
-function DashGuiComboRow (Combo, option) {
-    this.combo = Combo;
+function DashGuiComboRow (combo, option) {
+    this.combo = combo;
     this.option = option;
     this.color_set = this.combo.color_set;
     this.label_text = this.option["label_text"] || this.option["display_name"];
@@ -23648,8 +23648,8 @@ function DashGuiComboRow (Combo, option) {
             "color": this.color_set.Text.Base,
         });
     };
+    // Prior to showing, set the width of rows to fit the content
     this.SetWidthToFit = function (label_width=null) {
-        // Prior to showing, set the width of rows to fit the content
         if (!label_width) {
             label_width = "fit-content";
         }
@@ -23662,8 +23662,8 @@ function DashGuiComboRow (Combo, option) {
             "padding-right": Dash.Size.Padding * 0.5,
         });
     };
+    // Prior to showing, set the width of rows
     this.SetWidth = function (width) {
-        // Prior to showing, set the width of rows
         this.html.css({
             "width": width,
         });
@@ -23682,7 +23682,7 @@ function DashGuiComboRow (Combo, option) {
         }
         else {
             this.highlight.stop().animate({"opacity": 0}, 100);
-        };
+        }
     };
     this.setup_connections = function () {
         (function (self) {

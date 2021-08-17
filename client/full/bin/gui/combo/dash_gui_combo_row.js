@@ -1,17 +1,15 @@
-function DashGuiComboRow (Combo, option) {
-
-    this.combo = Combo;
+function DashGuiComboRow (combo, option) {
+    this.combo = combo;
     this.option = option;
+
     this.color_set = this.combo.color_set;
     this.label_text = this.option["label_text"] || this.option["display_name"];
-
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
 
     this.setup_styles = function () {
-
         this.html.append(this.highlight);
         this.html.append(this.label);
 
@@ -39,12 +37,10 @@ function DashGuiComboRow (Combo, option) {
             "border-bottom": "1px solid rgba(255, 255, 255, 0.05)",
             "color": this.color_set.Text.Base,
         });
-
     };
 
+    // Prior to showing, set the width of rows to fit the content
     this.SetWidthToFit = function (label_width=null) {
-        // Prior to showing, set the width of rows to fit the content
-
         if (!label_width) {
             label_width = "fit-content";
         }
@@ -60,9 +56,8 @@ function DashGuiComboRow (Combo, option) {
         });
     };
 
+    // Prior to showing, set the width of rows
     this.SetWidth = function (width) {
-        // Prior to showing, set the width of rows
-
         this.html.css({
             "width": width,
         });
@@ -72,7 +67,6 @@ function DashGuiComboRow (Combo, option) {
             "padding-left": Dash.Size.Padding*0.5,
             "padding-right": Dash.Size.Padding*0.5,
         });
-
     };
 
     this.SetSearchResultActive = function (is_active) {
@@ -80,20 +74,17 @@ function DashGuiComboRow (Combo, option) {
     };
 
     this.set_highlight_active = function (is_active) {
-
         if (is_active) {
             this.highlight.stop().animate({"opacity": 1}, 50);
         }
+
         else {
             this.highlight.stop().animate({"opacity": 0}, 100);
-        };
-
+        }
     };
 
     this.setup_connections = function () {
-
         (function (self) {
-
             self.label.on("mouseenter", function () {
                 self.set_highlight_active(true);
             });
@@ -104,15 +95,14 @@ function DashGuiComboRow (Combo, option) {
 
             self.label.on("click", function (e) {
                 self.combo.on_selection(self.option);
+
                 e.preventDefault();
+
                 return false;
             });
-
         })(this);
-
     };
 
     this.setup_styles();
     this.setup_connections();
-
 }
