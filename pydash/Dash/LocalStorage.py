@@ -368,6 +368,9 @@ class DashLocalStorage:
         from json import loads
         from time import sleep
 
+        if not os.path.exists(full_path):
+            return None
+
         error = ""
         data = None
         attempts = 0
