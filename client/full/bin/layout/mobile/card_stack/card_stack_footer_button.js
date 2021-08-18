@@ -11,7 +11,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
     this.html = Dash.Gui.GetHTMLContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height-(Dash.Size.Padding*0.5), 0.75, "black");
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height-(Dash.Size.Padding*0.5), 0.75, "#ff684d");
     this.label = Dash.Gui.GetHTMLAbsContext();
 
     this.setup_styles = function () {
@@ -60,6 +60,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
+            "color": "white",
         });
 
         this.setup_connections();
