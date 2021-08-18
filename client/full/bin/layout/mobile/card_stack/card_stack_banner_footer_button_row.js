@@ -5,6 +5,8 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
 
+    this.vertical_offset_slider = $("<div></div>");
+
     this.left_spacer = Dash.Gui.GetHTMLContext();
     this.right_spacer = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
@@ -16,15 +18,28 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     this.setup_styles = function () {
 
-        this.html.append(this.left_spacer);
-        this.html.append(this.center_content);
-        this.html.append(this.right_spacer);
+        this.html.append(this.vertical_offset_slider);
+
+        this.vertical_offset_slider.append(this.left_spacer);
+        this.vertical_offset_slider.append(this.center_content);
+        this.vertical_offset_slider.append(this.right_spacer);
 
         this.html.css({
             "background": "none",
             "height": this.row_height,
-            "display": "flex",
             // "background": "orange",
+            "pointer-events": "none",
+        });
+
+        this.vertical_offset_slider.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "height": this.row_height,
+            // "background": "purple",
+            "display": "flex",
+            // "pointer-events": "auto",
         });
 
         this.left_spacer.css({
@@ -46,6 +61,20 @@ function DashCardStackBannerFooterButtonRow (banner) {
         });
 
         this.setup_connections();
+
+    };
+
+    this.OnScroll = function (scroll_norm, headline_offset) {
+
+        var anim_clamp = 0.7
+        if (scroll_norm < anim_clamp) {
+            scroll_norm = Dash.Math.InverseLerp(0, anim_clamp, scroll_norm);
+        }
+        else {
+            scroll_norm = 1;
+        };
+
+        this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
 
     };
 

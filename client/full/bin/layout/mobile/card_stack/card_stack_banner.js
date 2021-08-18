@@ -21,8 +21,8 @@ function DashCardStackBanner (stack) {
 
     this.HeaderHeight = this.row_height;
     this.FooterHeight = this.footer_height;
-    this.FooterHeight = this.footer_height;
     this.FooterButtonWidth = this.footer_button_width;
+    this.skirt_bottom_rest = 0;
 
     this.setup_styles = function () {
 
@@ -33,6 +33,7 @@ function DashCardStackBanner (stack) {
         this.html.css({
             "background": "none",
             // "background": "black",
+            "pointer-events": "none",
         });
 
         this.content.css({
@@ -98,9 +99,46 @@ function DashCardStackBanner (stack) {
         this.header_row.SetRightIcon(icon_name, callback);
     };
 
+    this.SetFixed = function(is_fixed){
+        // When is_fixed is true, the banner does not scroll
+        // with the rest of the content on the page
+        this.stack.SetFixedBanner(is_fixed);
+    };
+
     this.AddFooterIcon = function(icon_name, label_text, callback){
         this.assert_footer_row();
         return this.footer_row.AddIcon(icon_name, label_text, callback);
+    };
+
+    this.OnScroll = function (scroll_top) {
+        var current_height = this.html.height();
+
+        var scroll_norm = 1; // Scrolled past the banner
+        if (scroll_top <= current_height) {
+            scroll_norm = scroll_top / current_height;
+        };
+
+        // var scroll_norm = scroll_top / current_height;
+        var max_offset = current_height + this.footer_row.row_height;
+        var headline_offset = 0;
+
+        if (this.headline) {
+            headline_offset = this.headline.GetHeight();
+            this.headline.OnScroll(scroll_norm);
+        };
+
+        if (this.footer_row) {
+            this.footer_row.OnScroll(scroll_norm, headline_offset);
+        };
+
+        if (this.background_skirt) {
+            var shadow_opacity = 0.5*scroll_norm;
+            this.background_skirt.css({
+                "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
+                "box-shadow": "0px 0px 30px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
+            });
+        };
+
     };
 
     this.assert_header_row = function() {
@@ -153,7 +191,7 @@ function DashCardStackBanner (stack) {
         var headline_bottom_margin = 0;
 
         var bottom_margin = 0;
-        var background_skirt_bottom = Dash.Size.ButtonHeight;
+        this.skirt_bottom_rest = Dash.Size.ButtonHeight;
 
         if (this.header_row && !this.footer_row) {
 
@@ -164,7 +202,7 @@ function DashCardStackBanner (stack) {
             // To account for the balance offset of the
             // top button row when there is no footer
             bottom_margin = Dash.Size.ButtonHeight;
-            background_skirt_bottom = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
         };
 
         if (this.header_row && this.footer_row) {
@@ -178,8 +216,8 @@ function DashCardStackBanner (stack) {
             // top button row when there is no footer
             // bottom_margin = Dash.Size.ButtonHeight;
             bottom_margin = Dash.Size.Padding;
-            background_skirt_bottom = Dash.Size.ButtonHeight*2;
-            background_skirt_bottom = -(this.footer_height-(this.footer_button_width*0.5));
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
 
         };
 
@@ -198,7 +236,7 @@ function DashCardStackBanner (stack) {
         });
 
         this.background_skirt.css({
-            "bottom": -background_skirt_bottom,
+            "bottom": -this.skirt_bottom_rest,
         });
 
         this.last_sizing_mode = mode;

@@ -39,6 +39,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "height": this.row_height,
             "width": this.width,
             "background": "none",
+            "pointer-events": "auto",
             // "overflow": "visible",
         });
 

@@ -26701,12 +26701,16 @@ function DashMobileLayoutCardStack (binder, color) {
     this.center_content = null;
     this.left_content = null;
     this.right_content = null;
+    this.banner = null;
+    this.banner_fixed = false; // By default, the banner scrolls with the rest of the content
     this.footer_button_overlay = null;
     this.anim_duration = 400;
     this.backing_gradient = null;
+    this.banner_spacer = null;
     this.width = 0;
     this.height = 0;
     this.frame = 0;
+    this.center_scroll_top = 0;
     this.active_panel_index = 1; // Center
     this.panel_offsets = [0, 0, 0];
     this.slider_offsets = [0, 0, 0];
@@ -26742,9 +26746,27 @@ function DashMobileLayoutCardStack (binder, color) {
             "-o-transform": "translateZ(0)",
             "transform": "translateZ(0)",
         });
+        this.setup_connections();
         this.html.append(this.slider);
         Dash.OnHTMLResized(this, this.on_resized);
         this.on_resized(window.innerWidth, window.innerHeight);
+    };
+    this.setup_connections = function () {
+        (function(self){
+            self.center_content.scroll(function() {
+                self.on_center_scroll();
+            });
+        })(this);
+    };
+    this.on_center_scroll = function () {
+        this.center_scroll_top = this.center_content.scrollTop();
+        if (!this.banner_fixed) {
+            return;
+        };
+        // console.log("center_content scrolling >>");
+        var banner_height = this.banner.html.height();
+        this.banner_spacer.css("height", banner_height);
+        this.banner.OnScroll(this.center_scroll_top);
     };
     this.on_resized = function (width, height) {
         this.panel_offsets = [0, -width, -width*2];
@@ -26770,6 +26792,9 @@ function DashMobileLayoutCardStack (binder, color) {
         });
         this.width = width;
         this.height = height;
+        if (this.banner_fixed) {
+            this.on_center_scroll();
+        };
     };
     this.make_content_panel = function (tmp_color) {
         var content = $("<div></div>");
@@ -26794,9 +26819,50 @@ function DashMobileLayoutCardStack (binder, color) {
         return content;
     };
     this.AddBanner = function(){
-        var banner = new DashCardStackBanner(this);
-        this.AppendHTML(banner.html);
-        return banner;
+        if (this.banner) {
+            console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
+            return this.banner;
+        };
+        this.banner = new DashCardStackBanner(this);
+        this.AppendHTML(this.banner.html);
+        return this.banner;
+    };
+    this.SetFixedBanner = function(is_fixed){
+        // When is_fixed is true, the banner does not scroll
+        // with the rest of the content on the page
+        if (is_fixed) {
+            this.fix_banner_on_top();
+        }
+        else {
+            console.log("WARNING: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+        };
+    };
+    this.fix_banner_on_top = function(){
+        if (this.banner_fixed || !this.banner) {
+            return;
+        };
+        this.banner_fixed = true;
+        // this.banner.html.unbind();
+        this.banner.html.css({
+            "position": "fixed",
+            "top": 0,
+            "left": 0,
+            "right": 0,
+        });
+        this.html.append(this.banner.html);
+        // You should never see this, but it allows the window to scroll correctly
+        this.banner_spacer = $("<div></div>");
+        this.banner_spacer.css({
+            "height": this.banner.html.height(),
+        });
+        this.center_content.prepend(this.banner_spacer);
+        // Wait until the next frame to force on_center_scroll since if this was called
+        // as part of the constructor, it will not yet be attached and have no height
+        (function(self){
+            requestAnimationFrame(function(){
+                self.on_center_scroll();
+            });
+        })(this);
     };
     this.AddUserBanner = function(){
         var banner = new DashCardStackUserBanner(this);
@@ -26975,8 +27041,8 @@ function DashCardStackBanner (stack) {
     this.footer_button_width = Dash.Size.ButtonHeight + Dash.Size.Padding;
     this.HeaderHeight = this.row_height;
     this.FooterHeight = this.footer_height;
-    this.FooterHeight = this.footer_height;
     this.FooterButtonWidth = this.footer_button_width;
+    this.skirt_bottom_rest = 0;
     this.setup_styles = function () {
         this.html.append(this.background_skirt);
         this.html.append(this.content);
@@ -26984,6 +27050,7 @@ function DashCardStackBanner (stack) {
         this.html.css({
             "background": "none",
             // "background": "black",
+            "pointer-events": "none",
         });
         this.content.css({
             // "background": "purple",
@@ -27035,9 +27102,38 @@ function DashCardStackBanner (stack) {
         this.assert_header_row();
         this.header_row.SetRightIcon(icon_name, callback);
     };
+    this.SetFixed = function(is_fixed){
+        // When is_fixed is true, the banner does not scroll
+        // with the rest of the content on the page
+        this.stack.SetFixedBanner(is_fixed);
+    };
     this.AddFooterIcon = function(icon_name, label_text, callback){
         this.assert_footer_row();
         return this.footer_row.AddIcon(icon_name, label_text, callback);
+    };
+    this.OnScroll = function (scroll_top) {
+        var current_height = this.html.height();
+        var scroll_norm = 1; // Scrolled past the banner
+        if (scroll_top <= current_height) {
+            scroll_norm = scroll_top / current_height;
+        };
+        // var scroll_norm = scroll_top / current_height;
+        var max_offset = current_height + this.footer_row.row_height;
+        var headline_offset = 0;
+        if (this.headline) {
+            headline_offset = this.headline.GetHeight();
+            this.headline.OnScroll(scroll_norm);
+        };
+        if (this.footer_row) {
+            this.footer_row.OnScroll(scroll_norm, headline_offset);
+        };
+        if (this.background_skirt) {
+            var shadow_opacity = 0.5*scroll_norm;
+            this.background_skirt.css({
+                "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
+                "box-shadow": "0px 0px 30px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
+            });
+        };
     };
     this.assert_header_row = function() {
         // Create the button row if it doesn't exist yet
@@ -27078,7 +27174,7 @@ function DashCardStackBanner (stack) {
         var headline_top_margin = Dash.Size.Padding*2;
         var headline_bottom_margin = 0;
         var bottom_margin = 0;
-        var background_skirt_bottom = Dash.Size.ButtonHeight;
+        this.skirt_bottom_rest = Dash.Size.ButtonHeight;
         if (this.header_row && !this.footer_row) {
             mode = 1;
             headline_top_margin = Dash.Size.Padding*0.25;
@@ -27086,7 +27182,7 @@ function DashCardStackBanner (stack) {
             // To account for the balance offset of the
             // top button row when there is no footer
             bottom_margin = Dash.Size.ButtonHeight;
-            background_skirt_bottom = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
         };
         if (this.header_row && this.footer_row) {
             mode = 2;
@@ -27097,8 +27193,8 @@ function DashCardStackBanner (stack) {
             // top button row when there is no footer
             // bottom_margin = Dash.Size.ButtonHeight;
             bottom_margin = Dash.Size.Padding;
-            background_skirt_bottom = Dash.Size.ButtonHeight*2;
-            background_skirt_bottom = -(this.footer_height-(this.footer_button_width*0.5));
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
         };
         if (mode == this.last_sizing_mode) {
             // Correct properties are already set
@@ -27112,7 +27208,7 @@ function DashCardStackBanner (stack) {
             "margin-bottom": bottom_margin,
         });
         this.background_skirt.css({
-            "bottom": -background_skirt_bottom,
+            "bottom": -this.skirt_bottom_rest,
         });
         this.last_sizing_mode = mode;
     };
@@ -27218,6 +27314,7 @@ function DashCardStackBannerTopButtonRow (banner) {
         this.left_icon_callback = callback.bind(this.banner);
         this.left_button_content.css({
             "display": "block",
+            "pointer-events": "auto",
         });
     };
     this.SetRightIcon = function(icon_name="gear", callback=null){
@@ -27225,6 +27322,7 @@ function DashCardStackBannerTopButtonRow (banner) {
         this.right_icon_callback = callback.bind(this.banner);
         this.right_button_content.css({
             "display": "block",
+            "pointer-events": "auto",
         });
     };
     this.set_icon = function(container, icon, icon_name){
@@ -27247,6 +27345,7 @@ function DashCardStackBannerHeadline (banner) {
         this.label_bottom.text("Bottom");
         this.html.css({
             "background": "none",
+            // "background": "green",
             "padding-top": Dash.Size.Padding*2,
             "padding-bottom": Dash.Size.Padding*2,
         });
@@ -27261,6 +27360,25 @@ function DashCardStackBannerHeadline (banner) {
             "font-family": "sans_serif_bold",
             "font-size": "175%",
         });
+    };
+    this.GetHeight = function () {
+        return this.html.height() + (Dash.Size.Padding*6)
+    };
+    this.OnScroll = function (scroll_norm) {
+        var opac_norm = 1;
+        if (scroll_norm > 0.25 && scroll_norm  < 0.5) {
+            opac_norm = Dash.Math.InverseLerp(0.5, 0.25, scroll_norm);
+        }
+        else if (scroll_norm >= 0.5) {
+            opac_norm = 0;
+        }
+        else {
+            opac_norm = 1;
+            // this.html.css("height", 10);
+        };
+        this.label_top.css("opacity", opac_norm);
+        this.label_bottom.css("opacity", opac_norm);
+
     };
     this.SetHeadlineText = function(text_primary, text_secondary){
         this.label_top.text(text_primary);
@@ -27393,6 +27511,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.stack = this.banner.stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
+    this.vertical_offset_slider = $("<div></div>");
     this.left_spacer = Dash.Gui.GetHTMLContext();
     this.right_spacer = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
@@ -27400,14 +27519,25 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.button_size = this.banner.FooterHeight;
     this.buttons = [];
     this.setup_styles = function () {
-        this.html.append(this.left_spacer);
-        this.html.append(this.center_content);
-        this.html.append(this.right_spacer);
+        this.html.append(this.vertical_offset_slider);
+        this.vertical_offset_slider.append(this.left_spacer);
+        this.vertical_offset_slider.append(this.center_content);
+        this.vertical_offset_slider.append(this.right_spacer);
         this.html.css({
             "background": "none",
             "height": this.row_height,
-            "display": "flex",
             // "background": "orange",
+            "pointer-events": "none",
+        });
+        this.vertical_offset_slider.css({
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "height": this.row_height,
+            // "background": "purple",
+            "display": "flex",
+            // "pointer-events": "auto",
         });
         this.left_spacer.css({
             "height": this.row_height,
@@ -27425,6 +27555,16 @@ function DashCardStackBannerFooterButtonRow (banner) {
             "height": this.row_height,
         });
         this.setup_connections();
+    };
+    this.OnScroll = function (scroll_norm, headline_offset) {
+        var anim_clamp = 0.7
+        if (scroll_norm < anim_clamp) {
+            scroll_norm = Dash.Math.InverseLerp(0, anim_clamp, scroll_norm);
+        }
+        else {
+            scroll_norm = 1;
+        };
+        this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
     };
     this.setup_connections = function(){
         (function(self){
@@ -27508,6 +27648,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "height": this.row_height,
             "width": this.width,
             "background": "none",
+            "pointer-events": "auto",
             // "overflow": "visible",
         });
         this.icon_circle.css({
@@ -27641,7 +27782,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": "orange",
+            "background": "#ff6a4b",
             "margin-top": Dash.Size.Padding*0.5,
             "margin-bottom": Dash.Size.Padding*0.5,
             "margin-right": Dash.Size.Padding*0.5,

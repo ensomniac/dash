@@ -18,6 +18,7 @@ function DashCardStackBannerHeadline (banner) {
 
         this.html.css({
             "background": "none",
+            // "background": "green",
             "padding-top": Dash.Size.Padding*2,
             "padding-bottom": Dash.Size.Padding*2,
         });
@@ -34,6 +35,31 @@ function DashCardStackBannerHeadline (banner) {
             "font-family": "sans_serif_bold",
             "font-size": "175%",
         });
+
+    };
+
+    this.GetHeight = function () {
+        return this.html.height() + (Dash.Size.Padding*6)
+    };
+
+    this.OnScroll = function (scroll_norm) {
+
+        var opac_norm = 1;
+
+        if (scroll_norm > 0.25 && scroll_norm  < 0.5) {
+            opac_norm = Dash.Math.InverseLerp(0.5, 0.25, scroll_norm);
+        }
+        else if (scroll_norm >= 0.5) {
+            opac_norm = 0;
+        }
+        else {
+            opac_norm = 1;
+            // this.html.css("height", 10);
+        };
+
+        this.label_top.css("opacity", opac_norm);
+        this.label_bottom.css("opacity", opac_norm);
+
 
     };
 

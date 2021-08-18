@@ -131,6 +131,7 @@ function DashCardStackBannerTopButtonRow (banner) {
 
         this.left_button_content.css({
             "display": "block",
+            "pointer-events": "auto",
         });
 
     };
@@ -141,6 +142,7 @@ function DashCardStackBannerTopButtonRow (banner) {
 
         this.right_button_content.css({
             "display": "block",
+            "pointer-events": "auto",
         });
 
     };

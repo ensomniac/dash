@@ -9,15 +9,19 @@ function DashMobileLayoutCardStack (binder, color) {
     this.center_content = null;
     this.left_content = null;
     this.right_content = null;
+    this.banner = null;
+    this.banner_fixed = false; // By default, the banner scrolls with the rest of the content
 
     this.footer_button_overlay = null;
 
     this.anim_duration = 400;
     this.backing_gradient = null;
+    this.banner_spacer = null;
 
     this.width = 0;
     this.height = 0;
     this.frame = 0;
+    this.center_scroll_top = 0;
 
     this.active_panel_index = 1; // Center
     this.panel_offsets = [0, 0, 0];
@@ -61,10 +65,39 @@ function DashMobileLayoutCardStack (binder, color) {
             "transform": "translateZ(0)",
         });
 
+        this.setup_connections();
+
         this.html.append(this.slider);
 
         Dash.OnHTMLResized(this, this.on_resized);
         this.on_resized(window.innerWidth, window.innerHeight);
+
+    };
+
+    this.setup_connections = function () {
+
+        (function(self){
+
+            self.center_content.scroll(function() {
+                self.on_center_scroll();
+            });
+
+        })(this);
+
+    };
+
+    this.on_center_scroll = function () {
+        this.center_scroll_top = this.center_content.scrollTop();
+
+        if (!this.banner_fixed) {
+            return;
+        };
+
+        // console.log("center_content scrolling >>");
+
+        var banner_height = this.banner.html.height();
+        this.banner_spacer.css("height", banner_height);
+        this.banner.OnScroll(this.center_scroll_top);
 
     };
 
@@ -99,6 +132,10 @@ function DashMobileLayoutCardStack (binder, color) {
         this.width = width;
         this.height = height;
 
+        if (this.banner_fixed) {
+            this.on_center_scroll();
+        };
+
     };
 
     this.make_content_panel = function (tmp_color) {
@@ -130,9 +167,65 @@ function DashMobileLayoutCardStack (binder, color) {
     };
 
     this.AddBanner = function(){
-        var banner = new DashCardStackBanner(this);
-        this.AppendHTML(banner.html);
-        return banner;
+
+        if (this.banner) {
+            console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
+            return this.banner;
+        };
+
+        this.banner = new DashCardStackBanner(this);
+        this.AppendHTML(this.banner.html);
+        return this.banner;
+
+    };
+
+    this.SetFixedBanner = function(is_fixed){
+        // When is_fixed is true, the banner does not scroll
+        // with the rest of the content on the page
+
+        if (is_fixed) {
+            this.fix_banner_on_top();
+        }
+        else {
+            console.log("WARNING: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+        };
+
+    };
+
+    this.fix_banner_on_top = function(){
+
+        if (this.banner_fixed || !this.banner) {
+            return;
+        };
+
+        this.banner_fixed = true;
+        // this.banner.html.unbind();
+        this.banner.html.css({
+            "position": "fixed",
+            "top": 0,
+            "left": 0,
+            "right": 0,
+        });
+
+        this.html.append(this.banner.html);
+
+        // You should never see this, but it allows the window to scroll correctly
+        this.banner_spacer = $("<div></div>");
+        this.banner_spacer.css({
+            "height": this.banner.html.height(),
+        });
+        this.center_content.prepend(this.banner_spacer);
+
+        // Wait until the next frame to force on_center_scroll since if this was called
+        // as part of the constructor, it will not yet be attached and have no height
+        (function(self){
+
+            requestAnimationFrame(function(){
+                self.on_center_scroll();
+            });
+
+        })(this);
+
     };
 
     this.AddUserBanner = function(){
