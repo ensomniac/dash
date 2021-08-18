@@ -12,6 +12,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label = null;
     this.icon_button = null;
     this.checked = this.default_state;
+    this.icon_button_redraw_styling = null;
 
     // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
 
@@ -51,6 +52,24 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.callback();
     };
 
+    this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {
+        this.icon_button_redraw_styling = {};
+
+        if (Dash.IsValidObject(button_container_css)) {
+            this.icon_button_redraw_styling["button_container_css"] = button_container_css;
+        }
+
+        if (Dash.IsValidObject(icon_container_css)) {
+            this.icon_button_redraw_styling["icon_container_css"] = icon_container_css;
+        }
+
+        if (Dash.IsValidObject(icon_css)) {
+            this.icon_button_redraw_styling["icon_css"] = icon_css;
+        }
+
+        this.restyle_icon_button();
+    };
+
     this.redraw = function () {
         this.icon_button = new Dash.Gui.IconButton(
             this.checked ? "checked_box" : "unchecked_box",
@@ -67,6 +86,26 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         else {
             this.html.append(this.icon_button.html);
             this.html.append(this.label.html);
+        }
+
+        this.restyle_icon_button();
+    };
+
+    this.restyle_icon_button = function () {
+        if (!Dash.IsValidObject(this.icon_button_redraw_styling)) {
+            return;
+        }
+
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["button_container_css"])) {
+            this.icon_button.html.css(this.icon_button_redraw_styling["button_container_css"]);
+        }
+
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_container_css"])) {
+            this.icon_button.icon.html.css(this.icon_button_redraw_styling["icon_container_css"]);
+        }
+
+        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_css"])) {
+            this.icon_button.icon.icon_html.css(this.icon_button_redraw_styling["icon_css"]);
         }
     };
 

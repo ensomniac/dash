@@ -149,7 +149,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
 
     this.create_save_button = function () {
-
         this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
         this.html.append(this.button.html);
 
@@ -177,7 +176,6 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "background": "none",
         });
 
-
         this.button.label.css({
             "text-align": "right",
             "line-height": Dash.Size.RowHeight + "px",
@@ -199,13 +197,18 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
     this.on_label_clicked = function () {
         var active_text = this.input.Text();
+        var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
 
         if (active_text.slice(0, 8) === "https://") {
             window.open(active_text, "_blank");
         }
 
-        if (Dash.IsValidEmail(active_text)) {
+        else if (Dash.IsValidEmail(active_text)) {
             window.open("mailto:" + active_text, "_blank");
+        }
+
+        else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+            window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
         }
     };
 
