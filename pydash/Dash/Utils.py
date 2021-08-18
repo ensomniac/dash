@@ -189,6 +189,66 @@ class __Utils:
         message.set_body_html(msg)
         message.send()
 
+    def process_exif_image_data(self, img_data, img):
+        from PIL import ExifTags
+
+        img_exif = img.getexif()
+        img_data["exif"] = None
+
+        if img_exif is None:
+            return img_data["exif"]
+
+        img_data["exif"] = {}
+        for key, val in img_exif.items():
+            if key in ExifTags.TAGS:
+
+                processed = False
+
+                if "." in str(val):
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
+                        processed = True
+                    except:
+                        pass
+
+                if not processed:
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = int(val)
+                        processed = True
+                    except:
+                        pass
+
+                if not processed:
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
+                        processed = True
+                    except:
+                        pass
+
+                if not processed:
+                    img_data["exif"][str(ExifTags.TAGS[key])] = str(val)
+
+            else:
+                # [Ryan] I'm not really sure what this case looks like:
+                img_data["exif"]["__" + str(key)] = str(val)
+
+        return img_data
+
+    def rotate_image(self, img, exif):
+
+        rot_deg = 0
+        if exif.get("Orientation") == 6:
+            rot_deg = -90
+        elif exif.get("Orientation") == 8:
+            rot_deg = 90
+        elif exif.get("Orientation") == 3:
+            rot_deg = 180
+
+        if rot_deg != 0:
+            img = img.rotate(rot_deg, expand=True)
+
+        return img, rot_deg
+
     def UploadImage(self, dash_context, user, img_root, img_file, nested=False):
         from PIL import Image
         from io import BytesIO
@@ -199,18 +259,31 @@ class __Utils:
 
         img_data = {}
         img_data["id"] = self.GetRandomID()
+        img_data = self.process_exif_image_data(img_data, img)
+        img_data["org_format"] = img.format.lower()
+
+        if img_data["exif"] and "Orientation" in img_data["exif"]:
+            img, rot_deg = self.rotate_image(img, img_data["exif"])
+            img_data["rot_deg"] = rot_deg
+
         img_data["orig_width"] = img.size[0]
         img_data["orig_height"] = img.size[1]
         img_data["orig_aspect"] = img.size[0] / float(img.size[1])
         img_data["uploaded_by"] = user["email"]
         img_data["uploaded_on"] = datetime.now().isoformat()
 
+        org_ext = "png"
+        if "jpeg" in img_data["org_format"] or "jpg" in img_data["org_format"]:
+            org_ext = "jpg"
+        elif "gif" in img_data["org_format"]:
+            org_ext = "gif"
+
         if nested:
             img_root = os.path.join(img_root, img_data["id"])
 
         os.makedirs(img_root, exist_ok=True)
 
-        orig_path = os.path.join(img_root, f"{img_data['id']}_orig.png")
+        orig_path = os.path.join(img_root, f"{img_data['id']}_orig." + org_ext)
         thumb_path = os.path.join(img_root, f"{img_data['id']}_thb.jpg")
         data_path = os.path.join(img_root, f"{img_data['id']}.json")
 
@@ -254,7 +327,7 @@ class __Utils:
         url_root += img_root.split(f"/{dash_context['asset_path']}/local/")[-1]
 
         thumb_url = f"{url_root}/{img_data['id']}_thb.jpg"
-        orig_url = f"{url_root}/{img_data['id']}_orig.png"
+        orig_url = f"{url_root}/{img_data['id']}_orig." + org_ext
 
         img_data["thumb_url"] = "https://" + thumb_url.replace("//", "/")
         img_data["orig_url"] = "https://" + orig_url.replace("//", "/")

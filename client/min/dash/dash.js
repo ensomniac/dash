@@ -26879,7 +26879,7 @@ function DashMobileLayoutCardStack (binder, color) {
         this.html.append(this.footer_button_overlay);
         // You should never see this, but it allows the window to scroll correctly
         // without having to add padding/margin for the lower button content
-        this.footer_spacer = $("<div>-- FOOTER SPACER --</div>");
+        this.footer_spacer = $("<div></div>");
         this.footer_spacer.css({
             "height": Dash.Size.ButtonHeight,
         });
