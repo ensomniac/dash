@@ -22,6 +22,8 @@ function DashMobileLayoutCardStack (binder, color) {
     this.active_panel_index = 1; // Center
     this.panel_offsets = [0, 0, 0];
     this.slider_offsets = [0, 0, 0];
+    this.footer_spacer = null;
+    this.footer_buttons = [];
 
     this.setup_styles = function () {
 
@@ -31,7 +33,6 @@ function DashMobileLayoutCardStack (binder, color) {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            // "background": Dash.Color.GetHorizontalGradient("red", "yellow"),
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
@@ -153,6 +154,10 @@ function DashMobileLayoutCardStack (binder, color) {
 
         this.center_content.append(html);
 
+        if (this.footer_spacer) {
+            this.center_content.append(this.footer_spacer);
+        };
+
     };
 
     this.AddLeftContent = function(html){
@@ -203,33 +208,48 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.AddFooterButton = function () {
-        // WIP!
+    this.AddFooterButton = function (icon_name, label_text, callback) {
 
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
         };
 
-        console.log("Add footer");
+        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback);
+        this.footer_buttons.push(button);
+        this.footer_button_overlay.append(button.html);
+
+        return button;
 
     };
 
     this.create_footer_overlay = function () {
 
         this.footer_button_overlay = Dash.Gui.GetHTMLAbsContext();
-        this.footer_button_overlay.text("Continue without images...");
 
         this.footer_button_overlay.css({
             "position": "fixed",
-            "background": "#222",
+            "display": "flex",
+            "background": this.color.Background,
             "height": Dash.Size.ButtonHeight,
             "top": "auto",
             "line-height": Dash.Size.ButtonHeight + "px",
             "color": "white",
-
+            "bottom": 0,
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "padding-left": Dash.Size.Padding*0.5,
+            // "padding-right": Dash.Size.Padding*0.5,
         });
 
         this.html.append(this.footer_button_overlay);
+
+        // You should never see this, but it allows the window to scroll correctly
+        // without having to add padding/margin for the lower button content
+        this.footer_spacer = $("<div>-- FOOTER SPACER --</div>");
+        this.footer_spacer.css({
+            "height": Dash.Size.ButtonHeight,
+        });
+        this.center_content.append(this.footer_spacer);
+
 
     };
 

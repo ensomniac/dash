@@ -200,7 +200,7 @@ class __Utils:
         img_data = {}
         img_data["id"] = self.GetRandomID()
         img_data["orig_width"] = img.size[0]
-        img_data["orig_height"] = img.size[0]
+        img_data["orig_height"] = img.size[1]
         img_data["orig_aspect"] = img.size[0] / float(img.size[1])
         img_data["uploaded_by"] = user["email"]
         img_data["uploaded_on"] = datetime.now().isoformat()
@@ -244,24 +244,24 @@ class __Utils:
                     y + size  # y + height
                 ))
 
-        if size > thumb_size:
+        if img.size[0] > thumb_size or img.size[1] > thumb_size:
             img = img.resize((thumb_size, thumb_size), Image.ANTIALIAS)
             size = thumb_size
 
         img.save(thumb_path)
 
-        url_root = f"https://{dash_context['domain']}/local/"
+        url_root = f"{dash_context['domain']}/local/"
         url_root += img_root.split(f"/{dash_context['asset_path']}/local/")[-1]
 
         thumb_url = f"{url_root}/{img_data['id']}_thb.jpg"
         orig_url = f"{url_root}/{img_data['id']}_orig.png"
 
-        img_data["thumb_url"] = thumb_url
-        img_data["orig_url"] = orig_url
+        img_data["thumb_url"] = "https://" + thumb_url.replace("//", "/")
+        img_data["orig_url"] = "https://" + orig_url.replace("//", "/")
 
-        img_data["width"] = size
-        img_data["height"] = size
-        img_data["aspect"] = 1
+        img_data["width"] = img.size[0]
+        img_data["height"] = img.size[1]
+        img_data["aspect"] = img.size[0] / float(img.size[1])
 
         Write(data_path, img_data)
 

@@ -1,69 +1,65 @@
-function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
+function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null) {
 
-    this.footer = footer;
-    this.banner = this.footer.banner;
-    this.stack = this.banner.stack;
+    this.stack = stack;
     this.color = this.stack.color;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
 
-    this.row_height = this.banner.FooterHeight;
-    this.width = this.banner.FooterButtonWidth;
-    this.label_height = Dash.Size.RowHeight;
+    this.height = Dash.Size.ButtonHeight-Dash.Size.Padding;
     this.click_active = false;
 
     this.html = Dash.Gui.GetHTMLContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height-(Dash.Size.Padding*0.5), 0.75, "black");
     this.label = Dash.Gui.GetHTMLAbsContext();
-
-    this.notification_icon = null;
-
-    if ((this.row_height-this.width) < this.label_height) {
-        this.label_height = this.row_height-this.width;
-    };
 
     this.setup_styles = function () {
 
         this.html.append(this.icon_circle);
         this.html.append(this.label);
-        this.label.text(this.label_text);
         this.icon_circle.append(this.icon.html);
 
         this.icon.icon_html.css({
             "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
         });
 
+        this.label.text(this.label_text);
+
         this.html.css({
-            "height": this.row_height,
-            "width": this.width,
-            "background": "none",
-            // "overflow": "visible",
+            "height": this.height,
+            "width": "auto",
+            "flex-grow": 1,
+            "background": "orange",
+            "margin-top": Dash.Size.Padding*0.5,
+            "margin-bottom": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding*0.5,
+            "line-height": this.height + "px",
+            "border-radius": this.height,
         });
 
         this.icon_circle.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
+            "left": "auto",
+            "top": Dash.Size.Padding*0.25,
+            "right": Dash.Size.Padding*0.25,
             "bottom": "auto",
             "background": "rgb(250, 250, 250)",
-            "height": this.width,
-            "width": this.width,
-            "border-radius": this.width*0.5,
+            "height": this.height-(Dash.Size.Padding*0.5),
+            "width": this.height-(Dash.Size.Padding*0.5),
+            "border-radius": (this.height-(Dash.Size.Padding*0.5))*0.5,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)",
         });
 
         this.label.css({
-            "position": "absolute",
-            "left": -Dash.Size.Padding,
-            "bottom": 0,
-            "top": "auto",
-            "height": this.label_height,
-            "line-height": this.label_height + "px",
-            "width": this.width + (Dash.Size.Padding*2),
-            "font-size": "80%",
+            "height": this.height,
+            "line-height": this.height + "px",
             "background": "none",
+            // "background": "orange",
+            "margin-right": this.height*0.5,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
         });
 
         this.setup_connections();
@@ -122,7 +118,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
     };
 
     this.create_notification_icon = function () {
-        var icon_size = this.width*0.25;
+        var icon_size = this.height*0.25;
 
         this.notification_icon = $("<div></div>");
         this.html.append(this.notification_icon);
