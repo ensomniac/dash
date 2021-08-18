@@ -8,10 +8,19 @@ function DashMobileLayoutCard (stack) {
     this.content = Dash.Gui.GetHTMLContext();
 
     this.pull_active = false;
-    this.pull_to_delete_callback = null;
     this.pull_mechanic_ready = false; // This is off by default since it requires more overhead
     this.restoring_pull = false;
     this.restoring_pull_start_x = 0;
+    this.last_touch_move_event = null;
+
+    this.left_pull_area = null;
+    this.right_pull_area = null;
+
+    this.left_pull_callback = null;
+    this.right_pull_callback = null;
+
+    this.left_pull_icon = null;
+    this.right_pull_icon = null;
 
     this.setup_styles = function () {
 
@@ -34,7 +43,7 @@ function DashMobileLayoutCard (stack) {
             "border-radius": Dash.Size.BorderRadius,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
             // "pointer-events": "none",
-            "background": "none",
+            // "background": "none",
             "color": this.color.Text,
         });
 
@@ -43,13 +52,21 @@ function DashMobileLayoutCard (stack) {
     };
 
     this.PullToDelete = function(callback) {
-        this.pull_to_delete_callback = callback;
+        this.SetLeftPullCallback(callback, "trash_solid");
+    };
+
+    this.SetLeftPullCallback = function(callback, icon) {
+
+        this.left_pull_callback = callback;
 
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
         };
 
+        this.left_pull_icon = icon;
+
     };
+
 
     this.setup_slider = function() {
 
@@ -58,11 +75,10 @@ function DashMobileLayoutCard (stack) {
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
 
-        console.log("content size: " + content_width + " x " + content_height);
-
         this.content.remove();
+        this.setup_pull_icons();
 
-        this.html.prepend(this.slider);
+        this.html.append(this.slider);
         this.slider.append(this.content);
 
         this.slider.css({
@@ -71,7 +87,6 @@ function DashMobileLayoutCard (stack) {
             "left": 0,
             "top": 0,
             "position": "absolute",
-            // "background": "red",
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
@@ -81,6 +96,40 @@ function DashMobileLayoutCard (stack) {
 
         this.html.css({
             "height": content_height,
+        });
+
+    };
+
+    this.setup_pull_icons = function() {
+
+        if (this.left_pull_area) {
+            return;
+        };
+
+        this.left_pull_area = new DashMobileLayoutCardPullIcon(this, this.left_pull_icon);
+        this.right_pull_area = new DashMobileLayoutCardPullIcon(this, this.right_pull_icon);
+
+        this.html.append(this.left_pull_area.html);
+        this.html.append(this.right_pull_area.html);
+
+    };
+
+    this.position_pull_icons = function() {
+
+        var content_width = this.content.width() + (Dash.Size.Padding*2);
+        var content_height = this.content.height() + (Dash.Size.Padding*2);
+
+        this.left_pull_area.html.css({
+            "left": 0,
+            "top": (content_height*0.5)-(this.left_pull_area.Size*0.5),
+            "opacity": 0,
+        });
+
+        this.right_pull_area.html.css({
+            "left": "auto",
+            "right": 0,
+            "top": content_height*0.5-(this.left_pull_area.Size*0.5),
+            "opacity": 0,
         });
 
     };
@@ -98,6 +147,17 @@ function DashMobileLayoutCard (stack) {
 
     };
 
+    this.get_coords_from_event = function(event) {
+
+        for (var i in event.originalEvent["changedTouches"]) {
+            var touch = event.originalEvent["changedTouches"][i];
+            return [touch.clientX, touch.clientY];
+        };
+
+        return null;
+
+    };
+
     this.on_drag_start = function(event) {
         if (this.pull_active || this.restoring_pull) {
             return;
@@ -106,6 +166,8 @@ function DashMobileLayoutCard (stack) {
         if (!this.slider) {
             this.setup_slider();
         };
+
+        this.position_pull_icons();
 
         var touch_found = false;
         this.pull_active = {};
@@ -157,13 +219,19 @@ function DashMobileLayoutCard (stack) {
         var screen_px_moved_x = this.pull_active["touch_now_x"]-this.pull_active["touch_start_x"];
         var screen_px_moved_y = this.pull_active["touch_now_y"]-this.pull_active["touch_start_y"];
 
+        this.restoring_pull_start_x = screen_px_moved_x;
+        var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
+
+        if (this.restoring_pull_start_x > 0) {
+            this.left_pull_area.OnDrag(pulled_norm);
+        }
+        else {
+            this.right_pull_area.OnDrag(pulled_norm);
+        };
+
         this.slider.css({
             "left": screen_px_moved_x,
         });
-
-        this.restoring_pull_start_x = screen_px_moved_x;
-
-        console.log("dragging " + screen_px_moved_x);
 
     };
 
@@ -173,12 +241,36 @@ function DashMobileLayoutCard (stack) {
             return;
         };
 
+        if (this.left_pull_callback && this.left_pull_area.IsTriggered) {
+            this.left_pull_callback();
+        };
+
+        if (this.right_pull_callback && this.right_pull_area.IsTriggered) {
+            this.right_pull_callback();
+        };
+
         this.pull_active = null;
         this.restoring_pull = true;
 
         var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
         var animation_duration = Dash.Math.Lerp(300, 1000, pulled_norm); // Longer duration for a further pull
         Dash.Animation.Start(animation_duration, this.on_restore.bind(this), Dash.Animation.Curves.EaseOutBounce);
+
+    };
+
+    this.Clear = function() {
+        // Animate the hiding of this card
+
+        this.html.stop().animate({
+            "opacity": 0,
+            "height": 0,
+            "padding-top": 0,
+            "padding-bottom": 0,
+            "margin-top": 0,
+            "margin-bottom": 0
+        }, function(){
+            this.remove();
+        });
 
     };
 
@@ -195,6 +287,40 @@ function DashMobileLayoutCard (stack) {
 
     };
 
+    this.manage_touch_start = function(event) {
+
+        if (!event.cancelable || this.pull_active) {
+            return;
+        };
+
+        // Reset this to ensure that if we do activate a pull and want to use
+        // the positioning from this event, it's a fresh event
+        this.last_touch_move_event = null;
+
+        (function(self, event){
+
+            setTimeout(function(){
+
+                if (!self.stack.GetScrollActive()) {
+
+                    if (self.last_touch_move_event) {
+                        self.on_drag_start(self.last_touch_move_event);
+                        self.last_touch_move_event.preventDefault();
+                    }
+                    else {
+                        self.on_drag_start(event);
+                    };
+
+                    event.preventDefault();
+
+                };
+
+            }, 150);
+
+        })(this, event);
+
+    };
+
     this.setup_pull_mechanic = function() {
         this.pull_mechanic_ready = true;
 
@@ -202,43 +328,41 @@ function DashMobileLayoutCard (stack) {
             "pointer-events": "auto",
         });
 
-        console.log("Set up pull");
-
         (function(self){
 
             self.html.on("touchstart", function(e){
-                self.on_drag_start(e);
-                e.preventDefault();
+                self.manage_touch_start(e);
             });
 
             self.html.on("touchmove", function(e){
+
+                self.last_touch_move_event = e;
+
                 self.on_drag(e);
-                e.preventDefault();
+
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
+
             });
 
             self.html.on("touchend", function(e){
+
                 self.on_drag_end(e);
-                e.preventDefault();
+
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
+
             });
 
             self.html.on("touchcancel", function(e){
                 self.on_drag_end(e);
-                e.preventDefault();
-            });
 
-            self.html.mousedown(function(e){
-                self.on_drag_start(e);
-                e.preventDefault();
-            });
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
 
-            self.html.mousemove(function(e){
-                self.on_drag(e);
-                e.preventDefault();
-            });
-
-            self.html.mouseup(function(e){
-                self.on_drag_end(e);
-                e.preventDefault();
             });
 
         })(this);

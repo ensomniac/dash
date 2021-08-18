@@ -18086,6 +18086,7 @@ function DashAnimation(){
         return animation_set;
     };
 };
+
 function DashAnimationSet(duration_ms, callback, curve){
     this.duration_ms = duration_ms;
     this.callback = callback;
@@ -18103,7 +18104,7 @@ function DashAnimationSet(duration_ms, callback, curve){
     };
     this.update = function(){
         if (!this.active) {
-            console.log("done");
+            delete this;
             return;
         };
         (function(self){
@@ -26753,10 +26754,13 @@ function DashMobileLayoutCardStack (binder, color) {
     this.anim_duration = 400;
     this.backing_gradient = null;
     this.banner_spacer = null;
+    this.touch_active = false;
     this.width = 0;
     this.height = 0;
     this.frame = 0;
     this.center_scroll_top = 0;
+    this.vertical_scroll_active = false;
+    this.vertical_scroll_timer_id = null;
     this.active_panel_index = 1; // Center
     this.panel_offsets = [0, 0, 0];
     this.slider_offsets = [0, 0, 0];
@@ -26802,14 +26806,62 @@ function DashMobileLayoutCardStack (binder, color) {
             self.center_content.scroll(function() {
                 self.on_center_scroll();
             });
+            self.slider.on("touchstart", function(e){
+                self.touch_active = true;
+            });
+            self.slider.on("touchmove", function(e){
+                self.touch_active = true;
+            });
+            self.slider.on("touchend", function(e){
+                self.touch_active = false;
+                if (!self.vertical_scroll_timer_id) {
+                    self.set_scroll_active(false);
+                };
+            });
+            self.slider.on("touchcancel", function(e){
+                self.touch_active = false;
+                if ( !self.vertical_scroll_timer_id) {
+                    self.set_scroll_active(false);
+                };
+            });
         })(this);
+    };
+    this.GetScrollTop = function () {
+        return this.center_scroll_top;
+    };
+    this.GetScrollActive = function () {
+        return this.vertical_scroll_active;
+    };
+    this.reset_scroll_timer = function () {
+        this.vertical_scroll_timer_id = null;
+        if (!this.touch_active) {
+            this.set_scroll_active(false);
+        };
+    };
+    this.set_scroll_active = function (scrolling_is_active) {
+        this.vertical_scroll_active = scrolling_is_active;
+        // if (this.vertical_scroll_active) {
+        //     this.center_content.css("background", "red");
+        // }
+        // else {
+        //     this.center_content.css("background", "none");
+        // };
     };
     this.on_center_scroll = function () {
         this.center_scroll_top = this.center_content.scrollTop();
+        this.set_scroll_active(true);
+        if (this.vertical_scroll_timer_id) {
+            clearTimeout(this.vertical_scroll_timer_id);
+            this.vertical_scroll_timer_id = null;
+        };
+        (function(self){
+            self.vertical_scroll_timer_id = setTimeout(function(){
+                self.reset_scroll_timer();
+            }, 300);
+        })(this);
         if (!this.banner_fixed) {
             return;
         };
-        // console.log("center_content scrolling >>");
         var banner_height = this.banner.html.height();
         this.banner_spacer.css("height", banner_height);
         this.banner.OnScroll(this.center_scroll_top);
@@ -27572,8 +27624,12 @@ function DashCardStackBannerFooterButtonRow (banner) {
         this.html.css({
             "background": "none",
             "height": this.row_height,
-            // "background": "orange",
             "pointer-events": "none",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
         this.vertical_offset_slider.css({
             "position": "absolute",
@@ -27581,9 +27637,12 @@ function DashCardStackBannerFooterButtonRow (banner) {
             "right": 0,
             "top": 0,
             "height": this.row_height,
-            // "background": "purple",
             "display": "flex",
-            // "pointer-events": "auto",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
         this.left_spacer.css({
             "height": this.row_height,
@@ -27695,7 +27754,11 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "width": this.width,
             "background": "none",
             "pointer-events": "auto",
-            // "overflow": "visible",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
         this.icon_circle.css({
             "position": "absolute",
@@ -27784,10 +27847,16 @@ function DashMobileLayoutCard (stack) {
     this.slider = null;
     this.content = Dash.Gui.GetHTMLContext();
     this.pull_active = false;
-    this.pull_to_delete_callback = null;
     this.pull_mechanic_ready = false; // This is off by default since it requires more overhead
     this.restoring_pull = false;
     this.restoring_pull_start_x = 0;
+    this.last_touch_move_event = null;
+    this.left_pull_area = null;
+    this.right_pull_area = null;
+    this.left_pull_callback = null;
+    this.right_pull_callback = null;
+    this.left_pull_icon = null;
+    this.right_pull_icon = null;
     this.setup_styles = function () {
         this.html.css({
             "background": "none",
@@ -27807,24 +27876,29 @@ function DashMobileLayoutCard (stack) {
             "border-radius": Dash.Size.BorderRadius,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
             // "pointer-events": "none",
-            "background": "none",
+            // "background": "none",
             "color": this.color.Text,
         });
         this.html.append(this.content);
     };
     this.PullToDelete = function(callback) {
-        this.pull_to_delete_callback = callback;
+        this.SetLeftPullCallback(callback, "trash_solid");
+    };
+    this.SetLeftPullCallback = function(callback, icon) {
+        this.left_pull_callback = callback;
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
         };
+        this.left_pull_icon = icon;
     };
+
     this.setup_slider = function() {
         this.slider = $("<div></div>");
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
-        console.log("content size: " + content_width + " x " + content_height);
         this.content.remove();
-        this.html.prepend(this.slider);
+        this.setup_pull_icons();
+        this.html.append(this.slider);
         this.slider.append(this.content);
         this.slider.css({
             "width": content_width,
@@ -27832,7 +27906,6 @@ function DashMobileLayoutCard (stack) {
             "left": 0,
             "top": 0,
             "position": "absolute",
-            // "background": "red",
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
@@ -27841,6 +27914,30 @@ function DashMobileLayoutCard (stack) {
         });
         this.html.css({
             "height": content_height,
+        });
+    };
+    this.setup_pull_icons = function() {
+        if (this.left_pull_area) {
+            return;
+        };
+        this.left_pull_area = new DashMobileLayoutCardPullIcon(this, this.left_pull_icon);
+        this.right_pull_area = new DashMobileLayoutCardPullIcon(this, this.right_pull_icon);
+        this.html.append(this.left_pull_area.html);
+        this.html.append(this.right_pull_area.html);
+    };
+    this.position_pull_icons = function() {
+        var content_width = this.content.width() + (Dash.Size.Padding*2);
+        var content_height = this.content.height() + (Dash.Size.Padding*2);
+        this.left_pull_area.html.css({
+            "left": 0,
+            "top": (content_height*0.5)-(this.left_pull_area.Size*0.5),
+            "opacity": 0,
+        });
+        this.right_pull_area.html.css({
+            "left": "auto",
+            "right": 0,
+            "top": content_height*0.5-(this.left_pull_area.Size*0.5),
+            "opacity": 0,
         });
     };
     this.restore_slider_content = function() {
@@ -27852,6 +27949,13 @@ function DashMobileLayoutCard (stack) {
             "height": "auto",
         });
     };
+    this.get_coords_from_event = function(event) {
+        for (var i in event.originalEvent["changedTouches"]) {
+            var touch = event.originalEvent["changedTouches"][i];
+            return [touch.clientX, touch.clientY];
+        };
+        return null;
+    };
     this.on_drag_start = function(event) {
         if (this.pull_active || this.restoring_pull) {
             return;
@@ -27859,6 +27963,7 @@ function DashMobileLayoutCard (stack) {
         if (!this.slider) {
             this.setup_slider();
         };
+        this.position_pull_icons();
         var touch_found = false;
         this.pull_active = {};
         this.pull_active["touch_start_x"] = 0;
@@ -27899,21 +28004,46 @@ function DashMobileLayoutCard (stack) {
         };
         var screen_px_moved_x = this.pull_active["touch_now_x"]-this.pull_active["touch_start_x"];
         var screen_px_moved_y = this.pull_active["touch_now_y"]-this.pull_active["touch_start_y"];
+        this.restoring_pull_start_x = screen_px_moved_x;
+        var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
+        if (this.restoring_pull_start_x > 0) {
+            this.left_pull_area.OnDrag(pulled_norm);
+        }
+        else {
+            this.right_pull_area.OnDrag(pulled_norm);
+        };
         this.slider.css({
             "left": screen_px_moved_x,
         });
-        this.restoring_pull_start_x = screen_px_moved_x;
-        console.log("dragging " + screen_px_moved_x);
     };
     this.on_drag_end = function(event) {
         if (!this.pull_active || this.restoring_pull) {
             return;
+        };
+        if (this.left_pull_callback && this.left_pull_area.IsTriggered) {
+            this.left_pull_callback();
+        };
+        if (this.right_pull_callback && this.right_pull_area.IsTriggered) {
+            this.right_pull_callback();
         };
         this.pull_active = null;
         this.restoring_pull = true;
         var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
         var animation_duration = Dash.Math.Lerp(300, 1000, pulled_norm); // Longer duration for a further pull
         Dash.Animation.Start(animation_duration, this.on_restore.bind(this), Dash.Animation.Curves.EaseOutBounce);
+    };
+    this.Clear = function() {
+        // Animate the hiding of this card
+        this.html.stop().animate({
+            "opacity": 0,
+            "height": 0,
+            "padding-top": 0,
+            "padding-bottom": 0,
+            "margin-top": 0,
+            "margin-bottom": 0
+        }, function(){
+            this.remove();
+        });
     };
     this.on_restore = function(t) {
         this.slider.css({
@@ -27924,40 +28054,55 @@ function DashMobileLayoutCard (stack) {
             this.restore_slider_content();
         };
     };
+    this.manage_touch_start = function(event) {
+        if (!event.cancelable || this.pull_active) {
+            return;
+        };
+        // Reset this to ensure that if we do activate a pull and want to use
+        // the positioning from this event, it's a fresh event
+        this.last_touch_move_event = null;
+        (function(self, event){
+            setTimeout(function(){
+                if (!self.stack.GetScrollActive()) {
+                    if (self.last_touch_move_event) {
+                        self.on_drag_start(self.last_touch_move_event);
+                        self.last_touch_move_event.preventDefault();
+                    }
+                    else {
+                        self.on_drag_start(event);
+                    };
+                    event.preventDefault();
+                };
+            }, 150);
+        })(this, event);
+    };
     this.setup_pull_mechanic = function() {
         this.pull_mechanic_ready = true;
         this.html.css({
             "pointer-events": "auto",
         });
-        console.log("Set up pull");
         (function(self){
             self.html.on("touchstart", function(e){
-                self.on_drag_start(e);
-                e.preventDefault();
+                self.manage_touch_start(e);
             });
             self.html.on("touchmove", function(e){
+                self.last_touch_move_event = e;
                 self.on_drag(e);
-                e.preventDefault();
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
             });
             self.html.on("touchend", function(e){
                 self.on_drag_end(e);
-                e.preventDefault();
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
             });
             self.html.on("touchcancel", function(e){
                 self.on_drag_end(e);
-                e.preventDefault();
-            });
-            self.html.mousedown(function(e){
-                self.on_drag_start(e);
-                e.preventDefault();
-            });
-            self.html.mousemove(function(e){
-                self.on_drag(e);
-                e.preventDefault();
-            });
-            self.html.mouseup(function(e){
-                self.on_drag_end(e);
-                e.preventDefault();
+                if (self.pull_active && e.cancelable) {
+                    e.preventDefault();
+                };
             });
         })(this);
     };
@@ -28075,6 +28220,61 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "border": "2px solid white",
         });
 
+    };
+    this.setup_styles();
+};
+
+function DashMobileLayoutCardPullIcon (card, icon_name) {
+    this.card = card;
+    this.stack = this.card.stack;
+    this.color = this.stack.color;
+    this.icon = null;
+    this.icon_name = icon_name;
+    this.html = Dash.Gui.GetHTMLAbsContext();
+    this.size = Dash.Size.ButtonHeight;
+    this.Size = this.size;
+    this.IsTriggered = false;
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "none",
+            "background": "green",
+            "width": this.size,
+            "height": this.size,
+            "left": 0,
+            "top": 0,
+            "right": "auto",
+            "bottom": "auto",
+            "opacity": 0,
+            "pointer-events": "none",
+            "border-radius": this.size*0.5,
+        });
+        if (this.icon_name) {
+            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+            this.html.append(this.icon.html);
+        };
+    };
+    this.OnDrag = function(norm_t) {
+        var color = "rgb(130, 130, 130)";
+        if (this.IsTriggered && norm_t < 0.4) {
+            this.IsTriggered = false;
+        };
+        if (!this.icon) {
+            return;
+        };
+        var px_pulled = Dash.Math.Lerp(0, $(window).width(), norm_t);
+        var px_max = this.size + (Dash.Size.Padding*0.5);
+        if (px_pulled > px_max) {
+            norm_t = 1.0;
+            color = "#ff6a4c";
+            this.IsTriggered = true;
+        }
+        else {
+            norm_t = Dash.Math.InverseLerp(0.0, px_max, px_pulled);
+        };
+        this.html.css({
+            "opacity": norm_t,
+            "background": color,
+        });
     };
     this.setup_styles();
 };

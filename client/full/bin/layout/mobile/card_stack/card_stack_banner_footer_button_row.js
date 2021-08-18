@@ -3,10 +3,9 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
     this.color = this.stack.color;
+
     this.html = Dash.Gui.GetHTMLContext();
-
     this.vertical_offset_slider = $("<div></div>");
-
     this.left_spacer = Dash.Gui.GetHTMLContext();
     this.right_spacer = Dash.Gui.GetHTMLContext();
     this.center_content = Dash.Gui.GetHTMLContext();
@@ -27,8 +26,12 @@ function DashCardStackBannerFooterButtonRow (banner) {
         this.html.css({
             "background": "none",
             "height": this.row_height,
-            // "background": "orange",
             "pointer-events": "none",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
 
         this.vertical_offset_slider.css({
@@ -37,9 +40,12 @@ function DashCardStackBannerFooterButtonRow (banner) {
             "right": 0,
             "top": 0,
             "height": this.row_height,
-            // "background": "purple",
             "display": "flex",
-            // "pointer-events": "auto",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
 
         this.left_spacer.css({

@@ -40,7 +40,11 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "width": this.width,
             "background": "none",
             "pointer-events": "auto",
-            // "overflow": "visible",
+            "-webkit-transform": "translateZ(0)",
+            "-moz-transform": "translateZ(0)",
+            "-ms-transform": "translateZ(0)",
+            "-o-transform": "translateZ(0)",
+            "transform": "translateZ(0)",
         });
 
         this.icon_circle.css({

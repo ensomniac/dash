@@ -17,11 +17,14 @@ function DashMobileLayoutCardStack (binder, color) {
     this.anim_duration = 400;
     this.backing_gradient = null;
     this.banner_spacer = null;
+    this.touch_active = false;
 
     this.width = 0;
     this.height = 0;
     this.frame = 0;
     this.center_scroll_top = 0;
+    this.vertical_scroll_active = false;
+    this.vertical_scroll_timer_id = null;
 
     this.active_panel_index = 1; // Center
     this.panel_offsets = [0, 0, 0];
@@ -82,18 +85,85 @@ function DashMobileLayoutCardStack (binder, color) {
                 self.on_center_scroll();
             });
 
+            self.slider.on("touchstart", function(e){
+                self.touch_active = true;
+            });
+
+            self.slider.on("touchmove", function(e){
+                self.touch_active = true;
+            });
+
+            self.slider.on("touchend", function(e){
+                self.touch_active = false;
+
+                if (!self.vertical_scroll_timer_id) {
+                    self.set_scroll_active(false);
+                };
+
+            });
+
+            self.slider.on("touchcancel", function(e){
+                self.touch_active = false;
+
+                if ( !self.vertical_scroll_timer_id) {
+                    self.set_scroll_active(false);
+                };
+
+            });
+
         })(this);
+
+    };
+
+    this.GetScrollTop = function () {
+        return this.center_scroll_top;
+    };
+
+    this.GetScrollActive = function () {
+        return this.vertical_scroll_active;
+    };
+
+    this.reset_scroll_timer = function () {
+
+        this.vertical_scroll_timer_id = null;
+
+        if (!this.touch_active) {
+            this.set_scroll_active(false);
+        };
+
+    };
+
+    this.set_scroll_active = function (scrolling_is_active) {
+
+        this.vertical_scroll_active = scrolling_is_active;
+
+        // if (this.vertical_scroll_active) {
+        //     this.center_content.css("background", "red");
+        // }
+        // else {
+        //     this.center_content.css("background", "none");
+        // };
 
     };
 
     this.on_center_scroll = function () {
         this.center_scroll_top = this.center_content.scrollTop();
+        this.set_scroll_active(true);
+
+        if (this.vertical_scroll_timer_id) {
+            clearTimeout(this.vertical_scroll_timer_id);
+            this.vertical_scroll_timer_id = null;
+        };
+
+        (function(self){
+            self.vertical_scroll_timer_id = setTimeout(function(){
+                self.reset_scroll_timer();
+            }, 300);
+        })(this);
 
         if (!this.banner_fixed) {
             return;
         };
-
-        // console.log("center_content scrolling >>");
 
         var banner_height = this.banner.html.height();
         this.banner_spacer.css("height", banner_height);
