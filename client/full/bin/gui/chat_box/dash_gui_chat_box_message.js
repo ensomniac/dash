@@ -129,8 +129,6 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         var corner_radius = Dash.Size.Padding * 0.05;
         var side_margin = Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5);
 
-        this.text_label = Dash.Gui.GetHTMLContext(this.text, {"background": "none"}, this.color);
-
         this.text_bubble_container = Dash.Gui.GetHTMLContext(
             "",
             {
@@ -151,6 +149,15 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "box-shadow": "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
                 "background": this.color.BackgroundRaisedTop || this.color.BackgroundRaised,
                 "display": "flex"
+            },
+            this.color
+        );
+
+        this.text_label = Dash.Gui.GetHTMLContext(
+            this.text,
+            {
+                "background": "none",
+                "word-break": "break-word"
             },
             this.color
         );

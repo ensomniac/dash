@@ -94,6 +94,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "bottom": 0,
             "height": this.divider_size,
             "background": this.divider_color,
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
 
         this.divider_hover.css({
@@ -105,6 +106,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "background": "rgba(0, 0, 0, 0)",
             "opacity": 0.5,
             "cursor": "ns-resize",
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
     };
 
@@ -134,6 +136,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "bottom": 0,
             "width": this.divider_size,
             "background": this.divider_color,
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
 
         this.divider_hover.css({
@@ -145,6 +148,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "background": "rgba(0, 0, 0, 0)",
             "opacity": 0.5,
             "cursor": "ew-resize",
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
     };
 

@@ -22557,7 +22557,6 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.add_text_bubble_container = function () {
         var corner_radius = Dash.Size.Padding * 0.05;
         var side_margin = Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5);
-        this.text_label = Dash.Gui.GetHTMLContext(this.text, {"background": "none"}, this.color);
         this.text_bubble_container = Dash.Gui.GetHTMLContext(
             "",
             {
@@ -22577,6 +22576,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "box-shadow": "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
                 "background": this.color.BackgroundRaisedTop || this.color.BackgroundRaised,
                 "display": "flex"
+            },
+            this.color
+        );
+        this.text_label = Dash.Gui.GetHTMLContext(
+            this.text,
+            {
+                "background": "none",
+                "word-break": "break-word"
             },
             this.color
         );
@@ -24421,6 +24428,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "bottom": 0,
             "height": this.divider_size,
             "background": this.divider_color,
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
         this.divider_hover.css({
             "position": "absolute",
@@ -24431,6 +24439,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "background": "rgba(0, 0, 0, 0)",
             "opacity": 0.5,
             "cursor": "ns-resize",
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
     };
     this.setup_horizontal = function () {
@@ -24457,6 +24466,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "bottom": 0,
             "width": this.divider_size,
             "background": this.divider_color,
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
         this.divider_hover.css({
             "position": "absolute",
@@ -24467,6 +24477,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
             "background": "rgba(0, 0, 0, 0)",
             "opacity": 0.5,
             "cursor": "ew-resize",
+            "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
     };
     this.setup_connections = function () {
