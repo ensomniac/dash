@@ -56,38 +56,9 @@ class SyncThread:
 
         if python_path != self.root_path and os.path.exists(python_path):
             paths.append(python_path)
-            print("\nINCLUDING PYTHON FOLDER: " + python_path)
 
         for index_path in paths:
             self.index_all_from_path(index_path)
-
-    def index_all_from_path(self, root_path):
-
-        print("index: " + str(root_path))
-
-        files = {}
-        all_files = [
-            os.path.join(dp, f)
-            for dp, dn, fn in os.walk(os.path.expanduser(root_path))
-            for f in fn
-        ]
-
-        for abspath in all_files:
-
-            if "/.git/" in abspath or ".pyc" in abspath or "/.D" in abspath:
-                continue
-
-            if ".idea" in abspath:
-                continue
-
-            # files[abspath.split("/")[-1]] = {"abspath": abspath}
-            files[abspath] = {"abspath": abspath}
-
-        if len(list(self.files.keys())) == len(list(files.keys())):
-            # The number of files is the same, nothing to do
-            return
-
-        self.files = files
 
         for filename in self.files:
             abspath = self.files[filename]["abspath"]
@@ -106,6 +77,26 @@ class SyncThread:
             return
 
         print(f"\t[{self.Name}] Re-indexed complete")
+
+    def index_all_from_path(self, root_path):
+
+        # print("index: " + str(root_path))
+
+        all_files = [
+            os.path.join(dp, f)
+            for dp, dn, fn in os.walk(os.path.expanduser(root_path))
+            for f in fn
+        ]
+
+        for abspath in all_files:
+
+            if "/.git/" in abspath or ".pyc" in abspath or "/.D" in abspath:
+                continue
+
+            if ".idea" in abspath:
+                continue
+
+            self.files[abspath] = {"abspath": abspath}
 
     def check(self):
         # print(f"\t[{self.Name}] LivesyncWatchThread > check()....")
