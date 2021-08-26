@@ -1,18 +1,20 @@
-#!/usr/bin/python
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import datetime
-import json
 import os
-import traceback
+import sys
+import json
 
-from Dash import LocalStorage
 from Dash.Utils import Utils
-from Dash import PackageContext as Context
+from datetime import datetime
+from Dash import LocalStorage
+from traceback import format_exc
+
 
 class Users:
-    def __init__(self, params, dash_context=None):
-        self.data = params
-        self.dash_context = dash_context or Context.Get(params["asset_path"])
+    def __init__(self, request_params, dash_context=None):
+        self.request_params = request_params
+        self.__dash_context = dash_context
 
     @property
     def UsersPath(self):
@@ -21,8 +23,20 @@ class Users:
             "users/"
         )
 
+    @property
+    def dash_context(self):
+        if self.__dash_context is None:
+            if not self.request_params or not self.request_params.get("asset_path"):
+                raise Exception("Error: (Users) No access to Dash Context asset path (no request params)")
+
+            from Dash.PackageContext import Get
+
+            self.__dash_context = Get(self.request_params["asset_path"])
+
+        return self.__dash_context
+
     def Reset(self):
-        email = str(self.data.get("email")).strip().lower()
+        email = str(self.request_params.get("email")).strip().lower()
 
         if "@" not in email:
             return {"error": "Enter a valid email address."}
@@ -37,11 +51,11 @@ class Users:
 
         os.makedirs(user_reset_root, exist_ok=True)
 
-        import random
-        import base64
+        from random import randint
+        from base64 import urlsafe_b64encode
 
-        request_token = random.randint(10000000, 99999999)
-        now = datetime.datetime.now()
+        request_token = randint(10000000, 99999999)
+        now = datetime.now()
 
         uri_data = {
             "email": email,
@@ -50,7 +64,7 @@ class Users:
         }
 
         uri_str = json.dumps(uri_data)
-        uri_data_64 = base64.urlsafe_b64encode(uri_str.encode()).decode().strip()
+        uri_data_64 = urlsafe_b64encode(uri_str.encode()).decode().strip()
         reset_path = os.path.join(user_reset_root, uri_data_64)
 
         open(reset_path, "w").write("")
@@ -81,14 +95,10 @@ class Users:
         return return_data
 
     def ResetResponse(self):
-        uri_data_64 = self.data.get("t")
+        uri_data_64 = self.request_params.get("t")
 
         if not uri_data_64:
             return {"error": "Invalid request token x3728"}
-
-        import dateutil.parser as date_parser
-        import random
-        from passlib.apps import custom_app_context as pwd_context
 
         uri_str = self.decode_base64(uri_data_64.encode())
 
@@ -104,8 +114,12 @@ class Users:
         if not os.path.exists(reset_path):
             return {"error": "Invalid request token x8923"}
 
-        timestamp = date_parser.parse(uri_data["time"])
-        seconds_since = (datetime.datetime.now() - timestamp).total_seconds()
+        from random import choice
+        from dateutil.parser import parse
+        from passlib.apps import custom_app_context as pwd_context
+
+        timestamp = parse(uri_data["time"])
+        seconds_since = (datetime.now() - timestamp).total_seconds()
         minutes_since = int(seconds_since / 60)
 
         if minutes_since > 5:
@@ -132,13 +146,11 @@ class Users:
 
             return "\n".join(html)
 
-        characters = (
-            "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$"
-        )
         new_password = ""
+        characters = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$"
 
         for i in range(10):
-            new_password += random.choice(characters)
+            new_password += choice(characters)
 
         hashed_password = pwd_context.hash(new_password)
         pass_path = os.path.join(user_root, "phash")
@@ -168,8 +180,6 @@ class Users:
         html.append("""</body>""")
         html.append("""</html>""")
 
-        # return_data = {"new_password": new_password}
-
         os.remove(reset_path)
 
         return "\n".join(html)
@@ -180,7 +190,7 @@ class Users:
         if not user:
             return {"error": "Invalid User - x73894"}
 
-        new_password = self.data.get("p")
+        new_password = self.request_params.get("p")
 
         if not new_password or len(new_password) < 5:
             return {"error": "Select a password with at least 6 characters - x72378"}
@@ -197,37 +207,12 @@ class Users:
 
         return return_data
 
-    def decode_base64(self, data, altchars=b"+/"):
-        """Decode base64, padding being optional.
-
-        :param altchars: (optional, default=b"+/")
-        :param data: Base64 data as an ASCII byte string
-        :returns: The decoded byte string.
-
-        """
-        import base64
-        import re
-
-        data = re.sub(rb"[^a-zA-Z0-9%s]+" % altchars, b"", data)  # normalize
-        missing_padding = len(data) % 4
-
-        if missing_padding:
-            data += b"=" * (4 - missing_padding)
-
-        try:
-            return base64.b64decode(data, altchars)
-        except:
-            raise Exception(f"Parse error x32489\n{traceback.format_exc()}")
-            # return None
-
     def Login(self):
-        email = self.data.get("email").lower().strip()
-        password = self.data.get("pass").strip()
+        email = self.request_params.get("email").lower().strip()
+        password = self.request_params.get("pass").strip()
 
         if not email or not password:
             return {"error": "Invalid login credentials x1943"}
-
-        # raise Exception(self.dash_context["srv_path_local"])
 
         user_root = os.path.join(self.UsersPath, email)
         sessions_path = os.path.join(user_root, "sessions")
@@ -237,7 +222,6 @@ class Users:
             return {"error": "Account does not exist x7832 | PP: " + pass_path}
 
         from passlib.apps import custom_app_context as pwd_context
-        import base64
 
         hashed_password = open(pass_path, "r").read()
         password_correct = pwd_context.verify(password, hashed_password)
@@ -249,8 +233,9 @@ class Users:
                 "p": password,
             }
 
-        if not os.path.exists(sessions_path):
-            os.makedirs(sessions_path)
+        from base64 import urlsafe_b64encode
+
+        os.makedirs(sessions_path, exist_ok=True)
 
         token = f"{os.environ['HTTP_USER_AGENT']}_|_{email}"
 
@@ -259,18 +244,19 @@ class Users:
             "REMOTE_ADDR": os.environ["REMOTE_ADDR"],
             "email": email,
             "token": token,
-            "time": datetime.datetime.now().isoformat(),
+            "time": datetime.now().isoformat(),
         }
 
-        token = base64.urlsafe_b64encode(token.encode("ascii")).decode()
+        token = urlsafe_b64encode(token.encode("ascii")).decode()
         token_path = os.path.join(sessions_path, token)
 
         open(token_path, "w").write(json.dumps(session_data))
 
-        return_data = {"token": token, "user": self.get_user_info(email)}
-        return_data["init"] = self.get_user_init(email)
-
-        return return_data
+        return {
+            "token": token,
+            "user": self.get_user_info(email),
+            "init": self.get_user_init(email)
+        }
 
     def GetAll(self):
         return self.get_team()
@@ -284,7 +270,7 @@ class Users:
         return LocalStorage.GetRecordPath(
             dash_context=self.dash_context,
             store_path="users",
-            obj_id=email,
+            obj_id=email
         )
 
     def GetUserData(self, user_email):
@@ -293,36 +279,6 @@ class Users:
         # break anything to get rid of the snake case variation
 
         return self.get_user_info(user_email)
-
-    def get_user_info(self, email):
-        email = email.lower().strip()
-
-        if type(email) == bytes:
-            email = email.decode()
-
-        user_data_path = self.GetUserDataPath(email)
-
-        # raise Exception(">> " + user_data_path)
-
-        if not Utils.Global.RequestUser:
-            Utils.Global.RequestUser = {}
-            Utils.Global.RequestUser["email"] = email
-
-        if os.path.exists(user_data_path):
-            user_data = LocalStorage.GetData(
-                dash_context=self.dash_context,
-                store_path="users",
-                obj_id=email,
-            )
-        else:
-            user_data = LocalStorage.New(
-                dash_context=self.dash_context,
-                store_path="users",
-                additional_data={"email": email},
-                obj_id=email,
-            )
-
-        return user_data
 
     def ValidateUser(self):
         response = self.Validate()
@@ -333,7 +289,7 @@ class Users:
             return None
 
     def Validate(self, token=None):
-        token_str = token or self.data.get("token")
+        token_str = token or self.request_params.get("token")
 
         if not token_str:
             return {"error": "Missing token"}
@@ -358,21 +314,75 @@ class Users:
 
         return_data = {"valid_login": True, "user": self.get_user_info(email)}
 
-        if self.data.get("init"):
+        if self.request_params.get("init"):
             # Return additional information for this user
             return_data["init"] = self.get_user_init(email)
 
         return return_data
 
+    def decode_base64(self, data, altchars=b"+/"):
+        """
+        Decode base64, padding being optional.
+
+        :param bytes data: Base64 data as an ASCII byte string
+        :param bytes altchars: (optional, default=b"+/")
+        :return: The decoded byte string.
+        :rtype: str
+        """
+
+        from re import sub
+        from base64 import b64decode
+
+        data = sub(rb"[^a-zA-Z0-9%s]+" % altchars, b"", data)  # normalize
+        missing_padding = len(data) % 4
+
+        if missing_padding:
+            data += b"=" * (4 - missing_padding)
+
+        try:
+            return b64decode(data, altchars)
+        except:
+            raise Exception(f"Parse error x32489\n{format_exc()}")
+
+    def get_user_info(self, email):
+        email = email.lower().strip()
+
+        if type(email) == bytes:
+            email = email.decode()
+
+        user_data_path = self.GetUserDataPath(email)
+
+        if not Utils.Global.RequestUser:
+            Utils.Global.RequestUser = {"email": email}
+
+        if os.path.exists(user_data_path):
+            user_data = LocalStorage.GetData(
+                dash_context=self.dash_context,
+                store_path="users",
+                obj_id=email,
+            )
+
+        else:
+            user_data = LocalStorage.New(
+                dash_context=self.dash_context,
+                store_path="users",
+                additional_data={"email": email},
+                obj_id=email,
+            )
+
+        return user_data
+
     def get_user_init(self, email):
-        if type(email) == bytes: email = email.decode()
+        if type(email) == bytes:
+            email = email.decode()
 
-        init = {}
-        init["team"] = self.get_team()
-        init["team_sort"] = self.sort_team(init["team"])
-        init["email"] = email
+        team = self.get_team()
 
-        return init
+        return {
+            "team": team,
+            "team_sort": self.sort_team(team),
+            "email": email
+        }
 
     def sort_team(self, team):
         sorted_emails = []
@@ -393,7 +403,6 @@ class Users:
         # TODO - get rid of this code - it's been moved to Admin.py
 
         team = {}
-
         users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
 
         for user_email in os.listdir(users_root):
@@ -413,61 +422,59 @@ class Users:
         return team
 
     def get_token_data(self, token):
-        import base64
-
-        # token_data = None
-        # padding_retry = False
+        from base64 import urlsafe_b64decode
 
         for x in range(3):
             try:
-                token_data = base64.urlsafe_b64decode(token)
+                token_data = urlsafe_b64decode(token)
+
                 return token, token_data
             except:
-                error = traceback.format_exc().lower()
+                error = format_exc().lower()
 
                 if "incorrect padding" in error:
                     pass
-                    # padding_retry = True
                 else:
-                    # self.set_return_data({"error": error, "token": token})
                     return None, None
 
             token += "="
 
-        # self.set_return_data({"error": "Failed to validate user. Error x8329"})
         return None, None
 
-def GetUserDataRoot(user_email_to_get, admin_user_data=None):
-    data_path = GetUserDataPath(user_email_to_get, admin_user_data)
+
+def GetUserDataRoot(user_email_to_get, request_params=None, dash_context=None):
+    data_path = GetUserDataPath(user_email_to_get, request_params, dash_context)
+
     return "/".join(data_path.split("/")[:-1]) + "/"
 
-def GetUserDataPath(user_email_to_get, admin_user_data=None):
-    from Dash.Utils import Utils as DashUtils
-    ctx = DashUtils.Global.Context
-    admin_user_data = admin_user_data or DashUtils.Global.RequestUser
-    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
-    return users.GetUserDataPath(user_email_to_get)
 
-def Get(user_email_to_get, admin_user_data=None):
-    # This function allows an admin to quickly pull a user
-    # But, for the moment, everyone is an admin...
+def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
+    return Users(
+        request_params or Utils.Global.RequestData,
+        dash_context or Utils.Global.Context
+    ).GetUserDataPath(user_email_to_get)
 
-    from Dash.Utils import Utils as DashUtils
-    ctx = DashUtils.Global.Context
-    admin_user_data = admin_user_data or DashUtils.Global.RequestUser
-    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
-    return users.GetUserData(user_email_to_get)
 
-def GetByToken(user_token):
-    # This function allows you to return a User object
-    # based on a valid token
+def Get(user_email_to_get, request_params=None, dash_context=None):
+    # This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
 
-    from Dash.Utils import Utils as DashUtils
-    ctx = DashUtils.Global.Context
-    users = Users(DashUtils.Global.RequestData, dash_context=ctx)
-    return users.Validate(token=user_token)
+    return Users(
+        request_params or Utils.Global.RequestData,
+        dash_context or Utils.Global.Context
+    ).GetUserData(user_email_to_get)
 
-def GetAll():
-    from Dash.Utils import Utils as DashUtils
-    users = Users(DashUtils.Global.RequestData, dash_context=DashUtils.Global.Context)
-    return users.GetAll()
+
+def GetByToken(user_token, request_params=None, dash_context=None):
+    # This function allows you to return a User object based on a valid token
+
+    return Users(
+        request_params or Utils.Global.RequestData,
+        dash_context or Utils.Global.Context
+    ).Validate(user_token)
+
+
+def GetAll(request_params=None, dash_context=None):
+    return Users(
+        request_params or Utils.Global.RequestData,
+        dash_context or Utils.Global.Context
+    ).GetAll()
