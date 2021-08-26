@@ -20,7 +20,7 @@ class CSV:
 
         :param str csv_root: Root where csv file will be stored or retrieved from
         :param dict dash_context: Dash Context object
-        :param dict all_data: (When exporting) Data object matching the structure of Collection.All["data"] (default={})
+        :param dict all_data: (When exporting) Data object matching the structure of Collection.All()["data"] (default={})
         :param list exclude_keys: Data keys to exclude when translating data to/from CSV (default=[])
         :param byte file: (When importing) File byte data from a file that was uploaded (default=None)
         """

@@ -61,7 +61,6 @@ class Collection:
             nested=self.nested,
         )
 
-    @property
     def All(self):
         return LocalStorage.GetAll(
             self.Ctx,
@@ -96,7 +95,7 @@ class Collection:
         )
 
         if return_all_data:
-            data = self.All
+            data = self.All()
             data["new_object"] = new_obj["id"]
 
             return data
@@ -113,7 +112,7 @@ class Collection:
         )
 
         if return_all_data:
-            return self.All
+            return self.All()
 
     def SetProperty(self, obj_id, key, value, return_all_data=True):
         updated_data = LocalStorage.SetProperty(
@@ -126,7 +125,7 @@ class Collection:
         )["updated_data"]
 
         if return_all_data:
-            return self.All
+            return self.All()
         else:
             return updated_data
 
@@ -140,7 +139,7 @@ class Collection:
         )
 
         if return_all_data:
-            return self.All
+            return self.All()
         else:
             return updated_data
 
