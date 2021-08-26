@@ -60,10 +60,6 @@ class SyncThread:
         for index_path in paths:
             self.index_all_from_path(index_path)
 
-        for filename in self.files:
-            abspath = self.files[filename]["abspath"]
-            self.files[filename]["last_timestamp"] = os.path.getmtime(abspath)
-
         if not hasattr(self, "_initialized"):
             # Don't do anything if this happened on startup
             self._initialized = True
@@ -76,7 +72,7 @@ class SyncThread:
 
             return
 
-        print(f"\t[{self.Name}] Re-indexed complete")
+            # print(f"\t[{self.Name}] Re-indexed complete")
 
     def index_all_from_path(self, root_path):
 
@@ -96,7 +92,12 @@ class SyncThread:
             if ".idea" in abspath:
                 continue
 
-            self.files[abspath] = {"abspath": abspath}
+            if abspath not in self.files:
+                self.files[abspath] = {}
+                self.files[abspath]["abspath"] = abspath
+                self.files[abspath]["last_timestamp"] = os.path.getmtime(abspath)
+
+            # self.files[abspath] = {"abspath": abspath}
 
     def check(self):
         # print(f"\t[{self.Name}] LivesyncWatchThread > check()....")
@@ -323,13 +324,15 @@ class SyncThread:
             return
 
         if response.get("success"):
-            print("\t\t\t(Upload) Success!")
+            print("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            print(">>>>>>>>> Upload: Success! >>>>>>>>>")
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
 
             if not self.needs_git_push:
                 self.needs_git_push = True
-                print("\t\t\t * Don't forget to commit your changes to GitHub! *")
+                # print("\t\t\t * Don't forget to commit your changes to GitHub! *")
 
-            print()
+            # print()
 
         else:
             print("== SERVER ERROR ==")
