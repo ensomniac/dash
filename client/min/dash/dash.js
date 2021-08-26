@@ -27211,10 +27211,12 @@ function DashCardStackBanner (stack) {
     };
     this.OnScroll = function (scroll_top) {
         var current_height = this.html.height();
+        var scroll_max = this.html.height()*0.5;
         var scroll_norm = 1; // Scrolled past the banner
-        if (scroll_top <= current_height) {
-            scroll_norm = scroll_top / current_height;
+        if (scroll_top <= scroll_max) {
+            scroll_norm = scroll_top / scroll_max;
         };
+        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
         // var scroll_norm = scroll_top / current_height;
         var max_offset = current_height + this.footer_row.row_height;
         var headline_offset = 0;
@@ -27226,10 +27228,10 @@ function DashCardStackBanner (stack) {
             this.footer_row.OnScroll(scroll_norm, headline_offset);
         };
         if (this.background_skirt) {
-            var shadow_opacity = 0.5*scroll_norm;
+            var shadow_opacity = 0.7*scroll_norm;
             this.background_skirt.css({
                 "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
-                "box-shadow": "0px 0px 30px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
+                "box-shadow": "0px 0px 40px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
             });
         };
     };
@@ -27464,10 +27466,10 @@ function DashCardStackBannerHeadline (banner) {
     };
     this.OnScroll = function (scroll_norm) {
         var opac_norm = 1;
-        if (scroll_norm > 0.25 && scroll_norm  < 0.5) {
-            opac_norm = Dash.Math.InverseLerp(0.5, 0.25, scroll_norm);
+        if (scroll_norm > 0.1 && scroll_norm  < 0.3) {
+            opac_norm = Dash.Math.InverseLerp(0.3, 0.1, scroll_norm);
         }
-        else if (scroll_norm >= 0.5) {
+        else if (scroll_norm >= 0.3) {
             opac_norm = 0;
         }
         else {
@@ -27669,6 +27671,8 @@ function DashCardStackBannerFooterButtonRow (banner) {
         else {
             scroll_norm = 1;
         };
+        // This is technically a double ease out...
+        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
         this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
     };
     this.setup_connections = function(){
@@ -27812,12 +27816,14 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
         })(this);
     };
     this.SetNotificationActive = function (is_active) {
-        if (is_active && !this.notification_icon) {
+        if (!this.notification_icon) {
             this.create_notification_icon();
         };
-        if (!is_active && this.notification_icon) {
-            this.notification_icon.remove();
-            this.notification_icon = null;
+        if (is_active) {
+            this.notification_icon.stop().animate({"opacity": 1}, 350);
+        }
+        else {
+            this.notification_icon.stop().animate({"opacity": 0}, 350);
         };
     };
     this.create_notification_icon = function () {
@@ -27834,6 +27840,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "border-radius": icon_size,
             "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
             "border": "2px solid white",
+            "opacity": 0.1,
         });
 
     };
@@ -27860,24 +27867,22 @@ function DashMobileLayoutCard (stack) {
     this.setup_styles = function () {
         this.html.css({
             "background": "none",
-            // "background": "#666",
             "margin-bottom": Dash.Size.Padding,
-            "margin-right": Dash.Size.Padding,
-            "margin-left": Dash.Size.Padding,
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
             "-o-transform": "translateZ(0)",
             "transform": "translateZ(0)",
+            "overflow": "visible",
         });
         this.content.css({
             "background": "white",
             "padding": Dash.Size.Padding,
             "border-radius": Dash.Size.BorderRadius,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
-            // "pointer-events": "none",
-            // "background": "none",
             "color": this.color.Text,
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
         });
         this.html.append(this.content);
     };
@@ -27911,6 +27916,11 @@ function DashMobileLayoutCard (stack) {
             "-ms-transform": "translateZ(0)",
             "-o-transform": "translateZ(0)",
             "transform": "translateZ(0)",
+            "margin-left": Dash.Size.Padding,
+        });
+        this.content.css({
+            "margin-right": 0,
+            "margin-left": 0,
         });
         this.html.css({
             "height": content_height,
@@ -27929,13 +27939,13 @@ function DashMobileLayoutCard (stack) {
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
         this.left_pull_area.html.css({
-            "left": 0,
+            "left": Dash.Size.Padding,
             "top": (content_height*0.5)-(this.left_pull_area.Size*0.5),
             "opacity": 0,
         });
         this.right_pull_area.html.css({
             "left": "auto",
-            "right": 0,
+            "right": Dash.Size.Padding,
             "top": content_height*0.5-(this.left_pull_area.Size*0.5),
             "opacity": 0,
         });
@@ -27947,6 +27957,10 @@ function DashMobileLayoutCard (stack) {
         this.slider = null;
         this.html.css({
             "height": "auto",
+        });
+        this.content.css({
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
         });
     };
     this.get_coords_from_event = function(event) {
@@ -28031,6 +28045,40 @@ function DashMobileLayoutCard (stack) {
         var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
         var animation_duration = Dash.Math.Lerp(300, 1000, pulled_norm); // Longer duration for a further pull
         Dash.Animation.Start(animation_duration, this.on_restore.bind(this), Dash.Animation.Curves.EaseOutBounce);
+    };
+    this.FancyShow = function() {
+        // Prepare for a fancy show by shrinking the box. Wait until the next frame to
+        // ensure we can calculate the destination height of the show
+        this.html.css({
+            "margin-bottom": 0,
+            "height": 0,
+            "overflow": "hidden",
+        });
+        (function(self){
+            requestAnimationFrame(function(){
+                self._fancy_show();
+            });
+        })(this);
+    };
+    this._fancy_show = function() {
+        // This is the frame after this card was hidden
+        this.html.stop().css({
+            "height": "auto",
+            "margin-bottom": Dash.Size.Padding,
+        });
+        var display_height = this.html.height();
+        this.html.css({
+            "height": 0,
+            "margin-bottom": 0,
+        });
+        this.html.animate({
+            "height": display_height,
+            "margin-bottom": Dash.Size.Padding,
+        }, 550, function(){
+            $(this).css({
+                "height": "auto",
+            })
+        });
     };
     this.Clear = function() {
         // Animate the hiding of this card

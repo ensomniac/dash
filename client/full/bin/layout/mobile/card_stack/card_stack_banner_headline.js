@@ -46,10 +46,10 @@ function DashCardStackBannerHeadline (banner) {
 
         var opac_norm = 1;
 
-        if (scroll_norm > 0.25 && scroll_norm  < 0.5) {
-            opac_norm = Dash.Math.InverseLerp(0.5, 0.25, scroll_norm);
+        if (scroll_norm > 0.1 && scroll_norm  < 0.3) {
+            opac_norm = Dash.Math.InverseLerp(0.3, 0.1, scroll_norm);
         }
-        else if (scroll_norm >= 0.5) {
+        else if (scroll_norm >= 0.3) {
             opac_norm = 0;
         }
         else {

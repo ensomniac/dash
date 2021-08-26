@@ -285,12 +285,14 @@ class __Utils:
 
         orig_path = os.path.join(img_root, f"{img_data['id']}_orig." + org_ext)
         thumb_path = os.path.join(img_root, f"{img_data['id']}_thb.jpg")
+        thumb_square_path = os.path.join(img_root, f"{img_data['id']}_sq_thb.jpg")
         data_path = os.path.join(img_root, f"{img_data['id']}.json")
 
         img.save(orig_path)
 
         # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
         img = img.convert("RGB")
+        img_square = img.copy()
 
         size = img.size[0]
         thumb_size = 512
@@ -300,7 +302,7 @@ class __Utils:
                 size = img.size[1]
                 x = int((img.size[0]*0.5) - (size*0.5))
 
-                img = img.crop((
+                img_square = img.crop((
                     x,         # x start
                     0,         # y start
                     x + size,  # x + width
@@ -310,26 +312,35 @@ class __Utils:
                 size = img.size[0]
                 y = int((img.size[1]*0.5) - (size*0.5))
 
-                img = img.crop((
+                img_square = img.crop((
                     0,        # x start
                     y,        # y start
                     size,     # x + width
                     y + size  # y + height
                 ))
+        else:
+            # This image is already square
+            pass
+
+        if img_square.size[0] > thumb_size or img_square.size[1] > thumb_size:
+            img_square = img_square.resize((thumb_size, thumb_size), Image.ANTIALIAS)
 
         if img.size[0] > thumb_size or img.size[1] > thumb_size:
-            img = img.resize((thumb_size, thumb_size), Image.ANTIALIAS)
+            img.thumbnail((thumb_size, thumb_size), Image.ANTIALIAS)
             size = thumb_size
 
-        img.save(thumb_path)
+        img.save(thumb_path, quality=40)
+        img_square.save(thumb_square_path, quality=40)
 
         url_root = f"{dash_context['domain']}/local/"
         url_root += img_root.split(f"/{dash_context['asset_path']}/local/")[-1]
 
         thumb_url = f"{url_root}/{img_data['id']}_thb.jpg"
+        thumb_sq_url = f"{url_root}/{img_data['id']}_sq_thb.jpg"
         orig_url = f"{url_root}/{img_data['id']}_orig." + org_ext
 
         img_data["thumb_url"] = "https://" + thumb_url.replace("//", "/")
+        img_data["thumb_sq_url"] = "https://" + thumb_sq_url.replace("//", "/")
         img_data["orig_url"] = "https://" + orig_url.replace("//", "/")
 
         img_data["width"] = img.size[0]

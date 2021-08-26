@@ -26,15 +26,13 @@ function DashMobileLayoutCard (stack) {
 
         this.html.css({
             "background": "none",
-            // "background": "#666",
             "margin-bottom": Dash.Size.Padding,
-            "margin-right": Dash.Size.Padding,
-            "margin-left": Dash.Size.Padding,
             "-webkit-transform": "translateZ(0)",
             "-moz-transform": "translateZ(0)",
             "-ms-transform": "translateZ(0)",
             "-o-transform": "translateZ(0)",
             "transform": "translateZ(0)",
+            "overflow": "visible",
         });
 
         this.content.css({
@@ -42,9 +40,9 @@ function DashMobileLayoutCard (stack) {
             "padding": Dash.Size.Padding,
             "border-radius": Dash.Size.BorderRadius,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
-            // "pointer-events": "none",
-            // "background": "none",
             "color": this.color.Text,
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
         });
 
         this.html.append(this.content);
@@ -92,6 +90,12 @@ function DashMobileLayoutCard (stack) {
             "-ms-transform": "translateZ(0)",
             "-o-transform": "translateZ(0)",
             "transform": "translateZ(0)",
+            "margin-left": Dash.Size.Padding,
+        });
+
+        this.content.css({
+            "margin-right": 0,
+            "margin-left": 0,
         });
 
         this.html.css({
@@ -120,14 +124,14 @@ function DashMobileLayoutCard (stack) {
         var content_height = this.content.height() + (Dash.Size.Padding*2);
 
         this.left_pull_area.html.css({
-            "left": 0,
+            "left": Dash.Size.Padding,
             "top": (content_height*0.5)-(this.left_pull_area.Size*0.5),
             "opacity": 0,
         });
 
         this.right_pull_area.html.css({
             "left": "auto",
-            "right": 0,
+            "right": Dash.Size.Padding,
             "top": content_height*0.5-(this.left_pull_area.Size*0.5),
             "opacity": 0,
         });
@@ -143,6 +147,11 @@ function DashMobileLayoutCard (stack) {
 
         this.html.css({
             "height": "auto",
+        });
+
+        this.content.css({
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding,
         });
 
     };
@@ -255,6 +264,50 @@ function DashMobileLayoutCard (stack) {
         var pulled_norm = Dash.Math.InverseLerp(0, $(window).width(), Math.abs(this.restoring_pull_start_x));
         var animation_duration = Dash.Math.Lerp(300, 1000, pulled_norm); // Longer duration for a further pull
         Dash.Animation.Start(animation_duration, this.on_restore.bind(this), Dash.Animation.Curves.EaseOutBounce);
+
+    };
+
+    this.FancyShow = function() {
+        // Prepare for a fancy show by shrinking the box. Wait until the next frame to
+        // ensure we can calculate the destination height of the show
+
+        this.html.css({
+            "margin-bottom": 0,
+            "height": 0,
+            "overflow": "hidden",
+        });
+
+        (function(self){
+            requestAnimationFrame(function(){
+                self._fancy_show();
+            });
+        })(this);
+
+    };
+
+    this._fancy_show = function() {
+        // This is the frame after this card was hidden
+
+        this.html.stop().css({
+            "height": "auto",
+            "margin-bottom": Dash.Size.Padding,
+        });
+
+        var display_height = this.html.height();
+
+        this.html.css({
+            "height": 0,
+            "margin-bottom": 0,
+        });
+
+        this.html.animate({
+            "height": display_height,
+            "margin-bottom": Dash.Size.Padding,
+        }, 550, function(){
+            $(this).css({
+                "height": "auto",
+            })
+        });
 
     };
 

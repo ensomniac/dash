@@ -112,11 +112,14 @@ function DashCardStackBanner (stack) {
 
     this.OnScroll = function (scroll_top) {
         var current_height = this.html.height();
+        var scroll_max = this.html.height()*0.5;
 
         var scroll_norm = 1; // Scrolled past the banner
-        if (scroll_top <= current_height) {
-            scroll_norm = scroll_top / current_height;
+        if (scroll_top <= scroll_max) {
+            scroll_norm = scroll_top / scroll_max;
         };
+
+        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
 
         // var scroll_norm = scroll_top / current_height;
         var max_offset = current_height + this.footer_row.row_height;
@@ -132,10 +135,10 @@ function DashCardStackBanner (stack) {
         };
 
         if (this.background_skirt) {
-            var shadow_opacity = 0.5*scroll_norm;
+            var shadow_opacity = 0.7*scroll_norm;
             this.background_skirt.css({
                 "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
-                "box-shadow": "0px 0px 30px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
+                "box-shadow": "0px 0px 40px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
             });
         };
 

@@ -80,6 +80,9 @@ function DashCardStackBannerFooterButtonRow (banner) {
             scroll_norm = 1;
         };
 
+        // This is technically a double ease out...
+        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
+
         this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
 
     };

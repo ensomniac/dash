@@ -115,13 +115,15 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
     this.SetNotificationActive = function (is_active) {
 
-        if (is_active && !this.notification_icon) {
+        if (!this.notification_icon) {
             this.create_notification_icon();
         };
 
-        if (!is_active && this.notification_icon) {
-            this.notification_icon.remove();
-            this.notification_icon = null;
+        if (is_active) {
+            this.notification_icon.stop().animate({"opacity": 1}, 350);
+        }
+        else {
+            this.notification_icon.stop().animate({"opacity": 0}, 350);
         };
 
     };
@@ -142,6 +144,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             "border-radius": icon_size,
             "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
             "border": "2px solid white",
+            "opacity": 0.1,
         });
 
 
