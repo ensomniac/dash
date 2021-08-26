@@ -50,10 +50,25 @@ class SyncThread:
     def index_all(self):
         self.last_reindex_time = datetime.datetime.now()
 
+        paths = [self.root_path]
+
+        python_path = self.root_path.replace("/server/", "/python/")
+
+        if python_path != self.root_path and os.path.exists(python_path):
+            paths.append(python_path)
+            print("\nINCLUDING PYTHON FOLDER: " + python_path)
+
+        for index_path in paths:
+            self.index_all_from_path(index_path)
+
+    def index_all_from_path(self, root_path):
+
+        print("index: " + str(root_path))
+
         files = {}
         all_files = [
             os.path.join(dp, f)
-            for dp, dn, fn in os.walk(os.path.expanduser(self.root_path))
+            for dp, dn, fn in os.walk(os.path.expanduser(root_path))
             for f in fn
         ]
 

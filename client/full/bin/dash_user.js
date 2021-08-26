@@ -94,7 +94,6 @@ function DashUser () {
 
         for (var i in this.Init["team_sort"]) {
             var email = this.Init["team_sort"][i];
-            // var data = this.Init["team"][email];
             this.Init["team_combo"].push(this.Init["team"][email]);
         }
 

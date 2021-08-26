@@ -40,7 +40,7 @@ class DashSync:
         server_root, client_root = SyncUtils.FindServerClientRoots(package)
 
         if server_root:
-            # print("server_root: " + server_root)
+            print("server_root: " + server_root)
             self.sync_threads.append(SyncThread(
                 package,
                 server_root,
