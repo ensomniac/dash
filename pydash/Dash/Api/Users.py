@@ -42,7 +42,7 @@ class ApiUsers:
             # Sent from the client
             user_data = json.loads(user_data)
 
-        data_root = Users.GetUserDataRoot(user_data["email"], admin_user_data=self.User)
+        data_root = Users.GetUserDataRoot(user_data["email"])
         usr_data_path = os.path.join(data_root, "usr.data")
         img_root = os.path.join(data_root, "img/")
 
