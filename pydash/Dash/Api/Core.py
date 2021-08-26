@@ -46,10 +46,6 @@ class ApiCore:
         self.set_dash_globals()
 
     @property
-    def RandomID(self):
-        return Utils.GetRandomID()
-
-    @property
     def DashContext(self):
         if not hasattr(self, "_dash_context"):
             from Dash.PackageContext import Get as GetContext
@@ -80,6 +76,10 @@ class ApiCore:
     def RunningOnServer(self):
         return sys.path[0].startswith(self.DashContext["srv_path_http_root"])
 
+    @property
+    def RandomID(self):
+        return Utils.GetRandomID()
+
     # TODO: Deprecate this function in favor of @property > RandomID
     def GetRandomID(self):
         return self.RandomID
@@ -102,17 +102,41 @@ class ApiCore:
 
         elif self._params.get("f") in self._private:
             if self.User:
-                # This needs to be set again in order to
-                # capture the logged in user's data
+                # This needs to be set again in order to capture the logged in user's data
                 self.set_dash_globals()
                 self.run(self._private[self._params.get("f")])
         else:
             self.SetResponse({"error": "Unknown Function x4543"})
 
+        self.ReturnResponse()
+
+    def ReturnResponse(self):
         if self._render_html:
             self.print_return_html()
         else:
             self.print_return_data()
+
+    # TODO: Propagate this throughout the code and update old validation checks
+    def ValidateParams(self, required_params):
+        """
+        Ensures the request has all required params before processing anything.
+
+        :param list required_params: All param names to check for
+        """
+
+        if type(required_params) != list:
+            self.RaiseError("ValidateParams requires a list")
+
+        for param in required_params:
+            if not self.Params.get(param):
+                self.RaiseError(f"Missing param '{param}'")
+
+    # TODO: Propagate this throughout the code and update old raiseException calls
+    def RaiseError(self, error_msg):
+        self.SetResponse({"error": error_msg})
+        self.ReturnResponse()
+
+        sys.exit()
 
     def SetParam(self, key, value):
         # Adds a param to self._params
@@ -127,6 +151,22 @@ class ApiCore:
             self._private[f.__name__] = f
         else:
             self._public[f.__name__] = f
+
+    def SetError(self, error_str):
+        self.SetResponse({"error": error_str})
+
+    def SetResponse(self, response=None):
+        if type(response) == str:
+            self._render_html = True
+        else:
+            self._render_html = False
+
+            if "error" not in response.keys():
+                response["error"] = None
+
+        self._response = response
+
+        return self._response
 
     def set_dash_globals(self):
         # This code allows us to inject content from this class in all
@@ -154,8 +194,9 @@ class ApiCore:
             try:
                 data[key] = mini_field_storage.value
             except:
-                mini_field_storage = self._fs[key][0]
+                # mini_field_storage = self._fs[key][0]
                 # raise Exception("? -> key: " + str(mini_field_storage))
+                pass
 
         return data
 
@@ -180,22 +221,6 @@ class ApiCore:
 
         print("Content-type: text/plain\n")
         print(str(json.dumps(self._response)))
-
-    def SetError(self, error_str):
-        self.SetResponse({"error": error_str})
-
-    def SetResponse(self, response=None):
-        if type(response) == str:
-            self._render_html = True
-        else:
-            self._render_html = False
-
-            if "error" not in response.keys():
-                response["error"] = None
-
-        self._response = response
-
-        return self._response
 
     def run(self, f):
         self._response = {"error": "Missing return data x8765"}
