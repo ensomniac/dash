@@ -4,7 +4,7 @@
 #      Andrew Stet, stetandrew@gmail.com
 
 
-class __Metric:
+class _Metric:
     def __init__(self):
         pass
 
@@ -78,4 +78,4 @@ class __Metric:
         return units
 
 
-Metric = __Metric()
+Metric = _Metric()

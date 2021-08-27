@@ -14,7 +14,7 @@ from traceback import format_exc
 class Users:
     def __init__(self, request_params, dash_context=None):
         self.request_params = request_params
-        self.__dash_context = dash_context
+        self._dash_context = dash_context
 
     @property
     def UsersPath(self):
@@ -25,15 +25,15 @@ class Users:
 
     @property
     def dash_context(self):
-        if self.__dash_context is None:
+        if self._dash_context is None:
             if not self.request_params or not self.request_params.get("asset_path"):
                 raise Exception("Error: (Users) No access to Dash Context asset path (no request params)")
 
             from Dash.PackageContext import Get
 
-            self.__dash_context = Get(self.request_params["asset_path"])
+            self._dash_context = Get(self.request_params["asset_path"])
 
-        return self.__dash_context
+        return self._dash_context
 
     def Reset(self):
         email = str(self.request_params.get("email")).strip().lower()

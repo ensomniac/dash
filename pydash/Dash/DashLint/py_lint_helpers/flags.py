@@ -4,17 +4,15 @@
 import os
 import sys
 
-from typing import Callable
-
 
 class Flags:
     source_code: list
     comment_token: str
     comment_prefix: str
-    AddDocstringsAndFlags: Callable
-    RemoveEmptyComments: Callable
-    GetFormattedCommentedLine: Callable
-    RemoveExtraLinesAtEndOfFile: Callable
+    RemoveEmptyComments: callable
+    AddDocstringsAndFlags: callable
+    GetFormattedCommentedLine: callable
+    RemoveExtraLinesAtEndOfFile: callable
 
     def __init__(self):
         self.line_length_flag_suffix = "(excluding comments)"

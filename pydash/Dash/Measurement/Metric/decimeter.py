@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Decimeter:
+class _Decimeter:
     def __init__(self):
         pass
 
@@ -33,4 +33,4 @@ class __Decimeter:
         return UnitToDict(self)
 
 
-Decimeter = __Decimeter()
+Decimeter = _Decimeter()

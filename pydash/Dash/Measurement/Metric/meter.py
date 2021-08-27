@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Meter:
+class _Meter:
     def __init__(self):
         pass
 
@@ -33,4 +33,4 @@ class __Meter:
         return UnitToDict(self)
 
 
-Meter = __Meter()
+Meter = _Meter()

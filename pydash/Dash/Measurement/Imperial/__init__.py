@@ -4,7 +4,7 @@
 #      Andrew Stet, stetandrew@gmail.com
 
 
-class __Imperial:
+class _Imperial:
     def __init__(self):
         pass
 
@@ -66,4 +66,4 @@ class __Imperial:
         return units
 
 
-Imperial = __Imperial()
+Imperial = _Imperial()

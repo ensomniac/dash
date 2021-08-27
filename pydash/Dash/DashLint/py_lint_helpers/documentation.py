@@ -4,8 +4,6 @@
 import os
 import sys
 
-from typing import Callable
-
 # Note: Some of this functionality may end up being able to be shared with JSLint,
 # however, I'm currently uncertain of that, so it will be made separate for now.
 
@@ -15,8 +13,8 @@ class PyDoc:
     comment_token: str
     comment_prefix: str
     iter_limit_range: range
-    GetIndentSpaceCount: Callable
-    GetFormattedCommentedLine: Callable
+    GetIndentSpaceCount: callable
+    GetFormattedCommentedLine: callable
 
     def __init__(self):
         super().__init__()

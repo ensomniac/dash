@@ -15,12 +15,12 @@ Unresolved Notes / Thoughts for Python:
 import os
 import sys
 
-from .js_lint    import JSLinter
-from .py_lint    import PyLinter
+from .js_lint import JSLinter
+from .py_lint import PyLinter
 from .lint_utils import LintUtils
 
 
-class __DashLint:
+class _DashLint:
     def __init__(self):
         pass
 
@@ -36,4 +36,4 @@ class __DashLint:
         return lint_succeeded, msg
 
 
-DashLint = __DashLint()
+DashLint = _DashLint()

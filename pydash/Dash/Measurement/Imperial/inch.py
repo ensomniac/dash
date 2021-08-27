@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Inch:
+class _Inch:
     def __init__(self):
         pass
 
@@ -37,4 +37,4 @@ class __Inch:
         return UnitToDict(self)
 
 
-Inch = __Inch()
+Inch = _Inch()

@@ -15,7 +15,7 @@ from .py_lint_helpers.pre_compile import PreCompile
 from .py_lint_helpers.style_formatting import FormatStyle
 
 
-class __PyLinter(
+class _PyLinter(
     PyDoc,
     Flags,
     Cleanup,
@@ -85,4 +85,4 @@ class __PyLinter(
         self.CheckForAlreadyUsedAssetPaths()
 
 
-PyLinter = __PyLinter()
+PyLinter = _PyLinter()

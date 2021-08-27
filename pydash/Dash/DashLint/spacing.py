@@ -4,8 +4,6 @@
 import os
 import sys
 
-from typing import Callable
-
 
 class GlobalSpacing:
     group: bool
@@ -14,7 +12,7 @@ class GlobalSpacing:
     iter_limit_range: range
     starts_with_keyword: str
     line_break_quantity: int
-    GetIndentSpaceCount: Callable
+    GetIndentSpaceCount: callable
     line_end_keyword_strings: list
 
     def __init__(self):

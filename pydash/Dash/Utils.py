@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Utils:
+class _Utils:
     _usr_token: str
     _global: callable
 
@@ -549,4 +549,4 @@ class __Utils:
             return f"{date_markup} at {time_markup}"
 
 
-Utils = __Utils()
+Utils = _Utils()

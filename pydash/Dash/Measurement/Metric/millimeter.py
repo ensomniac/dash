@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Millimeter:
+class _Millimeter:
     def __init__(self):
         pass
 
@@ -33,4 +33,4 @@ class __Millimeter:
         return UnitToDict(self)
 
 
-Millimeter = __Millimeter()
+Millimeter = _Millimeter()

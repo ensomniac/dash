@@ -4,13 +4,11 @@
 import os
 import sys
 
-from typing import Callable
-
 
 class PySpacing:
     source_code: list
     iter_limit_range: range
-    CheckSpecificSpacing: Callable
+    CheckSpecificSpacing: callable
 
     def __init__(self):
         super().__init__()

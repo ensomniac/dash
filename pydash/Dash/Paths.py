@@ -12,7 +12,7 @@
 #         self.root_ryan = os.path.join("/Users", "rmartin", "Google Drive", "code")
 #         self.request_path_ryan = os.path.join("/Users", "rmartin", "rar", "active")
 
-#         self.root_path = self.__get_root_path()
+#         self.root_path = self._get_root_path()
 
 #     # @property
 #     # def DashRoot(self):
@@ -33,8 +33,7 @@
 #     # #     if os.path.exists("")
 
 
-
-#     # def __get_root_path(self):
+#     # def _get_root_path(self):
 #     #     # Andrew - this is a little confusing - what is it the root path to?
 
 #     #     if os.path.exists(self.root_ryan):
@@ -87,4 +86,3 @@
 # local_paths = LocalPaths() # Andrew - let's get rid of this and use paths for both
 # server_paths = ServerPaths() # Andrew - let's get rid of this and use paths for both
 # Paths = Paths()
-

@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Yard:
+class _Yard:
     def __init__(self):
         pass
 
@@ -33,4 +33,4 @@ class __Yard:
         return UnitToDict(self)
 
 
-Yard = __Yard()
+Yard = _Yard()

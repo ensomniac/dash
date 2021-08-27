@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class __Foot:
+class _Foot:
     def __init__(self):
         pass
 
@@ -37,4 +37,4 @@ class __Foot:
         return UnitToDict(self)
 
 
-Foot = __Foot()
+Foot = _Foot()

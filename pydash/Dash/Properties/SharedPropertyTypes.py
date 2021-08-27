@@ -9,7 +9,7 @@ import sys
 from Dash.Properties.SharedPropertyType import Float, String, Int, Bool, PropertySet
 
 
-class __SharedPropertyTypes:
+class _SharedPropertyTypes:
     _all: dict
 
     def __init__(self):
@@ -48,4 +48,4 @@ def Validate(asset_path, value_to_validate, config_module, validation_options={}
     return prop.Validate(value_to_validate, config_module)
 
 
-SharedPropertyTypes = __SharedPropertyTypes()
+SharedPropertyTypes = _SharedPropertyTypes()
