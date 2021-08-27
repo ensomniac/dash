@@ -8,9 +8,9 @@ from .Imperial import Imperial
 
 
 class Measurement:
-    _unit: object
     _value: float
-    _system: object
+    _unit: callable
+    _system: callable
 
     def __init__(self, system, unit, value):
         """

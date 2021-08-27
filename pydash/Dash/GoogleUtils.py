@@ -7,10 +7,10 @@ import sys
 
 class GUtils:
     __creds: object
-    __drive_client: object
     __oauth2_creds: object
-    __sheets_client: object
     __gspread_creds: object
+    __drive_client: callable
+    __sheets_client: callable
 
     def __init__(self):
         pass

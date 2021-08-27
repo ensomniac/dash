@@ -8,28 +8,32 @@ import sys
 
 
 class __Utils:
-    _global: object
-    _usr_token: object
+    _usr_token: str
+    _global: callable
 
     def __init__(self):
         pass
 
     @property
+    def OapiRoot(self):
+        return os.path.join("/var", "www", "vhosts", "oapi.co")
+
+    @property
     def IsServer(self):
-        return os.path.exists("/var/www/vhosts/oapi.co/logs/")
+        return os.path.exists(os.path.join(self.OapiRoot, "logs"))
 
     @property
     def ServerLocalStorePath(self):
-        return "/var/www/vhosts/oapi.co/dash/local/packages/"
+        return os.path.join(self.OapiRoot, "dash", "local", "packages/")
 
     @property
     def Global(self):
-        # This function is meant to return meaningful shared
-        # data in the context of a single request
+        # This function is meant to return meaningful shared data in the context of a single request
 
         if not hasattr(self, "_global"):
-            import Dash
-            self._global = sys.modules[Dash.__name__]
+            from Dash import __name__ as DashName
+
+            self._global = sys.modules[DashName]
 
         if not hasattr(self._global, "RequestData"):
             self._global.RequestData = {}
@@ -163,7 +167,7 @@ class __Utils:
 
     def SendEmail(self, subject, notify_email_list, msg=None, error=None):
         # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
-        if not os.path.exists("/var/www/vhosts/oapi.co/"):
+        if not os.path.exists(self.OapiRoot):
             raise Exception("The Mail Module can currently only run directly from the server.")
 
         import Mail
@@ -235,8 +239,8 @@ class __Utils:
         return img_data
 
     def rotate_image(self, img, exif):
-
         rot_deg = 0
+
         if exif.get("Orientation") == 6:
             rot_deg = -90
         elif exif.get("Orientation") == 8:
@@ -255,10 +259,9 @@ class __Utils:
         from datetime import datetime
         from Dash.LocalStorage import Write
 
+        org_ext = "png"
         img = Image.open(BytesIO(img_file))
-
-        img_data = {}
-        img_data["id"] = self.GetRandomID()
+        img_data = {"id": self.GetRandomID()}
         img_data = self.process_exif_image_data(img_data, img)
         img_data["org_format"] = img.format.lower()
 
@@ -272,7 +275,6 @@ class __Utils:
         img_data["uploaded_by"] = user["email"]
         img_data["uploaded_on"] = datetime.now().isoformat()
 
-        org_ext = "png"
         if "jpeg" in img_data["org_format"] or "jpg" in img_data["org_format"]:
             org_ext = "jpg"
         elif "gif" in img_data["org_format"]:
@@ -293,8 +295,6 @@ class __Utils:
         # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
         img = img.convert("RGB")
         img_square = img.copy()
-
-        size = img.size[0]
         thumb_size = 512
 
         if img.size[0] != img.size[1]:
@@ -327,7 +327,6 @@ class __Utils:
 
         if img.size[0] > thumb_size or img.size[1] > thumb_size:
             img.thumbnail((thumb_size, thumb_size), Image.ANTIALIAS)
-            size = thumb_size
 
         img.save(thumb_path, quality=40)
         img_square.save(thumb_square_path, quality=40)
@@ -353,16 +352,14 @@ class __Utils:
 
     @property
     def LocalPackages(self):
-        # Andrew - I'm going to be moving these config objects
-        # somewhere else since it's messy doing it like this
-        # but for now let's keep it simple and assume there are only two of us
+        # Andrew - I'm going to be moving these config objects somewhere else since it's messy
+        # doing it like this but for now let's keep it simple and assume there are only two of us
 
         from Dash.LocalPackageContext import LocalPackageContext
 
         pkg = []
 
         if self.IsRyansMachine:
-
             pkg.append(LocalPackageContext(
                 asset_path="altona",
                 display_name="Altona IO",
@@ -392,13 +389,6 @@ class __Utils:
             ))
 
             pkg.append(LocalPackageContext(
-                asset_path="authentic",
-                display_name="Authentic Tools Portal",
-                domain="authentic.tools",
-                local_git_root="/Users/rmartin/Google Drive/authentic/github/",
-            ))
-
-            pkg.append(LocalPackageContext(
                 asset_path="dash_guide",
                 display_name="Dash Guide",
                 domain="dash.guide",
@@ -406,7 +396,6 @@ class __Utils:
             ))
 
         else:
-
             pkg.append(LocalPackageContext(
                 asset_path="altona",
                 display_name="Altona IO",
@@ -423,16 +412,18 @@ class __Utils:
 
     @property
     def IsRyansMachine(self):
-        return os.path.exists("/Users/rmartin/")
+        return os.path.exists(os.path.join("/Users", "rmartin"))
 
     @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
             try:
+                from json import loads
                 from os.path import expanduser
-                import json
+
                 dash_data_path = os.path.join(expanduser("~"), ".dash")
-                dash_data = json.loads(open(dash_data_path, "r").read())
+                dash_data = loads(open(dash_data_path, "r").read())
+
                 self._usr_token = dash_data["user"]["token"]
             except:
                 return None

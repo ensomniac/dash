@@ -15,7 +15,7 @@ from Dash import __name__ as DashName
 class ApiCore:
     _user: str
     _dash_context: dict
-    dash_global: object
+    dash_global: callable
 
     def __init__(self, execute_as_module, asset_path):
         self._execute_as_module = execute_as_module

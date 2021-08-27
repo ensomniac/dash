@@ -29,7 +29,7 @@ from Dash import LocalStorage
 
 
 class Collection:
-    _ctx: object
+    _ctx: dict
 
     def __init__(self, store_path, nested=False, dash_context=None, sort_by_key=""):
         self.nested = nested
