@@ -123,8 +123,14 @@ class ApiCore:
 
         :param list required_params: All param names to check for
         """
+        if type(required_params) == str:
+            if "," in required_params:
+                required_params = required_params.split(",")
+                required_params = [p.strip() for p in required_params]
+            else:
+                required_params = [required_params]
 
-        if type(required_params) != list:
+        elif type(required_params) != list:
             self.RaiseError("ValidateParams requires a list")
 
         for param in required_params:
