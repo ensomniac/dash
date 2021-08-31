@@ -165,7 +165,7 @@ class _Utils:
 
         return cleaned_list
 
-    def SendEmail(self, subject, notify_email_list, msg=None, error=None):
+    def SendEmail(self, subject, notify_email_list=[], msg="", error=""):
         # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
         if not os.path.exists(self.OapiRoot):
             raise Exception("The Mail Module can currently only run directly from the server.")
@@ -177,7 +177,7 @@ class _Utils:
         if not msg:
             msg = subject
 
-        if error and len(error) and str(error) != "NoneType: None" and error != "None":
+        if len(error) and error != "NoneType: None" and error != "None":
             msg += f"<br><br>Exception/Traceback:<br><br>{error}"
 
         if sender not in notify_email_list:

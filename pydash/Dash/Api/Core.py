@@ -17,15 +17,17 @@ class ApiCore:
     _dash_context: dict
     dash_global: callable
 
-    def __init__(self, execute_as_module, asset_path):
+    def __init__(self, execute_as_module, asset_path, send_email_on_error=False):
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
+        self._send_email_on_error = send_email_on_error
+
         self._params = {}
-        self._response = {"error": "Unauthorized"}
-        self._render_html = None
         self._public = {}
         self._private = {}  # Requires an authenticated user
+        self._render_html = None
         self._fs = cgi.FieldStorage()
+        self._response = {"error": "Unauthorized"}
 
         try:
             self._params = self.get_data()
@@ -123,6 +125,7 @@ class ApiCore:
 
         :param list required_params: All param names to check for
         """
+
         if type(required_params) == str:
             if "," in required_params:
                 required_params = required_params.split(",")
@@ -137,7 +140,7 @@ class ApiCore:
             if not self.Params.get(param):
                 self.RaiseError(f"Missing param '{param}'")
 
-    # TODO: Propagate this throughout the code and update old raiseException calls
+    # TODO: Propagate this throughout the code and update old raise Exception calls
     def RaiseError(self, error_msg):
         self.SetResponse({"error": error_msg})
         self.ReturnResponse()
@@ -145,11 +148,11 @@ class ApiCore:
         sys.exit()
 
     def SetParam(self, key, value):
-        # Adds a param to self._params
         self._params[key] = value
 
     def StopExecutionOnError(self, error):
         self._response["error"] = error
+
         self.print_return_data()
 
     def Add(self, f, requires_authentication):
@@ -172,7 +175,24 @@ class ApiCore:
 
         self._response = response
 
+        if self._response.get("error") and self._send_email_on_error and not self._execute_as_module:
+            self.SendEmail()
+
         return self._response
+
+    def SendEmail(self, subject="", msg="", error="", notify_email_list=["ryan@ensomniac.com", "stetandrew@gmail.com"]):
+        if not subject:
+            subject = f"{self._asset_path} - {self.Params.get('f')}"
+
+        if not error and self._response.get("error"):
+            error = self._response["error"]
+
+        Utils.SendEmail(
+            subject=subject,
+            notify_email_list=notify_email_list,
+            msg=msg,
+            error=error
+        )
 
     def set_dash_globals(self):
         # This code allows us to inject content from this class in all
