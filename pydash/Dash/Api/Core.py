@@ -145,6 +145,9 @@ class ApiCore:
         self.SetResponse({"error": error_msg})
         self.ReturnResponse()
 
+        # TODO: This technically kills a request from any level by raising a SystemExit
+        #  exception. Ideally, we should find a way to easily return from a
+        #  request, no matter how deep, without actually raising an exception.
         sys.exit()
 
     def SetParam(self, key, value):
