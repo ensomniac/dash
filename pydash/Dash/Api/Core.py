@@ -82,10 +82,6 @@ class ApiCore:
     def RandomID(self):
         return Utils.GetRandomID()
 
-    # TODO: Deprecate this function in favor of @property > RandomID
-    def GetRandomID(self):
-        return self.RandomID
-
     def SetUser(self, user_data):
         if not user_data["email"]:
             raise Exception("Invalid user_data format!")
@@ -118,7 +114,6 @@ class ApiCore:
         else:
             self.print_return_data()
 
-    # TODO: Propagate this throughout the code and update old validation checks
     def ValidateParams(self, required_params):
         """
         Ensures the request has all required params before processing anything.

@@ -55,7 +55,7 @@ class Jobs:
 
         job_details = {}
         job_details["simple_id"] = "A19"
-        job_details["id"] = self.GetRandomID()
+        job_details["id"] = self.RandomID
         job_details["title"] = "Job Title"
         job_details["description"] = "Job Description"
         job_details["tags"] = ["Job Tag 1", "Job Tag 2"]
