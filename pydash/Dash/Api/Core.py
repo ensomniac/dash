@@ -114,11 +114,12 @@ class ApiCore:
         else:
             self.print_return_data()
 
-    def ValidateParams(self, required_params):
+    def ValidateParams(self, required_params, falsy=False):
         """
         Ensures the request has all required params before processing anything.
 
         :param list required_params: All param names to check for
+        :param bool falsy: Whether or not required_params is a list of falsy params
         """
 
         if type(required_params) == str:
@@ -132,8 +133,13 @@ class ApiCore:
             self.RaiseError("ValidateParams requires a list")
 
         for param in required_params:
-            if not self.Params.get(param):
-                self.RaiseError(f"Missing param '{param}'")
+            if falsy:
+                if param not in self.Params:
+                    self.RaiseError(f"Missing param '{param}'")
+
+            else:
+                if not self.Params.get(param):
+                    self.RaiseError(f"Missing param '{param}'")
 
     # TODO: Propagate this throughout the code and update old raise Exception calls
     def RaiseError(self, error_msg):

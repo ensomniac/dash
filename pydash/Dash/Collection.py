@@ -34,7 +34,7 @@ class Collection:
     def __init__(self, store_path, nested=False, dash_context=None, sort_by_key=""):
         self.nested = nested
         self.store_path = store_path
-        self.sort_by_key = sort_by_key
+        self._sort_by_key = sort_by_key
         self._dash_context = dash_context
 
     @property
@@ -61,29 +61,44 @@ class Collection:
             nested=self.nested,
         )
 
+    @property
+    def sort_by_key(self):
+        return self._sort_by_key
+
+    def SetSortByKey(self, key):
+        self._sort_by_key = key
+
     def All(self):
         return LocalStorage.GetAll(
             self.Ctx,
             self.store_path,
             nested=self.nested,
-            sort_by_key=self.sort_by_key
+            sort_by_key=self._sort_by_key
         )
 
-    def Overview(self, filter_out_keys):
+    def AllIDs(self):
+        return LocalStorage.GetAllIDs(
+            self.Ctx,
+            self.store_path,
+            nested=self.nested
+        )
+
+    def Overview(self, filter_out_keys, sort_by_key=""):
         return LocalStorage.GetAll(
             self.Ctx,
             self.store_path,
             nested=self.nested,
-            sort_by_key=self.sort_by_key,
+            sort_by_key=(sort_by_key or self._sort_by_key),
             filter_out_keys=filter_out_keys
         )
 
-    def Get(self, obj_id):
+    def Get(self, obj_id, filter_out_keys=[]):
         return LocalStorage.GetData(
             self.Ctx,
             self.store_path,
             obj_id,
             nested=self.nested,
+            filter_out_keys=filter_out_keys
         )
 
     def New(self, additional_data={}, return_all_data=True):

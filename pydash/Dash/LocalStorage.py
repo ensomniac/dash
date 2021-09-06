@@ -79,19 +79,37 @@ class DashLocalStorage:
 
         return data
 
+    def GetAllIDs(self):
+        all_ids = []
+        store_root = self.get_store_root()
+
+        if not os.path.exists(store_root):
+            return all_ids
+
+        for obj_id in os.listdir(store_root):
+            if obj_id.startswith("."):
+                continue
+
+            all_ids.append(obj_id)
+
+        return all_ids
+
     def GetAll(self):
         """
         Returns a dictionary containing ID > Data pairs
         """
 
-        all_data = {}
-        all_data["data"] = {}
-        all_data["order"] = []
+        all_data = {
+            "data": {},
+            "order": []
+        }
 
-        if not os.path.exists(self.get_store_root()):
+        store_root = self.get_store_root()
+
+        if not os.path.exists(store_root):
             return all_data
 
-        for obj_id in os.listdir(self.get_store_root()):
+        for obj_id in os.listdir(store_root):
             if obj_id.startswith("."):
                 continue
 
@@ -129,9 +147,12 @@ class DashLocalStorage:
 
         data = self.Read(record_path)
 
-        return data
+        return self.filter_data_entry(data)
 
     def filter_data_entry(self, data):
+        if not self.filter_out_keys:
+            return data
+
         filtered_data = {}
 
         for key in data:
@@ -154,6 +175,7 @@ class DashLocalStorage:
 
             if not entry_data.get(self.sort_by_key):
                 unsortable.append(entry_id)
+
                 continue
 
             sorted_key = entry_data[self.sort_by_key]
@@ -434,12 +456,16 @@ def Delete(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id)
 
 
-def GetData(dash_context, store_path, obj_id, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).GetData(obj_id)
+def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
+    return DashLocalStorage(dash_context, store_path, nested, filter_out_keys).GetData(obj_id)
 
 
 def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[]):
     return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll()
+
+
+def GetAllIDs(dash_context, store_path, nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).GetAllIDs()
 
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
