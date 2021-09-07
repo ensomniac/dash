@@ -146,12 +146,12 @@ class Configuration:
         return None
 
     def set_combo_id(self, obj_id, value):
-        from Dash.Utils import Utils
+        from Dash.UtilsNew import GetAssetPath
 
         LocalStorage.SetProperty(
             dash_context=self.DashContext,
             store_path=self.StorePath,
             obj_id=obj_id,
             key="combo_id",
-            value=Utils.GetAssetPath(value)
+            value=GetAssetPath(value)
         )

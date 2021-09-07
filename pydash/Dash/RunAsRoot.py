@@ -11,7 +11,7 @@ from time import sleep
 from pathlib import Path
 from threading import Timer
 from datetime import datetime
-from Dash.Utils import OapiRoot, GetRandomID
+from Dash.UtilsNew import OapiRoot, GetRandomID
 
 
 class RunAsRoot:

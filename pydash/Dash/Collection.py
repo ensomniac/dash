@@ -43,9 +43,9 @@ class Collection:
             if self._dash_context:
                 self._ctx = self._dash_context
             else:
-                from Dash.Utils import Utils as DashUtils
+                from Dash.UtilsNew import Memory
 
-                self._ctx = DashUtils.Global.Context
+                self._ctx = Memory.Global.Context
 
         return self._ctx
 

@@ -17,10 +17,10 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 
 # ------------------------------------------------- IMAGE ---------------------------------------------------
-def UploadImage():
+def UploadImage(dash_context, user, img_root, img_file, nested=False):
     from .image import Upload
 
-    return Upload(None, None, None, None)
+    return Upload(dash_context, user, img_root, img_file, nested)
 
 
 # ------------------------------------------------- NUMBER --------------------------------------------------

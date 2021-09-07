@@ -23,7 +23,7 @@ import json
 
 from getpass import getuser
 from datetime import datetime
-from Dash.Utils import Utils as DashUtils
+from Dash.UtilsNew import FormatTime
 
 
 # TODO: Move this class to its own file
@@ -162,7 +162,7 @@ class DashBabelLanguage:
         lines = []
 
         header = self.comment_style + " Dash Babel Generated Code on "
-        header += DashUtils.FormatTime(datetime.now())
+        header += FormatTime(datetime.now())
         header += " by " + getuser().upper()
 
         lines.append(header)

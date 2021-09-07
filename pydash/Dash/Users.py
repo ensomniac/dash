@@ -6,10 +6,10 @@
 import os
 import sys
 
-from Dash.Utils import Utils
 from datetime import datetime
 from Dash import LocalStorage
 from traceback import format_exc
+from Dash.UtilsNew import Memory
 
 
 class Users:
@@ -355,8 +355,8 @@ class Users:
 
         user_data_path = self.GetUserDataPath(email)
 
-        if not Utils.Global.RequestUser:
-            Utils.Global.RequestUser = {"email": email}
+        if not Memory.Global.RequestUser:
+            Memory.Global.RequestUser = {"email": email}
 
         if os.path.exists(user_data_path):
             user_data = LocalStorage.GetData(
@@ -452,8 +452,8 @@ def GetUserDataRoot(user_email_to_get, request_params=None, dash_context=None):
 
 def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
     return Users(
-        request_params or Utils.Global.RequestData,
-        dash_context or Utils.Global.Context
+        request_params or Memory.Global.RequestData,
+        dash_context or Memory.Global.Context
     ).GetUserDataPath(user_email_to_get)
 
 
@@ -461,8 +461,8 @@ def Get(user_email_to_get, request_params=None, dash_context=None):
     # This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
 
     return Users(
-        request_params or Utils.Global.RequestData,
-        dash_context or Utils.Global.Context
+        request_params or Memory.Global.RequestData,
+        dash_context or Memory.Global.Context
     ).GetUserData(user_email_to_get)
 
 
@@ -470,13 +470,13 @@ def GetByToken(user_token, request_params=None, dash_context=None):
     # This function allows you to return a User object based on a valid token
 
     return Users(
-        request_params or Utils.Global.RequestData,
-        dash_context or Utils.Global.Context
+        request_params or Memory.Global.RequestData,
+        dash_context or Memory.Global.Context
     ).Validate(user_token)
 
 
 def GetAll(request_params=None, dash_context=None):
     return Users(
-        request_params or Utils.Global.RequestData,
-        dash_context or Utils.Global.Context
+        request_params or Memory.Global.RequestData,
+        dash_context or Memory.Global.Context
     ).GetAll()

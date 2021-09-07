@@ -10,8 +10,8 @@ Utility for reading, writing and maintaining common data.
 import os
 import sys
 
-from Dash.Utils import Utils
 from datetime import datetime
+from Dash.UtilsNew import Memory, GetRandomID
 
 
 class DashLocalStorage:
@@ -47,7 +47,7 @@ class DashLocalStorage:
         except:
             raise Exception("--> " + str(type(data)) + "<--")
 
-        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_by"] = Memory.Global.RequestUser["email"]
         data["modified_on"] = datetime.now().isoformat()
 
         self.WriteData(obj_id, data)
@@ -59,13 +59,13 @@ class DashLocalStorage:
         Creates and saves a standard user record
         """
 
-        record_id = obj_id or Utils.GetRandomID()
+        record_id = obj_id or GetRandomID()
 
         data = {
             "id": record_id,
-            "created_by": Utils.Global.RequestUser["email"],
+            "created_by": Memory.Global.RequestUser["email"],
             "created_on": datetime.now().isoformat(),
-            "modified_by": Utils.Global.RequestUser["email"],
+            "modified_by": Memory.Global.RequestUser["email"],
             "modified_on": datetime.now().isoformat()
         }
 
@@ -150,13 +150,13 @@ class DashLocalStorage:
         return self.filter_data_entry(data)
 
     def SetProperties(self, obj_id, properties, create=False):
-        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
+        obj_id = obj_id or Memory.Global.RequestData["obj_id"]
 
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
 
         data = self.GetData(obj_id, create=create)
-        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_by"] = Memory.Global.RequestUser["email"]
         data["modified_on"] = datetime.now().isoformat()
 
         for key in properties:
@@ -167,12 +167,12 @@ class DashLocalStorage:
         return data
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
-        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
-        key = key or Utils.Global.RequestData["key"]
+        obj_id = obj_id or Memory.Global.RequestData["obj_id"]
+        key = key or Memory.Global.RequestData["key"]
         # value = value or Utils.Global.RequestData.get("value")  # This was breaking certain cases
 
-        if value is None and "value" in Utils.Global.RequestData:
-            value = Utils.Global.RequestData["value"]
+        if value is None and "value" in Memory.Global.RequestData:
+            value = Memory.Global.RequestData["value"]
 
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
@@ -186,7 +186,7 @@ class DashLocalStorage:
 
         data = self.GetData(obj_id, create=create)
         data[key] = value
-        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_by"] = Memory.Global.RequestUser["email"]
         data["modified_on"] = datetime.now().isoformat()
 
         self.WriteData(obj_id, data)
@@ -357,10 +357,10 @@ class DashLocalStorage:
         """
 
         if self.store_path == "users":
-
             if not obj_id_email:
-                from Dash.Utils import Utils as DashUtils
-                params = DashUtils.Global.RequestData
+                from Dash.UtilsNew import Memory
+
+                params = Memory.Global.RequestData
                 obj_id_email = params.get("email")
 
             if not obj_id_email:
