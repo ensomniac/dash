@@ -65,8 +65,8 @@ class GitHub:
 
             return return_data
 
-        import Mail
         from json2html import json2html
+        from Dash.Utils import SendEmail
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
@@ -93,15 +93,11 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
-        message = Mail.create("ryan@ensomniac.com")
-        message.set_sender_name("Ryan Martin <ryan@ensomniac.com>")
-
-        for email in email_list:
-            message.add_recipient(email)
-
-        message.set_subject(subject)
-        message.set_body_html(msg)
-        message.send()
+        SendEmail(
+            subject=subject,
+            notify_email_list=email_list,
+            msg=msg
+        )
 
         del return_data["payload"]
         del return_data["sender_details"]

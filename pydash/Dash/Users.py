@@ -41,6 +41,7 @@ class Users:
 
         from json import dumps
         from random import randint
+        from Dash.Utils import SendEmail
         from base64 import urlsafe_b64encode
 
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
@@ -78,17 +79,13 @@ class Users:
         if account_exists:
             subject = "Reset Your " + self.dash_context["display_name"] + " Account: " + email
 
-        import Mail
-
-        message = Mail.create(self.dash_context["admin_from_email"])
-        message.set_sender_name("Reset Login <" + self.dash_context["admin_from_email"] + ">")
-
-        message.add_recipient(f"{email.split('@')[0].strip().title()} <{email}>")
-        message.add_bcc_recipient(self.dash_context["admin_from_email"])
-
-        message.set_subject(subject)
-        message.set_body_html(body_text)
-        message.send()
+        SendEmail(
+            subject=subject,
+            notify_email_list=[email],
+            msg=body_text,
+            sender=self.dash_context["admin_from_email"],
+            sender_name="Reset Login"
+        )
 
         return_data["success"] = True
 
