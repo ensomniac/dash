@@ -1,13 +1,18 @@
 #!/usr/bin/python
-
-import json
-
-# NOTE: When setting up a new repo, you likely have to run this on the server:
-# https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
 #
-# git config core.fileMode false
-# or set it globally
-# git config --global core.fileMode false
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
+
+"""
+| When setting up a new repo, you likely have to run this on the server:
+| https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
+|
+| git config core.fileMode false
+|
+| or set it globally:
+| git config --global core.fileMode false
+"""
+
 
 class PathSet:
     def __init__(self):
@@ -24,6 +29,7 @@ class PathSet:
             "local_git_path": local_git_path,
             "dest_path": dest_path,
         }
+
         self._all.append(path_details)
 
 
@@ -32,14 +38,16 @@ class GitHub:
         self.users = []
 
     def UpdateAndNotify(self, params, path_set, email_list):
+        from json import loads, dumps
 
         return_data = {"payload": params.get("payload")}
 
         if not return_data["payload"]:
             return_data["error"] = "No GitHub Payload"
+
             return return_data
 
-        return_data["payload"] = json.loads(return_data["payload"])
+        return_data["payload"] = loads(return_data["payload"])
         return_data["repository"] = return_data["payload"]["repository"]["name"]
         return_data["sender_details"] = return_data["payload"]["sender"]
         return_data["sender"] = return_data["sender_details"]["login"]
@@ -54,11 +62,14 @@ class GitHub:
 
         if not commits:
             return_data["msg"] = "Ignoring - no commits"
+
             return return_data
+
+        import Mail
+        from json2html import json2html
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
-
         git_update_result = {}
 
         for path_details in path_set.All:
@@ -72,26 +83,22 @@ class GitHub:
 
         msg += "<b>Git Pull Result (via Dash):</b><br>"
 
-        from json2html import json2html
+        html = json2html.convert(json=dumps(return_data["server_git_update"]))
 
-        html = json2html.convert(json=json.dumps(return_data["server_git_update"]))
         msg += f"{html}<br><b>Github Commits:</b><br>"
 
         for commit_details in commits:
-            msg += json2html.convert(json=json.dumps(commit_details))
+            msg += json2html.convert(json=dumps(commit_details))
 
-        msg += (
-            "<br><b>Full Github Payload:</b><br>"
-            f"{json2html.convert(json=json.dumps(return_data['payload']))}<br>"
-        )
-
-        import Mail
+        msg += "<br><b>Full Github Payload:</b><br>"
+        msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
         message = Mail.create("ryan@ensomniac.com")
         message.set_sender_name("Ryan Martin <ryan@ensomniac.com>")
 
         for email in email_list:
             message.add_recipient(email)
+
         message.set_subject(subject)
         message.set_body_html(msg)
         message.send()
@@ -102,6 +109,8 @@ class GitHub:
         return return_data
 
     def UpdateFromWebhook(self, local_git_root, local_git_path, dest_path):
+        from . import RunAsRoot
+
         for path in [local_git_path, local_git_root, dest_path]:
             if not path.endswith("/"):
                 path += "/"
@@ -128,13 +137,7 @@ class GitHub:
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
-        cmd = ";".join(cmds)
-
-        from . import RunAsRoot
-
-        result = RunAsRoot.Queue(cmd)
-
-        return result
+        return RunAsRoot.Queue(";".join(cmds))
 
 
 def UpdateFromWebhook(local_git_root, local_git_path, dest_path):
@@ -145,9 +148,9 @@ def UpdateFromWebhook(local_git_root, local_git_path, dest_path):
             dest_path=dest_path,
         )
     except:
-        import traceback
+        from traceback import format_exc
 
-        result = {"error": f"ERROR: {str(traceback.format_exc())}"}
+        result = {"error": f"ERROR: {format_exc()}"}
 
     return result
 
@@ -160,8 +163,8 @@ def UpdateAndNotify(params, path_set, email_list):
             email_list=email_list,
         )
     except:
-        import traceback
+        from traceback import format_exc
 
-        result = {"error": f"ERROR: {str(traceback.format_exc())}"}
+        result = {"error": f"ERROR: {format_exc()}"}
 
     return result

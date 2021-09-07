@@ -1,10 +1,12 @@
 #!/usr/bin/python
 #
-# 2021 Ryan Martin, ryan@ensomniac.com
-#      Andrew Stet, stetandrew@gmail.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
+
+OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 
 class _Utils:
@@ -15,16 +17,12 @@ class _Utils:
         pass
 
     @property
-    def OapiRoot(self):
-        return os.path.join("/var", "www", "vhosts", "oapi.co")
-
-    @property
     def IsServer(self):
-        return os.path.exists(os.path.join(self.OapiRoot, "logs"))
+        return os.path.exists(os.path.join(OapiRoot, "logs"))
 
     @property
     def ServerLocalStorePath(self):
-        return os.path.join(self.OapiRoot, "dash", "local", "packages/")
+        return os.path.join(OapiRoot, "dash", "local", "packages/")
 
     @property
     def Global(self):
@@ -45,6 +43,183 @@ class _Utils:
             self._global.Context = None
 
         return self._global
+
+    @property
+    def IsRyansMachine(self):
+        return os.path.exists(os.path.join("/Users", "rmartin"))
+
+    @property
+    def UserToken(self):
+        if not hasattr(self, "_usr_token"):
+            try:
+                from json import loads
+                from os.path import expanduser
+
+                dash_data_path = os.path.join(expanduser("~"), ".dash")
+                dash_data = loads(open(dash_data_path, "r").read())
+
+                self._usr_token = dash_data["user"]["token"]
+            except:
+                return None
+
+        return self._usr_token
+
+    @property
+    def LocalPackages(self):
+        # Andrew - I'm going to be moving these config objects somewhere else since it's messy
+        # doing it like this but for now let's keep it simple and assume there are only two of us
+
+        from Dash.LocalPackageContext import LocalPackageContext
+
+        pkg = []
+
+        if self.IsRyansMachine:
+            pkg.append(LocalPackageContext(
+                asset_path="altona",
+                display_name="Altona IO",
+                domain="altona.io",
+                local_git_root="/Users/rmartin/Google Drive/altona/github/",
+            ))
+
+            pkg.append(LocalPackageContext(
+                asset_path="analog",
+                display_name="Analog Technology",
+                domain="analog.technology",
+                local_git_root="/Users/rmartin/Google Drive/analog/github/",
+            ))
+
+            pkg.append(LocalPackageContext(
+                asset_path="smartsioux",
+                display_name="Smart Sioux",
+                domain="smartsioux.com",
+                local_git_root="/Users/rmartin/Google Drive/smartsioux/github/",
+            ))
+
+            pkg.append(LocalPackageContext(
+                asset_path="authentic",
+                display_name="Authentic Tools Portal",
+                domain="authentic.tools",
+                local_git_root="/Users/rmartin/Google Drive/authentic/github/",
+            ))
+
+            pkg.append(LocalPackageContext(
+                asset_path="dash_guide",
+                display_name="Dash Guide",
+                domain="dash.guide",
+                local_git_root="/Users/rmartin/Google Drive/dash/",
+            ))
+
+        else:
+            pkg.append(LocalPackageContext(
+                asset_path="altona",
+                display_name="Altona IO",
+                domain="altona.io",
+                local_git_root="/Users/andrewstet/altona_bin/repos/",
+            ))
+
+        for package_context in pkg:
+            if not os.path.exists(package_context.LocalGitRoot):
+                sys.exit(f"\nError: this path doesn't exist, but it should: '{package_context.LocalGitRoot}'\n")
+
+        return pkg
+
+    def FormatTime(self, datetime_object, time_format=1, tz="utc"):
+        """
+        Format a timestamp string using a datetime object.
+
+        :param datetime.datetime datetime_object: source datetime object
+        :param int time_format: (default=1)
+        :param str tz: (default="utc")
+        :return: strftime-formatted timestamp
+        :rtype: string
+        """
+
+        from datetime import datetime
+
+        if tz != "utc":
+            datetime_object = self.change_dt_tz(datetime_object, tz)
+
+        time_markup = datetime_object.strftime("%I:%M %p").lower()
+
+        if time_markup.startswith("0"):
+            time_markup = time_markup[1:]
+
+        day = int(datetime_object.strftime("%d"))
+
+        if 4 <= day <= 20 or 24 <= day <= 30:
+            suffix = "th"
+        else:
+            suffix = ["st", "nd", "rd"][day % 10 - 1]
+
+        day_string = f"{day}{suffix}"
+        date_markup = datetime_object.strftime(f"%A, %B {day_string} %Y")
+
+        # Display just the date
+        if time_format == 0:
+            return date_markup
+
+        # Display just the date in a human readable format
+        elif time_format == 1:
+            return datetime_object.strftime("%m/%d/%y at %I:%M %p")
+
+        # Format: Sunday, July 17th 2011 at 12:15pm
+        elif time_format == 2:
+            return datetime_object.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
+
+        # Format: 4/24/2017
+        elif time_format == 3:
+            return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
+
+        # Format: 12:15pm
+        elif time_format == 4:
+            formatted_time = datetime_object.strftime("%I:%M %p")
+
+            if formatted_time[0] == "0":
+                formatted_time = formatted_time[1:]
+
+            return formatted_time
+
+        # Format: 12:15:01pm
+        elif time_format == 5:
+            return datetime_object.strftime("%I:%M:%S %p")
+
+        # Format: July 17th 2011
+        elif time_format == 6:
+            return datetime_object.strftime(f"%B {day}{suffix} %Y")
+
+        # Format: 4_24_11
+        elif time_format == 7:
+            return datetime_object.strftime("%m_%d_%y")
+
+        # Format: Monday, July 17th
+        elif time_format == 8:
+            return datetime_object.strftime(f"%A %B {day}{suffix}")
+
+        # Format: 12 days ago / 2 months ago
+        elif time_format == 9:
+            timesince = (datetime.now() - datetime_object)
+
+            if timesince.days == 0:
+                return "Today"
+            elif timesince.days == 1:
+                return "Yesterday"
+            elif timesince.days <= 30:
+                return f"{timesince.days} days ago"
+            elif timesince.days <= 45:
+                return "A month ago"
+            elif timesince.days <= 75:
+                return f"{timesince.days} days ago"
+            else:
+                # More than 75 days ago
+                return f"{int(round(timesince.days / 30.0))} months ago"
+
+        # Format: 4/24
+        elif time_format == 10:
+            return f"{datetime_object.month}/{datetime_object.day}"
+
+        # Format date and time in a human readable format
+        else:
+            return f"{date_markup} at {time_markup}"
 
     def GetRandomID(self):
         from random import randint
@@ -167,7 +342,7 @@ class _Utils:
 
     def SendEmail(self, subject, notify_email_list=[], msg="", error=""):
         # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
-        if not os.path.exists(self.OapiRoot):
+        if not os.path.exists(OapiRoot):
             raise Exception("The Mail Module can currently only run directly from the server.")
 
         import Mail
@@ -192,66 +367,6 @@ class _Utils:
         message.set_subject(subject)
         message.set_body_html(msg)
         message.send()
-
-    def process_exif_image_data(self, img_data, img):
-        from PIL import ExifTags
-
-        img_exif = img.getexif()
-        img_data["exif"] = None
-
-        if img_exif is None:
-            return img_data["exif"]
-
-        img_data["exif"] = {}
-        for key, val in img_exif.items():
-            if key in ExifTags.TAGS:
-
-                processed = False
-
-                if "." in str(val):
-                    try:
-                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
-                        processed = True
-                    except:
-                        pass
-
-                if not processed:
-                    try:
-                        img_data["exif"][str(ExifTags.TAGS[key])] = int(val)
-                        processed = True
-                    except:
-                        pass
-
-                if not processed:
-                    try:
-                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
-                        processed = True
-                    except:
-                        pass
-
-                if not processed:
-                    img_data["exif"][str(ExifTags.TAGS[key])] = str(val)
-
-            else:
-                # [Ryan] I'm not really sure what this case looks like:
-                img_data["exif"]["__" + str(key)] = str(val)
-
-        return img_data
-
-    def rotate_image(self, img, exif):
-        rot_deg = 0
-
-        if exif.get("Orientation") == 6:
-            rot_deg = -90
-        elif exif.get("Orientation") == 8:
-            rot_deg = 90
-        elif exif.get("Orientation") == 3:
-            rot_deg = 180
-
-        if rot_deg != 0:
-            img = img.rotate(rot_deg, expand=True)
-
-        return img, rot_deg
 
     def UploadImage(self, dash_context, user, img_root, img_file, nested=False):
         from PIL import Image
@@ -350,85 +465,65 @@ class _Utils:
 
         return img_data
 
-    @property
-    def LocalPackages(self):
-        # Andrew - I'm going to be moving these config objects somewhere else since it's messy
-        # doing it like this but for now let's keep it simple and assume there are only two of us
+    def process_exif_image_data(self, img_data, img):
+        from PIL import ExifTags
 
-        from Dash.LocalPackageContext import LocalPackageContext
+        img_exif = img.getexif()
+        img_data["exif"] = None
 
-        pkg = []
+        if img_exif is None:
+            return img_data["exif"]
 
-        if self.IsRyansMachine:
-            pkg.append(LocalPackageContext(
-                asset_path="altona",
-                display_name="Altona IO",
-                domain="altona.io",
-                local_git_root="/Users/rmartin/Google Drive/altona/github/",
-            ))
+        img_data["exif"] = {}
+        for key, val in img_exif.items():
+            if key in ExifTags.TAGS:
 
-            pkg.append(LocalPackageContext(
-                asset_path="analog",
-                display_name="Analog Technology",
-                domain="analog.technology",
-                local_git_root="/Users/rmartin/Google Drive/analog/github/",
-            ))
+                processed = False
 
-            pkg.append(LocalPackageContext(
-                asset_path="smartsioux",
-                display_name="Smart Sioux",
-                domain="smartsioux.com",
-                local_git_root="/Users/rmartin/Google Drive/smartsioux/github/",
-            ))
+                if "." in str(val):
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
+                        processed = True
+                    except:
+                        pass
 
-            pkg.append(LocalPackageContext(
-                asset_path="authentic",
-                display_name="Authentic Tools Portal",
-                domain="authentic.tools",
-                local_git_root="/Users/rmartin/Google Drive/authentic/github/",
-            ))
+                if not processed:
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = int(val)
+                        processed = True
+                    except:
+                        pass
 
-            pkg.append(LocalPackageContext(
-                asset_path="dash_guide",
-                display_name="Dash Guide",
-                domain="dash.guide",
-                local_git_root="/Users/rmartin/Google Drive/dash/",
-            ))
+                if not processed:
+                    try:
+                        img_data["exif"][str(ExifTags.TAGS[key])] = float(val)
+                        processed = True
+                    except:
+                        pass
 
-        else:
-            pkg.append(LocalPackageContext(
-                asset_path="altona",
-                display_name="Altona IO",
-                domain="altona.io",
-                local_git_root="/Users/andrewstet/altona_bin/repos/",
-            ))
+                if not processed:
+                    img_data["exif"][str(ExifTags.TAGS[key])] = str(val)
 
-        for package_context in pkg:
-            if not os.path.exists(package_context.LocalGitRoot):
-                print(f"\nError: this path doesn't exist, but it should: '{package_context.LocalGitRoot}'\n")
-                sys.exit()
+            else:
+                # [Ryan] I'm not really sure what this case looks like:
+                img_data["exif"]["__" + str(key)] = str(val)
 
-        return pkg
+        return img_data
 
-    @property
-    def IsRyansMachine(self):
-        return os.path.exists(os.path.join("/Users", "rmartin"))
+    def rotate_image(self, img, exif):
+        rot_deg = 0
 
-    @property
-    def UserToken(self):
-        if not hasattr(self, "_usr_token"):
-            try:
-                from json import loads
-                from os.path import expanduser
+        if exif.get("Orientation") == 6:
+            rot_deg = -90
+        elif exif.get("Orientation") == 8:
+            rot_deg = 90
+        elif exif.get("Orientation") == 3:
+            rot_deg = 180
 
-                dash_data_path = os.path.join(expanduser("~"), ".dash")
-                dash_data = loads(open(dash_data_path, "r").read())
+        if rot_deg != 0:
+            img = img.rotate(rot_deg, expand=True)
 
-                self._usr_token = dash_data["user"]["token"]
-            except:
-                return None
-
-        return self._usr_token
+        return img, rot_deg
 
     def change_dt_tz(self, dt_obj, tz):
         from pytz import timezone as pytz_timezone
@@ -450,103 +545,17 @@ class _Utils:
 
         return dt_obj
 
-    def FormatTime(self, datetime_object, time_format=1, tz="utc"):
-        """
-        Format a timestamp string using a datetime object.
-
-        :param datetime.datetime datetime_object: source datetime object
-        :param int time_format: (default=1)
-        :param str tz: (default="utc")
-        :return: strftime-formatted timestamp
-        :rtype: string
-        """
-
-        from datetime import datetime
-
-        if tz != "utc":
-            datetime_object = self.change_dt_tz(datetime_object, tz)
-
-        time_markup = datetime_object.strftime("%I:%M %p").lower()
-
-        if time_markup.startswith("0"):
-            time_markup = time_markup[1:]
-
-        day = int(datetime_object.strftime("%d"))
-
-        if 4 <= day <= 20 or 24 <= day <= 30:
-            suffix = "th"
-        else:
-            suffix = ["st", "nd", "rd"][day % 10 - 1]
-
-        day_string = f"{day}{suffix}"
-        date_markup = datetime_object.strftime(f"%A, %B {day_string} %Y")
-
-        # Display just the date
-        if time_format == 0:
-            return date_markup
-
-        # Display just the date in a human readable format
-        elif time_format == 1:
-            return datetime_object.strftime("%m/%d/%y at %I:%M %p")
-
-        # Format: Sunday, July 17th 2011 at 12:15pm
-        elif time_format == 2:
-            return datetime_object.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
-
-        # Format: 4/24/2017
-        elif time_format == 3:
-            return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
-
-        # Format: 12:15pm
-        elif time_format == 4:
-            formatted_time = datetime_object.strftime("%I:%M %p")
-
-            if formatted_time[0] == "0":
-                formatted_time = formatted_time[1:]
-
-            return formatted_time
-
-        # Format: 12:15:01pm
-        elif time_format == 5:
-            return datetime_object.strftime("%I:%M:%S %p")
-
-        # Format: July 17th 2011
-        elif time_format == 6:
-            return datetime_object.strftime(f"%B {day}{suffix} %Y")
-
-        # Format: 4_24_11
-        elif time_format == 7:
-            return datetime_object.strftime("%m_%d_%y")
-
-        # Format: Monday, July 17th
-        elif time_format == 8:
-            return datetime_object.strftime(f"%A %B {day}{suffix}")
-
-        # Format: 12 days ago / 2 months ago
-        elif time_format == 9:
-            timesince = (datetime.now() - datetime_object)
-
-            if timesince.days == 0:
-                return "Today"
-            elif timesince.days == 1:
-                return "Yesterday"
-            elif timesince.days <= 30:
-                return f"{timesince.days} days ago"
-            elif timesince.days <= 45:
-                return "A month ago"
-            elif timesince.days <= 75:
-                return f"{timesince.days} days ago"
-            else:
-                # More than 75 days ago
-                return f"{int(round(timesince.days / 30.0))} months ago"
-
-        # Format: 4/24
-        elif time_format == 10:
-            return f"{datetime_object.month}/{datetime_object.day}"
-
-        # Format date and time in a human readable format
-        else:
-            return f"{date_markup} at {time_markup}"
-
 
 Utils = _Utils()
+
+
+def GetRandomID():
+    return Utils.GetRandomID()
+
+
+def FormatTime(datetime_object, time_format=1, tz="utc"):
+    return Utils.FormatTime(datetime_object, time_format, tz)
+
+
+def SendEmail(subject, notify_email_list=[], msg="", error=""):
+    return Utils.SendEmail(subject, notify_email_list, msg, error)

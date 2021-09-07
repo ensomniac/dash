@@ -1,22 +1,26 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
+#!/usr/bin/python
+#
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import sys
 import os
+import sys
 import json
-import datetime
-import random
-import threading
-import requests
-import gzip
-import subprocess
 
-from os.path import expanduser
-
-from Dash.DashLint import DashLint as Lint
+from gzip import compress
+from requests import post
+from random import randint
+from threading import Timer
 from Dash.Utils import Utils
+from datetime import datetime
+from os.path import expanduser
+from subprocess import check_output
+from Dash.DashLint import DashLint as Lint
+
 
 class SyncThread:
+    _initialized: bool
+
     def __init__(self, package, root_path, is_client, on_change_cb=None):
         self.context = package
         self.root_path = root_path
@@ -27,10 +31,10 @@ class SyncThread:
         self.seconds_before_reindex = 5
 
         self.files = {}
-        self.last_reindex_time = datetime.datetime.now()
-        self.start_time = datetime.datetime.now()
+        self.last_reindex_time = datetime.now()
+        self.start_time = datetime.now()
         self.last_commit_attempt = None
-        self.check_timeout = random.randint(100, 150) * 0.01
+        self.check_timeout = randint(100, 150) * 0.01
 
         self.index_all()
         self.check()
@@ -48,7 +52,7 @@ class SyncThread:
             return needs_sync_addl + self.context["display_name"] + " (Server)"
 
     def index_all(self):
-        self.last_reindex_time = datetime.datetime.now()
+        self.last_reindex_time = datetime.now()
 
         paths = [self.root_path]
 
@@ -102,10 +106,10 @@ class SyncThread:
     def check(self):
         # print(f"\t[{self.Name}] LivesyncWatchThread > check()....")
 
-        threading.Timer(self.check_timeout, self.check).start()
+        Timer(self.check_timeout, self.check).start()
 
         time_since_index = int(
-            (datetime.datetime.now() - self.last_reindex_time).total_seconds()
+            (datetime.now() - self.last_reindex_time).total_seconds()
         )
 
         if time_since_index >= self.seconds_before_reindex:
@@ -116,13 +120,15 @@ class SyncThread:
         self.check_timestamps()
 
     def broadcast_git_status(self):
-        if not self.context.get("usr_path_git"): return
+        if not self.context.get("usr_path_git"):
+            return
+
         # if "/dash/" not in self.context["usr_path_git"]: return
 
         cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         cmd += "git status;"
 
-        git_status = subprocess.check_output([cmd], shell=True).decode()
+        git_status = check_output([cmd], shell=True).decode()
 
         has_changes = False
 
@@ -138,14 +144,15 @@ class SyncThread:
         if "to publish your local commits" in git_status.lower():
             has_changes = True
 
-        params = {}
-        params["f"] = "set_sync_state"
-        params["token"] = Utils.UserToken
-        params["asset_path"] = self.context["asset_path"]
-        params["git_status"] = git_status
-        params["has_changes"] = has_changes
+        params = {
+            "f": "set_sync_state",
+            "token": Utils.UserToken,
+            "asset_path": self.context["asset_path"],
+            "git_status": git_status,
+            "has_changes": has_changes
+        }
 
-        response = requests.post(
+        response = post(
             "https://dash.guide/Users",
             data=params
         )
@@ -185,11 +192,13 @@ class SyncThread:
             # This hook says "this is dash client code, not pydash"
             return
 
-        seconds_since_start = (datetime.datetime.now()-self.start_time).total_seconds()
-        if seconds_since_start < 3: return
+        seconds_since_start = (datetime.now() - self.start_time).total_seconds()
+
+        if seconds_since_start < 3:
+            return
 
         if self.last_commit_attempt:
-            seconds_since_attempt = (datetime.datetime.now()-self.last_commit_attempt).total_seconds()
+            seconds_since_attempt = (datetime.now() - self.last_commit_attempt).total_seconds()
             if seconds_since_attempt < 30:
                 # Don't attempt again for another 30 seconds
                 return
@@ -198,22 +207,23 @@ class SyncThread:
         print("Initiated by: " + commit_request["initiated_by"])
         print("Commit msg: '" + commit_request["commit_msg"] + "'\n")
 
-        self.last_commit_attempt = datetime.datetime.now()
+        self.last_commit_attempt = datetime.now()
 
         git_cmd = "cd " + self.context["usr_path_git"].replace(" ", "\ ") + ";"
         git_cmd += "git add .;"
         git_cmd += "git commit . -m '" + commit_request["commit_msg"] + "';"
         git_cmd += "git push;"
 
-        git_result = subprocess.check_output([git_cmd], shell=True).decode()
+        git_result = check_output([git_cmd], shell=True).decode()
 
-        params = {}
-        params["f"] = "set_livesync_git_result"
-        params["token"] = Utils.UserToken
-        params["asset_path"] = self.context["asset_path"]
-        params["git_result"] = git_result
+        params = {
+            "f": "set_livesync_git_result",
+            "token": Utils.UserToken,
+            "asset_path": self.context["asset_path"],
+            "git_result": git_result
+        }
 
-        response = requests.post(
+        response = post(
             "https://dash.guide/Users",
             data=params
         )
@@ -242,7 +252,9 @@ class SyncThread:
 
             if not os.path.exists(self.files[filename]["abspath"]):
                 print("\tRE-INDEX...")
+
                 self.index_all()
+
                 break
 
             current_timestamp = os.path.getmtime(self.files[filename]["abspath"])
@@ -269,7 +281,7 @@ class SyncThread:
                 )
 
                 if lint_succeeded:
-                    threading.Timer(0.0, self.upload_change, args=[filename]).start()
+                    Timer(0.0, self.upload_change, args=[filename]).start()
                     print(f"\t\t\t{msg}")
                 else:
                     print(f"\t\t * Fatal DashLint ERROR: This must be resolved before this file can be synced\n\t\t\t{msg}")
@@ -298,19 +310,19 @@ class SyncThread:
         dash_data = json.loads(open(dash_data_path, "r").read())
         token = dash_data["user"]["token"]
 
-        params = {}
-        params["f"] = "live"
-        params["token"] = token
-        params["local_path"] = local_path
-        params["remote_path"] = remote_path
-        params["context"] = json.dumps(self.context)
-        params["is_client"] = self.is_client
+        params = {
+            "f": "live",
+            "token": token,
+            "local_path": local_path,
+            "remote_path": remote_path,
+            "context": json.dumps(self.context),
+            "is_client": self.is_client
+        }
 
         # Send the contents of the file as compressed binary
-        files = {}
-        files["fmod"] = gzip.compress(open(local_path, "r").read().encode())
+        files = {"fmod": compress(open(local_path, "r").read().encode())}
 
-        response = requests.post(
+        response = post(
             "https://dash.guide/Sync",
             data=params,
             files=files,

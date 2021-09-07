@@ -1,15 +1,16 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021, Ryan Martin ryan@ensomniac.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
 import cgi
 import json
 
-from Dash.Utils import Utils
 from traceback import format_exc
 from Dash import __name__ as DashName
+from Dash.Utils import GetRandomID, SendEmail
 
 
 class ApiCore:
@@ -80,7 +81,7 @@ class ApiCore:
 
     @property
     def RandomID(self):
-        return Utils.GetRandomID()
+        return GetRandomID()
 
     def SetUser(self, user_data):
         if not user_data["email"]:
@@ -143,13 +144,11 @@ class ApiCore:
 
     # TODO: Propagate this throughout the code and update old raise Exception calls
     def RaiseError(self, error_msg):
+        # Might not need these two lines since sys.exit raises the error as an exception anyway
         self.SetResponse({"error": error_msg})
         self.ReturnResponse()
 
-        # TODO: This technically kills a request from any level by raising a SystemExit
-        #  exception. Ideally, we should find a way to easily return from a
-        #  request, no matter how deep, without actually raising an exception.
-        sys.exit()
+        sys.exit(error_msg)
 
     def SetParam(self, key, value):
         self._params[key] = value
@@ -191,7 +190,7 @@ class ApiCore:
         if not error and self._response.get("error"):
             error = self._response["error"]
 
-        Utils.SendEmail(
+        SendEmail(
             subject=subject,
             notify_email_list=notify_email_list,
             msg=msg,

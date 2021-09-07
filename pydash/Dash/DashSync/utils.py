@@ -1,55 +1,47 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
-
-# This script requires that you have
-# an account at https://dash.guide
+#!/usr/bin/python
 #
-# This is tied to a command installed during setup.py: "dashsync"
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import sys
+
 import os
-import json
-import getpass
-import requests
-import site
-import subprocess
+import sys
+
 from os.path import expanduser
 
-class SyncUtils:
+
+class _SyncUtils:
     def __init__(self):
         pass
 
     def GetServerSyncPackages(self, quiet=False):
+        from json import loads
+        from requests import post
+
         # Get all active packages for the logged in user
-        dash_data_path = os.path.join(expanduser("~"), ".dash") # TODO this is moved to dash.Utils
+        dash_data_path = os.path.join(expanduser("~"), ".dash")  # TODO this is moved to dash.Utils
 
         if not os.path.exists(dash_data_path):
-            print("\nNot Authenticated\n")
-            sys.exit()
+            sys.exit("\nNot Authenticated\n")
 
-        dash_data = json.loads(open(dash_data_path, "r").read())
+        dash_data = loads(open(dash_data_path, "r").read())
         token = dash_data["user"]["token"]
 
-        response = requests.post(
+        response = post(
             "https://dash.guide/Packages",
             data={"f": "get_sync_manifest", "token": token}
         )
 
         try:
-            response = json.loads(response.text)
+            response = loads(response.text)
         except:
-            print("\n** SERVER ERROR **\n")
-            print(response)
-            print(response.text)
-            print()
-            sys.exit()
+            sys.exit(f"\n** SERVER ERROR **\n\n{response}\n{response.text}\n")
 
         if response.get("error"):
-            print("\n**** SERVER ERROR ****\n")
-            print(response["error"])
-            sys.exit()
+            sys.exit(f"\n**** SERVER ERROR ****\n\n{response['error']}")
 
         sync_packages = []
+
         for package_data in response["packages"]:
 
             if not quiet:
@@ -84,8 +76,10 @@ class SyncUtils:
             msg = "Warning: " + package_data["display_name"] + " "
             msg += "has a local sync path set, but it doesn't exist on this machine."
             msg += "\n\tExpected: '" + usr_path_git + "'"
+
             print(msg)
             print("\tResolve this by correcting your Local GitHub Repo Path path at https://dash.guide/")
+
             return
 
         print(package_data["display_name"])
@@ -102,7 +96,7 @@ class SyncUtils:
         pid_list = self.get_pids(script_name)
         another_process_running = False
 
-        active_ids = [str(os.getpid()), str(os.getpid()-1)]
+        active_ids = [str(os.getpid()), str(os.getpid() - 1)]
 
         for pid in pid_list:
 
@@ -129,8 +123,10 @@ class SyncUtils:
             print("\tKilled.\n")
 
     def get_pids(self, script_name):
-        result = subprocess.check_output(["ps -eaf"], shell=True).decode()
+        from subprocess import check_output
+
         pids = []
+        result = check_output(["ps -eaf"], shell=True).decode()
 
         try:
             for line in result.split("\n"):
@@ -150,8 +146,7 @@ class SyncUtils:
         server_root, client_root = "", ""
 
         if not package["usr_path_git"]:
-            print("\nERROR: You haven't set your 'usr_path_git' for package: " + package["asset_path"] +  "\n")
-            sys.exit()
+            sys.exit("\nERROR: You haven't set your 'usr_path_git' for package: " + package["asset_path"] + "\n")
 
         print(package["usr_path_git"])
         print(os.path.expanduser(package["usr_path_git"]))
@@ -169,7 +164,8 @@ class SyncUtils:
             server_path_anchor = "/pydash/Dash/"
 
         for filename in all_files:
-            if "/.git/" in filename: continue
+            if "/.git/" in filename:
+                continue
 
             if not client_root and filename.endswith("index.html"):
                 croot = "/".join(filename.split("/")[:-1]) + "/"
@@ -186,17 +182,16 @@ class SyncUtils:
                     # Slightly different naming convention since this is a py module
                     server_root = os.path.join(server_root, *server_path_anchor.split("/"))
 
-            if server_root and client_root: break
+            if server_root and client_root:
+                break
 
         # These are just tests to triple check the
         # things we're expecting to exist actually do
         if server_root and not os.path.exists(server_root):
-            print("\nError: Failed to find local system path - expected " + server_root + "\n")
-            sys.exit()
+            sys.exit("\nError: Failed to find local system path - expected " + server_root + "\n")
 
         if client_root and not os.path.exists(client_root):
-            print("\nError: Failed to find local system path - expected " + client_root + "\n")
-            sys.exit()
+            sys.exit("\nError: Failed to find local system path - expected " + client_root + "\n")
 
         return server_root, client_root
 
@@ -204,8 +199,11 @@ class SyncUtils:
 
         pydash_package = None
         for package in packages:
-            if package["asset_path"] != "pydash": continue
+            if package["asset_path"] != "pydash":
+                continue
+
             pydash_package = package
+
             break
 
         if not pydash_package:
@@ -220,7 +218,7 @@ class SyncUtils:
             print("\nWarning: Did Dash client code missing. Expected: '" + client_path_full + "'\n")
 
         # if not os.path.exists(client_path_min):
-            # print("\nWarning: Did Dash client code missing. Expected: '" + client_path_min + "'\n")
+        # print("\nWarning: Did Dash client code missing. Expected: '" + client_path_min + "'\n")
 
         return client_path_full, client_path_min, pydash_package
 
@@ -231,11 +229,14 @@ class SyncUtils:
         distribution_packages = []
         for package in packages:
             usr_path_git = package.get("usr_path_git")
-            if not usr_path_git: continue
+            if not usr_path_git:
+                continue
+
             client_root = os.path.join(usr_path_git, "client/")
 
             if not os.path.exists(client_root):
                 print("\tWarning: Client path doesn't exist! Expected: " + client_root)
+
                 continue
 
             package["client_root"] = client_root
@@ -250,8 +251,7 @@ class SyncUtils:
         dash_package_root = pydash_root.split("/pydash/")[0] + "/"
 
         if not os.path.exists(dash_package_root):
-            print("Failed to locate dash root! Expected " + dash_package_root)
-            sys.exit()
+            sys.exit("Failed to locate dash root! Expected " + dash_package_root)
 
         return dash_package_root
 
@@ -261,12 +261,9 @@ class SyncUtils:
         version_path = os.path.join(dash_package_root, "local", "version_info.json")
 
         if not os.path.exists(version_path):
-            print("Failed to locate version path! Expected " + version_path)
-            sys.exit()
+            sys.exit("Failed to locate version path! Expected " + version_path)
 
         return version_path
 
 
-
-
-SyncUtils = SyncUtils()
+SyncUtils = _SyncUtils()

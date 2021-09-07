@@ -1,9 +1,10 @@
+#!/usr/bin/python
+#
 # Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
-import json
 
 from Dash.Utils import Utils
 from datetime import datetime
@@ -18,10 +19,7 @@ class Users:
 
     @property
     def UsersPath(self):
-        return os.path.join(
-            self.dash_context["srv_path_local"],
-            "users/"
-        )
+        return os.path.join(self.dash_context["srv_path_local"], "users/")
 
     @property
     def dash_context(self):
@@ -41,18 +39,20 @@ class Users:
         if "@" not in email:
             return {"error": "Enter a valid email address."}
 
+        from json import dumps
+        from random import randint
+        from base64 import urlsafe_b64encode
+
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
         account_exists = True
 
         if not os.path.exists(user_root):
             os.makedirs(user_root)
+
             account_exists = False
 
         os.makedirs(user_reset_root, exist_ok=True)
-
-        from random import randint
-        from base64 import urlsafe_b64encode
 
         request_token = randint(10000000, 99999999)
         now = datetime.now()
@@ -63,7 +63,7 @@ class Users:
             "request_token": request_token,
         }
 
-        uri_str = json.dumps(uri_data)
+        uri_str = dumps(uri_data)
         uri_data_64 = urlsafe_b64encode(uri_str.encode()).decode().strip()
         reset_path = os.path.join(user_reset_root, uri_data_64)
 
@@ -105,7 +105,9 @@ class Users:
         if not uri_str:
             return
 
-        uri_data = json.loads(uri_str)
+        from json import loads
+
+        uri_data = loads(uri_str)
         email = uri_data["email"]
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
@@ -233,6 +235,7 @@ class Users:
                 "p": password,
             }
 
+        from json import dumps
         from base64 import urlsafe_b64encode
 
         os.makedirs(sessions_path, exist_ok=True)
@@ -250,7 +253,7 @@ class Users:
         token = urlsafe_b64encode(token.encode("ascii")).decode()
         token_path = os.path.join(sessions_path, token)
 
-        open(token_path, "w").write(json.dumps(session_data))
+        open(token_path, "w").write(dumps(session_data))
 
         return {
             "token": token,
@@ -399,9 +402,8 @@ class Users:
 
         return sorted_emails
 
+    # TODO - get rid of this code - it's been moved to Admin.py
     def get_team(self):
-        # TODO - get rid of this code - it's been moved to Admin.py
-
         team = {}
         users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
 

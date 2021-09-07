@@ -1,18 +1,16 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
-
-# This script requires that you have
-# an account at https://dash.guide
+#!/usr/bin/python
 #
-# This is tied to a command installed during setup.py: "dashsync"
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import sys
+"""
+| This script requires that you have an account at https://dash.guide
+|
+| This is tied to a command installed during setup.py: "dashsync"
+"""
+
 import os
-import json
-import getpass
-import requests
-import site
-import threading
+import sys
 
 try:
     from .utils import SyncUtils
@@ -21,11 +19,13 @@ except:
     from utils import SyncUtils
     from sync_thread import SyncThread
 
+
 class DashSync:
     def __init__(self):
         print("\nDash Sync\n")
 
         SyncUtils.CheckForRunningProcess("dashsync")
+
         self.packages = SyncUtils.GetServerSyncPackages()
         self.sync_threads = []
 
@@ -59,7 +59,7 @@ class DashSync:
 
     def add_dash_client(self):
         # Add the dash client code to monitor for changes
-        # But we don't actually want to live sync the chanes
+        # But we don't actually want to live sync the changes
         # Instead, if changes occur in a dash js file,
         # we want to recompile dash.js and distribute it
         # to any local dash packages on this machine.
@@ -71,10 +71,12 @@ class DashSync:
 
         if not os.path.exists(client_path_full):
             print("\nWarning: Did Dash client code missing. Expected: '" + client_path_full + "'\n")
+
             return
 
         if not os.path.exists(client_path_min):
             print("\nWarning: Did Dash client code missing. Expected: '" + client_path_min + "'\n")
+
             return
 
         self.sync_threads.append(SyncThread(
@@ -101,5 +103,5 @@ if __name__ == "__main__":
     # from Dash import PackageContext as Context
     # dash_context = Context.Get("authentic")
     # from Dash.Utils import Utils
-    # print(Utils.IsServer)
+
     DashSync()

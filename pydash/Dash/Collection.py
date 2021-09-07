@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# 2021 Ryan Martin, ryan@ensomniac.com
-#      Andrew Stet, stetandrew@gmail.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 """
 | A Collection is a type of managed data store for use cases that look like this:

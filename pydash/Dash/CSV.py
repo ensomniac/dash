@@ -1,16 +1,15 @@
 #!/usr/bin/python
 #
-# 2021 Ryan Martin, ryan@ensomniac.com
-#      Andrew Stet, stetandrew@gmail.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
-import csv
 
-from Dash.Utils import Utils
 from Dash.Users import Users
 from datetime import datetime
 from collections import OrderedDict
+from Dash.Utils import GetRandomID, FormatTime
 
 
 class CSV:
@@ -29,13 +28,13 @@ class CSV:
         self.csv_root = csv_root
         self.dash_context = dash_context
         self.exclude_keys = exclude_keys
-        self.users_mod = Users(params={}, dash_context=self.dash_context)
+        self.users_mod = Users(request_params={}, dash_context=self.dash_context)
 
         # Paths
         self.csv_export_root = os.path.join(self.csv_root, "export")
         self.csv_import_root = os.path.join(self.csv_root, "import")
-        self.csv_export_filepath = os.path.join(self.csv_export_root, f"{Utils.GetRandomID()}.csv")
-        self.csv_import_filepath = os.path.join(self.csv_import_root, f"{Utils.GetRandomID()}.csv")
+        self.csv_export_filepath = os.path.join(self.csv_export_root, f"{GetRandomID()}.csv")
+        self.csv_import_filepath = os.path.join(self.csv_import_root, f"{GetRandomID()}.csv")
 
         # Keys to move to the beginning and end, respectively, when sorting
         self.prioritized_keys = ["display_name"]
@@ -49,9 +48,11 @@ class CSV:
         self.ensure_roots_exist()
 
     def Export(self):
+        from csv import writer
+
         header = False
         csv_file = open(self.csv_export_filepath, "w")
-        csv_writer = csv.writer(csv_file)
+        csv_writer = writer(csv_file)
 
         for data in self.all_data:
             if not header:
@@ -144,7 +145,7 @@ class CSV:
             if not data.get(key):
                 continue
 
-            data[key] = Utils.FormatTime(datetime.fromisoformat(data[key]))
+            data[key] = FormatTime(datetime.fromisoformat(data[key]))
 
         return data
 

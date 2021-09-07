@@ -1,10 +1,10 @@
 #!/usr/bin/python
 #
-# 2021 Ryan Martin, ryan@ensomniac.com
-#      Andrew Stet, stetandrew@gmail.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 """
-Utility for reading, writing and maintaining common data
+Utility for reading, writing and maintaining common data.
 """
 
 import os
@@ -61,19 +61,19 @@ class DashLocalStorage:
 
         record_id = obj_id or Utils.GetRandomID()
 
-        data = {}
-        data["id"] = record_id
-        data["created_by"] = Utils.Global.RequestUser["email"]
-        data["created_on"] = datetime.now().isoformat()
-        data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
+        data = {
+            "id": record_id,
+            "created_by": Utils.Global.RequestUser["email"],
+            "created_on": datetime.now().isoformat(),
+            "modified_by": Utils.Global.RequestUser["email"],
+            "modified_on": datetime.now().isoformat()
+        }
 
         if additional_data:
             for key in additional_data:
                 data[key] = additional_data[key]
 
-        if not os.path.exists(self.get_data_root(record_id)):
-            os.makedirs(self.get_data_root(record_id))
+        os.makedirs(self.get_data_root(record_id), exist_ok=True)
 
         self.Write(self.get_record_path(record_id), data)
 
@@ -329,11 +329,12 @@ class DashLocalStorage:
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
 
-        response = {}
-        response["key"] = key
-        response["value"] = value
-        response["obj_id"] = obj_id
-        response["record_path"] = self.get_record_path(obj_id)
+        response = {
+            "key": key,
+            "value": value,
+            "obj_id": obj_id,
+            "record_path": self.get_record_path(obj_id)
+        }
 
         data = self.GetData(obj_id, create=create)
         data[key] = value
@@ -352,9 +353,10 @@ class DashLocalStorage:
         else:
             record_path = self.get_record_path(obj_id)
 
-        result = {}
-        result["existed"] = os.path.exists(record_path)
-        result["record_path"] = record_path
+        result = {
+            "existed": os.path.exists(record_path),
+            "record_path": record_path
+        }
 
         if result["existed"]:
             if self.nested:

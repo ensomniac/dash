@@ -1,10 +1,12 @@
 #!/usr/bin/python
+#
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
-import json
 
-from Dash.Utils import Utils
+from Dash.Utils import Utils, OapiRoot
 
 
 class PackageContext:
@@ -12,6 +14,7 @@ class PackageContext:
 
     def __init__(self, asset_path):
         self._asset_path = asset_path
+        self.logs_root = os.path.join(OapiRoot, "logs")
         
     @property
     def AssetPath(self):
@@ -20,8 +23,7 @@ class PackageContext:
     @property
     def PackageData(self):
         if not hasattr(self, "_package_data"):
-
-            if Utils.IsServer:
+            if os.path.exists(self.logs_root):
                 # Get the data directly from the server
                 self._package_data = self.get_pkg_data_from_server()
             else:
@@ -31,13 +33,16 @@ class PackageContext:
         return self._package_data
 
     def get_pkg_data_from_server(self):
+        from json import loads
+
         # TODO: Make a lookup for asset path / package ids
 
         package_data = None
+        root = os.path.join(OapiRoot, "dash", "local", "packages/")
 
-        for filename in os.listdir(Utils.ServerLocalStorePath):
-            record_path = os.path.join(Utils.ServerLocalStorePath, filename)
-            pkg_data = json.loads(open(record_path, "r").read())
+        for filename in os.listdir(root):
+            record_path = os.path.join(root, filename)
+            pkg_data = loads(open(record_path, "r").read())
 
             if not pkg_data.get("asset_path"):
                 continue
@@ -53,6 +58,7 @@ class PackageContext:
         return package_data
 
     def get_pkg_data_from_request(self):
+        from json import loads
         from requests import post
 
         params = {
@@ -64,17 +70,12 @@ class PackageContext:
         response = post("https://dash.guide/PackageContext", data=params)
 
         try:
-            response = json.loads(response.text)
+            response = loads(response.text)
         except:
-            print("== SERVER ERROR ==")
-            print(response.text)
-
-            sys.exit()
+            sys.exit(f"== SERVER ERROR ==\n{response.text}")
 
         if "full_data" not in response:
-            print(response)
-
-            sys.exit()
+            sys.exit(response)
 
         return response["full_data"]
 
@@ -99,7 +100,7 @@ class PackageContext:
         data = {
             "asset_path": self._asset_path,
             "is_valid": True,
-            "is_server": Utils.IsServer
+            "is_server": self.logs_root
         }
 
         available_keys = list(self.PackageData.keys())

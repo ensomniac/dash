@@ -1,16 +1,20 @@
 #!/usr/bin/python
 #
-# 2021 Ensomniac, Ryan Martin ryan@ensomniac.com
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
+
+"""
+pip install https://ensomniac.io/src/pydash.tar.gz
+"""
 
 import os
 import sys
-import shutil
-import datetime
-import requests
 
-from Dash.Utils import Utils
+from requests import post
+from datetime import datetime
+from Dash.Utils import OapiRoot
+from shutil import rmtree, copytree
 
-# pip install https://ensomniac.io/src/pydash.tar.gz
 
 class PublishDash:
     _timestamp: str
@@ -18,7 +22,7 @@ class PublishDash:
 
     def __init__(self):
 
-        self.source_path = os.path.join(Utils.Paths.Local.DashRoot, "pydash/")
+        self.source_path = os.path.join(OapiRoot, "dash", "github", "dash", "pydash")
 
         if not os.path.exists(self.source_path):
             raise Exception("Path doesn exist. Expected: " + self.source_path)
@@ -29,7 +33,7 @@ class PublishDash:
         self.version = self.get_version()
 
         if os.path.exists(self.tmp_path):
-            shutil.rmtree(self.tmp_path)
+            rmtree(self.tmp_path)
 
         self.modify_version_info()
         self.copy_source()
@@ -39,14 +43,14 @@ class PublishDash:
     @property
     def year(self):
         if not hasattr(self, "_year"):
-            self._year = str(datetime.datetime.now().year)
+            self._year = str(datetime.now().year)
 
         return self._year
 
     @property
     def timestamp(self):
         if not hasattr(self, "_timestamp"):
-            now = datetime.datetime.now()
+            now = datetime.now()
             self._timestamp = "/".join([str(now.month), str(now.day), str(now.year)])
 
         return self._timestamp
@@ -63,24 +67,22 @@ class PublishDash:
                 break
 
         if not version:
-            print("Unable to determine version!")
-            sys.exit()
+            sys.exit("Unable to determine version!")
 
         return round(version + 0.01, 3)
 
     def copy_source(self):
         os.makedirs(self.tmp_path)
-        shutil.copytree(self.source_path, self.dest_src)
 
-        cmd = f"cd {self.dest_src};tar -czf {self.dest_tar} ."
-        os.system(cmd)
+        copytree(self.source_path, self.dest_src)
+
+        os.system(f"cd {self.dest_src};tar -czf {self.dest_tar} .")
 
         if not os.path.exists(self.dest_tar):
-            print("Failed to publish!")
-            sys.exit()
+            sys.exit("Failed to publish!")
 
-    def cleanup(self):
-        print("cleanup (empty function)")
+    # def cleanup(self):
+    #     print("cleanup (empty function)")
 
     def modify_version_info(self):
         self.modify_init()
@@ -150,7 +152,7 @@ class PublishDash:
 
         post_data = {"f": "publish", "version": self.version}
 
-        response = requests.post(
+        response = post(
             "https://ensomniac.io/PyDash",
             files={"tar": open(self.dest_tar, "rb")},
             data=post_data,
@@ -165,9 +167,7 @@ class PublishDash:
         except:
             pass
 
-        print("Error Uploading to Server!!")
-        print(response.text)
-        sys.exit()
+        sys.exit(f"Error Uploading to Server!!\n{response.text}")
 
 
 if __name__ == "__main__":

@@ -1,22 +1,32 @@
-# 2021 Ensomniac
-# Ryan Martin ryan@ensomniac.com
-
-# This script can be ran by itself or called as a module:
-# from Dash.ClientCompiler import ClientCompiler
+#!/usr/bin/python
 #
-# It will compile the dash client code into a minified version
-# and optionally distribute this new version to all clients
+# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
-import sys
+"""
+This script can be ran by itself or called as a module:
+from Dash.ClientCompiler import ClientCompiler
+
+It will compile the dash client code into a minified version
+and optionally distribute this new version to all clients
+"""
+
 import os
+import sys
 import json
-import shutil
-import datetime
-import dateutil.parser
+
+from datetime import datetime
+from shutil import rmtree, copytree
 
 from Dash.DashSync import SyncUtils
 
-class ClientCompiler:
+
+class _ClientCompiler:
+    _version_info: dict
+    dash_min_src_index: str
+    dash_min_src_folder: str
+    _packages: SyncUtils.GetServerSyncPackages
+
     def __init__(self):
         pass
 
@@ -26,7 +36,7 @@ class ClientCompiler:
             if os.path.exists(SyncUtils.VersionInfoPath):
                 self._version_info = json.loads(open(SyncUtils.VersionInfoPath, "r").read())
             else:
-                self._version_info = {"version": 1.0, "date": datetime.datetime.now().isoformat()}
+                self._version_info = {"version": 1.0, "date": datetime.now().isoformat()}
 
             self._version_info["version"] = round(self._version_info["version"] + 0.01, 2)
 
@@ -60,7 +70,7 @@ class ClientCompiler:
         print("CC -> COMP -> Dash Client -> Compiling (from " + str(self.ClientPathFull) + ")...")
         print("CC -> COMP -> Dash Client -> Compiling (to " + str(self.ClientPathMin) + ")...")
 
-        p = self.Packages
+        # p = self.Packages
         self.combine()
         self.write_version_info()
 
@@ -70,7 +80,7 @@ class ClientCompiler:
         version_info = self.VersionInfo
         # version_info["date"] = version_info["date"].isoformat()
 
-        now = datetime.datetime.now()
+        now = datetime.now()
         version_info["date"] = now.isoformat()
         version_info["date_hr"] = now.strftime("%m/%d/%y at %I:%M %p")
 
@@ -83,7 +93,7 @@ class ClientCompiler:
         self.dash_min_src_index = os.path.join(self.ClientPathMin, "index.html")
 
         if os.path.exists(self.ClientPathMin):
-            shutil.rmtree(self.ClientPathMin, True)
+            rmtree(self.ClientPathMin, True)
 
         os.makedirs(self.ClientPathMin)
         os.makedirs(self.dash_min_src_folder)
@@ -96,7 +106,7 @@ class ClientCompiler:
         fonts_src = os.path.join(self.ClientPathFull, "bin", "css", "fonts")
         fonts_dst = os.path.join(self.ClientPathMin, "dash", "fonts")
 
-        shutil.copytree(fonts_src, fonts_dst)
+        copytree(fonts_src, fonts_dst)
 
         index_content = []
 
@@ -137,7 +147,8 @@ class ClientCompiler:
                         index_content.append(css_anchor)
 
                     path = self.parse_source_path(line)
-                    if path: css_source_paths.append(path)
+                    if path:
+                        css_source_paths.append(path)
 
                 continue
 
@@ -147,7 +158,9 @@ class ClientCompiler:
                     index_content.append(js_anchor)
 
                 path = self.parse_source_path(line)
-                if path: js_source_paths.append(path)
+
+                if path:
+                    js_source_paths.append(path)
 
                 continue
 
@@ -187,7 +200,9 @@ class ClientCompiler:
             msg += line + "' in dash/index.html "
             msg += "\nRemove the line containing '"
             msg += line + "' in index.html\n\n"
+
             print(msg)
+
             return None
 
         return full_path
@@ -219,20 +234,22 @@ class ClientCompiler:
                 column_width = len(package["asset_path"])
 
         for package in distribution_packages:
-            col_diff = column_width-len(package["asset_path"])
-            msg = "CC -> DIST -> " + package["asset_path"] + (" "*col_diff)
+            col_diff = column_width - len(package["asset_path"])
+            msg = "CC -> DIST -> " + package["asset_path"] + (" " * col_diff)
             msg += " (to " + package["client_root"] + ") ..."
+
             print(msg)
 
         for package in distribution_packages:
-            if package["asset_path"] == "pydash": continue
+            if package["asset_path"] == "pydash":
+                continue
+
             self.distribute_client(package)
 
     def distribute_client(self, package):
         # package["client_root"] == client.LocalDirectory
 
-        if not os.path.exists(package["client_root"]):
-            os.makedirs(package["client_root"])
+        os.makedirs(package["client_root"], exist_ok=True)
 
         expected_index_path = os.path.join(package["client_root"], "index.html")
 
@@ -253,8 +270,7 @@ class ClientCompiler:
         expected_bin_path = os.path.join(package["client_root"], "bin")
         expected_core_path = os.path.join(package["client_root"], "bin", "core.js")
 
-        if not os.path.exists(expected_bin_path):
-            os.makedirs(expected_bin_path)
+        os.makedirs(expected_bin_path, exist_ok=True)
 
         core_line = "        <script src='bin/core.js?v=1.0'></script>"
 
@@ -281,10 +297,10 @@ class ClientCompiler:
 
         open(expected_index_path, "w").write("\n".join(index_lines))
         open(expected_core_path, "w").write(
-            "\n".join(self.get_default_core_content(package, js_package_name))
+            "\n".join(self.get_default_core_content(js_package_name))
         )
 
-    def get_default_core_content(self, package, js_package_name):
+    def get_default_core_content(self, js_package_name):
         return [
             f"""function {js_package_name}()""" + """{""",
             f"""    this.html = $("<div>{js_package_name}</div>");""",
@@ -331,32 +347,35 @@ class ClientCompiler:
         path_root = index_path.split("index.h")[0].replace("index.h", "")
 
         if os.path.exists(os.path.join(path_root, "dash/")):
-            shutil.rmtree(os.path.join(path_root, "dash/"), True)
+            rmtree(os.path.join(path_root, "dash/"), True)
 
-        shutil.copytree(
+        copytree(
             os.path.join(self.ClientPathMin, "dash/"),
             os.path.join(path_root, "dash/")
         )
 
         clean_context = {}
+        skip = ["path_", "admin", "git", "root_"]
+
         for key in package:
-            if "path_" in key: continue
-            if "admin" in key: continue
-            if "git" in key: continue
-            if "root_" in key: continue
+            for word in skip:
+                if word in key:
+                    continue
+
             clean_context[key] = package[key]
 
-        header = []
-        header.append('''''')
-        header.append('''<!-- DASH START -->''')
-        header.append('''<script type="text/javascript">''')
-        header.append('''    var DASH_AUTHOR = "Ryan Martin ryan@ensomniac.com";''')
-        header.append('''    var DASH_VERSION = ''' + str(self.VersionInfo["version"]) + ''';''')
-        header.append('''    var DASH_VERSION_DATE = "''' + str(self.VersionInfo["date_hr"]) + '''";''')
-        header.append('''    var DASH_CONTEXT = ''' + str(json.dumps(clean_context)) + ''';''')
-        header.append('''</script>''')
-        header.append('''<script src='dash/dash.js?v=''' + str(self.VersionInfo["version"]) + ''''></script>''')
-        header.append('''<link rel="stylesheet" href="dash/dash.css?v=''' + str(self.VersionInfo["version"]) + '''">''')
+        header = [
+            '''''', '''<!-- DASH START -->''',
+            '''<script type="text/javascript">''',
+            '''    var DASH_AUTHOR = "Ryan Martin ryan@ensomniac.com";''',
+            '''    var DASH_VERSION = ''' + str(self.VersionInfo["version"]) + ''';''',
+            '''    var DASH_VERSION_DATE = "''' + str(self.VersionInfo["date_hr"]) + '''";''',
+            '''    var DASH_CONTEXT = ''' + str(json.dumps(clean_context)) + ''';''',
+            '''</script>''',
+            '''<script src='dash/dash.js?v=''' + str(self.VersionInfo["version"]) + ''''></script>''',
+            '''<link rel="stylesheet" href="dash/dash.css?v=''' + str(self.VersionInfo["version"]) + '''">'''
+        ]
+
         header.extend(self.get_mobile_css_include())
         header.append('''<!-- DASH END -->''')
         header.append('''''')
@@ -370,12 +389,10 @@ class ClientCompiler:
         index_orig = open(index_path, "r").read()
 
         if end_token in index_orig and start_token not in index_orig:
-            print(f"\nx12 Unable to modify index for \n")
-            sys.exit()
+            sys.exit(f"\nx12 Unable to modify index for \n")
 
         if start_token in index_orig and end_token not in index_orig:
-            print(f"\nx78 Unable to modify index for {index_path}\n")
-            sys.exit()
+            sys.exit(f"\nx78 Unable to modify index for {index_path}\n")
 
         dash_header_open = False
         dash_free = []
@@ -449,7 +466,8 @@ class ClientCompiler:
         vstring = f"?v={str(self.VersionInfo['version'])}"
         return f"{head}{vstring}{quote_type}{tail}"
 
+
 if __name__ == "__main__":
-    ClientCompiler().CompileAndDistribute()
+    _ClientCompiler().CompileAndDistribute()
 else:
-    ClientCompiler = ClientCompiler()
+    ClientCompiler = _ClientCompiler()
