@@ -25503,7 +25503,7 @@ function DashGuiListRow (list, arbitrary_id) {
         })(this);
     };
     this.SetSelected = function (is_selected) {
-        console.log("TODO? SetSelected()");
+        // TODO?
         // this.is_selected = is_selected;
         // if (this.is_selected) {
         //     this.selected_highlight.stop().animate({"opacity": 1}, 100);

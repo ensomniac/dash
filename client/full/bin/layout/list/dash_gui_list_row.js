@@ -236,7 +236,7 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     this.SetSelected = function (is_selected) {
-        console.log("TODO? SetSelected()");
+        // TODO?
 
         // this.is_selected = is_selected;
 
