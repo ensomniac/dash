@@ -19,7 +19,7 @@ class _SyncUtils:
         from requests import post
 
         # Get all active packages for the logged in user
-        dash_data_path = os.path.join(expanduser("~"), ".dash")  # TODO this is moved to dash.Utils
+        dash_data_path = os.path.join(expanduser("~"), ".dash")
 
         if not os.path.exists(dash_data_path):
             sys.exit("\nNot Authenticated\n")

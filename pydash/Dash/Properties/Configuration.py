@@ -146,7 +146,7 @@ class Configuration:
         return None
 
     def set_combo_id(self, obj_id, value):
-        from Dash.UtilsNew import GetAssetPath
+        from Dash.Utils import GetAssetPath
 
         LocalStorage.SetProperty(
             dash_context=self.DashContext,

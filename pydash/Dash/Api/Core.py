@@ -10,7 +10,7 @@ import json
 
 from traceback import format_exc
 from Dash import __name__ as DashName
-from Dash.UtilsNew import GetRandomID, SendEmail
+from Dash.Utils import GetRandomID, SendEmail
 
 
 class ApiCore:

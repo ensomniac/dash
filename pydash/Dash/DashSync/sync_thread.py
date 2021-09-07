@@ -13,7 +13,7 @@ from random import randint
 from threading import Timer
 from datetime import datetime
 from os.path import expanduser
-from Dash.UtilsNew import Memory
+from Dash.Utils import Memory
 from subprocess import check_output
 from Dash.DashLint import DashLint as Lint
 

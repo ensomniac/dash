@@ -9,7 +9,7 @@ import sys
 from Dash.Users import Users
 from datetime import datetime
 from collections import OrderedDict
-from Dash.UtilsNew import GetRandomID, FormatTime
+from Dash.Utils import GetRandomID, FormatTime
 
 
 class CSV:

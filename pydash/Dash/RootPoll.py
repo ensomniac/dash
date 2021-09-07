@@ -11,7 +11,7 @@ from pathlib import Path
 from threading import Timer
 from datetime import datetime
 from traceback import format_exc
-from Dash.UtilsNew import OapiRoot
+from Dash.Utils import OapiRoot
 from subprocess import check_output
 
 

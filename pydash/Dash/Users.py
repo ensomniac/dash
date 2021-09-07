@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from Dash import LocalStorage
 from traceback import format_exc
-from Dash.UtilsNew import Memory
+from Dash.Utils import Memory
 
 
 class Users:

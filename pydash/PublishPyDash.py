@@ -12,7 +12,7 @@ import sys
 
 from requests import post
 from datetime import datetime
-from Dash.UtilsNew import OapiRoot
+from Dash.Utils import OapiRoot
 from shutil import rmtree, copytree
 
 

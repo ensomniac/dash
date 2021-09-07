@@ -6,7 +6,7 @@
 import os
 import sys
 
-from Dash.UtilsNew import Memory, OapiRoot
+from Dash.Utils import Memory, OapiRoot
 
 
 class PackageContext:

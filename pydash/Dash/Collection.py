@@ -43,7 +43,7 @@ class Collection:
             if self._dash_context:
                 self._ctx = self._dash_context
             else:
-                from Dash.UtilsNew import Memory
+                from Dash.Utils import Memory
 
                 self._ctx = Memory.Global.Context
 

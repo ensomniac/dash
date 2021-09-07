@@ -23,7 +23,7 @@ import json
 
 from getpass import getuser
 from datetime import datetime
-from Dash.UtilsNew import FormatTime
+from Dash.Utils import FormatTime
 
 
 # TODO: Move this class to its own file

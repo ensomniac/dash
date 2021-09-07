@@ -11,7 +11,7 @@ import os
 import sys
 
 from datetime import datetime
-from Dash.UtilsNew import Memory, GetRandomID
+from Dash.Utils import Memory, GetRandomID
 
 
 class DashLocalStorage:
@@ -169,7 +169,7 @@ class DashLocalStorage:
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         obj_id = obj_id or Memory.Global.RequestData["obj_id"]
         key = key or Memory.Global.RequestData["key"]
-        # value = value or Utils.Global.RequestData.get("value")  # This was breaking certain cases
+        # value = value or Memory.Global.RequestData.get("value")  # This was breaking certain cases
 
         if value is None and "value" in Memory.Global.RequestData:
             value = Memory.Global.RequestData["value"]
@@ -358,7 +358,7 @@ class DashLocalStorage:
 
         if self.store_path == "users":
             if not obj_id_email:
-                from Dash.UtilsNew import Memory
+                from Dash.Utils import Memory
 
                 params = Memory.Global.RequestData
                 obj_id_email = params.get("email")
