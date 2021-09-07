@@ -149,6 +149,118 @@ class DashLocalStorage:
 
         return self.filter_data_entry(data)
 
+    def SetProperties(self, obj_id, properties, create=False):
+        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
+
+        if not obj_id:
+            raise Exception("Missing 'obj_id' error x8932")
+
+        data = self.GetData(obj_id, create=create)
+        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_on"] = datetime.now().isoformat()
+
+        for key in properties:
+            data[key] = properties[key]
+
+        self.WriteData(obj_id, data)
+
+        return data
+
+    def SetProperty(self, obj_id, key=None, value=None, create=False):
+        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
+        key = key or Utils.Global.RequestData["key"]
+        # value = value or Utils.Global.RequestData.get("value")  # This was breaking certain cases
+
+        if value is None and "value" in Utils.Global.RequestData:
+            value = Utils.Global.RequestData["value"]
+
+        if not obj_id:
+            raise Exception("Missing 'obj_id' error x8932")
+
+        response = {
+            "key": key,
+            "value": value,
+            "obj_id": obj_id,
+            "record_path": self.get_record_path(obj_id)
+        }
+
+        data = self.GetData(obj_id, create=create)
+        data[key] = value
+        data["modified_by"] = Utils.Global.RequestUser["email"]
+        data["modified_on"] = datetime.now().isoformat()
+
+        self.WriteData(obj_id, data)
+
+        response["updated_data"] = data
+
+        return response
+
+    def Delete(self, obj_id):
+        if self.nested:
+            record_path = self.get_data_root(obj_id)
+        else:
+            record_path = self.get_record_path(obj_id)
+
+        result = {
+            "existed": os.path.exists(record_path),
+            "record_path": record_path
+        }
+
+        if result["existed"]:
+            if self.nested:
+                from shutil import rmtree
+
+                rmtree(record_path, True)
+            else:
+                os.remove(record_path)
+
+        result["exists_now"] = os.path.exists(record_path)
+
+        return result
+
+    def WriteData(self, obj_id, data):
+        self.Write(self.get_record_path(obj_id), data)
+
+        return data
+
+    def Write(self, full_path, data):
+        # if "local/performance/ryan" in full_path:
+        #     self.write_protected(full_path, data)
+        # else:
+        #     self.write_unprotected(full_path, data)
+
+        # Andrew - I'm leaving this code somewhat messy / or at least
+        # leaving some old bits around since today is Warpsound day
+        # and I want to make sure I can quickly revert this change in the
+        # case that it starts causing problems instead of solving them
+
+        return self.write_protected(full_path, data)
+
+    def Read(self, full_path):
+        from json import loads
+        from time import sleep
+
+        if not os.path.exists(full_path):
+            return None
+
+        error = ""
+        data = None
+        attempts = 0
+
+        while attempts < 3:
+            attempts += 1
+
+            try:
+                data = loads(open(full_path, "r").read())
+            except Exception as e:
+                error = e
+                sleep(0.2)
+
+        if attempts >= 3 and data is None:
+            raise Exception(f"Failed to read: {full_path}, error: {error}, ({attempts} attempts)")
+
+        return data
+
     def filter_data_entry(self, data):
         if not self.filter_out_keys:
             return data
@@ -300,118 +412,6 @@ class DashLocalStorage:
                     self.get_store_root(obj_id),
                     obj_id
                 )
-
-    def SetProperties(self, obj_id, properties, create=False):
-        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
-
-        if not obj_id:
-            raise Exception("Missing 'obj_id' error x8932")
-
-        data = self.GetData(obj_id, create=create)
-        data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
-
-        for key in properties:
-            data[key] = properties[key]
-
-        self.WriteData(obj_id, data)
-
-        return data
-
-    def SetProperty(self, obj_id, key=None, value=None, create=False):
-        obj_id = obj_id or Utils.Global.RequestData["obj_id"]
-        key = key or Utils.Global.RequestData["key"]
-        # value = value or Utils.Global.RequestData.get("value")  # This was breaking certain cases
-
-        if value is None and "value" in Utils.Global.RequestData:
-            value = Utils.Global.RequestData["value"]
-
-        if not obj_id:
-            raise Exception("Missing 'obj_id' error x8932")
-
-        response = {
-            "key": key,
-            "value": value,
-            "obj_id": obj_id,
-            "record_path": self.get_record_path(obj_id)
-        }
-
-        data = self.GetData(obj_id, create=create)
-        data[key] = value
-        data["modified_by"] = Utils.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
-
-        self.WriteData(obj_id, data)
-
-        response["updated_data"] = data
-
-        return response
-
-    def Delete(self, obj_id):
-        if self.nested:
-            record_path = self.get_data_root(obj_id)
-        else:
-            record_path = self.get_record_path(obj_id)
-
-        result = {
-            "existed": os.path.exists(record_path),
-            "record_path": record_path
-        }
-
-        if result["existed"]:
-            if self.nested:
-                from shutil import rmtree
-
-                rmtree(record_path, True)
-            else:
-                os.remove(record_path)
-
-        result["exists_now"] = os.path.exists(record_path)
-
-        return result
-
-    def WriteData(self, obj_id, data):
-        self.Write(self.get_record_path(obj_id), data)
-
-        return data
-
-    def Write(self, full_path, data):
-        # if "local/performance/ryan" in full_path:
-        #     self.write_protected(full_path, data)
-        # else:
-        #     self.write_unprotected(full_path, data)
-
-        # Andrew - I'm leaving this code somewhat messy / or at least
-        # leaving some old bits around since today is Warpsound day
-        # and I want to make sure I can quickly revert this change in the
-        # case that it starts causing problems instead of solving them
-
-        return self.write_protected(full_path, data)
-
-    def Read(self, full_path):
-        from json import loads
-        from time import sleep
-
-        if not os.path.exists(full_path):
-            return None
-
-        error = ""
-        data = None
-        attempts = 0
-
-        while attempts < 3:
-            attempts += 1
-
-            try:
-                data = loads(open(full_path, "r").read())
-            except Exception as e:
-                error = e
-                sleep(0.2)
-
-        if attempts >= 3 and data is None:
-            raise Exception(f"Failed to read: {full_path}, error: {error}, ({attempts} attempts)")
-
-        return data
 
     def write_unprotected(self, full_path, data):
         from json import dumps

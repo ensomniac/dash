@@ -32,53 +32,6 @@ class PackageContext:
 
         return self._package_data
 
-    def get_pkg_data_from_server(self):
-        from json import loads
-
-        # TODO: Make a lookup for asset path / package ids
-
-        package_data = None
-        root = os.path.join(OapiRoot, "dash", "local", "packages/")
-
-        for filename in os.listdir(root):
-            record_path = os.path.join(root, filename)
-            pkg_data = loads(open(record_path, "r").read())
-
-            if not pkg_data.get("asset_path"):
-                continue
-
-            if self._asset_path == pkg_data.get("asset_path").lower().strip():
-                package_data = pkg_data
-
-                break
-
-        if not package_data:
-            return None
-
-        return package_data
-
-    def get_pkg_data_from_request(self):
-        from json import loads
-        from requests import post
-
-        params = {
-            "f": "get_full_data",
-            "asset_path": self._asset_path,
-            "token": Utils.UserToken
-        }
-
-        response = post("https://dash.guide/PackageContext", data=params)
-
-        try:
-            response = loads(response.text)
-        except:
-            sys.exit(f"== SERVER ERROR ==\n{response.text}")
-
-        if "full_data" not in response:
-            sys.exit(response)
-
-        return response["full_data"]
-
     def ToDict(self):
         if not self.PackageData:
             return None
@@ -136,6 +89,53 @@ class PackageContext:
         # }
 
         return data
+
+    def get_pkg_data_from_server(self):
+        from json import loads
+
+        # TODO: Make a lookup for asset path / package ids
+
+        package_data = None
+        root = os.path.join(OapiRoot, "dash", "local", "packages/")
+
+        for filename in os.listdir(root):
+            record_path = os.path.join(root, filename)
+            pkg_data = loads(open(record_path, "r").read())
+
+            if not pkg_data.get("asset_path"):
+                continue
+
+            if self._asset_path == pkg_data.get("asset_path").lower().strip():
+                package_data = pkg_data
+
+                break
+
+        if not package_data:
+            return None
+
+        return package_data
+
+    def get_pkg_data_from_request(self):
+        from json import loads
+        from requests import post
+
+        params = {
+            "f": "get_full_data",
+            "asset_path": self._asset_path,
+            "token": Utils.UserToken
+        }
+
+        response = post("https://dash.guide/PackageContext", data=params)
+
+        try:
+            response = loads(response.text)
+        except:
+            sys.exit(f"== SERVER ERROR ==\n{response.text}")
+
+        if "full_data" not in response:
+            sys.exit(response)
+
+        return response["full_data"]
 
 
 def Get(asset_path):

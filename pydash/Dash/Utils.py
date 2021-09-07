@@ -17,14 +17,6 @@ class _Utils:
         pass
 
     @property
-    def IsServer(self):
-        return os.path.exists(os.path.join(OapiRoot, "logs"))
-
-    @property
-    def ServerLocalStorePath(self):
-        return os.path.join(OapiRoot, "dash", "local", "packages/")
-
-    @property
     def Global(self):
         # This function is meant to return meaningful shared data in the context of a single request
 
@@ -45,10 +37,6 @@ class _Utils:
         return self._global
 
     @property
-    def IsRyansMachine(self):
-        return os.path.exists(os.path.join("/Users", "rmartin"))
-
-    @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
             try:
@@ -63,65 +51,6 @@ class _Utils:
                 return None
 
         return self._usr_token
-
-    @property
-    def LocalPackages(self):
-        # Andrew - I'm going to be moving these config objects somewhere else since it's messy
-        # doing it like this but for now let's keep it simple and assume there are only two of us
-
-        from Dash.LocalPackageContext import LocalPackageContext
-
-        pkg = []
-
-        if self.IsRyansMachine:
-            pkg.append(LocalPackageContext(
-                asset_path="altona",
-                display_name="Altona IO",
-                domain="altona.io",
-                local_git_root="/Users/rmartin/Google Drive/altona/github/",
-            ))
-
-            pkg.append(LocalPackageContext(
-                asset_path="analog",
-                display_name="Analog Technology",
-                domain="analog.technology",
-                local_git_root="/Users/rmartin/Google Drive/analog/github/",
-            ))
-
-            pkg.append(LocalPackageContext(
-                asset_path="smartsioux",
-                display_name="Smart Sioux",
-                domain="smartsioux.com",
-                local_git_root="/Users/rmartin/Google Drive/smartsioux/github/",
-            ))
-
-            pkg.append(LocalPackageContext(
-                asset_path="authentic",
-                display_name="Authentic Tools Portal",
-                domain="authentic.tools",
-                local_git_root="/Users/rmartin/Google Drive/authentic/github/",
-            ))
-
-            pkg.append(LocalPackageContext(
-                asset_path="dash_guide",
-                display_name="Dash Guide",
-                domain="dash.guide",
-                local_git_root="/Users/rmartin/Google Drive/dash/",
-            ))
-
-        else:
-            pkg.append(LocalPackageContext(
-                asset_path="altona",
-                display_name="Altona IO",
-                domain="altona.io",
-                local_git_root="/Users/andrewstet/altona_bin/repos/",
-            ))
-
-        for package_context in pkg:
-            if not os.path.exists(package_context.LocalGitRoot):
-                sys.exit(f"\nError: this path doesn't exist, but it should: '{package_context.LocalGitRoot}'\n")
-
-        return pkg
 
     def FormatTime(self, datetime_object, time_format=1, tz="utc"):
         """
