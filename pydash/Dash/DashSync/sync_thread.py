@@ -11,9 +11,9 @@ from gzip import compress
 from requests import post
 from random import randint
 from threading import Timer
-from Dash.Utils import Utils
 from datetime import datetime
 from os.path import expanduser
+from Dash.UtilsNew import Memory
 from subprocess import check_output
 from Dash.DashLint import DashLint as Lint
 
@@ -146,7 +146,7 @@ class SyncThread:
 
         params = {
             "f": "set_sync_state",
-            "token": Utils.UserToken,
+            "token": Memory.UserToken,
             "asset_path": self.context["asset_path"],
             "git_status": git_status,
             "has_changes": has_changes
@@ -218,7 +218,7 @@ class SyncThread:
 
         params = {
             "f": "set_livesync_git_result",
-            "token": Utils.UserToken,
+            "token": Memory.UserToken,
             "asset_path": self.context["asset_path"],
             "git_result": git_result
         }

@@ -6,7 +6,7 @@
 import os
 import sys
 
-from Dash.Utils import Utils, OapiRoot
+from Dash.UtilsNew import Memory, OapiRoot
 
 
 class PackageContext:
@@ -122,7 +122,7 @@ class PackageContext:
         params = {
             "f": "get_full_data",
             "asset_path": self._asset_path,
-            "token": Utils.UserToken
+            "token": Memory.UserToken
         }
 
         response = post("https://dash.guide/PackageContext", data=params)
