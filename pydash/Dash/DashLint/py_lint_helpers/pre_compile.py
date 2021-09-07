@@ -16,12 +16,14 @@ class PreCompile:
         try:
             compile(open(self.code_path, "r").read(), self.code_path, "exec")
 
+            file_name = self.code_path.split("/")[-1]
+
             if len(debug_text):
                 return True, f"\n{'-'*44}DEBUG START{'-'*44}\n\n{debug_text}\n\n{'-'*45}DEBUG END{'-'*45}\n"
             elif print_linted_code_line_list:
-                return True, f"\n{'-'*41}LINT PREVIEW START{'-'*41}\n" \
+                return True, f"\n{'-'*30}LINT PREVIEW START ({file_name}){'-'*30}\n" \
                              + '\n'.join(self.source_code) \
-                             + f"\n{'-'*42}LINT PREVIEW END{'-'*42}\n"
+                             + f"\n{'-'*31}LINT PREVIEW END ({file_name}){'-'*31}\n"
             else:
                 return True, "(DashLint) Success!"
 
