@@ -97,7 +97,9 @@ function GuiIcons (icon) {
     this.weight = {
         "solid":   "s",
         "regular": "r",
-        "light":   "l"
+        "light":   "l",
+        "duotone": "d",
+        "brand":   "b"
     };
     
     this.icon_map = {
@@ -159,6 +161,8 @@ function GuiIcons (icon) {
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
         "file":                  new GuiIconDefinition(this.icon, "File", this.weight["light"], "file"),
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
+        "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
+        "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
@@ -21259,12 +21263,11 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.label_text = label_text;
     this.color = color || Dash.Color.Light;
     this.include_border = include_border;
+    this.icon = null;
+    this.border = null;
     this.html = $("<div></div>");
-    this.border = $("<div></div>");
     this.label = $("<div>" + this.label_text + "</div>");
     this.setup_styles = function () {
-        this.html.append(this.label);
-        this.html.append(this.border);
         this.html.css({
             "height": Dash.Size.RowHeight,
             "margin-bottom": Dash.Size.Padding,
@@ -21276,7 +21279,9 @@ function DashGuiHeader (label_text, color, include_border=true) {
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
         });
+        this.html.append(this.label);
         if (this.include_border) {
+            this.border = $("<div></div>");
             this.border.css({
                 "position": "absolute",
                 "left": -Dash.Size.Padding * 0.25,
@@ -21285,13 +21290,33 @@ function DashGuiHeader (label_text, color, include_border=true) {
                 "width": Dash.Size.Padding * 0.5,
                 "background": this.color.AccentGood,
             });
+            this.html.append(this.border);
         }
     };
     this.SetText = function (label_text) {
         this.label.text(label_text);
     };
+    this.ReplaceBorderWithIcon = function (icon_name, icon_color=null) {
+        this.html.empty();
+        this.html.css({
+            "display": "flex"
+        });
+        this.icon = new Dash.Gui.Icon(this.color, icon_name);
+        this.icon.html.css({
+            "cursor": "auto"
+        });
+        this.icon.SetColor(icon_color || this.color.AccentGood);
+        this.label.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": "auto",
+            "margin-bottom": "auto",
+            "margin-right": Dash.Size.Padding
+        });
+        this.html.append(this.icon.html);
+        this.html.append(this.label);
+    };
     this.setup_styles();
-};
+}
 
 function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null) {
     this.label_text = label_text;
@@ -25175,23 +25200,35 @@ class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
     };
 }
 
-function DashGuiButtonBar (binder, color) {
-    this.html = $("<div></div>");
+function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.binder = binder;
     this.color = color || Dash.Color.Light;
+    this.style = button_style;
     this.buttons = [];
+    this.html = $("<div></div>");
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
             "height": Dash.Size.ButtonHeight,
         });
     };
+    this.SetHeight = function (height) {
+        this.html.css({
+            "height": height
+        });
+    };
     this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
         (function (self, callback) {
-            var button = new Dash.Gui.Button(label_text, function () {
-                callback(button);
-            }, self, self.color);
+            var button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    callback(button);
+                },
+                self,
+                self.color,
+                {"style": self.style}
+            );
             self.buttons.push(button);
             button.html.css({
                 "margin": 0,
@@ -25200,15 +25237,15 @@ function DashGuiButtonBar (binder, color) {
             self.html.append(button.html);
         })(this, callback);
         this.update_spacing();
-        return this.buttons[this.buttons.length-1];
+        return this.buttons[this.buttons.length - 1];
     };
     this.update_spacing = function () {
         // TODO: Make this more efficient - we don't need to hit
-        // this multiple times on the same frame
+        //  this multiple times on the same frame
         for (var i in this.buttons) {
             var button = this.buttons[i];
             var right_padding = Dash.Size.Padding;
-            if (i == this.buttons.length-1) {
+            if (parseInt(i) === this.buttons.length - 1) {
                 right_padding = 0;
             }
             button.html.css({

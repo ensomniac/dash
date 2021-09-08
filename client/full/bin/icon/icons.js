@@ -4,7 +4,9 @@ function GuiIcons (icon) {
     this.weight = {
         "solid":   "s",
         "regular": "r",
-        "light":   "l"
+        "light":   "l",
+        "duotone": "d",
+        "brand":   "b"
     };
     
     this.icon_map = {
@@ -66,6 +68,8 @@ function GuiIcons (icon) {
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
         "file":                  new GuiIconDefinition(this.icon, "File", this.weight["light"], "file"),
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
+        "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
+        "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
