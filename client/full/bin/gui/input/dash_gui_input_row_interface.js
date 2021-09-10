@@ -2,7 +2,7 @@
 
 function DashGuiInputRowInterface () {
     this.DisableAutosave = function () {
-        this.autosave = false;
+        this.input.DisableAutosave();
     };
 
     this.SetInputValidity = function (input_is_valid) {
@@ -66,10 +66,10 @@ function DashGuiInputRowInterface () {
         this.input.SetText(text);
         this.input_changed(true);
 
-        if (this.autosave_timeout) {
-            clearTimeout(this.autosave_timeout);
+        if (this.input.autosave_timeout) {
+            clearTimeout(this.input.autosave_timeout);
 
-            this.autosave_timeout = null;
+            this.input.autosave_timeout = null;
         }
 
         if (this.load_dots) {
@@ -84,13 +84,14 @@ function DashGuiInputRowInterface () {
     };
 
     this.Request = function (api, server_data, callback, callback_binder) {
-
         console.log("RE");
 
-        if (this.autosave_timeout) {
+        if (this.input.autosave_timeout) {
             console.log("Cleared timeout");
-            clearTimeout(this.autosave_timeout);
-            this.autosave_timeout = null;
+
+            clearTimeout(this.input.autosave_timeout);
+
+            this.input.autosave_timeout = null;
         }
 
         var request = null;

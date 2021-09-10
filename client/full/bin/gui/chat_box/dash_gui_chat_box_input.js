@@ -115,6 +115,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.at_button.DisableFlash();
         this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
 
+        this.at_button.html.attr("title", "Mention");
+
         this.html.append(this.at_button.html);
     };
 
@@ -151,6 +153,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "margin-left": Dash.Size.Padding,
             "margin-right": Dash.Size.Padding * 0.3
         });
+
+        this.submit_button.SetHoverHint("Submit");
 
         this.html.append(this.submit_button.html);
     };

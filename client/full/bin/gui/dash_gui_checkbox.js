@@ -49,7 +49,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         this.redraw();
 
-        this.callback();
+        this.callback(this);
     };
 
     this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {

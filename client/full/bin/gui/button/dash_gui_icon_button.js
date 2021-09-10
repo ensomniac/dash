@@ -2,7 +2,6 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon = null;
     this.icon_height = options["container_size"] || null;
     this.icon_name = icon_name;
-    // this.icon_default_opacity = 0.8;
     this.icon_default_opacity = 1;
     this.icon_size_mult = options["size_mult"] || 1.0;
     this.style = options["style"] || "default";
@@ -13,6 +12,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.SetColor(color);
     };
 
+    this.SetHoverHint = function (hint) {
+        this.html.attr("title", hint);
+    };
+
     this.setup_icon = function () {
         if (this.style === "toolbar") {
             if (!this.icon_height) {
@@ -20,6 +23,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             }
 
             this.icon_size_mult = 0.75;
+
             this.setup_toolbar_icon();
         }
 
@@ -39,6 +43,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             console.log("Warning: Unhandled button / icon style: " + this.style);
 
             this.setup_default_icon();
+        }
+
+        if (this.icon_name.startsWith("trash")) {
+            this.SetHoverHint("Delete");
         }
     };
 
@@ -61,7 +69,6 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         });
 
         this.html.append(this.icon.html);
-
     };
 
     this.setup_default_icon = function () {

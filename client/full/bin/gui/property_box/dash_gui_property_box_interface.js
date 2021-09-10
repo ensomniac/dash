@@ -8,72 +8,29 @@ function DashGuiPropertyBoxInterface () {
         }
 
         this.top_right_label.text(label_text);
-
     };
 
-    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, alt_icon_id=null) {
-        var icon_id = "trash";
-
-        if (alt_icon_id && typeof alt_icon_id === "string") {
-            icon_id = alt_icon_id;
-        }
-
+    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
             return;
         }
-
-        if (this.top_right_label) {
-            this.top_right_label.css({
-                "right": Dash.Size.Padding * 5
-            });
-        }
-
-        this.top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
-
-        this.top_right_delete_button.css({
-            "left": "auto",
-            "bottom": "auto",
-            "top": Dash.Size.Padding * 0.8,
-            "right": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "color": this.color,
-            "z-index": 1,
-            "overflow-y": ""
-        });
-
-        callback = callback.bind(this.binder);
 
         if (!this.buttons) {
             this.buttons = [];
         }
 
-        (function (self, callback, data_key, additional_data) {
+        this.top_right_delete_button = Dash.Gui.GetTopRightIconButton(
+            this.binder,
+            callback,
+            icon_id,
+            data_key,
+            additional_data,
+            this.top_right_label
+        );
 
-            var button = new window.Dash.Gui.IconButton(
-                icon_id,
-                function () {
-                    callback(data_key, additional_data);
-                },
-                self,
-                self.color
-            );
+        this.html.append(this.top_right_delete_button.html);
 
-            self.buttons.push(button);
-
-            button.html.css({
-            });
-
-            self.top_right_delete_button.append(button.html);
-
-        })(this, callback, data_key, additional_data);
-
-        if (this.top_right_delete_button.button) {
-            this.top_right_delete_button.button.html.css({
-                "margin-right": Dash.Size.RowHeight
-            });
-        }
-
-        this.html.append(this.top_right_delete_button);
+        return this.top_right_delete_button;
     };
 
     this.AddHTML = function (html) {
@@ -81,7 +38,6 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddHeader = function (label_text) {
-
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
 
@@ -93,7 +49,6 @@ function DashGuiPropertyBoxInterface () {
         this.num_headers += 1;
 
         return header_obj;
-
     };
 
     this.AddButtonBar = function (label_text) {
@@ -104,6 +59,7 @@ function DashGuiPropertyBoxInterface () {
         });
 
         this.AddHTML(bar.html);
+
         return bar;
     };
 
@@ -115,7 +71,6 @@ function DashGuiPropertyBoxInterface () {
         }
 
         (function (self, callback) {
-
             var button = new Dash.Gui.Button(label_text, function () {
                 callback(button);
             }, self, self.color);
@@ -125,15 +80,12 @@ function DashGuiPropertyBoxInterface () {
             button.html.css("margin-top", Dash.Size.Padding);
 
             self.html.append(button.html);
-
         })(this, callback);
 
         return this.buttons[this.buttons.length-1];
-
     };
 
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
-
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
 
@@ -146,7 +98,9 @@ function DashGuiPropertyBoxInterface () {
             "",
             "",
             "",
-            function (row_input) {console.log("Do nothing, dummy row");},
+            function (row_input) {
+                console.log("Do nothing, dummy row");
+            },
             self
         );
 
@@ -204,13 +158,14 @@ function DashGuiPropertyBoxInterface () {
             this.data = {};
         }
 
-        var row_details = {};
-        row_details["key"] = data_key;
-        row_details["label_text"] = label_text;
-        row_details["default_value"] = default_value || null;
-        row_details["combo_options"] = combo_options || null;
-        row_details["value"] = this.data[data_key]   || default_value;
-        row_details["can_edit"] = can_edit;
+        var row_details = {
+            "key": data_key,
+            "label_text": label_text,
+            "default_value": default_value || null,
+            "combo_options": combo_options || null,
+            "value": this.data[data_key] || default_value,
+            "can_edit": can_edit
+        };
 
         (function (self, row_details, callback) {
             var _callback;

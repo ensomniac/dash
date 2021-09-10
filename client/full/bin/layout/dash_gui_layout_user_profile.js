@@ -14,19 +14,16 @@ function DashGuiLayoutUserProfile (user_data, options) {
     this.setup_styles = function () {
         this.add_header();
         this.setup_property_box();
-        this.add_logout_button();
 
-        var min_height = this.img_box_size + Dash.Size.RowHeight + Dash.Size.Padding;
+        var button = Dash.Gui.GetTopRightIconButton(this, this.log_out, "log_out");
+
+        button.SetHoverHint("Log Out");
+
+        this.html.append(button.html);
 
         this.html.css({
-            "min-height": min_height,
-            // "background": this.color.Background,
+            "min-height": this.img_box_size + Dash.Size.RowHeight + Dash.Size.Padding
         });
-    };
-
-    this.add_logout_button = function () {
-        this.logout_button = Dash.Gui.AddTopRightIconButton(this, this.log_out, "log_out");
-        this.html.append(this.logout_button);
     };
 
     this.add_header = function () {

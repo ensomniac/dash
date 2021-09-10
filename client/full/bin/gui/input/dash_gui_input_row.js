@@ -8,13 +8,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.color = color || Dash.Color.Light;
     this.data_key = data_key;
 
-    this.autosave = true;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.highlight = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
     this.save_button_visible = false;
-    this.autosave_timeout = null;
     this.icon_button_count = 0;
 
     // For lock toggle
@@ -31,6 +29,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.label = $("<div>" + this.label_text + ": </div>");
         this.input = new Dash.Gui.Input(this.placeholder_text, this.color);
 
+        this.input.EnableAutosave();
         this.input.SetTransparent(true);
 
         this.set_initial_text();
@@ -40,6 +39,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         });
 
         this.input.OnChange(this.input_changed, this);
+        this.input.OnAutosave(this.trigger_autosave, this);
 
         this.html.append(this.label);
         this.html.append(this.input.html);
@@ -233,23 +233,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             return;
         }
 
-        if (this.autosave) {
-            if (this.autosave_timeout) {
-                clearTimeout(this.autosave_timeout);
-                this.autosave_timeout = null;
-            }
-
-            (function (self) {
-                // This timeout is intentionally pretty long since the field will auto save if the
-                // box was changed when the user clicks out of it as well. This longer timeout
-                // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
-                self.autosave_timeout = setTimeout(function () {self.trigger_autosave();}, 1500);
-            })(this);
-        }
-
-        else {
-            this.show_save_button();
-        }
+        this.show_save_button();
     };
 
     this.trigger_autosave = function () {
@@ -259,6 +243,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         if (this.load_dots.IsActive()) {
             this.input_changed();
+
             return;
         }
 
@@ -271,6 +256,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         this.load_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight - Dash.Size.Padding);
+
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.8)");
 

@@ -44,23 +44,25 @@ function DashGuiHeader (label_text, color, include_border=true) {
         this.label.text(label_text);
     };
 
-    this.ReplaceBorderWithIcon = function (icon_name, icon_color=null) {
+    this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
         this.html.empty();
 
         this.html.css({
-            "display": "flex"
+            "display": "flex",
+            "margin-left": -Dash.Size.Padding * 0.25
         });
 
-        this.icon = new Dash.Gui.Icon(this.color, icon_name);
+        this.icon = new Dash.Gui.Icon(this.color, icon_name, icon_container_size);
 
         this.icon.html.css({
+            ...icon_html_css,
             "cursor": "auto"
         });
 
         this.icon.SetColor(icon_color || this.color.AccentGood);
 
         this.label.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.75,
             "margin-top": "auto",
             "margin-bottom": "auto",
             "margin-right": Dash.Size.Padding

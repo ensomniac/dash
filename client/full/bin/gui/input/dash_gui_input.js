@@ -2,8 +2,13 @@ function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
 
+    this.autosave = false;
     this.html = $("<div></div>");
+    this.autosave_timeout = null;
     this.last_submitted_text = "";
+    this.on_change_callback = null;
+    this.on_submit_callback = null;
+    this.on_autosave_callback = null;
 
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
@@ -38,6 +43,14 @@ function DashGuiInput (placeholder_text, color) {
 
     this.InFocus = function () {
         return $(this.input).is(":focus");
+    };
+
+    this.EnableAutosave = function () {
+        this.autosave = true;
+    };
+
+    this.DisableAutosave = function () {
+        this.autosave = false;
     };
 
     this.DisableBlurSubmit = function () {
@@ -96,6 +109,10 @@ function DashGuiInput (placeholder_text, color) {
         this.on_change_callback = callback.bind(bind_to);
     };
 
+    this.OnAutosave = function (callback, bind_to) {
+        this.on_autosave_callback = callback.bind(bind_to);
+    };
+
     this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
@@ -104,25 +121,60 @@ function DashGuiInput (placeholder_text, color) {
         this.input.trigger("focus");
     };
 
+    // Fired if the box is clicked on or the user is typing
     this.on_change = function () {
-        // Fired if the box is clicked on or the user is typing
+        var text = this.Text().toString();
+        var changed = text !== this.last_val.toString();
+        this.last_val = text;
 
-        var changed = this.Text() !== this.last_val;
-        this.last_val = this.Text();
+        if (!changed) {
+            return;
+        }
 
-        if (changed && this.on_change_callback) {
+        if (this.autosave) {
+            if (this.autosave_timeout) {
+                clearTimeout(this.autosave_timeout);
+
+                this.autosave_timeout = null;
+            }
+
+            (function (self) {
+                // This timeout is intentionally pretty long since the field will auto save if the
+                // box was changed when the user clicks out of it as well. This longer timeout
+                // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
+                self.autosave_timeout = setTimeout(
+                    function () {
+                        if (self.on_autosave_callback) {
+                            self.on_autosave_callback();
+                        }
+
+                        else {
+                            self.on_submit();
+                        }
+                    },
+                    1500
+                );
+            })(this);
+        }
+
+        else {
+            if (!this.on_change_callback) {
+                return;
+            }
+
             this.on_change_callback();
         }
     };
 
+    // Fired on 'enter' or 'paste'
     this.on_submit = function () {
-        // Fired on 'enter' or 'paste'
-
-        if (this.on_submit_callback) {
-            this.on_submit_callback();
-
-            this.last_submitted_text = this.Text();
+        if (!this.on_submit_callback) {
+            return;
         }
+
+        this.on_submit_callback();
+
+        this.last_submitted_text = this.Text();
     };
 
     this.setup_connections = function () {

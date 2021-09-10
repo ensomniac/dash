@@ -167,6 +167,9 @@ function DashGuiLayoutToolbarInterface () {
 
     this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
         var input = this.AddInput(placeholder_label, callback, options, additional_data);
+
+        input.EnableAutosave();
+
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
         var text_align = "left";

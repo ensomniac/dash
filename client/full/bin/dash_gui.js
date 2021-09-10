@@ -164,12 +164,8 @@ function DashGui() {
         return color_picker;
     };
 
-    this.AddTopRightIconButton = function (binder, callback, alt_icon_id=null, data_key=null, additional_data=null, existing_top_right_label=null) {
-        var icon_id = "trash";
-
-        if (alt_icon_id && typeof alt_icon_id === "string") {
-            icon_id = alt_icon_id;
-        }
+    this.GetTopRightIconButton = function (binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null) {
+        callback = callback.bind(binder);
 
         if (existing_top_right_label) {
             existing_top_right_label.css({
@@ -177,22 +173,7 @@ function DashGui() {
             });
         }
 
-        var top_right_delete_button = Dash.Gui.GetHTMLAbsContext();
-
-        top_right_delete_button.css({
-            "left": "auto",
-            "bottom": "auto",
-            "top": Dash.Size.Padding * 0.8,
-            "right": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "color": binder.color || Dash.Color.Dark,
-            "z-index": 1,
-            "overflow-y": ""
-        });
-
-        callback = callback.bind(binder);
-
-        (function (binder, callback, top_right_delete_button, icon_id, data_key, additional_data) {
+        (function (self, icon_id, callback, data_key, additional_data, binder) {
             var button = new Dash.Gui.IconButton(
                 icon_id,
                 function () {
@@ -203,19 +184,18 @@ function DashGui() {
             );
 
             button.html.css({
+                "position": "absolute",
+                "left": "auto",
+                "bottom": "auto",
+                "top": Dash.Size.Padding * 0.8,
+                "right": Dash.Size.Padding,
+                "height": Dash.Size.RowHeight,
+                "z-index": 1
             });
 
-            top_right_delete_button.append(button.html);
+            self._tmp_button = button;
+        })(this, icon_id, callback, data_key, additional_data, binder);
 
-        })(binder, callback, top_right_delete_button, icon_id, data_key, additional_data);
-
-
-        if (top_right_delete_button.button) {
-            top_right_delete_button.button.html.css({
-                "margin-right": Dash.Size.RowHeight
-            });
-        }
-
-        return top_right_delete_button;
+        return this._tmp_button;
     };
 }

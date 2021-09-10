@@ -419,9 +419,7 @@ function DashGuiListRow (list, arbitrary_id) {
         });
 
         if (column_config_data["css"]) {
-            for (var key in column_config_data["css"]) {
-                combo.html.css(key, column_config_data["css"][key]);
-            }
+            combo.html.css(column_config_data["css"]);
         }
 
         return combo;
@@ -434,7 +432,9 @@ function DashGuiListRow (list, arbitrary_id) {
         );
 
         input.html.css({
-            "height": Dash.Size.RowHeight * 0.9
+            "height": Dash.Size.RowHeight * 0.9,
+            "margin-top": Dash.Size.Padding * 0.1,
+            "box-shadow": "0px 0px 4px 1px rgba(0, 0, 0, 0.2)"
         });
 
         if (column_config_data["width"]) {
@@ -467,6 +467,8 @@ function DashGuiListRow (list, arbitrary_id) {
                     },
                     column_config_data["options"]["binder"]
                 );
+
+                input.EnableAutosave();
             })(this, column_config_data, row_id, input);
         }
 
