@@ -53,10 +53,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
 
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
         });
 
         if (this.is_vertical) {
@@ -113,19 +110,13 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
     this.setup_horizontal = function () {
         this.content_a.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-x": "auto",
         });
 
         this.content_b.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-x": "auto",
         });
 

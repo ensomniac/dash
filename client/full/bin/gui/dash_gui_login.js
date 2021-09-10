@@ -67,10 +67,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         };
 
         this.html.css({
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "text-align": "center",
         });
 
@@ -127,10 +124,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
 
         this.html.css({
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "text-align": "center",
             "background": "none",
         });

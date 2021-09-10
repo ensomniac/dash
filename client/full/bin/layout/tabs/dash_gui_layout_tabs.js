@@ -32,10 +32,7 @@ class DashGuiLayoutTabs {
 
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
         });
 
         if (this.side_tabs) {
@@ -82,10 +79,7 @@ class DashGuiLayoutTabs {
         // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-y": "auto",
             "background": Dash.Color.Light.Background,
         });
@@ -117,10 +111,7 @@ class DashGuiLayoutTabs {
         // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-y": "auto",
             "background": Dash.Color.Light.Background,
         });

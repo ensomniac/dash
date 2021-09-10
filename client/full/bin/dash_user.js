@@ -1,5 +1,4 @@
 function DashUser () {
-
     this.__auth_authenticated_cb = null;
     this.__auth_not_authenticated_cb = null;
 
@@ -16,23 +15,23 @@ function DashUser () {
 
         if (token && email && user_json) {
 
-            var params = {};
-            params["f"] = "validate";
-            params["token"] = token;
-            params["init"] = true;
-            params["gzip"] = true;
+            var params = {
+                "f": "validate",
+                "token": token,
+                "init": true,
+                "gzip": true
+            };
 
             for (var key in optional_params) {
                 params[key] = optional_params[key];
-            };
+            }
 
             Dash.Request(this, this.on_auth_response, "Users", params);
-
         }
+
         else {
             this.__auth_not_authenticated_cb();
         }
-
     };
 
     this.SetUserAuthentication = function (email, server_response) {
@@ -133,4 +132,4 @@ function DashUser () {
 
     };
 
-};
+}

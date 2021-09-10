@@ -37,11 +37,15 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
 
     this.Load = function () {
-        var params = {};
-        params["f"] = "get_property_set";
-        params["obj_id"] = this.dash_obj_id;
-
-        Dash.Request(this, this.on_server_property_set, this.endpoint, params);
+        Dash.Request(
+            this,
+            this.on_server_property_set,
+            this.endpoint,
+            {
+                "f": "get_property_set",
+                "obj_id": this.dash_obj_id
+            }
+        );
     };
 
     this.Update = function () {
@@ -190,13 +194,17 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
     this.on_combo_updated = function (property_key, selected_option) {
         if (this.dash_obj_id) {
-            var params = {};
-            params["f"] = "set_property";
-            params["key"] = property_key;
-            params["value"] = selected_option;
-            params["obj_id"] = this.dash_obj_id;
-
-            Dash.Request(this, this.on_server_response, this.endpoint, params);
+            Dash.Request(
+                this,
+                this.on_server_response,
+                this.endpoint,
+                {
+                    "f": "set_property",
+                    "key": property_key,
+                    "value": selected_option,
+                    "obj_id": this.dash_obj_id
+                }
+            );
 
             return;
         }
@@ -240,11 +248,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
 
-        var params = {};
-        params["f"] = "set_property";
-        params["key"] = row_details["key"];
-        params["value"] = new_value;
-        params["obj_id"] = this.dash_obj_id;
+        var params = {
+            "f": "set_property",
+            "key": row_details["key"],
+            "value": new_value,
+            "obj_id": this.dash_obj_id
+        };
 
         console.log("updated - uploading...");
 

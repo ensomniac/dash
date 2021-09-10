@@ -16,10 +16,7 @@ function DashAdminColor () {
 
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "bottom": 0,
-            "top": 0,
+            "inset": 0,
             "padding": Dash.Size.Padding,
         });
 
@@ -92,6 +89,7 @@ function DashAdminColor () {
                 if (self.display_theme == "light") {
                     self.display_theme = "dark";
                 }
+
                 else {
                     self.display_theme = "light";
                 }
@@ -99,22 +97,17 @@ function DashAdminColor () {
                 Dash.Local.Set("dash_admin_color_style", self.display_theme);
 
                 console.log("switch to " + self.display_theme);
-                self.draw_all();
 
+                self.draw_all();
             });
         })(this);
 
         var doc = new DashAdminColorDoc(this.color);
         this.html.append(doc.html);
-
     };
 
     this.draw_property_box = function (color_set) {
-
         console.log("Adding property box");
-
-        var params = {};
-        params["color"] = this.color;
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
@@ -122,7 +115,7 @@ function DashAdminColor () {
             this.set_data,  // Function to set saved data locally
             null,           // Endpoint
             null,           // Dash obj_id (unique for users)
-            params
+            {"color": this.color}
         );
 
         this.html.append(this.property_box.html);
@@ -138,7 +131,6 @@ function DashAdminColor () {
         this.property_box.html.append(this.new_password_row.html);
 
         this.property_box.AddButton("Property Box Button", this.dummy_cb);
-
     };
 
     this.get_data = function () {
@@ -153,7 +145,5 @@ function DashAdminColor () {
         return "";
     };
 
-
     this.setup_styles();
-
 }

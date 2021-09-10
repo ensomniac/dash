@@ -72,10 +72,7 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
         var icon_fnt_size = this.icon.size * this.icon.size_mult;
         var icon_css = {
             "position": "absolute",
-            "top": 0,
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
+            "inset": 0,
             "width": this.icon.size,
             "height": this.icon.size,
             "font-size": icon_fnt_size + "px",
@@ -17958,14 +17955,15 @@ function DashUser () {
         var email = Dash.Local.Get("email");
         var user_json = Dash.Local.Get("user_json");
         if (token && email && user_json) {
-            var params = {};
-            params["f"] = "validate";
-            params["token"] = token;
-            params["init"] = true;
-            params["gzip"] = true;
+            var params = {
+                "f": "validate",
+                "token": token,
+                "init": true,
+                "gzip": true
+            };
             for (var key in optional_params) {
                 params[key] = optional_params[key];
-            };
+            }
             Dash.Request(this, this.on_auth_response, "Users", params);
         }
         else {
@@ -18044,7 +18042,7 @@ function DashUser () {
         Dash.Local.Set("user_json", "");
         location.reload();
     };
-};
+}
 
 function DashSize (is_mobile) {
     this.Padding = 10;
@@ -18189,13 +18187,31 @@ function DashColor () {
         var light_input_text = "rgba(0, 0, 0, 0.8)";
         var light = new DashSiteColors({
             "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",
+            "background_raised": "#e3e8ea",  // TODO: Choose something different than "background"
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
-            "accent_good": "#f3d057",
+            // "accent_good": "#f3d057",
+            "accent_good": "#f2c96c",  // Slightly easier on the eyes in the short term
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
             "tab_area_background": "#333",
+            // TODO: Pick new button and/or accent_good colors
+            // Option 1
+            // "button": "#6572BA",
+            // "accent_good": "#65BAAD",
+            // Option 2
+            // "button": "#627EAE",
+            // "accent_good": "#AE9262",
+            // Option 3
+            // "accent_good": "#627EAE",
+            // "button": "#AE9262",
+            // Option 4
+            // "accent_good": "#6B82C4",
+            // "button": "#C4AC6B"
+            // Option 5 (leave button as is)
+            // "accent_good": "#9CBA65"
+            // Option 6 (leave button as is)
+            // "accent_good": "#72BA65"
         });
         var dark = new DashSiteColors({
             "background": "#23262b",
@@ -19368,10 +19384,7 @@ function DashAdminColor () {
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "bottom": 0,
-            "top": 0,
+            "inset": 0,
             "padding": Dash.Size.Padding,
         });
         this.draw_all();
@@ -19438,15 +19451,13 @@ function DashAdminColor () {
     };
     this.draw_property_box = function (color_set) {
         console.log("Adding property box");
-        var params = {};
-        params["color"] = this.color;
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
             this.set_data,  // Function to set saved data locally
             null,           // Endpoint
             null,           // Dash obj_id (unique for users)
-            params
+            {"color": this.color}
         );
         this.html.append(this.property_box.html);
         var header_title = "Property Box";
@@ -19467,7 +19478,6 @@ function DashAdminColor () {
     this.dummy_cb = function () {
         return "";
     };
-
     this.setup_styles();
 }
 
@@ -19536,10 +19546,7 @@ function DashGui() {
         var html = $("<div>" + optional_label_text + "</div>");
         html.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-y": "auto",
             "color": "black",
             "background": Dash.Color.Light.Background,
@@ -20078,10 +20085,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
             "width": this.width,
             "margin-top": margin_top,
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
         });
         this.dropzone_box.css({
             "background": "red",
@@ -20255,10 +20259,7 @@ function DashGuiButtonStyleDefault () {
         });
         this.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadiusInteractive,
@@ -20274,10 +20275,7 @@ function DashGuiButtonStyleDefault () {
         });
         this.click_highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadiusInteractive,
@@ -20316,10 +20314,7 @@ function DashGuiButtonStyleTabSide () {
         });
         this.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_highlight_background,
             "opacity": 0,
         });
@@ -20333,10 +20328,7 @@ function DashGuiButtonStyleTabSide () {
         });
         this.click_highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
         });
@@ -20396,10 +20388,7 @@ function DashGuiButtonStyleTabTop () {
         });
         this.click_highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
@@ -20466,10 +20455,7 @@ function DashGuiButtonStyleToolbar () {
         });
         this.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
@@ -20485,10 +20471,7 @@ function DashGuiButtonStyleToolbar () {
         });
         this.click_highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
             "border-radius": Dash.Size.BorderRadius,
@@ -20559,10 +20542,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             login_box_width = 350;
         };
         this.html.css({
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "text-align": "center",
         });
         this.login_box.css({
@@ -20608,10 +20588,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     this.setup_mobile_sizing = function () {
         var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
         this.html.css({
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "text-align": "center",
             "background": "none",
         });
@@ -22781,10 +22758,15 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         });
     };
     this.Load = function () {
-        var params = {};
-        params["f"] = "get_property_set";
-        params["obj_id"] = this.dash_obj_id;
-        Dash.Request(this, this.on_server_property_set, this.endpoint, params);
+        Dash.Request(
+            this,
+            this.on_server_property_set,
+            this.endpoint,
+            {
+                "f": "get_property_set",
+                "obj_id": this.dash_obj_id
+            }
+        );
     };
     this.Update = function () {
         for (var data_key in this.update_inputs) {
@@ -22902,12 +22884,17 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
     this.on_combo_updated = function (property_key, selected_option) {
         if (this.dash_obj_id) {
-            var params = {};
-            params["f"] = "set_property";
-            params["key"] = property_key;
-            params["value"] = selected_option;
-            params["obj_id"] = this.dash_obj_id;
-            Dash.Request(this, this.on_server_response, this.endpoint, params);
+            Dash.Request(
+                this,
+                this.on_server_response,
+                this.endpoint,
+                {
+                    "f": "set_property",
+                    "key": property_key,
+                    "value": selected_option,
+                    "obj_id": this.dash_obj_id
+                }
+            );
             return;
         }
         if (this.set_data_cb) {
@@ -22938,11 +22925,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
         var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
-        var params = {};
-        params["f"] = "set_property";
-        params["key"] = row_details["key"];
-        params["value"] = new_value;
-        params["obj_id"] = this.dash_obj_id;
+        var params = {
+            "f": "set_property",
+            "key": row_details["key"],
+            "value": new_value,
+            "obj_id": this.dash_obj_id
+        };
         console.log("updated - uploading...");
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
@@ -23753,10 +23741,7 @@ function DashGuiComboRow (combo, option) {
         });
         this.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": "rgba(255, 255, 255, 0.2)",
             "opacity": 0,
         });
@@ -24024,10 +24009,7 @@ function DashGuiComboStyleDefault () {
     this.setup_styles = function () {
         this.highlight_css = {
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
         };
@@ -24060,10 +24042,7 @@ function DashGuiComboStyleDefault () {
         this.highlight.css(this.highlight_css);
         this.click.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "line-height": Dash.Size.ButtonHeight + "px",
             "background": this.color_set.Background.Base,
             "opacity": 0,
@@ -24333,14 +24312,19 @@ function DashGuiLayoutUserProfile (user_data, options) {
         if (!this.new_password_row.Text()) {
             return;
         }
-        var params = {};
-        params["f"] = "update_password";
-        params["p"] = this.new_password_row.Text();
-        (function (self, params) {
-            Dash.Request(self, function (response) {
-                self.on_info_saved(response, self.new_password_row);
-            }, "Users", params);
-        })(this, params);
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_info_saved(response, self.new_password_row);
+                },
+                "Users",
+                {
+                    "f": "update_password",
+                    "p": self.new_password_row.Text()
+                }
+            );
+        })(this);
     };
     this.update_first_name = function () {
         this.update_personal_information(this.first_name);
@@ -24421,10 +24405,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
         this.html.append(this.divider_hover);
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
         });
         if (this.is_vertical) {
             this.setup_vertical();
@@ -24473,18 +24454,12 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
     this.setup_horizontal = function () {
         this.content_a.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-x": "auto",
         });
         this.content_b.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-x": "auto",
         });
         this.divider.css({
@@ -24948,10 +24923,7 @@ class DashGuiLayoutTabs {
         this.html.append(this.content);
         this.html.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
         });
         if (this.side_tabs) {
             this.set_styles_for_side_tabs();
@@ -24989,10 +24961,7 @@ class DashGuiLayoutTabs {
         // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-y": "auto",
             "background": Dash.Color.Light.Background,
         });
@@ -25020,10 +24989,7 @@ class DashGuiLayoutTabs {
         // The right side / non-tab area / content
         this.content.css({
             "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "overflow-y": "auto",
             "background": Dash.Color.Light.Background,
         });
@@ -27598,20 +27564,14 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
         );
         this.user_image_upload_button.html.css({
             "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
-            "top": 0,
+            "inset": 0,
             "width": "auto",
             "height": "auto",
             "background": "rgba(0, 0, 0, 0)",
         });
         this.user_image_upload_button.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
-            "top": 0,
+            "inset": 0,
             "width": "auto",
             "height": "auto",
         });

@@ -22,13 +22,37 @@ function DashColor () {
 
         var light = new DashSiteColors({
             "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",
+            "background_raised": "#e3e8ea",  // TODO: Choose something different than "background"
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
-            "accent_good": "#f3d057",
+            // "accent_good": "#f3d057",
+            "accent_good": "#f2c96c",  // Slightly easier on the eyes in the short term
             "accent_bad": "#f9663c",
             "text_header": "#2b323c",
             "tab_area_background": "#333",
+
+            // TODO: Pick new button and/or accent_good colors
+            // Option 1
+            // "button": "#6572BA",
+            // "accent_good": "#65BAAD",
+
+            // Option 2
+            // "button": "#627EAE",
+            // "accent_good": "#AE9262",
+
+            // Option 3
+            // "accent_good": "#627EAE",
+            // "button": "#AE9262",
+
+            // Option 4
+            // "accent_good": "#6B82C4",
+            // "button": "#C4AC6B"
+
+            // Option 5 (leave button as is)
+            // "accent_good": "#9CBA65"
+
+            // Option 6 (leave button as is)
+            // "accent_good": "#72BA65"
         });
 
         var dark = new DashSiteColors({

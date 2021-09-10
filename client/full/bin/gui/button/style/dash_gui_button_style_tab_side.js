@@ -25,10 +25,7 @@ function DashGuiButtonStyleTabSide () {
 
         this.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_highlight_background,
             "opacity": 0,
         });
@@ -44,10 +41,7 @@ function DashGuiButtonStyleTabSide () {
 
         this.click_highlight.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
         });

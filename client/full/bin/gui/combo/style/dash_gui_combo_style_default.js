@@ -13,10 +13,7 @@ function DashGuiComboStyleDefault () {
     this.setup_styles = function () {
         this.highlight_css = {
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": this.color_set.Background.BaseHover,
             "opacity": 0,
         };
@@ -60,10 +57,7 @@ function DashGuiComboStyleDefault () {
 
         this.click.css({
             "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
+            "inset": 0,
             "line-height": Dash.Size.ButtonHeight + "px",
             "background": this.color_set.Background.Base,
             "opacity": 0,

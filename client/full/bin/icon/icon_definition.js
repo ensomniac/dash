@@ -21,10 +21,7 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
 
         var icon_css = {
             "position": "absolute",
-            "top": 0,
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
+            "inset": 0,
             "width": this.icon.size,
             "height": this.icon.size,
             "font-size": icon_fnt_size + "px",

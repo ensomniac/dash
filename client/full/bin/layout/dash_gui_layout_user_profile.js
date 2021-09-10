@@ -204,15 +204,19 @@ function DashGuiLayoutUserProfile (user_data, options) {
             return;
         }
 
-        var params = {};
-        params["f"] = "update_password";
-        params["p"] = this.new_password_row.Text();
-
-        (function (self, params) {
-            Dash.Request(self, function (response) {
-                self.on_info_saved(response, self.new_password_row);
-            }, "Users", params);
-        })(this, params);
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_info_saved(response, self.new_password_row);
+                },
+                "Users",
+                {
+                    "f": "update_password",
+                    "p": self.new_password_row.Text()
+                }
+            );
+        })(this);
     };
 
     this.update_first_name = function () {

@@ -70,10 +70,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
 
         this.user_image_upload_button.html.css({
             "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
-            "top": 0,
+            "inset": 0,
             "width": "auto",
             "height": "auto",
             "background": "rgba(0, 0, 0, 0)",
@@ -81,10 +78,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
 
         this.user_image_upload_button.highlight.css({
             "position": "absolute",
-            "left": 0,
-            "bottom": 0,
-            "right": 0,
-            "top": 0,
+            "inset": 0,
             "width": "auto",
             "height": "auto",
         });
