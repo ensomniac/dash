@@ -83,6 +83,18 @@ class ApiCore:
     def RandomID(self):
         return GetRandomID()
 
+    @property
+    def PublicFunctions(self):
+        return self._public
+
+    @property
+    def PrivateFunctions(self):
+        return self._private
+
+    @property
+    def Response(self):
+        return self._response
+
     def SetUser(self, user_data):
         if not user_data["email"]:
             raise Exception("Invalid user_data format!")
