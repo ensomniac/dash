@@ -15,7 +15,7 @@ def GetRandomID():
 
     return f"{now.split('.')[0].strip().replace('-', '').replace(' ', '').replace(':', '').strip()}" \
            f"{now.split('.')[-1].strip()[:3]}" \
-           f"{str(randint(0, 99))}"
+           f"{randint(10, 99)}"
 
 
 def Lerp(valA, valB, t):
