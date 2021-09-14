@@ -34,7 +34,7 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
 
     };
 
-    this.OnDrag = function(norm_t) {
+    this.OnDrag = function (norm_t) {
         var color = "rgb(130, 130, 130)";
 
         if (this.IsTriggered && norm_t < 0.4) {

@@ -53,6 +53,10 @@ function DashColor () {
 
             // Option 6 (leave button as is)
             // "accent_good": "#72BA65"
+
+            // Option 7
+            // "button": "#627EAE",
+            // "accent_good": "#65BAAD",
         });
 
         var dark = new DashSiteColors({

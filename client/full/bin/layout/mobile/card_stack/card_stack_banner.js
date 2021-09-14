@@ -84,28 +84,28 @@ function DashCardStackBanner (stack) {
     };
 
     // text_secondary = optional
-    this.SetHeadlineText = function(text_primary, text_secondary){
+    this.SetHeadlineText = function (text_primary, text_secondary) {
         this.headline.SetHeadlineText(text_primary, text_secondary);
         this.adjust_margins();
     };
 
-    this.SetLeftIcon = function(icon_name, callback){
+    this.SetLeftIcon = function (icon_name, callback) {
         this.assert_header_row();
         this.header_row.SetLeftIcon(icon_name, callback);
     };
 
-    this.SetRightIcon = function(icon_name, callback){
+    this.SetRightIcon = function (icon_name, callback) {
         this.assert_header_row();
         this.header_row.SetRightIcon(icon_name, callback);
     };
 
-    this.SetFixed = function(is_fixed){
+    this.SetFixed = function (is_fixed) {
         // When is_fixed is true, the banner does not scroll
         // with the rest of the content on the page
         this.stack.SetFixedBanner(is_fixed);
     };
 
-    this.AddFooterIcon = function(icon_name, label_text, callback){
+    this.AddFooterIcon = function (icon_name, label_text, callback) {
         this.assert_footer_row();
         return this.footer_row.AddIcon(icon_name, label_text, callback);
     };
@@ -144,7 +144,7 @@ function DashCardStackBanner (stack) {
 
     };
 
-    this.assert_header_row = function() {
+    this.assert_header_row = function () {
         // Create the button row if it doesn't exist yet
         if (this.header_row) {
             // Header already exists
@@ -157,7 +157,7 @@ function DashCardStackBanner (stack) {
 
     };
 
-    this.assert_footer_row = function() {
+    this.assert_footer_row = function () {
         // Create the button row if it doesn't exist yet
         if (this.footer_row) {
             // Footer already exists
@@ -170,7 +170,7 @@ function DashCardStackBanner (stack) {
 
     };
 
-    this.adjust_margins = function() {
+    this.adjust_margins = function () {
         // Whenever core content is added or removed, we need to adjust some values
 
         // + If headline only (no header, no footer)

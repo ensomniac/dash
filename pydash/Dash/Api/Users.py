@@ -201,12 +201,17 @@ class ApiUsers:
 
         img.save(thumb_path)
 
+        asset_path_splitter = self.DashContext["asset_path"]
+
+        if asset_path_splitter == "dash_guide":
+            asset_path_splitter = "dash"
+
         thumb_url = "https://" + self.DashContext["domain"] + "/local/"
-        thumb_url += img_root.split("/" + self.DashContext["asset_path"] + "/local/")[-1]
+        thumb_url += img_root.split(f"/{asset_path_splitter}/local/")[-1]
         thumb_url += img_data["id"] + "_thb.jpg"
 
         orig_url = "https://" + self.DashContext["domain"] + "/local/"
-        orig_url += img_root.split("/" + self.DashContext["asset_path"] + "/local/")[-1]
+        orig_url += img_root.split(f"/{asset_path_splitter}/local/")[-1]
         orig_url += img_data["id"] + "_orig.png"
 
         img_data["thumb_url"] = thumb_url

@@ -13,7 +13,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
+    this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;

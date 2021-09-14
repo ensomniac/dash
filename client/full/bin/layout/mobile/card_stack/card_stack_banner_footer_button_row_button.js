@@ -75,11 +75,11 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.html.mousedown(function(event){
+            self.html.mousedown(function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;
@@ -89,7 +89,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
     };
 
-    this.on_button_clicked = function() {
+    this.on_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
 
         if (this.click_active) {
@@ -105,8 +105,8 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
         this.click_active = true;
 
-        (function(self){
-            setTimeout(function(){
+        (function (self) {
+            setTimeout(function () {
                 self.click_active = false;
             }, 750);
         })(this);

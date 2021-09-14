@@ -1,19 +1,19 @@
 
-function DashAnimationCurves(){
+function DashAnimationCurves() {
 
-    this.EaseInOut = function(t){
+    this.EaseInOut = function (t) {
         return t<.5 ? 2*t*t : -1+(4-2*t)*t;
     };
 
-    this.EaseIn = function(t){
+    this.EaseIn = function (t) {
         return t*t;
     };
 
-    this.EaseOut = function(t){
+    this.EaseOut = function (t) {
         return t*(2-t);
     };
 
-    this.EaseOutBounce = function(t){
+    this.EaseOutBounce = function (t) {
 
         var b1 = 4 / 11,
             b2 = 6 / 11,

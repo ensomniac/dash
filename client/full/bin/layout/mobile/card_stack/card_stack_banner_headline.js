@@ -63,12 +63,12 @@ function DashCardStackBannerHeadline (banner) {
 
     };
 
-    this.SetHeadlineText = function(text_primary, text_secondary){
+    this.SetHeadlineText = function (text_primary, text_secondary) {
         this.label_top.text(text_primary);
         this.label_bottom.text(text_secondary);
     };
 
-    this.SetTopBottomMargins = function(margin_top, margin_bottom) {
+    this.SetTopBottomMargins = function (margin_top, margin_bottom) {
 
         this.html.css({
             "padding-top": margin_top,

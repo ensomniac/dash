@@ -18085,19 +18085,19 @@ function DashMath () {
 }
 
 
-function DashAnimation(){
+function DashAnimation() {
     this.Curves = new DashAnimationCurves();
-    this.Eval = function(curve, t){
+    this.Eval = function (curve, t) {
         return curve(t);
     };
-    this.Start = function(duration_ms, callback, curve=null) {
+    this.Start = function (duration_ms, callback, curve=null) {
         var animation_set = new DashAnimationSet(duration_ms, callback, curve);
         animation_set.Start();
         return animation_set;
     };
 };
 
-function DashAnimationSet(duration_ms, callback, curve){
+function DashAnimationSet(duration_ms, callback, curve) {
     this.duration_ms = duration_ms;
     this.callback = callback;
     this.curve = curve;
@@ -18105,20 +18105,20 @@ function DashAnimationSet(duration_ms, callback, curve){
     this.playback_ms = 0;
     this.norm_t = 0;
     this.active = false;
-    this.Start = function(){
+    this.Start = function () {
         this.start_time = new Date();
         this.playback_ms = 0;
         this.norm_t = 0;
         this.active = true;
         this.update();
     };
-    this.update = function(){
+    this.update = function () {
         if (!this.active) {
             delete this;
             return;
         };
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.update();
             });
         })(this);
@@ -18140,17 +18140,18 @@ function DashAnimationSet(duration_ms, callback, curve){
     };
 };
 
-function DashAnimationCurves(){
-    this.EaseInOut = function(t){
+
+function DashAnimationCurves() {
+    this.EaseInOut = function (t) {
         return t<.5 ? 2*t*t : -1+(4-2*t)*t;
     };
-    this.EaseIn = function(t){
+    this.EaseIn = function (t) {
         return t*t;
     };
-    this.EaseOut = function(t){
+    this.EaseOut = function (t) {
         return t*(2-t);
     };
-    this.EaseOutBounce = function(t){
+    this.EaseOutBounce = function (t) {
         var b1 = 4 / 11,
             b2 = 6 / 11,
             b3 = 8 / 11,
@@ -18212,6 +18213,9 @@ function DashColor () {
             // "accent_good": "#9CBA65"
             // Option 6 (leave button as is)
             // "accent_good": "#72BA65"
+            // Option 7
+            // "button": "#627EAE",
+            // "accent_good": "#65BAAD",
         });
         var dark = new DashSiteColors({
             "background": "#23262b",
@@ -18922,11 +18926,11 @@ function DashUtils () {
             "source": binder
         });
     };
-    this.start_background_update_loop = function(){
+    this.start_background_update_loop = function () {
         // This function is called when this class is instantiated. It calls a
         // few global update functions that keep certain time elements current.
-        (function(self){
-            setInterval(function(){
+        (function (self) {
+            setInterval(function () {
                 self.manage_background_update_loop_5_min();
             // }, 300000); // 5 Minutes
             }, 1000); // 5 Minutes
@@ -18990,9 +18994,9 @@ function DashUtils () {
                 this.animation_frame_workers[x]["callback"]();
             }
         }
-        (function(self){
+        (function (self) {
             // Call this function again
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.draw_anim_frame_workers();
             });
         })(this);
@@ -19032,8 +19036,8 @@ function DashUtils () {
     };
     // This is called on the next frame because window.Dash.<> is not
     // the correct instance / valid until the next frame
-    (function(self){
-        requestAnimationFrame(function(){
+    (function (self) {
+        requestAnimationFrame(function () {
             self.start_background_update_loop();
         });
     })(this);
@@ -25993,7 +25997,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = window.Dash.Color.Light.Tab.AreaBackground;
+    this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
     this.secondary_color = this.color.Tab.AreaBackground;
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
@@ -26789,23 +26793,23 @@ function DashMobileLayoutCardStack (binder, color) {
         this.on_resized(window.innerWidth, window.innerHeight);
     };
     this.setup_connections = function () {
-        (function(self){
-            self.center_content.scroll(function() {
+        (function (self) {
+            self.center_content.scroll(function () {
                 self.on_center_scroll();
             });
-            self.slider.on("touchstart", function(e){
+            self.slider.on("touchstart", function (e) {
                 self.touch_active = true;
             });
-            self.slider.on("touchmove", function(e){
+            self.slider.on("touchmove", function (e) {
                 self.touch_active = true;
             });
-            self.slider.on("touchend", function(e){
+            self.slider.on("touchend", function (e) {
                 self.touch_active = false;
                 if (!self.vertical_scroll_timer_id) {
                     self.set_scroll_active(false);
                 };
             });
-            self.slider.on("touchcancel", function(e){
+            self.slider.on("touchcancel", function (e) {
                 self.touch_active = false;
                 if ( !self.vertical_scroll_timer_id) {
                     self.set_scroll_active(false);
@@ -26841,8 +26845,8 @@ function DashMobileLayoutCardStack (binder, color) {
             clearTimeout(this.vertical_scroll_timer_id);
             this.vertical_scroll_timer_id = null;
         };
-        (function(self){
-            self.vertical_scroll_timer_id = setTimeout(function(){
+        (function (self) {
+            self.vertical_scroll_timer_id = setTimeout(function () {
                 self.reset_scroll_timer();
             }, 300);
         })(this);
@@ -26903,7 +26907,7 @@ function DashMobileLayoutCardStack (binder, color) {
         this.slider.append(content);
         return content;
     };
-    this.AddBanner = function(){
+    this.AddBanner = function () {
         if (this.banner) {
             console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
@@ -26912,7 +26916,7 @@ function DashMobileLayoutCardStack (binder, color) {
         this.AppendHTML(this.banner.html);
         return this.banner;
     };
-    this.SetFixedBanner = function(is_fixed){
+    this.SetFixedBanner = function (is_fixed) {
         // When is_fixed is true, the banner does not scroll
         // with the rest of the content on the page
         if (is_fixed) {
@@ -26922,7 +26926,7 @@ function DashMobileLayoutCardStack (binder, color) {
             console.log("WARNING: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         };
     };
-    this.fix_banner_on_top = function(){
+    this.fix_banner_on_top = function () {
         if (this.banner_fixed || !this.banner) {
             return;
         };
@@ -26943,18 +26947,18 @@ function DashMobileLayoutCardStack (binder, color) {
         this.center_content.prepend(this.banner_spacer);
         // Wait until the next frame to force on_center_scroll since if this was called
         // as part of the constructor, it will not yet be attached and have no height
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.on_center_scroll();
             });
         })(this);
     };
-    this.AddUserBanner = function(){
+    this.AddUserBanner = function () {
         var banner = new DashCardStackUserBanner(this);
         this.AppendHTML(banner.html);
         return banner;
     };
-    this.AppendHTML = function(html){
+    this.AppendHTML = function (html) {
         // Force hardware acceleration
         html.css({
             "-webkit-transform": "translateZ(0)",
@@ -26968,7 +26972,7 @@ function DashMobileLayoutCardStack (binder, color) {
             this.center_content.append(this.footer_spacer);
         };
     };
-    this.AddLeftContent = function(html){
+    this.AddLeftContent = function (html) {
         if (this.active_panel_index == 0) {
             console.error("The left panel is already loaded");
         };
@@ -26984,10 +26988,10 @@ function DashMobileLayoutCardStack (binder, color) {
         this.left_content.append(html);
         this.slide_to_index(0);
     };
-    this.ShowCenterContent = function(){
+    this.ShowCenterContent = function () {
         this.slide_to_index(1);
     };
-    this.AddRightContent = function(html){
+    this.AddRightContent = function (html) {
         if (this.active_panel_index == 2) {
             console.error("The right panel is already loaded");
         };
@@ -27042,7 +27046,7 @@ function DashMobileLayoutCardStack (binder, color) {
         this.AppendHTML(card.html);
         return card;
     };
-    this.slide_to_index = function(target_index){
+    this.slide_to_index = function (target_index) {
         var backing_opacity = 0;
         if (target_index == 0) {
             this.left_content.css({"display": "block"});
@@ -27054,10 +27058,10 @@ function DashMobileLayoutCardStack (binder, color) {
             this.center_content.css({"display": "block"});
             backing_opacity = 1;
         };
-        (function(self){
+        (function (self) {
             self.slider.stop().animate({
                 "left": self.panel_offsets[target_index],
-            }, self.anim_duration, function(){
+            }, self.anim_duration, function () {
                 self.cleanup_hidden_panels();
             });
             if (self.backing_gradient) {
@@ -27068,10 +27072,10 @@ function DashMobileLayoutCardStack (binder, color) {
         })(this);
         this.active_panel_index = target_index;
     };
-    this.reset_center_column = function(){
+    this.reset_center_column = function () {
         this.slide_to_index(1);
     };
-    this.cleanup_hidden_panels = function(){
+    this.cleanup_hidden_panels = function () {
         if (this.active_panel_index == 0) {
             // Left is visible
             this.center_content.css({"display": "none"});
@@ -27175,24 +27179,24 @@ function DashCardStackBanner (stack) {
         };
     };
     // text_secondary = optional
-    this.SetHeadlineText = function(text_primary, text_secondary){
+    this.SetHeadlineText = function (text_primary, text_secondary) {
         this.headline.SetHeadlineText(text_primary, text_secondary);
         this.adjust_margins();
     };
-    this.SetLeftIcon = function(icon_name, callback){
+    this.SetLeftIcon = function (icon_name, callback) {
         this.assert_header_row();
         this.header_row.SetLeftIcon(icon_name, callback);
     };
-    this.SetRightIcon = function(icon_name, callback){
+    this.SetRightIcon = function (icon_name, callback) {
         this.assert_header_row();
         this.header_row.SetRightIcon(icon_name, callback);
     };
-    this.SetFixed = function(is_fixed){
+    this.SetFixed = function (is_fixed) {
         // When is_fixed is true, the banner does not scroll
         // with the rest of the content on the page
         this.stack.SetFixedBanner(is_fixed);
     };
-    this.AddFooterIcon = function(icon_name, label_text, callback){
+    this.AddFooterIcon = function (icon_name, label_text, callback) {
         this.assert_footer_row();
         return this.footer_row.AddIcon(icon_name, label_text, callback);
     };
@@ -27222,7 +27226,7 @@ function DashCardStackBanner (stack) {
             });
         };
     };
-    this.assert_header_row = function() {
+    this.assert_header_row = function () {
         // Create the button row if it doesn't exist yet
         if (this.header_row) {
             // Header already exists
@@ -27232,7 +27236,7 @@ function DashCardStackBanner (stack) {
         this.content.prepend(this.header_row.html);
         this.adjust_margins();
     };
-    this.assert_footer_row = function() {
+    this.assert_footer_row = function () {
         // Create the button row if it doesn't exist yet
         if (this.footer_row) {
             // Footer already exists
@@ -27242,7 +27246,7 @@ function DashCardStackBanner (stack) {
         this.content.append(this.footer_row.html);
         this.adjust_margins();
     };
-    this.adjust_margins = function() {
+    this.adjust_margins = function () {
         // Whenever core content is added or removed, we need to adjust some values
         // + If headline only (no header, no footer)
         //   - MODE: 0
@@ -27358,23 +27362,23 @@ function DashCardStackBannerTopButtonRow (banner) {
         });
         this.setup_connections();
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.left_button_content.click(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.left_button_content.click(function () {
                 self.on_left_button_clicked();
             });
-            self.right_button_content.click(function(){
+            self.right_button_content.click(function () {
                 self.on_right_button_clicked();
             });
         })(this);
     };
-    this.on_left_button_clicked = function() {
+    this.on_left_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
         if (this.left_icon_callback && !this.left_icon_click_active) {
             this.left_icon_click_active = true;
             this.left_button_content.css("opacity", 0.75);
-            (function(self){
-                setTimeout(function(){
+            (function (self) {
+                setTimeout(function () {
                     self.left_icon_click_active = false;
                     self.left_button_content.stop().animate({"opacity": 1.0}, 400);
                 }, 750);
@@ -27382,13 +27386,13 @@ function DashCardStackBannerTopButtonRow (banner) {
             this.left_icon_callback();
         };
     };
-    this.on_right_button_clicked = function(){
+    this.on_right_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
         if (this.right_icon_callback && !this.right_icon_click_active) {
             this.right_icon_click_active = true;
             this.right_button_content.css("opacity", 0.75);
-            (function(self){
-                setTimeout(function(){
+            (function (self) {
+                setTimeout(function () {
                     self.right_icon_click_active = false;
                     self.right_button_content.stop().animate({"opacity": 1.0}, 400);
                 }, 750);
@@ -27396,7 +27400,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             this.right_icon_callback();
         };
     };
-    this.SetLeftIcon = function(icon_name="gear", callback=null){
+    this.SetLeftIcon = function (icon_name="gear", callback=null) {
         this.set_icon(this.left_button_content, this.left_icon, icon_name);
         this.left_icon_callback = callback.bind(this.banner);
         this.left_button_content.css({
@@ -27404,7 +27408,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             "pointer-events": "auto",
         });
     };
-    this.SetRightIcon = function(icon_name="gear", callback=null){
+    this.SetRightIcon = function (icon_name="gear", callback=null) {
         this.set_icon(this.right_button_content, this.right_icon, icon_name);
         this.right_icon_callback = callback.bind(this.banner);
         this.right_button_content.css({
@@ -27412,7 +27416,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             "pointer-events": "auto",
         });
     };
-    this.set_icon = function(container, icon, icon_name){
+    this.set_icon = function (container, icon, icon_name) {
         icon.SetIcon(icon_name);
     };
     this.setup_styles();
@@ -27467,11 +27471,11 @@ function DashCardStackBannerHeadline (banner) {
         this.label_bottom.css("opacity", opac_norm);
 
     };
-    this.SetHeadlineText = function(text_primary, text_secondary){
+    this.SetHeadlineText = function (text_primary, text_secondary) {
         this.label_top.text(text_primary);
         this.label_bottom.text(text_secondary);
     };
-    this.SetTopBottomMargins = function(margin_top, margin_bottom) {
+    this.SetTopBottomMargins = function (margin_top, margin_bottom) {
         this.html.css({
             "padding-top": margin_top,
             "padding-bottom": margin_bottom,
@@ -27656,25 +27660,25 @@ function DashCardStackBannerFooterButtonRow (banner) {
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
         this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
     };
-    this.setup_connections = function(){
-        (function(self){
-            // self.left_button_content.click(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            // self.left_button_content.click(function () {
             //     self.on_left_button_clicked();
             // });
             //
-            // self.right_button_content.click(function(){
+            // self.right_button_content.click(function () {
             //     self.on_right_button_clicked();
             // });
         })(this);
     };
-    this.on_button_clicked = function() {
+    this.on_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
         // if (this.left_icon_callback && !this.left_icon_click_active) {
         //     this.left_icon_click_active = true;
         //     this.left_button_content.css("opacity", 0.75);
         //
-        //     (function(self){
-        //         setTimeout(function(){
+        //     (function (self) {
+        //         setTimeout(function () {
         //             self.left_icon_click_active = false;
         //             self.left_button_content.stop().animate({"opacity": 1.0}, 400);
         //         }, 750);
@@ -27684,7 +27688,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
         //
         // };
     };
-    this.AddIcon = function(icon_name="gear", label_text="--", callback=null){
+    this.AddIcon = function (icon_name="gear", label_text="--", callback=null) {
         var button = new DashCardStackBannerFooterButtonRowButton(
             this,
             icon_name,
@@ -27700,7 +27704,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
         this.buttons.push(button);
         return button;
     };
-    this.set_icon = function(container, icon, icon_name){
+    this.set_icon = function (container, icon, icon_name) {
         icon.SetIcon(icon_name);
     };
     this.setup_styles();
@@ -27769,16 +27773,16 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
         });
         this.setup_connections();
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.mousedown(function(event){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.mousedown(function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;
             });
         })(this);
     };
-    this.on_button_clicked = function() {
+    this.on_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
         if (this.click_active) {
             return;
@@ -27790,8 +27794,8 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             console.log("ERROR: No callback associated with button!");
         };
         this.click_active = true;
-        (function(self){
-            setTimeout(function(){
+        (function (self) {
+            setTimeout(function () {
                 self.click_active = false;
             }, 750);
         })(this);
@@ -27867,10 +27871,10 @@ function DashMobileLayoutCard (stack) {
         });
         this.html.append(this.content);
     };
-    this.PullToDelete = function(callback) {
+    this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
-    this.SetLeftPullCallback = function(callback, icon) {
+    this.SetLeftPullCallback = function (callback, icon) {
         this.left_pull_callback = callback;
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
@@ -27878,7 +27882,7 @@ function DashMobileLayoutCard (stack) {
         this.left_pull_icon = icon;
     };
 
-    this.setup_slider = function() {
+    this.setup_slider = function () {
         this.slider = $("<div></div>");
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
@@ -27907,7 +27911,7 @@ function DashMobileLayoutCard (stack) {
             "height": content_height,
         });
     };
-    this.setup_pull_icons = function() {
+    this.setup_pull_icons = function () {
         if (this.left_pull_area) {
             return;
         };
@@ -27916,7 +27920,7 @@ function DashMobileLayoutCard (stack) {
         this.html.append(this.left_pull_area.html);
         this.html.append(this.right_pull_area.html);
     };
-    this.position_pull_icons = function() {
+    this.position_pull_icons = function () {
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
         this.left_pull_area.html.css({
@@ -27931,7 +27935,7 @@ function DashMobileLayoutCard (stack) {
             "opacity": 0,
         });
     };
-    this.restore_slider_content = function() {
+    this.restore_slider_content = function () {
         this.content.remove();
         this.html.append(this.content);
         this.slider.remove();
@@ -27944,14 +27948,14 @@ function DashMobileLayoutCard (stack) {
             "margin-left": Dash.Size.Padding,
         });
     };
-    this.get_coords_from_event = function(event) {
+    this.get_coords_from_event = function (event) {
         for (var i in event.originalEvent["changedTouches"]) {
             var touch = event.originalEvent["changedTouches"][i];
             return [touch.clientX, touch.clientY];
         };
         return null;
     };
-    this.on_drag_start = function(event) {
+    this.on_drag_start = function (event) {
         if (this.pull_active || this.restoring_pull) {
             return;
         };
@@ -27981,7 +27985,7 @@ function DashMobileLayoutCard (stack) {
         this.pull_active["offset_x"] = this.html.offset()["left"];
         this.pull_active["offset_y"] = this.html.offset()["top"];
     };
-    this.on_drag = function(event) {
+    this.on_drag = function (event) {
         if (!this.pull_active || this.restoring_pull) {
             return;
         };
@@ -28011,7 +28015,7 @@ function DashMobileLayoutCard (stack) {
             "left": screen_px_moved_x,
         });
     };
-    this.on_drag_end = function(event) {
+    this.on_drag_end = function (event) {
         if (!this.pull_active || this.restoring_pull) {
             return;
         };
@@ -28027,7 +28031,7 @@ function DashMobileLayoutCard (stack) {
         var animation_duration = Dash.Math.Lerp(300, 1000, pulled_norm); // Longer duration for a further pull
         Dash.Animation.Start(animation_duration, this.on_restore.bind(this), Dash.Animation.Curves.EaseOutBounce);
     };
-    this.FancyShow = function() {
+    this.FancyShow = function () {
         // Prepare for a fancy show by shrinking the box. Wait until the next frame to
         // ensure we can calculate the destination height of the show
         this.html.css({
@@ -28035,13 +28039,13 @@ function DashMobileLayoutCard (stack) {
             "height": 0,
             "overflow": "hidden",
         });
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self._fancy_show();
             });
         })(this);
     };
-    this._fancy_show = function() {
+    this._fancy_show = function () {
         // This is the frame after this card was hidden
         this.html.stop().css({
             "height": "auto",
@@ -28055,13 +28059,13 @@ function DashMobileLayoutCard (stack) {
         this.html.animate({
             "height": display_height,
             "margin-bottom": Dash.Size.Padding,
-        }, 550, function(){
+        }, 550, function () {
             $(this).css({
                 "height": "auto",
             })
         });
     };
-    this.Clear = function() {
+    this.Clear = function () {
         // Animate the hiding of this card
         this.html.stop().animate({
             "opacity": 0,
@@ -28070,11 +28074,11 @@ function DashMobileLayoutCard (stack) {
             "padding-bottom": 0,
             "margin-top": 0,
             "margin-bottom": 0
-        }, function(){
+        }, function () {
             this.remove();
         });
     };
-    this.on_restore = function(t) {
+    this.on_restore = function (t) {
         this.slider.css({
             "left": Dash.Math.Lerp(this.restoring_pull_start_x, 0, t),
         });
@@ -28083,15 +28087,15 @@ function DashMobileLayoutCard (stack) {
             this.restore_slider_content();
         };
     };
-    this.manage_touch_start = function(event) {
+    this.manage_touch_start = function (event) {
         if (!event.cancelable || this.pull_active) {
             return;
         };
         // Reset this to ensure that if we do activate a pull and want to use
         // the positioning from this event, it's a fresh event
         this.last_touch_move_event = null;
-        (function(self, event){
-            setTimeout(function(){
+        (function (self, event) {
+            setTimeout(function () {
                 if (!self.stack.GetScrollActive()) {
                     if (self.last_touch_move_event) {
                         self.on_drag_start(self.last_touch_move_event);
@@ -28105,29 +28109,29 @@ function DashMobileLayoutCard (stack) {
             }, 150);
         })(this, event);
     };
-    this.setup_pull_mechanic = function() {
+    this.setup_pull_mechanic = function () {
         this.pull_mechanic_ready = true;
         this.html.css({
             "pointer-events": "auto",
         });
-        (function(self){
-            self.html.on("touchstart", function(e){
+        (function (self) {
+            self.html.on("touchstart", function (e) {
                 self.manage_touch_start(e);
             });
-            self.html.on("touchmove", function(e){
+            self.html.on("touchmove", function (e) {
                 self.last_touch_move_event = e;
                 self.on_drag(e);
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
                 };
             });
-            self.html.on("touchend", function(e){
+            self.html.on("touchend", function (e) {
                 self.on_drag_end(e);
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
                 };
             });
-            self.html.on("touchcancel", function(e){
+            self.html.on("touchcancel", function (e) {
                 self.on_drag_end(e);
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
@@ -28135,7 +28139,7 @@ function DashMobileLayoutCard (stack) {
             });
         })(this);
     };
-    this.SetText = function(text) {
+    this.SetText = function (text) {
         this.content.text(text);
     };
     this.setup_styles();
@@ -28197,16 +28201,16 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
         });
         this.setup_connections();
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.mousedown(function(event){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.mousedown(function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;
             });
         })(this);
     };
-    this.on_button_clicked = function() {
+    this.on_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
         if (this.click_active) {
             return;
@@ -28218,8 +28222,8 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             console.log("ERROR: No callback associated with button!");
         };
         this.click_active = true;
-        (function(self){
-            setTimeout(function(){
+        (function (self) {
+            setTimeout(function () {
                 self.click_active = false;
             }, 750);
         })(this);
@@ -28282,7 +28286,7 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
             this.html.append(this.icon.html);
         };
     };
-    this.OnDrag = function(norm_t) {
+    this.OnDrag = function (norm_t) {
         var color = "rgb(130, 130, 130)";
         if (this.IsTriggered && norm_t < 0.4) {
             this.IsTriggered = false;

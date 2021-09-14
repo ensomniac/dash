@@ -79,21 +79,21 @@ function DashMobileLayoutCardStack (binder, color) {
 
     this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.center_content.scroll(function() {
+            self.center_content.scroll(function () {
                 self.on_center_scroll();
             });
 
-            self.slider.on("touchstart", function(e){
+            self.slider.on("touchstart", function (e) {
                 self.touch_active = true;
             });
 
-            self.slider.on("touchmove", function(e){
+            self.slider.on("touchmove", function (e) {
                 self.touch_active = true;
             });
 
-            self.slider.on("touchend", function(e){
+            self.slider.on("touchend", function (e) {
                 self.touch_active = false;
 
                 if (!self.vertical_scroll_timer_id) {
@@ -102,7 +102,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
             });
 
-            self.slider.on("touchcancel", function(e){
+            self.slider.on("touchcancel", function (e) {
                 self.touch_active = false;
 
                 if ( !self.vertical_scroll_timer_id) {
@@ -155,8 +155,8 @@ function DashMobileLayoutCardStack (binder, color) {
             this.vertical_scroll_timer_id = null;
         };
 
-        (function(self){
-            self.vertical_scroll_timer_id = setTimeout(function(){
+        (function (self) {
+            self.vertical_scroll_timer_id = setTimeout(function () {
                 self.reset_scroll_timer();
             }, 300);
         })(this);
@@ -236,7 +236,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.AddBanner = function(){
+    this.AddBanner = function () {
 
         if (this.banner) {
             console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
@@ -249,7 +249,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.SetFixedBanner = function(is_fixed){
+    this.SetFixedBanner = function (is_fixed) {
         // When is_fixed is true, the banner does not scroll
         // with the rest of the content on the page
 
@@ -262,7 +262,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.fix_banner_on_top = function(){
+    this.fix_banner_on_top = function () {
 
         if (this.banner_fixed || !this.banner) {
             return;
@@ -288,9 +288,9 @@ function DashMobileLayoutCardStack (binder, color) {
 
         // Wait until the next frame to force on_center_scroll since if this was called
         // as part of the constructor, it will not yet be attached and have no height
-        (function(self){
+        (function (self) {
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.on_center_scroll();
             });
 
@@ -298,13 +298,13 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.AddUserBanner = function(){
+    this.AddUserBanner = function () {
         var banner = new DashCardStackUserBanner(this);
         this.AppendHTML(banner.html);
         return banner;
     };
 
-    this.AppendHTML = function(html){
+    this.AppendHTML = function (html) {
 
         // Force hardware acceleration
         html.css({
@@ -323,7 +323,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.AddLeftContent = function(html){
+    this.AddLeftContent = function (html) {
 
         if (this.active_panel_index == 0) {
             console.error("The left panel is already loaded");
@@ -345,11 +345,11 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.ShowCenterContent = function(){
+    this.ShowCenterContent = function () {
         this.slide_to_index(1);
     };
 
-    this.AddRightContent = function(html){
+    this.AddRightContent = function (html) {
 
         if (this.active_panel_index == 2) {
             console.error("The right panel is already loaded");
@@ -426,7 +426,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.slide_to_index = function(target_index){
+    this.slide_to_index = function (target_index) {
 
         var backing_opacity = 0;
 
@@ -441,11 +441,11 @@ function DashMobileLayoutCardStack (binder, color) {
             backing_opacity = 1;
         };
 
-        (function(self){
+        (function (self) {
 
             self.slider.stop().animate({
                 "left": self.panel_offsets[target_index],
-            }, self.anim_duration, function(){
+            }, self.anim_duration, function () {
                 self.cleanup_hidden_panels();
             });
 
@@ -463,11 +463,11 @@ function DashMobileLayoutCardStack (binder, color) {
 
     };
 
-    this.reset_center_column = function(){
+    this.reset_center_column = function () {
         this.slide_to_index(1);
     };
 
-    this.cleanup_hidden_panels = function(){
+    this.cleanup_hidden_panels = function () {
 
         if (this.active_panel_index == 0) {
             // Left is visible

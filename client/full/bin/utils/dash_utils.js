@@ -77,12 +77,12 @@ function DashUtils () {
         });
     };
 
-    this.start_background_update_loop = function(){
+    this.start_background_update_loop = function () {
         // This function is called when this class is instantiated. It calls a
         // few global update functions that keep certain time elements current.
 
-        (function(self){
-            setInterval(function(){
+        (function (self) {
+            setInterval(function () {
                 self.manage_background_update_loop_5_min();
             // }, 300000); // 5 Minutes
             }, 1000); // 5 Minutes
@@ -165,9 +165,9 @@ function DashUtils () {
             }
         }
 
-        (function(self){
+        (function (self) {
             // Call this function again
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.draw_anim_frame_workers();
             });
         })(this);
@@ -218,8 +218,8 @@ function DashUtils () {
     // This is called on the next frame because window.Dash.<> is not
     // the correct instance / valid until the next frame
 
-    (function(self){
-        requestAnimationFrame(function(){
+    (function (self) {
+        requestAnimationFrame(function () {
             self.start_background_update_loop();
         });
     })(this);

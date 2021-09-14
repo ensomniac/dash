@@ -49,11 +49,11 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.PullToDelete = function(callback) {
+    this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
 
-    this.SetLeftPullCallback = function(callback, icon) {
+    this.SetLeftPullCallback = function (callback, icon) {
 
         this.left_pull_callback = callback;
 
@@ -66,7 +66,7 @@ function DashMobileLayoutCard (stack) {
     };
 
 
-    this.setup_slider = function() {
+    this.setup_slider = function () {
 
         this.slider = $("<div></div>");
 
@@ -104,7 +104,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.setup_pull_icons = function() {
+    this.setup_pull_icons = function () {
 
         if (this.left_pull_area) {
             return;
@@ -118,7 +118,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.position_pull_icons = function() {
+    this.position_pull_icons = function () {
 
         var content_width = this.content.width() + (Dash.Size.Padding*2);
         var content_height = this.content.height() + (Dash.Size.Padding*2);
@@ -138,7 +138,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.restore_slider_content = function() {
+    this.restore_slider_content = function () {
 
         this.content.remove();
         this.html.append(this.content);
@@ -156,7 +156,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.get_coords_from_event = function(event) {
+    this.get_coords_from_event = function (event) {
 
         for (var i in event.originalEvent["changedTouches"]) {
             var touch = event.originalEvent["changedTouches"][i];
@@ -167,7 +167,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.on_drag_start = function(event) {
+    this.on_drag_start = function (event) {
         if (this.pull_active || this.restoring_pull) {
             return;
         };
@@ -205,7 +205,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.on_drag = function(event) {
+    this.on_drag = function (event) {
         if (!this.pull_active || this.restoring_pull) {
             return;
         };
@@ -244,7 +244,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.on_drag_end = function(event) {
+    this.on_drag_end = function (event) {
 
         if (!this.pull_active || this.restoring_pull) {
             return;
@@ -267,7 +267,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.FancyShow = function() {
+    this.FancyShow = function () {
         // Prepare for a fancy show by shrinking the box. Wait until the next frame to
         // ensure we can calculate the destination height of the show
 
@@ -277,15 +277,15 @@ function DashMobileLayoutCard (stack) {
             "overflow": "hidden",
         });
 
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self._fancy_show();
             });
         })(this);
 
     };
 
-    this._fancy_show = function() {
+    this._fancy_show = function () {
         // This is the frame after this card was hidden
 
         this.html.stop().css({
@@ -303,7 +303,7 @@ function DashMobileLayoutCard (stack) {
         this.html.animate({
             "height": display_height,
             "margin-bottom": Dash.Size.Padding,
-        }, 550, function(){
+        }, 550, function () {
             $(this).css({
                 "height": "auto",
             })
@@ -311,7 +311,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.Clear = function() {
+    this.Clear = function () {
         // Animate the hiding of this card
 
         this.html.stop().animate({
@@ -321,13 +321,13 @@ function DashMobileLayoutCard (stack) {
             "padding-bottom": 0,
             "margin-top": 0,
             "margin-bottom": 0
-        }, function(){
+        }, function () {
             this.remove();
         });
 
     };
 
-    this.on_restore = function(t) {
+    this.on_restore = function (t) {
 
         this.slider.css({
             "left": Dash.Math.Lerp(this.restoring_pull_start_x, 0, t),
@@ -340,7 +340,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.manage_touch_start = function(event) {
+    this.manage_touch_start = function (event) {
 
         if (!event.cancelable || this.pull_active) {
             return;
@@ -350,9 +350,9 @@ function DashMobileLayoutCard (stack) {
         // the positioning from this event, it's a fresh event
         this.last_touch_move_event = null;
 
-        (function(self, event){
+        (function (self, event) {
 
-            setTimeout(function(){
+            setTimeout(function () {
 
                 if (!self.stack.GetScrollActive()) {
 
@@ -374,20 +374,20 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.setup_pull_mechanic = function() {
+    this.setup_pull_mechanic = function () {
         this.pull_mechanic_ready = true;
 
         this.html.css({
             "pointer-events": "auto",
         });
 
-        (function(self){
+        (function (self) {
 
-            self.html.on("touchstart", function(e){
+            self.html.on("touchstart", function (e) {
                 self.manage_touch_start(e);
             });
 
-            self.html.on("touchmove", function(e){
+            self.html.on("touchmove", function (e) {
 
                 self.last_touch_move_event = e;
 
@@ -399,7 +399,7 @@ function DashMobileLayoutCard (stack) {
 
             });
 
-            self.html.on("touchend", function(e){
+            self.html.on("touchend", function (e) {
 
                 self.on_drag_end(e);
 
@@ -409,7 +409,7 @@ function DashMobileLayoutCard (stack) {
 
             });
 
-            self.html.on("touchcancel", function(e){
+            self.html.on("touchcancel", function (e) {
                 self.on_drag_end(e);
 
                 if (self.pull_active && e.cancelable) {
@@ -422,7 +422,7 @@ function DashMobileLayoutCard (stack) {
 
     };
 
-    this.SetText = function(text) {
+    this.SetText = function (text) {
 
         this.content.text(text);
 

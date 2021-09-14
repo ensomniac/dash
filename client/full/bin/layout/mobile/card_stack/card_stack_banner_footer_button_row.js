@@ -87,15 +87,15 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            // self.left_button_content.click(function(){
+            // self.left_button_content.click(function () {
             //     self.on_left_button_clicked();
             // });
             //
-            // self.right_button_content.click(function(){
+            // self.right_button_content.click(function () {
             //     self.on_right_button_clicked();
             // });
 
@@ -103,15 +103,15 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     };
 
-    this.on_button_clicked = function() {
+    this.on_button_clicked = function () {
         // Button presses have a short timeout to prevent accidental multiple taps
 
         // if (this.left_icon_callback && !this.left_icon_click_active) {
         //     this.left_icon_click_active = true;
         //     this.left_button_content.css("opacity", 0.75);
         //
-        //     (function(self){
-        //         setTimeout(function(){
+        //     (function (self) {
+        //         setTimeout(function () {
         //             self.left_icon_click_active = false;
         //             self.left_button_content.stop().animate({"opacity": 1.0}, 400);
         //         }, 750);
@@ -123,7 +123,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     };
 
-    this.AddIcon = function(icon_name="gear", label_text="--", callback=null){
+    this.AddIcon = function (icon_name="gear", label_text="--", callback=null) {
 
         var button = new DashCardStackBannerFooterButtonRowButton(
             this,
@@ -146,7 +146,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     };
 
-    this.set_icon = function(container, icon, icon_name){
+    this.set_icon = function (container, icon, icon_name) {
         icon.SetIcon(icon_name);
     };
 

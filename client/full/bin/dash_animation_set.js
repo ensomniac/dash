@@ -1,4 +1,4 @@
-function DashAnimationSet(duration_ms, callback, curve){
+function DashAnimationSet(duration_ms, callback, curve) {
 
     this.duration_ms = duration_ms;
     this.callback = callback;
@@ -8,7 +8,7 @@ function DashAnimationSet(duration_ms, callback, curve){
     this.norm_t = 0;
     this.active = false;
 
-    this.Start = function(){
+    this.Start = function () {
         this.start_time = new Date();
         this.playback_ms = 0;
         this.norm_t = 0;
@@ -16,16 +16,16 @@ function DashAnimationSet(duration_ms, callback, curve){
         this.update();
     };
 
-    this.update = function(){
+    this.update = function () {
 
         if (!this.active) {
             delete this;
             return;
         };
 
-        (function(self){
+        (function (self) {
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.update();
             });
 
