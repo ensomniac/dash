@@ -46,7 +46,11 @@ class ApiCore:
 
             return
 
-        self.set_dash_globals()
+        if not execute_as_module:
+            # This was causing problems for threaded instances when executed as a module.
+            # Changing this this shouldn't cause any problems, and hasn't, but this
+            # change is not thoroughly tested yet and may need to be reverted or altered.
+            self.set_dash_globals()
 
     @property
     def DashContext(self):
