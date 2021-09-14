@@ -21515,8 +21515,16 @@ function DashGuiInput (placeholder_text, color) {
     };
     // Fired if the box is clicked on or the user is typing
     this.on_change = function () {
+        var changed = false;
         var text = this.Text().toString();
-        var changed = text !== this.last_val.toString();
+        if (this.last_val) {
+            changed = text !== this.last_val.toString();
+        }
+        else {
+            if (text) {
+                changed = true;
+            }
+        }
         this.last_val = text;
         if (!changed) {
             return;
