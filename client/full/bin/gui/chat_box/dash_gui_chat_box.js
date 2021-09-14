@@ -322,6 +322,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             "left": 0
         });
 
+        this.header.ReplaceBorderWithIcon("comments_square");
+
         this.header_area.append(this.header.html);
 
         this.html.append(this.header_area);

@@ -144,6 +144,7 @@ function GuiIcons (icon) {
         "close_square":          new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square", 1.2, 0.25, 0.25),
         "comment":               new GuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
         "comments":              new GuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight["solid"], "comments"),
+        "comments_square":       new GuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
         "complete":              new GuiIconDefinition(this.icon, "Complete", this.weight["regular"], "check"),
         "copy":                  new GuiIconDefinition(this.icon, "Copy", this.weight["regular"], "copy"),
         "database":              new GuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
@@ -169,6 +170,7 @@ function GuiIcons (icon) {
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image", 0.9),
         "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
+        "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
         "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
@@ -22283,6 +22285,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             "top": 0,
             "left": 0
         });
+        this.header.ReplaceBorderWithIcon("comments_square");
         this.header_area.append(this.header.html);
         this.html.append(this.header_area);
     };
