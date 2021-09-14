@@ -1,14 +1,13 @@
 function DashRequest () {
-
     this.requests = [];
 
     this.Request = function (binder, callback, endpoint, params) {
         var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
+
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
 
     function DashRequestThread (dash_requests, url, params, binder, callback) {
-
         this.dash_requests = dash_requests;
         this.url = url;
         this.params = params || {};
@@ -19,19 +18,14 @@ function DashRequest () {
         this.binder = binder;
 
         this.post = function () {
-
             (function (self) {
-
                 $.post(self.url, self.params, function (response_str) {
                     self.dash_requests.on_response(self, $.parseJSON(response_str));
                 });
-
             })(this);
-
         };
 
         this.post();
-
     }
 
     this.on_no_further_requests_pending = function () {
@@ -46,10 +40,9 @@ function DashRequest () {
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
 
         (function (self, gzip_bytes, request, response) {
-
             zlib.unzip(gzip_bytes, function (_, decompressed_data) {
-
                 delete response["gzip"];
+
                 response["dash_decompressed"] = true;
 
                 if (decompressed_data) {
@@ -59,53 +52,49 @@ function DashRequest () {
                     for (var key in gzipped_data) {
                         response[key] = gzipped_data[key];
                     }
-
                 }
-                else {
 
-                    console.log("Dash failed to decompress gzip content");
-                    console.log(response);
+                else {
+                    console.log("Dash failed to decompress gzip content", response);
 
                     if (!response["error"]) {
                         response["error"] = "Failed to decompress gzip data from server!";
                     }
+
                     else {
                         response["error_gzip"] = "Failed to decompress gzip data from server!";
                     }
-
                 }
 
                 self.on_response(request, response);
-
             });
-
         })(this, gzip_bytes, request, response);
-
     };
 
     this.on_response = function (request, response) {
-
         if (response["gzip"]) {
             this.decompress_response(request, response);
+
             return;
         }
 
         var callback = request.callback.bind(request.binder);
-
         var requests = [];
+
         for (var i in this.requests) {
-            if (this.requests[i] == request) {continue;}
+            if (this.requests[i] == request) {
+                continue;
+            }
+
             requests.push(this.requests[i]);
         }
 
         this.requests = requests;
 
-        if (this.requests.length == 0) {
+        if (this.requests.length === 0) {
             this.on_no_further_requests_pending();
         }
 
         callback(response);
-
     };
-
 }

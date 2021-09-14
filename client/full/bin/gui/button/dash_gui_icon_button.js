@@ -5,6 +5,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon_default_opacity = 1;
     this.icon_size_mult = options["size_mult"] || 1.0;
     this.style = options["style"] || "default";
+    this.additional_data = options["additional_data"] || null;
 
     DashGuiButton.call(this, "", callback, binder, color, options);
 

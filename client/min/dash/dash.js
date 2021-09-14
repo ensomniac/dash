@@ -19097,8 +19097,7 @@ function DashRequest () {
                     }
                 }
                 else {
-                    console.log("Dash failed to decompress gzip content");
-                    console.log(response);
+                    console.log("Dash failed to decompress gzip content", response);
                     if (!response["error"]) {
                         response["error"] = "Failed to decompress gzip data from server!";
                     }
@@ -19118,11 +19117,13 @@ function DashRequest () {
         var callback = request.callback.bind(request.binder);
         var requests = [];
         for (var i in this.requests) {
-            if (this.requests[i] == request) {continue;}
+            if (this.requests[i] == request) {
+                continue;
+            }
             requests.push(this.requests[i]);
         }
         this.requests = requests;
-        if (this.requests.length == 0) {
+        if (this.requests.length === 0) {
             this.on_no_further_requests_pending();
         }
         callback(response);
@@ -20161,6 +20162,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.icon_default_opacity = 1;
     this.icon_size_mult = options["size_mult"] || 1.0;
     this.style = options["style"] || "default";
+    this.additional_data = options["additional_data"] || null;
     DashGuiButton.call(this, "", callback, binder, color, options);
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
