@@ -1,51 +1,14 @@
 function DashUtils () {
-
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
     this.animation_frame_iter = 0;
 
-    this.start_background_update_loop = function(){
-        // This function is called when this class is instantiated. It calls a
-        // few global update functions that keep certain time elements current.
-
-        (function(self){
-            setInterval(function(){
-                self.manage_background_update_loop_5_min();
-            // }, 300000); // 5 Minutes
-            }, 1000); // 5 Minutes
-        })(this);
-
-        this.manage_background_update_loop_5_min();
-
-    };
-
-    this.manage_background_update_loop_5_min = function () {
-        // Called once every 5 minutes, and upon instantiation of Dash
-
-        Dash.Daypart = "Day";
-
-        var hrs = new Date().getHours();
-
-        if (hrs < 12) {
-            Dash.Daypart = "Morning";
-        }
-        else if (hrs >= 12 && hrs <= 17) {
-            Dash.Daypart = "Afternoon";
-        }
-        else if (hrs >= 17 && hrs <= 24) {
-            Dash.Daypart = "Evening";
-        }
-        else {
-            console.log("Error - Unknown hour set");
-        };
-
-    };
-
     this.SetTimer = function (binder, callback, ms) {
-        var timer = {};
-        timer["callback"] = callback.bind(binder);
-        timer["source"] = binder;
-        timer["iterations"] = 0;
+        var timer = {
+            "callback": callback.bind(binder),
+            "source": binder,
+            "iterations": 0
+        };
 
         (function (self, timer) {
             var iterations = 0;
@@ -65,6 +28,93 @@ function DashUtils () {
         this.manage_timer(timer);
     };
 
+    this.OnAnimationFrame = function (binder, callback, html_key=null) {
+        var anim_frame = {};
+        anim_frame["callback"] = callback.bind(binder);
+        anim_frame["source"] = binder;
+        anim_frame["iterations"] = 0;
+        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
+
+        (function (self, anim_frame, binder, callback, html_key) {
+            var iterations = 0;
+
+            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
+                anim_frame["iterations"] = iterations;
+
+                // [Andrew] I think (unable to confirm) that this may be causing some excessive looping...
+
+                // [Ryan] I don't think this is implemented in the way you were expecting.
+                //        I wrote a slightly different version in this file as an example.
+
+                self.OnAnimationFrame(binder, callback, html_key);
+
+                iterations += 1;
+            });
+        })(this, anim_frame, binder, callback, html_key);
+
+        this.manage_animation_frame(anim_frame);
+    };
+
+    this.OnHTMLResized = function (binder, callback) {
+        // Very similar to OnFrame, except we capture the size of binder.html
+        // and only fire the callback if the size changes
+
+        this.register_anim_frame_worker({
+            "callback": callback.bind(binder),
+            "source": binder,
+            "width": binder.html.width(),
+            "height": binder.html.height(),
+            "on_resize": true
+        });
+    };
+
+    this.OnFrame = function (binder, callback) {
+        // Store a tiny bit of information about this request
+
+        this.register_anim_frame_worker({
+            "callback": callback.bind(binder),
+            "source": binder
+        });
+    };
+
+    this.start_background_update_loop = function(){
+        // This function is called when this class is instantiated. It calls a
+        // few global update functions that keep certain time elements current.
+
+        (function(self){
+            setInterval(function(){
+                self.manage_background_update_loop_5_min();
+            // }, 300000); // 5 Minutes
+            }, 1000); // 5 Minutes
+        })(this);
+
+        this.manage_background_update_loop_5_min();
+    };
+
+    this.manage_background_update_loop_5_min = function () {
+        // Called once every 5 minutes, and upon instantiation of Dash
+
+        Dash.Daypart = "Day";
+
+        var hrs = new Date().getHours();
+
+        if (hrs < 12) {
+            Dash.Daypart = "Morning";
+        }
+
+        else if (hrs >= 12 && hrs <= 17) {
+            Dash.Daypart = "Afternoon";
+        }
+
+        else if (hrs >= 17 && hrs <= 24) {
+            Dash.Daypart = "Evening";
+        }
+
+        else {
+            console.log("Error - Unknown hour set");
+        }
+    };
+
     this.manage_timer = function (timer) {
         var still_active = true;
 
@@ -82,93 +132,61 @@ function DashUtils () {
         timer["callback"]();
     };
 
-    this.OnHTMLResized = function (binder, callback) {
-        // Very similar to OnFrame, except we capture the size of binder.html
-        // and only fire the callback if the size changes
-
-        var anim_frame_worker = {};
-        anim_frame_worker["callback"] = callback.bind(binder);
-        anim_frame_worker["source"] = binder;
-        anim_frame_worker["width"] = binder.html.width();
-        anim_frame_worker["height"] = binder.html.height();
-        anim_frame_worker["on_resize"] = true;
-
-        this.register_anim_frame_worker(anim_frame_worker);
-
-    };
-
-    this.OnFrame = function (binder, callback) {
-
-        // Store a tiny bit of information about this request
-        var anim_frame_worker = {};
-        anim_frame_worker["callback"] = callback.bind(binder);
-        anim_frame_worker["source"] = binder;
-
-        this.register_anim_frame_worker(anim_frame_worker);
-
-    };
-
     this.register_anim_frame_worker = function (anim_frame_worker) {
-
         if (!this.animation_frame_manager_running) {
             // This only needs to be started once, and it will run forever
             this.animation_frame_manager_running = true;
             this.draw_anim_frame_workers();
-        };
+        }
 
         // This is intentionally called after we start the worker so that
         // the behavior of Dash.OnFrame is similar to Window.RequestAnimationFrame in that
         // you would not expect the callback to fire until the next frame...
         this.animation_frame_workers.push(anim_frame_worker);
-
     };
 
     this.draw_anim_frame_workers = function () {
-
         this.animation_frame_iter += 1;
 
         if (this.animation_frame_iter >= 30) {
             // Coarse timeout
             this.animation_frame_iter = 0;
             this.manage_anim_frame_workers();
-        };
+        }
 
         // Actually fire each callback
         for (var x in this.animation_frame_workers) {
-
             if (this.animation_frame_workers[x]["on_resize"]) {
                 this.manage_on_resize_worker(x);
             }
+
             else {
                 this.animation_frame_workers[x]["callback"]();
-            };
-
-        };
+            }
+        }
 
         (function(self){
             // Call this function again
             requestAnimationFrame(function(){
-                self.draw_anim_frame_workers()
+                self.draw_anim_frame_workers();
             });
         })(this);
-
     };
 
     this.manage_on_resize_worker = function (index) {
-
         var width = this.animation_frame_workers[index]["source"].html.width();
         var height = this.animation_frame_workers[index]["source"].html.height();
 
-        if (width == this.animation_frame_workers[index]["width"] && height == this.animation_frame_workers[index]["height"]) {
-            // Nothing to do, height and width are the same
-            return;
-        };
+        if (parseInt(width) === parseInt(this.animation_frame_workers[index]["width"])) {
+            if (parseInt(height) === parseInt(this.animation_frame_workers[index]["height"])) {
+                // Nothing to do, height and width are the same
+                return;
+            }
+        }
 
         this.animation_frame_workers[index]["width"] = width;
         this.animation_frame_workers[index]["height"] = height;
-
         this.animation_frame_workers[index]["callback"](width, height);
-
     };
 
     this.manage_anim_frame_workers = function () {
@@ -178,41 +196,11 @@ function DashUtils () {
         // still be processing frame updates
         // console.log("Manage them all....");
         // console.log(this.animation_frame_workers.length);
+
         // TODO: Round out this function to clean up stale html objects
     };
 
-    this.OnAnimationFrame = function (binder, callback, html_key=null) {
-        var anim_frame = {};
-        anim_frame["callback"] = callback.bind(binder);
-        anim_frame["source"] = binder;
-        anim_frame["iterations"] = 0;
-        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
-
-        (function (self, anim_frame, binder, callback, html_key) {
-            var iterations = 0;
-
-            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
-                anim_frame["iterations"] = iterations;
-
-                // TODO: Ryan, I think (unable to confirm) that this may be causing some excessive looping...
-                //  Can you please take a look at this logic and see if everything looks correct?
-                //
-                // TODO: Andrew: I don't think this is implemented in the way you were expecting
-                //  I wrote a slightly different version in this file as an example
-                //  of what I was thinking. When you see this and have some time,
-                //  let's hop on a call to discus!
-
-                self.OnAnimationFrame(binder, callback, html_key);
-
-                iterations += 1;
-            });
-        })(this, anim_frame, binder, callback, html_key);
-
-        this.manage_animation_frame(anim_frame);
-    };
-
     this.manage_animation_frame = function (anim_frame) {
-
         var still_active = true;
 
         if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
@@ -225,18 +213,14 @@ function DashUtils () {
         }
 
         anim_frame["callback"]();
-
     };
 
     // This is called on the next frame because window.Dash.<> is not
     // the correct instance / valid until the next frame
 
     (function(self){
-
         requestAnimationFrame(function(){
             self.start_background_update_loop();
         });
-
     })(this);
-
-};
+}

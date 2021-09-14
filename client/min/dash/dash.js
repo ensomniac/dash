@@ -17761,7 +17761,7 @@ function Dash () {
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
             dt.setHours(dt.getHours() - 4);
-        };
+        }
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
         var readable = date + " at " + time;
@@ -17812,10 +17812,8 @@ function Dash () {
         return test;
     };
     this.ValidateResponse = function (response) {
-        // TODO: doc
         if (!response) {
-            console.log("Dash.ValidateResponse(1)");
-            console.log(response);
+            console.log("Dash.ValidateResponse(1)", response);
             alert("There was a server problem with this request");
             return null;
         }
@@ -18866,6 +18864,62 @@ function DashUtils () {
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
     this.animation_frame_iter = 0;
+    this.SetTimer = function (binder, callback, ms) {
+        var timer = {
+            "callback": callback.bind(binder),
+            "source": binder,
+            "iterations": 0
+        };
+        (function (self, timer) {
+            var iterations = 0;
+            timer["timer_id"] = setInterval(
+                function () {
+                    timer["iterations"] = iterations;
+                    self.manage_timer(timer);
+                    iterations += 1;
+                },
+                ms
+            );
+        })(this, timer);
+        this.manage_timer(timer);
+    };
+    this.OnAnimationFrame = function (binder, callback, html_key=null) {
+        var anim_frame = {};
+        anim_frame["callback"] = callback.bind(binder);
+        anim_frame["source"] = binder;
+        anim_frame["iterations"] = 0;
+        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
+        (function (self, anim_frame, binder, callback, html_key) {
+            var iterations = 0;
+            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
+                anim_frame["iterations"] = iterations;
+                // [Andrew] I think (unable to confirm) that this may be causing some excessive looping...
+                // [Ryan] I don't think this is implemented in the way you were expecting.
+                //        I wrote a slightly different version in this file as an example.
+                self.OnAnimationFrame(binder, callback, html_key);
+                iterations += 1;
+            });
+        })(this, anim_frame, binder, callback, html_key);
+        this.manage_animation_frame(anim_frame);
+    };
+    this.OnHTMLResized = function (binder, callback) {
+        // Very similar to OnFrame, except we capture the size of binder.html
+        // and only fire the callback if the size changes
+        this.register_anim_frame_worker({
+            "callback": callback.bind(binder),
+            "source": binder,
+            "width": binder.html.width(),
+            "height": binder.html.height(),
+            "on_resize": true
+        });
+    };
+    this.OnFrame = function (binder, callback) {
+        // Store a tiny bit of information about this request
+        this.register_anim_frame_worker({
+            "callback": callback.bind(binder),
+            "source": binder
+        });
+    };
     this.start_background_update_loop = function(){
         // This function is called when this class is instantiated. It calls a
         // few global update functions that keep certain time elements current.
@@ -18892,25 +18946,7 @@ function DashUtils () {
         }
         else {
             console.log("Error - Unknown hour set");
-        };
-    };
-    this.SetTimer = function (binder, callback, ms) {
-        var timer = {};
-        timer["callback"] = callback.bind(binder);
-        timer["source"] = binder;
-        timer["iterations"] = 0;
-        (function (self, timer) {
-            var iterations = 0;
-            timer["timer_id"] = setInterval(
-                function () {
-                    timer["iterations"] = iterations;
-                    self.manage_timer(timer);
-                    iterations += 1;
-                },
-                ms
-            );
-        })(this, timer);
-        this.manage_timer(timer);
+        }
     };
     this.manage_timer = function (timer) {
         var still_active = true;
@@ -18925,30 +18961,12 @@ function DashUtils () {
         }
         timer["callback"]();
     };
-    this.OnHTMLResized = function (binder, callback) {
-        // Very similar to OnFrame, except we capture the size of binder.html
-        // and only fire the callback if the size changes
-        var anim_frame_worker = {};
-        anim_frame_worker["callback"] = callback.bind(binder);
-        anim_frame_worker["source"] = binder;
-        anim_frame_worker["width"] = binder.html.width();
-        anim_frame_worker["height"] = binder.html.height();
-        anim_frame_worker["on_resize"] = true;
-        this.register_anim_frame_worker(anim_frame_worker);
-    };
-    this.OnFrame = function (binder, callback) {
-        // Store a tiny bit of information about this request
-        var anim_frame_worker = {};
-        anim_frame_worker["callback"] = callback.bind(binder);
-        anim_frame_worker["source"] = binder;
-        this.register_anim_frame_worker(anim_frame_worker);
-    };
     this.register_anim_frame_worker = function (anim_frame_worker) {
         if (!this.animation_frame_manager_running) {
             // This only needs to be started once, and it will run forever
             this.animation_frame_manager_running = true;
             this.draw_anim_frame_workers();
-        };
+        }
         // This is intentionally called after we start the worker so that
         // the behavior of Dash.OnFrame is similar to Window.RequestAnimationFrame in that
         // you would not expect the callback to fire until the next frame...
@@ -18960,7 +18978,7 @@ function DashUtils () {
             // Coarse timeout
             this.animation_frame_iter = 0;
             this.manage_anim_frame_workers();
-        };
+        }
         // Actually fire each callback
         for (var x in this.animation_frame_workers) {
             if (this.animation_frame_workers[x]["on_resize"]) {
@@ -18968,22 +18986,24 @@ function DashUtils () {
             }
             else {
                 this.animation_frame_workers[x]["callback"]();
-            };
-        };
+            }
+        }
         (function(self){
             // Call this function again
             requestAnimationFrame(function(){
-                self.draw_anim_frame_workers()
+                self.draw_anim_frame_workers();
             });
         })(this);
     };
     this.manage_on_resize_worker = function (index) {
         var width = this.animation_frame_workers[index]["source"].html.width();
         var height = this.animation_frame_workers[index]["source"].html.height();
-        if (width == this.animation_frame_workers[index]["width"] && height == this.animation_frame_workers[index]["height"]) {
-            // Nothing to do, height and width are the same
-            return;
-        };
+        if (parseInt(width) === parseInt(this.animation_frame_workers[index]["width"])) {
+            if (parseInt(height) === parseInt(this.animation_frame_workers[index]["height"])) {
+                // Nothing to do, height and width are the same
+                return;
+            }
+        }
         this.animation_frame_workers[index]["width"] = width;
         this.animation_frame_workers[index]["height"] = height;
         this.animation_frame_workers[index]["callback"](width, height);
@@ -18996,29 +19016,6 @@ function DashUtils () {
         // console.log("Manage them all....");
         // console.log(this.animation_frame_workers.length);
         // TODO: Round out this function to clean up stale html objects
-    };
-    this.OnAnimationFrame = function (binder, callback, html_key=null) {
-        var anim_frame = {};
-        anim_frame["callback"] = callback.bind(binder);
-        anim_frame["source"] = binder;
-        anim_frame["iterations"] = 0;
-        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
-        (function (self, anim_frame, binder, callback, html_key) {
-            var iterations = 0;
-            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
-                anim_frame["iterations"] = iterations;
-                // TODO: Ryan, I think (unable to confirm) that this may be causing some excessive looping...
-                //  Can you please take a look at this logic and see if everything looks correct?
-                //
-                // TODO: Andrew: I don't think this is implemented in the way you were expecting
-                //  I wrote a slightly different version in this file as an example
-                //  of what I was thinking. When you see this and have some time,
-                //  let's hop on a call to discus!
-                self.OnAnimationFrame(binder, callback, html_key);
-                iterations += 1;
-            });
-        })(this, anim_frame, binder, callback, html_key);
-        this.manage_animation_frame(anim_frame);
     };
     this.manage_animation_frame = function (anim_frame) {
         var still_active = true;
@@ -19038,7 +19035,7 @@ function DashUtils () {
             self.start_background_update_loop();
         });
     })(this);
-};
+}
 
 function DashLocal () {
     this.Set = function (key, value) {
@@ -22053,7 +22050,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
     this.secondary_css_color = this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray";
-    // TODO: This element is set up to work as a vertical, column-style box. It may not work in a
+    // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
     this.setup_styles = function () {
         this.html = Dash.Gui.GetHTMLBoxContext(
@@ -25000,12 +24997,9 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
         this.list_bottom.append(html);
     };
     this.AppendImage = function (img_url, height=null) {
-        // TODO:
-        //  - Move the concept of an 'Image' into dash as a light
-        //    abstraction for managing aspect ratios
-        //  - This AppendImage is a hack. We need to revise the
-        //    stack of objects in this container so they derive from
-        //    some abstraction to simplify append/prepend
+        // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
+        // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
+        //  container so they derive from some abstraction to simplify append/prepend
         var image = $("<div></div>");
         image.css({
             "height": height || Dash.Size.RowHeight * 2,
@@ -25216,8 +25210,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this.buttons[this.buttons.length - 1];
     };
     this.update_spacing = function () {
-        // TODO: Make this more efficient - we don't need to hit
-        //  this multiple times on the same frame
+        // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
         for (var i in this.buttons) {
             var button = this.buttons[i];
             var right_padding = Dash.Size.Padding;
@@ -25516,7 +25509,6 @@ function DashGuiListRow (list, arbitrary_id) {
         })(this);
     };
     this.SetSelected = function (is_selected) {
-        // TODO?
         // this.is_selected = is_selected;
         // if (this.is_selected) {
         //     this.selected_highlight.stop().animate({"opacity": 1}, 100);
@@ -25568,7 +25560,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
                 left_aligned = false;
             }
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
                 this.column_box.append(combo.html);
@@ -25580,7 +25572,7 @@ function DashGuiListRow (list, arbitrary_id) {
                     "column_config_data": column_config_data
                 });
             }
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "input") {
                 var input = this.get_input(column_config_data);
                 this.column_box.append(input.html);
@@ -25592,7 +25584,7 @@ function DashGuiListRow (list, arbitrary_id) {
                     "column_config_data": column_config_data
                 });
             }
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "icon_button") {
                 var icon_button = this.get_icon_button(column_config_data);
                 this.column_box.append(icon_button.html);
@@ -26455,7 +26447,6 @@ function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
     this.list_data = [];
-    // TODO: Update all uses of VH
     // Expects list of dicts with a single key/value pair (value should be a string), where
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
@@ -26533,18 +26524,15 @@ function DashGuiLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "17vh",  // TEMP
@@ -26554,7 +26542,6 @@ function DashGuiLayoutDashboardModuleRect () {
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            // TODO: Replace units if necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "4vh",  // TEMP
@@ -26579,7 +26566,6 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            // TODO: Replace units if necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -26590,7 +26576,6 @@ function DashGuiLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            // TODO: Replace units if necessary
             "height": "0.1vh"  // TEMP
         });
         return line;
@@ -26602,7 +26587,6 @@ function DashGuiLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
     this.list_data = [];
-    // TODO: Update all uses of VH
     // Expects list of dicts with a single key/value pair (value should be a string), where
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
@@ -26680,18 +26664,15 @@ function DashGuiLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "17vh",  // TEMP
@@ -26701,7 +26682,6 @@ function DashGuiLayoutDashboardModuleRect () {
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            // TODO: Replace units if necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "4vh",  // TEMP
@@ -26726,7 +26706,6 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            // TODO: Replace units if necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -26737,7 +26716,6 @@ function DashGuiLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            // TODO: Replace units if necessary
             "height": "0.1vh"  // TEMP
         });
         return line;

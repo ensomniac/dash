@@ -22,7 +22,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.dark_mode = this.color === Dash.Color.Dark;
     this.secondary_css_color = this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray";
 
-    // TODO: This element is set up to work as a vertical, column-style box. It may not work in a
+    // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
 
     this.setup_styles = function () {

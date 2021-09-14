@@ -59,7 +59,7 @@ function Dash () {
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
             dt.setHours(dt.getHours() - 4);
-        };
+        }
 
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
@@ -128,11 +128,8 @@ function Dash () {
     };
 
     this.ValidateResponse = function (response) {
-        // TODO: doc
-
         if (!response) {
-            console.log("Dash.ValidateResponse(1)");
-            console.log(response);
+            console.log("Dash.ValidateResponse(1)", response);
             alert("There was a server problem with this request");
             return null;
         }

@@ -49,8 +49,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     };
 
     this.update_spacing = function () {
-        // TODO: Make this more efficient - we don't need to hit
-        //  this multiple times on the same frame
+        // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
 
         for (var i in this.buttons) {
             var button = this.buttons[i];

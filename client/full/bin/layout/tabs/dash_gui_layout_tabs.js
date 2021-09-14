@@ -127,12 +127,10 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
     };
 
     this.AppendImage = function (img_url, height=null) {
-        // TODO:
-        //  - Move the concept of an 'Image' into dash as a light
-        //    abstraction for managing aspect ratios
-        //  - This AppendImage is a hack. We need to revise the
-        //    stack of objects in this container so they derive from
-        //    some abstraction to simplify append/prepend
+        // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
+
+        // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
+        //  container so they derive from some abstraction to simplify append/prepend
 
         var image = $("<div></div>");
 

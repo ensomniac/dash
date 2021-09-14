@@ -236,8 +236,6 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     this.SetSelected = function (is_selected) {
-        // TODO?
-
         // this.is_selected = is_selected;
 
         // if (this.is_selected) {
@@ -306,7 +304,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 left_aligned = false;
             }
 
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
 
@@ -322,7 +320,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
             }
 
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "input") {
                 var input = this.get_input(column_config_data);
 
@@ -338,7 +336,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
             }
 
-            // TODO: This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
+            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "icon_button") {
                 var icon_button = this.get_icon_button(column_config_data);
 

@@ -5,8 +5,6 @@ function DashGuiLayoutDashboardModuleRect () {
     this.list_rows = [];
     this.list_data = [];
 
-    // TODO: Update all uses of VH
-
     // Expects list of dicts with a single key/value pair (value should be a string), where
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
@@ -108,23 +106,17 @@ function DashGuiLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
 
         content.css({
             "display": "flex",
-
-            // TODO: Replace units if necessary
             "height": "2.75vh"  // TEMP
         });
 
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-
-            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "17vh",  // TEMP
@@ -135,8 +127,6 @@ function DashGuiLayoutDashboardModuleRect () {
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-
-            // TODO: Replace units if necessary
             "font-size": "2.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "width": "4vh",  // TEMP
@@ -166,8 +156,6 @@ function DashGuiLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-
-            // TODO: Replace units if necessary
             "font-size": "1.25vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "2.75vh"  // TEMP
@@ -181,8 +169,6 @@ function DashGuiLayoutDashboardModuleRect () {
 
         line.css({
             "background": this.secondary_color,
-
-            // TODO: Replace units if necessary
             "height": "0.1vh"  // TEMP
         });
 
