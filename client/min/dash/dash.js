@@ -24903,27 +24903,25 @@ function DashGuiLayoutToolbarInterface () {
     };
 }
 
-// TODO - convert this to a proper class
-class DashGuiLayoutTabs {
-    constructor(Binder, side_tabs) {
-    this.html = $("<div></div>");
+function DashGuiLayoutTabs(Binder, side_tabs) {
     this.binder = Binder;
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.side_tabs = side_tabs;
+    this.all_content = [];
+    this.selected_index = -1;
+    this.current_index = null;
+    this.html = $("<div></div>");
+    this.content = $("<div></div>");
+    this.list_top = $("<div></div>");
+    this.list_bottom = $("<div></div>");
+    this.list_backing = $("<div></div>");
+    this.size = Dash.Size.ColumnWidth; // Thickness
+    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     if (this.side_tabs) {
         this.color = Dash.Color.Dark;
     }
     else {
         this.color = Dash.Color.Light;
     }
-    this.list_backing = $("<div></div>");
-    this.list_top = $("<div></div>");
-    this.list_bottom = $("<div></div>");
-    this.content = $("<div></div>");
-    this.all_content = [];
-    this.selected_index = -1;
-    this.size = Dash.Size.ColumnWidth; // Thickness
-    this.current_index = null;
     this.setup_styles = function () {
         this.html.append(this.list_backing);
         this.html.append(this.list_top);
@@ -24948,6 +24946,82 @@ class DashGuiLayoutTabs {
     };
     this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
+    };
+    this.GetCurrentIndex = function () {
+        return this.current_index;
+    };
+    this.LoadIndex = function (index) {
+        if (index > this.all_content.length-1) {
+            return;
+        }
+        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        this.current_index = index;
+        var button = null;
+        for (var i in this.all_content) {
+            var content_data = this.all_content[i];
+            if (parseInt(i) === parseInt(index)) {
+                content_data["button"].SetSelected(true);
+                button = content_data["button"];
+            }
+            else {
+                content_data["button"].SetSelected(false);
+            }
+        }
+        this.content.empty();
+        var content_html;
+        if (typeof this.all_content[index]["content_div_html_class"] === "object") {
+            content_html = this.all_content[index]["content_div_html_class"];
+        }
+        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
+            content_html = new this.all_content[index]["content_div_html_class"]().html;
+        }
+        else {
+            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+        }
+        if (!content_html) {
+            console.log("ERROR: Unknown content!");
+            content_html = $("<div>Error Loading Content</div>");
+        }
+        this.content.append(content_html);
+        if (this.on_tab_changed_cb) {
+            this.on_tab_changed_cb(this.all_content[index]);
+        }
+    };
+    this.AppendHTML = function (html) {
+        html.css({
+            "margin-bottom": 1,
+        });
+        this.list_top.append(html);
+    };
+    this.PrependHTML = function (html) {
+        html.css({
+            "margin-top": 1,
+        });
+        this.list_bottom.append(html);
+    };
+    this.AppendImage = function (img_url, height=null) {
+        // TODO:
+        //  - Move the concept of an 'Image' into dash as a light
+        //    abstraction for managing aspect ratios
+        //  - This AppendImage is a hack. We need to revise the
+        //    stack of objects in this container so they derive from
+        //    some abstraction to simplify append/prepend
+        var image = $("<div></div>");
+        image.css({
+            "height": height || Dash.Size.RowHeight * 2,
+            "background-image": "url(" + img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center",
+        });
+        this.list_top.append(image);
+        return image;
+    };
+    this.Append = function (label_text, content_div_html_class, optional_params) {
+        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+    };
+    this.Prepend = function (label_text, content_div_html_class, optional_params) {
+        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
     this.set_styles_for_side_tabs = function () {
         this.list_backing.css({
@@ -25046,11 +25120,11 @@ class DashGuiLayoutTabs {
         }
     };
     this.load_last_selection = function () {
-        if (this.selected_index != -1) {
+        if (parseInt(this.selected_index) !== -1) {
             // A selection was already made externally
             return;
         }
-        if (this.all_content.length == 0) {
+        if (this.all_content.length === 0) {
             return;
         }
         var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
@@ -25058,82 +25132,6 @@ class DashGuiLayoutTabs {
             last_index = 0;
         }
         this.LoadIndex(last_index);
-    };
-    this.GetCurrentIndex = function () {
-        return this.current_index;
-    };
-    this.LoadIndex = function (index) {
-        if (index > this.all_content.length-1) {
-            return;
-        }
-        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
-        this.current_index = index;
-        var button = null;
-        for (var i in this.all_content) {
-            var content_data = this.all_content[i];
-            if (i == index) {
-                content_data["button"].SetSelected(true);
-                button = content_data["button"];
-            }
-            else {
-                content_data["button"].SetSelected(false);
-            }
-        }
-        this.content.empty();
-        var content_html;
-        if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
-            content_html = this.all_content[index]["content_div_html_class"];
-        }
-        else if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "function") {
-            content_html = new this.all_content[index]["content_div_html_class"]().html;
-        }
-        else {
-            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        }
-        if (!content_html) {
-            console.log("ERROR: Unknown content!");
-            content_html = $("<div>Error Loading Content</div>");
-        }
-        this.content.append(content_html);
-        if (this.on_tab_changed_cb) {
-            this.on_tab_changed_cb(this.all_content[index]);
-        }
-    };
-    this.AppendHTML = function (html) {
-        html.css({
-            "margin-bottom": 1,
-        });
-        this.list_top.append(html);
-    };
-    this.PrependHTML = function (html) {
-        html.css({
-            "margin-top": 1,
-        });
-        this.list_bottom.append(html);
-    };
-    this.AppendImage = function (img_url, height=null) {
-        // TODO:
-        //  - Move the concept of an 'Image' into dash as a light
-        //    abstraction for managing aspect ratios
-        //  - This AppendImage is a hack. We need to revise the
-        //    stack of objects in this container so they derive from
-        //    some abstraction to simplify append/prepend
-        var image = $("<div></div>");
-        image.css({
-            "height": height || Dash.Size.RowHeight * 2,
-            "background-image": "url(" + img_url + ")",
-            "background-repeat": "no-repeat",
-            "background-size": "contain",
-            "background-position": "center",
-        });
-        this.list_top.append(image);
-        return image;
-    };
-    this.Append = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
-    };
-    this.Prepend = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
     this._add = function (label_text, content_div_html_class, anchor_div, optional_params) {
         optional_params = optional_params || {};
@@ -25164,7 +25162,6 @@ class DashGuiLayoutTabs {
         return content_data["button"];
     };
     this.setup_styles();
-    };
 }
 
 class DashGuiLayoutTabsSide extends DashGuiLayoutTabs {
@@ -25854,12 +25851,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
-    // TODO: How can we make this collapsible? Is that feasible when using canvas elements?
-    // TODO: Update all uses of VH/VW
-    //  How can we make the text auto-scale with the div without using vh?
-    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use "ready" functions. Using vh, however, works perfectly
-    //  for this purpose. What is the reason for not allowing those units?
     this.AddSquareTagModule = function () {
         return this.add_module("square", "tag");
     };
@@ -25951,7 +25942,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
-        // TODO: Replace units if necessary
         top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
         top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
         for (var i in styles) {
@@ -25973,7 +25963,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
-        // TODO: Replace units if necessary
         container.style.padding = this.padding.toString() + "vh";  // TEMP
         container.style.margin = this.margin.toString() + "vh";  // TEMP
         if (type === "square") {
@@ -25997,7 +25986,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.dashboard = dashboard;
     this.style = style;
     this.sub_style = sub_style;
-    // TODO: Update all uses of VH
     this.color = this.dashboard.color || Dash.Color.Dark;
     this.modules = this.dashboard.modules;
     this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
@@ -26063,7 +26051,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
             "padding": this.padding.toString() + "vh"  // TEMP
         });
@@ -26078,7 +26065,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -26094,7 +26080,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
 function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
-    // TODO: Update all uses of VH/VW
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
             console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
@@ -26142,7 +26127,6 @@ function DashGuiLayoutDashboardModuleFlex () {
         var prev_mod_is_flex = this.modules[this.modules.length - 1]["style"] === "flex";
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
-        // TODO: Replace units if necessary
         canvas_container.style.height = "11.25vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
         canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
@@ -26272,7 +26256,6 @@ function DashGuiLayoutDashboardModuleSquare () {
     this.label = $("<div></div>");
     this.label_header = $("<div></div>");
     this.radial_fill_percent = 0;
-    // TODO: Update all uses of VH
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
         (function (self, text) {
@@ -26292,7 +26275,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             }
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
                 self.label.css({
-                    // TODO: Replace units if necessary
                     "font-size": "5.5vh",  // TEMP
                     "height": "5.5vh",  // TEMP
                     "line-height": "6vh",  // TEMP
@@ -26340,7 +26322,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "1.5vh",  // TEMP
         });
@@ -26348,7 +26329,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "95%",
-            // TODO: Replace units if necessary
             "font-size": "4.5vh",  // TEMP
             "height": "4.5vh",  // TEMP
             "line-height": "5vh",  // TEMP
@@ -26371,7 +26351,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -26379,7 +26358,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-            // TODO: Replace units if necessary
             "font-size": "2.75vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "3.25vh",  // TEMP
@@ -26393,7 +26371,6 @@ function DashGuiLayoutDashboardModuleSquare () {
         var canvas_container = document.createElement("div");
         var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
         canvas_container.style.overflow = "hidden";
-        // TODO: Replace units if necessary
         canvas_container.style.width = "10.5vh";  // TEMP
         canvas_container.style.height = "10.5vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP

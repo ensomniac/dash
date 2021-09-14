@@ -3,8 +3,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.style = style;
     this.sub_style = sub_style;
 
-    // TODO: Update all uses of VH
-
     this.color = this.dashboard.color || Dash.Color.Dark;
     this.modules = this.dashboard.modules;
     this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
@@ -87,8 +85,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-
-            // TODO: Replace units if necessary
             "margin": this.margin.toString() + "vh",  // TEMP
             "padding": this.padding.toString() + "vh"  // TEMP
         });
@@ -105,8 +101,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-
-            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });

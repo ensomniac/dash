@@ -13,14 +13,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
 
-    // TODO: How can we make this collapsible? Is that feasible when using canvas elements?
-
-    // TODO: Update all uses of VH/VW
-    //  How can we make the text auto-scale with the div without using vh?
-    //  Even using a percentage, like 85%, doesn't auto-scale the text, and all
-    //  the answers online use "ready" functions. Using vh, however, works perfectly
-    //  for this purpose. What is the reason for not allowing those units?
-
     this.AddSquareTagModule = function () {
         return this.add_module("square", "tag");
     };
@@ -141,8 +133,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
-
-        // TODO: Replace units if necessary
         top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
         top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
 
@@ -170,7 +160,6 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
 
-        // TODO: Replace units if necessary
         container.style.padding = this.padding.toString() + "vh";  // TEMP
         container.style.margin = this.margin.toString() + "vh";  // TEMP
 

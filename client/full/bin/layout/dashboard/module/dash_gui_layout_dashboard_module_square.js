@@ -8,8 +8,6 @@ function DashGuiLayoutDashboardModuleSquare () {
     this.label_header = $("<div></div>");
     this.radial_fill_percent = 0;
 
-    // TODO: Update all uses of VH
-
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
         (function (self, text) {
@@ -35,7 +33,6 @@ function DashGuiLayoutDashboardModuleSquare () {
 
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
                 self.label.css({
-                    // TODO: Replace units if necessary
                     "font-size": "5.5vh",  // TEMP
                     "height": "5.5vh",  // TEMP
                     "line-height": "6vh",  // TEMP
@@ -99,8 +96,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-
-            // TODO: Replace units if necessary
             "font-size": "1.5vh",  // TEMP
             "height": "1.5vh",  // TEMP
         });
@@ -109,8 +104,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "95%",
-
-            // TODO: Replace units if necessary
             "font-size": "4.5vh",  // TEMP
             "height": "4.5vh",  // TEMP
             "line-height": "5vh",  // TEMP
@@ -135,8 +128,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-
-            // TODO: Replace units if necessary
             "font-size": "1vh",  // TEMP
             "height": "1vh",  // TEMP
         });
@@ -145,8 +136,6 @@ function DashGuiLayoutDashboardModuleSquare () {
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-
-            // TODO: Replace units if necessary
             "font-size": "2.75vh",  // TEMP
             "height": "2.75vh",  // TEMP
             "line-height": "3.25vh",  // TEMP
@@ -163,8 +152,6 @@ function DashGuiLayoutDashboardModuleSquare () {
         var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
 
         canvas_container.style.overflow = "hidden";
-
-        // TODO: Replace units if necessary
         canvas_container.style.width = "10.5vh";  // TEMP
         canvas_container.style.height = "10.5vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP

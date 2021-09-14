@@ -1,11 +1,17 @@
-// TODO - convert this to a proper class
-class DashGuiLayoutTabs {
-    constructor(Binder, side_tabs) {
-
-    this.html = $("<div></div>");
+function DashGuiLayoutTabs(Binder, side_tabs) {
     this.binder = Binder;
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.side_tabs = side_tabs;
+
+    this.all_content = [];
+    this.selected_index = -1;
+    this.current_index = null;
+    this.html = $("<div></div>");
+    this.content = $("<div></div>");
+    this.list_top = $("<div></div>");
+    this.list_bottom = $("<div></div>");
+    this.list_backing = $("<div></div>");
+    this.size = Dash.Size.ColumnWidth; // Thickness
+    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
     if (this.side_tabs) {
         this.color = Dash.Color.Dark;
@@ -14,15 +20,6 @@ class DashGuiLayoutTabs {
     else {
         this.color = Dash.Color.Light;
     }
-
-    this.list_backing = $("<div></div>");
-    this.list_top = $("<div></div>");
-    this.list_bottom = $("<div></div>");
-    this.content = $("<div></div>");
-    this.all_content = [];
-    this.selected_index = -1;
-    this.size = Dash.Size.ColumnWidth; // Thickness
-    this.current_index = null;
 
     this.setup_styles = function () {
         this.html.append(this.list_backing);
@@ -54,6 +51,110 @@ class DashGuiLayoutTabs {
 
     this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
+    };
+
+    this.GetCurrentIndex = function () {
+        return this.current_index;
+    };
+
+    this.LoadIndex = function (index) {
+        if (index > this.all_content.length-1) {
+            return;
+        }
+
+        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+
+        this.current_index = index;
+
+        var button = null;
+
+        for (var i in this.all_content) {
+            var content_data = this.all_content[i];
+
+            if (parseInt(i) === parseInt(index)) {
+                content_data["button"].SetSelected(true);
+                button = content_data["button"];
+            }
+
+            else {
+                content_data["button"].SetSelected(false);
+            }
+        }
+
+        this.content.empty();
+
+        var content_html;
+
+        if (typeof this.all_content[index]["content_div_html_class"] === "object") {
+            content_html = this.all_content[index]["content_div_html_class"];
+        }
+
+        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
+            content_html = new this.all_content[index]["content_div_html_class"]().html;
+        }
+
+        else {
+            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+        }
+
+        if (!content_html) {
+            console.log("ERROR: Unknown content!");
+
+            content_html = $("<div>Error Loading Content</div>");
+        }
+
+        this.content.append(content_html);
+
+        if (this.on_tab_changed_cb) {
+            this.on_tab_changed_cb(this.all_content[index]);
+        }
+    };
+
+    this.AppendHTML = function (html) {
+        html.css({
+            "margin-bottom": 1,
+        });
+
+        this.list_top.append(html);
+    };
+
+    this.PrependHTML = function (html) {
+        html.css({
+            "margin-top": 1,
+        });
+
+        this.list_bottom.append(html);
+    };
+
+    this.AppendImage = function (img_url, height=null) {
+        // TODO:
+        //  - Move the concept of an 'Image' into dash as a light
+        //    abstraction for managing aspect ratios
+        //  - This AppendImage is a hack. We need to revise the
+        //    stack of objects in this container so they derive from
+        //    some abstraction to simplify append/prepend
+
+        var image = $("<div></div>");
+
+        image.css({
+            "height": height || Dash.Size.RowHeight * 2,
+            "background-image": "url(" + img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center",
+        });
+
+        this.list_top.append(image);
+
+        return image;
+    };
+
+    this.Append = function (label_text, content_div_html_class, optional_params) {
+        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+    };
+
+    this.Prepend = function (label_text, content_div_html_class, optional_params) {
+        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
 
     this.set_styles_for_side_tabs = function () {
@@ -174,12 +275,12 @@ class DashGuiLayoutTabs {
     };
 
     this.load_last_selection = function () {
-        if (this.selected_index != -1) {
+        if (parseInt(this.selected_index) !== -1) {
             // A selection was already made externally
             return;
         }
 
-        if (this.all_content.length == 0) {
+        if (this.all_content.length === 0) {
             return;
         }
 
@@ -190,109 +291,6 @@ class DashGuiLayoutTabs {
         }
 
         this.LoadIndex(last_index);
-    };
-
-    this.GetCurrentIndex = function () {
-        return this.current_index;
-    };
-
-    this.LoadIndex = function (index) {
-        if (index > this.all_content.length-1) {
-            return;
-        }
-
-        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
-
-        this.current_index = index;
-
-        var button = null;
-
-        for (var i in this.all_content) {
-            var content_data = this.all_content[i];
-
-            if (i == index) {
-                content_data["button"].SetSelected(true);
-                button = content_data["button"];
-            }
-            else {
-                content_data["button"].SetSelected(false);
-            }
-        }
-
-        this.content.empty();
-
-        var content_html;
-
-        if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "object") {
-            content_html = this.all_content[index]["content_div_html_class"];
-        }
-
-        else if (("" + typeof(this.all_content[index]["content_div_html_class"])) == "function") {
-            content_html = new this.all_content[index]["content_div_html_class"]().html;
-        }
-
-        else {
-            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        }
-
-        if (!content_html) {
-            console.log("ERROR: Unknown content!");
-
-            content_html = $("<div>Error Loading Content</div>");
-        }
-
-        this.content.append(content_html);
-
-        if (this.on_tab_changed_cb) {
-            this.on_tab_changed_cb(this.all_content[index]);
-        }
-    };
-
-    this.AppendHTML = function (html) {
-        html.css({
-            "margin-bottom": 1,
-        });
-
-        this.list_top.append(html);
-    };
-
-    this.PrependHTML = function (html) {
-        html.css({
-            "margin-top": 1,
-        });
-
-        this.list_bottom.append(html);
-    };
-
-    this.AppendImage = function (img_url, height=null) {
-        // TODO:
-        //  - Move the concept of an 'Image' into dash as a light
-        //    abstraction for managing aspect ratios
-        //  - This AppendImage is a hack. We need to revise the
-        //    stack of objects in this container so they derive from
-        //    some abstraction to simplify append/prepend
-
-        var image = $("<div></div>");
-
-        image.css({
-            "height": height || Dash.Size.RowHeight * 2,
-            "background-image": "url(" + img_url + ")",
-            "background-repeat": "no-repeat",
-            "background-size": "contain",
-            "background-position": "center",
-        });
-
-        this.list_top.append(image);
-
-        return image;
-    };
-
-    this.Append = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
-    };
-
-    this.Prepend = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
     };
 
     this._add = function (label_text, content_div_html_class, anchor_div, optional_params) {
@@ -333,5 +331,4 @@ class DashGuiLayoutTabs {
     };
 
     this.setup_styles();
-    };
 }

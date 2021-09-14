@@ -4,8 +4,6 @@ function DashGuiLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
 
-    // TODO: Update all uses of VH/VW
-
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
             console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
@@ -68,7 +66,6 @@ function DashGuiLayoutDashboardModuleFlex () {
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
 
-        // TODO: Replace units if necessary
         canvas_container.style.height = "11.25vh";  // TEMP
         canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
         canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
