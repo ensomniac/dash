@@ -137,28 +137,23 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
 
     this.upload_success = function (file, result) {
         this.button.SetLoadBar(0);
-        result = $.parseJSON(result);
+
         this.upload_backing_bar.animate({"opacity": 0});
         this.upload_progress_bar.animate({"opacity": 0});
 
         this.callback(result);
-
     };
 
     this.draw_dropzone = function () {
-
         (function (self) {
-
             self.dropzone_options = {
-
                 "init": function () {
                     this.on("addedfile", function (file) {self.added_file(file);});
                     this.on("error", function (file, error) {self.error_uploading(file, error);});
                     this.on("processing", function (file) {self.processing_upload(file);});
                     this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
                     this.on("success", function (file, result) {self.upload_success(file, result);});
-                    },
-
+                },
                 "url": self.api,
                 "uploadMultiple": false,
                 "addRemoveLinks": false,
@@ -170,7 +165,6 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
             self.html.dropzone(self.dropzone_options);
 
         })(this);
-
     };
 
 

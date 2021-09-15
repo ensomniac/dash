@@ -19,8 +19,8 @@ function DashRequest () {
 
         this.post = function () {
             (function (self) {
-                $.post(self.url, self.params, function (response_str) {
-                    self.dash_requests.on_response(self, $.parseJSON(response_str));
+                $.post(self.url, self.params, function (response) {
+                    self.dash_requests.on_response(self, response);
                 });
             })(this);
         };

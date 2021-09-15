@@ -151,6 +151,18 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         return input;
     };
 
+    this.AddIconButton = function (icon_name, callback, hover_hint="") {
+        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder));
+
+        button.html.css({
+            "margin-top": Dash.Size.Padding * 0.15
+        });
+
+        button.SetHoverHint(hover_hint);
+
+        return button;
+    };
+
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null) {
         var checkbox = new Dash.Gui.Checkbox(
             label_text,                                             // Label text
@@ -199,6 +211,10 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         this.toolbar.AddHTML(checkbox.html);
 
         return checkbox;
+    };
+
+    this.AddHTML = function (html) {
+        this.toolbar.AddHTML(html);
     };
 
     this.on_input_keystroke = function () {

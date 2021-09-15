@@ -128,10 +128,8 @@ function DashGuiComboInterface () {
             $.post(api, server_data, function (response) {
                 self.load_dots.Stop();
 
-                var response_json = $.parseJSON(response);
-
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);

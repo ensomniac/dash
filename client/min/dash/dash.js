@@ -19076,8 +19076,8 @@ function DashRequest () {
         this.binder = binder;
         this.post = function () {
             (function (self) {
-                $.post(self.url, self.params, function (response_str) {
-                    self.dash_requests.on_response(self, $.parseJSON(response_str));
+                $.post(self.url, self.params, function (response) {
+                    self.dash_requests.on_response(self, response);
                 });
             })(this);
         };
@@ -19980,9 +19980,8 @@ function DashGuiButtonInterface () {
         (function (self) {
             $.post(api, server_data, function (response) {
                 self.SetLoading(false);
-                var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);
@@ -20131,7 +20130,6 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     };
     this.upload_success = function (file, result) {
         this.button.SetLoadBar(0);
-        result = $.parseJSON(result);
         this.upload_backing_bar.animate({"opacity": 0});
         this.upload_progress_bar.animate({"opacity": 0});
         this.callback(result);
@@ -20145,7 +20143,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
                     this.on("processing", function (file) {self.processing_upload(file);});
                     this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
                     this.on("success", function (file, result) {self.upload_success(file, result);});
-                    },
+                },
                 "url": self.api,
                 "uploadMultiple": false,
                 "addRemoveLinks": false,
@@ -21543,6 +21541,14 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         this.elements.push(input);
         return input;
     };
+    this.AddIconButton = function (icon_name, callback, hover_hint="") {
+        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder));
+        button.html.css({
+            "margin-top": Dash.Size.Padding * 0.15
+        });
+        button.SetHoverHint(hover_hint);
+        return button;
+    };
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null) {
         var checkbox = new Dash.Gui.Checkbox(
             label_text,                                             // Label text
@@ -21582,6 +21588,9 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         }
         this.toolbar.AddHTML(checkbox.html);
         return checkbox;
+    };
+    this.AddHTML = function (html) {
+        this.toolbar.AddHTML(html);
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -23885,9 +23894,8 @@ function DashGuiComboInterface () {
         (function (self) {
             $.post(api, server_data, function (response) {
                 self.load_dots.Stop();
-                var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);
