@@ -26,7 +26,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     };
 
     this.AddExpander = function () {
-        this.toolbar.AddExpander();
+        return this.toolbar.AddExpander();
     };
 
     this.AddCombo = function (combo_options, default_value, callback) {
@@ -151,8 +151,8 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         return input;
     };
 
-    this.AddIconButton = function (icon_name, callback, hover_hint="") {
-        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder));
+    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null) {
+        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), null, additional_data);
 
         button.html.css({
             "margin-top": Dash.Size.Padding * 0.15

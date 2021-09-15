@@ -83,16 +83,20 @@ function DashGuiComboInterface () {
         return this.selected_option_id;
     };
 
+    this.GetActiveOption = function () {
+        return this.selected_option;
+    };
+
     this.SetLabel = function (content) {
         this.label.text(content["label"]);
     };
 
-    this.SetID = function (combo_id) {
-        this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
-
-        this.on_selection(this.selected_option_id, true);
-        this.flash();
-    };
+    // this.SetID = function (combo_id) {
+    //     this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
+    //
+    //     this.on_selection(this.selected_option_id, true);
+    //     this.flash();
+    // };
 
     this.SetWidth = function (width) {
         this.html.css({"width": width});
@@ -135,21 +139,22 @@ function DashGuiComboInterface () {
         })(this);
     };
 
-    this.Update = function (label_list, selected, ignore_callback=false) {
+    this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
         if (!ignore_callback) {
-            ignore_callback = (selected["id"] == this.selected_option_id);
+            ignore_callback = (selected["id"].toString() === this.selected_option_id);
         }
 
-        if (label_list) {
-            this.option_list = label_list;
+        if (combo_list) {
+            this.option_list = combo_list;
         }
 
         if (selected) {
-            this.selected_option_id = selected;
+            this.selected_option = selected;
+            this.selected_option_id = selected["id"];
         }
 
-        this.on_selection(this.selected_option_id, ignore_callback);
+        this.on_selection(this.selected_option, ignore_callback);
 
         if (this.bool) {
             this.option_list.reverse();

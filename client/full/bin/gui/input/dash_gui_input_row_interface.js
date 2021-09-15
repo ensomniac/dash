@@ -40,7 +40,7 @@ function DashGuiInputRowInterface () {
 
         var options = {};
         options["list"] = combo_options;
-        options["selected"] = ComboUtils.GetDataFromID(combo_options, this.initial_value);
+        // options["selected"] = ComboUtils.GetDataFromID(combo_options, this.initial_value);
         options["thin_style"] = true;
         options["text_alignment"] = "left";
         options["label_style"] = "light";
