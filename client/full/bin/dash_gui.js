@@ -10,6 +10,7 @@ function DashGui() {
     this.IconButton =      DashGuiIconButton;
     this.Input =           DashGuiInput;
     this.InputRow =        DashGuiInputRow;
+    this.ToolRow =         DashGuiToolRow;
     this.Layout =          new DashGuiLayout();
     this.LoadDots =        DashGuiLoadDots;
     this.Login =           DashGuiLogin;
