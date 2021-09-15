@@ -158,12 +158,14 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
             "margin-top": Dash.Size.Padding * 0.15
         });
 
-        button.SetHoverHint(hover_hint);
+        if (hover_hint) {
+            button.SetHoverHint(hover_hint);
+        }
 
         return button;
     };
 
-    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null) {
+    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
         var checkbox = new Dash.Gui.Checkbox(
             label_text,                                             // Label text
             this,                                                   // Binder
@@ -171,7 +173,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
             true,                                                   // Label first
-            true,                                                   // Include border
+            label_border,                                           // Include border
             this.color                                              // Color
         );
 
@@ -180,7 +182,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         });
 
         // May need to add this to the other public functions as well
-        if (this.elements.length > 0) {
+        if (this.elements.length > 0 && label_border) {
             checkbox.html.css({
                 "margin-left": Dash.Size.Padding
             });
@@ -196,11 +198,13 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
             "font-family": "sans_serif_bold"
         });
 
-        checkbox.label.border.css({
-            "background": this.color.Button.Background.Base,
-            "height": Dash.Size.RowHeight * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1
-        });
+        if (label_border) {
+            checkbox.label.border.css({
+                "background": this.color.Button.Background.Base,
+                "height": Dash.Size.RowHeight * 0.9,
+                "margin-top": Dash.Size.Padding * 0.1
+            });
+        }
 
         checkbox.icon_button.SetHoverHint(hover_hint);
 
