@@ -21443,13 +21443,14 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     this.AddExpander = function () {
         return this.toolbar.AddExpander();
     };
-    this.AddCombo = function (combo_options, default_value, callback) {
+    this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
         var combo = this.toolbar.AddCombo(
             "",
             combo_options,
             default_value,
             callback.bind(this.binder),
-            true
+            true,
+            additional_data
         );
         combo.html.css({
             "line-height": this.height,
@@ -21458,9 +21459,12 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         this.elements.push(combo);
         return combo;
     };
+    this.AddText = function (text, color=null) {
+        this.toolbar.AddText(text, color);
+    };
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false);
-        if (right_margin) {
+        if (right_margin !== null) {
             label.html.css({
                 "margin-right": right_margin
             });
@@ -21468,7 +21472,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         label.html.css({
             "line-height": this.height,
             "margin-top": 0,
-            "margin-left": left_label_margin || Dash.Size.Padding * 0.1
+            "margin-left": left_label_margin !== null ? left_label_margin : Dash.Size.Padding * 0.1
         });
         label.label.css({
             "white-space": "nowrap",
@@ -21500,17 +21504,25 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
             label.label.css({
                 "margin-left": 0
             });
+            if (this.elements.length < 1) {
+                label.html.css({
+                    "padding-left": 0
+                });
+                label.label.css({
+                    "padding-left": 0
+                });
+            }
         }
         this.elements.push(label);
         return label;
     };
-    this.AddInput = function (text, data_key, width=null, flex=false) {
+    this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
         var input = this.toolbar.AddTransparentInput(
             text,
-            this.on_input_keystroke,
+            on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
-                "on_enter": this.on_input_submit
+                "on_enter": on_submit_cb ? on_submit_cb.bind(this.binder) : this.on_input_submit
             },
             {
                 "data_key": data_key
