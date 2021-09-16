@@ -19093,7 +19093,7 @@ function DashRequest () {
                             self.dash_requests.on_response(self, response);
                         }
                         else {
-                            alert("Request to " + self.url + "failed:\n" + self.params);
+                            console.log("WARNING: Request to " + self.url + " failed:", self.params);
                         }
                     }
                 );
