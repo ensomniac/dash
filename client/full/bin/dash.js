@@ -130,23 +130,24 @@ function Dash () {
     this.ValidateResponse = function (response) {
         if (!response) {
             console.log("Dash.ValidateResponse(1)", response);
-            alert("There was a server problem with this request");
+
+            alert("There was a server problem with this request: No response received");
+
             return null;
         }
 
         if (response["error"]) {
-            console.log("Dash.ValidateResponse(2)");
-            console.log(response);
+            console.log("There was a server problem with this request:", response);
+
             alert(response["error"]);
+
             return null;
         }
 
         return response;
-
     };
 
     this.GetFormContainer = function () {
-
         var container = $("<div></div>");
 
         container.css({

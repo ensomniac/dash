@@ -17816,12 +17816,11 @@ function Dash () {
     this.ValidateResponse = function (response) {
         if (!response) {
             console.log("Dash.ValidateResponse(1)", response);
-            alert("There was a server problem with this request");
+            alert("There was a server problem with this request: No response received");
             return null;
         }
         if (response["error"]) {
-            console.log("Dash.ValidateResponse(2)");
-            console.log(response);
+            console.log("There was a server problem with this request:", response);
             alert(response["error"]);
             return null;
         }
@@ -19067,18 +19066,32 @@ function DashRequest () {
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
     function DashRequestThread (dash_requests, url, params, binder, callback) {
-        this.dash_requests = dash_requests;
         this.url = url;
+        this.binder = binder;
+        this.callback = callback;
         this.params = params || {};
+        this.dash_requests = dash_requests;
         this.params["token"] = Dash.Local.Get("token");
         this.id = Math.random() * (999999 - 100000) + 100000;
-        this.callback = callback;
-        this.binder = binder;
         this.post = function () {
             (function (self) {
-                $.post(self.url, self.params, function (response) {
-                    self.dash_requests.on_response(self, response);
-                });
+                $.post(
+                    self.url,
+                    self.params,
+                    function (response) {
+                        self.dash_requests.on_response(self, response);
+                    }
+                ).fail(
+                    function (request) {
+                        var response = request.responseJSON || request.responseText;
+                        if (response) {
+                            self.dash_requests.on_response(self, response);
+                        }
+                        else {
+                            alert("Request to " + self.url + "failed:\n" + self.params);
+                        }
+                    }
+                );
             })(this);
         };
         this.post();

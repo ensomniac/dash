@@ -8,20 +8,35 @@ function DashRequest () {
     };
 
     function DashRequestThread (dash_requests, url, params, binder, callback) {
-        this.dash_requests = dash_requests;
         this.url = url;
-        this.params = params || {};
-        this.params["token"] = Dash.Local.Get("token");
-
-        this.id = Math.random() * (999999 - 100000) + 100000;
-        this.callback = callback;
         this.binder = binder;
+        this.callback = callback;
+        this.params = params || {};
+        this.dash_requests = dash_requests;
+        this.params["token"] = Dash.Local.Get("token");
+        this.id = Math.random() * (999999 - 100000) + 100000;
 
         this.post = function () {
             (function (self) {
-                $.post(self.url, self.params, function (response) {
-                    self.dash_requests.on_response(self, response);
-                });
+                $.post(
+                    self.url,
+                    self.params,
+                    function (response) {
+                        self.dash_requests.on_response(self, response);
+                    }
+                ).fail(
+                    function (request) {
+                        var response = request.responseJSON || request.responseText;
+
+                        if (response) {
+                            self.dash_requests.on_response(self, response);
+                        }
+
+                        else {
+                            alert("Request to " + self.url + "failed:\n" + self.params);
+                        }
+                    }
+                );
             })(this);
         };
 
