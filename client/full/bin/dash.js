@@ -115,13 +115,27 @@ function Dash () {
         return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
     };
 
-    this.IsServerIsoDate = function (str) {
-        str = str.toString();
+    this.IsServerIsoDate = function (value) {
+        if (typeof value === "object") {
+            return false;
+        }
 
-        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+        try {
+            if (typeof JSON.parse(value) === "object") {
+                return false;
+            }
+        }
+
+        catch {
+            // Ignore
+        }
+
+        value = value.toString();
+
+        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(value);
 
         if (!test) {
-            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str);
+            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
         }
 
         return test;
