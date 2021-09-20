@@ -14,7 +14,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
     this.footer_button_overlay = null;
 
-    this.anim_duration = 400;
+    this.anim_duration = 250;
     this.backing_gradient = null;
     this.banner_spacer = null;
     this.touch_active = false;
@@ -202,7 +202,12 @@ function DashMobileLayoutCardStack (binder, color) {
         this.width = width;
         this.height = height;
 
+        if (this.footer_button_overlay) {
+            this.set_footer_overlay_size();
+        };
+
         if (this.banner_fixed) {
+            this.set_fixed_banner_size();
             this.on_center_scroll();
         };
 
@@ -269,15 +274,10 @@ function DashMobileLayoutCardStack (binder, color) {
         };
 
         this.banner_fixed = true;
-        // this.banner.html.unbind();
-        this.banner.html.css({
-            "position": "fixed",
-            "top": 0,
-            "left": 0,
-            "right": 0,
-        });
+        this.set_fixed_banner_size();
 
-        this.html.append(this.banner.html);
+        // this.html.append(this.banner.html);
+        this.slider.append(this.banner.html);
 
         // You should never see this, but it allows the window to scroll correctly
         this.banner_spacer = $("<div></div>");
@@ -325,6 +325,10 @@ function DashMobileLayoutCardStack (binder, color) {
 
     this.AddLeftContent = function (html) {
 
+        // if (this.banner_fixed) {
+        //     console.log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
+        // };
+
         if (this.active_panel_index == 0) {
             console.error("The left panel is already loaded");
         };
@@ -346,10 +350,20 @@ function DashMobileLayoutCardStack (binder, color) {
     };
 
     this.ShowCenterContent = function () {
+
+        // if (this.banner_fixed) {
+        //     console.log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
+        // };
+
         this.slide_to_index(1);
     };
 
     this.AddRightContent = function (html) {
+
+        // if (this.banner_fixed) {
+        //     console.log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     this.unfix_banner_on_top();
+        // };
 
         if (this.active_panel_index == 2) {
             console.error("The right panel is already loaded");
@@ -403,7 +417,9 @@ function DashMobileLayoutCardStack (binder, color) {
             // "padding-right": Dash.Size.Padding*0.5,
         });
 
-        this.html.append(this.footer_button_overlay);
+        this.slider.append(this.footer_button_overlay);
+        // this.html.append(this.footer_button_overlay);
+        this.set_footer_overlay_size();
 
         // You should never see this, but it allows the window to scroll correctly
         // without having to add padding/margin for the lower button content
@@ -413,6 +429,31 @@ function DashMobileLayoutCardStack (binder, color) {
         });
         this.center_content.append(this.footer_spacer);
 
+    };
+
+    this.set_footer_overlay_size = function () {
+
+        this.footer_button_overlay.css({
+            "position": "fixed",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "bottom": 0,
+            "left": this.width,
+            "width": this.width - (Dash.Size.Padding*0.5),
+            "right": "auto",
+        });
+
+    };
+
+    this.set_fixed_banner_size = function () {
+
+        this.banner.html.css({
+            "position": "fixed",
+            "top": 0,
+            "left": this.width,
+            "width": this.width,
+            "right": "auto",
+        });
 
     };
 
@@ -431,14 +472,55 @@ function DashMobileLayoutCardStack (binder, color) {
         var backing_opacity = 0;
 
         if (target_index == 0) {
-            this.left_content.css({"display": "block"});
+            // LEFT
+            this.left_content.css({"display": "block", "opacity": 1});
+
+            this.right_content.stop().animate({"opacity":   0}, this.anim_duration);
+            this.center_content.stop().animate({"opacity": 0}, this.anim_duration);
+
         }
         else if (target_index == 2) {
-            this.right_content.css({"display": "block"});
+            // RIGHT
+            this.right_content.css({"display": "block", "opacity": 1});
+
+            this.left_content.stop().animate({"opacity":   0}, this.anim_duration);
+            this.center_content.stop().animate({"opacity": 0}, this.anim_duration);
+
         }
         else {
-            this.center_content.css({"display": "block"});
+            // CENTER
+            this.center_content.css({"display": "block", "opacity": 1});
             backing_opacity = 1;
+
+            this.left_content.stop().animate({"opacity":  0}, this.anim_duration);
+            this.right_content.stop().animate({"opacity": 0}, this.anim_duration);
+
+        };
+
+
+        if (target_index == 1) {
+            // Make sure to show header and footer
+
+            if (this.footer_button_overlay) {
+                this.footer_button_overlay.stop().animate({"opacity": 1}, this.anim_duration*0.25);
+            };
+
+            if (this.banner_fixed) {
+                this.banner.html.stop().animate({"opacity": 1}, this.anim_duration*0.25);
+            };
+
+        }
+        else {
+            // Make sure to hide header and footer
+
+            if (this.footer_button_overlay) {
+                this.footer_button_overlay.stop().animate({"opacity": 0}, this.anim_duration*1.5);
+            };
+
+            if (this.banner_fixed) {
+                this.banner.html.stop().animate({"opacity": 0}, this.anim_duration*1.5);
+            };
+
         };
 
         (function (self) {

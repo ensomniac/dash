@@ -26742,7 +26742,7 @@ function DashMobileLayoutCardStack (binder, color) {
     this.banner = null;
     this.banner_fixed = false; // By default, the banner scrolls with the rest of the content
     this.footer_button_overlay = null;
-    this.anim_duration = 400;
+    this.anim_duration = 250;
     this.backing_gradient = null;
     this.banner_spacer = null;
     this.touch_active = false;
@@ -26881,7 +26881,11 @@ function DashMobileLayoutCardStack (binder, color) {
         });
         this.width = width;
         this.height = height;
+        if (this.footer_button_overlay) {
+            this.set_footer_overlay_size();
+        };
         if (this.banner_fixed) {
+            this.set_fixed_banner_size();
             this.on_center_scroll();
         };
     };
@@ -26931,14 +26935,9 @@ function DashMobileLayoutCardStack (binder, color) {
             return;
         };
         this.banner_fixed = true;
-        // this.banner.html.unbind();
-        this.banner.html.css({
-            "position": "fixed",
-            "top": 0,
-            "left": 0,
-            "right": 0,
-        });
-        this.html.append(this.banner.html);
+        this.set_fixed_banner_size();
+        // this.html.append(this.banner.html);
+        this.slider.append(this.banner.html);
         // You should never see this, but it allows the window to scroll correctly
         this.banner_spacer = $("<div></div>");
         this.banner_spacer.css({
@@ -26973,6 +26972,9 @@ function DashMobileLayoutCardStack (binder, color) {
         };
     };
     this.AddLeftContent = function (html) {
+        // if (this.banner_fixed) {
+        //     console.log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
+        // };
         if (this.active_panel_index == 0) {
             console.error("The left panel is already loaded");
         };
@@ -26989,9 +26991,16 @@ function DashMobileLayoutCardStack (binder, color) {
         this.slide_to_index(0);
     };
     this.ShowCenterContent = function () {
+        // if (this.banner_fixed) {
+        //     console.log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
+        // };
         this.slide_to_index(1);
     };
     this.AddRightContent = function (html) {
+        // if (this.banner_fixed) {
+        //     console.log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     this.unfix_banner_on_top();
+        // };
         if (this.active_panel_index == 2) {
             console.error("The right panel is already loaded");
         };
@@ -27031,7 +27040,9 @@ function DashMobileLayoutCardStack (binder, color) {
             "padding-left": Dash.Size.Padding*0.5,
             // "padding-right": Dash.Size.Padding*0.5,
         });
-        this.html.append(this.footer_button_overlay);
+        this.slider.append(this.footer_button_overlay);
+        // this.html.append(this.footer_button_overlay);
+        this.set_footer_overlay_size();
         // You should never see this, but it allows the window to scroll correctly
         // without having to add padding/margin for the lower button content
         this.footer_spacer = $("<div></div>");
@@ -27039,7 +27050,26 @@ function DashMobileLayoutCardStack (binder, color) {
             "height": Dash.Size.ButtonHeight,
         });
         this.center_content.append(this.footer_spacer);
-
+    };
+    this.set_footer_overlay_size = function () {
+        this.footer_button_overlay.css({
+            "position": "fixed",
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "bottom": 0,
+            "left": this.width,
+            "width": this.width - (Dash.Size.Padding*0.5),
+            "right": "auto",
+        });
+    };
+    this.set_fixed_banner_size = function () {
+        this.banner.html.css({
+            "position": "fixed",
+            "top": 0,
+            "left": this.width,
+            "width": this.width,
+            "right": "auto",
+        });
     };
     this.AddCard = function () {
         var card = new DashMobileLayoutCard(this);
@@ -27049,14 +27079,42 @@ function DashMobileLayoutCardStack (binder, color) {
     this.slide_to_index = function (target_index) {
         var backing_opacity = 0;
         if (target_index == 0) {
-            this.left_content.css({"display": "block"});
+            // LEFT
+            this.left_content.css({"display": "block", "opacity": 1});
+            this.right_content.stop().animate({"opacity":   0}, this.anim_duration);
+            this.center_content.stop().animate({"opacity": 0}, this.anim_duration);
         }
         else if (target_index == 2) {
-            this.right_content.css({"display": "block"});
+            // RIGHT
+            this.right_content.css({"display": "block", "opacity": 1});
+            this.left_content.stop().animate({"opacity":   0}, this.anim_duration);
+            this.center_content.stop().animate({"opacity": 0}, this.anim_duration);
         }
         else {
-            this.center_content.css({"display": "block"});
+            // CENTER
+            this.center_content.css({"display": "block", "opacity": 1});
             backing_opacity = 1;
+            this.left_content.stop().animate({"opacity":  0}, this.anim_duration);
+            this.right_content.stop().animate({"opacity": 0}, this.anim_duration);
+        };
+
+        if (target_index == 1) {
+            // Make sure to show header and footer
+            if (this.footer_button_overlay) {
+                this.footer_button_overlay.stop().animate({"opacity": 1}, this.anim_duration*0.25);
+            };
+            if (this.banner_fixed) {
+                this.banner.html.stop().animate({"opacity": 1}, this.anim_duration*0.25);
+            };
+        }
+        else {
+            // Make sure to hide header and footer
+            if (this.footer_button_overlay) {
+                this.footer_button_overlay.stop().animate({"opacity": 0}, this.anim_duration*1.5);
+            };
+            if (this.banner_fixed) {
+                this.banner.html.stop().animate({"opacity": 0}, this.anim_duration*1.5);
+            };
         };
         (function (self) {
             self.slider.stop().animate({
@@ -27203,13 +27261,17 @@ function DashCardStackBanner (stack) {
     this.OnScroll = function (scroll_top) {
         var current_height = this.html.height();
         var scroll_max = this.html.height()*0.5;
+        var footer_row_height = 0;
         var scroll_norm = 1; // Scrolled past the banner
         if (scroll_top <= scroll_max) {
             scroll_norm = scroll_top / scroll_max;
         };
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
+        if (this.footer_row) {
+            footer_row_height = this.footer_row.row_height;
+        };
         // var scroll_norm = scroll_top / current_height;
-        var max_offset = current_height + this.footer_row.row_height;
+        var max_offset = current_height + footer_row_height;
         var headline_offset = 0;
         if (this.headline) {
             headline_offset = this.headline.GetHeight();
@@ -27280,6 +27342,20 @@ function DashCardStackBanner (stack) {
             headline_top_margin = Dash.Size.Padding*0.25;
             headline_bottom_margin = (Dash.Size.Padding*0.25);
             headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            // bottom_margin = Dash.Size.ButtonHeight;
+            bottom_margin = Dash.Size.Padding;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
+        };
+        if (!this.header_row && this.footer_row) {
+            console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
+            mode = 3;
+            headline_top_margin = Dash.Size.Padding*1;
+            // headline_top_margin = 100;
+            headline_bottom_margin = Dash.Size.Padding*1;
+            // headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
             // To account for the balance offset of the
             // top button row when there is no footer
             // bottom_margin = Dash.Size.ButtonHeight;

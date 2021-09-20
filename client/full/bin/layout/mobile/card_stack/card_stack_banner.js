@@ -113,6 +113,7 @@ function DashCardStackBanner (stack) {
     this.OnScroll = function (scroll_top) {
         var current_height = this.html.height();
         var scroll_max = this.html.height()*0.5;
+        var footer_row_height = 0;
 
         var scroll_norm = 1; // Scrolled past the banner
         if (scroll_top <= scroll_max) {
@@ -121,8 +122,12 @@ function DashCardStackBanner (stack) {
 
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
 
+        if (this.footer_row) {
+            footer_row_height = this.footer_row.row_height;
+        };
+
         // var scroll_norm = scroll_top / current_height;
-        var max_offset = current_height + this.footer_row.row_height;
+        var max_offset = current_height + footer_row_height;
         var headline_offset = 0;
 
         if (this.headline) {
@@ -214,6 +219,25 @@ function DashCardStackBanner (stack) {
             headline_top_margin = Dash.Size.Padding*0.25;
             headline_bottom_margin = (Dash.Size.Padding*0.25);
             headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
+
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            // bottom_margin = Dash.Size.ButtonHeight;
+            bottom_margin = Dash.Size.Padding;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
+
+        };
+
+        if (!this.header_row && this.footer_row) {
+
+            console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
+
+            mode = 3;
+            headline_top_margin = Dash.Size.Padding*1;
+            // headline_top_margin = 100;
+            headline_bottom_margin = Dash.Size.Padding*1;
+            // headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
 
             // To account for the balance offset of the
             // top button row when there is no footer
