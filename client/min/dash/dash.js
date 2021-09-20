@@ -23972,12 +23972,6 @@ function DashGuiComboInterface () {
     this.SetLabel = function (content) {
         this.label.text(content["label"]);
     };
-    // this.SetID = function (combo_id) {
-    //     this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
-    //
-    //     this.on_selection(this.selected_option_id, true);
-    //     this.flash();
-    // };
     this.SetWidth = function (width) {
         this.html.css({"width": width});
         this.rows.css({"width": width});
@@ -24011,7 +24005,14 @@ function DashGuiComboInterface () {
     };
     this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
-        if (!ignore_callback) {
+        if (typeof(selected) == "string") {
+            console.log("WARNING: A combo object is using a string to identify a selected property. This should be an object only.");
+            console.log("combo_list", combo_list);
+            console.log("selected", selected);
+            console.log("ignore_callback", ignore_callback);
+            return;
+        };
+        if (!ignore_callback && selected) {
             ignore_callback = (selected["id"].toString() === this.selected_option_id);
         }
         if (combo_list) {
