@@ -158,6 +158,8 @@ function DashGuiLayoutUserProfile (user_data, options) {
         this.user_image_upload_button.label.css(hidden_css);
         this.user_image_upload_button.file_uploader.html.css(hidden_css);
 
+        this.user_image_upload_button.html.attr("title", "Upload Image");
+
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {
                 user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);

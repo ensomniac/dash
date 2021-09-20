@@ -213,10 +213,8 @@ function DashGuiButtonInterface () {
             $.post(api, server_data, function (response) {
                 self.SetLoading(false);
 
-                var response_json = $.parseJSON(response);
-
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);

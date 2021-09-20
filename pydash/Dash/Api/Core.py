@@ -261,11 +261,25 @@ class ApiCore:
         return {"gzip": order_compressed_str}
 
     def print_return_data(self):
+        response_status = self.get_response_status()
+
         if "gzip" in self.Params and not self._response.get("error"):
             self._response = self.compress_response(self._response)
 
-        print("Content-type: text/plain\n")
+        print(f"{response_status}Content-type: application/json\n")
         print(str(json.dumps(self._response)))
+
+    def get_response_status(self):
+        status = "Status: 200 OK\n"
+        error = self._response.get("error")
+
+        if error:
+            if error == "Unauthorized":
+                status = "Status: 401 Unauthorized\n"
+            else:
+                status = "Status: 400 Bad Request\n"
+
+        return status
 
     def run(self, f):
         self._response = {"error": "Missing return data x8765"}

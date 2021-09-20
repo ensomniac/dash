@@ -12,7 +12,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
 
-    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
@@ -20,6 +19,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.flash_enabled = true;
     this.gravity_vertical = 0;
     this.is_searchable = false;
+    this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
@@ -31,6 +31,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
+    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
 
     DashGuiComboInterface.call(this);
 
@@ -167,11 +168,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             selected_obj = this.option_list[0];
         }
 
-        for (var x in this.option_list) {
-            if (this.option_list[x]["id"] == this.selected_option_id) {
-                selected_obj = this.option_list[x];
+        if (this.selected_option_id) {
+            for (var x in this.option_list) {
+                if (this.option_list[x]["id"].toString() === this.selected_option_id.toString()) {
+                    selected_obj = this.option_list[x];
 
-                break;
+                    break;
+                }
             }
         }
 
@@ -185,14 +188,14 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.setup_load_dots = function () {
-        this.load_dots = new LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
 
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
 
         this.html.append(this.load_dots.html);
 
-        if (this.text_alignment == "right") {
+        if (this.text_alignment.toString() === "right") {
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
@@ -259,7 +262,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         // Called when a selection in the combo is made
 
-        var previous_selected_option = this.selected_option_id;
+        var previous_selected_option = this.selected_option;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
@@ -271,7 +274,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.hide();
         this.label.text(label_text);
 
-        this.selected_option_id = selected_option;
+        this.selected_option = selected_option;
+        this.selected_option_id = selected_option["id"];
 
         if (this.initialized && !ignore_callback && this.callback) {
             this.callback(selected_option, previous_selected_option, this.additional_data, search_text);

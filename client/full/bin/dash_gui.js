@@ -10,6 +10,7 @@ function DashGui() {
     this.IconButton =      DashGuiIconButton;
     this.Input =           DashGuiInput;
     this.InputRow =        DashGuiInputRow;
+    this.ToolRow =         DashGuiToolRow;
     this.Layout =          new DashGuiLayout();
     this.LoadDots =        DashGuiLoadDots;
     this.Login =           DashGuiLogin;
@@ -194,5 +195,72 @@ function DashGui() {
         })(this, icon_id, callback, data_key, additional_data, binder);
 
         return this._tmp_button;
+    };
+
+    // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
+    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000) {
+        var color = Dash.Color.Dark;
+        var tooltip = $("<div></div>");
+        var padding = Dash.Size.Padding * 0.5;
+
+        html.append(tooltip);
+
+        tooltip.css({
+            "padding": padding,
+            "color": color.Text,
+            "background": color.Background,
+            "border": "2px solid " + color.BackgroundRaised,
+            "border-radius": padding,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.5)",
+            "position": "absolute",
+            "z-index": 100000,
+            "white-space": "pre-wrap",
+            "top"  : html.height() + padding,
+            "opacity": 0.95,
+            "cursor": "auto",
+            "width": Dash.Size.ColumnWidth * 3,
+            "pointer-events": "none",
+            ...additional_css
+        });
+
+        if (monospaced) {
+            tooltip.css({
+                "font-family": "Andale Mono, Monaco, monospace",
+                "font-size": "85%"
+            });
+        }
+
+        else {
+            tooltip.css({
+                "font-family": "sans_serif_normal",
+                "font-size": "90%"
+            });
+        }
+
+        if (text) {
+            tooltip.text(text);
+        }
+
+        tooltip.hide();
+
+        var timer;
+
+        html.hover(
+            function () {
+                timer = setTimeout(
+                    function () {
+                    tooltip.show();
+                    },
+                    delay_ms
+                );
+            },
+            function () {
+                clearTimeout(timer);
+
+                tooltip.hide();
+            }
+        );
+
+        return tooltip;
     };
 }

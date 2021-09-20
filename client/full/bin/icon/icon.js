@@ -61,6 +61,12 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
         });
     };
 
+    this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+        this.icon_html.css({
+            "text-shadow": value,
+        });
+    };
+
     // this.update = function (icon_id) {
     //     this.id = icon_id;
     //     this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];

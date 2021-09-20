@@ -45,6 +45,11 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
             "color": color
         });
     };
+    this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+        this.icon_html.css({
+            "text-shadow": value,
+        });
+    };
     // this.update = function (icon_id) {
     //     this.id = icon_id;
     //     this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
@@ -17805,23 +17810,33 @@ function Dash () {
     this.IsValidObject = function (data_object) {
         return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
     };
-    this.IsServerIsoDate = function (str) {
-        str = str.toString();
-        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(str);
+    this.IsServerIsoDate = function (value) {
+        if (typeof value === "object") {
+            return false;
+        }
+        try {
+            if (typeof JSON.parse(value) === "object") {
+                return false;
+            }
+        }
+        catch {
+            // Ignore
+        }
+        value = value.toString();
+        var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(value);
         if (!test) {
-            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str);
+            test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
         }
         return test;
     };
     this.ValidateResponse = function (response) {
         if (!response) {
             console.log("Dash.ValidateResponse(1)", response);
-            alert("There was a server problem with this request");
+            alert("There was a server problem with this request: No response received");
             return null;
         }
         if (response["error"]) {
-            console.log("Dash.ValidateResponse(2)");
-            console.log(response);
+            console.log("There was a server problem with this request:", response);
             alert(response["error"]);
             return null;
         }
@@ -19067,18 +19082,32 @@ function DashRequest () {
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
     function DashRequestThread (dash_requests, url, params, binder, callback) {
-        this.dash_requests = dash_requests;
         this.url = url;
+        this.binder = binder;
+        this.callback = callback;
         this.params = params || {};
+        this.dash_requests = dash_requests;
         this.params["token"] = Dash.Local.Get("token");
         this.id = Math.random() * (999999 - 100000) + 100000;
-        this.callback = callback;
-        this.binder = binder;
         this.post = function () {
             (function (self) {
-                $.post(self.url, self.params, function (response_str) {
-                    self.dash_requests.on_response(self, $.parseJSON(response_str));
-                });
+                $.post(
+                    self.url,
+                    self.params,
+                    function (response) {
+                        self.dash_requests.on_response(self, response);
+                    }
+                ).fail(
+                    function (request) {
+                        var response = request.responseJSON || request.responseText;
+                        if (response) {
+                            self.dash_requests.on_response(self, response);
+                        }
+                        else {
+                            console.log("WARNING: Request to " + self.url + " failed:", self.params);
+                        }
+                    }
+                );
             })(this);
         };
         this.post();
@@ -19524,6 +19553,7 @@ function DashGui() {
     this.IconButton =      DashGuiIconButton;
     this.Input =           DashGuiInput;
     this.InputRow =        DashGuiInputRow;
+    this.ToolRow =         DashGuiToolRow;
     this.Layout =          new DashGuiLayout();
     this.LoadDots =        DashGuiLoadDots;
     this.Login =           DashGuiLogin;
@@ -19666,6 +19696,62 @@ function DashGui() {
             self._tmp_button = button;
         })(this, icon_id, callback, data_key, additional_data, binder);
         return this._tmp_button;
+    };
+    // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
+    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000) {
+        var color = Dash.Color.Dark;
+        var tooltip = $("<div></div>");
+        var padding = Dash.Size.Padding * 0.5;
+        html.append(tooltip);
+        tooltip.css({
+            "padding": padding,
+            "color": color.Text,
+            "background": color.Background,
+            "border": "2px solid " + color.BackgroundRaised,
+            "border-radius": padding,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.5)",
+            "position": "absolute",
+            "z-index": 100000,
+            "white-space": "pre-wrap",
+            "top"  : html.height() + padding,
+            "opacity": 0.95,
+            "cursor": "auto",
+            "width": Dash.Size.ColumnWidth * 3,
+            "pointer-events": "none",
+            ...additional_css
+        });
+        if (monospaced) {
+            tooltip.css({
+                "font-family": "Andale Mono, Monaco, monospace",
+                "font-size": "85%"
+            });
+        }
+        else {
+            tooltip.css({
+                "font-family": "sans_serif_normal",
+                "font-size": "90%"
+            });
+        }
+        if (text) {
+            tooltip.text(text);
+        }
+        tooltip.hide();
+        var timer;
+        html.hover(
+            function () {
+                timer = setTimeout(
+                    function () {
+                    tooltip.show();
+                    },
+                    delay_ms
+                );
+            },
+            function () {
+                clearTimeout(timer);
+                tooltip.hide();
+            }
+        );
+        return tooltip;
     };
 }
 
@@ -19979,9 +20065,8 @@ function DashGuiButtonInterface () {
         (function (self) {
             $.post(api, server_data, function (response) {
                 self.SetLoading(false);
-                var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);
@@ -20130,7 +20215,6 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     };
     this.upload_success = function (file, result) {
         this.button.SetLoadBar(0);
-        result = $.parseJSON(result);
         this.upload_backing_bar.animate({"opacity": 0});
         this.upload_progress_bar.animate({"opacity": 0});
         this.callback(result);
@@ -20144,7 +20228,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
                     this.on("processing", function (file) {self.processing_upload(file);});
                     this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
                     this.on("success", function (file, result) {self.upload_success(file, result);});
-                    },
+                },
                 "url": self.api,
                 "uploadMultiple": false,
                 "addRemoveLinks": false,
@@ -21420,6 +21504,204 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.setup_styles();
 }
 
+function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
+    this.binder = binder;
+    this.get_data_cb = get_data_cb.bind(binder);
+    this.set_data_cb = set_data_cb.bind(binder);
+    this.color = color || Dash.Color.Light;
+    this.html = null;
+    this.elements = [];
+    this.toolbar = null;
+    this.height = Dash.Size.RowHeight;  // TODO
+    this.setup_styles = function () {
+        this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
+        this.toolbar.stroke_sep.remove();
+        this.toolbar.html.css({
+            "padding-left": Dash.Size.Padding * 0.1,
+            "padding-right": 0,
+            "height": this.height,
+            "margin-left": Dash.Size.Padding * 2,
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+        this.html = this.toolbar.html;
+    };
+    this.AddExpander = function () {
+        return this.toolbar.AddExpander();
+    };
+    this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
+        var combo = this.toolbar.AddCombo(
+            "",
+            combo_options,
+            default_value,
+            callback.bind(this.binder),
+            true,
+            additional_data
+        );
+        combo.html.css({
+            "line-height": this.height,
+            "margin-top": 0
+        });
+        this.elements.push(combo);
+        return combo;
+    };
+    this.AddText = function (text, color=null) {
+        this.toolbar.AddText(text, color);
+    };
+    this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
+        var label = this.toolbar.AddLabel(text, false);
+        if (right_margin !== null) {
+            label.html.css({
+                "margin-right": right_margin
+            });
+        }
+        label.html.css({
+            "line-height": this.height,
+            "margin-top": 0,
+            "margin-left": left_label_margin !== null ? left_label_margin : Dash.Size.Padding * 0.1
+        });
+        label.label.css({
+            "white-space": "nowrap",
+            "font-size": "80%",
+            "font-family": "sans_serif_bold"
+        });
+        if (border) {
+            if (icon_name) {
+                label.ReplaceBorderWithIcon(
+                    icon_name,
+                    null,
+                    {"margin-top": Dash.Size.Padding * 0.2},
+                    this.height * 0.8
+                );
+                label.html.css({
+                    "padding-left": 0
+                });
+            }
+            else {
+                label.border.css({
+                    "background": this.color.Button.Background.Base,
+                    "height": this.height * 0.9,
+                    "margin-top": Dash.Size.Padding * 0.1
+                });
+            }
+        }
+        else {
+            label.border.remove();
+            label.label.css({
+                "margin-left": 0
+            });
+            if (this.elements.length < 1) {
+                label.html.css({
+                    "padding-left": 0
+                });
+                label.label.css({
+                    "padding-left": 0
+                });
+            }
+        }
+        this.elements.push(label);
+        return label;
+    };
+    this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
+        var input = this.toolbar.AddTransparentInput(
+            text,
+            on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
+            {
+                "width": width || Dash.Size.ColumnWidth * 0.6,
+                "on_enter": on_submit_cb ? on_submit_cb.bind(this.binder) : this.on_input_submit
+            },
+            {
+                "data_key": data_key
+            }
+        );
+        input.html.css({
+            "margin-right": 0,
+            "height": this.height * 0.65,
+            "margin-top": Dash.Size.Padding * 0.25
+        });
+        input.input.css({
+            "top": 0,
+            "height": this.height * 0.65
+        });
+        if (flex) {
+            input.html.css({
+                "flex-grow": 2
+            });
+            input.input.css({
+                "flex-grow": 2,
+                "width": "100%"
+            });
+        }
+        var value = this.get_data_cb()[data_key];
+        if (value) {
+            input.SetText(value);
+        }
+        this.elements.push(input);
+        return input;
+    };
+    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null) {
+        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), null, additional_data);
+        button.html.css({
+            "margin-top": Dash.Size.Padding * 0.15
+        });
+        if (hover_hint) {
+            button.SetHoverHint(hover_hint);
+        }
+        return button;
+    };
+    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
+        var checkbox = new Dash.Gui.Checkbox(
+            label_text,                                             // Label text
+            this,                                                   // Binder
+            callback.bind(this.binder),                             // Callback
+            "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
+            default_state,                                          // Default state
+            true,                                                   // Label first
+            label_border,                                           // Include border
+            this.color                                              // Color
+        );
+        checkbox.html.css({
+            "margin-top": 0
+        });
+        // May need to add this to the other public functions as well
+        if (this.elements.length > 0 && label_border) {
+            checkbox.html.css({
+                "margin-left": Dash.Size.Padding
+            });
+        }
+        checkbox.label.html.css({
+            "margin-left": Dash.Size.Padding * 0.1
+        });
+        checkbox.label.label.css({
+            "margin-left": Dash.Size.Padding * 1.5,
+            "font-size": "80%",
+            "font-family": "sans_serif_bold"
+        });
+        if (label_border) {
+            checkbox.label.border.css({
+                "background": this.color.Button.Background.Base,
+                "height": Dash.Size.RowHeight * 0.9,
+                "margin-top": Dash.Size.Padding * 0.1
+            });
+        }
+        checkbox.icon_button.SetHoverHint(hover_hint);
+        if (checkbox_redraw_styling) {
+            checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);
+        }
+        this.toolbar.AddHTML(checkbox.html);
+        return checkbox;
+    };
+    this.AddHTML = function (html) {
+        this.toolbar.AddHTML(html);
+    };
+    this.on_input_keystroke = function () {
+        // Placeholder
+    };
+    this.on_input_submit = function (submitted_value, input_obj, additional_data) {
+        this.set_data_cb(additional_data["data_key"], submitted_value);
+    };
+    this.setup_styles();
+}
+
 function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
@@ -21904,7 +22186,7 @@ function DashGuiInputRowInterface () {
         });
         var options = {};
         options["list"] = combo_options;
-        options["selected"] = ComboUtils.GetDataFromID(combo_options, this.initial_value);
+        // options["selected"] = ComboUtils.GetDataFromID(combo_options, this.initial_value);
         options["thin_style"] = true;
         options["text_alignment"] = "left";
         options["label_style"] = "light";
@@ -23169,7 +23451,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.style              = this.options["style"] || "default";
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
-    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
@@ -23177,6 +23458,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.flash_enabled = true;
     this.gravity_vertical = 0;
     this.is_searchable = false;
+    this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
@@ -23188,6 +23470,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
+    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     DashGuiComboInterface.call(this);
     this.hide_skirt = function () {
         if (!this.click_skirt) {
@@ -23291,10 +23574,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
         }
-        for (var x in this.option_list) {
-            if (this.option_list[x]["id"] == this.selected_option_id) {
-                selected_obj = this.option_list[x];
-                break;
+        if (this.selected_option_id) {
+            for (var x in this.option_list) {
+                if (this.option_list[x]["id"].toString() === this.selected_option_id.toString()) {
+                    selected_obj = this.option_list[x];
+                    break;
+                }
             }
         }
         if (selected_obj) {
@@ -23305,11 +23590,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
     this.setup_load_dots = function () {
-        this.load_dots = new LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
         this.html.append(this.load_dots.html);
-        if (this.text_alignment == "right") {
+        if (this.text_alignment.toString() === "right") {
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding*0.5,
@@ -23363,7 +23648,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         // Called when a selection in the combo is made
-        var previous_selected_option = this.selected_option_id;
+        var previous_selected_option = this.selected_option;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
             this.label.text("ERROR");
@@ -23371,7 +23656,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
         this.hide();
         this.label.text(label_text);
-        this.selected_option_id = selected_option;
+        this.selected_option = selected_option;
+        this.selected_option_id = selected_option["id"];
         if (this.initialized && !ignore_callback && this.callback) {
             this.callback(selected_option, previous_selected_option, this.additional_data, search_text);
         }
@@ -23680,14 +23966,18 @@ function DashGuiComboInterface () {
     this.GetActiveID = function () {
         return this.selected_option_id;
     };
+    this.GetActiveOption = function () {
+        return this.selected_option;
+    };
     this.SetLabel = function (content) {
         this.label.text(content["label"]);
     };
-    this.SetID = function (combo_id) {
-        this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
-        this.on_selection(this.selected_option_id, true);
-        this.flash();
-    };
+    // this.SetID = function (combo_id) {
+    //     this.selected_option_id = ComboUtils.GetDataFromID(this.option_list, combo_id);
+    //
+    //     this.on_selection(this.selected_option_id, true);
+    //     this.flash();
+    // };
     this.SetWidth = function (width) {
         this.html.css({"width": width});
         this.rows.css({"width": width});
@@ -23713,25 +24003,25 @@ function DashGuiComboInterface () {
         (function (self) {
             $.post(api, server_data, function (response) {
                 self.load_dots.Stop();
-                var response_json = $.parseJSON(response);
                 if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response_json);
+                    self.on_request_response_callback(response);
                 }
             });
         })(this);
     };
-    this.Update = function (label_list, selected, ignore_callback=false) {
+    this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
         if (!ignore_callback) {
-            ignore_callback = (selected["id"] == this.selected_option_id);
+            ignore_callback = (selected["id"].toString() === this.selected_option_id);
         }
-        if (label_list) {
-            this.option_list = label_list;
+        if (combo_list) {
+            this.option_list = combo_list;
         }
         if (selected) {
-            this.selected_option_id = selected;
+            this.selected_option = selected;
+            this.selected_option_id = selected["id"];
         }
-        this.on_selection(this.selected_option_id, ignore_callback);
+        this.on_selection(this.selected_option, ignore_callback);
         if (this.bool) {
             this.option_list.reverse();
         }
@@ -23897,7 +24187,7 @@ function DashGuiComboSearch () {
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input(" Type to search...", this.color);
-        this.search_input.SetText(this.selected_option_id["label_text"]);
+        this.search_input.SetText(this.selected_option["label_text"]);
         this.search_input.OnChange(this.on_search_text_changed, this);
         this.search_input.OnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
@@ -24290,6 +24580,7 @@ function DashGuiLayoutUserProfile (user_data, options) {
         this.user_image_upload_button.html.css({...button_css, "background": "none"});
         this.user_image_upload_button.label.css(hidden_css);
         this.user_image_upload_button.file_uploader.html.css(hidden_css);
+        this.user_image_upload_button.html.attr("title", "Upload Image");
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {
                 user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);
