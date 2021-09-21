@@ -199,6 +199,8 @@ function DashGui() {
 
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
     this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000) {
+        // TODO: This should probably become its own style at some point
+
         var color = Dash.Color.Dark;
         var tooltip = $("<div></div>");
         var padding = Dash.Size.Padding * 0.5;
@@ -212,10 +214,9 @@ function DashGui() {
             "border": "2px solid " + color.BackgroundRaised,
             "border-radius": padding,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.5)",
-            "position": "absolute",
+            "position": "fixed",
             "z-index": 100000,
             "white-space": "pre-wrap",
-            "top"  : html.height() + padding,
             "opacity": 0.95,
             "cursor": "auto",
             "width": Dash.Size.ColumnWidth * 3,
@@ -245,21 +246,40 @@ function DashGui() {
 
         var timer;
 
-        html.hover(
-            function () {
-                timer = setTimeout(
-                    function () {
-                    tooltip.show();
-                    },
-                    delay_ms
-                );
-            },
-            function () {
-                clearTimeout(timer);
+        (function (self, html, additional_css) {
+            html.hover(
+                function () {
+                    timer = setTimeout(
+                        function () {
+                            var top = html.offset()["top"];
+                            var left = html.offset()["left"];
 
-                tooltip.hide();
-            }
-        );
+                            if (additional_css && additional_css["top"]) {
+                                top += parseInt(additional_css["top"]);
+                            }
+
+                            if (additional_css && additional_css["left"]) {
+                                left += parseInt(additional_css["left"]);
+                            }
+
+                            tooltip.css({
+                                ...additional_css,
+                                "top": top,
+                                "left": left
+                            });
+
+                            tooltip.show();
+                        },
+                        delay_ms
+                    );
+                },
+                function () {
+                    clearTimeout(timer);
+
+                    tooltip.hide();
+                }
+            );
+        })(this, html, additional_css);
 
         return tooltip;
     };

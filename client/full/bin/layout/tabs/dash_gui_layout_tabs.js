@@ -1,44 +1,32 @@
-function DashGuiLayoutTabs(Binder, side_tabs) {
-    this.binder = Binder;
+function DashGuiLayoutTabs(binder, side_tabs) {
+    this.binder = binder;
     this.side_tabs = side_tabs;
 
     this.all_content = [];
     this.selected_index = -1;
     this.current_index = null;
     this.html = $("<div></div>");
-    this.content = $("<div></div>");
-    this.list_top = $("<div></div>");
-    this.list_bottom = $("<div></div>");
-    this.list_backing = $("<div></div>");
+    this.tab_top = $("<div></div>");
+    this.tab_bottom = $("<div></div>");
+    this.content_area = $("<div></div>");
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
     if (this.side_tabs) {
         this.color = Dash.Color.Dark;
-        this.size = Dash.Size.ColumnWidth;
-        this.list_middle = $("<div></div>");
+        this.tab_area = $("<div></div>");
+        this.tab_middle = $("<div></div>");
+        this.tab_area_size = Dash.Size.ColumnWidth;
     }
 
     else {
+        // TODO: This should probably also be converted to a better div grouping
+
         this.color = Dash.Color.Light;
-        this.size = Dash.Size.RowHeight + Dash.Size.Padding;
+        this.list_backing = $("<div></div>");
+        this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
     }
 
     this.setup_styles = function () {
-        this.html.append(this.list_backing);
-        this.html.append(this.list_top);
-
-        if (this.side_tabs) {
-            this.html.append(this.list_middle);
-        }
-
-        this.html.append(this.list_bottom);
-        this.html.append(this.content);
-
-        this.html.css({
-            "position": "absolute",
-            "inset": 0
-        });
-
         if (this.side_tabs) {
             this.set_styles_for_side_tabs();
         }
@@ -86,7 +74,7 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             }
         }
 
-        this.content.empty();
+        this.content_area.empty();
 
         var content_html;
 
@@ -108,7 +96,7 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             content_html = $("<div>Error Loading Content</div>");
         }
 
-        this.content.append(content_html);
+        this.content_area.append(content_html);
 
         if (this.on_tab_changed_cb) {
             this.on_tab_changed_cb(this.all_content[index]);
@@ -120,7 +108,8 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             "margin-bottom": 1,
         });
 
-        this.list_top.append(html);
+        
+        this.tab_top.append(html);
     };
 
     this.MidpendHTML = function (html) {
@@ -135,7 +124,7 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             "margin-bottom": 1
         });
 
-        this.list_middle.append(html);
+        this.tab_middle.append(html);
     };
 
     this.PrependHTML = function (html) {
@@ -143,7 +132,7 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             "margin-top": 1,
         });
 
-        this.list_bottom.append(html);
+        this.tab_bottom.append(html);
     };
 
     this.AppendImage = function (img_url, height=null) {
@@ -162,13 +151,13 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             "background-position": "center",
         });
 
-        this.list_top.append(image);
+        this.tab_top.append(image);
 
         return image;
     };
 
     this.Append = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_top, optional_params);
+        return this._add(label_text, content_div_html_class, this.tab_top, optional_params);
     };
 
     this.Midpend = function (label_text, content_div_html_class, optional_params) {
@@ -178,91 +167,107 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             return;
         }
 
-        return this._add(label_text, content_div_html_class, this.list_middle, optional_params);
+        return this._add(label_text, content_div_html_class, this.tab_middle, optional_params);
     };
 
     this.Prepend = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.list_bottom, optional_params);
+        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params);
     };
 
     this.set_styles_for_side_tabs = function () {
         this.html.css({
-            "display": "flex",
-            "flex-direction": "column"
-        });
-
-        this.list_backing.css({
             "position": "absolute",
-            "left": 0,
+            "inset": 0
+        });
+
+        this.content_area.css({
+            "position": "absolute",
             "top": 0,
+            "left": this.tab_area_size,
             "bottom": 0,
-            "width": this.size,
-            "background": this.color.Background,
+            "right": 0
         });
 
-        this.list_top.css({
-            "width": this.size
+        this.tab_area.css({
+            "display": "flex",
+            "flex-direction": "column",
+            "position": "absolute",
+            "top": 0,
+            "left": 0,
+            "bottom": 0,
+            "width": this.tab_area_size,
+            "background": this.color.Background
         });
 
-        this.list_middle.css({
+        this.tab_top.css({
+            "width": this.tab_area_size
+        });
+
+        this.tab_middle.css({
             "margin-top": Dash.Size.Padding * 0.2,
             "margin-bottom": Dash.Size.Padding * 0.2,
             "flex-grow": 2,
             "overflow-y": "auto",
-            "overflow-x": "hidden",
-            "width": this.size
+            "width": this.tab_area_size
         });
 
-        this.list_bottom.css({
-            "width": this.size
+        this.tab_bottom.css({
+            "width": this.tab_area_size
         });
 
-        // The right side / non-tab area / content
-        this.content.css({
-            "position": "absolute",
-            "inset": 0,
-            "overflow-y": "auto",
-            "background": Dash.Color.Light.Background,
-            "left": this.size,
-            "box-shadow": "0px 0px 20px 10px rgba(0, 0, 0, 0.2)"
-        });
+        this.tab_area.append(this.tab_top);
+        this.tab_area.append(this.tab_middle);
+        this.tab_area.append(this.tab_bottom);
+
+        this.html.append(this.content_area);
+        this.html.append(this.tab_area);
     };
 
     this.set_styles_for_top_tabs = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0
+        });
+
         this.list_backing.css({
             "position": "absolute",
             "left": 0,
             "top": 0,
             "right": 0,
-            "height": this.size,
+            "height": this.tab_area_size,
             "background": this.color.Tab.AreaBackground
         });
 
-        this.list_top.css({
+        this.tab_top.css({
             "position": "absolute",
             "left": 0,
             "right": 0,
             "top": 0,
             "display": "flex",
-            "height": this.size
+            "height": this.tab_area_size
         });
 
-        this.list_bottom.css({
+        this.tab_bottom.css({
             "position": "absolute",
             "right": 0,
             "top": 0,
             "display": "flex",
-            "height": this.size
+            "height": this.tab_area_size
         });
 
         // The right side / non-tab area / content
-        this.content.css({
+        this.content_area.css({
             "position": "absolute",
             "inset": 0,
             "overflow-y": "auto",
             "background": Dash.Color.Light.Background,
-            "top": this.size
+            "top": this.tab_area_size
         });
+
+        this.html.append(this.list_backing);
+        this.html.append(this.tab_top);
+        this.html.append(this.tab_bottom);
+        this.html.append(this.content_area);
     };
 
     this.load_last_selection = function () {
@@ -306,7 +311,7 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             );
         })(this, this.all_content.length);
 
-        anchor_div = anchor_div || this.list_top;
+        anchor_div = anchor_div || this.tab_top;
 
         anchor_div.append(content_data["button"].html);
 
