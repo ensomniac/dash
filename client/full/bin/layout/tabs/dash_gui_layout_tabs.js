@@ -205,8 +205,8 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
         });
 
         this.list_middle.css({
-            "margin-top": Dash.Size.Padding * 0.25,
-            "margin-bottom": Dash.Size.Padding * 0.25,
+            "margin-top": Dash.Size.Padding * 0.2,
+            "margin-bottom": Dash.Size.Padding * 0.2,
             "flex-grow": 2,
             "overflow-y": "auto",
             "overflow-x": "hidden",

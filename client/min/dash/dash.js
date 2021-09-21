@@ -17811,6 +17811,9 @@ function Dash () {
         return !(!data_object || jQuery.isEmptyObject(data_object) || typeof data_object !== "object");
     };
     this.IsServerIsoDate = function (value) {
+        if (!value) {
+            return false;
+        }
         if (typeof value === "object") {
             return false;
         }
@@ -25357,8 +25360,8 @@ function DashGuiLayoutTabs(Binder, side_tabs) {
             "width": this.size
         });
         this.list_middle.css({
-            "margin-top": Dash.Size.Padding * 0.25,
-            "margin-bottom": Dash.Size.Padding * 0.25,
+            "margin-top": Dash.Size.Padding * 0.2,
+            "margin-bottom": Dash.Size.Padding * 0.2,
             "flex-grow": 2,
             "overflow-y": "auto",
             "overflow-x": "hidden",

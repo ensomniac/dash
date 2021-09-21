@@ -116,6 +116,10 @@ function Dash () {
     };
 
     this.IsServerIsoDate = function (value) {
+        if (!value) {
+            return false;
+        }
+
         if (typeof value === "object") {
             return false;
         }
