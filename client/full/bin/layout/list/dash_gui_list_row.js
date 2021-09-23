@@ -10,7 +10,7 @@ function DashGuiListRow (list, arbitrary_id) {
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
-    this.expand_content = $("<div></div>");
+    this.expanded_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
     this.is_header = this.id === "_top_header_row";
 
@@ -29,9 +29,9 @@ function DashGuiListRow (list, arbitrary_id) {
         else {
             this.html.append(this.highlight);
             this.html.append(this.selected_highlight);
-            this.html.append(this.expand_content);
+            this.html.append(this.expanded_content);
 
-            this.expand_content.css({
+            this.expanded_content.css({
                 "margin-left": -Dash.Size.Padding,
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
@@ -88,19 +88,8 @@ function DashGuiListRow (list, arbitrary_id) {
         this.setup_connections();
     };
 
-    this.create_expand_highlight = function () {
-        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
-
-        this.expanded_highlight.css({
-            "background": this.color.BackgroundRaised,
-            "pointer-events": "none",
-            "opacity": 0,
-            "top": -1,
-            "bottom": -1,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
-        });
-
-        this.html.prepend(this.expanded_highlight);
+    this.IsExpanded = function () {
+        return this.is_expanded;
     };
 
     this.Hide = function () {
@@ -150,19 +139,6 @@ function DashGuiListRow (list, arbitrary_id) {
         }
     };
 
-    // Helper/handler for external GetDataForKey functions
-    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
-        if (this.is_header) {
-            return column_config_data["display_name"] || column_config_data["data_key"].Title();
-        }
-
-        if (third_param !== null) {
-            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
-        }
-
-        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
-    };
-
     // Expand an html element below this row
     this.Expand = function (html) {
         if (this.is_expanded) {
@@ -181,27 +157,27 @@ function DashGuiListRow (list, arbitrary_id) {
 
         this.expanded_highlight.stop().animate({"opacity": 1}, 270);
 
-        var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
+        var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
 
-        this.expand_content.stop().css({
+        this.expanded_content.stop().css({
             "overflow-y": "auto",
             "opacity": 1,
             "height": "auto",
             "padding-top": Dash.Size.RowHeight,
         });
 
-        this.expand_content.append(html);
+        this.expanded_content.append(html);
 
-        var target_size = parseInt(this.expand_content.css("height").replace("px", ""));
+        var target_size = parseInt(this.expanded_content.css("height").replace("px", ""));
 
-        this.expand_content.stop().css({
+        this.expanded_content.stop().css({
             "height": size_now,
             "overflow-y": "hidden",
         });
 
         (function (self) {
-            self.expand_content.animate({"height": target_size}, 180, function () {
-                self.expand_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
+            self.expanded_content.animate({"height": target_size}, 180, function () {
+                self.expanded_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
                 self.is_expanded = true;
             });
         })(this);
@@ -218,18 +194,18 @@ function DashGuiListRow (list, arbitrary_id) {
             this.expanded_highlight.stop().animate({"opacity": 0}, 270);
         }
 
-        this.expand_content.stop().css({
+        this.expanded_content.stop().css({
             "overflow-y": "hidden",
         });
 
         (function (self) {
-            self.expand_content.animate({"height": 0}, 180, function () {
-                self.expand_content.stop().css({
+            self.expanded_content.animate({"height": 0}, 180, function () {
+                self.expanded_content.stop().css({
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
                 self.expanded_highlight.stop().animate({"opacity": 0}, 135);
-                self.expand_content.empty();
+                self.expanded_content.empty();
                 self.is_expanded = false;
             });
         })(this);
@@ -244,6 +220,34 @@ function DashGuiListRow (list, arbitrary_id) {
         // else {
         //     this.selected_highlight.stop().animate({"opacity": 0}, 250);
         // };
+    };
+
+    this.create_expand_highlight = function () {
+        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
+
+        this.expanded_highlight.css({
+            "background": this.color.BackgroundRaised,
+            "pointer-events": "none",
+            "opacity": 0,
+            "top": -1,
+            "bottom": -1,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+        });
+
+        this.html.prepend(this.expanded_highlight);
+    };
+
+    // Helper/handler for external GetDataForKey functions
+    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
+        if (this.is_header) {
+            return column_config_data["display_name"] || column_config_data["data_key"].Title();
+        }
+
+        if (third_param !== null) {
+            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+        }
+
+        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
 
     this.setup_connections = function () {

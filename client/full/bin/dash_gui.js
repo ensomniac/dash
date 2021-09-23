@@ -198,7 +198,7 @@ function DashGui() {
     };
 
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
-    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000) {
+    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
         // TODO: This should probably become its own style at some point
 
         var color = Dash.Color.Dark;
@@ -246,9 +246,20 @@ function DashGui() {
 
         var timer;
 
-        (function (self, html, additional_css) {
+        (function (self, html, additional_css, override_element) {
             html.hover(
                 function () {
+                    if (override_element) {
+                        // Override element is intended to NOT show the tooltip under the below defined
+                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
+
+                        if (override_element instanceof DashGuiListRow) {
+                            if (override_element.IsExpanded()) {
+                                return;
+                            }
+                        }
+                    }
+
                     timer = setTimeout(
                         function () {
                             var top = html.offset()["top"];
@@ -274,12 +285,23 @@ function DashGui() {
                     );
                 },
                 function () {
+                    if (override_element && !tooltip.is(":visible")) {
+                        // Override element is intended to NOT show the tooltip under the below defined
+                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
+
+                        if (override_element instanceof DashGuiListRow) {
+                            if (override_element.IsExpanded()) {
+                                return;
+                            }
+                        }
+                    }
+
                     clearTimeout(timer);
 
                     tooltip.hide();
                 }
             );
-        })(this, html, additional_css);
+        })(this, html, additional_css, override_element);
 
         return tooltip;
     };

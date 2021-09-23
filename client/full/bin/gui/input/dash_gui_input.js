@@ -3,12 +3,15 @@ function DashGuiInput (placeholder_text, color) {
     this.color = color || Dash.Color.Light;
 
     this.autosave = false;
+    this.last_submit_ts = null;
+    this.autosave_delay_ms = 1500;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
     this.last_submitted_text = "";
     this.on_change_callback = null;
     this.on_submit_callback = null;
     this.on_autosave_callback = null;
+    this.being_navigated_by_arrow_keys = false;
 
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
@@ -43,6 +46,10 @@ function DashGuiInput (placeholder_text, color) {
 
     this.InFocus = function () {
         return $(this.input).is(":focus");
+    };
+
+    this.SetAutosaveDelayMs = function (ms) {
+        this.autosave_delay_ms = parseInt(ms);
     };
 
     this.EnableAutosave = function () {
@@ -149,6 +156,9 @@ function DashGuiInput (placeholder_text, color) {
                 this.autosave_timeout = null;
             }
 
+            // TODO: Return if now minus this.last_submit_ts is less than autosave_delay_ms
+            // TODO: Return if this.being_navigated_by_arrow_keys
+
             (function (self) {
                 // This timeout is intentionally pretty long since the field will auto save if the
                 // box was changed when the user clicks out of it as well. This longer timeout
@@ -163,7 +173,7 @@ function DashGuiInput (placeholder_text, color) {
                             self.on_submit();
                         }
                     },
-                    1500
+                    self.autosave_delay_ms
                 );
             })(this);
         }
@@ -185,6 +195,7 @@ function DashGuiInput (placeholder_text, color) {
 
         this.on_submit_callback();
 
+        this.last_submit_ts = new Date();
         this.last_submitted_text = this.Text();
     };
 
@@ -196,7 +207,11 @@ function DashGuiInput (placeholder_text, color) {
                 return false;
             });
 
-            self.input.on("keypress",function (e) {
+            self.input.on("keydown",function (e) {
+                console.log("TEST keydown", e.key, e);
+
+                self.being_navigated_by_arrow_keys = e.key === "ArrowLeft" || e.key === "ArrowRight";
+
                 if (e.key === "Enter") {
                     self.on_submit();
                 }

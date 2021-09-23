@@ -28,6 +28,7 @@ function GuiIcons (icon) {
         "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
+        "building":              new GuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "cancel":                new GuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
         "cdn_tool_accordion":    new GuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new GuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),

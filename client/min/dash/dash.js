@@ -123,6 +123,7 @@ function GuiIcons (icon) {
         "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
+        "building":              new GuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "cancel":                new GuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
         "cdn_tool_accordion":    new GuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new GuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
@@ -19701,7 +19702,7 @@ function DashGui() {
         return this._tmp_button;
     };
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
-    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000) {
+    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
         // TODO: This should probably become its own style at some point
         var color = Dash.Color.Dark;
         var tooltip = $("<div></div>");
@@ -19740,9 +19741,18 @@ function DashGui() {
         }
         tooltip.hide();
         var timer;
-        (function (self, html, additional_css) {
+        (function (self, html, additional_css, override_element) {
             html.hover(
                 function () {
+                    if (override_element) {
+                        // Override element is intended to NOT show the tooltip under the below defined
+                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
+                        if (override_element instanceof DashGuiListRow) {
+                            if (override_element.IsExpanded()) {
+                                return;
+                            }
+                        }
+                    }
                     timer = setTimeout(
                         function () {
                             var top = html.offset()["top"];
@@ -19764,11 +19774,20 @@ function DashGui() {
                     );
                 },
                 function () {
+                    if (override_element && !tooltip.is(":visible")) {
+                        // Override element is intended to NOT show the tooltip under the below defined
+                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
+                        if (override_element instanceof DashGuiListRow) {
+                            if (override_element.IsExpanded()) {
+                                return;
+                            }
+                        }
+                    }
                     clearTimeout(timer);
                     tooltip.hide();
                 }
             );
-        })(this, html, additional_css);
+        })(this, html, additional_css, override_element);
         return tooltip;
     };
 }
@@ -21530,7 +21549,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     this.html = null;
     this.elements = [];
     this.toolbar = null;
-    this.height = Dash.Size.RowHeight;  // TODO
+    this.height = Dash.Size.RowHeight;
     this.setup_styles = function () {
         this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
         this.toolbar.stroke_sep.remove();
@@ -21638,7 +21657,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         });
         input.input.css({
             "top": 0,
-            "height": this.height * 0.65
+            "height": this.height * 0.8
         });
         if (flex) {
             input.html.css({
@@ -21697,7 +21716,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         if (label_border) {
             checkbox.label.border.css({
                 "background": this.color.Button.Background.Base,
-                "height": Dash.Size.RowHeight * 0.9,
+                "height": this.height * 0.9,
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
@@ -21724,12 +21743,15 @@ function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
     this.autosave = false;
+    this.last_submit_ts = null;
+    this.autosave_delay_ms = 1500;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
     this.last_submitted_text = "";
     this.on_change_callback = null;
     this.on_submit_callback = null;
     this.on_autosave_callback = null;
+    this.being_navigated_by_arrow_keys = false;
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
     }
@@ -21758,6 +21780,9 @@ function DashGuiInput (placeholder_text, color) {
     };
     this.InFocus = function () {
         return $(this.input).is(":focus");
+    };
+    this.SetAutosaveDelayMs = function (ms) {
+        this.autosave_delay_ms = parseInt(ms);
     };
     this.EnableAutosave = function () {
         this.autosave = true;
@@ -21839,6 +21864,8 @@ function DashGuiInput (placeholder_text, color) {
                 clearTimeout(this.autosave_timeout);
                 this.autosave_timeout = null;
             }
+            // TODO: Return if now minus this.last_submit_ts is less than autosave_delay_ms
+            // TODO: Return if this.being_navigated_by_arrow_keys
             (function (self) {
                 // This timeout is intentionally pretty long since the field will auto save if the
                 // box was changed when the user clicks out of it as well. This longer timeout
@@ -21852,7 +21879,7 @@ function DashGuiInput (placeholder_text, color) {
                             self.on_submit();
                         }
                     },
-                    1500
+                    self.autosave_delay_ms
                 );
             })(this);
         }
@@ -21869,6 +21896,7 @@ function DashGuiInput (placeholder_text, color) {
             return;
         }
         this.on_submit_callback();
+        this.last_submit_ts = new Date();
         this.last_submitted_text = this.Text();
     };
     this.setup_connections = function () {
@@ -21877,7 +21905,9 @@ function DashGuiInput (placeholder_text, color) {
                 event.preventDefault();
                 return false;
             });
-            self.input.on("keypress",function (e) {
+            self.input.on("keydown",function (e) {
+                console.log("TEST keydown", e.key, e);
+                self.being_navigated_by_arrow_keys = e.key === "ArrowLeft" || e.key === "ArrowRight";
                 if (e.key === "Enter") {
                     self.on_submit();
                 }
@@ -22175,6 +22205,9 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 function DashGuiInputRowInterface () {
     this.DisableAutosave = function () {
         this.input.DisableAutosave();
+    };
+    this.SetAutosaveDelayMs = function (ms) {
+        this.input.SetAutosaveDelayMs(ms);
     };
     this.SetInputValidity = function (input_is_valid) {
         console.log("input_is_valid: " + input_is_valid, "\n", this.color);
@@ -25642,7 +25675,7 @@ function DashGuiListRow (list, arbitrary_id) {
     this.html = $("<div></div>");
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
-    this.expand_content = $("<div></div>");
+    this.expanded_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
     this.is_header = this.id === "_top_header_row";
     this.setup_styles = function () {
@@ -25659,8 +25692,8 @@ function DashGuiListRow (list, arbitrary_id) {
         else {
             this.html.append(this.highlight);
             this.html.append(this.selected_highlight);
-            this.html.append(this.expand_content);
-            this.expand_content.css({
+            this.html.append(this.expanded_content);
+            this.expanded_content.css({
                 "margin-left": -Dash.Size.Padding,
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
@@ -25709,17 +25742,8 @@ function DashGuiListRow (list, arbitrary_id) {
         this.setup_columns();
         this.setup_connections();
     };
-    this.create_expand_highlight = function () {
-        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
-        this.expanded_highlight.css({
-            "background": this.color.BackgroundRaised,
-            "pointer-events": "none",
-            "opacity": 0,
-            "top": -1,
-            "bottom": -1,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
-        });
-        this.html.prepend(this.expanded_highlight);
+    this.IsExpanded = function () {
+        return this.is_expanded;
     };
     this.Hide = function () {
         if (!this.is_shown) {
@@ -25758,16 +25782,6 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
     };
-    // Helper/handler for external GetDataForKey functions
-    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
-        if (this.is_header) {
-            return column_config_data["display_name"] || column_config_data["data_key"].Title();
-        }
-        if (third_param !== null) {
-            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
-        }
-        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
-    };
     // Expand an html element below this row
     this.Expand = function (html) {
         if (this.is_expanded) {
@@ -25780,22 +25794,22 @@ function DashGuiListRow (list, arbitrary_id) {
             this.create_expand_highlight();
         }
         this.expanded_highlight.stop().animate({"opacity": 1}, 270);
-        var size_now = parseInt(this.expand_content.css("height").replace("px", ""));
-        this.expand_content.stop().css({
+        var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
+        this.expanded_content.stop().css({
             "overflow-y": "auto",
             "opacity": 1,
             "height": "auto",
             "padding-top": Dash.Size.RowHeight,
         });
-        this.expand_content.append(html);
-        var target_size = parseInt(this.expand_content.css("height").replace("px", ""));
-        this.expand_content.stop().css({
+        this.expanded_content.append(html);
+        var target_size = parseInt(this.expanded_content.css("height").replace("px", ""));
+        this.expanded_content.stop().css({
             "height": size_now,
             "overflow-y": "hidden",
         });
         (function (self) {
-            self.expand_content.animate({"height": target_size}, 180, function () {
-                self.expand_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
+            self.expanded_content.animate({"height": target_size}, 180, function () {
+                self.expanded_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
                 self.is_expanded = true;
             });
         })(this);
@@ -25808,17 +25822,17 @@ function DashGuiListRow (list, arbitrary_id) {
         if (this.expanded_highlight) {
             this.expanded_highlight.stop().animate({"opacity": 0}, 270);
         }
-        this.expand_content.stop().css({
+        this.expanded_content.stop().css({
             "overflow-y": "hidden",
         });
         (function (self) {
-            self.expand_content.animate({"height": 0}, 180, function () {
-                self.expand_content.stop().css({
+            self.expanded_content.animate({"height": 0}, 180, function () {
+                self.expanded_content.stop().css({
                     "overflow-y": "hidden",
                     "opacity": 0,
                 });
                 self.expanded_highlight.stop().animate({"opacity": 0}, 135);
-                self.expand_content.empty();
+                self.expanded_content.empty();
                 self.is_expanded = false;
             });
         })(this);
@@ -25831,6 +25845,28 @@ function DashGuiListRow (list, arbitrary_id) {
         // else {
         //     this.selected_highlight.stop().animate({"opacity": 0}, 250);
         // };
+    };
+    this.create_expand_highlight = function () {
+        this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
+        this.expanded_highlight.css({
+            "background": this.color.BackgroundRaised,
+            "pointer-events": "none",
+            "opacity": 0,
+            "top": -1,
+            "bottom": -1,
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+        });
+        this.html.prepend(this.expanded_highlight);
+    };
+    // Helper/handler for external GetDataForKey functions
+    this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
+        if (this.is_header) {
+            return column_config_data["display_name"] || column_config_data["data_key"].Title();
+        }
+        if (third_param !== null) {
+            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+        }
+        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
     this.setup_connections = function () {
         (function (self) {

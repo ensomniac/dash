@@ -5,6 +5,10 @@ function DashGuiInputRowInterface () {
         this.input.DisableAutosave();
     };
 
+    this.SetAutosaveDelayMs = function (ms) {
+        this.input.SetAutosaveDelayMs(ms);
+    };
+
     this.SetInputValidity = function (input_is_valid) {
         console.log("input_is_valid: " + input_is_valid, "\n", this.color);
 

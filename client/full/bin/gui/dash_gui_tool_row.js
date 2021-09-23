@@ -7,7 +7,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     this.html = null;
     this.elements = [];
     this.toolbar = null;
-    this.height = Dash.Size.RowHeight;  // TODO
+    this.height = Dash.Size.RowHeight;
 
     this.setup_styles = function () {
         this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
@@ -141,7 +141,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
 
         input.input.css({
             "top": 0,
-            "height": this.height * 0.65
+            "height": this.height * 0.8
         });
 
         if (flex) {
@@ -216,7 +216,7 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         if (label_border) {
             checkbox.label.border.css({
                 "background": this.color.Button.Background.Base,
-                "height": Dash.Size.RowHeight * 0.9,
+                "height": this.height * 0.9,
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
