@@ -4,14 +4,14 @@ function DashGuiInput (placeholder_text, color) {
 
     this.autosave = false;
     this.last_submit_ts = null;
-    this.autosave_delay_ms = 1500;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
+    this.autosave_delay_ms = 1500;
     this.last_submitted_text = "";
     this.on_change_callback = null;
     this.on_submit_callback = null;
     this.on_autosave_callback = null;
-    this.being_navigated_by_arrow_keys = false;
+    this.last_arrow_navigation_ts = null;
 
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
@@ -150,32 +150,9 @@ function DashGuiInput (placeholder_text, color) {
         }
 
         if (this.autosave) {
-            if (this.autosave_timeout) {
-                clearTimeout(this.autosave_timeout);
+            this.last_change_ts = new Date();
 
-                this.autosave_timeout = null;
-            }
-
-            // TODO: Return if now minus this.last_submit_ts is less than autosave_delay_ms
-            // TODO: Return if this.being_navigated_by_arrow_keys
-
-            (function (self) {
-                // This timeout is intentionally pretty long since the field will auto save if the
-                // box was changed when the user clicks out of it as well. This longer timeout
-                // helps prevent the weird anxiety that comes with the field saving on a brief typing pause
-                self.autosave_timeout = setTimeout(
-                    function () {
-                        if (self.on_autosave_callback) {
-                            self.on_autosave_callback();
-                        }
-
-                        else {
-                            self.on_submit();
-                        }
-                    },
-                    self.autosave_delay_ms
-                );
-            })(this);
+            this.attempt_autosave();
         }
 
         else {
@@ -199,6 +176,51 @@ function DashGuiInput (placeholder_text, color) {
         this.last_submitted_text = this.Text();
     };
 
+    this.attempt_autosave = function () {
+        if (this.autosave_timeout) {
+            clearTimeout(this.autosave_timeout);
+
+            this.autosave_timeout = null;
+        }
+
+        (function (self) {
+            self.autosave_timeout = setTimeout(
+                function () {
+                    var now = new Date();
+
+                    // Don't fire if the user manually submitted a change in the autosave time window
+                    if (self.last_submit_ts !== null) {
+                        if (self.last_change_ts < self.last_submit_ts < now) {
+                            if (now - self.last_submit_ts < self.autosave_delay_ms) {
+                                return;
+                            }
+                        }
+                    }
+
+                    // Reset autosave attempt if, after a change, the user navigated using the arrow keys during the autosave time window
+                    if (self.last_arrow_navigation_ts !== null) {
+                        if (self.last_change_ts < self.last_arrow_navigation_ts < now) {
+                            if (now - self.last_arrow_navigation_ts < self.autosave_delay_ms) {
+                                self.attempt_autosave();
+
+                                return;
+                            }
+                        }
+                    }
+
+                    if (self.on_autosave_callback) {
+                        self.on_autosave_callback();
+                    }
+
+                    else {
+                        self.on_submit();
+                    }
+                },
+                self.autosave_delay_ms
+            );
+        })(this);
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.input.on("click", function (event) {
@@ -208,11 +230,11 @@ function DashGuiInput (placeholder_text, color) {
             });
 
             self.input.on("keydown",function (e) {
+                if (self.autosave && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                    self.last_arrow_navigation_ts = new Date();
+                }
 
-                // TODO: Might need a way to set this back to false when nothing is happening like no keydown events
-                self.being_navigated_by_arrow_keys = e.key === "ArrowLeft" || e.key === "ArrowRight";
-
-                if (e.key === "Enter") {
+                else if (e.key === "Enter") {
                     self.on_submit();
                 }
             });
