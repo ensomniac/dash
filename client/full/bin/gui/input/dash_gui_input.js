@@ -208,8 +208,8 @@ function DashGuiInput (placeholder_text, color) {
             });
 
             self.input.on("keydown",function (e) {
-                console.log("TEST keydown", e.key, e);
 
+                // TODO: Might need a way to set this back to false when nothing is happening like no keydown events
                 self.being_navigated_by_arrow_keys = e.key === "ArrowLeft" || e.key === "ArrowRight";
 
                 if (e.key === "Enter") {
