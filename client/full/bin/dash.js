@@ -98,10 +98,10 @@ function Dash () {
 
         var username = str.split("@")[0];
         var domain = str.split("@");
-        domain = domain[domain.length - 1];
+        domain = domain.Last();
         var domain_split = domain.split(".");
         var domain_start = domain_split[0];
-        var domain_end = domain_split[domain_split.length - 1];
+        var domain_end = domain_split.Last();
         var at_sign_count = (str.match(/@/g) || []).length;
 
         if (str.length > 0 && (at_sign_count !== 1 || !(domain.includes(".")))) {
@@ -237,10 +237,60 @@ function Dash () {
     this.extend_js = function () {
         // TODO: Move this into utils
 
-        // Ryan, any idea why this breaks everything? Why does it not allow me to extend Array?
-        // Array.prototype.Last = function () {
-        //     return this[this.length - 1];
-        // };
+        // *** IMPORTANT NOTE ***
+        // To extend Object types, like Array (unlike String), something like:
+        //
+        // Array.prototype.Last = function () {}
+        //
+        // will not work effectively. Instead, you must use Object.defineProperty,
+        // or defineProperties, as in the example for Array.prototype.Last below.
+        // When extending an Object type in the incorrect way above, it
+        // technically work and you can successfully call the new function.
+        // However, doing it that way makes the newly created function
+        // enumerable, which breaks any and all enumerations of the extended
+        // object type. For example, if you loop through an Array like this:
+        //
+        // var test_array = ["a", "b"];
+        //
+        // for (var i in test_array) {
+        //     console.log(test_array[i])
+        //
+        // You would see three printouts instead of two:
+        //     - "a"
+        //     - "b"
+        //     - Last
+
+        Object.defineProperties(
+            Array.prototype,
+            {
+                "Last": {
+                    "value": function () {
+                        try {
+                            return this[this.length - 1];
+                        }
+
+                        catch {
+                            console.log("Array.prototype.Last() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
+                "SetLast": {
+                    "value": function (value) {
+                        try {
+                            this[this.length - 1] = value;
+                        }
+
+                        catch {
+                            console.log("Array.prototype.SetLast() failed:", this);
+
+                            return this;
+                        }
+                    }
+                }
+            }
+        );
 
         String.prototype.Title = function () {
             try {
@@ -260,7 +310,9 @@ function Dash () {
             }
 
             catch {
+                console.log("String.prototype.Title() failed:", this);
 
+                return this;
             }
         };
     };

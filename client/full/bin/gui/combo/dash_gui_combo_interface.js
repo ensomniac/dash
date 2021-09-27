@@ -79,12 +79,16 @@ function DashGuiComboInterface () {
         this.list_offset_vertical = offset;
     };
 
-    this.GetActiveID = function () {
+    this.ActiveID = function () {
         return this.selected_option_id;
     };
 
-    this.GetActiveOption = function () {
+    this.ActiveOption = function () {
         return this.selected_option;
+    };
+
+    this.Text = function () {
+        return this.label.text();
     };
 
     this.SetLabel = function (content) {
@@ -141,7 +145,7 @@ function DashGuiComboInterface () {
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);
             return;
-        };
+        }
 
         if (!ignore_callback && selected) {
             ignore_callback = (selected["id"].toString() === this.selected_option_id);

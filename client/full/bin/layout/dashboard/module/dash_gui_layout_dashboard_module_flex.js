@@ -62,7 +62,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         var canvas_container = document.createElement("div");
         var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
 
-        var prev_mod_is_flex = this.modules[this.modules.length - 1]["style"] === "flex";
+        var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
 

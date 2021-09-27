@@ -82,7 +82,7 @@ function DashGuiPropertyBoxInterface () {
             self.html.append(button.html);
         })(this, callback);
 
-        return this.buttons[this.buttons.length-1];
+        return this.buttons.Last();
     };
 
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {

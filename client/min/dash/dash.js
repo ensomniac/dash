@@ -17798,10 +17798,10 @@ function Dash () {
         }
         var username = str.split("@")[0];
         var domain = str.split("@");
-        domain = domain[domain.length - 1];
+        domain = domain.Last();
         var domain_split = domain.split(".");
         var domain_start = domain_split[0];
-        var domain_end = domain_split[domain_split.length - 1];
+        var domain_end = domain_split.Last();
         var at_sign_count = (str.match(/@/g) || []).length;
         if (str.length > 0 && (at_sign_count !== 1 || !(domain.includes(".")))) {
             return false;
@@ -17897,10 +17897,55 @@ function Dash () {
     };
     this.extend_js = function () {
         // TODO: Move this into utils
-        // Ryan, any idea why this breaks everything? Why does it not allow me to extend Array?
-        // Array.prototype.Last = function () {
-        //     return this[this.length - 1];
-        // };
+        // *** IMPORTANT NOTE ***
+        // To extend Object types, like Array (unlike String), something like:
+        //
+        // Array.prototype.Last = function () {}
+        //
+        // will not work effectively. Instead, you must use Object.defineProperty,
+        // or defineProperties, as in the example for Array.prototype.Last below.
+        // When extending an Object type in the incorrect way above, it
+        // technically work and you can successfully call the new function.
+        // However, doing it that way makes the newly created function
+        // enumerable, which breaks any and all enumerations of the extended
+        // object type. For example, if you loop through an Array like this:
+        //
+        // var test_array = ["a", "b"];
+        //
+        // for (var i in test_array) {
+        //     console.log(test_array[i])
+        //
+        // You would see three printouts instead of two:
+        //     - "a"
+        //     - "b"
+        //     - Last
+        Object.defineProperties(
+            Array.prototype,
+            {
+                "Last": {
+                    "value": function () {
+                        try {
+                            return this[this.length - 1];
+                        }
+                        catch {
+                            console.log("Array.prototype.Last() failed:", this);
+                            return this;
+                        }
+                    }
+                },
+                "SetLast": {
+                    "value": function (value) {
+                        try {
+                            this[this.length - 1] = value;
+                        }
+                        catch {
+                            console.log("Array.prototype.SetLast() failed:", this);
+                            return this;
+                        }
+                    }
+                }
+            }
+        );
         String.prototype.Title = function () {
             try {
                 if (this.includes("_")) {
@@ -17915,6 +17960,8 @@ function Dash () {
                 return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
             }
             catch {
+                console.log("String.prototype.Title() failed:", this);
+                return this;
             }
         };
     };
@@ -23406,7 +23453,7 @@ function DashGuiPropertyBoxInterface () {
             button.html.css("margin-top", Dash.Size.Padding);
             self.html.append(button.html);
         })(this, callback);
-        return this.buttons[this.buttons.length-1];
+        return this.buttons.Last();
     };
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
         var indent_px = Dash.Size.Padding*2;
@@ -24052,11 +24099,14 @@ function DashGuiComboInterface () {
         }
         this.list_offset_vertical = offset;
     };
-    this.GetActiveID = function () {
+    this.ActiveID = function () {
         return this.selected_option_id;
     };
-    this.GetActiveOption = function () {
+    this.ActiveOption = function () {
         return this.selected_option;
+    };
+    this.Text = function () {
+        return this.label.text();
     };
     this.SetLabel = function (content) {
         this.label.text(content["label"]);
@@ -24100,7 +24150,7 @@ function DashGuiComboInterface () {
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);
             return;
-        };
+        }
         if (!ignore_callback && selected) {
             ignore_callback = (selected["id"].toString() === this.selected_option_id);
         }
@@ -25593,7 +25643,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             self.html.append(button.html);
         })(this, callback);
         this.update_spacing();
-        return this.buttons[this.buttons.length - 1];
+        return this.buttons.Last();
     };
     this.update_spacing = function () {
         // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
@@ -26505,7 +26555,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         var script = document.createElement("script");
         var canvas_container = document.createElement("div");
         var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
-        var prev_mod_is_flex = this.modules[this.modules.length - 1]["style"] === "flex";
+        var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
         canvas_container.style.height = "11.25vh";  // TEMP
@@ -28152,7 +28202,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
             callback
         );
         if (this.buttons.length > 0) {
-            this.buttons[this.buttons.length-1].html.css({
+            this.buttons.Last().html.css({
                 "margin-right": Dash.Size.Padding*2,
             });
         };

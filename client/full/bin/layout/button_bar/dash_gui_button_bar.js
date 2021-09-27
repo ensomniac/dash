@@ -45,7 +45,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
         this.update_spacing();
 
-        return this.buttons[this.buttons.length - 1];
+        return this.buttons.Last();
     };
 
     this.update_spacing = function () {

@@ -134,7 +134,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
         if (this.buttons.length > 0) {
 
-            this.buttons[this.buttons.length-1].html.css({
+            this.buttons.Last().html.css({
                 "margin-right": Dash.Size.Padding*2,
             });
         };
