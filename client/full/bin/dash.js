@@ -237,6 +237,11 @@ function Dash () {
     this.extend_js = function () {
         // TODO: Move this into utils
 
+        // Ryan, any idea why this breaks everything? Why does it not allow me to extend Array?
+        // Array.prototype.Last = function () {
+        //     return this[this.length - 1];
+        // };
+
         String.prototype.Title = function () {
             try {
                 if (this.includes("_")) {

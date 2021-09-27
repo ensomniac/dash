@@ -17897,6 +17897,10 @@ function Dash () {
     };
     this.extend_js = function () {
         // TODO: Move this into utils
+        // Ryan, any idea why this breaks everything? Why does it not allow me to extend Array?
+        // Array.prototype.Last = function () {
+        //     return this[this.length - 1];
+        // };
         String.prototype.Title = function () {
             try {
                 if (this.includes("_")) {
@@ -21435,7 +21439,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.html = null;
     this.label = null;
     this.icon_button = null;
+    this.able_to_toggle_cb = null;
     this.checked = this.default_state;
+    this.toggle_confirmation_msg = null;
     this.icon_button_redraw_styling = null;
     // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
     this.setup_styles = function () {
@@ -21451,7 +21457,21 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.IsChecked = function () {
         return this.checked;
     };
+    this.SetConfirmationMsg = function (msg) {
+        this.toggle_confirmation_msg = msg;
+    };
+    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
+        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    };
     this.Toggle = function () {
+        if (this.toggle_confirmation_msg) {
+            if (!window.confirm(this.toggle_confirmation_msg)) {
+                return;
+            }
+        }
+        if (this.able_to_toggle_cb && !this.able_to_toggle_cb(this)) {
+            return;
+        }
         this.checked = !this.checked;
         if (this.checked) {
             Dash.Local.Set(this.local_storage_key, "true");

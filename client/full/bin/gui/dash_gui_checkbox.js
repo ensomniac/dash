@@ -11,7 +11,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.html = null;
     this.label = null;
     this.icon_button = null;
+    this.able_to_toggle_cb = null;
     this.checked = this.default_state;
+    this.toggle_confirmation_msg = null;
     this.icon_button_redraw_styling = null;
 
     // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
@@ -34,7 +36,25 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         return this.checked;
     };
 
+    this.SetConfirmationMsg = function (msg) {
+        this.toggle_confirmation_msg = msg;
+    };
+
+    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
+        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    };
+
     this.Toggle = function () {
+        if (this.toggle_confirmation_msg) {
+            if (!window.confirm(this.toggle_confirmation_msg)) {
+                return;
+            }
+        }
+
+        if (this.able_to_toggle_cb && !this.able_to_toggle_cb(this)) {
+            return;
+        }
+
         this.checked = !this.checked;
 
         if (this.checked) {
