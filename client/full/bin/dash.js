@@ -81,7 +81,7 @@ function Dash () {
             }
         }
 
-        // Return readable without seconds
+        // Return readable without second
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
 
         if (include_tz_label) {
