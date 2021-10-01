@@ -194,7 +194,7 @@ class ApiCore:
 
         self._response = response
 
-        if self._response.get("error") and self._send_email_on_error and not self._execute_as_module:
+        if type(self._response) is dict and self._response.get("error") and self._send_email_on_error and not self._execute_as_module:
             self.SendEmail()
 
         return self._response
