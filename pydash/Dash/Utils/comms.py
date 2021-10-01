@@ -29,7 +29,7 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender="ryan@enso
         message.add_recipient(f"{email_address.split('@')[0].strip().title()} <{email_address}>")
 
     if sender not in notify_email_list:
-        message.add_bcc_recipient(sender_name)
+        message.add_bcc_recipient(sender)
 
     message.set_subject(subject)
     message.set_body_html(msg)

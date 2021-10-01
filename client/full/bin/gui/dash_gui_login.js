@@ -29,9 +29,14 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             "background": this.color.Background
         });
 
+        // Any and all submissions on this page should be deliberate
+        this.password_input.DisableAutosave();
+        this.password_input.DisableBlurSubmit();
+        this.email_input.DisableAutosave();
+        this.email_input.DisableBlurSubmit();
+
         this.email_input.OnSubmit(this.Submit, this);
         this.password_input.OnSubmit(this.Submit, this);
-
         this.email_input.OnChange(this.store_input, this);
         this.password_input.OnChange(this.store_input, this);
 
@@ -51,20 +56,82 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             this.setup_mobile_sizing();
         } else {
             this.setup_desktop_sizing();
-        };
+        }
 
         this.email_input.SetText(Dash.Local.Get("email") || "");
         this.show_login_box();
 
     };
 
-    this.setup_desktop_sizing = function () {
+    this.Submit = function () {
+        var email = this.email_input.Text();
+        var pass = this.password_input.Text();
 
+        if (email && pass) {
+            this.Login();
+        }
+    };
+
+    this.Login = function () {
+        var email = this.email_input.Text();
+        var pass = this.password_input.Text();
+
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+
+            return;
+        }
+
+        if (!pass) {
+            alert("Please enter a valid password");
+
+            return;
+        }
+
+        var server_data = {
+            "f": "login",
+            "email": email,
+            "pass": pass
+        };
+
+        for (var key in this.optional_params) {
+            server_data[key] = this.optional_params[key];
+        }
+
+        this.login_button.Request(
+            "https://" + Dash.Context["domain"] + "/Users",
+            server_data,
+            this.on_login_response,
+            this
+        );
+    };
+
+    this.ResetLogin = function () {
+        var email = this.email_input.Text();
+
+        if (!Dash.IsValidEmail(email)) {
+            alert("Please enter a valid email");
+
+            return;
+        }
+
+        this.reset_button.Request(
+            "https://" + Dash.Context["domain"] + "/Users",
+            {
+                "f": "reset",
+                "email": email
+            },
+            this.on_reset_response,
+            this
+        );
+    };
+
+    this.setup_desktop_sizing = function () {
         var login_box_width = window.outerWidth * 0.5;
 
         if (login_box_width > 350) {
             login_box_width = 350;
-        };
+        }
 
         this.html.css({
             "inset": 0,
@@ -120,7 +187,6 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.setup_mobile_sizing = function () {
-
         var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
 
         this.html.css({
@@ -174,14 +240,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             "margin-left": Dash.Size.Padding,
             "width": (login_box_width * 0.5) - Dash.Size.Padding * 1.5,
         });
-
     };
-
-
-
-
-
-
 
     this.show_login_box = function () {
         this.login_box.css({"opacity": 1});
@@ -189,67 +248,6 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
 
     this.store_input = function () {
         Dash.Local.Set("email", this.email_input.Text());
-    };
-
-    this.Submit = function () {
-        var email = this.email_input.Text();
-        var pass = this.password_input.Text();
-
-        if (email && pass) {
-            this.Login();
-        }
-
-        // Disabling this to prevent accidental resets, better if they deliberately click the button
-        // else {
-        //     this.ResetLogin();
-        // }
-    };
-
-    this.Login = function () {
-        var email = this.email_input.Text();
-        var pass = this.password_input.Text();
-
-        if (!Dash.IsValidEmail(email)) {
-            alert("Please enter a valid email");
-
-            return;
-        }
-
-        if (!pass) {
-            alert("Please enter a valid password");
-
-            return;
-        }
-
-        var api = "https://" + Dash.Context["domain"] + "/Users";
-
-        var server_data = {};
-        server_data["f"] = "login";
-        server_data["email"] = email;
-        server_data["pass"] = pass;
-
-        for (var key in this.optional_params) {
-            server_data[key] = this.optional_params[key];
-        };
-
-        this.login_button.Request(api, server_data, this.on_login_response, this);
-    };
-
-    this.ResetLogin = function () {
-        var email = this.email_input.Text();
-        var api = "https://" + Dash.Context["domain"] + "/Users";
-
-        if (!Dash.IsValidEmail(email)) {
-            alert("Please enter a valid email");
-
-            return;
-        }
-
-        var server_data = {};
-        server_data["f"] = "reset";
-        server_data["email"] = email;
-
-        this.reset_button.Request(api, server_data, this.on_reset_response, this);
     };
 
     this.on_reset_response = function (response) {
@@ -267,15 +265,18 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     this.on_login_response = function (response) {
         if (response["error"]) {
             alert(response["error"]);
+
             return;
-        };
+        }
 
         console.log("******* LOG IN *******", response);
+
         Dash.User.SetUserAuthentication(this.email_input.Text(), response);
 
         (function (self) {
             self.html.animate({"opacity": 0}, 150, function () {
                 self.html.remove();
+
                 self.on_login_callback();
             });
         })(this);
