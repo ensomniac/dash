@@ -147,24 +147,16 @@ class ApiCore:
                 required_params = [required_params]
 
         elif type(required_params) != list:
-            self.RaiseError("ValidateParams requires a list")
+            raise Exception("ValidateParams requires a list")
 
         for param in required_params:
             if falsy:
                 if param not in self.Params:
-                    self.RaiseError(f"Missing param '{param}'")
+                    raise Exception(f"Missing param '{param}'")
 
             else:
                 if not self.Params.get(param):
-                    self.RaiseError(f"Missing param '{param}'")
-
-    # TODO: Propagate this throughout the code and update old raise Exception calls
-    def RaiseError(self, error_msg):
-        # Might not need these two lines since sys.exit raises the error as an exception anyway
-        self.SetResponse({"error": error_msg})
-        self.ReturnResponse()
-
-        sys.exit(error_msg)
+                    raise Exception(f"Missing param '{param}'")
 
     def SetParam(self, key, value):
         self._params[key] = value
@@ -261,46 +253,63 @@ class ApiCore:
         return {"gzip": order_compressed_str}
 
     def print_return_data(self):
-        response_status = self.get_response_status()
+        response_status = get_response_status(self._response)
 
         if "gzip" in self.Params and not self._response.get("error"):
             self._response = self.compress_response(self._response)
 
-        print(f"{response_status}Content-type: application/json\n")
-        print(str(json.dumps(self._response)))
-
-    def get_response_status(self):
-        status = "Status: 200 OK\n"
-        error = self._response.get("error")
-
-        if error:
-            if error == "Unauthorized":
-                status = "Status: 401 Unauthorized\n"
-            else:
-                status = "Status: 400 Bad Request\n"
-
-        return status
+        print_json(self._response, response_status)
 
     def run(self, f):
         self._response = {"error": "Missing return data x8765"}
 
         try:
             f()
+
+        except Exception as e:
+            self.SetResponse({"error": f"{e}\nTraceback: {format_exc()}"})
+
         except:
             self.SetResponse({"error": f"There was a scripting problem: {format_exc()}"})
 
     def Execute(uninstantiated_class_ref):
         """
-        This function exists as a wrapper to cgi scripts using ApiCore
-        and helps to catch common errors more flexibly
+        This function exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
         """
+
+        error = None
 
         try:
             uninstantiated_class_ref()
+
+        except Exception as e:
+            error = {"error": f"{e}\nTraceback: {format_exc()}"}
+
         except:
             error = {"error": format_exc(), "script_execution_failed": True}
 
-            print("Content-type: text/plain\n")
-            print(str(json.dumps(error)))
+        if error is not None:
+            print_json(error)
 
             sys.exit()
+
+
+def get_response_status(response):
+    status = "Status: 200 OK\n"
+    error = response.get("error")
+
+    if error:
+        if error == "Unauthorized":
+            status = "Status: 401 Unauthorized\n"
+        else:
+            status = "Status: 400 Bad Request\n"
+
+    return status
+
+
+def print_json(response, status=None):
+    if status is None:
+        status = get_response_status(response)
+
+    print(f"{status}Content-type: application/json\n")
+    print(str(json.dumps(response)))

@@ -17792,6 +17792,13 @@ function Dash () {
         }
         return readable;
     };
+    this.GetDeepCopy = function (obj) {
+        if (!this.IsValidObject(obj)) {
+            console.log("WARNING: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+            return null;
+        }
+        return JSON.parse(JSON.stringify(obj));
+    };
     this.IsValidEmail = function (str) {
         if (typeof str !== "string") {
             return false;
@@ -20001,9 +20008,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
 /** @member DashGuiButton*/
 function DashGuiButtonInterface () {
     this.ChangeLabel = function (label_text, width=null) {
-        this.html[0].innerText = "";
-        this.label = $("<div>" + label_text + "</div>");
-        this.setup_styles();
+        this.label.text(label_text);
         if (width) {
             this.html.css({"width": width});
         }

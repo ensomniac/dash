@@ -91,6 +91,16 @@ function Dash () {
         return readable;
     };
 
+    this.GetDeepCopy = function (obj) {
+        if (!this.IsValidObject(obj)) {
+            console.log("WARNING: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+
+            return null;
+        }
+
+        return JSON.parse(JSON.stringify(obj));
+    };
+
     this.IsValidEmail = function (str) {
         if (typeof str !== "string") {
             return false;
