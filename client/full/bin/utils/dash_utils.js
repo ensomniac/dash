@@ -29,11 +29,12 @@ function DashUtils () {
     };
 
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
-        var anim_frame = {};
-        anim_frame["callback"] = callback.bind(binder);
-        anim_frame["source"] = binder;
-        anim_frame["iterations"] = 0;
-        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
+        var anim_frame = {
+            "callback": callback.bind(binder),
+            "source": binder,
+            "iterations": 0,
+            "html": html_key ? binder[html_key] : binder.html
+        };
 
         (function (self, anim_frame, binder, callback, html_key) {
             var iterations = 0;
@@ -126,6 +127,7 @@ function DashUtils () {
 
         if (!still_active) {
             clearInterval(timer["timer_id"]);
+
             return;
         }
 

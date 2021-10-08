@@ -17794,7 +17794,7 @@ function Dash () {
     };
     this.GetDeepCopy = function (obj) {
         if (!this.IsValidObject(obj)) {
-            console.log("WARNING: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+            console.log("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
             return null;
         }
         return JSON.parse(JSON.stringify(obj));
@@ -18901,7 +18901,7 @@ class DashColorStateSet {
         // Doc: Since it's possible to only use one color, this function
         //makes sure to auto-fill missing colors
         if (!this._base) {
-            console.log("ERROR: DashColorStateSet() Requires at least one color");
+            console.log("Error: DashColorStateSet() Requires at least one color");
             return;
         }
         if (!this._selected) {
@@ -18967,11 +18967,12 @@ function DashUtils () {
         this.manage_timer(timer);
     };
     this.OnAnimationFrame = function (binder, callback, html_key=null) {
-        var anim_frame = {};
-        anim_frame["callback"] = callback.bind(binder);
-        anim_frame["source"] = binder;
-        anim_frame["iterations"] = 0;
-        anim_frame["html"] = html_key ? binder[html_key] : binder.html;
+        var anim_frame = {
+            "callback": callback.bind(binder),
+            "source": binder,
+            "iterations": 0,
+            "html": html_key ? binder[html_key] : binder.html
+        };
         (function (self, anim_frame, binder, callback, html_key) {
             var iterations = 0;
             anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
@@ -19166,7 +19167,7 @@ function DashRequest () {
                             self.dash_requests.on_response(self, response);
                         }
                         else {
-                            console.log("WARNING: Request to " + self.url + " failed:", self.params);
+                            console.log("Warning: Request to " + self.url + " failed:", self.params);
                         }
                     }
                 );
@@ -20303,7 +20304,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.html.hide();
     };
     this.error_uploading = function (file, error) {
-        console.log("ERROR uploading");
+        console.log("Error uploading");
         console.log(error);
     };
     this.processing_upload = function (file) {
@@ -22530,13 +22531,13 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         text = text.trim();
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
-                console.log("ERROR: AddMessage() requires a 'text' param");
+                console.log("Error: AddMessage() requires a 'text' param");
             }
             return;
         }
         if (align_right && !this.dual_sided) {
             console.log(
-                "WARNING: ChatBox.dual_sided has been changed to 'true' to accommodate " +
+                "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate " +
                 "an AddMessage() call with the 'align_right' param set to 'true'"
             );
             this.dual_sided = true;
@@ -22590,7 +22591,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
-            console.log("WARNING: Toggle button already added to ChatBox, can't add another at this time.");
+            console.log("Warning: Toggle button already added to ChatBox, can't add another at this time.");
             return;
         }
         this.toggle_local_storage_key = local_storage_key;
@@ -22869,7 +22870,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
                 this.at_combo_options[i]["label_text"] = this.FormatMentionName(label_text);
             }
             if (labels.includes(label_text)) {
-                console.log("ERROR: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
+                console.log("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
                 return;
             }
             labels.push(label_text);
@@ -23000,14 +23001,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         index = parseInt(index);
         
         if (!Number.isInteger(index)) {
-            console.log("ERROR: SetIndex() requires an integer:", index, typeof index);
+            console.log("Error: SetIndex() requires an integer:", index, typeof index);
             return;
         }
         this.index = index;
     };
     this.SetText = function (text) {
         if (typeof text !== "string") {
-            console.log("ERROR: SetText() requires a string");
+            console.log("Error: SetText() requires a string");
             return;
         }
         this.text = text;
@@ -24115,7 +24116,7 @@ function DashGuiComboInterface () {
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
         if (!Number.isInteger(offset)) {
-            console.log("ERROR: SetListVerticalOffset() requires an integer:", offset, typeof offset);
+            console.log("Error: SetListVerticalOffset() requires an integer:", offset, typeof offset);
             return;
         }
         this.list_offset_vertical = offset;
@@ -24166,7 +24167,7 @@ function DashGuiComboInterface () {
     this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
         if (typeof(selected) == "string") {
-            console.log("WARNING: A combo object is using a string to identify a selected property. This should be an object only.");
+            console.log("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
             console.log("combo_list", combo_list);
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);
@@ -24820,9 +24821,9 @@ function DashGuiLayoutUserProfile (user_data, options) {
         // button.Request(api, server_data, this.on_info_saved, this);
     };
     this.on_info_saved = function (response, input_row) {
-        if (response.error) {
+        if (response["error"]) {
             console.log(response);
-            alert(response.error);
+            alert(response["error"]);
             return;
         }
         console.log("** Info saved successfully **");
@@ -25435,8 +25436,15 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
         }
         if (!content_html) {
-            console.log("ERROR: Unknown content!");
-            content_html = $("<div>Error Loading Content</div>");
+            if (parseInt(index) === 0) {
+                console.log("Error: Unknown content!");
+                content_html = $("<div>Error Loading Content</div>");
+            }
+            else {
+                console.log("Error: Invalid index", index, ", reloading index 0");
+                this.LoadIndex(0);
+                return;
+            }
         }
         this.content_area.append(content_html);
         if (this.on_tab_changed_cb) {
@@ -26321,7 +26329,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.SetVerticalSpacePercent = function (num) {
         num = parseInt(num);
         if (isNaN(num)) {
-            console.log("ERROR: Invalid number passed to SetVerticalSpacePercent()");
+            console.log("Error: Invalid number passed to SetVerticalSpacePercent()");
             return;
         }
         this.VerticalSpaceTakenPercent = num.toString() + "%";
@@ -26390,7 +26398,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         var canvas_container = canvas["container"];
         var canvas_script = canvas["script"];
         if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
-            console.log("ERROR: Something went wrong when updating canvas containers x0741");
+            console.log("Error: Something went wrong when updating canvas containers x0741");
             return;
         }
         var top_container = document.createElement("div");
@@ -26491,11 +26499,11 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             DashGuiLayoutDashboardModuleRect.call(this);
         }
         else {
-            console.log("ERROR: Invalid Module Style:", this.style);
+            console.log("Error: Invalid Module Style:", this.style);
             return;
         }
         if (!this.styles.includes(this.sub_style)) {
-            console.log("ERROR: Invalid Module Sub-Style:", this.sub_style);
+            console.log("Error: Invalid Module Sub-Style:", this.sub_style);
             return;
         }
         this.html = Dash.Gui.GetHTMLBoxContext();
@@ -26537,15 +26545,15 @@ function DashGuiLayoutDashboardModuleFlex () {
     this.bar_data = {};
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
-            console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
+            console.log("Error: SetBarData() only applies to Flex-Bar Modules");
             return;
         }
         if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetBarData() requires a dictionary to be passed in");
+            console.log("Error: SetBarData() requires a dictionary to be passed in");
             return;
         }
         if (!data["data"] || !data["order"]) {
-            console.log("ERROR: SetBarData() expects a dict that contains 'data' and 'order' keys");
+            console.log("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
             return;
         }
         this.bar_data = data;
@@ -26633,7 +26641,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             var key = data["order"][i];
             var value = parseInt(data["data"][key]);
             if (isNaN(value)) {
-                console.log("ERROR: Bar data object values must be numbers");
+                console.log("Error: Bar data object values must be numbers");
                 return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
             }
             values.push(value);
@@ -26726,7 +26734,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             self.label.fadeOut(500);
             self.label_text = text.toString().toUpperCase();
             if (self.label_text.length > 4) {
-                console.log("WARNING: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+                console.log("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
             }
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
                 self.label.css({
@@ -26741,12 +26749,12 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
     this.SetRadialFillPercent = function (percent) {
         if (this.sub_style !== "radial") {
-            console.log("ERROR: SetRadialFillPercent() only works for Square Radial Modules");
+            console.log("Error: SetRadialFillPercent() only works for Square Radial Modules");
             return;
         }
         percent = parseInt(percent);
         if (isNaN(percent)) {
-            console.log("ERROR: SetRadialFillPercent requires a number!");
+            console.log("Error: SetRadialFillPercent requires a number!");
         }
         if (percent > 100) {
             percent = 100;
@@ -26914,11 +26922,11 @@ function DashGuiLayoutDashboardModuleRect () {
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
-            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+            console.log("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
         if (!Array.isArray(data_list)) {
-            console.log("ERROR: SetListData() requires a list of dicts to be passed in");
+            console.log("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
         this.list_data = data_list;
@@ -26956,12 +26964,12 @@ function DashGuiLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.log("WARNING: Rect List Module will only display 3 key/value pairs from list data");
+                console.log("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
             if (!Dash.IsValidObject(data)) {
-                console.log("ERROR: Rect List Module data expects a list of dicts");
+                console.log("Error: Rect List Module data expects a list of dicts");
                 return;
             }
             var key = Object.keys(data)[0];
@@ -27054,11 +27062,11 @@ function DashGuiLayoutDashboardModuleRect () {
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
-            console.log("ERROR: SetListData() only applies to Rect-List Modules");
+            console.log("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
         if (!Array.isArray(data_list)) {
-            console.log("ERROR: SetListData() requires a list of dicts to be passed in");
+            console.log("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
         this.list_data = data_list;
@@ -27096,12 +27104,12 @@ function DashGuiLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.log("WARNING: Rect List Module will only display 3 key/value pairs from list data");
+                console.log("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
             if (!Dash.IsValidObject(data)) {
-                console.log("ERROR: Rect List Module data expects a list of dicts");
+                console.log("Error: Rect List Module data expects a list of dicts");
                 return;
             }
             var key = Object.keys(data)[0];
@@ -27367,7 +27375,7 @@ function DashMobileLayoutCardStack (binder, color) {
     };
     this.AddBanner = function () {
         if (this.banner) {
-            console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
+            console.log("Error: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
         };
         this.banner = new DashCardStackBanner(this);
@@ -27381,7 +27389,7 @@ function DashMobileLayoutCardStack (binder, color) {
             this.fix_banner_on_top();
         }
         else {
-            console.log("WARNING: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+            console.log("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         };
     };
     this.fix_banner_on_top = function () {
@@ -28321,7 +28329,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             this.callback();
         }
         else {
-            console.log("ERROR: No callback associated with button!");
+            console.log("Error: No callback associated with button!");
         };
         this.click_active = true;
         (function (self) {
@@ -28749,7 +28757,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             this.callback();
         }
         else {
-            console.log("ERROR: No callback associated with button!");
+            console.log("Error: No callback associated with button!");
         };
         this.click_active = true;
         (function (self) {

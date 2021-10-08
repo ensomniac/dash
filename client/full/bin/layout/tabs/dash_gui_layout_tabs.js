@@ -91,9 +91,19 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         }
 
         if (!content_html) {
-            console.log("Error: Unknown content!");
+            if (parseInt(index) === 0) {
+                console.log("Error: Unknown content!");
 
-            content_html = $("<div>Error Loading Content</div>");
+                content_html = $("<div>Error Loading Content</div>");
+            }
+
+            else {
+                console.log("Error: Invalid index", index, ", reloading index 0");
+
+                this.LoadIndex(0);
+
+                return;
+            }
         }
 
         this.content_area.append(content_html);
