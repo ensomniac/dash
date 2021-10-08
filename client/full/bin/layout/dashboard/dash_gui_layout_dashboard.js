@@ -33,7 +33,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         num = parseInt(num);
 
         if (isNaN(num)) {
-            console.log("ERROR: Invalid number passed to SetVerticalSpacePercent()");
+            console.log("Error: Invalid number passed to SetVerticalSpacePercent()");
 
             return;
         }
@@ -124,7 +124,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         var canvas_script = canvas["script"];
 
         if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
-            console.log("ERROR: Something went wrong when updating canvas containers x0741");
+            console.log("Error: Something went wrong when updating canvas containers x0741");
 
             return;
         }

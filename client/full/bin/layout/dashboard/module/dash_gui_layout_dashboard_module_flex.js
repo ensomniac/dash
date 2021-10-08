@@ -6,19 +6,19 @@ function DashGuiLayoutDashboardModuleFlex () {
 
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
-            console.log("ERROR: SetBarData() only applies to Flex-Bar Modules");
+            console.log("Error: SetBarData() only applies to Flex-Bar Modules");
 
             return;
         }
 
         if (!Dash.IsValidObject(data)) {
-            console.log("ERROR: SetBarData() requires a dictionary to be passed in");
+            console.log("Error: SetBarData() requires a dictionary to be passed in");
 
             return;
         }
 
         if (!data["data"] || !data["order"]) {
-            console.log("ERROR: SetBarData() expects a dict that contains 'data' and 'order' keys");
+            console.log("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
 
             return;
         }
@@ -135,7 +135,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             var value = parseInt(data["data"][key]);
 
             if (isNaN(value)) {
-                console.log("ERROR: Bar data object values must be numbers");
+                console.log("Error: Bar data object values must be numbers");
 
                 return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
             }

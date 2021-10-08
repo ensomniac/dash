@@ -63,7 +63,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
 
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
-                console.log("ERROR: AddMessage() requires a 'text' param");
+                console.log("Error: AddMessage() requires a 'text' param");
             }
 
             return;
@@ -71,7 +71,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
 
         if (align_right && !this.dual_sided) {
             console.log(
-                "WARNING: ChatBox.dual_sided has been changed to 'true' to accommodate " +
+                "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate " +
                 "an AddMessage() call with the 'align_right' param set to 'true'"
             );
 
@@ -140,7 +140,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
 
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
-            console.log("WARNING: Toggle button already added to ChatBox, can't add another at this time.");
+            console.log("Warning: Toggle button already added to ChatBox, can't add another at this time.");
 
             return;
         }

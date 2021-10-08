@@ -244,7 +244,7 @@ function DashMobileLayoutCardStack (binder, color) {
     this.AddBanner = function () {
 
         if (this.banner) {
-            console.log("ERROR: Stack.AddBanner() >> A banner already exists!");
+            console.log("Error: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
         };
 
@@ -262,7 +262,7 @@ function DashMobileLayoutCardStack (binder, color) {
             this.fix_banner_on_top();
         }
         else {
-            console.log("WARNING: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+            console.log("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         };
 
     };

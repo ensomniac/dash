@@ -64,13 +64,13 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
         }
 
         else {
-            console.log("ERROR: Invalid Module Style:", this.style);
+            console.log("Error: Invalid Module Style:", this.style);
 
             return;
         }
 
         if (!this.styles.includes(this.sub_style)) {
-            console.log("ERROR: Invalid Module Sub-Style:", this.sub_style);
+            console.log("Error: Invalid Module Sub-Style:", this.sub_style);
 
             return;
         }

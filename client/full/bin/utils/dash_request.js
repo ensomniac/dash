@@ -33,7 +33,7 @@ function DashRequest () {
                         }
 
                         else {
-                            console.log("WARNING: Request to " + self.url + " failed:", self.params);
+                            console.log("Warning: Request to " + self.url + " failed:", self.params);
                         }
                     }
                 );

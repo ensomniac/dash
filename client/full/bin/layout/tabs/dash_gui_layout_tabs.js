@@ -91,7 +91,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         }
 
         if (!content_html) {
-            console.log("ERROR: Unknown content!");
+            console.log("Error: Unknown content!");
 
             content_html = $("<div>Error Loading Content</div>");
         }

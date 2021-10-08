@@ -28,7 +28,7 @@ class DashColorStateSet {
         //makes sure to auto-fill missing colors
 
         if (!this._base) {
-            console.log("ERROR: DashColorStateSet() Requires at least one color");
+            console.log("Error: DashColorStateSet() Requires at least one color");
             return;
         }
 

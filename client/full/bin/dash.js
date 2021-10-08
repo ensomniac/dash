@@ -93,7 +93,7 @@ function Dash () {
 
     this.GetDeepCopy = function (obj) {
         if (!this.IsValidObject(obj)) {
-            console.log("WARNING: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+            console.log("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
 
             return null;
         }

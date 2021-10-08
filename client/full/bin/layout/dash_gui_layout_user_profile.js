@@ -253,10 +253,10 @@ function DashGuiLayoutUserProfile (user_data, options) {
     };
 
     this.on_info_saved = function (response, input_row) {
-        if (response.error) {
+        if (response["error"]) {
             console.log(response);
 
-            alert(response.error);
+            alert(response["error"]);
 
             return;
         }
