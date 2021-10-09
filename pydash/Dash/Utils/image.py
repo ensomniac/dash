@@ -15,6 +15,7 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
     from Dash.LocalStorage import Write
 
     org_ext = "png"
+    thumb_size = 512
     img = Image.open(BytesIO(img_file))
     img_data = {"id": GetRandomID()}
     img_data = process_exif_image_data(img_data, img)
@@ -32,6 +33,7 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
 
     if "jpeg" in img_data["org_format"] or "jpg" in img_data["org_format"]:
         org_ext = "jpg"
+
     elif "gif" in img_data["org_format"]:
         org_ext = "gif"
 
@@ -50,12 +52,12 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
     # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
     img = img.convert("RGB")
     img_square = img.copy()
-    thumb_size = 512
 
+    # Make image square if not already
     if img.size[0] != img.size[1]:
         if img.size[0] > img.size[1]:  # Wider
             size = img.size[1]
-            x = int((img.size[0]*0.5) - (size*0.5))
+            x = int((img.size[0] * 0.5) - (size * 0.5))
 
             img_square = img.crop((
                 x,         # x start
@@ -63,9 +65,10 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
                 x + size,  # x + width
                 size       # y + height
             ))
+
         else:  # Taller
             size = img.size[0]
-            y = int((img.size[1]*0.5) - (size*0.5))
+            y = int((img.size[1] * 0.5) - (size * 0.5))
 
             img_square = img.crop((
                 0,        # x start
@@ -73,9 +76,6 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
                 size,     # x + width
                 y + size  # y + height
             ))
-    else:
-        # This image is already square
-        pass
 
     if img_square.size[0] > thumb_size or img_square.size[1] > thumb_size:
         img_square = img_square.resize((thumb_size, thumb_size), Image.ANTIALIAS)

@@ -314,13 +314,11 @@ function Dash () {
                     return asset_path.join(" ");
                 }
 
-                // var first = this.slice(0, 1);
-                // var rest = this.slice(1, this.length);
                 return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
             }
 
             catch {
-                console.log("String.prototype.Title() failed:", this);
+                console.log("String.prototype.Title() failed:", typeof this, this);
 
                 return this;
             }
