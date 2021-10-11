@@ -49,6 +49,9 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
 
     img.save(orig_path)
 
+    # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
+    # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
+
     # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
     img = img.convert("RGB")
     img_square = img.copy()
