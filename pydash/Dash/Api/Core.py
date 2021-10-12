@@ -14,7 +14,7 @@ from Dash.Utils import GetRandomID, SendEmail
 
 
 class ApiCore:
-    _user: str
+    _user: dict
     _dash_context: dict
     dash_global: callable
 
@@ -55,17 +55,15 @@ class ApiCore:
     @property
     def DashContext(self):
         if not hasattr(self, "_dash_context"):
-            from Dash.PackageContext import Get as GetContext
+            from Dash.PackageContext import Get
 
-            self._dash_context = GetContext(self._asset_path)
+            self._dash_context = Get(self._asset_path)
 
         return self._dash_context
 
     @property
     def User(self):
         if not hasattr(self, "_user"):
-            self._user = None
-
             if not self.DashContext:
                 raise Exception("Dash Context is missing x8136")
 
@@ -161,6 +159,22 @@ class ApiCore:
     def SetParam(self, key, value):
         self._params[key] = value
 
+        try:
+            self.dash_global.RequestData[key] = value
+        except:
+            pass
+
+    def SetParams(self, params):
+        if not params or type(params) is not dict:
+            raise Exception(f"Error: SetParams requires a dict: {params}")
+
+        self._params = params
+
+        try:
+            self.dash_global.RequestData = params
+        except:
+            pass
+
     def StopExecutionOnError(self, error):
         self._response["error"] = error
 
@@ -205,9 +219,17 @@ class ApiCore:
             error=error
         )
 
+    def SetDashGlobals(self):
+        if not self._execute_as_module:
+            return
+
+        self.set_dash_globals()
+
     def set_dash_globals(self):
-        # This code allows us to inject content from this class in all
-        # instances of this module running in this shell
+        """
+        This allows us to inject content from this class in all instances of this module running in this shell.
+        """
+
         if not hasattr(self, "dash_global"):
             self.dash_global = sys.modules[DashName]
 
@@ -274,7 +296,7 @@ class ApiCore:
 
     def Execute(uninstantiated_class_ref):
         """
-        This function exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
+        This exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
         """
 
         error = None
