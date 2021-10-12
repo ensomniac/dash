@@ -1,7 +1,7 @@
-function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
+function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null) {
     this.binder = binder;
-    this.get_data_cb = get_data_cb.bind(binder);
-    this.set_data_cb = set_data_cb.bind(binder);
+    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
+    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
     this.color = color || Dash.Color.Light;
 
     this.html = null;
@@ -121,6 +121,12 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     };
 
     this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
+        if (!this.get_data_cb) {
+            console.log("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
+
+            return;
+        }
+
         var input = this.toolbar.AddTransparentInput(
             text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
@@ -241,6 +247,10 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
     };
 
     this.on_input_submit = function (submitted_value, input_obj, additional_data) {
+        if (!this.set_data_cb) {
+            return;
+        }
+
         this.set_data_cb(additional_data["data_key"], submitted_value);
     };
 

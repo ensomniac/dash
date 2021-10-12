@@ -159,6 +159,7 @@ function GuiIcons (icon) {
         "dots_horizontal":       new GuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new GuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
         "download":              new GuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
+        "download_file":         new GuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
@@ -188,6 +189,7 @@ function GuiIcons (icon) {
         "note":                  new GuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note", 1.05),
         "notify":                new GuiIconDefinition(this.icon, "Notify", this.weight["regular"], "bell"),
         "open_folder":           new GuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
+        "paperclip":             new GuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
         "pen":                   new GuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
         "phone":                 new GuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
         "play":                  new GuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),
@@ -217,7 +219,7 @@ function GuiIcons (icon) {
         "unlock":                new GuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "unlock"),
         "unlock_alt":            new GuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "lock-open"),
         "upload":                new GuiIconDefinition(this.icon, "Upload", this.weight["light"], "upload"),
-        "upload_file":           new GuiIconDefinition(this.icon, "Upload", this.weight["regular"], "file-upload"),
+        "upload_file":           new GuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
         "user":                  new GuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
         "video":                 new GuiIconDefinition(this.icon, "Video", this.weight["regular"], "video", 0.85),
         "view":                  new GuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
@@ -21628,10 +21630,10 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.setup_styles();
 }
 
-function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
+function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null) {
     this.binder = binder;
-    this.get_data_cb = get_data_cb.bind(binder);
-    this.set_data_cb = set_data_cb.bind(binder);
+    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
+    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
     this.color = color || Dash.Color.Light;
     this.html = null;
     this.elements = [];
@@ -21726,6 +21728,10 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         return label;
     };
     this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
+        if (!this.get_data_cb) {
+            console.log("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
+            return;
+        }
         var input = this.toolbar.AddTransparentInput(
             text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
@@ -21821,6 +21827,9 @@ function DashGuiToolRow (binder, get_data_cb, set_data_cb, color) {
         // Placeholder
     };
     this.on_input_submit = function (submitted_value, input_obj, additional_data) {
+        if (!this.set_data_cb) {
+            return;
+        }
         this.set_data_cb(additional_data["data_key"], submitted_value);
     };
     this.setup_styles();
@@ -26175,6 +26184,9 @@ function DashGuiListRow (list, arbitrary_id) {
             for (var key in column_config_data["css"]) {
                 icon_button.html.css(key, column_config_data["css"][key]);
             }
+        }
+        if (column_config_data["options"]["hover_text"]) {
+            icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
         }
         if (this.is_header) {
             // Keep the container so the header stays properly aligned, but don't add an icon

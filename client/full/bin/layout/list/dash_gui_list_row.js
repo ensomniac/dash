@@ -498,6 +498,10 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
 
+        if (column_config_data["options"]["hover_text"]) {
+            icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        }
+
         if (this.is_header) {
             // Keep the container so the header stays properly aligned, but don't add an icon
             icon_button.icon.icon_html.remove();
