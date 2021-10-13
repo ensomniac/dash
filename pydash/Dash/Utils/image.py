@@ -6,10 +6,13 @@
 import os
 import sys
 
+ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
+
 
 def Upload(dash_context, user, img_root, img_file, nested=False):
     from PIL import Image
     from io import BytesIO
+    from .file import GetURL
     from datetime import datetime
     from .number import GetRandomID
     from Dash.LocalStorage import Write
@@ -99,6 +102,11 @@ def Upload(dash_context, user, img_root, img_file, nested=False):
     img_data["thumb_url"] = "https://" + thumb_url.replace("//", "/")
     img_data["thumb_sq_url"] = "https://" + thumb_sq_url.replace("//", "/")
     img_data["orig_url"] = "https://" + orig_url.replace("//", "/")
+
+    # TODO: Test that this works as expected
+    # img_data["thumb_url"] = GetURL(dash_context, thumb_path)
+    # img_data["thumb_sq_url"] = GetURL(dash_context, thumb_square_path)
+    # img_data["orig_url"] = GetURL(dash_context, orig_path)
 
     img_data["width"] = img.size[0]
     img_data["height"] = img.size[1]

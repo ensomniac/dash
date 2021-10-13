@@ -16,7 +16,26 @@ import sys
 OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 
+# ------------------------------------------------- FILE ----------------------------------------------------
+def UploadFile(dash_context, user, file_root, file_bytes, file_name, nested=False):
+    from .file import Upload
+
+    return Upload(dash_context, user, file_root, file_bytes, file_name, nested)
+
+
+def GetURL(dash_context, server_file_path):
+    from .file import GetURL
+
+    return GetURL(dash_context, server_file_path)
+
+
 # ------------------------------------------------- IMAGE ---------------------------------------------------
+def ImageExtensions():
+    from .image import ImageExtensions
+
+    return ImageExtensions
+
+
 def UploadImage(dash_context, user, img_root, img_file, nested=False):
     from .image import Upload
 

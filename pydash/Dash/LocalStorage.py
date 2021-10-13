@@ -224,17 +224,10 @@ class DashLocalStorage:
         return data
 
     def Write(self, full_path, data):
-        # if "local/performance/ryan" in full_path:
-        #     self.write_protected(full_path, data)
-        # else:
-        #     self.write_unprotected(full_path, data)
+        if type(data) is bytes:
+            return self.write_binary(full_path, data)
 
-        # Andrew - I'm leaving this code somewhat messy / or at least
-        # leaving some old bits around since today is Warpsound day
-        # and I want to make sure I can quickly revert this change in the
-        # case that it starts causing problems instead of solving them
-
-        return self.write_protected(full_path, data)
+        return self.write_json_protected(full_path, data)
 
     def Read(self, full_path):
         from json import loads
@@ -413,14 +406,17 @@ class DashLocalStorage:
                     obj_id
                 )
 
-    def write_unprotected(self, full_path, data):
+    def write_binary(self, full_path, data):
+        return open(full_path, "wb").write(data)
+
+    def write_json_unprotected(self, full_path, data):
         from json import dumps
 
         open(full_path, "w").write(dumps(data))
 
         return data
 
-    def write_protected(self, full_path, data):
+    def write_json_protected(self, full_path, data):
         """
         This is a newer system that first writes a unique filename to
         disk, then moves that file into the correct location. This should resolve
