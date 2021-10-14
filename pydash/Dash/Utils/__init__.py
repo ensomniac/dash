@@ -30,7 +30,7 @@ def GetURL(dash_context, server_file_path):
 
 
 # ------------------------------------------------- IMAGE ---------------------------------------------------
-def ImageExtensions():
+def GetImageExtensions():
     from .image import ImageExtensions
 
     return ImageExtensions

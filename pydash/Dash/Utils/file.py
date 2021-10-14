@@ -15,7 +15,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False):
 
     file_ext = filename.split(".")[-1].strip()
 
-    if file_ext in ImageExtensions():
+    if file_ext in ImageExtensions:
         from .image import Upload as UploadImage
 
         return UploadImage(dash_context, user, file_root, file_bytes, nested)
