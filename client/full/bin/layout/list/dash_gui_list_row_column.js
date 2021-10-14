@@ -56,20 +56,20 @@ function DashGuiListRowColumn (list_row, column_config_data) {
         }
 
         if (this.list_row.is_header) {
-            var color;
-
             if (this.list.color === Dash.Color.Dark) {
-                color = Dash.Color.Light.BackgroundRaised;
+                css["color"] = Dash.Color.Light.BackgroundRaised;
             }
 
             else if (this.list.color === Dash.Color.Light) {
-                color = Dash.Color.Dark.BackgroundRaised;
+                css["color"] = Dash.Color.Dark.BackgroundRaised;
             }
-
-            css["color"] = color;
         }
 
         this.html.css(css);
+
+        if (this.list_row.is_header && this.column_config_data["header_css"]) {
+            this.html.css(this.column_config_data["header_css"]);
+        }
     };
 
     this.Update = function () {

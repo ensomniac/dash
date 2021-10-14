@@ -74,6 +74,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             this.add_header_row();
         }
 
+        // This step must happen after re-adding the header row above, since we don't track that row
         this.rows = [];
     };
 

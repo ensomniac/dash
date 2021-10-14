@@ -55,6 +55,20 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
         this.icon_html = icon_html;
     };
 
+    this.SetSize = function (percentage_number) {
+        percentage_number = parseInt(percentage_number);
+
+        if (isNaN(percentage_number)) {
+            console.log("Error: DashIcon SetSize requires a number (that represents a percentage)");
+
+            return;
+        }
+
+        this.icon_html.css({
+            "font-size": percentage_number.toString() + "%"
+        });
+    };
+
     this.SetColor = function (color) {
         this.icon_html.css({
             "color": color

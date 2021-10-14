@@ -292,7 +292,7 @@ function DashGuiListRow (list, arbitrary_id) {
             }
 
             else if (column_config_data["type"] === "divider") {
-                var divider = this.get_divider();
+                var divider = this.get_divider(column_config_data);
 
                 this.column_box.append(divider);
 
@@ -386,7 +386,7 @@ function DashGuiListRow (list, arbitrary_id) {
         return spacer;
     };
 
-    this.get_divider = function () {
+    this.get_divider = function (column_config_data) {
         var divider_line = new Dash.Gui.Header("");
 
         divider_line.html.css({
@@ -396,6 +396,23 @@ function DashGuiListRow (list, arbitrary_id) {
         divider_line.border.css({
             "width": Dash.Size.Padding * 0.25
         });
+
+        if (column_config_data["css"]) {
+            if (column_config_data["css"]["html"]) {
+                divider_line.html.css(column_config_data["css"]["html"]);
+            }
+
+            if (column_config_data["css"]["border"]) {
+                divider_line.border.css(column_config_data["css"]["border"]);
+            }
+        }
+
+        if (this.is_header) {
+            // Keep the container so the header stays properly aligned, but don't show the divider
+            divider_line.html.css({
+                "opacity": 0
+            });
+        }
 
         return divider_line.html;
     };

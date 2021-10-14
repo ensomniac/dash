@@ -21,8 +21,10 @@ function DashColor () {
         var light_input_text = "rgba(0, 0, 0, 0.8)";
 
         var light = new DashSiteColors({
+            // TODO: "background" and "background_raised" need to be different ("background" should be something like "#d7dcde")
+            //  (changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead)
             "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",  // TODO: Choose something different than "background"
+            "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
             // "accent_good": "#f3d057",

@@ -18,7 +18,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False):
     if file_ext in ImageExtensions:
         from .image import Upload as UploadImage
 
-        return UploadImage(dash_context, user, file_root, file_bytes, nested)
+        return UploadImage(dash_context, user, file_root, file_bytes, nested, filename)
 
     file_data = {
         "id": GetRandomID(),

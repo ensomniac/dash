@@ -36,10 +36,10 @@ def GetImageExtensions():
     return ImageExtensions
 
 
-def UploadImage(dash_context, user, img_root, img_file, nested=False):
+def UploadImage(dash_context, user, img_root, img_file, nested=False, original_filename=""):
     from .image import Upload
 
-    return Upload(dash_context, user, img_root, img_file, nested)
+    return Upload(dash_context, user, img_root, img_file, nested, original_filename)
 
 
 # ------------------------------------------------- NUMBER --------------------------------------------------

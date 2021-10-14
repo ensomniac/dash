@@ -13,6 +13,14 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.SetColor(color);
     };
 
+    this.SetIconSize = function (percentage_number) {
+        this.icon.SetSize(percentage_number);
+    };
+
+    this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+        this.icon.AddShadow(value);
+    };
+
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
     };

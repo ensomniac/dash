@@ -40,6 +40,16 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
         }
         this.icon_html = icon_html;
     };
+    this.SetSize = function (percentage_number) {
+        percentage_number = parseInt(percentage_number);
+        if (isNaN(percentage_number)) {
+            console.log("Error: DashIcon SetSize requires a number (that represents a percentage)");
+            return;
+        }
+        this.icon_html.css({
+            "font-size": percentage_number.toString() + "%"
+        });
+    };
     this.SetColor = function (color) {
         this.icon_html.css({
             "color": color
@@ -18265,8 +18275,10 @@ function DashColor () {
         var dark_input_text = "rgba(255, 255, 255, 0.8)";
         var light_input_text = "rgba(0, 0, 0, 0.8)";
         var light = new DashSiteColors({
+            // TODO: "background" and "background_raised" need to be different ("background" should be something like "#d7dcde")
+            //  (changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead)
             "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",  // TODO: Choose something different than "background"
+            "background_raised": "#e3e8ea",
             "button": "#659cba",
             "button_text": "rgb(234 239 255)",
             // "accent_good": "#f3d057",
@@ -20360,6 +20372,12 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     DashGuiButton.call(this, "", callback, binder, color, options);
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
+    };
+    this.SetIconSize = function (percentage_number) {
+        this.icon.SetSize(percentage_number);
+    };
+    this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+        this.icon.AddShadow(value);
     };
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
@@ -25759,6 +25777,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         if (this.header_row) {
             this.add_header_row();
         }
+        // This step must happen after re-adding the header row above, since we don't track that row
         this.rows = [];
     };
     this.SetColumnConfig = function (column_config, clear=true) {
@@ -26029,7 +26048,7 @@ function DashGuiListRow (list, arbitrary_id) {
                 left_aligned = false;
             }
             else if (column_config_data["type"] === "divider") {
-                var divider = this.get_divider();
+                var divider = this.get_divider(column_config_data);
                 this.column_box.append(divider);
                 if (!this.columns["dividers"]) {
                     this.columns["dividers"] = [];
@@ -26098,7 +26117,7 @@ function DashGuiListRow (list, arbitrary_id) {
         });
         return spacer;
     };
-    this.get_divider = function () {
+    this.get_divider = function (column_config_data) {
         var divider_line = new Dash.Gui.Header("");
         divider_line.html.css({
             "margin-left": Dash.Size.Padding * 0.7,
@@ -26106,6 +26125,20 @@ function DashGuiListRow (list, arbitrary_id) {
         divider_line.border.css({
             "width": Dash.Size.Padding * 0.25
         });
+        if (column_config_data["css"]) {
+            if (column_config_data["css"]["html"]) {
+                divider_line.html.css(column_config_data["css"]["html"]);
+            }
+            if (column_config_data["css"]["border"]) {
+                divider_line.border.css(column_config_data["css"]["border"]);
+            }
+        }
+        if (this.is_header) {
+            // Keep the container so the header stays properly aligned, but don't show the divider
+            divider_line.html.css({
+                "opacity": 0
+            });
+        }
         return divider_line.html;
     };
     this.get_combo = function (column_config_data) {
@@ -26243,16 +26276,17 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             })(this);
         }
         if (this.list_row.is_header) {
-            var color;
             if (this.list.color === Dash.Color.Dark) {
-                color = Dash.Color.Light.BackgroundRaised;
+                css["color"] = Dash.Color.Light.BackgroundRaised;
             }
             else if (this.list.color === Dash.Color.Light) {
-                color = Dash.Color.Dark.BackgroundRaised;
+                css["color"] = Dash.Color.Dark.BackgroundRaised;
             }
-            css["color"] = color;
         }
         this.html.css(css);
+        if (this.list_row.is_header && this.column_config_data["header_css"]) {
+            this.html.css(this.column_config_data["header_css"]);
+        }
     };
     this.Update = function () {
         var column_value;
@@ -26290,27 +26324,33 @@ function DashGuiListRowColumn (list_row, column_config_data) {
 function DashGuiListColumnConfig () {
     this.columns = [];
     this.AddColumn = function (display_name, data_key, can_edit, width, options) {
-        if (typeof can_edit != "boolean") {
+        if (typeof can_edit !== "boolean") {
             can_edit = true;
         }
-        options = options || {};
-        var optional_css = options["css"] || null;
-        var column_details = {};
-        column_details["type"] = options["type"] || "";
-        column_details["display_name"] = display_name;
-        column_details["data_key"] = data_key;
-        column_details["can_edit"] = can_edit;
-        column_details["width"] = width;
-        column_details["css"] = optional_css;
-        column_details["on_click_callback"] = options["on_click_callback"];
-        column_details["options"] = options["options"] || {};
+        var column_details = {
+            "width": width,
+            "data_key": data_key,
+            "can_edit": can_edit,
+            "display_name": display_name,
+            "type": options && options["type"] ? options["type"] : "",
+            "css": options && options["css"] ? options["css"] : null,
+            "header_css": options && options["header_css"] ? options["header_css"] : null,
+            "options": options && options["options"] ? options["options"] : {},
+            "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
+        };
         this.columns.push(column_details);
     };
     this.AddSpacer = function () {
         this.columns.push({"type": "spacer"});
     };
-    this.AddDivider = function () {
-        this.columns.push({"type": "divider"});
+    this.AddDivider = function (html_css=null, border_css=null) {
+        this.columns.push({
+            "type": "divider",
+            "css": {
+                "html": html_css,
+                "border": border_css
+            }
+        });
     };
 }
 
