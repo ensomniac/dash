@@ -174,8 +174,8 @@ function DashGui() {
         (function (self, icon_id, callback, data_key, additional_data, binder) {
             var button = new Dash.Gui.IconButton(
                 icon_id,
-                function () {
-                    callback(data_key, additional_data);
+                function (response) {
+                    callback(data_key, additional_data, response);
                 },
                 binder,
                 binder.color || Dash.Color.Dark

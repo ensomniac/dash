@@ -175,14 +175,19 @@ function DashGuiButtonInterface () {
         this.file_uploader = null;
 
         (function (self) {
-            self.file_uploader = new DashGuiButtonFileUploader(self, api, params, function (response) {
-                self.on_file_upload_response(response);
-            }, function () {
-
-                if (self.on_file_upload_start_callback) {
-                    self.on_file_upload_start_callback();
+            self.file_uploader = new DashGuiButtonFileUploader(
+                self,
+                api,
+                params,
+                function (response) {
+                    self.on_file_upload_response(response);
+                },
+                function () {
+                    if (self.on_file_upload_start_callback) {
+                        self.on_file_upload_start_callback();
+                    }
                 }
-            });
+            );
         })(this);
 
         this.html.append(this.file_uploader.html);
