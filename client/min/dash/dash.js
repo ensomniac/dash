@@ -20357,10 +20357,11 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.upload_backing_bar.css({"background": "rgba(255, 255, 255, 0.2)", "opacity": 1});
         this.upload_progress_bar.css({"width": this.width*progress_t, "opacity": 1});
     };
-    this.upload_success = function (file, result) {
+    this.upload_success = function (file, result, t, a, b) {
         this.button.SetLoadBar(0);
         this.upload_backing_bar.animate({"opacity": 0});
         this.upload_progress_bar.animate({"opacity": 0});
+        console.log("TEST on upload success", result, t, a, b, file);
         this.callback(result);
     };
     this.draw_dropzone = function () {
@@ -20371,7 +20372,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
                     this.on("error", function (file, error) {self.error_uploading(file, error);});
                     this.on("processing", function (file) {self.processing_upload(file);});
                     this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
-                    this.on("success", function (file, result) {self.upload_success(file, result);});
+                    this.on("success", function (file, result, t, a, b) {self.upload_success(file, result, t, a, b);});
                 },
                 "url": self.api,
                 "uploadMultiple": false,
