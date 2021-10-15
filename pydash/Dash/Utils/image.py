@@ -9,6 +9,7 @@ import sys
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
+# The majority of the time, Upload should be used from file.py instead, and it will decide if this should be called
 def Upload(dash_context, user, img_root, img_file, nested=False, original_filename=""):
     from io import BytesIO
     from .file import GetURL

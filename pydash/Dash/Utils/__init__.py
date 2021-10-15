@@ -36,6 +36,7 @@ def GetImageExtensions():
     return ImageExtensions
 
 
+# The majority of the time, UploadFile should be used instead, and it will decide if UploadImage should be called
 def UploadImage(dash_context, user, img_root, img_file, nested=False, original_filename=""):
     from .image import Upload
 

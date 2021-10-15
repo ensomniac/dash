@@ -13,7 +13,13 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False):
     from .image import ImageExtensions
     from Dash.LocalStorage import Write
 
-    file_ext = filename.split(".")[-1].strip()
+    if filename.count(".") != 1:
+        raise Exception(f"Invalid filename, or no file extension: {filename}")
+
+    file_ext = filename.lower().split(".")[-1].strip()
+
+    if not file_ext or not (2 <= len(file_ext) <= 4):
+        raise Exception(f"Invalid file extension: {file_ext}")
 
     if file_ext in ImageExtensions:
         from .image import Upload as UploadImage

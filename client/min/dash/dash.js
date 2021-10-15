@@ -25771,6 +25771,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     }
     this.rows = [];
     this.header_row = null;
+    this.header_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
@@ -25786,11 +25787,15 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.html.append(row.html);
         return row;
     };
-    this.AddHeaderRow = function () {
+    this.AddHeaderRow = function (html_css, column_box_css) {
         if (this.header_row) {
             console.log("Error: This list already has a header row, can't add another.");
             return;
         }
+        this.header_row_css = {
+            "html": html_css,
+            "column_box": column_box_css
+        };
         this.add_header_row();
         return this.header_row;
     };
@@ -25853,8 +25858,27 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.selected_callback(cb_id, is_selected);
         this.last_selection_id = row_id;
     };
+    this.GetRow = function (row_id) {
+        if (!this.rows) {
+            return;
+        }
+        for (var i in this.rows) {
+            var row = this.rows[i];
+            if (row.id === row_id) {
+                return row;
+            }
+        }
+    };
     this.add_header_row = function () {
         this.header_row = new DashGuiListRow(this, "_top_header_row");
+        if (this.header_row_css) {
+            if (this.header_row_css["html"]) {
+                this.header_row.html.css(this.header_row_css["html"]);
+            }
+            if (this.header_row_css["column_box"]) {
+                this.header_row.column_box.css(this.header_row_css["column_box"]);
+            }
+        }
         this.html.prepend(this.header_row.html);
         // Always update it by default - can still update later in the code that calls this
         this.header_row.Update();
