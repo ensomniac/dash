@@ -19782,6 +19782,34 @@ function DashGui() {
         })(this, icon_id, callback, data_key, additional_data, binder);
         return this._tmp_button;
     };
+    this.OpenFileURLDownloadDialog = function (url, filename) {
+        var dialog_id = "__dash_file_url_download_dialog";
+        fetch(
+            url
+        ).then(
+            resp => resp.blob()
+        ).then(
+            blob => {
+                var url_pointer = window.URL.createObjectURL(blob);
+                // This will only already exist if we don't removeChild at the end of this
+                // function - however, using removeChild at the end seems most efficient
+                var dialog = document.getElementById(dialog_id);
+                if (!dialog) {
+                    dialog = document.createElement("a");
+                    dialog.setAttribute("id", dialog_id);
+                    dialog.style.display = "none";
+                }
+                dialog.href = url_pointer;
+                dialog.download = filename;
+                document.body.appendChild(dialog);
+                dialog.click();
+                window.URL.revokeObjectURL(url_pointer);
+                document.body.removeChild(dialog);
+            }
+        ).catch(
+            () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
+        );
+    };
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
     this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
         // TODO: This should probably become its own style at some point
@@ -25760,11 +25788,21 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.add_header_row();
         return this.header_row;
     };
-    this.add_header_row = function () {
-        this.header_row = new DashGuiListRow(this, "_top_header_row");
-        this.html.prepend(this.header_row.html);
-        // Always update it by default - can still update later in the code that calls this
-        this.header_row.Update();
+    this.DisableColumn = function (type, type_index) {
+        if (!this.rows) {
+            return;
+        }
+        for (var i in this.rows) {
+            this.rows[i].ChangeColumnEnabled(type, type_index, false);
+        }
+    };
+    this.EnableColumn = function (type, type_index) {
+        if (!this.rows) {
+            return;
+        }
+        for (var i in this.rows) {
+            this.rows[i].ChangeColumnEnabled(type, type_index, true);
+        }
     };
     this.Update = function () {
         for (var i in this.rows) {
@@ -25808,6 +25846,12 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
         this.selected_callback(cb_id, is_selected);
         this.last_selection_id = row_id;
+    };
+    this.add_header_row = function () {
+        this.header_row = new DashGuiListRow(this, "_top_header_row");
+        this.html.prepend(this.header_row.html);
+        // Always update it by default - can still update later in the code that calls this
+        this.header_row.Update();
     };
     this.setup_styles();
 }
@@ -26059,7 +26103,6 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
                 left_aligned = false;
             }
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
                 this.column_box.append(combo.html);
@@ -26071,7 +26114,6 @@ function DashGuiListRow (list, arbitrary_id) {
                     "column_config_data": column_config_data
                 });
             }
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "input") {
                 var input = this.get_input(column_config_data);
                 this.column_box.append(input.html);
@@ -26083,7 +26125,6 @@ function DashGuiListRow (list, arbitrary_id) {
                     "column_config_data": column_config_data
                 });
             }
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "icon_button") {
                 var icon_button = this.get_icon_button(column_config_data);
                 this.column_box.append(icon_button.html);
@@ -26109,6 +26150,30 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
     };
+    this.ChangeColumnEnabled = function (type, index, enabled=true) {
+        if (!this.columns || !this.columns[type]) {
+            return;
+        }
+        if (index === -1) {
+            index = this.columns[type].length - 1;
+        }
+        if ((index + 1) > this.columns[type].length) {
+            return;
+        }
+        if (!this.columns[type][index] || !this.columns[type][index]["obj"]) {
+            return;
+        }
+        if (type === "icon_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].Enable();
+            }
+            else {
+                this.columns[type][index]["obj"].Disable();
+            }
+        }
+        // Add conditions for the other types as needed
+    };
+    // TODO: Move all the stuff below into DashGuiListRowColumn and adjust the conditions in this.setup_columns accordingly
     this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
@@ -26203,7 +26268,7 @@ function DashGuiListRow (list, arbitrary_id) {
         return input;
     };
     this.get_icon_button = function (column_config_data) {
-        var  row_id = this.id;
+        var row_id = this.id;
         var icon_button = new Dash.Gui.IconButton(
             column_config_data["options"]["icon_name"],
             function () {

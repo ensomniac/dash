@@ -197,6 +197,45 @@ function DashGui() {
         return this._tmp_button;
     };
 
+    this.OpenFileURLDownloadDialog = function (url, filename) {
+        var dialog_id = "__dash_file_url_download_dialog";
+
+        fetch(
+            url
+        ).then(
+            resp => resp.blob()
+        ).then(
+            blob => {
+                var url_pointer = window.URL.createObjectURL(blob);
+
+                // This will only already exist if we don't removeChild at the end of this
+                // function - however, using removeChild at the end seems most efficient
+                var dialog = document.getElementById(dialog_id);
+
+                if (!dialog) {
+                    dialog = document.createElement("a");
+
+                    dialog.setAttribute("id", dialog_id);
+
+                    dialog.style.display = "none";
+                }
+
+                dialog.href = url_pointer;
+                dialog.download = filename;
+
+                document.body.appendChild(dialog);
+
+                dialog.click();
+
+                window.URL.revokeObjectURL(url_pointer);
+
+                document.body.removeChild(dialog);
+            }
+        ).catch(
+            () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
+        );
+    };
+
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
     this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
         // TODO: This should probably become its own style at some point

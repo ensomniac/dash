@@ -51,13 +51,24 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return this.header_row;
     };
 
-    this.add_header_row = function () {
-        this.header_row = new DashGuiListRow(this, "_top_header_row");
+    this.DisableColumn = function (type, type_index) {
+        if (!this.rows) {
+            return;
+        }
 
-        this.html.prepend(this.header_row.html);
+        for (var i in this.rows) {
+            this.rows[i].ChangeColumnEnabled(type, type_index, false);
+        }
+    };
 
-        // Always update it by default - can still update later in the code that calls this
-        this.header_row.Update();
+    this.EnableColumn = function (type, type_index) {
+        if (!this.rows) {
+            return;
+        }
+
+        for (var i in this.rows) {
+            this.rows[i].ChangeColumnEnabled(type, type_index, true);
+        }
     };
 
     this.Update = function () {
@@ -115,6 +126,15 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
         this.selected_callback(cb_id, is_selected);
         this.last_selection_id = row_id;
+    };
+
+    this.add_header_row = function () {
+        this.header_row = new DashGuiListRow(this, "_top_header_row");
+
+        this.html.prepend(this.header_row.html);
+
+        // Always update it by default - can still update later in the code that calls this
+        this.header_row.Update();
     };
 
     this.setup_styles();

@@ -308,7 +308,6 @@ function DashGuiListRow (list, arbitrary_id) {
                 left_aligned = false;
             }
 
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
 
@@ -324,7 +323,6 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
             }
 
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "input") {
                 var input = this.get_input(column_config_data);
 
@@ -340,7 +338,6 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
             }
 
-            // This makes more sense as part of DashGuiListRowColumn, but I couldn't get it to work properly
             else if (column_config_data["type"] === "icon_button") {
                 var icon_button = this.get_icon_button(column_config_data);
 
@@ -375,6 +372,37 @@ function DashGuiListRow (list, arbitrary_id) {
         }
     };
 
+    this.ChangeColumnEnabled = function (type, index, enabled=true) {
+        if (!this.columns || !this.columns[type]) {
+            return;
+        }
+
+        if (index === -1) {
+            index = this.columns[type].length - 1;
+        }
+
+        if ((index + 1) > this.columns[type].length) {
+            return;
+        }
+
+        if (!this.columns[type][index] || !this.columns[type][index]["obj"]) {
+            return;
+        }
+
+        if (type === "icon_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].Enable();
+            }
+
+            else {
+                this.columns[type][index]["obj"].Disable();
+            }
+        }
+
+        // Add conditions for the other types as needed
+    };
+
+    // TODO: Move all the stuff below into DashGuiListRowColumn and adjust the conditions in this.setup_columns accordingly
     this.get_spacer = function () {
         var spacer = $("<div></div>");
 
@@ -495,7 +523,7 @@ function DashGuiListRow (list, arbitrary_id) {
     };
 
     this.get_icon_button = function (column_config_data) {
-        var  row_id = this.id;
+        var row_id = this.id;
 
         var icon_button = new Dash.Gui.IconButton(
             column_config_data["options"]["icon_name"],

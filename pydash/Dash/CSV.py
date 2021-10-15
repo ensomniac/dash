@@ -97,15 +97,21 @@ class CSV:
 
         all_keys = []
         all_cleaned_data = []
+        sort_keys = ["display_name", "asset_path"]
 
         for item in all_data:
             data = all_data[item]
+
+            for sort_key in sort_keys:
+                if not data.get(sort_key):
+                    continue
 
             data = self.replace_user_email_with_name(data)
             data = self.replace_timestamp_with_readable(data)
 
             for exclude_key in self.exclude_keys:
-                del data[exclude_key]
+                if exclude_key in data:
+                    del data[exclude_key]
 
             for key in data:
                 if key not in all_keys:
@@ -120,7 +126,7 @@ class CSV:
 
             all_cleaned_data[index] = self.reorder_data(data)
 
-        for sort_key in ["display_name", "asset_path"]:
+        for sort_key in sort_keys:
             if sort_key in all_keys:
                 return self.sort_data_by_key(all_cleaned_data, sort_key)
 
@@ -158,13 +164,21 @@ class CSV:
         :rtype: list
         :return: sorted list of json data dicts
         """
+
         sorted_data = []
         cleaned_data = {}
 
         for data in all_data:
             cleaned_data[data[sort_key]] = data
 
-        cleaned_data = OrderedDict(sorted(cleaned_data.items()))
+        cleaned_data_sorted = cleaned_data.items()
+
+        try:
+            cleaned_data_sorted = sorted(cleaned_data_sorted)
+        except TypeError:
+            pass
+
+        cleaned_data = OrderedDict(cleaned_data_sorted)
 
         for key in cleaned_data:
             sorted_data.append(cleaned_data[key])
@@ -196,8 +210,11 @@ class CSV:
         values = list(data.values())
 
         for index, value in enumerate(values):
-            if type(value) == list:
-                values[index] = "\n".join(value)
+            if type(value) is list:
+                try:
+                    values[index] = "\n".join(value)
+                except:
+                    values[index] = str(value)
 
         return values
 
