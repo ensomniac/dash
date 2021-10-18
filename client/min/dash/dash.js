@@ -18979,29 +18979,8 @@ function DashUtils () {
         })(this, timer);
         this.manage_timer(timer);
     };
-    this.OnAnimationFrame = function (binder, callback, html_key=null) {
-        var anim_frame = {
-            "callback": callback.bind(binder),
-            "source": binder,
-            "iterations": 0,
-            "html": html_key ? binder[html_key] : binder.html
-        };
-        (function (self, anim_frame, binder, callback, html_key) {
-            var iterations = 0;
-            anim_frame["anim_frame_id"] = requestAnimationFrame(function () {
-                anim_frame["iterations"] = iterations;
-                // [Andrew] I think (unable to confirm) that this may be causing some excessive looping...
-                // [Ryan] I don't think this is implemented in the way you were expecting.
-                //        I wrote a slightly different version in this file as an example.
-                self.OnAnimationFrame(binder, callback, html_key);
-                iterations += 1;
-            });
-        })(this, anim_frame, binder, callback, html_key);
-        this.manage_animation_frame(anim_frame);
-    };
+    // Very similar to OnFrame, except we capture the size of binder.html and only fire the callback if the size changes
     this.OnHTMLResized = function (binder, callback) {
-        // Very similar to OnFrame, except we capture the size of binder.html
-        // and only fire the callback if the size changes
         this.register_anim_frame_worker({
             "callback": callback.bind(binder),
             "source": binder,
@@ -19010,12 +18989,35 @@ function DashUtils () {
             "on_resize": true
         });
     };
+    // Store a tiny bit of information about this request
     this.OnFrame = function (binder, callback) {
-        // Store a tiny bit of information about this request
         this.register_anim_frame_worker({
             "callback": callback.bind(binder),
             "source": binder
         });
+    };
+    this.OnAnimationFrame = function (binder, callback, html_key=null) {
+        var anim_frame = {
+            "callback": callback.bind(binder),
+            "source": binder,
+            "iterations": 0,
+            "html": html_key ? binder[html_key] : binder.html
+        };
+        (function (self, anim_frame, binder, callback, html_key) {
+            anim_frame["anim_frame_id"] = requestAnimationFrame(
+                function () {
+                    self.OnAnimationFrame(binder, callback, html_key);
+                }
+            );
+        })(this, anim_frame, binder, callback, html_key);
+        this.manage_animation_frame(anim_frame);
+    };
+    this.manage_animation_frame = function (anim_frame) {
+        if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
+            window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
+            return;
+        }
+        anim_frame["callback"]();
     };
     this.start_background_update_loop = function () {
         // This function is called when this class is instantiated. It calls a
@@ -19113,17 +19115,6 @@ function DashUtils () {
         // console.log("Manage them all....");
         // console.log(this.animation_frame_workers.length);
         // TODO: Round out this function to clean up stale html objects
-    };
-    this.manage_animation_frame = function (anim_frame) {
-        var still_active = true;
-        if (anim_frame["html"] && !anim_frame["html"].is(":visible")) {
-            still_active = false;
-        }
-        if (!still_active) {
-            window.cancelAnimationFrame(anim_frame["anim_frame_id"]);
-            return;
-        }
-        anim_frame["callback"]();
     };
     // This is called on the next frame because window.Dash.<> is not
     // the correct instance / valid until the next frame
@@ -26110,6 +26101,9 @@ function DashGuiListRow (list, arbitrary_id) {
         for (var x in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[x];
             if (column_config_data["type"] === "spacer") {
+                if (column_config_data["header_only"] && !this.is_header) {
+                    continue;
+                }
                 var spacer = this.get_spacer();
                 this.column_box.append(spacer);
                 if (!this.columns["spacers"]) {
@@ -26435,8 +26429,11 @@ function DashGuiListColumnConfig () {
         };
         this.columns.push(column_details);
     };
-    this.AddSpacer = function () {
-        this.columns.push({"type": "spacer"});
+    this.AddSpacer = function (header_only=false) {
+        this.columns.push({
+            "type": "spacer",
+            "header_only": header_only
+        });
     };
     this.AddDivider = function (html_css=null, border_css=null) {
         this.columns.push({

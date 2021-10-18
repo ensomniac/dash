@@ -275,6 +275,10 @@ function DashGuiListRow (list, arbitrary_id) {
             var column_config_data = this.list.column_config.columns[x];
 
             if (column_config_data["type"] === "spacer") {
+                if (column_config_data["header_only"] && !this.is_header) {
+                    continue;
+                }
+
                 var spacer = this.get_spacer();
 
                 this.column_box.append(spacer);

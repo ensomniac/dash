@@ -21,8 +21,11 @@ function DashGuiListColumnConfig () {
         this.columns.push(column_details);
     };
 
-    this.AddSpacer = function () {
-        this.columns.push({"type": "spacer"});
+    this.AddSpacer = function (header_only=false) {
+        this.columns.push({
+            "type": "spacer",
+            "header_only": header_only
+        });
     };
 
     this.AddDivider = function (html_css=null, border_css=null) {
