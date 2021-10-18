@@ -1,6 +1,7 @@
-function DashGuiListRowColumn (list_row, column_config_data) {
+function DashGuiListRowColumn (list_row, column_config_data, index) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
+    this.index = parseInt(index);
 
     this.list = this.list_row.list;
     this.html = $("<div></div>");
@@ -14,18 +15,33 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis",
+            "text-overflow": "ellipsis"
         };
 
         if (this.width > 0) {
             css["width"] = this.width;
         }
 
-        if (this.column_config_data["left_aligned"]) {
-            css["margin-right"] = Dash.Size.Padding;
-        }
-        else {
+        var previous_column = this.list.column_config.columns[this.index - 1];
+
+        if (previous_column && previous_column["type"] === "divider") {
+            if (this.index < (this.list.column_config.columns.length - 1)) {
+                css["margin-right"] = Dash.Size.Padding;
+            }
+
             css["margin-left"] = Dash.Size.Padding;
+        }
+
+        else {
+            if (this.column_config_data["left_aligned"]) {
+                if (this.index < (this.list.column_config.columns.length - 1)) {
+                    css["margin-right"] = Dash.Size.Padding;
+                }
+            }
+
+            else {
+                css["margin-left"] = Dash.Size.Padding;
+            }
         }
 
         if (this.column_config_data["css"]) {

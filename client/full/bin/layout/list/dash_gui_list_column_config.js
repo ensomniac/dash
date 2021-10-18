@@ -28,13 +28,10 @@ function DashGuiListColumnConfig () {
         });
     };
 
-    this.AddDivider = function (html_css=null, border_css=null) {
+    this.AddDivider = function (css=null) {
         this.columns.push({
             "type": "divider",
-            "css": {
-                "html": html_css,
-                "border": border_css
-            }
+            "css": css
         });
     };
 }

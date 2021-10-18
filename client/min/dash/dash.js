@@ -26091,15 +26091,18 @@ function DashGuiListRow (list, arbitrary_id) {
                     self.highlight.stop().animate({"opacity": 0}, 250);
                 }
             });
-            self.column_box.on("click", function () {
+            self.column_box.on("click", function (e) {
+                if (e.target && e.target.className.includes(" fa-")) {
+                    // Don't set selection if it was an icon button that was clicked
+                    return;
+                }
                 self.list.SetSelection(self.id);
             });
         })(this);
     };
     this.setup_columns = function () {
-        var left_aligned = true;
-        for (var x in this.list.column_config.columns) {
-            var column_config_data = this.list.column_config.columns[x];
+        for (var i in this.list.column_config.columns) {
+            var column_config_data = this.list.column_config.columns[i];
             if (column_config_data["type"] === "spacer") {
                 if (column_config_data["header_only"] && !this.is_header) {
                     continue;
@@ -26113,7 +26116,6 @@ function DashGuiListRow (list, arbitrary_id) {
                     "obj": spacer,
                     "column_config_data": column_config_data
                 });
-                left_aligned = false;
             }
             else if (column_config_data["type"] === "divider") {
                 var divider = this.get_divider(column_config_data);
@@ -26125,7 +26127,6 @@ function DashGuiListRow (list, arbitrary_id) {
                     "obj": divider,
                     "column_config_data": column_config_data
                 });
-                left_aligned = false;
             }
             else if (column_config_data["type"] === "combo") {
                 var combo = this.get_combo(column_config_data);
@@ -26161,8 +26162,8 @@ function DashGuiListRow (list, arbitrary_id) {
                 });
             }
             else {
-                column_config_data["left_aligned"] = left_aligned;
-                var column = new DashGuiListRowColumn(this, column_config_data);
+                column_config_data["left_aligned"] = true;
+                var column = new DashGuiListRowColumn(this, column_config_data, i);
                 this.column_box.append(column.html);
                 if (!this.columns["default"]) {
                     this.columns["default"] = [];
@@ -26207,28 +26208,17 @@ function DashGuiListRow (list, arbitrary_id) {
         return spacer;
     };
     this.get_divider = function (column_config_data) {
-        var divider_line = new Dash.Gui.Header("");
-        divider_line.html.css({
-            "margin-left": Dash.Size.Padding * 0.7,
-        });
-        divider_line.border.css({
-            "width": Dash.Size.Padding * 0.25
+        var divider_line = $("<div></div>");
+        divider_line.css({
+            "background": this.color.AccentGood,
+            "width": Dash.Size.Padding * 0.3,
+            "margin": "none",
+            "flex": "none"
         });
         if (column_config_data["css"]) {
-            if (column_config_data["css"]["html"]) {
-                divider_line.html.css(column_config_data["css"]["html"]);
-            }
-            if (column_config_data["css"]["border"]) {
-                divider_line.border.css(column_config_data["css"]["border"]);
-            }
+            divider_line.css(column_config_data["css"]);
         }
-        if (this.is_header) {
-            // Keep the container so the header stays properly aligned, but don't show the divider
-            divider_line.html.css({
-                "opacity": 0
-            });
-        }
-        return divider_line.html;
+        return divider_line;
     };
     this.get_combo = function (column_config_data) {
         var combo = new Dash.Gui.Combo (
@@ -26303,10 +26293,11 @@ function DashGuiListRow (list, arbitrary_id) {
             column_config_data["options"]["color"] || this.color,
             column_config_data["options"]["options"] || {}
         );
+        icon_button.html.css({
+            "height": Dash.Size.RowHeight
+        });
         if (column_config_data["css"]) {
-            for (var key in column_config_data["css"]) {
-                icon_button.html.css(key, column_config_data["css"][key]);
-            }
+            icon_button.html.css(column_config_data["css"]);
         }
         if (column_config_data["options"]["hover_text"]) {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
@@ -26320,9 +26311,10 @@ function DashGuiListRow (list, arbitrary_id) {
     this.setup_styles();
 }
 
-function DashGuiListRowColumn (list_row, column_config_data) {
+function DashGuiListRowColumn (list_row, column_config_data, index) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
+    this.index = parseInt(index);
     this.list = this.list_row.list;
     this.html = $("<div></div>");
     this.width = this.column_config_data["width"] || -1;
@@ -26334,16 +26326,27 @@ function DashGuiListRowColumn (list_row, column_config_data) {
             "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis",
+            "text-overflow": "ellipsis"
         };
         if (this.width > 0) {
             css["width"] = this.width;
         }
-        if (this.column_config_data["left_aligned"]) {
-            css["margin-right"] = Dash.Size.Padding;
+        var previous_column = this.list.column_config.columns[this.index - 1];
+        if (previous_column && previous_column["type"] === "divider") {
+            if (this.index < (this.list.column_config.columns.length - 1)) {
+                css["margin-right"] = Dash.Size.Padding;
+            }
+            css["margin-left"] = Dash.Size.Padding;
         }
         else {
-            css["margin-left"] = Dash.Size.Padding;
+            if (this.column_config_data["left_aligned"]) {
+                if (this.index < (this.list.column_config.columns.length - 1)) {
+                    css["margin-right"] = Dash.Size.Padding;
+                }
+            }
+            else {
+                css["margin-left"] = Dash.Size.Padding;
+            }
         }
         if (this.column_config_data["css"]) {
             for (var key in this.column_config_data["css"]) {
@@ -26435,13 +26438,10 @@ function DashGuiListColumnConfig () {
             "header_only": header_only
         });
     };
-    this.AddDivider = function (html_css=null, border_css=null) {
+    this.AddDivider = function (css=null) {
         this.columns.push({
             "type": "divider",
-            "css": {
-                "html": html_css,
-                "border": border_css
-            }
+            "css": css
         });
     };
 }
