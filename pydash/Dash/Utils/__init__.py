@@ -43,6 +43,13 @@ def UploadImage(dash_context, user, img_root, img_file, nested=False, original_f
     return Upload(dash_context, user, img_root, img_file, nested, original_filename)
 
 
+# ------------------------------------------------- MODEL ---------------------------------------------------
+def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False):
+    from .model import ConvertFBXToGLB
+
+    return ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path, compress_txt)
+
+
 # ------------------------------------------------- NUMBER --------------------------------------------------
 def GetRandomID():
     from .number import GetRandomID
