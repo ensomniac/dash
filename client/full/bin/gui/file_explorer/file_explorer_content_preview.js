@@ -1,18 +1,14 @@
-function DashFileExplorerFilePreview (preview_strip, file_data={}) {
+function DashGuiFileExplorerContentPreview (preview_strip) {
     this.preview_strip = preview_strip;
-    this.file_data = file_data;
 
     this.html = null;
+    this.color = this.preview_strip.color;
     this.height = this.preview_strip.height;
-    this.model_viewer_exts = ["gltf", "glb"];
+    this.file_data = this.preview_strip.get_data();
+    this.extensions = this.preview_strip.extensions;
     this.opposite_color = this.preview_strip.opposite_color;
     this.file_url = this.file_data["url"] || this.file_data["orig_url"] || "";
     this.file_ext = this.file_url.split(".").Last();
-
-    // Add to these categories as we become aware of more extensions that are being uploaded
-    this.video_exts = ["mp4", "mov"];
-    this.audio_exts = ["mp3", "wav"];
-    this.model_exts = ["fbx", "obj"];
 
     this.abs_center_css = {
         "position": "absolute",
@@ -39,21 +35,21 @@ function DashFileExplorerFilePreview (preview_strip, file_data={}) {
             this.set_image_preview();
         }
 
-        else if (this.model_viewer_exts.includes(this.file_ext)) {
+        else if (this.extensions["model_viewer"].includes(this.file_ext)) {
             this.set_model_preview();
         }
 
-        else if (this.model_exts.includes(this.file_ext) && "glb_url" in this.file_data) {
+        else if (this.extensions["model"].includes(this.file_ext) && "glb_url" in this.file_data) {
             this.set_model_preview();
         }
 
-        else if (this.video_exts.includes(this.file_ext)) {
+        else if (this.extensions["video"].includes(this.file_ext)) {
             this.set_video_preview();
 
             height = null;
         }
 
-        else if (this.audio_exts.includes(this.file_ext)) {
+        else if (this.extensions["audio"].includes(this.file_ext)) {
             this.set_audio_preview();
 
             width = this.height - (Dash.Size.Padding * 2);

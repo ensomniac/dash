@@ -1,22 +1,25 @@
 function DashGui() {
-    this.Button =          DashGuiButton;
-    this.ChatBox =         DashGuiChatBox;
-    this.ChatBox.Message = DashGuiChatBoxMessage;
-    this.ChatBox.Input =   DashGuiChatBoxInput;
-    this.Checkbox =        DashGuiCheckbox;
-    this.Combo =           DashGuiCombo;
-    this.Header =          DashGuiHeader;
-    this.Icon =            DashIcon;
-    this.IconButton =      DashGuiIconButton;
-    this.Input =           DashGuiInput;
-    this.InputRow =        DashGuiInputRow;
-    this.ToolRow =         DashGuiToolRow;
-    this.Layout =          new DashGuiLayout();
-    this.LoadDots =        DashGuiLoadDots;
-    this.Login =           DashGuiLogin;
-    this.PaneSlider =      DashGuiPaneSlider;
-    this.PropertyBox =     DashGuiPropertyBox;
-    this.Slider =          DashGuiSlider;
+    this.Button                      = DashGuiButton;
+    this.ChatBox                     = DashGuiChatBox;
+    this.ChatBox.Message             = DashGuiChatBoxMessage;
+    this.ChatBox.Input               = DashGuiChatBoxInput;
+    this.Checkbox                    = DashGuiCheckbox;
+    this.Combo                       = DashGuiCombo;
+    this.FileExplorer                = DashGuiFileExplorer;
+    this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
+    this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
+    this.Header                      = DashGuiHeader;
+    this.Icon                        = DashIcon;
+    this.IconButton                  = DashGuiIconButton;
+    this.Input                       = DashGuiInput;
+    this.InputRow                    = DashGuiInputRow;
+    this.Layout                      = new DashGuiLayout();
+    this.LoadDots                    = DashGuiLoadDots;
+    this.Login                       = DashGuiLogin;
+    this.PaneSlider                  = this.Layout.PaneSlider; // This is redundant, but unsure if it's referenced in other projects
+    this.PropertyBox                 = DashGuiPropertyBox;
+    this.Slider                      = DashGuiSlider;
+    this.ToolRow                     = DashGuiToolRow;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {

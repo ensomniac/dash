@@ -50,6 +50,12 @@ def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_
     return ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path, compress_txt)
 
 
+def ConvertOBJToGLB(existing_obj_path, output_glb_path):
+    from .model import ConvertOBJToGLB
+
+    return ConvertOBJToGLB(existing_obj_path, output_glb_path)
+
+
 # ------------------------------------------------- NUMBER --------------------------------------------------
 def GetRandomID():
     from .number import GetRandomID

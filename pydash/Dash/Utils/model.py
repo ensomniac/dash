@@ -17,6 +17,15 @@ if not is_python3:
     from json import dumps
 
 
+def ConvertOBJToGLB(existing_obj_path, output_glb_path):
+    # Documentation: https://github.com/CesiumGS/obj2gltf#readme
+    # This CLI also supports textures, but we won't use that in this context
+
+    os.system(f"/usr/local/bin/obj2gltf -i {existing_obj_path} -o {output_glb_path} --binary")
+
+    return output_glb_path
+
+
 def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False):
     if is_python3:
         # As of July 2020, Autodesk's FBX's python bindings only exist for python2
