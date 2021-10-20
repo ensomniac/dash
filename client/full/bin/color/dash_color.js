@@ -186,6 +186,14 @@ function DashColor () {
 
     };
 
+    this.GetOpposite = function (dash_color_instance) {
+        if (!dash_color_instance instanceof DashColorSet) {
+            return dash_color_instance;
+        }
+
+        return dash_color_instance === this.Light ? this.Dark : this.Light;
+    };
+
     this.Raise = function (cstr, raise_steps) {
         raise_steps = raise_steps || 1;
 

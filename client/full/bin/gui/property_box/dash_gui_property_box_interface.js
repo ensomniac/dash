@@ -37,6 +37,19 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(html);
     };
 
+    this.AddExpander = function () {
+        var expander = Dash.Gui.GetFlexSpacer();
+
+        this.html.css({
+            "display": "flex",
+            "flex-direction": "column"
+        });
+
+        this.html.append(expander);
+
+        return expander;
+    };
+
     this.AddHeader = function (label_text) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;

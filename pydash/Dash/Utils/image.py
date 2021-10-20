@@ -16,10 +16,12 @@ def Upload(dash_context, user, img_root, img_file, nested=False, original_filena
     from datetime import datetime
     from .number import GetRandomID
     from Dash.LocalStorage import Write
-    from PIL.Image import open as OpenImage
+    from PIL import Image
+
+    Image.MAX_IMAGE_PIXELS = None  # Allow large uploads, no concern for DecompressionBombError
 
     original_extension = "png"
-    img = OpenImage(BytesIO(img_file))
+    img = Image.open(BytesIO(img_file))
 
     img_data = {
         "id": GetRandomID(),

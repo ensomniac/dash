@@ -197,14 +197,16 @@ class _FBXConverter:
             return None
 
         if self.compress_txt:
-            from PIL.Image import open as OpenImage
+            from PIL import Image
+
+            Image.MAX_IMAGE_PIXELS = None  # Allow large uploads, no concern for DecompressionBombError
 
             local_txt_path = os.path.join(
                 self.conversion_path,
                 self.txt_path.split("/")[-1].strip().split(".")[0] + ".jpg"
             )
 
-            img = OpenImage(self.txt_path)
+            img = Image.open(self.txt_path)
 
             img.thumbnail([512, 512])
             img.save(local_txt_path, quality=50)
