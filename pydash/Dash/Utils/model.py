@@ -5,15 +5,20 @@
 
 import os
 import sys
-import fbx
 
 from random import randint
 from shutil import move, copyfile
-from Dash.LocalStorage import Write, Read
+
+is_python3 = sys.version_info[0] >= 3
+
+if not is_python3:
+    import fbx
+
+    from json import dumps
 
 
 def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False):
-    if sys.version_info[0] >= 3:
+    if is_python3:
         # As of July 2020, Autodesk's FBX's python bindings only exist for python2
 
         from json import loads
@@ -22,13 +27,20 @@ def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_
 
         py_root = "/usr/bin/python2"
         module = os.path.join(OapiRoot, "dash", "github", "dash", "pydash", "Dash", "Utils", "model.py")
-        response = check_output(" ".join([py_root, module, existing_fbx_path, output_glb_path, txt_path]), shell=True).strip()
+        args = [py_root, module, existing_fbx_path, output_glb_path]
 
-        return loads(response)
+        if txt_path:
+            args.append(str(txt_path))
+
+        if compress_txt:
+            args.append(str(compress_txt))
+
+        return loads(check_output(" ".join(args), shell=True).decode().strip())
     else:
         return _FBXConverter(existing_fbx_path, output_glb_path, txt_path, compress_txt).ToGLB()
 
 
+# ************ THIS IS A PYTHON 2 CLASS - DO NOT UPDATE THE SYNTAX ************
 class _FBXConverter:
     def __init__(self, existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False, can_print=False):
         self.fbx_path = existing_fbx_path
@@ -37,28 +49,25 @@ class _FBXConverter:
         self.compress_txt = compress_txt
         self.can_print = can_print
 
-        if self.fbx_path.split(".")[-1].strip().lower() != "fbx":
-            raise Exception(f"{self.__class__.__name__} only handles fbx files: {self.fbx_path}")
+        if type(self.compress_txt) is not bool:
+            if type(self.compress_txt) is str and self.compress_txt.lower() == "true":
+                self.compress_txt = True
+            else:
+                self.compress_txt = False
 
-        if sys.version_info[0] >= 3:
-            raise Exception(f"{self.__class__.__name__} must be executed in Python 2 (as of July 2020)")
+        if self.fbx_path.split(".")[-1].strip().lower() != "fbx":
+            raise Exception(self.__class__.__name__ + " only handles fbx files: " + self.fbx_path)
+
+        if is_python3:
+            raise Exception(self.__class__.__name__ + " must be executed in Python 2 (Py FBX SDK limitation as of July 2020)")
 
         self.log = []
+        self.scene = None
+        self.manager = fbx.FbxManager.Create()
         self.output_log_path = self.output_glb_path.replace(".glb", ".glblog")
         self.conversion_path = os.path.join("/var", "tmp", str(randint(10000, 99999)), "_fbx_validator")
         self.local_fbx_path = os.path.join(self.conversion_path, self.fbx_path.split("/")[-1].strip())
         self.local_fbx_converted_path = self.local_fbx_path.replace(".fbx", "_converted.fbx")
-
-        self.manager = fbx.FbxManager.create()
-        self.importer = fbx.FbxImporter.create(self.manager, "dash_importer")
-        self.status = self.importer.Initialize(self.local_fbx_path)
-
-        if not self.status:
-            raise Exception(f"Failed to import fbx from {self.local_fbx_path}")
-
-        self.exporter = fbx.FbxExporter.create(self.manager, "")
-        self.scene = fbx.FbxScene.create(self.manager, "fbx_scene")
-        self.asciiFormatIndex = self.get_ascii_format_index(self.manager)
 
     @property
     def LogPath(self):
@@ -69,9 +78,15 @@ class _FBXConverter:
 
         try:
             local_txt_path = self.setup_files()
+            importer = fbx.FbxImporter.Create(self.manager, "dash_importer")
 
-            self.importer.Import(self.scene)
-            self.importer.Destroy()
+            if not importer.Initialize(self.local_fbx_path):
+                raise Exception("Failed to import fbx from " + self.local_fbx_path)
+
+            self.scene = fbx.FbxScene.Create(self.manager, "fbx_scene")
+
+            importer.Import(self.scene)
+            importer.Destroy()
 
             if self.txt_path:
                 nodes_with_materials = self.get_all_nodes(self.scene.GetRootNode())
@@ -99,7 +114,13 @@ class _FBXConverter:
         log_content_text = "not produced"
 
         if os.path.exists(self.output_log_path):
-            log_content_text = Read(self.output_log_path)
+            if is_python3:
+                from Dash.LocalStorage import Read
+
+                log_content_text = Read(self.output_log_path)
+
+            else:
+                log_content_text = open(self.output_log_path, "r").read()
 
         log_content = {
             "glb_path": self.output_glb_path,
@@ -108,7 +129,15 @@ class _FBXConverter:
             "error": error,
         }
 
-        Write(self.output_log_path, log_content)
+        if is_python3:
+            from Dash.LocalStorage import Write
+
+            Write(self.output_log_path, log_content)
+
+        else:
+            open(self.output_log_path, "w").write(dumps(log_content))
+
+            self.set_path_permissions(self.output_log_path)
 
         return log_content
 
@@ -122,10 +151,17 @@ class _FBXConverter:
         self.add_to_log("Creating glb")
 
         found_glb = None
-        cmd = f"cd {self.conversion_path}; FBX2glTF {self.local_fbx_converted_path} --embed --binary --khr-materials-unlit"
+        shader = "--khr-materials-unlit"
+
+        # For now, only default to PBR if we're not supplying textures, since that makes the model easier to read in the viewer.
+        # In the future, we could add a bool param to this class for PBR, but it may not be beneficial if we're only uploading a color map.
+        if not self.txt_path:
+            shader = "--pbr-metallic-roughness"
+
+        cmd = "cd " + self.conversion_path + "; /usr/local/bin/FBX2glTF " + self.local_fbx_converted_path + " --binary " + shader
 
         if not self.can_print:
-            cmd += f"  > {self.output_log_path} 2>&1"
+            cmd += "  > " + self.output_log_path + " 2>&1"
 
         os.system(cmd)
 
@@ -139,16 +175,16 @@ class _FBXConverter:
                 break
 
         if not found_glb:
-            raise Exception("Failed to produce .glb")
+            raise Exception("Failed to find .glb in " + self.conversion_path + ":\n\n" + str(os.listdir(self.conversion_path)))
 
         move(found_glb, self.output_glb_path)
 
-        # Shouldn't need this
-        # os.system(f"chmod 755 {self.output_glb_path}")
-        # os.system(f"chown ensomniac {self.output_glb_path}")
-        # os.system(f"chgrp psacln {self.output_glb_path}")
+        self.set_path_permissions(self.output_glb_path)
 
-        self.add_to_log(f"Wrote {self.output_glb_path}")
+        self.add_to_log("Wrote " + self.output_glb_path)
+
+    def set_path_permissions(self, path):
+        os.system("chmod 755 " + path + "; chown ensomniac " + path + "; chgrp psacln " + path)
 
     def setup_files(self):
         os.makedirs(self.conversion_path)
@@ -165,7 +201,7 @@ class _FBXConverter:
 
             local_txt_path = os.path.join(
                 self.conversion_path,
-                f"{self.txt_path.split('/')[-1].strip().split('.')[0]}.jpg"
+                self.txt_path.split("/")[-1].strip().split(".")[0] + ".jpg"
             )
 
             img = OpenImage(self.txt_path)
@@ -190,11 +226,11 @@ class _FBXConverter:
 
             node_with_material.RemoveAllMaterials()
 
-            new_material = fbx.FbxSurfaceLambert.create(self.scene, "Automatically Generated Material")
+            new_material = fbx.FbxSurfaceLambert.Create(self.scene, "Automatically Generated Material")
 
-            self.add_to_log(f"\tAdding texture to new material {new_material.GetName()}")
+            self.add_to_log("\tAdding texture to new material " + new_material.GetName())
 
-            texture = fbx.FbxFileTexture.create(self.scene, "Automatically Generated Texture")
+            texture = fbx.FbxFileTexture.Create(self.scene, "Automatically Generated Texture")
 
             texture.SetFileName(local_txt_path)
 
@@ -210,13 +246,15 @@ class _FBXConverter:
         return material_set
 
     def save(self):
-        if not self.exporter.Initialize(self.local_fbx_converted_path, self.asciiFormatIndex):
+        exporter = fbx.FbxExporter.Create(self.manager, "")
+
+        if not exporter.Initialize(self.local_fbx_converted_path, self.get_ascii_format_index(self.manager)):
             raise Exception("Failed to initialize save")
 
-        self.exporter.Export(self.scene)
-        self.exporter.Destroy()
+        exporter.Export(self.scene)
+        exporter.Destroy()
 
-        self.add_to_log(f"Saved {self.local_fbx_converted_path}")
+        self.add_to_log("Saved " + self.local_fbx_converted_path)
 
     def get_ascii_format_index(self, p_manager):
         """
@@ -255,3 +293,7 @@ class _FBXConverter:
             nodes_with_materials = self.get_all_nodes(node.GetChild(i), nodes_with_materials)
 
         return nodes_with_materials
+
+
+if __name__ == "__main__":
+    print(dumps(_FBXConverter(*sys.argv[1:6]).ToGLB()))

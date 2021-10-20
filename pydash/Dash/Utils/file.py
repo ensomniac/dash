@@ -46,14 +46,22 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False):
     Write(file_path, file_bytes)
 
     if file_ext == "fbx":
-        from .model import ConvertFBXToGLB
+        try:
+            from .model import ConvertFBXToGLB
 
-        glb_path = os.path.join(file_root, f"{file_data['id']}.glb")
+            glb_path = os.path.join(file_root, f"{file_data['id']}.glb")
 
-        # ConvertFBXToGLB supports the inclusion of a texture file during the conversion, but we won't use that in this context
-        file_data["glb_log"] = ConvertFBXToGLB(file_path, glb_path)
+            # ConvertFBXToGLB supports the inclusion of a texture file during the conversion, but we won't use that in this context
+            file_data["glb_log"] = ConvertFBXToGLB(file_path, glb_path)
 
-        file_data["glb_url"] = GetURL(dash_context, file_path)
+            file_data["glb_url"] = GetURL(dash_context, glb_path)
+
+        except Exception as e:
+            from shutil import rmtree
+
+            rmtree(file_root)
+
+            raise Exception(e)
 
     Write(data_path, file_data)
 
