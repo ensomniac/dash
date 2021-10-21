@@ -39,10 +39,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
 
-    // TODO: (this must be managed in this module)
-    //  Don't initially add files list if no files (that way the header row isn’t just showing
-    //  when there’s no files yet), they have to upload a file first before the list will be appended
-
     this.setup_styles = function () {
         // if (!this.validate_params()) {
         //     return;
@@ -106,7 +102,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this.on_file_upload_started
         );
 
-        this.upload_button.SetIconSize(130);
+        this.upload_button.html.css({
+            "margin-right": Dash.Size.Padding * 0.1,
+            "margin-top": Dash.Size.Padding * 0.25
+        });
+
+        this.upload_button.SetIconSize(150);
         this.upload_button.SetHoverHint("Upload File");
 
         this.html.append(this.upload_button.html);
