@@ -8,6 +8,7 @@ import sys
 
 from random import randint
 from shutil import move, copyfile
+from subprocess import check_output
 
 is_python3 = sys.version_info[0] >= 3
 
@@ -18,12 +19,16 @@ if not is_python3:
 
 ModelExtensions = ["fbx", "obj"]
 
+# ***************************************************************************************
+# ************ THIS MUST REMAIN A PYTHON 2 SCRIPT - DO NOT UPDATE THE SYNTAX ************
+# ***************************************************************************************
+
 
 def ConvertOBJToGLB(existing_obj_path, output_glb_path):
     # Documentation: https://github.com/CesiumGS/obj2gltf#readme
     # This CLI also supports textures, but we won't use that in this context
 
-    os.system(f"/usr/local/bin/obj2gltf -i {existing_obj_path} -o {output_glb_path} --binary")
+    check_output("/usr/local/bin/obj2gltf -i " + existing_obj_path + " -o " + output_glb_path + " --binary", shell=True)
 
     return output_glb_path
 
@@ -34,7 +39,6 @@ def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_
 
         from json import loads
         from . import OapiRoot
-        from subprocess import check_output
 
         py_root = "/usr/bin/python2"
         module = os.path.join(OapiRoot, "dash", "github", "dash", "pydash", "Dash", "Utils", "model.py")
@@ -51,7 +55,6 @@ def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_
         return _FBXConverter(existing_fbx_path, output_glb_path, txt_path, compress_txt).ToGLB()
 
 
-# ************ THIS IS A PYTHON 2 CLASS - DO NOT UPDATE THE SYNTAX ************
 class _FBXConverter:
     def __init__(self, existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False, can_print=False):
         self.fbx_path = existing_fbx_path
@@ -174,7 +177,7 @@ class _FBXConverter:
         if not self.can_print:
             cmd += "  > " + self.output_log_path + " 2>&1"
 
-        os.system(cmd)
+        check_output(cmd, shell=True)
 
         for filename in os.listdir(self.conversion_path):
             if filename.startswith(".") or filename.endswith(".meta"):
@@ -195,7 +198,7 @@ class _FBXConverter:
         self.add_to_log("Wrote " + self.output_glb_path)
 
     def set_path_permissions(self, path):
-        os.system("chmod 755 " + path + "; chown ensomniac " + path + "; chgrp psacln " + path)
+        check_output("chmod 755 " + path + "; chown ensomniac " + path + "; chgrp psacln " + path, shell=True)
 
     def setup_files(self):
         os.makedirs(self.conversion_path)

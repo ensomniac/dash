@@ -9,6 +9,12 @@ import sys
 from .model import ModelExtensions
 from Dash.LocalStorage import Write
 
+# Checking against these for security purposes - can re-evaluate if this causes issues
+ExecutableExtensions = [
+    "bat", "bin", "cmd", "com", "cpl", "exe", "gadget", "inf1", "ins", "inx", "isu", "job", "jse", "lnk", "msc", "msi", "msp",
+    "mst", "paf", "pif", "ps1", "reg", "rgs", "scr", "sct", "shb", "shs", "u3p", "vb", "vbe", "vbs", "vbscript", "ws", "wsf", "wsh"
+]
+
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 # TODO: Ideally, we should get rid of all old "orig" key tags (from old image upload
@@ -23,6 +29,9 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, pa
 
     if not file_ext or not (2 <= len(file_ext) <= 4):
         raise Exception(f"Invalid file extension: {file_ext}")
+
+    if file_ext in ExecutableExtensions:
+        raise Exception(f"Executable files are not permitted ({file_ext}). If you believe this is in error, please let an admin know.")
 
     img = None
     is_image = file_ext in ImageExtensions
@@ -85,7 +94,7 @@ def parse_parent_folders(file_root, file_id, parent_folders=[]):
     for folder in parent_folders:
         cleaned_list.append(str(folder).replace("/", "").strip())
 
-    if cleaned_list[0] == root_name or cleaned_list[0] == file_id:
+    if cleaned_list and (cleaned_list[0] == root_name or cleaned_list[0] == file_id):
         cleaned_list.pop(0)
 
     return cleaned_list
@@ -152,13 +161,13 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash
 
     file_data["url"] = GetURL(dash_context, file_path)
 
+    Write(file_path, file_bytes)
+
     if file_ext in ModelExtensions:
         glb_path = convert_model_to_glb(file_ext, file_path)
 
         if os.path.exists(glb_path):
             file_data["glb_url"] = GetURL(dash_context, glb_path)
-
-    Write(file_path, file_bytes)
 
     return file_data
 
