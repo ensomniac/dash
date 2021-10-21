@@ -23,27 +23,25 @@ def UploadFile(dash_context, user, file_root, file_bytes, file_name, nested=Fals
     return Upload(dash_context, user, file_root, file_bytes, file_name, nested)
 
 
-def GetURL(dash_context, server_file_path):
+def GetFileURL(dash_context, server_file_path):
     from .file import GetURL
 
     return GetURL(dash_context, server_file_path)
 
 
-# ------------------------------------------------- IMAGE ---------------------------------------------------
 def GetImageExtensions():
-    from .image import ImageExtensions
+    from .file import ImageExtensions
 
     return ImageExtensions
 
 
-# The majority of the time, UploadFile should be used instead, and it will decide if UploadImage should be called
-def UploadImage(dash_context, user, img_root, img_file, nested=False, original_filename=""):
-    from .image import Upload
-
-    return Upload(dash_context, user, img_root, img_file, nested, original_filename)
-
-
 # ------------------------------------------------- MODEL ---------------------------------------------------
+def GetModelExtensions():
+    from .model import ModelExtensions
+
+    return ModelExtensions
+
+
 def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False):
     from .model import ConvertFBXToGLB
 

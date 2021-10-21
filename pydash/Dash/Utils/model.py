@@ -16,6 +16,8 @@ if not is_python3:
 
     from json import dumps
 
+ModelExtensions = ["fbx", "obj"]
+
 
 def ConvertOBJToGLB(existing_obj_path, output_glb_path):
     # Documentation: https://github.com/CesiumGS/obj2gltf#readme

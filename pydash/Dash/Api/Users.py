@@ -131,7 +131,7 @@ class ApiUsers:
 
     # TODO: Move this into the core Users.py module
     def upload_image(self):
-        from Dash.Utils import UploadImage
+        from Dash.Utils import UploadFile
         from Dash.Users import GetUserDataRoot
         from Dash.LocalStorage import Read, Write
 
@@ -147,12 +147,12 @@ class ApiUsers:
         user_data_path = os.path.join(data_root, "usr.data")
         user_data = Read(user_data_path)
 
-        user_data["img"] = UploadImage(
+        user_data["img"] = UploadFile(
             self.DashContext,
             user_data,
             img_root,
             self.Params["file"],
-            original_filename=self.Params.get("filename")
+            self.Params.get("filename")
         )
 
         Write(user_data_path, user_data)
