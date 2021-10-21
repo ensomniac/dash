@@ -1,24 +1,20 @@
-function DashGuiFileExplorerPreviewStrip (binder, color, file_id, get_data_cb, set_data_cb) {
-    this.binder = binder;
-    this.color = color || this.binder.color || Dash.Color.Light;
+function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
+    this.file_explorer = file_explorer;
     this.file_id = file_id;
-    this.get_data_cb = get_data_cb ? get_data_cb.bind(this.binder) : get_data_cb;
-    this.set_data_cb = set_data_cb ? set_data_cb.bind(this.binder) : set_data_cb;
 
-    this.file_url = null;
-    this.file_ext = null;
     this.content_preview = null;
     this.html = $("<div></div>");
     this.details_property_box = null;
     this.detail_box = $("<div></div>");
     this.preview_box = $("<div></div>");
+    this.color = this.file_explorer.color;
     this.height = Dash.Size.RowHeight * 15;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.extensions = {
         "model_viewer": ["gltf", "glb"],
 
-        // Add to these categories as we become aware of more extensions that are being uploaded
+        // Add to these categories as we become aware of more extensions that are commonly being uploaded
         "video":        ["mp4", "mov"],
         "audio":        ["mp3", "wav"],
         "model":        ["fbx", "obj"],
@@ -81,16 +77,15 @@ function DashGuiFileExplorerPreviewStrip (binder, color, file_id, get_data_cb, s
     };
 
     this.get_data = function () {
-        var data = this.get_data_cb(this.file_id);
+        return this.file_explorer.get_file_data(this.file_id);
+    };
 
-        this.file_url = data["url"] || data["orig_url"] || "";
-        this.file_ext = this.file_url.split(".").Last();
-
-        return data;
+    this.get_file_ext = function (file_url) {
+        return file_url.split(".").Last();
     };
 
     this.set_data = function (key, value) {
-        this.set_data_cb(key, value, this.file_id);
+        this.file_explorer.set_file_data(key, value, this.file_id);
     };
 
     this.add_details_property_box = function () {
@@ -102,7 +97,7 @@ function DashGuiFileExplorerPreviewStrip (binder, color, file_id, get_data_cb, s
 
         var is_image = "aspect" in file_data;
 
-        this.add_header_to_property_box(is_image);
+        this.add_header_to_property_box(file_data, is_image);
         this.add_primary_inputs(file_data, is_image);
 
         this.details_property_box.AddExpander();
@@ -120,18 +115,19 @@ function DashGuiFileExplorerPreviewStrip (binder, color, file_id, get_data_cb, s
         });
     };
 
-    this.add_header_to_property_box = function (is_image) {
+    this.add_header_to_property_box = function (file_data, is_image) {
+        var file_ext = this.get_file_ext(this.file_explorer.get_file_url(file_data));
         var header = this.details_property_box.AddHeader("File Details");
 
         header.ReplaceBorderWithIcon(
             is_image                                             ? "file_image"   :
-            this.file_ext === "txt"                              ? "file_lined"   :
-            this.file_ext === "pdf"                              ? "file_pdf"     :
-            this.file_ext === "csv"                              ? "file_csv"     :
-            this.file_ext === "doc" || this.file_ext === "docx"  ? "file_word"    :
-            this.extensions["model"].includes(this.file_ext)     ? "cube"         :
-            this.extensions["video"].includes(this.file_ext)     ? "file_video"   :
-            this.extensions["drafting"].includes(this.file_ext)  ? "pencil_ruler" :
+            file_ext === "txt"                              ? "file_lined"   :
+            file_ext === "pdf"                              ? "file_pdf"     :
+            file_ext === "csv"                              ? "file_csv"     :
+            file_ext === "doc" || file_ext === "docx"       ? "file_word"    :
+            this.extensions["model"].includes(file_ext)     ? "cube"         :
+            this.extensions["video"].includes(file_ext)     ? "file_video"   :
+            this.extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
             "file"
         );
 
@@ -139,8 +135,8 @@ function DashGuiFileExplorerPreviewStrip (binder, color, file_id, get_data_cb, s
     };
 
     this.add_primary_inputs = function (file_data, is_image) {
-        this.details_property_box.AddInput(is_image ? "orig_filename" : "filename", "Filename", file_data[is_image ? "orig_filename" : "filename"], null, true);
-        this.details_property_box.AddInput(is_image ? "orig_url" : "url", "URL", this.file_url, null, false);
+        this.details_property_box.AddInput(is_image ? "orig_filename" : "filename", "Filename", this.file_explorer.get_filename(file_data), null, true);
+        this.details_property_box.AddInput(is_image ? "orig_url" : "url", "URL", this.file_explorer.get_file_url(file_data), null, false);
 
         if ("thumb_url" in file_data) {
             this.details_property_box.AddInput("thumb_url", "URL (Thumbnail)", file_data["thumb_url"], null, false);

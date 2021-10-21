@@ -6,9 +6,10 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     this.height = this.preview_strip.height;
     this.file_data = this.preview_strip.get_data();
     this.extensions = this.preview_strip.extensions;
+    this.file_explorer = this.preview_strip.file_explorer;
     this.opposite_color = this.preview_strip.opposite_color;
-    this.file_url = this.file_data["url"] || this.file_data["orig_url"] || "";
-    this.file_ext = this.file_url.split(".").Last();
+    this.file_url = this.file_explorer.get_file_url(this.file_data);
+    this.file_ext = this.preview_strip.get_file_ext(this.file_url);
 
     this.abs_center_css = {
         "position": "absolute",
