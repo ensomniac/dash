@@ -21933,6 +21933,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.files_data = null;
     this.initialized = false;
     this.upload_button = null;
+    this.subfolder_structure = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.setup_styles = function () {
         // if (!this.validate_params()) {
@@ -22002,15 +22003,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             "margin-bottom": 0
         });
         this.html.append(header.html);
-    };
-    this.add_row = function (file_id) {
-        var row = this.list.AddRow(file_id);
-        row.html.css({
-            "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
-        });
-        row.Update();
-        this.rows[file_id] = row;
     };
     this.on_file_upload_started = function () {
         this.show_subheader("File upload in progress...");
@@ -22124,6 +22116,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
     };
     this.redraw_rows = function () {
+        this.get_subfolder_structure();
         this.rows = {};
         if (this.list) {
             this.list.Clear();
@@ -22134,8 +22127,37 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             }
             this.add_list();
         }
-        for (var i in this.files_data["order"]) {
-            this.add_row(this.files_data["order"][i]);
+        // Draw files that don't live in subfolders
+        this.files_data["order"].forEach(
+            function (file_id) {
+                if (!Dash.IsValidObject(this.get_file_data(file_id)["parent_folders"])) {
+                    this.add_row(file_id);
+                }
+            },
+            this
+        );
+        // TODO: draw folder rows and then make sure they expand to show new lists with its contents
+    };
+    this.add_row = function (file_id) {
+        var row = this.list.AddRow(file_id);
+        row.html.css({
+            "margin-left": Dash.Size.Padding * 2,
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+        row.Update();
+        this.rows[file_id] = row;
+    };
+    // TODO: Finish this
+    this.get_subfolder_structure = function () {
+        for (var file_id in this.files_data["data"]) {
+            var parents = this.get_file_data(file_id)["parent_folders"];
+            if (!Dash.IsValidObject(parents)) {
+                continue;
+            }
+            for (var i in parents) {
+                var name = parents[i];
+                // TODO: figure out this complex algorithm
+            }
         }
     };
     this.get_init_files_data = function () {
@@ -22288,13 +22310,14 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //     }
     //
     //     // These required params are dynamically added in this module
-    //     (function (self) {
-    //         ["key", "value", "file_id"].forEach(function (key) {
-    //             if (key in self.params_set_property) {
-    //                 delete self.params_set_property[key];
+    //     ["key", "value", "file_id"].forEach(
+    //         function (key) {
+    //             if (key in this.params_set_property) {
+    //                 delete this.params_set_property[key];
     //             }
-    //         });
-    //     })(this);
+    //         },
+    //         this
+    //     );
     //
     //     return true;
     // };
