@@ -18,6 +18,10 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             "text-overflow": "ellipsis"
         };
 
+        if (this.list_row.is_sublist) {
+            css["text-decoration"] = "underline";
+        }
+
         if (this.width > 0) {
             css["width"] = this.width;
         }
@@ -96,6 +100,16 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
         }
 
+        else if (this.list_row.is_sublist) {
+            if (this.index === 0) {
+                column_value = this.list_row.id.replace(this.list_row.list.sublist_row_tag, "");
+            }
+
+            else {
+                column_value = "";
+            }
+        }
+
         else {
             column_value = this.list.binder.GetDataForKey(
                 this.list_row.id,
@@ -105,6 +119,10 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
 
         if (this.list_row.is_header) {
             font_family = "sans_serif_bold";
+        }
+
+        else if (this.list_row.is_sublist) {
+            font_family = "sans_serif_italic";
         }
 
         else if (column_value && column_value.length > 0) {

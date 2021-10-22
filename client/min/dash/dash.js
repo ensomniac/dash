@@ -21935,6 +21935,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.subfolder_structure = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.border_color = this.color.BackgroundTrue || this.color.Background;
     this.setup_styles = function () {
         // if (!this.validate_params()) {
         //     return;
@@ -22116,7 +22117,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
     };
     this.redraw_rows = function () {
-        this.get_subfolder_structure();
         this.rows = {};
         if (this.list) {
             this.list.Clear();
@@ -22127,6 +22127,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             }
             this.add_list();
         }
+        this.draw_subfolders();
+        // TODO: how are we going to add subfolders' file rows to sublists?
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             function (file_id) {
@@ -22136,27 +22138,87 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             },
             this
         );
-        // TODO: draw folder rows and then make sure they expand to show new lists with its contents
     };
-    this.add_row = function (file_id) {
-        var row = this.list.AddRow(file_id);
+    // TODO: bug - expand sublist, collapse, then expand again and now highlighting isn't working
+    this.add_sublist = function (row_id, list) {
+        // TODO: incorporate some sort of random ID to this row id since some folder names could be the same
+        var row = list.AddSubList(row_id, this.border_color, true);
+        row.html.css({
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+        if (list === this.list) {
+            row.html.css({
+                "margin-left": Dash.Size.Padding * 2
+            });
+        }
+        this.rows[row_id] = row;
+        return row;
+    };
+    this.add_row = function (row_id) {
+        var row = this.list.AddRow(row_id);
         row.html.css({
             "margin-left": Dash.Size.Padding * 2,
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
         row.Update();
-        this.rows[file_id] = row;
+        this.rows[row_id] = row;
+        return row;
     };
-    // TODO: Finish this
-    this.get_subfolder_structure = function () {
+    // Should be able to get rid of this now that draw_subfolders took its place
+    // this.add_folders_to_structure = function (root, folders) {
+    //     if (!folders.length) {
+    //         return root;
+    //     }
+    //
+    //     var current_folder_name = folders[0];
+    //
+    //     root[current_folder_name] = root[current_folder_name] || {};
+    //
+    //     console.log("TEST root", root);
+    //
+    //     return this.add_folders_to_structure(root[current_folder_name], folders.slice(1));
+    // };
+    //
+    // this.get_subfolder_structure = function () {
+    //     var structures = [];
+    //
+    //     for (var file_id in this.files_data["data"]) {
+    //         var parents = this.get_file_data(file_id)["parent_folders"];
+    //
+    //         if (!Dash.IsValidObject(parents)) {
+    //             continue;
+    //         }
+    //
+    //         structures.push(parents);
+    //     }
+    //
+    //     (function (self) {
+    //         self.subfolder_structure = structures.reduce(
+    //             function (root, folders) {
+    //                 self.add_folders_to_structure(root, folders);
+    //
+    //                 return root;
+    //             },
+    //             {}
+    //         );
+    //     })(this);
+    //
+    //     console.log("TEST subfolders", this.subfolder_structure);
+    // };
+    this.draw_subfolders = function () {
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
             if (!Dash.IsValidObject(parents)) {
                 continue;
             }
+            var list = this.list;
             for (var i in parents) {
-                var name = parents[i];
-                // TODO: figure out this complex algorithm
+                var folder_name = parents[i];
+                var row = list.GetRow(folder_name, true);
+                if (!row) {
+                    row = this.add_sublist(folder_name, list);
+                }
+                list = row.cached_preview;
             }
         }
     };
@@ -22190,13 +22252,13 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             })(this, response);
             return;
         }
-        console.log("(FileExplorer) Init files data:", response);
+        console.log("(File Explorer) Init files data:", response);
         this.files_data = response;
         this.redraw_rows();
     };
     this.add_list = function () {
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
-        var border_css = {"background": this.color.BackgroundTrue || this.color.Background};
+        var border_css = {"background": this.border_color};
         column_config.AddColumn(
             "Filename",
             "filename",
@@ -22261,8 +22323,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         });
         this.html.append(this.list.html);
     };
-    this.on_row_selected = function (file_id, is_selected) {
-        var row = this.list.GetRow(file_id);
+    this.on_row_selected = function (file_id, is_selected, row) {
+        if (!row) {
+            row = this.list.GetRow(file_id);
+        }
         if (!is_selected) {
             row.Collapse();
             return;
@@ -22322,23 +22386,19 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //     return true;
     // };
     this.GetDataForKey = function (file_id, key) {
-        var value;
         if (key === "filename") {
-            value = this.get_filename(this.get_file_data(file_id));
+            return this.get_filename(this.get_file_data(file_id));
         }
-        else {
-            value = this.get_file_data(file_id)[key];
-            if (key === "uploaded_on") {
-                if (Dash.IsServerIsoDate(value)) {
-                    return Dash.ReadableDateTime(value, false);
-                }
+        var value = this.get_file_data(file_id)[key];
+        if (key === "uploaded_on") {
+            if (Dash.IsServerIsoDate(value)) {
+                return Dash.ReadableDateTime(value, false);
             }
-
-            else if (key === "uploaded_by") {
-                var user = Dash.User.Init["team"][value];
-                if (user && user["display_name"]) {
-                    return user["display_name"];
-                }
+        }
+        else if (key === "uploaded_by") {
+            var user = Dash.User.Init["team"][value];
+            if (user && user["display_name"]) {
+                return user["display_name"];
             }
         }
         return value;
@@ -26524,10 +26584,13 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return;
     }
     this.rows = [];
+    this.parent_row= null;  // Intended for cases where this is a sublist
     this.header_row = null;
     this.header_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
+    this.sublist_row_tag = "_sublist_row_";
+    this.header_row_tag = "_top_header_row";
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
     this.setup_styles = function () {
@@ -26535,8 +26598,8 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             "background": Dash.Color.Light.Background
         });
     };
-    this.AddRow = function (arbitrary_id) {
-        var row = new DashGuiListRow(this, arbitrary_id);
+    this.AddRow = function (row_id) {
+        var row = new DashGuiListRow(this, row_id);
         this.rows.push(row);
         this.html.append(row.html);
         return row;
@@ -26552,6 +26615,20 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         };
         this.add_header_row();
         return this.header_row;
+    };
+    this.AddSubList = function (sublist_name, highlight_color=null, init_list=false) {
+        var row = this.AddRow(this.sublist_row_tag + sublist_name);
+        if (highlight_color) {
+            row.highlight.css({
+                "background": highlight_color
+            });
+        }
+        // Always update it by default - can still update later in the code that calls this
+        row.Update();
+        if (init_list) {
+            row.SetCachedPreview(this.get_sublist());
+        }
+        return row;
     };
     this.DisableColumn = function (type, type_index) {
         if (!this.rows) {
@@ -26593,38 +26670,37 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             this.Clear();
         }
     };
-    this.SetSelection = function (row_id) {
-        var is_selected = true;
-        var cb_id = row_id;
-        if (row_id == this.last_selection_id) {
-            row_id = null;
-            is_selected = false;
+    this.SetSelection = function (row) {
+        var is_selected = !(this.last_selection_id && row.id.toString() === this.last_selection_id.toString());
+        if (row.is_sublist) {
+            this.expand_sublist(row, is_selected);
         }
-        for (var i in this.rows) {
-            var row = this.rows[i];
-            if (row.id == row_id) {
-                row.SetSelected(true);
-            }
-            else {
-                row.SetSelected(false);
-            }
+        else {
+            this.selected_callback(row.id, is_selected, row);
         }
-        this.selected_callback(cb_id, is_selected);
-        this.last_selection_id = row_id;
+        this.last_selection_id = is_selected ? row.id : null;
     };
-    this.GetRow = function (row_id) {
+    this.GetRow = function (row_id, is_sublist=false) {
         if (!this.rows) {
             return;
         }
         for (var i in this.rows) {
             var row = this.rows[i];
-            if (row.id === row_id) {
+            if (row.id === (is_sublist ? (this.sublist_row_tag + row_id) : row_id)) {
                 return row;
             }
         }
     };
+    this.GetParentRow = function () {
+        // Intended for cases where this is a sublist
+        return this.parent_row;
+    };
+    this.SetParentRow = function (row) {
+        // Intended for cases where this is a sublist
+        this.parent_row = row;
+    };
     this.add_header_row = function () {
-        this.header_row = new DashGuiListRow(this, "_top_header_row");
+        this.header_row = new DashGuiListRow(this, this.header_row_tag);
         if (this.header_row_css) {
             if (this.header_row_css["html"]) {
                 this.header_row.html.css(this.header_row_css["html"]);
@@ -26637,6 +26713,41 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         // Always update it by default - can still update later in the code that calls this
         this.header_row.Update();
     };
+    this.get_sublist = function () {
+        // May need to add more here
+        return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+    };
+    this.expand_sublist = function (row, is_selected) {
+        if (is_selected) {
+            row.Collapse();
+        }
+        // TODO: expand another list with the same column config - will need to work out how we then add rows
+        //  to it (maybe pass an array of ids to AddSubList and immediately "add" rows to it, or save them to ref here)
+        // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
+        // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
+        var preview = row.GetCachedPreview();
+        if (!(preview instanceof DashGuiList)) {
+            preview = row.SetCachedPreview(this.get_sublist(row));
+            // TEST
+            // var test_row = row.cached_preview.AddRow("2021102122424482130");
+            // test_row.Update();
+        }
+        preview.SetParentRow(row);
+        if (preview.rows.length > 0) {
+            row.Expand(preview.html);
+            return;
+        }
+        preview = $("<div></div>");
+        preview.css({
+            "padding-left": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "height": Dash.Size.RowHeight,
+            "color": this.color.Text,
+            "font-family": "sans_serif_italic"
+        });
+        preview.text("No content (empty folder)");
+        row.Expand(preview);
+    };
     this.setup_styles();
 }
 
@@ -26646,6 +26757,7 @@ function DashGuiListRow (list, arbitrary_id) {
     this.columns = {};
     this.is_shown = true;
     this.is_expanded = false;
+    this.cached_preview = null;  // Intended for sublists only
     this.color = this.list.color;
     this.expanded_highlight = null;
     this.html = $("<div></div>");
@@ -26653,7 +26765,8 @@ function DashGuiListRow (list, arbitrary_id) {
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
     this.selected_highlight = $("<div></div>");
-    this.is_header = this.id === "_top_header_row";
+    this.is_header = this.id === this.list.header_row_tag;
+    this.is_sublist = this.id.startsWith(this.list.sublist_row_tag);
     this.setup_styles = function () {
         if (this.is_header) {
             this.column_box.css({
@@ -26670,7 +26783,7 @@ function DashGuiListRow (list, arbitrary_id) {
             this.html.append(this.selected_highlight);
             this.html.append(this.expanded_content);
             this.expanded_content.css({
-                "margin-left": -Dash.Size.Padding,
+                "margin-left": Dash.Size.Padding * (this.is_sublist ? 1 : -1),
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
                 "height": 0,
@@ -26718,6 +26831,19 @@ function DashGuiListRow (list, arbitrary_id) {
         this.setup_columns();
         this.setup_connections();
     };
+    this.SetCachedPreview = function (preview_obj) {
+        if (!this.is_sublist) {
+            return;
+        }
+        this.cached_preview = preview_obj;
+        return this.cached_preview;
+    };
+    this.GetCachedPreview = function () {
+        if (!this.is_sublist) {
+            return;
+        }
+        return this.cached_preview;
+    };
     this.IsExpanded = function () {
         return this.is_expanded;
     };
@@ -26737,6 +26863,8 @@ function DashGuiListRow (list, arbitrary_id) {
     };
     this.Update = function () {
         var i;
+        // Reset this to force a redraw next time it's expanded
+        this.SetCachedPreview(null);
         for (var type in this.columns) {
             if (!this.columns[type] || this.columns[type].length < 1) {
                 continue;
@@ -26758,10 +26886,23 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
     };
+    // TODO: Needs to also be implemented on Collapse
+    this.SetExpandedSubListParentHeight = function (height_change) {
+        if (!this.is_sublist || !this.list) {
+            return;
+        }
+        var row = this.list.GetParentRow();
+        if (!row || !row.is_sublist || !row.is_expanded) {
+            return;
+        }
+        var size_now = parseInt(row.expanded_content.css("height").replace("px", ""));
+        row.expanded_content.stop().animate({"height": size_now + height_change}, 180);
+        // This will recursively continue up the stack
+        row.SetExpandedSubListParentHeight(height_change);
+    };
     // Expand an html element below this row
     this.Expand = function (html) {
         if (this.is_expanded) {
-            console.log("Already expanded");
             this.Collapse();
             return;
         }
@@ -26784,54 +26925,87 @@ function DashGuiListRow (list, arbitrary_id) {
             "overflow-y": "hidden",
         });
         (function (self) {
-            self.expanded_content.animate({"height": target_size}, 180, function () {
-                self.expanded_content.css({"overflow-y": "visible"});  // This MUST be set to visible so that combo skirts don't get clipped
-                self.is_expanded = true;
-            });
+            self.expanded_content.animate(
+                {"height": target_size},
+                180,
+                function () {
+                    self.expanded_content.css({
+                        "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
+                    });
+                    self.is_expanded = true;
+                }
+            );
         })(this);
+        this.SetExpandedSubListParentHeight(target_size);
     };
     this.Collapse = function () {
         if (!this.is_expanded) {
             return;
         }
         this.html.css("z-index", "initial");
-        if (this.expanded_highlight) {
-            this.expanded_highlight.stop().animate({"opacity": 0}, 270);
-        }
         this.expanded_content.stop().css({
             "overflow-y": "hidden",
         });
+        var expanded_height = parseInt(this.expanded_content.css("height").replace("px", ""));
         (function (self) {
-            self.expanded_content.animate({"height": 0}, 180, function () {
-                self.expanded_content.stop().css({
-                    "overflow-y": "hidden",
-                    "opacity": 0,
-                });
-                self.expanded_highlight.stop().animate({"opacity": 0}, 135);
-                self.expanded_content.empty();
-                self.is_expanded = false;
-            });
+            self.expanded_content.animate(
+                {"height": 0},
+                180,
+                function () {
+                    self.expanded_content.stop().css({
+                        "overflow-y": "hidden",
+                        "opacity": 0,
+                    });
+                    if (self.expanded_highlight) {
+                        self.expanded_highlight.css({
+                            "opacity": 0
+                        });
+                    }
+                    self.expanded_content.empty();
+                    self.is_expanded = false;
+                }
+            );
         })(this);
+        this.SetExpandedSubListParentHeight(-expanded_height);
     };
-    this.SetSelected = function (is_selected) {
-        // this.is_selected = is_selected;
-        // if (this.is_selected) {
-        //     this.selected_highlight.stop().animate({"opacity": 1}, 100);
-        // }
-        // else {
-        //     this.selected_highlight.stop().animate({"opacity": 0}, 250);
-        // };
+    this.ChangeColumnEnabled = function (type, index, enabled=true) {
+        if (!this.columns || !this.columns[type]) {
+            return;
+        }
+        if (index === -1) {
+            index = this.columns[type].length - 1;
+        }
+        if ((index + 1) > this.columns[type].length) {
+            return;
+        }
+        if (!this.columns[type][index] || !this.columns[type][index]["obj"]) {
+            return;
+        }
+        if (type === "icon_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].Enable();
+            }
+            else {
+                this.columns[type][index]["obj"].Disable();
+            }
+        }
+        // Add conditions for the other types as needed
     };
     this.create_expand_highlight = function () {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
         this.expanded_highlight.css({
-            "background": this.color.BackgroundRaised,
+            "background": this.is_sublist ? "none" : this.color.BackgroundRaised,
             "pointer-events": "none",
             "opacity": 0,
             "top": -1,
             "bottom": -1,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
         });
+        if (this.is_sublist) {
+            this.expanded_highlight.css({
+                "margin-left": Dash.Size.Padding * 2
+            });
+        }
         this.html.prepend(this.expanded_highlight);
     };
     // Helper/handler for external GetDataForKey functions
@@ -26859,7 +27033,7 @@ function DashGuiListRow (list, arbitrary_id) {
                     // Don't set selection if it was an icon button that was clicked
                     return;
                 }
-                self.list.SetSelection(self.id);
+                self.list.SetSelection(self);
             });
         })(this);
     };
@@ -26867,101 +27041,96 @@ function DashGuiListRow (list, arbitrary_id) {
         for (var i in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[i];
             if (column_config_data["type"] === "spacer") {
-                if (column_config_data["header_only"] && !this.is_header) {
-                    continue;
-                }
-                var spacer = this.get_spacer();
-                this.column_box.append(spacer);
-                if (!this.columns["spacers"]) {
-                    this.columns["spacers"] = [];
-                }
-                this.columns["spacers"].push({
-                    "obj": spacer,
-                    "column_config_data": column_config_data
-                });
+                this.add_spacer_column(column_config_data);
             }
             else if (column_config_data["type"] === "divider") {
-                var divider = this.get_divider(column_config_data);
-                this.column_box.append(divider);
-                if (!this.columns["dividers"]) {
-                    this.columns["dividers"] = [];
-                }
-                this.columns["dividers"].push({
-                    "obj": divider,
-                    "column_config_data": column_config_data
-                });
+                this.add_divider_column(column_config_data);
             }
             else if (column_config_data["type"] === "combo") {
-                var combo = this.get_combo(column_config_data);
-                this.column_box.append(combo.html);
-                if (!this.columns["combos"]) {
-                    this.columns["combos"] = [];
-                }
-                this.columns["combos"].push({
-                    "obj": combo,
-                    "column_config_data": column_config_data
-                });
+                this.add_combo_column(column_config_data);
             }
             else if (column_config_data["type"] === "input") {
-                var input = this.get_input(column_config_data);
-                this.column_box.append(input.html);
-                if (!this.columns["inputs"]) {
-                    this.columns["inputs"] = [];
-                }
-                this.columns["inputs"].push({
-                    "obj": input,
-                    "column_config_data": column_config_data
-                });
+                this.add_input_column(column_config_data);
             }
             else if (column_config_data["type"] === "icon_button") {
-                var icon_button = this.get_icon_button(column_config_data);
-                this.column_box.append(icon_button.html);
-                if (!this.columns["icon_buttons"]) {
-                    this.columns["icon_buttons"] = [];
-                }
-                this.columns["icon_buttons"].push({
-                    "obj": icon_button,
-                    "column_config_data": column_config_data
-                });
+                this.add_icon_button_column(column_config_data);
             }
             else {
-                column_config_data["left_aligned"] = true;
-                var column = new DashGuiListRowColumn(this, column_config_data, i);
-                this.column_box.append(column.html);
-                if (!this.columns["default"]) {
-                    this.columns["default"] = [];
-                }
-                this.columns["default"].push({
-                    "obj": column,
-                    "column_config_data": column_config_data
-                });
+                this.add_default_column(column_config_data, i);
             }
         }
-    };
-    this.ChangeColumnEnabled = function (type, index, enabled=true) {
-        if (!this.columns || !this.columns[type]) {
-            return;
-        }
-        if (index === -1) {
-            index = this.columns[type].length - 1;
-        }
-        if ((index + 1) > this.columns[type].length) {
-            return;
-        }
-        if (!this.columns[type][index] || !this.columns[type][index]["obj"]) {
-            return;
-        }
-        if (type === "icon_buttons") {
-            if (enabled) {
-                this.columns[type][index]["obj"].Enable();
-            }
-            else {
-                this.columns[type][index]["obj"].Disable();
-            }
-        }
-        // Add conditions for the other types as needed
     };
     // TODO: Move all the stuff below into DashGuiListRowColumn and adjust the conditions in this.setup_columns accordingly
+    this.add_spacer_column = function (column_config_data) {
+        if (column_config_data["header_only"] && !this.is_header) {
+            return;
+        }
+        var spacer = this.get_spacer();
+        this.column_box.append(spacer);
+        if (!this.columns["spacers"]) {
+            this.columns["spacers"] = [];
+        }
+        this.columns["spacers"].push({
+            "obj": spacer,
+            "column_config_data": column_config_data
+        });
+    };
+    this.add_divider_column = function (column_config_data) {
+        var divider = this.get_divider(column_config_data);
+        this.column_box.append(divider);
+        if (!this.columns["dividers"]) {
+            this.columns["dividers"] = [];
+        }
+        this.columns["dividers"].push({
+            "obj": divider,
+            "column_config_data": column_config_data
+        });
+    };
+    this.add_combo_column = function (column_config_data) {
+        var combo = this.get_combo(column_config_data);
+        this.column_box.append(combo.html);
+        if (!this.columns["combos"]) {
+            this.columns["combos"] = [];
+        }
+        this.columns["combos"].push({
+            "obj": combo,
+            "column_config_data": column_config_data
+        });
+    };
+    this.add_input_column = function (column_config_data) {
+        var input = this.get_input(column_config_data);
+        this.column_box.append(input.html);
+        if (!this.columns["inputs"]) {
+            this.columns["inputs"] = [];
+        }
+        this.columns["inputs"].push({
+            "obj": input,
+            "column_config_data": column_config_data
+        });
+    };
+    this.add_icon_button_column = function (column_config_data) {
+        var icon_button = this.get_icon_button(column_config_data);
+        this.column_box.append(icon_button.html);
+        if (!this.columns["icon_buttons"]) {
+            this.columns["icon_buttons"] = [];
+        }
+        this.columns["icon_buttons"].push({
+            "obj": icon_button,
+            "column_config_data": column_config_data
+        });
+    };
+    this.add_default_column = function (column_config_data, index) {
+        column_config_data["left_aligned"] = true;
+        var column = new DashGuiListRowColumn(this, column_config_data, index);
+        this.column_box.append(column.html);
+        if (!this.columns["default"]) {
+            this.columns["default"] = [];
+        }
+        this.columns["default"].push({
+            "obj": column,
+            "column_config_data": column_config_data
+        });
+    };
     this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
@@ -27003,6 +27172,12 @@ function DashGuiListRow (list, arbitrary_id) {
         if (column_config_data["css"]) {
             combo.html.css(column_config_data["css"]);
         }
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't show the actual element
+            combo.html.css({
+                "opacity": 0
+            });
+        }
         return combo;
     };
     this.get_input = function (column_config_data) {
@@ -27019,6 +27194,11 @@ function DashGuiListRow (list, arbitrary_id) {
             input.html.css({
                 "width": column_config_data["width"]
             });
+        }
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            input.input.remove();
+            return input;
         }
         input.input.css({
             "height": Dash.Size.RowHeight * 0.9,
@@ -27062,12 +27242,13 @@ function DashGuiListRow (list, arbitrary_id) {
         if (column_config_data["css"]) {
             icon_button.html.css(column_config_data["css"]);
         }
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            icon_button.icon.icon_html.remove();
+            return icon_button;
+        }
         if (column_config_data["options"]["hover_text"]) {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
-        }
-        if (this.is_header) {
-            // Keep the container so the header stays properly aligned, but don't add an icon
-            icon_button.icon.icon_html.remove();
         }
         return icon_button;
     };
@@ -27091,6 +27272,9 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             "overflow": "hidden",
             "text-overflow": "ellipsis"
         };
+        if (this.list_row.is_sublist) {
+            css["text-decoration"] = "underline";
+        }
         if (this.width > 0) {
             css["width"] = this.width;
         }
@@ -27149,6 +27333,14 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
         if (this.list_row.is_header) {
             column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
         }
+        else if (this.list_row.is_sublist) {
+            if (this.index === 0) {
+                column_value = this.list_row.id.replace(this.list_row.list.sublist_row_tag, "");
+            }
+            else {
+                column_value = "";
+            }
+        }
         else {
             column_value = this.list.binder.GetDataForKey(
                 this.list_row.id,
@@ -27157,6 +27349,9 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
         }
         if (this.list_row.is_header) {
             font_family = "sans_serif_bold";
+        }
+        else if (this.list_row.is_sublist) {
+            font_family = "sans_serif_italic";
         }
         else if (column_value && column_value.length > 0) {
             font_family = "sans_serif_normal";

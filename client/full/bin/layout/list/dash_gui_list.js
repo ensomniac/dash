@@ -17,10 +17,13 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     }
 
     this.rows = [];
+    this.parent_row= null;  // Intended for cases where this is a sublist
     this.header_row = null;
     this.header_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
+    this.sublist_row_tag = "_sublist_row_";
+    this.header_row_tag = "_top_header_row";
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
 
@@ -30,8 +33,8 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         });
     };
 
-    this.AddRow = function (arbitrary_id) {
-        var row = new DashGuiListRow(this, arbitrary_id);
+    this.AddRow = function (row_id) {
+        var row = new DashGuiListRow(this, row_id);
 
         this.rows.push(row);
 
@@ -55,6 +58,25 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.add_header_row();
 
         return this.header_row;
+    };
+
+    this.AddSubList = function (sublist_name, highlight_color=null, init_list=false) {
+        var row = this.AddRow(this.sublist_row_tag + sublist_name);
+
+        if (highlight_color) {
+            row.highlight.css({
+                "background": highlight_color
+            });
+        }
+
+        // Always update it by default - can still update later in the code that calls this
+        row.Update();
+
+        if (init_list) {
+            row.SetCachedPreview(this.get_sublist());
+        }
+
+        return row;
     };
 
     this.DisableColumn = function (type, type_index) {
@@ -109,32 +131,21 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
     };
 
-    this.SetSelection = function (row_id) {
-        var is_selected = true;
-        var cb_id = row_id;
+    this.SetSelection = function (row) {
+        var is_selected = !(this.last_selection_id && row.id.toString() === this.last_selection_id.toString());
 
-        if (row_id == this.last_selection_id) {
-            row_id = null;
-            is_selected = false;
+        if (row.is_sublist) {
+            this.expand_sublist(row, is_selected);
         }
 
-        for (var i in this.rows) {
-            var row = this.rows[i];
-
-            if (row.id == row_id) {
-                row.SetSelected(true);
-            }
-
-            else {
-                row.SetSelected(false);
-            }
+        else {
+            this.selected_callback(row.id, is_selected, row);
         }
 
-        this.selected_callback(cb_id, is_selected);
-        this.last_selection_id = row_id;
+        this.last_selection_id = is_selected ? row.id : null;
     };
 
-    this.GetRow = function (row_id) {
+    this.GetRow = function (row_id, is_sublist=false) {
         if (!this.rows) {
             return;
         }
@@ -142,14 +153,26 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         for (var i in this.rows) {
             var row = this.rows[i];
 
-            if (row.id === row_id) {
+            if (row.id === (is_sublist ? (this.sublist_row_tag + row_id) : row_id)) {
                 return row;
             }
         }
     };
 
+    this.GetParentRow = function () {
+        // Intended for cases where this is a sublist
+
+        return this.parent_row;
+    };
+
+    this.SetParentRow = function (row) {
+        // Intended for cases where this is a sublist
+
+        this.parent_row = row;
+    };
+
     this.add_header_row = function () {
-        this.header_row = new DashGuiListRow(this, "_top_header_row");
+        this.header_row = new DashGuiListRow(this, this.header_row_tag);
 
         if (this.header_row_css) {
             if (this.header_row_css["html"]) {
@@ -165,6 +188,54 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
         // Always update it by default - can still update later in the code that calls this
         this.header_row.Update();
+    };
+
+    this.get_sublist = function () {
+        // May need to add more here
+        return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+    };
+
+    this.expand_sublist = function (row, is_selected) {
+        if (is_selected) {
+            row.Collapse();
+        }
+
+        // TODO: expand another list with the same column config - will need to work out how we then add rows
+        //  to it (maybe pass an array of ids to AddSubList and immediately "add" rows to it, or save them to ref here)
+
+        // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
+        // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
+        var preview = row.GetCachedPreview();
+
+        if (!(preview instanceof DashGuiList)) {
+            preview = row.SetCachedPreview(this.get_sublist(row));
+
+            // TEST
+            // var test_row = row.cached_preview.AddRow("2021102122424482130");
+            // test_row.Update();
+        }
+
+        preview.SetParentRow(row);
+
+        if (preview.rows.length > 0) {
+            row.Expand(preview.html);
+
+            return;
+        }
+
+        preview = $("<div></div>");
+
+        preview.css({
+            "padding-left": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "height": Dash.Size.RowHeight,
+            "color": this.color.Text,
+            "font-family": "sans_serif_italic"
+        });
+
+        preview.text("No content (empty folder)");
+
+        row.Expand(preview);
     };
 
     this.setup_styles();

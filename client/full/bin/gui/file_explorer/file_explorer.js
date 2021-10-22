@@ -39,6 +39,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.subfolder_structure = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.border_color = this.color.BackgroundTrue || this.color.Background;
 
     this.setup_styles = function () {
         // if (!this.validate_params()) {
@@ -272,8 +273,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     };
 
     this.redraw_rows = function () {
-        this.get_subfolder_structure();
-
         this.rows = {};
 
         if (this.list) {
@@ -288,6 +287,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this.add_list();
         }
 
+        this.draw_subfolders();
+
+        // TODO: how are we going to add subfolders' file rows to sublists?
+
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             function (file_id) {
@@ -297,12 +300,31 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             },
             this
         );
-
-        // TODO: draw folder rows and then make sure they expand to show new lists with its contents
     };
 
-    this.add_row = function (file_id) {
-        var row = this.list.AddRow(file_id);
+    // TODO: bug - expand sublist, collapse, then expand again and now highlighting isn't working
+
+    this.add_sublist = function (row_id, list) {
+        // TODO: incorporate some sort of random ID to this row id since some folder names could be the same
+        var row = list.AddSubList(row_id, this.border_color, true);
+
+        row.html.css({
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+
+        if (list === this.list) {
+            row.html.css({
+                "margin-left": Dash.Size.Padding * 2
+            });
+        }
+
+        this.rows[row_id] = row;
+
+        return row;
+    };
+
+    this.add_row = function (row_id) {
+        var row = this.list.AddRow(row_id);
 
         row.html.css({
             "margin-left": Dash.Size.Padding * 2,
@@ -311,11 +333,54 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
         row.Update();
 
-        this.rows[file_id] = row;
+        this.rows[row_id] = row;
+
+        return row;
     };
 
-    // TODO: Finish this
-    this.get_subfolder_structure = function () {
+    // Should be able to get rid of this now that draw_subfolders took its place
+    // this.add_folders_to_structure = function (root, folders) {
+    //     if (!folders.length) {
+    //         return root;
+    //     }
+    //
+    //     var current_folder_name = folders[0];
+    //
+    //     root[current_folder_name] = root[current_folder_name] || {};
+    //
+    //     console.log("TEST root", root);
+    //
+    //     return this.add_folders_to_structure(root[current_folder_name], folders.slice(1));
+    // };
+    //
+    // this.get_subfolder_structure = function () {
+    //     var structures = [];
+    //
+    //     for (var file_id in this.files_data["data"]) {
+    //         var parents = this.get_file_data(file_id)["parent_folders"];
+    //
+    //         if (!Dash.IsValidObject(parents)) {
+    //             continue;
+    //         }
+    //
+    //         structures.push(parents);
+    //     }
+    //
+    //     (function (self) {
+    //         self.subfolder_structure = structures.reduce(
+    //             function (root, folders) {
+    //                 self.add_folders_to_structure(root, folders);
+    //
+    //                 return root;
+    //             },
+    //             {}
+    //         );
+    //     })(this);
+    //
+    //     console.log("TEST subfolders", this.subfolder_structure);
+    // };
+
+    this.draw_subfolders = function () {
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
 
@@ -323,10 +388,17 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 continue;
             }
 
-            for (var i in parents) {
-                var name = parents[i];
+            var list = this.list;
 
-                // TODO: figure out this complex algorithm
+            for (var i in parents) {
+                var folder_name = parents[i];
+                var row = list.GetRow(folder_name, true);
+
+                if (!row) {
+                    row = this.add_sublist(folder_name, list);
+                }
+
+                list = row.cached_preview;
             }
         }
     };
@@ -367,7 +439,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             return;
         }
 
-        console.log("(FileExplorer) Init files data:", response);
+        console.log("(File Explorer) Init files data:", response);
 
         this.files_data = response;
 
@@ -376,7 +448,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
     this.add_list = function () {
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
-        var border_css = {"background": this.color.BackgroundTrue || this.color.Background};
+        var border_css = {"background": this.border_color};
 
         column_config.AddColumn(
             "Filename",
@@ -454,8 +526,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.html.append(this.list.html);
     };
 
-    this.on_row_selected = function (file_id, is_selected) {
-        var row = this.list.GetRow(file_id);
+    this.on_row_selected = function (file_id, is_selected, row) {
+        if (!row) {
+            row = this.list.GetRow(file_id);
+        }
 
         if (!is_selected) {
             row.Collapse();
@@ -524,28 +598,23 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     // };
 
     this.GetDataForKey = function (file_id, key) {
-        var value;
-
         if (key === "filename") {
-            value = this.get_filename(this.get_file_data(file_id));
+            return this.get_filename(this.get_file_data(file_id));
         }
 
-        else {
-            value = this.get_file_data(file_id)[key];
+        var value = this.get_file_data(file_id)[key];
 
-            if (key === "uploaded_on") {
-                if (Dash.IsServerIsoDate(value)) {
-                    return Dash.ReadableDateTime(value, false);
-                }
+        if (key === "uploaded_on") {
+            if (Dash.IsServerIsoDate(value)) {
+                return Dash.ReadableDateTime(value, false);
             }
+        }
 
+        else if (key === "uploaded_by") {
+            var user = Dash.User.Init["team"][value];
 
-            else if (key === "uploaded_by") {
-                var user = Dash.User.Init["team"][value];
-
-                if (user && user["display_name"]) {
-                    return user["display_name"];
-                }
+            if (user && user["display_name"]) {
+                return user["display_name"];
             }
         }
 
