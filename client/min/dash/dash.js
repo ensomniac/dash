@@ -22172,8 +22172,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //
     //     root[current_folder_name] = root[current_folder_name] || {};
     //
-    //     console.log("TEST root", root);
-    //
     //     return this.add_folders_to_structure(root[current_folder_name], folders.slice(1));
     // };
     //
@@ -22200,8 +22198,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //             {}
     //         );
     //     })(this);
-    //
-    //     console.log("TEST subfolders", this.subfolder_structure);
     // };
     this.draw_subfolders = function () {
         for (var file_id in this.files_data["data"]) {
@@ -26721,11 +26717,13 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         if (is_selected) {
             row.Collapse();
         }
+        var refresh_connections = true;
         // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
         if (!(preview instanceof DashGuiList)) {
             preview = row.SetCachedPreview(this.get_sublist());
+            refresh_connections = false;
         }
         preview.SetParentRow(row);
         var queue = row.GetSublistQueue();
@@ -26744,19 +26742,28 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             );
         }
         if (preview.rows.length > 0) {
+            if (refresh_connections) {
+                // When re-using a cached preview, need to refresh the connections
+                preview.rows.forEach(
+                    function (sublist_row) {
+                        sublist_row.setup_connections();
+                    }
+                );
+            }
             row.Expand(preview.html, preview.rows);
-            return;
         }
-        preview = $("<div></div>");
-        preview.css({
-            "padding-left": Dash.Size.Padding,
-            "padding-top": Dash.Size.Padding * 0.5,
-            "height": Dash.Size.RowHeight,
-            "color": this.color.Text,
-            "font-family": "sans_serif_italic"
-        });
-        preview.text("No content (empty folder)");
-        row.Expand(preview);
+        else {
+            preview = $("<div></div>");
+            preview.css({
+                "padding-left": Dash.Size.Padding,
+                "padding-top": Dash.Size.Padding * 0.5,
+                "height": Dash.Size.RowHeight,
+                "color": this.color.Text,
+                "font-family": "sans_serif_italic"
+            });
+            preview.text("No content (empty folder)");
+            row.Expand(preview);
+        }
     };
     this.setup_styles();
 }

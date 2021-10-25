@@ -197,12 +197,15 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             row.Collapse();
         }
 
+        var refresh_connections = true;
+
         // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
 
         if (!(preview instanceof DashGuiList)) {
             preview = row.SetCachedPreview(this.get_sublist());
+            refresh_connections = false;
         }
 
         preview.SetParentRow(row);
@@ -228,24 +231,33 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
 
         if (preview.rows.length > 0) {
-            row.Expand(preview.html, preview.rows);
+            if (refresh_connections) {
+                // When re-using a cached preview, need to refresh the connections
+                preview.rows.forEach(
+                    function (sublist_row) {
+                        sublist_row.setup_connections();
+                    }
+                );
+            }
 
-            return;
+            row.Expand(preview.html, preview.rows);
         }
 
-        preview = $("<div></div>");
+        else {
+            preview = $("<div></div>");
 
-        preview.css({
-            "padding-left": Dash.Size.Padding,
-            "padding-top": Dash.Size.Padding * 0.5,
-            "height": Dash.Size.RowHeight,
-            "color": this.color.Text,
-            "font-family": "sans_serif_italic"
-        });
+            preview.css({
+                "padding-left": Dash.Size.Padding,
+                "padding-top": Dash.Size.Padding * 0.5,
+                "height": Dash.Size.RowHeight,
+                "color": this.color.Text,
+                "font-family": "sans_serif_italic"
+            });
 
-        preview.text("No content (empty folder)");
+            preview.text("No content (empty folder)");
 
-        row.Expand(preview);
+            row.Expand(preview);
+        }
     };
 
     this.setup_styles();

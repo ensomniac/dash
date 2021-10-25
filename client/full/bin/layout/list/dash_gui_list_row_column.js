@@ -65,7 +65,6 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
 
             (function (self) {
                 self.html.on("click", function (e) {
-
                     self.column_config_data["on_click_callback"](self.list_row.id);
 
                     e.preventDefault();

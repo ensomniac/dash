@@ -346,8 +346,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //
     //     root[current_folder_name] = root[current_folder_name] || {};
     //
-    //     console.log("TEST root", root);
-    //
     //     return this.add_folders_to_structure(root[current_folder_name], folders.slice(1));
     // };
     //
@@ -374,8 +372,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     //             {}
     //         );
     //     })(this);
-    //
-    //     console.log("TEST subfolders", this.subfolder_structure);
     // };
 
     this.draw_subfolders = function () {
