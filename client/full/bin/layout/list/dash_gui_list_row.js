@@ -4,6 +4,8 @@ function DashGuiListRow (list, arbitrary_id) {
 
     this.columns = {};
     this.is_shown = true;
+    this.tmp_css_cache = [];
+    this.sublist_queue = [];
     this.is_expanded = false;
     this.cached_preview = null;  // Intended for sublists only
     this.color = this.list.color;
@@ -12,7 +14,6 @@ function DashGuiListRow (list, arbitrary_id) {
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
-    this.selected_highlight = $("<div></div>");
     this.is_header = this.id === this.list.header_row_tag;
     this.is_sublist = this.id.startsWith(this.list.sublist_row_tag);
 
@@ -30,7 +31,6 @@ function DashGuiListRow (list, arbitrary_id) {
 
         else {
             this.html.append(this.highlight);
-            this.html.append(this.selected_highlight);
             this.html.append(this.expanded_content);
 
             this.expanded_content.css({
@@ -38,17 +38,6 @@ function DashGuiListRow (list, arbitrary_id) {
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
                 "height": 0,
-            });
-
-            this.selected_highlight.css({
-                "position": "absolute",
-                "left": 0,
-                "top": 0,
-                "right": 0,
-                "height": Dash.Size.RowHeight,
-                "background": "rgb(240, 240, 240)", // Not correct
-                "pointer-events": "none",
-                "opacity": 0,
             });
 
             this.highlight.css({
@@ -88,6 +77,28 @@ function DashGuiListRow (list, arbitrary_id) {
 
         this.setup_columns();
         this.setup_connections();
+    };
+
+    this.AddToSublistQueue = function (row_id, css=null) {
+        if (!this.is_sublist || !row_id) {
+            return;
+        }
+
+        var item = {"row_id": row_id, "css": css};
+
+        if (!(JSON.stringify(this.sublist_queue).includes(JSON.stringify(item)))) {
+            this.sublist_queue.push(item);
+        }
+
+        return this.sublist_queue;
+    };
+
+    this.GetSublistQueue = function () {
+        if (!this.is_sublist) {
+            return;
+        }
+
+        return this.sublist_queue;
     };
 
     this.SetCachedPreview = function (preview_obj) {
@@ -160,14 +171,12 @@ function DashGuiListRow (list, arbitrary_id) {
                 }
             }
         }
+
+        // Probably need to recursively go through sublists and update
+        // those as well, but that functionality isn't needed right now
     };
 
-    // TODO: Needs to also be implemented on Collapse
     this.SetExpandedSubListParentHeight = function (height_change) {
-        if (!this.is_sublist || !this.list) {
-            return;
-        }
-
         var row = this.list.GetParentRow();
 
         if (!row || !row.is_sublist || !row.is_expanded) {
@@ -182,12 +191,19 @@ function DashGuiListRow (list, arbitrary_id) {
         row.SetExpandedSubListParentHeight(height_change);
     };
 
-    // Expand an html element below this row
-    this.Expand = function (html) {
+    this.Expand = function (html, sublist_rows=null) {
         if (this.is_expanded) {
             this.Collapse();
 
             return;
+        }
+
+        if (sublist_rows) {
+            this.store_css_on_expansion(sublist_rows.Last());
+        }
+
+        if (this.is_sublist) {
+            this.store_css_on_expansion(this.list.rows.Last());
         }
 
         this.html.css("z-index", 2000);
@@ -238,6 +254,18 @@ function DashGuiListRow (list, arbitrary_id) {
             return;
         }
 
+        if (Dash.IsValidObject(this.tmp_css_cache)) {
+            this.tmp_css_cache.forEach(
+                function (entry) {
+                    if (entry && entry["row"] && entry["row"].html && entry["css"]) {
+                        entry["row"].html.css(entry["css"]);
+                    }
+                }
+            );
+
+            this.tmp_css_cache = [];
+        }
+
         this.html.css("z-index", "initial");
 
         this.expanded_content.stop().css({
@@ -257,7 +285,7 @@ function DashGuiListRow (list, arbitrary_id) {
                     });
 
                     if (self.expanded_highlight) {
-                        self.expanded_highlight.css({
+                        self.expanded_highlight.stop().css({
                             "opacity": 0
                         });
                     }
@@ -300,6 +328,23 @@ function DashGuiListRow (list, arbitrary_id) {
         }
 
         // Add conditions for the other types as needed
+    };
+
+    this.store_css_on_expansion = function (row) {
+        var border_bottom = row.html.css("border-bottom");
+
+        if (!border_bottom || border_bottom === "none") {
+            return;
+        }
+
+        row.html.css({
+            "border-bottom": "none"
+        });
+
+        this.tmp_css_cache.push({
+            "row": row,
+            "css": {"border-bottom": border_bottom}
+        });
     };
 
     this.create_expand_highlight = function () {

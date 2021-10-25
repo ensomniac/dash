@@ -289,8 +289,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
         this.draw_subfolders();
 
-        // TODO: how are we going to add subfolders' file rows to sublists?
-
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             function (file_id) {
@@ -302,10 +300,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         );
     };
 
-    // TODO: bug - expand sublist, collapse, then expand again and now highlighting isn't working
+    // TODO: bug - expand sublist, collapse, then expand again and now highlighting/clicking isn't working
 
     this.add_sublist = function (row_id, list) {
-        // TODO: incorporate some sort of random ID to this row id since some folder names could be the same
         var row = list.AddSubList(row_id, this.border_color, true);
 
         row.html.css({
@@ -339,6 +336,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     };
 
     // Should be able to get rid of this now that draw_subfolders took its place
+
     // this.add_folders_to_structure = function (root, folders) {
     //     if (!folders.length) {
     //         return root;
@@ -398,7 +396,11 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                     row = this.add_sublist(folder_name, list);
                 }
 
-                list = row.cached_preview;
+                if (parseInt(i) === (parents.length - 1)) {
+                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"});
+                }
+
+                list = row.GetCachedPreview();
             }
         }
     };

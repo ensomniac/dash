@@ -22128,7 +22128,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this.add_list();
         }
         this.draw_subfolders();
-        // TODO: how are we going to add subfolders' file rows to sublists?
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             function (file_id) {
@@ -22139,9 +22138,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this
         );
     };
-    // TODO: bug - expand sublist, collapse, then expand again and now highlighting isn't working
+    // TODO: bug - expand sublist, collapse, then expand again and now highlighting/clicking isn't working
     this.add_sublist = function (row_id, list) {
-        // TODO: incorporate some sort of random ID to this row id since some folder names could be the same
         var row = list.AddSubList(row_id, this.border_color, true);
         row.html.css({
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
@@ -22218,7 +22216,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 if (!row) {
                     row = this.add_sublist(folder_name, list);
                 }
-                list = row.cached_preview;
+                if (parseInt(i) === (parents.length - 1)) {
+                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"});
+                }
+                list = row.GetCachedPreview();
             }
         }
     };
@@ -26691,12 +26692,12 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             }
         }
     };
+    // Intended for cases where this is a sublist
     this.GetParentRow = function () {
-        // Intended for cases where this is a sublist
         return this.parent_row;
     };
+    // Intended for cases where this is a sublist
     this.SetParentRow = function (row) {
-        // Intended for cases where this is a sublist
         this.parent_row = row;
     };
     this.add_header_row = function () {
@@ -26714,27 +26715,36 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.header_row.Update();
     };
     this.get_sublist = function () {
-        // May need to add more here
         return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
     };
     this.expand_sublist = function (row, is_selected) {
         if (is_selected) {
             row.Collapse();
         }
-        // TODO: expand another list with the same column config - will need to work out how we then add rows
-        //  to it (maybe pass an array of ids to AddSubList and immediately "add" rows to it, or save them to ref here)
         // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
         if (!(preview instanceof DashGuiList)) {
-            preview = row.SetCachedPreview(this.get_sublist(row));
-            // TEST
-            // var test_row = row.cached_preview.AddRow("2021102122424482130");
-            // test_row.Update();
+            preview = row.SetCachedPreview(this.get_sublist());
         }
         preview.SetParentRow(row);
+        var queue = row.GetSublistQueue();
+        if (Dash.IsValidObject(queue)) {
+            queue.forEach(
+                function (entry) {
+                    var added_row = preview.GetRow(entry["row_id"]);
+                    if (!added_row) {
+                        added_row = preview.AddRow(entry["row_id"]);
+                    }
+                    if (entry["css"]) {
+                        added_row.html.css(entry["css"]);
+                    }
+                    added_row.Update();
+                }
+            );
+        }
         if (preview.rows.length > 0) {
-            row.Expand(preview.html);
+            row.Expand(preview.html, preview.rows);
             return;
         }
         preview = $("<div></div>");
@@ -26756,6 +26766,8 @@ function DashGuiListRow (list, arbitrary_id) {
     this.id = arbitrary_id;
     this.columns = {};
     this.is_shown = true;
+    this.tmp_css_cache = [];
+    this.sublist_queue = [];
     this.is_expanded = false;
     this.cached_preview = null;  // Intended for sublists only
     this.color = this.list.color;
@@ -26764,7 +26776,6 @@ function DashGuiListRow (list, arbitrary_id) {
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
-    this.selected_highlight = $("<div></div>");
     this.is_header = this.id === this.list.header_row_tag;
     this.is_sublist = this.id.startsWith(this.list.sublist_row_tag);
     this.setup_styles = function () {
@@ -26780,23 +26791,12 @@ function DashGuiListRow (list, arbitrary_id) {
         }
         else {
             this.html.append(this.highlight);
-            this.html.append(this.selected_highlight);
             this.html.append(this.expanded_content);
             this.expanded_content.css({
                 "margin-left": Dash.Size.Padding * (this.is_sublist ? 1 : -1),
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
                 "height": 0,
-            });
-            this.selected_highlight.css({
-                "position": "absolute",
-                "left": 0,
-                "top": 0,
-                "right": 0,
-                "height": Dash.Size.RowHeight,
-                "background": "rgb(240, 240, 240)", // Not correct
-                "pointer-events": "none",
-                "opacity": 0,
             });
             this.highlight.css({
                 "position": "absolute",
@@ -26830,6 +26830,22 @@ function DashGuiListRow (list, arbitrary_id) {
         });
         this.setup_columns();
         this.setup_connections();
+    };
+    this.AddToSublistQueue = function (row_id, css=null) {
+        if (!this.is_sublist || !row_id) {
+            return;
+        }
+        var item = {"row_id": row_id, "css": css};
+        if (!(JSON.stringify(this.sublist_queue).includes(JSON.stringify(item)))) {
+            this.sublist_queue.push(item);
+        }
+        return this.sublist_queue;
+    };
+    this.GetSublistQueue = function () {
+        if (!this.is_sublist) {
+            return;
+        }
+        return this.sublist_queue;
     };
     this.SetCachedPreview = function (preview_obj) {
         if (!this.is_sublist) {
@@ -26885,12 +26901,10 @@ function DashGuiListRow (list, arbitrary_id) {
                 }
             }
         }
+        // Probably need to recursively go through sublists and update
+        // those as well, but that functionality isn't needed right now
     };
-    // TODO: Needs to also be implemented on Collapse
     this.SetExpandedSubListParentHeight = function (height_change) {
-        if (!this.is_sublist || !this.list) {
-            return;
-        }
         var row = this.list.GetParentRow();
         if (!row || !row.is_sublist || !row.is_expanded) {
             return;
@@ -26900,11 +26914,16 @@ function DashGuiListRow (list, arbitrary_id) {
         // This will recursively continue up the stack
         row.SetExpandedSubListParentHeight(height_change);
     };
-    // Expand an html element below this row
-    this.Expand = function (html) {
+    this.Expand = function (html, sublist_rows=null) {
         if (this.is_expanded) {
             this.Collapse();
             return;
+        }
+        if (sublist_rows) {
+            this.store_css_on_expansion(sublist_rows.Last());
+        }
+        if (this.is_sublist) {
+            this.store_css_on_expansion(this.list.rows.Last());
         }
         this.html.css("z-index", 2000);
         if (!this.expanded_highlight) {
@@ -26942,6 +26961,16 @@ function DashGuiListRow (list, arbitrary_id) {
         if (!this.is_expanded) {
             return;
         }
+        if (Dash.IsValidObject(this.tmp_css_cache)) {
+            this.tmp_css_cache.forEach(
+                function (entry) {
+                    if (entry && entry["row"] && entry["row"].html && entry["css"]) {
+                        entry["row"].html.css(entry["css"]);
+                    }
+                }
+            );
+            this.tmp_css_cache = [];
+        }
         this.html.css("z-index", "initial");
         this.expanded_content.stop().css({
             "overflow-y": "hidden",
@@ -26957,7 +26986,7 @@ function DashGuiListRow (list, arbitrary_id) {
                         "opacity": 0,
                     });
                     if (self.expanded_highlight) {
-                        self.expanded_highlight.css({
+                        self.expanded_highlight.stop().css({
                             "opacity": 0
                         });
                     }
@@ -26990,6 +27019,19 @@ function DashGuiListRow (list, arbitrary_id) {
             }
         }
         // Add conditions for the other types as needed
+    };
+    this.store_css_on_expansion = function (row) {
+        var border_bottom = row.html.css("border-bottom");
+        if (!border_bottom || border_bottom === "none") {
+            return;
+        }
+        row.html.css({
+            "border-bottom": "none"
+        });
+        this.tmp_css_cache.push({
+            "row": row,
+            "css": {"border-bottom": border_bottom}
+        });
     };
     this.create_expand_highlight = function () {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();

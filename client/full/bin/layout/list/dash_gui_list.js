@@ -159,15 +159,13 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
     };
 
+    // Intended for cases where this is a sublist
     this.GetParentRow = function () {
-        // Intended for cases where this is a sublist
-
         return this.parent_row;
     };
 
+    // Intended for cases where this is a sublist
     this.SetParentRow = function (row) {
-        // Intended for cases where this is a sublist
-
         this.parent_row = row;
     };
 
@@ -191,7 +189,6 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
 
     this.get_sublist = function () {
-        // May need to add more here
         return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
     };
 
@@ -200,25 +197,38 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             row.Collapse();
         }
 
-        // TODO: expand another list with the same column config - will need to work out how we then add rows
-        //  to it (maybe pass an array of ids to AddSubList and immediately "add" rows to it, or save them to ref here)
-
         // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
 
         if (!(preview instanceof DashGuiList)) {
-            preview = row.SetCachedPreview(this.get_sublist(row));
-
-            // TEST
-            // var test_row = row.cached_preview.AddRow("2021102122424482130");
-            // test_row.Update();
+            preview = row.SetCachedPreview(this.get_sublist());
         }
 
         preview.SetParentRow(row);
 
+        var queue = row.GetSublistQueue();
+
+        if (Dash.IsValidObject(queue)) {
+            queue.forEach(
+                function (entry) {
+                    var added_row = preview.GetRow(entry["row_id"]);
+
+                    if (!added_row) {
+                        added_row = preview.AddRow(entry["row_id"]);
+                    }
+
+                    if (entry["css"]) {
+                        added_row.html.css(entry["css"]);
+                    }
+
+                    added_row.Update();
+                }
+            );
+        }
+
         if (preview.rows.length > 0) {
-            row.Expand(preview.html);
+            row.Expand(preview.html, preview.rows);
 
             return;
         }
