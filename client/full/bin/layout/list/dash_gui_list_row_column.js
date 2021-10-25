@@ -8,6 +8,16 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
     this.width = this.column_config_data["width"] || -1;
 
     this.setup_styles = function () {
+        this.set_click_callback();
+
+        this.html.css(this.get_css());
+
+        if (this.list_row.is_header && this.column_config_data["header_css"]) {
+            this.html.css(this.column_config_data["header_css"]);
+        }
+    };
+
+    this.get_css = function () {
         var css = {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
@@ -26,6 +36,46 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             css["width"] = this.width;
         }
 
+        css = this.get_css_margins(css);
+        css = this.get_column_config_css(css);
+        css = this.get_text_color_css(css);
+
+        return css;
+    };
+
+    this.get_text_color_css = function (css) {
+        if (!this.list_row.is_header) {
+            return css;
+        }
+
+        if (this.list.color === Dash.Color.Dark) {
+            css["color"] = Dash.Color.Light.BackgroundRaised;
+        }
+
+        else if (this.list.color === Dash.Color.Light) {
+            css["color"] = Dash.Color.Dark.BackgroundRaised;
+        }
+
+        return css;
+    };
+
+    this.get_column_config_css = function (css) {
+        if (!this.column_config_data["css"]) {
+            return css;
+        }
+
+        for (var key in this.column_config_data["css"]) {
+            if (!key.includes("width") && this.list_row.is_header) {
+                continue;
+            }
+
+            css[key] = this.column_config_data["css"][key];
+        }
+
+        return css;
+    };
+
+    this.get_css_margins = function (css) {
         var previous_column = this.list.column_config.columns[this.index - 1];
 
         if (previous_column && previous_column["type"] === "divider") {
@@ -48,47 +98,27 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             }
         }
 
-        if (this.column_config_data["css"]) {
-            for (var key in this.column_config_data["css"]) {
-                if (!key.includes("width") && this.list_row.is_header) {
-                    continue;
-                }
+        return css;
+    };
 
-                css[key] = this.column_config_data["css"][key];
-            }
+    this.set_click_callback = function () {
+        if (!this.column_config_data["on_click_callback"]) {
+            return;
         }
 
-        if (this.column_config_data["on_click_callback"]) {
-            var binder = this.list.binder;
+        var binder = this.list.binder;
 
-            this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
+        this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
 
-            (function (self) {
-                self.html.on("click", function (e) {
-                    self.column_config_data["on_click_callback"](self.list_row.id);
+        (function (self) {
+            self.html.on("click", function (e) {
+                self.column_config_data["on_click_callback"](self.list_row.id);
 
-                    e.preventDefault();
+                e.preventDefault();
 
-                    return false;
-                });
-            })(this);
-        }
-
-        if (this.list_row.is_header) {
-            if (this.list.color === Dash.Color.Dark) {
-                css["color"] = Dash.Color.Light.BackgroundRaised;
-            }
-
-            else if (this.list.color === Dash.Color.Light) {
-                css["color"] = Dash.Color.Dark.BackgroundRaised;
-            }
-        }
-
-        this.html.css(css);
-
-        if (this.list_row.is_header && this.column_config_data["header_css"]) {
-            this.html.css(this.column_config_data["header_css"]);
-        }
+                return false;
+            });
+        })(this);
     };
 
     this.Update = function () {
