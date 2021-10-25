@@ -381,6 +381,14 @@ function DashGuiListRow (list, arbitrary_id) {
         return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
 
+    this.refresh_connections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.column_box.off("click");
+
+        this.setup_connections();
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {

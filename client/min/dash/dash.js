@@ -21897,35 +21897,29 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.setup_styles();
 }
 
-/**
- * File Explorer box element.
- *
- * IMPORTANT NOTE:
- *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
- *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
- *
- *         "get_files":         Get all files and return dict with data/order keys
- *         "upload_file":       Upload a file
- *         "delete_file":       Delete a file
- *         "set_file_property": Set a property for a file with provided key/value
- *
- * @param {DashColorSet} color - DashColorSet instance
- * @param {string} api - API name for requests
- * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
- * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
- */
 function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false) {
+    /**
+     * File Explorer box element.
+     * --------------------------
+     *
+     * IMPORTANT NOTE: <br>
+     *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
+     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *
+     *         - "get_files":         Get all files and return dict with data/order keys
+     *         - "upload_file":       Upload a file
+     *         - "delete_file":       Delete a file
+     *         - "set_file_property": Set a property for a file with provided key/value
+     *
+     * @param {DashColorSet} color - DashColorSet instance
+     * @param {string} api - API name for requests
+     * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
+     * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
+     */
     this.color = color || Dash.Color.Light;
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
-    // Using the simpler/concise method (in docstring) for now - if we ever need full flexibility with
-    // the requests in this module, revert back to the below system and re-enable this.validate_params
-    //
-    // this.params_get_all = params_get_all;
-    // this.params_set_property = params_set_property;
-    // this.params_upload = params_upload;
-    // this.params_delete = params_delete;
     this.rows = {};
     this.list = null;
     this.buttons = null;
@@ -21933,13 +21927,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.files_data = null;
     this.initialized = false;
     this.upload_button = null;
-    this.subfolder_structure = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.border_color = this.color.BackgroundTrue || this.color.Background;
+    DashGuiFileExplorerGUI.call(this);
+    DashGuiFileExplorerData.call(this);
+    DashGuiFileExplorerSync.call(this);
     this.setup_styles = function () {
-        // if (!this.validate_params()) {
-        //     return;
-        // }
         // this.buttons must be populated here so that the callbacks are not undefined
         this.buttons = {
             "view": {
@@ -21963,6 +21956,112 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.add_header();
         this.add_upload_button();
         this.initialized = true;
+    };
+    this.show_subheader = function (text="") {
+        if (!this.subheader) {
+            this.add_subheader();
+        }
+        else {
+            this.subheader.html.show();
+        }
+        if (text) {
+            this.subheader.SetText(text);
+        }
+    };
+    this.hide_subheader = function () {
+        if (!this.subheader) {
+            return;
+        }
+        this.subheader.html.hide();
+    };
+    this.disable_load_buttons = function () {
+        this.upload_button.Disable();
+        if (this.list) {
+            this.list.DisableColumn("icon_buttons", 1);
+        }
+    };
+    this.enable_load_buttons = function () {
+        this.upload_button.Enable();
+        if (this.list) {
+            this.list.EnableColumn("icon_buttons", 1);
+        }
+    };
+    this.on_row_selected = function (file_id, is_selected, row) {
+        if (!row) {
+            row = this.list.GetRow(file_id);
+        }
+        if (!is_selected) {
+            row.Collapse();
+            return;
+        }
+        var preview = new Dash.Gui.FileExplorer.PreviewStrip(this, file_id);
+        row.Expand(preview.html);
+    };
+    this.redraw_rows = function () {
+        this.rows = {};
+        if (this.list) {
+            this.list.Clear();
+        }
+        else {
+            if (this.files_data["order"].length < 1) {
+                return;
+            }
+            this.add_list();
+        }
+        this.draw_subfolders();
+        // Draw files that don't live in subfolders
+        this.files_data["order"].forEach(
+            function (file_id) {
+                if (!Dash.IsValidObject(this.get_file_data(file_id)["parent_folders"])) {
+                    this.add_row(file_id);
+                }
+            },
+            this
+        );
+    };
+    this.get_file_data = function (file_id) {
+        return this.files_data["data"][file_id];
+    };
+    this.get_filename = function (file_data) {
+        return file_data["filename"] || file_data["orig_filename"] || "";
+    };
+    this.get_file_url = function (file_data) {
+        return file_data["url"] || file_data["orig_url"] || "";
+    };
+    this.GetDataForKey = function (file_id, key) {
+        if (key === "filename") {
+            return this.get_filename(this.get_file_data(file_id));
+        }
+        var value = this.get_file_data(file_id)[key];
+        if (key === "uploaded_on") {
+            if (Dash.IsServerIsoDate(value)) {
+                return Dash.ReadableDateTime(value, false);
+            }
+        }
+        else if (key === "uploaded_by") {
+            var user = Dash.User.Init["team"][value];
+            if (user && user["display_name"]) {
+                return user["display_name"];
+            }
+        }
+        return value;
+    };
+    this.Update = function () {
+        this.redraw_rows();
+    };
+    this.setup_styles();
+}
+
+/**@member DashGuiFileExplorer*/
+function DashGuiFileExplorerGUI () {
+    this.add_header = function () {
+        var header = new Dash.Gui.Header("Files", this.color);
+        header.ReplaceBorderWithIcon("paperclip");
+        header.icon.AddShadow();
+        header.html.css({
+            "margin-bottom": 0
+        });
+        this.html.append(header.html);
     };
     this.add_subheader = function () {
         this.subheader = new Dash.Gui.Header("...", this.color);
@@ -21996,149 +22095,16 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.upload_button.SetHoverHint("Upload File");
         this.html.append(this.upload_button.html);
     };
-    this.add_header = function () {
-        var header = new Dash.Gui.Header("Files", this.color);
-        header.ReplaceBorderWithIcon("paperclip");
-        header.icon.AddShadow();
-        header.html.css({
-            "margin-bottom": 0
+    this.add_row = function (row_id) {
+        var row = this.list.AddRow(row_id);
+        row.html.css({
+            "margin-left": Dash.Size.Padding * 2,
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
-        this.html.append(header.html);
+        row.Update();
+        this.rows[row_id] = row;
+        return row;
     };
-    this.on_file_upload_started = function () {
-        this.show_subheader("File upload in progress...");
-        this.disable_load_buttons();
-    };
-    this.show_subheader = function (text="") {
-        if (!this.subheader) {
-            this.add_subheader();
-        }
-        else {
-            this.subheader.html.show();
-        }
-        if (text) {
-            this.subheader.SetText(text);
-        }
-    };
-    this.hide_subheader = function () {
-        if (!this.subheader) {
-            return;
-        }
-        this.subheader.html.hide();
-    };
-    this.on_file_uploaded = function (data_key, additional_data, response) {
-        if (!response || response["originalEvent"]) {
-            return;
-        }
-        this.on_files_changed(response);
-    };
-    this.on_files_changed = function (response) {
-        var error_context = "on_files_changed response (on upload/delete) was invalid.";
-        if (!response["all_files"]) {
-            console.log("Error:", error_context, "An 'all_files' key is required to update the list:", response);
-            return;
-        }
-        if (!response["all_files"]["data"] || !response["all_files"]["order"]) {
-            console.log("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
-            return;
-        }
-        if (!Dash.ValidateResponse(response)) {
-            return;
-        }
-        this.files_data = response["all_files"];
-        this.redraw_rows();
-        this.hide_subheader();
-        this.enable_load_buttons();
-    };
-    this.disable_load_buttons = function () {
-        this.upload_button.Disable();
-        if (this.list) {
-            this.list.DisableColumn("icon_buttons", 1);
-        }
-    };
-    this.enable_load_buttons = function () {
-        this.upload_button.Enable();
-        if (this.list) {
-            this.list.EnableColumn("icon_buttons", 1);
-        }
-    };
-    this.delete_file = function (file_id) {
-        if (!window.confirm("Are you sure you want to delete this file?")) {
-            return;
-        }
-        this.show_subheader("File deletion in progress...");
-        this.disable_load_buttons();
-        Dash.Request(
-            this,
-            this.on_files_changed,
-            this.api,
-            {
-                "f": "delete_file",
-                "parent_obj_id": this.parent_obj_id,
-                "file_id": file_id
-            }
-        );
-    };
-    this.download_file = function (file_id) {
-        var file_data = this.get_file_data(file_id);
-        Dash.Gui.OpenFileURLDownloadDialog(
-            this.get_file_url(file_data),
-            this.get_filename(file_data)
-        );
-    };
-    this.get_filename = function (file_data) {
-        return file_data["filename"] || file_data["orig_filename"] || "";
-    };
-    this.get_file_url = function (file_data) {
-        return file_data["url"] || file_data["orig_url"] || "";
-    };
-    this.view_file = function (file_id) {
-        if (this.supports_desktop_client) {
-            var live_sync_active = false;  // TODO: Check if live sync is active/enabled
-            if (live_sync_active) {
-                // TODO: Show the file in the user's computer's local file system
-            }
-            else {
-                // TODO: Remove "(coming soon)" and instead, mention how to enable it
-                if (!window.confirm(
-                    "Opening this file in your computer's local file system requires LiveSync to be enabled " +
-                    "(coming soon).\n\nWould you like to open a new browser tab to view/download the file?"
-                )) {
-                    return;
-                }
-                this.open_file_in_browser_tab(file_id);
-            }
-        }
-        else {
-            this.open_file_in_browser_tab(file_id);
-        }
-    };
-    this.open_file_in_browser_tab = function (file_id) {
-        window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
-    };
-    this.redraw_rows = function () {
-        this.rows = {};
-        if (this.list) {
-            this.list.Clear();
-        }
-        else {
-            if (this.files_data["order"].length < 1) {
-                return;
-            }
-            this.add_list();
-        }
-        this.draw_subfolders();
-        // Draw files that don't live in subfolders
-        this.files_data["order"].forEach(
-            function (file_id) {
-                if (!Dash.IsValidObject(this.get_file_data(file_id)["parent_folders"])) {
-                    this.add_row(file_id);
-                }
-            },
-            this
-        );
-    };
-    // TODO: bug - expand sublist, collapse, then expand again and now highlighting/clicking isn't working
     this.add_sublist = function (row_id, list) {
         var row = list.AddSubList(row_id, this.border_color, true);
         row.html.css({
@@ -22152,53 +22118,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.rows[row_id] = row;
         return row;
     };
-    this.add_row = function (row_id) {
-        var row = this.list.AddRow(row_id);
-        row.html.css({
-            "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
-        });
-        row.Update();
-        this.rows[row_id] = row;
-        return row;
-    };
-    // Should be able to get rid of this now that draw_subfolders took its place
-    // this.add_folders_to_structure = function (root, folders) {
-    //     if (!folders.length) {
-    //         return root;
-    //     }
-    //
-    //     var current_folder_name = folders[0];
-    //
-    //     root[current_folder_name] = root[current_folder_name] || {};
-    //
-    //     return this.add_folders_to_structure(root[current_folder_name], folders.slice(1));
-    // };
-    //
-    // this.get_subfolder_structure = function () {
-    //     var structures = [];
-    //
-    //     for (var file_id in this.files_data["data"]) {
-    //         var parents = this.get_file_data(file_id)["parent_folders"];
-    //
-    //         if (!Dash.IsValidObject(parents)) {
-    //             continue;
-    //         }
-    //
-    //         structures.push(parents);
-    //     }
-    //
-    //     (function (self) {
-    //         self.subfolder_structure = structures.reduce(
-    //             function (root, folders) {
-    //                 self.add_folders_to_structure(root, folders);
-    //
-    //                 return root;
-    //             },
-    //             {}
-    //         );
-    //     })(this);
-    // };
     this.draw_subfolders = function () {
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
@@ -22218,40 +22137,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 list = row.GetCachedPreview();
             }
         }
-    };
-    this.get_init_files_data = function () {
-        Dash.Request(
-            this,
-            this.on_init_files_data,
-            this.api,
-            {
-                "f": "get_files",
-                "parent_obj_id": this.parent_obj_id
-            }
-        );
-    };
-    this.on_init_files_data = function (response) {
-        if (!Dash.ValidateResponse(response)) {
-            return;
-        }
-        if (!response["data"] || !response["order"]) {
-            console.log("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
-            return;
-        }
-        if (!this.initialized) {
-            (function (self, response) {
-                setTimeout(
-                    function () {
-                        self.on_init_files_data(response);
-                    },
-                    250
-                );
-            })(this, response);
-            return;
-        }
-        console.log("(File Explorer) Init files data:", response);
-        this.files_data = response;
-        this.redraw_rows();
     };
     this.add_list = function () {
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
@@ -22320,19 +22205,33 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         });
         this.html.append(this.list.html);
     };
-    this.on_row_selected = function (file_id, is_selected, row) {
-        if (!row) {
-            row = this.list.GetRow(file_id);
-        }
-        if (!is_selected) {
-            row.Collapse();
+}
+
+/**@member DashGuiFileExplorer*/
+function DashGuiFileExplorerData () {
+    this.delete_file = function (file_id) {
+        if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
         }
-        var preview = new Dash.Gui.FileExplorer.PreviewStrip(this, file_id);
-        row.Expand(preview.html);
+        this.show_subheader("File deletion in progress...");
+        this.disable_load_buttons();
+        Dash.Request(
+            this,
+            this.on_files_changed,
+            this.api,
+            {
+                "f": "delete_file",
+                "parent_obj_id": this.parent_obj_id,
+                "file_id": file_id
+            }
+        );
     };
-    this.get_file_data = function (file_id) {
-        return this.files_data["data"][file_id];
+    this.download_file = function (file_id) {
+        var file_data = this.get_file_data(file_id);
+        Dash.Gui.OpenFileURLDownloadDialog(
+            this.get_file_url(file_data),
+            this.get_filename(file_data)
+        );
     };
     this.set_file_data = function (key, value, file_id) {
         this.show_subheader("Updating list...");
@@ -22350,60 +22249,101 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             }
         );
     };
-    // this.validate_params = function () {
-    //     [this.params_get_all, this.params_upload, this.params_delete].forEach(function (params) {
-    //         if (!Dash.IsValidObject(params)) {
-    //             console.log("Error: Invalid 'params_' param, expecting a dict of server params:", params);
-    //
-    //             return false;
-    //         }
-    //
-    //         if (!(params["f"])) {
-    //             console.log("Error: Invalid 'params_' param, missing 'f' key:", params);
-    //
-    //             return false;
-    //         }
-    //     });
-    //
-    //     // This required param is dynamically added in this module
-    //     if ("file_id" in this.params_delete) {
-    //         delete this.params_delete["file_id"];
-    //     }
-    //
-    //     // These required params are dynamically added in this module
-    //     ["key", "value", "file_id"].forEach(
-    //         function (key) {
-    //             if (key in this.params_set_property) {
-    //                 delete this.params_set_property[key];
-    //             }
-    //         },
-    //         this
-    //     );
-    //
-    //     return true;
-    // };
-    this.GetDataForKey = function (file_id, key) {
-        if (key === "filename") {
-            return this.get_filename(this.get_file_data(file_id));
-        }
-        var value = this.get_file_data(file_id)[key];
-        if (key === "uploaded_on") {
-            if (Dash.IsServerIsoDate(value)) {
-                return Dash.ReadableDateTime(value, false);
+    this.get_init_files_data = function () {
+        Dash.Request(
+            this,
+            this.on_init_files_data,
+            this.api,
+            {
+                "f": "get_files",
+                "parent_obj_id": this.parent_obj_id
             }
-        }
-        else if (key === "uploaded_by") {
-            var user = Dash.User.Init["team"][value];
-            if (user && user["display_name"]) {
-                return user["display_name"];
-            }
-        }
-        return value;
+        );
     };
-    this.Update = function () {
+    this.on_init_files_data = function (response) {
+        if (!Dash.ValidateResponse(response)) {
+            return;
+        }
+        if (!response["data"] || !response["order"]) {
+            console.log("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
+            return;
+        }
+        if (!this.initialized) {
+            (function (self, response) {
+                setTimeout(
+                    function () {
+                        self.on_init_files_data(response);
+                    },
+                    250
+                );
+            })(this, response);
+            return;
+        }
+        console.log("(File Explorer) Init files data:", response);
+        this.files_data = response;
         this.redraw_rows();
     };
-    this.setup_styles();
+    this.on_file_uploaded = function (data_key, additional_data, response) {
+        if (!response || response["originalEvent"]) {
+            return;
+        }
+        this.on_files_changed(response);
+    };
+    this.on_files_changed = function (response) {
+        var error_context = "on_files_changed response (on upload/delete) was invalid.";
+        if (!response["all_files"]) {
+            console.log("Error:", error_context, "An 'all_files' key is required to update the list:", response);
+            return;
+        }
+        if (!response["all_files"]["data"] || !response["all_files"]["order"]) {
+            console.log("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
+            return;
+        }
+        if (!Dash.ValidateResponse(response)) {
+            return;
+        }
+        this.files_data = response["all_files"];
+        this.redraw_rows();
+        this.hide_subheader();
+        this.enable_load_buttons();
+    };
+    this.on_file_upload_started = function () {
+        this.show_subheader("File upload in progress...");
+        this.disable_load_buttons();
+    };
+}
+
+/**@member DashGuiFileExplorer*/
+function DashGuiFileExplorerSync () {
+    this.view_file = function (file_id) {
+        if (this.supports_desktop_client) {
+            if (this.check_livesync_connected()) {
+                this.open_file_in_desktop_file_system();
+            }
+            else {
+                // TODO: Remove "(coming soon)" and instead, mention how to enable it
+                var msg = "Opening this file in your computer's local file system requires LiveSync to be enabled " +
+                          "(coming soon).\n\nWould you like to open a new browser tab to view/download the file?";
+                if (!window.confirm(msg)) {
+                    return;
+                }
+                this.open_file_in_browser_tab(file_id);
+            }
+        }
+        else {
+            this.open_file_in_browser_tab(file_id);
+        }
+    };
+    this.check_livesync_connected = function () {
+        // TODO: Check if live sync is active/enabled
+        return false;
+    };
+    this.open_file_in_desktop_file_system = function () {
+        // TODO: Show the file in the user's computer's local file system
+    };
+    this.open_file_in_browser_tab = function (file_id) {
+        window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
+    };
 }
 
 function DashGuiFileExplorerContentPreview (preview_strip) {
@@ -26746,7 +26686,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
                 // When re-using a cached preview, need to refresh the connections
                 preview.rows.forEach(
                     function (sublist_row) {
-                        sublist_row.setup_connections();
+                        sublist_row.refresh_connections();
                     }
                 );
             }
@@ -27066,6 +27006,12 @@ function DashGuiListRow (list, arbitrary_id) {
             return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
         }
         return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
+    };
+    this.refresh_connections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.column_box.off("click");
+        this.setup_connections();
     };
     this.setup_connections = function () {
         (function (self) {

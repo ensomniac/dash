@@ -235,7 +235,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
                 // When re-using a cached preview, need to refresh the connections
                 preview.rows.forEach(
                     function (sublist_row) {
-                        sublist_row.setup_connections();
+                        sublist_row.refresh_connections();
                     }
                 );
             }
