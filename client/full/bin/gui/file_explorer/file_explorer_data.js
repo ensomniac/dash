@@ -6,7 +6,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        this.show_subheader("File deletion in progress...");
+        this.show_subheader("Deleting...");
         this.disable_load_buttons();
 
         Dash.Request(
@@ -31,7 +31,7 @@ function DashGuiFileExplorerData () {
     };
 
     this.set_file_data = function (key, value, file_id) {
-        this.show_subheader("Updating list...");
+        this.show_subheader("Updating...");
         this.disable_load_buttons();
 
         Dash.Request(
@@ -126,7 +126,16 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_file_upload_started = function () {
-        this.show_subheader("File upload in progress...");
+        this.show_subheader("Uploading...");
         this.disable_load_buttons();
+    };
+
+    this.on_sort_changed = function (selection) {
+        console.log("TEST on sort changed", selection);
+    };
+
+    this.on_folder_display_changed = function (selection) {
+        // TODO: also resolve combo rows display issue where it's not wide enough
+        console.log("TEST on folder display changed", selection);
     };
 }

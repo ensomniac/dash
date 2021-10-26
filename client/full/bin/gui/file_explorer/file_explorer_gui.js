@@ -22,8 +22,9 @@ function DashGuiFileExplorerGUI () {
         this.subheader.html.css({
             "opacity": 0.6,
             "position": "absolute",
-            "right": Dash.Size.Padding * 4,
-            "top": Dash.Size.Padding
+            "right": Dash.Size.Padding * 1.1,
+            "top": Dash.Size.Padding * 4,
+            "z-index": 10000
         });
 
         this.subheader.label.css({
@@ -32,6 +33,85 @@ function DashGuiFileExplorerGUI () {
 
         this.html.append(this.subheader.html);
     };
+
+    this.add_tool_row = function () {
+        this.tool_row = new Dash.Gui.ToolRow(this, null, null, this.color);
+
+        this.add_combo_to_tool_row(
+            "Sort By:",
+            [
+                {"id": "when_uploaded", "label_text": "When Uploaded"},
+                {"id": "alphabetical", "label_text": "Alphabetical"}
+            ],
+            this.on_sort_changed,
+            "Change Sorting Method"
+        );
+
+        this.add_combo_to_tool_row(
+            "Folders Display:",
+            [
+                {"id": "top", "label_text": "Top"},
+                {"id": "bottom", "label_text": "Bottom"}
+            ],
+            this.on_folder_display_changed,
+            "Change How Folders Are Displayed"
+        );
+
+        this.tool_row.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 4.25,
+            "top": Dash.Size.Padding,
+            "border-bottom": "none"
+        });
+
+        this.html.append(this.tool_row.html);
+    };
+
+    this.add_combo_to_tool_row = function (label_text, combo_options, callback, hover_hint) {
+        this.tool_row.AddLabel(label_text, null, null, null, false);
+
+        var combo = this.tool_row.AddCombo(combo_options, combo_options[0], callback);
+
+        combo.html.attr("title", hover_hint);
+
+        combo.html.css({
+            "margin-right": 0,
+            "margin-top": -Dash.Size.Padding * 0.151,
+            "border": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+
+        combo.label.css({
+            "margin-left": Dash.Size.Padding * 0.5
+        });
+    };
+
+    // this.add_sort_combo = function () {
+    //     var combo_options = [
+    //         {"id": "when_uploaded", "label_text": "When Uploaded"},
+    //         {"id": "alphabetical", "label_text": "Alphabetical"}
+    //     ];
+    //
+    //     var combo = new Dash.Gui.Combo (
+    //         "",
+    //         this.on_sort_changed,
+    //         this,
+    //         combo_options,
+    //         combo_options[0]["id"],
+    //         this.color,
+    //         {"style": "default"}
+    //     );
+    //
+    //     combo.html.css({
+    //         "position": "absolute",
+    //         "right": Dash.Size.Padding * 4,
+    //         "top": Dash.Size.Padding,
+    //         "height": Dash.Size.RowHeight
+    //     });
+    //
+    //     combo.html.attr("title", "Change Sorting Method");
+    //
+    //     this.html.append(combo.html);
+    // };
 
     this.add_upload_button = function () {
         this.upload_button = Dash.Gui.GetTopRightIconButton(this, this.on_file_uploaded, "upload_file");

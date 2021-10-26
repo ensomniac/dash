@@ -26,6 +26,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.rows = {};
     this.list = null;
     this.buttons = null;
+    this.tool_row = null;
     this.subheader = null;
     this.files_data = null;
     this.initialized = false;
@@ -60,6 +61,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
         this.get_init_files_data();
         this.add_header();
+        this.add_tool_row();
         this.add_upload_button();
 
         this.initialized = true;
@@ -75,6 +77,15 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         }
 
         if (text) {
+            if (text.includes(" ")) {
+                // Subheader should only be a single word
+                text = text.split(" ")[0];
+            }
+
+            if (!text.endsWith("...")) {
+                text += "...";
+            }
+
             this.subheader.SetText(text);
         }
     };

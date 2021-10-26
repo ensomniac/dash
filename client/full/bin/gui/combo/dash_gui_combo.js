@@ -35,6 +35,32 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
     DashGuiComboInterface.call(this);
 
+    this.initialize_style = function () {
+        // Toss a warning if this isn't a known style so we don't fail silently
+        this.styles = ["default", "row"];
+
+        if (!this.styles.includes(this.style)) {
+            console.log("Error: Unknown Dash Combo Style: " + this.style);
+
+            this.style = "default";
+        }
+
+        if (this.style === "row") {
+            this.color_set  = this.color.Button;
+
+            DashGuiComboStyleRow.call(this);
+        }
+
+        else {
+            this.color_set  = this.color.Button;
+
+            DashGuiComboStyleDefault.call(this);
+        }
+
+        this.setup_styles();
+        this.initialize_rows();
+    };
+
     this.hide_skirt = function () {
         if (!this.click_skirt) {
             return;
@@ -133,32 +159,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "height": Math.floor(window.innerHeight - panel.offset().top)
             });
         }
-    };
-
-    this.initialize_style = function () {
-        // Toss a warning if this isn't a known style so we don't fail silently
-        this.styles = ["default", "row"];
-
-        if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Combo Style: " + this.style);
-
-            this.style = "default";
-        }
-
-        if (this.style === "row") {
-            this.color_set  = this.color.Button;
-
-            DashGuiComboStyleRow.call(this);
-        }
-
-        else {
-            this.color_set  = this.color.Button;
-
-            DashGuiComboStyleDefault.call(this);
-        }
-
-        this.setup_styles();
-        this.initialize_rows();
     };
 
     this.initialize_rows = function () {

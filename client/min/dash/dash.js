@@ -21923,6 +21923,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.rows = {};
     this.list = null;
     this.buttons = null;
+    this.tool_row = null;
     this.subheader = null;
     this.files_data = null;
     this.initialized = false;
@@ -21954,6 +21955,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         };
         this.get_init_files_data();
         this.add_header();
+        this.add_tool_row();
         this.add_upload_button();
         this.initialized = true;
     };
@@ -21965,6 +21967,13 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this.subheader.html.show();
         }
         if (text) {
+            if (text.includes(" ")) {
+                // Subheader should only be a single word
+                text = text.split(" ")[0];
+            }
+            if (!text.endsWith("...")) {
+                text += "...";
+            }
             this.subheader.SetText(text);
         }
     };
@@ -22069,14 +22078,83 @@ function DashGuiFileExplorerGUI () {
         this.subheader.html.css({
             "opacity": 0.6,
             "position": "absolute",
-            "right": Dash.Size.Padding * 4,
-            "top": Dash.Size.Padding
+            "right": Dash.Size.Padding * 1.1,
+            "top": Dash.Size.Padding * 4,
+            "z-index": 10000
         });
         this.subheader.label.css({
             "font-family": "sans_serif_italic"
         });
         this.html.append(this.subheader.html);
     };
+    this.add_tool_row = function () {
+        this.tool_row = new Dash.Gui.ToolRow(this, null, null, this.color);
+        this.add_combo_to_tool_row(
+            "Sort By:",
+            [
+                {"id": "when_uploaded", "label_text": "When Uploaded"},
+                {"id": "alphabetical", "label_text": "Alphabetical"}
+            ],
+            this.on_sort_changed,
+            "Change Sorting Method"
+        );
+        this.add_combo_to_tool_row(
+            "Folders Display:",
+            [
+                {"id": "top", "label_text": "Top"},
+                {"id": "bottom", "label_text": "Bottom"}
+            ],
+            this.on_folder_display_changed,
+            "Change How Folders Are Displayed"
+        );
+        this.tool_row.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding * 4.25,
+            "top": Dash.Size.Padding,
+            "border-bottom": "none"
+        });
+        this.html.append(this.tool_row.html);
+    };
+    this.add_combo_to_tool_row = function (label_text, combo_options, callback, hover_hint) {
+        this.tool_row.AddLabel(label_text, null, null, null, false);
+        var combo = this.tool_row.AddCombo(combo_options, combo_options[0], callback);
+        combo.html.attr("title", hover_hint);
+        combo.html.css({
+            "margin-right": 0,
+            "margin-top": -Dash.Size.Padding * 0.151,
+            "border": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+        combo.label.css({
+            "margin-left": Dash.Size.Padding * 0.5
+        });
+    };
+    // this.add_sort_combo = function () {
+    //     var combo_options = [
+    //         {"id": "when_uploaded", "label_text": "When Uploaded"},
+    //         {"id": "alphabetical", "label_text": "Alphabetical"}
+    //     ];
+    //
+    //     var combo = new Dash.Gui.Combo (
+    //         "",
+    //         this.on_sort_changed,
+    //         this,
+    //         combo_options,
+    //         combo_options[0]["id"],
+    //         this.color,
+    //         {"style": "default"}
+    //     );
+    //
+    //     combo.html.css({
+    //         "position": "absolute",
+    //         "right": Dash.Size.Padding * 4,
+    //         "top": Dash.Size.Padding,
+    //         "height": Dash.Size.RowHeight
+    //     });
+    //
+    //     combo.html.attr("title", "Change Sorting Method");
+    //
+    //     this.html.append(combo.html);
+    // };
     this.add_upload_button = function () {
         this.upload_button = Dash.Gui.GetTopRightIconButton(this, this.on_file_uploaded, "upload_file");
         this.upload_button.SetFileUploader(
@@ -22213,7 +22291,7 @@ function DashGuiFileExplorerData () {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
         }
-        this.show_subheader("File deletion in progress...");
+        this.show_subheader("Deleting...");
         this.disable_load_buttons();
         Dash.Request(
             this,
@@ -22234,7 +22312,7 @@ function DashGuiFileExplorerData () {
         );
     };
     this.set_file_data = function (key, value, file_id) {
-        this.show_subheader("Updating list...");
+        this.show_subheader("Updating...");
         this.disable_load_buttons();
         Dash.Request(
             this,
@@ -22308,8 +22386,15 @@ function DashGuiFileExplorerData () {
         this.enable_load_buttons();
     };
     this.on_file_upload_started = function () {
-        this.show_subheader("File upload in progress...");
+        this.show_subheader("Uploading...");
         this.disable_load_buttons();
+    };
+    this.on_sort_changed = function (selection) {
+        console.log("TEST on sort changed", selection);
+    };
+    this.on_folder_display_changed = function (selection) {
+        // TODO: also resolve combo rows display issue where it's not wide enough
+        console.log("TEST on folder display changed", selection);
     };
 }
 
@@ -24442,6 +24527,24 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label_container = $("<div class='ComboLabel Combo'></div>");
     this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
     DashGuiComboInterface.call(this);
+    this.initialize_style = function () {
+        // Toss a warning if this isn't a known style so we don't fail silently
+        this.styles = ["default", "row"];
+        if (!this.styles.includes(this.style)) {
+            console.log("Error: Unknown Dash Combo Style: " + this.style);
+            this.style = "default";
+        }
+        if (this.style === "row") {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleRow.call(this);
+        }
+        else {
+            this.color_set  = this.color.Button;
+            DashGuiComboStyleDefault.call(this);
+        }
+        this.setup_styles();
+        this.initialize_rows();
+    };
     this.hide_skirt = function () {
         if (!this.click_skirt) {
             return;
@@ -24520,24 +24623,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 "height": Math.floor(window.innerHeight - panel.offset().top)
             });
         }
-    };
-    this.initialize_style = function () {
-        // Toss a warning if this isn't a known style so we don't fail silently
-        this.styles = ["default", "row"];
-        if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Combo Style: " + this.style);
-            this.style = "default";
-        }
-        if (this.style === "row") {
-            this.color_set  = this.color.Button;
-            DashGuiComboStyleRow.call(this);
-        }
-        else {
-            this.color_set  = this.color.Button;
-            DashGuiComboStyleDefault.call(this);
-        }
-        this.setup_styles();
-        this.initialize_rows();
     };
     this.initialize_rows = function () {
         var selected_obj = null;
