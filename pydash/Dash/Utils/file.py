@@ -13,6 +13,7 @@ from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write
 
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
+debug_log = []
 
 
 def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True):
@@ -173,22 +174,27 @@ def ensure_filename_key_is_unique(file_data, file_root, nested, is_image):
     else:
         key = "filename"
 
-    matches = 0
+    matches = []
     filename = file_data[key]
     parent_folders = file_data["parent_folders"]
 
     if nested:
         file_root = file_root.rstrip("/").rstrip(file_data["id"])
+        debug_log.append(f"file root: {file_root}")
 
         for file_id in os.listdir(file_root):
             other_file_root = os.path.join(file_root, file_id)
+            debug_log.append(f"\nother file root: {other_file_root}")
 
             for other_filename in os.listdir(other_file_root):
                 if not other_filename.endswith(".json"):
                     continue
 
-                if check_filename_key_match(filename, key, parent_folders, other_filename, other_file_root):
-                    matches += 1
+                tag_number = check_filename_key_match(filename, key, parent_folders, other_filename, other_file_root)
+
+                if tag_number is not None:
+                    debug_log.append(f"match added: {tag_number}")
+                    matches.append(tag_number)
 
                 break
     else:
@@ -196,22 +202,41 @@ def ensure_filename_key_is_unique(file_data, file_root, nested, is_image):
             if not other_filename.endswith(".json"):
                 continue
 
-            if check_filename_key_match(filename, key, parent_folders, other_filename, file_root):
-                matches += 1
+            tag_number = check_filename_key_match(filename, key, parent_folders, other_filename, file_root)
+
+            if tag_number is not None:
+                matches.append(tag_number)
 
     file_data[key] = update_filename_based_on_matches(filename, matches)
 
     return file_data
 
 
-def update_filename_based_on_matches(filename, matches=0):
+def update_filename_based_on_matches(filename, matches=[]):
     if not matches:
         return filename
+
+    matches.sort()
+
+    debug_log.append(f"matches: {matches}")
+
+    num = None
+
+    for n in range(0, 10000):
+        if n not in matches:
+            num = n
+
+            break
+
+    if num is None:
+        num = len(matches)
 
     # Using the default Mac convention here, may want to change this at some point. It doesn't
     # adhere to our typical naming conventions on the server, but this 'filename' is only for
     # client display purposes anyway, so it's not a big deal unless it isn't optimal for Windows.
-    tag = f"({matches + 1})"
+    tag = f"({num})"
+
+    debug_log.append(f"tag: {tag}")
 
     if "." in filename:
         split = filename.split(".")
@@ -223,19 +248,38 @@ def update_filename_based_on_matches(filename, matches=0):
 
 
 def check_filename_key_match(filename, key, parent_folders, other_filename, other_file_root):
+    tag_number = 0
     other_file_data = Read(os.path.join(other_file_root, other_filename))
     other_file_parents = other_file_data.get("parent_folders")
+    other_filename_value = other_file_data.get(key)
 
-    if other_file_data.get(key) != filename:
-        return False
+    if other_filename_value and other_filename_value.startswith("test") and other_filename_value.endswith(".txt"):
+        debug_log.append(f"filename: {filename}, key: {key}, parent_folders: {parent_folders}")
+        debug_log.append(f"(check match) other_filename: {other_filename}, other_filename_value: {other_filename_value}, other_file_parents: {other_file_parents}")
+
+    # other_filename_value: "test (1).txt"
+    if other_filename_value and " (" in other_filename_value:
+        split = other_filename_value.split(" (")
+
+        if other_filename_value.endswith(")"):
+            other_filename_value = split[0]
+            tag_number = int(split[-1].replace(")", "").strip())
+
+        elif ")." in other_filename_value:
+            sub_split = split[-1].split(").")
+            tag_number = int(sub_split[0].strip())
+            other_filename_value = f"{split[0]}.{sub_split[-1]}"
+
+    if other_filename_value != filename:
+        return None
 
     if parent_folders and parent_folders == other_file_parents:
-        return True
+        return tag_number
 
     if not parent_folders and not other_file_parents:
-        return True
+        return tag_number
 
-    return False
+    return None
 
 
 def convert_model_to_glb(source_model_file_ext, source_model_file_path):
