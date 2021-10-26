@@ -17,10 +17,10 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 
 # ------------------------------------------------- FILE ----------------------------------------------------
-def UploadFile(dash_context, user, file_root, file_bytes, file_name, nested=False):
+def UploadFile(dash_context, user, file_root, file_bytes, file_name, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True):
     from .file import Upload
 
-    return Upload(dash_context, user, file_root, file_bytes, file_name, nested)
+    return Upload(dash_context, user, file_root, file_bytes, file_name, nested_on_server, parent_folders, enforce_unique_filename_key)
 
 
 def GetFileURL(dash_context, server_file_path):
