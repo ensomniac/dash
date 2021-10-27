@@ -104,12 +104,6 @@ function DashGuiComboInterface () {
         this.rows.css({"width": width});
     };
 
-    this.SetModeOff = function () {
-        var cmd_options = {"command": "TurnModeOff", "mindtwin_id": "markiplier", "mode": ""};
-
-        this.link.tab_view.send_trigger("json_command", cmd_options);
-    };
-
     this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (!this.load_dots) {
             this.setup_load_dots();

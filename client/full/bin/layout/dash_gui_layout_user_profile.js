@@ -229,27 +229,8 @@ function DashGuiLayoutUserProfile (user_data, options) {
         this.update_personal_information(this.last_name);
     };
 
-    this.update_hidden_mindtwins = function () {
-        this.update_personal_information(this.hidden_mindtwins_csv);
-    };
-
     this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
-        // console.log(response);
-
-        // var api = "https://altona.io/Users";
-        // var server_data = {};
-        // server_data["f"] = "update_personal_information";
-        // server_data["token"] = localStorage.getItem("login_token");
-        // server_data["first_name"] = this.first_name.Text();
-        // server_data["last_name"] = this.last_name.Text();
-        // server_data["as_user"] = this.user_data["email"];
-
-        // if (this.hidden_mindtwins_csv) {
-        //     server_data["hidden_mindtwins_csv"] = this.hidden_mindtwins_csv.Text();
-        // };
-
-        // button.Request(api, server_data, this.on_info_saved, this);
     };
 
     this.on_info_saved = function (response, input_row) {

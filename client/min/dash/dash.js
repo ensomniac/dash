@@ -25021,10 +25021,6 @@ function DashGuiComboInterface () {
         this.html.css({"width": width});
         this.rows.css({"width": width});
     };
-    this.SetModeOff = function () {
-        var cmd_options = {"command": "TurnModeOff", "mindtwin_id": "markiplier", "mode": ""};
-        this.link.tab_view.send_trigger("json_command", cmd_options);
-    };
     this.Request = function (api, server_data, on_complete_callback, bind_to) {
         if (!this.load_dots) {
             this.setup_load_dots();
@@ -25685,23 +25681,8 @@ function DashGuiLayoutUserProfile (user_data, options) {
     this.update_last_name = function () {
         this.update_personal_information(this.last_name);
     };
-    this.update_hidden_mindtwins = function () {
-        this.update_personal_information(this.hidden_mindtwins_csv);
-    };
     this.update_personal_information = function (button) {
         console.log("this.update_personal_information");
-        // console.log(response);
-        // var api = "https://altona.io/Users";
-        // var server_data = {};
-        // server_data["f"] = "update_personal_information";
-        // server_data["token"] = localStorage.getItem("login_token");
-        // server_data["first_name"] = this.first_name.Text();
-        // server_data["last_name"] = this.last_name.Text();
-        // server_data["as_user"] = this.user_data["email"];
-        // if (this.hidden_mindtwins_csv) {
-        //     server_data["hidden_mindtwins_csv"] = this.hidden_mindtwins_csv.Text();
-        // };
-        // button.Request(api, server_data, this.on_info_saved, this);
     };
     this.on_info_saved = function (response, input_row) {
         if (response["error"]) {
