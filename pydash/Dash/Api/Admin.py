@@ -40,8 +40,14 @@ class ApiAdmin:
         for item in self.get_all_users()["users"]:
             users["data"][item["email"]] = item
 
-            # users_sort.append([item["created_on"], item["email"]])
-            users_sort.append([f"{item['first_name']} {item['last_name']}", item["email"]])
+            first_name = item.get("first_name") or item["email"].split("@")[0]
+            last_name = item.get("last_name")
+
+            full_name = first_name
+            if first_name and last_name:
+                full_name = first_name + " " + last_name
+
+            users_sort.append([full_name, item["email"]])
 
         users_sort.sort()
 
