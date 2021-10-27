@@ -29,8 +29,11 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.tool_row = null;
     this.subheader = null;
     this.files_data = null;
+    this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
+    this.original_order = null;
+    this.display_folders_first = true;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.border_color = this.color.BackgroundTrue || this.color.Background;
 
@@ -45,7 +48,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "icon_name": "link",
                 "callback": this.view_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
-                "hover_preview": this.supports_desktop_client ? "View locally in your computer's file explorer (requires LiveSync)" : "View file in browser"
+                "hover_preview": this.supports_desktop_client ?
+                                 "View locally in your computer's file system (requires LiveSync)" :
+                                 "View file in new browser tab"
             },
             "delete": {
                 "icon_name": "trash",
@@ -145,7 +150,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             this.add_list();
         }
 
-        this.draw_subfolders();
+        if (this.display_folders_first) {
+            this.draw_subfolders();
+        }
 
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
@@ -156,6 +163,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             },
             this
         );
+
+        if (!this.display_folders_first) {
+            this.draw_subfolders();
+        }
     };
 
     this.get_file_data = function (file_id) {

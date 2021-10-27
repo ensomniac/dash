@@ -60,6 +60,13 @@ function DashGuiFileExplorerData () {
         );
     };
 
+    this.update_cached_data = function (data) {
+        this.files_data = data;
+        this.original_order = data["order"];
+
+        this.get_order();
+    };
+
     this.on_init_files_data = function (response) {
         if (!Dash.ValidateResponse(response)) {
             return;
@@ -86,17 +93,8 @@ function DashGuiFileExplorerData () {
 
         console.log("(File Explorer) Init files data:", response);
 
-        this.files_data = response;
-
+        this.update_cached_data(response);
         this.redraw_rows();
-    };
-
-    this.on_file_uploaded = function (data_key, additional_data, response) {
-        if (!response || response["originalEvent"]) {
-            return;
-        }
-
-        this.on_files_changed(response);
     };
 
     this.on_files_changed = function (response) {
@@ -118,8 +116,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        this.files_data = response["all_files"];
-
+        this.update_cached_data(response["all_files"]);
         this.redraw_rows();
         this.hide_subheader();
         this.enable_load_buttons();
@@ -130,13 +127,85 @@ function DashGuiFileExplorerData () {
         this.disable_load_buttons();
     };
 
-    // TODO
-    this.on_sort_changed = function (selection) {
-        console.log("TEST on sort changed", selection);
+    this.on_file_uploaded = function (data_key, additional_data, response) {
+        if (!response || response["originalEvent"]) {
+            return;
+        }
+
+        this.on_files_changed(response);
     };
 
-    // TODO
     this.on_folder_display_changed = function (selection) {
-        console.log("TEST on folder display changed", selection);
+        if (selection["id"] === "top") {
+            if (this.display_folders_first) {
+                return;  // No change
+            }
+
+            this.display_folders_first = true;
+        }
+
+        else if (selection["id"] === "bottom") {
+            if (!this.display_folders_first) {
+                return;  // No change
+            }
+
+            this.display_folders_first = false;
+        }
+
+        else {
+            return;
+        }
+
+        this.redraw_rows();
+    };
+
+    this.on_sort_changed = function (selection) {
+        if (selection["id"] === this.sort_by_key) {
+            return;  // No change
+        }
+
+        this.sort_by_key = selection["id"];
+
+        this.get_order();
+        this.redraw_rows();
+    };
+
+    this.get_order = function () {
+        if (this.sort_by_key === "most_recent") {
+            this.files_data["order"] = this.original_order;
+        }
+
+        else if (this.sort_by_key === "alphabetical") {
+            this.set_alphabetical_order();
+        }
+    };
+
+    this.set_alphabetical_order = function () {
+        var order = [];
+        var items = [];
+
+        for (var file_id in this.files_data["data"]) {
+            items.push([file_id, this.get_filename(this.files_data["data"][file_id])]);
+        }
+
+        items.sort(function (item, next_item) {
+            if (item[1] < next_item[1]) {
+                return -1;
+            }
+
+            if (item[1] > next_item[1]) {
+                return 1;
+            }
+
+            return 0;
+        });
+
+        items.forEach(
+            function (item) {
+                order.push(item[0]);
+            }
+        );
+
+        this.files_data["order"] = order;
     };
 }

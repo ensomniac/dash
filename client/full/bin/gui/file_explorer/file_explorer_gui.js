@@ -40,7 +40,7 @@ function DashGuiFileExplorerGUI () {
         this.add_combo_to_tool_row(
             "Sort By:",
             [
-                {"id": "when_uploaded", "label_text": "When Uploaded"},
+                {"id": "most_recent", "label_text": "Most Recent"},
                 {"id": "alphabetical", "label_text": "Alphabetical"}
             ],
             this.on_sort_changed
