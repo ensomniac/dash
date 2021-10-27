@@ -12,7 +12,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
 
-    this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
     this.dropdown_icon = null;
@@ -31,7 +30,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
-    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
+
+    this.random_id = "combo_" + Dash.RandomID() + "_" +
+                     (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
+                     "_" + this.option_list[0]["id"];
 
     DashGuiComboInterface.call(this);
 
@@ -222,13 +224,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "width": "auto", // This is important so it can auto-size
         });
 
-        // TODO: Make this.rows grab focus while active
+        // TODO: Make this.rows grab focus while active?
 
         this.rows.empty();
         this.row_buttons = [];
 
         for (var i in this.option_list) {
-            // var content = this.option_list[i];
             var button = new DashGuiComboRow(this, this.option_list[i]);
 
             this.rows.append(button.html);
@@ -284,17 +285,15 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.initialized = true;
     };
 
+    // Prior to showing, set the width of rows (this is all important so it can auto-size)
     this.pre_show_size_set = function () {
-        // Prior to showing, set the width of rows
         this.setup_label_list();
 
-        this.list_width = this.rows.width() + Dash.Size.Padding;
-        var label_width = 0;
         var i;
-        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+        var label_width = 0;
 
         this.rows.css({
-            "width": html_width > this.rows.width() ? html_width : this.list_width
+            "width": "fit-content"
         });
 
         for (i in this.row_buttons) {
@@ -308,7 +307,19 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         for (i in this.row_buttons) {
-            this.row_buttons[i].SetWidthToFit(label_width); // This is important so it can auto-size
+            this.row_buttons[i].SetWidthToFit(label_width);
+        }
+
+        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+
+        if (html_width > this.rows.width()) {
+            this.rows.css({
+                "width": html_width
+            });
+
+            for (i in this.row_buttons) {
+                this.row_buttons[i].SetWidthToFit(html_width);
+            }
         }
     };
 

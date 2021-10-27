@@ -1,6 +1,10 @@
 /**@member DashGuiCombo*/
 
 function DashGuiComboInterface () {
+    this.SetHoverHint = function (hint) {
+        this.label_container.attr("title", hint);
+    };
+
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result

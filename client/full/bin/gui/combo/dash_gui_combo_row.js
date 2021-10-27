@@ -27,11 +27,10 @@ function DashGuiComboRow (combo, option) {
         this.label.css({
             "text-align": this.combo.text_alignment,
             "height": this.height,
-            "line-height": (this.height) + "px",
+            "line-height": this.height + "px",
             "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "border-bottom": "1px solid rgba(255, 255, 255, 0.05)",
+            // "margin-right": Dash.Size.Padding * 0.1,
+            "border-bottom": "1px solid rgba(255, 255, 255, 0.1)",
             "color": this.color_set.Text.Base,
         });
     };
@@ -49,7 +48,7 @@ function DashGuiComboRow (combo, option) {
         this.label.css({
             "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.6,
         });
     };
 

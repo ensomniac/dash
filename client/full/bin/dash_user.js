@@ -14,7 +14,6 @@ function DashUser () {
         var user_json = Dash.Local.Get("user_json");
 
         if (token && email && user_json) {
-
             var params = {
                 "f": "validate",
                 "token": token,
@@ -35,24 +34,25 @@ function DashUser () {
     };
 
     this.SetUserAuthentication = function (email, server_response) {
-
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
+
             Dash.Local.Set("email", email);
             Dash.Local.Set("token", server_response["token"]);
             Dash.Local.Set("user_json", JSON.stringify(server_response["user"]));
         }
+
         else {
             this.Data = null;
             this.Init = null;
+
             Dash.Local.Set("email", "");
             Dash.Local.Set("token", "");
             Dash.Local.Set("user_json", "");
         }
 
         this.build_init_team_combo();
-
     };
 
     this.GetImageByEmail = function (user_email) {
@@ -93,9 +93,12 @@ function DashUser () {
 
         for (var i in this.Init["team_sort"]) {
             var email = this.Init["team_sort"][i];
-            this.Init["team_combo"].push(this.Init["team"][email]);
-        }
 
+            this.Init["team_combo"].push({
+                ...Dash.GetDeepCopy(this.Init["team"][email]),  // Deep copy required here
+                "label_text": this.Init["team"][email]["display_name"]  // Added for cohesiveness
+            });
+        }
     };
 
     this.on_auth_response = function (response) {
@@ -106,20 +109,16 @@ function DashUser () {
             this.SetUserAuthentication(response["user"]["email"], response);
             this.__auth_authenticated_cb();
         }
-        else {
 
-            console.log("** The user is no longer authenticated **");
-            console.log(response);
+        else {
+            console.log("** The user is no longer authenticated **\n", response);
 
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
-
         }
-
     };
 
     this.Logout = function () {
-
         if (!window.confirm("Log out?")) {
             return;
         }
@@ -129,7 +128,5 @@ function DashUser () {
         Dash.Local.Set("user_json", "");
 
         location.reload();
-
     };
-
 }

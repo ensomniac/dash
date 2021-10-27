@@ -193,7 +193,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             var mention = this.callback_mentions[i];
 
             for (var x in this.at_combo_options) {
-                var name = this.message_input.FormatMentionName(this.at_combo_options[x]["label_text"]);
+                var name = this.at_combo_options[x]["label_text"];
 
                 if (name === mention) {
                     ids.push(this.at_combo_options[x]["id"]);
@@ -211,48 +211,25 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             return text;
         }
 
-        var new_text = "";
-        var text_split = [...text];
-        var bold_open = false;
-
-        for (var i in text_split) {
-            i = parseInt(i);
-            var char = text_split[i];
-
-            if (char === "@" && text_split[i + 1] !== " ") {
-                var mention = "";
-
-                for (var x = i + 1; x < text_split.length; x++) {
-                    if (text_split[x] === " ") {
-                        break;
-                    }
-
-                    mention += text_split[x];
+        this.valid_mentions.forEach(
+            function (label_text) {
+                if (!text.includes(label_text)) {
+                    return;
                 }
 
-                if (this.valid_mentions.includes(mention)) {
-                    char = "<b style='color: " + this.color.AccentGood + "'>@";
-                    bold_open = true;
+                text = text.replaceAll(
+                    "@" + label_text,
+                    "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
+                );
 
-                    if (track && !this.callback_mentions.includes(mention)) {
-                        this.callback_mentions.push(mention);
-                    }
+                if (track && !this.callback_mentions.includes(label_text)) {
+                    this.callback_mentions.push(label_text);
                 }
-            }
+            },
+            this
+        );
 
-            else if (bold_open && char === " ") {
-                char = "</b> ";
-                bold_open = false;
-            }
-
-            new_text += char;
-        }
-
-        if (bold_open) {
-            new_text += "</b>";
-        }
-
-        return new_text;
+        return text;
     };
 
     this.set_valid_mentions = function () {
@@ -370,8 +347,29 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
 
     this.add_message = function () {
+        var text = this.message_input.Text();
+
+        if (text.endsWith("@")) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.add_message();
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        if (this.message_input.combo_enter_key_event_fired) {
+            this.message_input.combo_enter_key_event_fired = false;
+
+            return;
+        }
+
         this.AddMessage(
-            this.message_input.Text(),
+            text,
             null,
             null,
             false,

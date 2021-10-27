@@ -8,9 +8,9 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.input = null;
     this.pen_icon = null;
     this.at_button = null;
-    this.combo_skirt = null;
     this.submit_button = null;
     this.dark_mode = this.chat_box.dark_mode;
+    this.combo_enter_key_event_fired = false;
     this.secondary_css_color = this.chat_box.secondary_css_color;
 
     this.setup_styles = function () {
@@ -46,10 +46,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.input.Focus();
     };
 
-    this.FormatMentionName = function (name) {
-        return name.split(" ").join("");
-    };
-
     this.add_input = function () {
         this.input = new Dash.Gui.Input("Leave a note...", this.color);
 
@@ -60,7 +56,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         });
 
         this.input.input.css({
-            // "flex-grow": 2,
             "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element and it was bleeding outside of its html container
         });
 
@@ -90,10 +85,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         for (var i in this.at_combo_options) {
             var label_text = this.at_combo_options[i]["label_text"];
 
-            if (label_text.includes(" ")) {
-                this.at_combo_options[i]["label_text"] = this.FormatMentionName(label_text);
-            }
-
             if (labels.includes(label_text)) {
                 console.log("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
 
@@ -122,6 +113,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     };
 
     this.on_combo_changed = function (selected_combo) {
+        this.combo_enter_key_event_fired = true;
+
         var new_text = "";
         var old_text = this.Text();
 

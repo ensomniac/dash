@@ -130,12 +130,13 @@ function DashGuiFileExplorerData () {
         this.disable_load_buttons();
     };
 
+    // TODO
     this.on_sort_changed = function (selection) {
         console.log("TEST on sort changed", selection);
     };
 
+    // TODO
     this.on_folder_display_changed = function (selection) {
-        // TODO: also resolve combo rows display issue where it's not wide enough
         console.log("TEST on folder display changed", selection);
     };
 }

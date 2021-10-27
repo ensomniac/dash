@@ -18114,7 +18114,10 @@ function DashUser () {
         }
         for (var i in this.Init["team_sort"]) {
             var email = this.Init["team_sort"][i];
-            this.Init["team_combo"].push(this.Init["team"][email]);
+            this.Init["team_combo"].push({
+                ...Dash.GetDeepCopy(this.Init["team"][email]),  // Deep copy required here
+                "label_text": this.Init["team"][email]["display_name"]  // Added for cohesiveness
+            });
         }
     };
     this.on_auth_response = function (response) {
@@ -18124,8 +18127,7 @@ function DashUser () {
             this.__auth_authenticated_cb();
         }
         else {
-            console.log("** The user is no longer authenticated **");
-            console.log(response);
+            console.log("** The user is no longer authenticated **\n", response);
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
         }
@@ -19821,11 +19823,30 @@ function DashGui() {
     };
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
     this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
-        // TODO: This should probably become its own style at some point
-        var color = Dash.Color.Dark;
+        // TODO: This should probably become its own style at some point (will require it to first be visually improved)
         var tooltip = $("<div></div>");
-        var padding = Dash.Size.Padding * 0.5;
         html.append(tooltip);
+        this.set_tooltip_css(tooltip, additional_css, monospaced);
+        if (text) {
+            tooltip.text(text);
+        }
+        tooltip.hide();
+        (function (self, html, additional_css, override_element, delay_ms, tooltip) {
+            var timer;
+            html.hover(
+                function () {
+                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms);
+                },
+                function () {
+                    self.tooltip_on_hover_out(tooltip, override_element, timer);
+                }
+            );
+        })(this, html, additional_css, override_element, delay_ms, tooltip);
+        return tooltip;
+    };
+    this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
+        var color = Dash.Color.Dark;
+        var padding = Dash.Size.Padding * 0.5;
         tooltip.css({
             "padding": padding,
             "color": color.Text,
@@ -19854,59 +19875,50 @@ function DashGui() {
                 "font-size": "90%"
             });
         }
-        if (text) {
-            tooltip.text(text);
-        }
-        tooltip.hide();
-        var timer;
-        (function (self, html, additional_css, override_element) {
-            html.hover(
-                function () {
-                    if (override_element) {
-                        // Override element is intended to NOT show the tooltip under the below defined
-                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
-                        if (override_element instanceof DashGuiListRow) {
-                            if (override_element.IsExpanded()) {
-                                return;
-                            }
-                        }
-                    }
-                    timer = setTimeout(
-                        function () {
-                            var top = html.offset()["top"];
-                            var left = html.offset()["left"];
-                            if (additional_css && additional_css["top"]) {
-                                top += parseInt(additional_css["top"]);
-                            }
-                            if (additional_css && additional_css["left"]) {
-                                left += parseInt(additional_css["left"]);
-                            }
-                            tooltip.css({
-                                ...additional_css,
-                                "top": top,
-                                "left": left
-                            });
-                            tooltip.show();
-                        },
-                        delay_ms
-                    );
-                },
-                function () {
-                    if (override_element && !tooltip.is(":visible")) {
-                        // Override element is intended to NOT show the tooltip under the below defined
-                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
-                        if (override_element instanceof DashGuiListRow) {
-                            if (override_element.IsExpanded()) {
-                                return;
-                            }
-                        }
-                    }
-                    clearTimeout(timer);
-                    tooltip.hide();
-                }
-            );
-        })(this, html, additional_css, override_element);
         return tooltip;
+    };
+    this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms) {
+        if (override_element) {
+            // Override element is intended to NOT show the tooltip under the below defined
+            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+            if (override_element instanceof DashGuiListRow) {
+                if (override_element.IsExpanded()) {
+                    return;
+                }
+            }
+        }
+        return setTimeout(
+            function () {
+                var top = html.offset()["top"];
+                var left = html.offset()["left"];
+                if (additional_css && additional_css["top"]) {
+                    top = parseInt(additional_css["top"]);
+                }
+                if (additional_css && additional_css["left"]) {
+                    left = parseInt(additional_css["left"]);
+                }
+                tooltip.css({
+                    ...additional_css,
+                    "top": top,
+                    "left": left
+                });
+                tooltip.show();
+            },
+            delay_ms
+        );
+    };
+    this.tooltip_on_hover_out = function (tooltip, override_element, timer) {
+        if (override_element && !tooltip.is(":visible")) {
+            // Override element is intended to NOT show the tooltip under the below defined
+            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+            if (override_element instanceof DashGuiListRow) {
+                if (override_element.IsExpanded()) {
+                    return;
+                }
+            }
+        }
+        clearTimeout(timer);
+        tooltip.hide();
     };
 }
 
@@ -22095,8 +22107,7 @@ function DashGuiFileExplorerGUI () {
                 {"id": "when_uploaded", "label_text": "When Uploaded"},
                 {"id": "alphabetical", "label_text": "Alphabetical"}
             ],
-            this.on_sort_changed,
-            "Change Sorting Method"
+            this.on_sort_changed
         );
         this.add_combo_to_tool_row(
             "Folders Display:",
@@ -22104,8 +22115,7 @@ function DashGuiFileExplorerGUI () {
                 {"id": "top", "label_text": "Top"},
                 {"id": "bottom", "label_text": "Bottom"}
             ],
-            this.on_folder_display_changed,
-            "Change How Folders Are Displayed"
+            this.on_folder_display_changed
         );
         this.tool_row.html.css({
             "position": "absolute",
@@ -22115,10 +22125,9 @@ function DashGuiFileExplorerGUI () {
         });
         this.html.append(this.tool_row.html);
     };
-    this.add_combo_to_tool_row = function (label_text, combo_options, callback, hover_hint) {
+    this.add_combo_to_tool_row = function (label_text, combo_options, callback) {
         this.tool_row.AddLabel(label_text, null, null, null, false);
         var combo = this.tool_row.AddCombo(combo_options, combo_options[0], callback);
-        combo.html.attr("title", hover_hint);
         combo.html.css({
             "margin-right": 0,
             "margin-top": -Dash.Size.Padding * 0.151,
@@ -22128,33 +22137,6 @@ function DashGuiFileExplorerGUI () {
             "margin-left": Dash.Size.Padding * 0.5
         });
     };
-    // this.add_sort_combo = function () {
-    //     var combo_options = [
-    //         {"id": "when_uploaded", "label_text": "When Uploaded"},
-    //         {"id": "alphabetical", "label_text": "Alphabetical"}
-    //     ];
-    //
-    //     var combo = new Dash.Gui.Combo (
-    //         "",
-    //         this.on_sort_changed,
-    //         this,
-    //         combo_options,
-    //         combo_options[0]["id"],
-    //         this.color,
-    //         {"style": "default"}
-    //     );
-    //
-    //     combo.html.css({
-    //         "position": "absolute",
-    //         "right": Dash.Size.Padding * 4,
-    //         "top": Dash.Size.Padding,
-    //         "height": Dash.Size.RowHeight
-    //     });
-    //
-    //     combo.html.attr("title", "Change Sorting Method");
-    //
-    //     this.html.append(combo.html);
-    // };
     this.add_upload_button = function () {
         this.upload_button = Dash.Gui.GetTopRightIconButton(this, this.on_file_uploaded, "upload_file");
         this.upload_button.SetFileUploader(
@@ -22389,11 +22371,12 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Uploading...");
         this.disable_load_buttons();
     };
+    // TODO
     this.on_sort_changed = function (selection) {
         console.log("TEST on sort changed", selection);
     };
+    // TODO
     this.on_folder_display_changed = function (selection) {
-        // TODO: also resolve combo rows display issue where it's not wide enough
         console.log("TEST on folder display changed", selection);
     };
 }
@@ -23518,7 +23501,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         for (var i in this.callback_mentions) {
             var mention = this.callback_mentions[i];
             for (var x in this.at_combo_options) {
-                var name = this.message_input.FormatMentionName(this.at_combo_options[x]["label_text"]);
+                var name = this.at_combo_options[x]["label_text"];
                 if (name === mention) {
                     ids.push(this.at_combo_options[x]["id"]);
                     break;
@@ -23531,38 +23514,22 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         if (!text.includes("@")) {
             return text;
         }
-        var new_text = "";
-        var text_split = [...text];
-        var bold_open = false;
-        for (var i in text_split) {
-            i = parseInt(i);
-            var char = text_split[i];
-            if (char === "@" && text_split[i + 1] !== " ") {
-                var mention = "";
-                for (var x = i + 1; x < text_split.length; x++) {
-                    if (text_split[x] === " ") {
-                        break;
-                    }
-                    mention += text_split[x];
+        this.valid_mentions.forEach(
+            function (label_text) {
+                if (!text.includes(label_text)) {
+                    return;
                 }
-                if (this.valid_mentions.includes(mention)) {
-                    char = "<b style='color: " + this.color.AccentGood + "'>@";
-                    bold_open = true;
-                    if (track && !this.callback_mentions.includes(mention)) {
-                        this.callback_mentions.push(mention);
-                    }
+                text = text.replaceAll(
+                    "@" + label_text,
+                    "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
+                );
+                if (track && !this.callback_mentions.includes(label_text)) {
+                    this.callback_mentions.push(label_text);
                 }
-            }
-            else if (bold_open && char === " ") {
-                char = "</b> ";
-                bold_open = false;
-            }
-            new_text += char;
-        }
-        if (bold_open) {
-            new_text += "</b>";
-        }
-        return new_text;
+            },
+            this
+        );
+        return text;
     };
     this.set_valid_mentions = function () {
         if (!this.at_combo_options) {
@@ -23654,8 +23621,24 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.del_msg_callback(message);
     };
     this.add_message = function () {
+        var text = this.message_input.Text();
+        if (text.endsWith("@")) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.add_message();
+                    },
+                    100
+                );
+            })(this);
+            return;
+        }
+        if (this.message_input.combo_enter_key_event_fired) {
+            this.message_input.combo_enter_key_event_fired = false;
+            return;
+        }
         this.AddMessage(
-            this.message_input.Text(),
+            text,
             null,
             null,
             false,
@@ -23689,9 +23672,9 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.input = null;
     this.pen_icon = null;
     this.at_button = null;
-    this.combo_skirt = null;
     this.submit_button = null;
     this.dark_mode = this.chat_box.dark_mode;
+    this.combo_enter_key_event_fired = false;
     this.secondary_css_color = this.chat_box.secondary_css_color;
     this.setup_styles = function () {
         this.html = Dash.Gui.GetHTMLContext(
@@ -23720,9 +23703,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.Focus = function () {
         this.input.Focus();
     };
-    this.FormatMentionName = function (name) {
-        return name.split(" ").join("");
-    };
     this.add_input = function () {
         this.input = new Dash.Gui.Input("Leave a note...", this.color);
         this.input.html.css({
@@ -23731,7 +23711,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "background": "none"
         });
         this.input.input.css({
-            // "flex-grow": 2,
             "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element and it was bleeding outside of its html container
         });
         this.input.DisableBlurSubmit();
@@ -23754,9 +23733,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         var labels = [];
         for (var i in this.at_combo_options) {
             var label_text = this.at_combo_options[i]["label_text"];
-            if (label_text.includes(" ")) {
-                this.at_combo_options[i]["label_text"] = this.FormatMentionName(label_text);
-            }
             if (labels.includes(label_text)) {
                 console.log("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
                 return;
@@ -23778,6 +23754,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.html.append(this.at_button.html);
     };
     this.on_combo_changed = function (selected_combo) {
+        this.combo_enter_key_event_fired = true;
         var new_text = "";
         var old_text = this.Text();
         if (old_text.endsWith("@")) {
@@ -24506,7 +24483,6 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.style              = this.options["style"] || "default";
     this.additional_data    = this.options["additional_data"] || {};
     this.bool               = bool;
-    this.list_width = -1;
     this.click_skirt = null;
     this.searchable_min = 20;
     this.dropdown_icon = null;
@@ -24525,7 +24501,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
-    this.random_id = "combo_" + Dash.RandomID() + "_" + this.option_list[0]["label_text"] + "_" + this.option_list[0]["id"];
+    this.random_id = "combo_" + Dash.RandomID() + "_" +
+                     (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
+                     "_" + this.option_list[0]["id"];
     DashGuiComboInterface.call(this);
     this.initialize_style = function () {
         // Toss a warning if this isn't a known style so we don't fail silently
@@ -24673,11 +24651,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "top": 0,
             "width": "auto", // This is important so it can auto-size
         });
-        // TODO: Make this.rows grab focus while active
+        // TODO: Make this.rows grab focus while active?
         this.rows.empty();
         this.row_buttons = [];
         for (var i in this.option_list) {
-            // var content = this.option_list[i];
             var button = new DashGuiComboRow(this, this.option_list[i]);
             this.rows.append(button.html);
             this.row_buttons.push(button);
@@ -24718,15 +24695,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
         this.initialized = true;
     };
+    // Prior to showing, set the width of rows (this is all important so it can auto-size)
     this.pre_show_size_set = function () {
-        // Prior to showing, set the width of rows
         this.setup_label_list();
-        this.list_width = this.rows.width() + Dash.Size.Padding;
-        var label_width = 0;
         var i;
-        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+        var label_width = 0;
         this.rows.css({
-            "width": html_width > this.rows.width() ? html_width : this.list_width
+            "width": "fit-content"
         });
         for (i in this.row_buttons) {
             var scroll_width = this.row_buttons[i].html[0]["scrollWidth"];
@@ -24736,7 +24711,16 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             label_width = scroll_width;
         }
         for (i in this.row_buttons) {
-            this.row_buttons[i].SetWidthToFit(label_width); // This is important so it can auto-size
+            this.row_buttons[i].SetWidthToFit(label_width);
+        }
+        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+        if (html_width > this.rows.width()) {
+            this.rows.css({
+                "width": html_width
+            });
+            for (i in this.row_buttons) {
+                this.row_buttons[i].SetWidthToFit(html_width);
+            }
         }
     };
     this.determine_gravity = function (end_height) {
@@ -24961,6 +24945,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
 /**@member DashGuiCombo*/
 function DashGuiComboInterface () {
+    this.SetHoverHint = function (hint) {
+        this.label_container.attr("title", hint);
+    };
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result
@@ -25111,11 +25098,10 @@ function DashGuiComboRow (combo, option) {
         this.label.css({
             "text-align": this.combo.text_alignment,
             "height": this.height,
-            "line-height": (this.height) + "px",
+            "line-height": this.height + "px",
             "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "border-bottom": "1px solid rgba(255, 255, 255, 0.05)",
+            // "margin-right": Dash.Size.Padding * 0.1,
+            "border-bottom": "1px solid rgba(255, 255, 255, 0.1)",
             "color": this.color_set.Text.Base,
         });
     };
@@ -25130,7 +25116,7 @@ function DashGuiComboRow (combo, option) {
         this.label.css({
             "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.6,
         });
     };
     // Prior to showing, set the width of rows
@@ -25242,7 +25228,7 @@ function DashGuiComboSearch () {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            "width": this.list_width,
+            "width": this.rows.width(),
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);

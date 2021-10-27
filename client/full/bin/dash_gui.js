@@ -241,13 +241,39 @@ function DashGui() {
 
     // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
     this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
-        // TODO: This should probably become its own style at some point
+        // TODO: This should probably become its own style at some point (will require it to first be visually improved)
 
-        var color = Dash.Color.Dark;
         var tooltip = $("<div></div>");
-        var padding = Dash.Size.Padding * 0.5;
 
         html.append(tooltip);
+
+        this.set_tooltip_css(tooltip, additional_css, monospaced);
+
+        if (text) {
+            tooltip.text(text);
+        }
+
+        tooltip.hide();
+
+        (function (self, html, additional_css, override_element, delay_ms, tooltip) {
+            var timer;
+
+            html.hover(
+                function () {
+                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms);
+                },
+                function () {
+                    self.tooltip_on_hover_out(tooltip, override_element, timer);
+                }
+            );
+        })(this, html, additional_css, override_element, delay_ms, tooltip);
+
+        return tooltip;
+    };
+
+    this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
+        var color = Dash.Color.Dark;
+        var padding = Dash.Size.Padding * 0.5;
 
         tooltip.css({
             "padding": padding,
@@ -280,71 +306,60 @@ function DashGui() {
             });
         }
 
-        if (text) {
-            tooltip.text(text);
+        return tooltip;
+    };
+
+    this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms) {
+        if (override_element) {
+            // Override element is intended to NOT show the tooltip under the below defined
+            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+
+            if (override_element instanceof DashGuiListRow) {
+                if (override_element.IsExpanded()) {
+                    return;
+                }
+            }
         }
 
-        tooltip.hide();
+        return setTimeout(
+            function () {
+                var top = html.offset()["top"];
+                var left = html.offset()["left"];
 
-        var timer;
-
-        (function (self, html, additional_css, override_element) {
-            html.hover(
-                function () {
-                    if (override_element) {
-                        // Override element is intended to NOT show the tooltip under the below defined
-                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
-
-                        if (override_element instanceof DashGuiListRow) {
-                            if (override_element.IsExpanded()) {
-                                return;
-                            }
-                        }
-                    }
-
-                    timer = setTimeout(
-                        function () {
-                            var top = html.offset()["top"];
-                            var left = html.offset()["left"];
-
-                            if (additional_css && additional_css["top"]) {
-                                top += parseInt(additional_css["top"]);
-                            }
-
-                            if (additional_css && additional_css["left"]) {
-                                left += parseInt(additional_css["left"]);
-                            }
-
-                            tooltip.css({
-                                ...additional_css,
-                                "top": top,
-                                "left": left
-                            });
-
-                            tooltip.show();
-                        },
-                        delay_ms
-                    );
-                },
-                function () {
-                    if (override_element && !tooltip.is(":visible")) {
-                        // Override element is intended to NOT show the tooltip under the below defined
-                        // circumstances. These will be somewhat unique depending on the element - expand as needed.
-
-                        if (override_element instanceof DashGuiListRow) {
-                            if (override_element.IsExpanded()) {
-                                return;
-                            }
-                        }
-                    }
-
-                    clearTimeout(timer);
-
-                    tooltip.hide();
+                if (additional_css && additional_css["top"]) {
+                    top = parseInt(additional_css["top"]);
                 }
-            );
-        })(this, html, additional_css, override_element);
 
-        return tooltip;
+                if (additional_css && additional_css["left"]) {
+                    left = parseInt(additional_css["left"]);
+                }
+
+                tooltip.css({
+                    ...additional_css,
+                    "top": top,
+                    "left": left
+                });
+
+                tooltip.show();
+            },
+            delay_ms
+        );
+    };
+
+    this.tooltip_on_hover_out = function (tooltip, override_element, timer) {
+        if (override_element && !tooltip.is(":visible")) {
+            // Override element is intended to NOT show the tooltip under the below defined
+            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+
+            if (override_element instanceof DashGuiListRow) {
+                if (override_element.IsExpanded()) {
+                    return;
+                }
+            }
+        }
+
+        clearTimeout(timer);
+
+        tooltip.hide();
     };
 }

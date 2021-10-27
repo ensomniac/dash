@@ -83,7 +83,7 @@ function DashGuiComboSearch () {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            "width": this.list_width,
+            "width": this.rows.width(),
             "height": this.html.height()
         });
 
