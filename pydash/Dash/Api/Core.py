@@ -203,6 +203,10 @@ class ApiCore:
         if type(self._response) is dict and self._response.get("error") and self._send_email_on_error and not self._execute_as_module:
             self.SendEmail()
 
+        # Private errors should be deleted after sending the error email so they're not exposed to the client
+        if "_error" in self._response:
+            del self._response["_error"]
+
         return self._response
 
     def SendEmail(self, subject="", msg="", error="", notify_email_list=["ryan@ensomniac.com", "stetandrew@gmail.com"]):
@@ -213,7 +217,9 @@ class ApiCore:
             error = self._response["error"]
 
             if self._response.get("_error"):
-                error += f"\n\nPrivate error:\n{self._response['_error']}"
+                private_error = self._response['_error'].replace("\n", "<br>")
+
+                error += f"<br><br>Private error:<br>{private_error}"
 
         SendEmail(
             subject=subject,
