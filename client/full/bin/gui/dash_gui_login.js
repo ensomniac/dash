@@ -98,9 +98,12 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             params[key] = this.optional_params[key];
         }
 
-        this.login_button.SetLoading(true);
-
-        Dash.Request(this, this.on_login_response, "Users", params);
+        this.login_button.Request(
+            "Users",
+            params,
+            this.on_login_response,
+            this
+        );
     };
 
     this.ResetLogin = function () {
@@ -113,7 +116,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         }
 
         this.reset_button.Request(
-            "https://" + Dash.Context["domain"] + "/Users",
+            "Users",
             {
                 "f": "reset",
                 "email": email
@@ -260,8 +263,6 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.on_login_response = function (response) {
-        this.login_button.SetLoading(false);
-
         if (response["error"]) {
             alert(response["error"]);
 

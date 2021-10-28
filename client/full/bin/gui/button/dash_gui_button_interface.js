@@ -193,33 +193,35 @@ function DashGuiButtonInterface () {
         this.html.append(this.file_uploader.html);
     };
 
-    this.Request = function (api, server_data, on_complete_callback, bind_to) {
+    this.Request = function (endpoint, params, callback, binder=null) {
         if (this.load_dots) {
             return;
         }
 
         this.on_request_response_callback = null;
 
-        var binder = bind_to || this.bind;
+        binder = binder || this.bind;
 
-        if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder);
+        if (binder && callback) {
+            this.on_request_response_callback = callback.bind(binder);
         }
 
         this.SetLoading(true);
 
-        server_data = server_data || {};
-        server_data["token"] = Dash.Local.Get("token");
+        (function (self, endpoint, params) {
+            Dash.Request(
+                binder,
+                function (response) {
+                    self.SetLoading(false);
 
-        (function (self) {
-            $.post(api, server_data, function (response) {
-                self.SetLoading(false);
-
-                if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response);
-                }
-            });
-        })(this);
+                    if (self.on_request_response_callback) {
+                        self.on_request_response_callback(response);
+                    }
+                },
+                endpoint,
+                params
+            );
+        })(this, endpoint, params);
     };
 
     this.RefreshConnections  = function () {

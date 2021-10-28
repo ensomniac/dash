@@ -19162,6 +19162,9 @@ function DashLocal () {
 function DashRequest () {
     this.requests = [];
     this.Request = function (binder, callback, endpoint, params) {
+        if (endpoint.includes("/")) {
+            endpoint = endpoint.split("/").Last();
+        }
         var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));
     };
@@ -20221,26 +20224,29 @@ function DashGuiButtonInterface () {
         })(this);
         this.html.append(this.file_uploader.html);
     };
-    this.Request = function (api, server_data, on_complete_callback, bind_to) {
+    this.Request = function (endpoint, params, callback, binder=null) {
         if (this.load_dots) {
             return;
         }
         this.on_request_response_callback = null;
-        var binder = bind_to || this.bind;
-        if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder);
+        binder = binder || this.bind;
+        if (binder && callback) {
+            this.on_request_response_callback = callback.bind(binder);
         }
         this.SetLoading(true);
-        server_data = server_data || {};
-        server_data["token"] = Dash.Local.Get("token");
-        (function (self) {
-            $.post(api, server_data, function (response) {
-                self.SetLoading(false);
-                if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response);
-                }
-            });
-        })(this);
+        (function (self, endpoint, params) {
+            Dash.Request(
+                binder,
+                function (response) {
+                    self.SetLoading(false);
+                    if (self.on_request_response_callback) {
+                        self.on_request_response_callback(response);
+                    }
+                },
+                endpoint,
+                params
+            );
+        })(this, endpoint, params);
     };
     this.RefreshConnections  = function () {
         // This may be necessary in certain cases when the parent html is emptied
@@ -20833,8 +20839,12 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         for (var key in this.optional_params) {
             params[key] = this.optional_params[key];
         }
-        this.login_button.SetLoading(true);
-        Dash.Request(this, this.on_login_response, "Users", params);
+        this.login_button.Request(
+            "Users",
+            params,
+            this.on_login_response,
+            this
+        );
     };
     this.ResetLogin = function () {
         var email = this.email_input.Text();
@@ -20843,7 +20853,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             return;
         }
         this.reset_button.Request(
-            "https://" + Dash.Context["domain"] + "/Users",
+            "Users",
             {
                 "f": "reset",
                 "email": email
@@ -20964,7 +20974,6 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         }
     };
     this.on_login_response = function (response) {
-        this.login_button.SetLoading(false);
         if (response["error"]) {
             alert(response["error"]);
             return;
@@ -23305,24 +23314,25 @@ function DashGuiInputRowInterface () {
     this.Text = function () {
         return this.input.Text();
     };
-    this.Request = function (api, server_data, callback, callback_binder) {
-        console.log("RE");
+    this.Request = function (endpoint, params, callback, binder) {
         if (this.input.autosave_timeout) {
-            console.log("Cleared timeout");
             clearTimeout(this.input.autosave_timeout);
             this.input.autosave_timeout = null;
+            console.log("Cleared input autosave timeout");
         }
         var request = null;
         this.request_callback = callback;
-        this.request_callback_binder = callback_binder;
-        if (!server_data["token"]) {
-            server_data["token"] = Dash.Local.Get("token");
-        }
-        (function (self) {
-            request = self.button.Request(api, server_data, function (response_json) {
-                self.on_request_response(response_json);
-            }, self);
-        })(this);
+        this.request_callback_binder = binder;
+        (function (self, endpoint, params) {
+            request = self.button.Request(
+                endpoint,
+                params,
+                function (response) {
+                    self.on_request_response(response);
+                },
+                self
+            );
+        })(this, endpoint, params);
         return request;
     };
     this.SetLocked = function (is_locked) {
@@ -24303,14 +24313,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
             return;
         }
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
         var params = {
             "f": "set_property",
             "key": row_details["key"],
             "value": new_value,
             "obj_id": this.dash_obj_id
         };
-        console.log("updated - uploading...");
+        console.log("Row updated - uploading...");
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
         }
@@ -24318,11 +24327,16 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             params["f"] = "update_password";
             params["p"] = new_value;
         }
-        (function (self, row_input, row_details) {
-            row_input.Request(url, params, function (response) {
-                self.on_server_response(response, row_details, row_input);
-            }, self);
-        })(this, row_input, row_details);
+        (function (self, row_input, row_details, params) {
+            row_input.Request(
+                self.endpoint,
+                params,
+                function (response) {
+                    self.on_server_response(response, row_details, row_input);
+                },
+                self
+            );
+        })(this, row_input, row_details, params);
     };
     this.on_server_response = function (response, row_details, row_input) {
         if (!Dash.ValidateResponse(response)) {
@@ -25081,28 +25095,33 @@ function DashGuiComboInterface () {
         this.html.css({"width": width});
         this.rows.css({"width": width});
     };
-    this.Request = function (api, server_data, on_complete_callback, bind_to) {
+    this.Request = function (endpoint, params, callback, binder=null) {
         if (!this.load_dots) {
             this.setup_load_dots();
         }
         if (this.load_dots.IsActive()) {
-            console.log("Request active...");
+            console.log("Request already active...");
             return;
         }
         this.load_dots.Start();
         this.on_request_response_callback = null;
-        var binder = bind_to || this.binder;
-        if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder);
+        binder = binder || this.binder;
+        if (binder && callback) {
+            this.on_request_response_callback = callback.bind(binder);
         }
-        (function (self) {
-            $.post(api, server_data, function (response) {
-                self.load_dots.Stop();
-                if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response);
-                }
-            });
-        })(this);
+        (function (self, endpoint, params) {
+            Dash.Request(
+                binder,
+                function (response) {
+                    self.load_dots.Stop();
+                    if (self.on_request_response_callback) {
+                        self.on_request_response_callback(response);
+                    }
+                },
+                endpoint,
+                params
+            );
+        })(this, endpoint, params);
     };
     this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list

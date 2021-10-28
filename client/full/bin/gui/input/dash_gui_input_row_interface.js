@@ -87,31 +87,30 @@ function DashGuiInputRowInterface () {
         return this.input.Text();
     };
 
-    this.Request = function (api, server_data, callback, callback_binder) {
-        console.log("RE");
-
+    this.Request = function (endpoint, params, callback, binder) {
         if (this.input.autosave_timeout) {
-            console.log("Cleared timeout");
-
             clearTimeout(this.input.autosave_timeout);
 
             this.input.autosave_timeout = null;
+
+            console.log("Cleared input autosave timeout");
         }
 
         var request = null;
 
         this.request_callback = callback;
-        this.request_callback_binder = callback_binder;
+        this.request_callback_binder = binder;
 
-        if (!server_data["token"]) {
-            server_data["token"] = Dash.Local.Get("token");
-        }
-
-        (function (self) {
-            request = self.button.Request(api, server_data, function (response_json) {
-                self.on_request_response(response_json);
-            }, self);
-        })(this);
+        (function (self, endpoint, params) {
+            request = self.button.Request(
+                endpoint,
+                params,
+                function (response) {
+                    self.on_request_response(response);
+                },
+                self
+            );
+        })(this, endpoint, params);
 
         return request;
     };

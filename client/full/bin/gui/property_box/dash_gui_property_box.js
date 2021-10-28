@@ -246,8 +246,6 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
-        var url = "https://" + Dash.Context.domain + "/" + this.endpoint;
-
         var params = {
             "f": "set_property",
             "key": row_details["key"],
@@ -255,7 +253,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             "obj_id": this.dash_obj_id
         };
 
-        console.log("updated - uploading...");
+        console.log("Row updated - uploading...");
 
         for (var key in this.additional_request_params) {
             params[key] = this.additional_request_params[key];
@@ -266,11 +264,16 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             params["p"] = new_value;
         }
 
-        (function (self, row_input, row_details) {
-            row_input.Request(url, params, function (response) {
-                self.on_server_response(response, row_details, row_input);
-            }, self);
-        })(this, row_input, row_details);
+        (function (self, row_input, row_details, params) {
+            row_input.Request(
+                self.endpoint,
+                params,
+                function (response) {
+                    self.on_server_response(response, row_details, row_input);
+                },
+                self
+            );
+        })(this, row_input, row_details, params);
     };
 
     this.on_server_response = function (response, row_details, row_input) {

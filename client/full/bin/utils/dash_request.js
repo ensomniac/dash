@@ -2,6 +2,10 @@ function DashRequest () {
     this.requests = [];
 
     this.Request = function (binder, callback, endpoint, params) {
+        if (endpoint.includes("/")) {
+            endpoint = endpoint.split("/").Last();
+        }
+
         var url = "https://" + Dash.Context["domain"] + "/" + endpoint;
 
         this.requests.push(new DashRequestThread(this, url, params, binder, callback));

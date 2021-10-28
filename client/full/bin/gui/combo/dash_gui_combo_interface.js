@@ -104,34 +104,40 @@ function DashGuiComboInterface () {
         this.rows.css({"width": width});
     };
 
-    this.Request = function (api, server_data, on_complete_callback, bind_to) {
+    this.Request = function (endpoint, params, callback, binder=null) {
         if (!this.load_dots) {
             this.setup_load_dots();
         }
 
         if (this.load_dots.IsActive()) {
-            console.log("Request active...");
+            console.log("Request already active...");
 
             return;
         }
 
         this.load_dots.Start();
         this.on_request_response_callback = null;
-        var binder = bind_to || this.binder;
 
-        if (binder && on_complete_callback) {
-            this.on_request_response_callback = on_complete_callback.bind(binder);
+        binder = binder || this.binder;
+
+        if (binder && callback) {
+            this.on_request_response_callback = callback.bind(binder);
         }
 
-        (function (self) {
-            $.post(api, server_data, function (response) {
-                self.load_dots.Stop();
+        (function (self, endpoint, params) {
+            Dash.Request(
+                binder,
+                function (response) {
+                    self.load_dots.Stop();
 
-                if (self.on_request_response_callback) {
-                    self.on_request_response_callback(response);
-                }
-            });
-        })(this);
+                    if (self.on_request_response_callback) {
+                        self.on_request_response_callback(response);
+                    }
+                },
+                endpoint,
+                params
+            );
+        })(this, endpoint, params);
     };
 
     this.Update = function (combo_list, selected, ignore_callback=false) {
