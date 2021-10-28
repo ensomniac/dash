@@ -212,6 +212,9 @@ class ApiCore:
         if not error and self._response.get("error"):
             error = self._response["error"]
 
+            if self._response.get("_error"):
+                error += f"\n\nPrivate error:\n{self._response['_error']}"
+
         SendEmail(
             subject=subject,
             notify_email_list=notify_email_list,

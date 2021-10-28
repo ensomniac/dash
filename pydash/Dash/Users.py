@@ -8,8 +8,8 @@ import sys
 
 from datetime import datetime
 from Dash import LocalStorage
-from traceback import format_exc
 from Dash.Utils import Memory
+from traceback import format_exc
 
 
 class Users:
@@ -95,7 +95,10 @@ class Users:
         uri_data_64 = self.request_params.get("t")
 
         if not uri_data_64:
-            return {"error": "Invalid request token x3728"}
+            return {
+                "error": "Invalid request token x3728",
+                "_error": f"uri_data_64: {uri_data_64}"
+            }
 
         uri_str = self.decode_base64(uri_data_64.encode())
 
@@ -111,7 +114,10 @@ class Users:
         reset_path = os.path.join(user_reset_root, uri_data_64)
 
         if not os.path.exists(reset_path):
-            return {"error": "Invalid request token x8923"}
+            return {
+                "error": "Invalid request token x8923",
+                "_error": f"reset path: {reset_path}"
+            }
 
         from random import choice
         from dateutil.parser import parse
@@ -171,9 +177,7 @@ class Users:
         link += "'>https://" + self.dash_context["domain"] + "</a>"
 
         html.append(f"""Hello, {email}, <br><br>""")
-        html.append(
-            f"""You've been issued a new temporary password that can be used to log in to {link}<br><br>"""
-        )
+        html.append(f"""You've been issued a new temporary password that can be used to log in to {link}<br><br>""")
         html.append("""Change it once you log in.<br><br>""")
         html.append(f"""<b>Temporary password: </b>{new_password}""")
         html.append("""</body>""")
@@ -187,7 +191,10 @@ class Users:
         user = self.ValidateUser()
 
         if not user:
-            return {"error": "Invalid User - x73894"}
+            return {
+                "error": "Invalid User - x73894",
+                "_error": f"user: {user}"
+            }
 
         new_password = self.request_params.get("p")
 
@@ -211,14 +218,20 @@ class Users:
         password = self.request_params.get("pass").strip()
 
         if not email or not password:
-            return {"error": "Invalid login credentials x1943"}
+            return {
+                "error": "Invalid login credentials x1943",
+                "_error": f"email: {email}"
+            }
 
         user_root = os.path.join(self.UsersPath, email)
         sessions_path = os.path.join(user_root, "sessions")
         pass_path = os.path.join(user_root, "phash")
 
         if not os.path.exists(pass_path):
-            return {"error": "Account does not exist x7832 | PP: " + pass_path}
+            return {
+                "error": "Account does not exist x7832",
+                "_error": f"password path: {pass_path}"
+            }
 
         from passlib.apps import custom_app_context as pwd_context
 
@@ -227,7 +240,8 @@ class Users:
 
         if not password_correct:
             return {
-                "error": f"Incorrect login information for {email}",
+                "error": "Incorrect login information",
+                "_error": f"email: {email}",
                 "h": hashed_password,
                 "p": password,
             }
@@ -297,7 +311,10 @@ class Users:
         token_str, token_data = self.get_token_data(token_str)
 
         if not token_data:
-            return {"error": "Invalid token"}
+            return {
+                "error": "Invalid token",
+                "_error": f"token str: {token_str}"
+            }
 
         if type(token_data) == str:
             token_data = token_data.encode()
@@ -310,7 +327,11 @@ class Users:
         token_path = os.path.join(sessions_path, token_str)
 
         if not os.path.exists(token_path):
-            return {"error": "Invalid Login x7283", "token_path": token_path}
+            return {
+                "error": "Invalid Login x7283",
+                "_error": f"token path: {token_path}",
+                "token_path": token_path
+            }
 
         return_data = {"valid_login": True, "user": self.get_user_info(email)}
 
