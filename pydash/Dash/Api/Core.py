@@ -207,7 +207,7 @@ class ApiCore:
 
     def SendEmail(self, subject="", msg="", error="", notify_email_list=["ryan@ensomniac.com", "stetandrew@gmail.com"]):
         if not subject:
-            subject = f"{self._asset_path} - {self.Params.get('f')}"
+            subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
         if not error and self._response.get("error"):
             error = self._response["error"]

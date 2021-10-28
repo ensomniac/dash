@@ -25563,9 +25563,10 @@ function DashGuiLayout () {
 };
 
 // Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile (user_data, options) {
+function DashGuiLayoutUserProfile (user_data, options, include_password_field=true) {
     this.user_data = user_data || Dash.User.Data;
     this.options = options || {};
+    this.include_password_field = include_password_field;
     this.as_overview = false;
     this.property_box = null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -25611,7 +25612,9 @@ function DashGuiLayoutUserProfile (user_data, options) {
         this.property_box.AddInput("email",       "E-mail Address",  "", null, false);
         this.property_box.AddInput("first_name",  "First Name",      "", null, true);
         this.property_box.AddInput("last_name",   "Last Name",       "", null, true);
-        this.property_box.AddInput("password",    "Update Password", "", null, true);
+        if (this.include_password_field) {
+            this.property_box.AddInput("password",    "Update Password", "", null, true);
+        }
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
             for (var i in additional_props) {
