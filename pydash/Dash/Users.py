@@ -227,7 +227,7 @@ class Users:
 
         if not password_correct:
             return {
-                "error": "Incorrect login information",
+                "error": f"Incorrect login information for {email}",
                 "h": hashed_password,
                 "p": password,
             }
