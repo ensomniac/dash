@@ -1,4 +1,4 @@
-/** @member DashGuiInputRow*/
+/**@member DashGuiInputRow*/
 
 function DashGuiInputRowInterface () {
     this.DisableAutosave = function () {

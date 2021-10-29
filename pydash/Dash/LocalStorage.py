@@ -15,7 +15,7 @@ from Dash.Utils import Memory, GetRandomID
 
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path, nested, sort_by_key="", filter_out_keys=[]):
+    def __init__(self, dash_context, store_path="", nested=False, sort_by_key="", filter_out_keys=[]):
         """
         Utility for reading, writing and maintaining common data
 
@@ -87,7 +87,7 @@ class DashLocalStorage:
             return all_ids
 
         for obj_id in os.listdir(store_root):
-            if obj_id.startswith("."):
+            if str(obj_id).startswith("."):
                 continue
 
             all_ids.append(obj_id)
@@ -110,7 +110,7 @@ class DashLocalStorage:
             return all_data
 
         for obj_id in os.listdir(store_root):
-            if obj_id.startswith("."):
+            if str(obj_id).startswith("."):
                 continue
 
             data = self.GetData(obj_id)
@@ -285,6 +285,9 @@ class DashLocalStorage:
 
             sorted_key = entry_data[self.sort_by_key]
 
+            if type(sorted_key) is str:
+                sorted_key = sorted_key.lower().strip()
+
             if not restructured_data.get(sorted_key):
                 restructured_data[sorted_key] = entry_data
             else:
@@ -455,7 +458,7 @@ def Delete(dash_context, store_path, obj_id, nested=False):
 
 
 def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
-    return DashLocalStorage(dash_context, store_path, nested, filter_out_keys).GetData(obj_id)
+    return DashLocalStorage(dash_context, store_path, nested, filter_out_keys=filter_out_keys).GetData(obj_id)
 
 
 def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[]):
@@ -487,8 +490,8 @@ def GetRecordPath(dash_context, store_path, obj_id, nested=False):
 
 
 def Read(full_path):
-    return DashLocalStorage(None, None, None).Read(full_path)
+    return DashLocalStorage(None).Read(full_path)
 
 
 def Write(full_path, data):
-    return DashLocalStorage(None, None, None).Write(full_path, data)
+    return DashLocalStorage(None).Write(full_path, data)

@@ -1,4 +1,4 @@
-/** @member DashGuiCombo*/
+/**@member DashGuiCombo*/
 
 function DashGuiComboSearch () {
     this.search_input = null;

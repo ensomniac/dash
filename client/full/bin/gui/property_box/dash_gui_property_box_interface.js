@@ -1,4 +1,4 @@
-/** @member DashGuiPropertyBox*/
+/**@member DashGuiPropertyBox*/
 
 function DashGuiPropertyBoxInterface () {
     this.SetTopRightLabel = function (label_text) {

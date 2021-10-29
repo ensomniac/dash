@@ -1,4 +1,4 @@
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 
 function DashGuiButtonStyleTabSide () {
     this.setup_styles = function () {

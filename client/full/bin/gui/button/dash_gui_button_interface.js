@@ -1,4 +1,4 @@
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 
 function DashGuiButtonInterface () {
     this.ChangeLabel = function (label_text, width=null) {

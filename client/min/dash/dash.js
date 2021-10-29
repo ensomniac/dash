@@ -20071,7 +20071,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
     this.setup_connections();
 }
 
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 function DashGuiButtonInterface () {
     this.ChangeLabel = function (label_text, width=null) {
         this.label.text(label_text);
@@ -20508,7 +20508,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.setup_icon();
 }
 
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 function DashGuiButtonStyleDefault () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
@@ -20563,7 +20563,7 @@ function DashGuiButtonStyleDefault () {
     };
 }
 
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 function DashGuiButtonStyleTabSide () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
@@ -20620,7 +20620,7 @@ function DashGuiButtonStyleTabSide () {
     };
 }
 
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 function DashGuiButtonStyleTabTop () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
@@ -20701,7 +20701,7 @@ function DashGuiButtonStyleTabTop () {
     };
 }
 
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 function DashGuiButtonStyleToolbar () {
     this.setup_styles = function () {
         this.html.append(this.highlight);
@@ -23247,7 +23247,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.setup_connections();
 }
 
-/** @member DashGuiInputRow*/
+/**@member DashGuiInputRow*/
 function DashGuiInputRowInterface () {
     this.DisableAutosave = function () {
         this.input.DisableAutosave();
@@ -24354,7 +24354,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.setup_styles();
 }
 
-/** @member DashGuiPropertyBox*/
+/**@member DashGuiPropertyBox*/
 function DashGuiPropertyBoxInterface () {
     this.SetTopRightLabel = function (label_text) {
         if (!this.top_right_label) {
@@ -25235,7 +25235,7 @@ function DashGuiComboRow (combo, option) {
     this.setup_connections();
 }
 
-/** @member DashGuiCombo*/
+/**@member DashGuiCombo*/
 function DashGuiComboSearch () {
     this.search_input = null;
     this.search_results = [];
@@ -26064,7 +26064,7 @@ function DashGuiLayoutToolbar (binder, color) {
     this.setup_styles();
 }
 
-/** @member DashGuiLayoutToolbar */
+/**@member DashGuiLayoutToolbar */
 function DashGuiLayoutToolbarInterface () {
     this.AddExpander = function () {
         var expander = $("<div></div>");
@@ -27330,7 +27330,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
     this.setup_styles();
 }
 
-/** @member DashGuiListRow*/
+/**@member DashGuiListRow*/
 function DashGuiListRowElements () {
     this.add_default_column = function (column_config_data, index) {
         column_config_data["left_aligned"] = true;

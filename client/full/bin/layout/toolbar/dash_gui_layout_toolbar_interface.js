@@ -1,4 +1,4 @@
-/** @member DashGuiLayoutToolbar */
+/**@member DashGuiLayoutToolbar */
 
 function DashGuiLayoutToolbarInterface () {
     this.AddExpander = function () {

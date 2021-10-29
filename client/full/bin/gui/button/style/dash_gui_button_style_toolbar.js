@@ -1,4 +1,4 @@
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 
 function DashGuiButtonStyleToolbar () {
     this.setup_styles = function () {

@@ -1,4 +1,4 @@
-/** @member DashGuiButton*/
+/**@member DashGuiButton*/
 
 function DashGuiButtonStyleDefault () {
     this.setup_styles = function () {

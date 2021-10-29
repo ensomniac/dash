@@ -1,4 +1,4 @@
-/** @member DashGuiListRow*/
+/**@member DashGuiListRow*/
 
 function DashGuiListRowElements () {
     this.add_default_column = function (column_config_data, index) {
