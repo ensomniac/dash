@@ -213,6 +213,13 @@ class ApiCore:
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
+        request_details = f"User: {self.User['email']}<br>Params: {self.Params}<br><br>"
+
+        if not msg:
+            msg = request_details
+        else:
+            msg += f"<br><br>{request_details}"
+
         if not error and self._response.get("error"):
             error = self._response["error"]
 
