@@ -25,6 +25,9 @@ function Dash () {
     this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
     this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
 
+    // Temp storage
+    this.TempLastInputSubmitted = null;
+
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
@@ -156,18 +159,21 @@ function Dash () {
     };
 
     this.ValidateResponse = function (response) {
-        if (!response) {
-            console.log("Dash.ValidateResponse(1)", response);
+        if (!response || response["error"]) {
+            // This stops duplicate callbacks from being triggered after an alert window pops up
+            this.handle_duplicate_callbacks_on_invalid_input();
 
-            alert("There was a server problem with this request: No response received");
+            if (!response) {
+                console.log("Dash.ValidateResponse(1)", response);
 
-            return null;
-        }
+                alert("There was a server problem with this request: No response received");
+            }
 
-        if (response["error"]) {
-            console.log("There was a server problem with this request:", response);
+            else if (response["error"]) {
+                console.log("There was a server problem with this request:", response);
 
-            alert(response["error"]);
+                alert(response["error"]);
+            }
 
             return null;
         }
@@ -242,6 +248,26 @@ function Dash () {
             "height": this.height,
         });
 
+    };
+
+    this.handle_duplicate_callbacks_on_invalid_input = function () {
+        var temp_last_input = this.TempLastInputSubmitted;
+
+        if (!temp_last_input || !(temp_last_input instanceof DashGuiInput)) {
+            return;
+        }
+
+        temp_last_input.SkipNextBlur();
+
+        if (!temp_last_input.submit_called_from_autosave) {
+            temp_last_input.SkipNextAutosave();
+        }
+
+        var previous = temp_last_input.previous_submitted_text;
+
+        if (previous && previous !== temp_last_input.last_submitted_text) {
+            temp_last_input.SetText(previous);
+        }
     };
 
     this.extend_js = function () {

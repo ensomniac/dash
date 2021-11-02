@@ -17762,6 +17762,8 @@ function Dash () {
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
     this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
     this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
+    // Temp storage
+    this.TempLastInputSubmitted = null;
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
         var date = new Date(Date.parse(server_iso_string));
@@ -17863,14 +17865,17 @@ function Dash () {
         return test;
     };
     this.ValidateResponse = function (response) {
-        if (!response) {
-            console.log("Dash.ValidateResponse(1)", response);
-            alert("There was a server problem with this request: No response received");
-            return null;
-        }
-        if (response["error"]) {
-            console.log("There was a server problem with this request:", response);
-            alert(response["error"]);
+        if (!response || response["error"]) {
+            // This stops duplicate callbacks from being triggered after an alert window pops up
+            this.handle_duplicate_callbacks_on_invalid_input();
+            if (!response) {
+                console.log("Dash.ValidateResponse(1)", response);
+                alert("There was a server problem with this request: No response received");
+            }
+            else if (response["error"]) {
+                console.log("There was a server problem with this request:", response);
+                alert(response["error"]);
+            }
             return null;
         }
         return response;
@@ -17923,6 +17928,20 @@ function Dash () {
             "width": this.width,
             "height": this.height,
         });
+    };
+    this.handle_duplicate_callbacks_on_invalid_input = function () {
+        var temp_last_input = this.TempLastInputSubmitted;
+        if (!temp_last_input || !(temp_last_input instanceof DashGuiInput)) {
+            return;
+        }
+        temp_last_input.SkipNextBlur();
+        if (!temp_last_input.submit_called_from_autosave) {
+            temp_last_input.SkipNextAutosave();
+        }
+        var previous = temp_last_input.previous_submitted_text;
+        if (previous && previous !== temp_last_input.last_submitted_text) {
+            temp_last_input.SetText(previous);
+        }
     };
     this.extend_js = function () {
         // TODO: Move this into utils
@@ -22771,15 +22790,20 @@ function DashGuiInput (placeholder_text, color) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
     this.autosave = false;
+    this.blur_enabled = null;
     this.last_submit_ts = null;
+    this.skip_next_blur = false;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
     this.autosave_delay_ms = 1500;
     this.last_submitted_text = "";
     this.on_change_callback = null;
     this.on_submit_callback = null;
+    this.skip_next_autosave = false;
     this.on_autosave_callback = null;
+    this.previous_submitted_text = "";
     this.last_arrow_navigation_ts = null;
+    this.submit_called_from_autosave = false;
     if (this.placeholder.toString().toLowerCase().includes("password")) {
         this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
     }
@@ -22820,6 +22844,34 @@ function DashGuiInput (placeholder_text, color) {
     };
     this.DisableBlurSubmit = function () {
         this.input.off("blur");
+        this.blur_enabled = false;
+    };
+    // Enabled by default - this is to re-enable it if disabled
+    this.EnableBlurSubmit = function () {
+        (function (self) {
+            self.input.on("blur", function () {
+                if (self.skip_next_blur) {
+                    self.skip_next_blur = false;
+                    return;
+                }
+                if (self.Text() !== self.last_submitted_text) {
+                    self.on_submit();
+                }
+            });
+        })(this);
+        this.blur_enabled = true;
+    };
+    // This is primarily intended to be called on error by Dash.ValidateResponse
+    this.SkipNextBlur = function () {
+        if (this.blur_enabled) {
+            this.skip_next_blur = true;
+        }
+    };
+    // This is primarily intended to be called on error by Dash.ValidateResponse
+    this.SkipNextAutosave = function () {
+        if (this.autosave) {
+            this.skip_next_autosave = true;
+        }
     };
     this.SetLocked = function (is_locked) {
         if (is_locked) {
@@ -22899,12 +22951,31 @@ function DashGuiInput (placeholder_text, color) {
         }
     };
     // Fired on 'enter' or 'paste'
-    this.on_submit = function () {
-        if (!this.on_submit_callback) {
-            return;
+    this.on_submit = function (from_autosave=false) {
+        if (from_autosave) {
+            if (!this.on_autosave_callback) {
+                return;
+            }
         }
-        this.on_submit_callback();
-        this.last_submit_ts = new Date();
+        else {
+            if (!this.on_submit_callback) {
+                return;
+            }
+        }
+        // Store the previous value so we can reset the input value from
+        // Dash.ValidateInput, in case the new value throws an error
+        this.previous_submitted_text = this.last_submitted_text;
+        // Also important in case Dash.ValidateInput throws an error
+        this.submit_called_from_autosave = from_autosave;
+        Dash.TempLastInputSubmitted = this;
+        if (from_autosave) {
+            this.on_autosave_callback();
+        }
+        else {
+            this.on_submit_callback();
+            // Don't store this on autosave
+            this.last_submit_ts = new Date();
+        }
         this.last_submitted_text = this.Text();
     };
     this.attempt_autosave = function () {
@@ -22933,8 +23004,16 @@ function DashGuiInput (placeholder_text, color) {
                             }
                         }
                     }
+                    // In case autosave is toggled while there are active timers
+                    if (!self.autosave) {
+                        return;
+                    }
+                    if (self.skip_next_autosave) {
+                        self.skip_next_autosave = false;
+                        return;
+                    }
                     if (self.on_autosave_callback) {
-                        self.on_autosave_callback();
+                        self.on_submit(true);
                     }
                     else {
                         self.on_submit();
@@ -22967,12 +23046,8 @@ function DashGuiInput (placeholder_text, color) {
             self.input.on("keyup click", function () {
                 self.on_change();
             });
-            self.input.on("blur", function () {
-                if (self.input.val() !== self.last_submitted_text) {
-                    self.on_submit();
-                }
-            });
         })(this);
+        this.EnableBlurSubmit();
     };
     this.setup_styles();
     this.setup_connections();
