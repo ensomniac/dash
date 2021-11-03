@@ -71,7 +71,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         index = parseInt(index);
         
         if (!Number.isInteger(index)) {
-            console.log("Error: SetIndex() requires an integer:", index, typeof index);
+            console.error("Error: SetIndex() requires an integer:", index, typeof index);
 
             return;
         }
@@ -81,7 +81,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
     this.SetText = function (text) {
         if (typeof text !== "string") {
-            console.log("Error: SetText() requires a string");
+            console.error("Error: SetText() requires a string");
 
             return;
         }

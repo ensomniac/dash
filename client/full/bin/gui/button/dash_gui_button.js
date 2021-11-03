@@ -27,7 +27,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
 
         if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Button Style: " + this.style);
+            console.error("Error: Unknown Dash Button Style: " + this.style);
 
             this.style = "default";
         }
@@ -57,7 +57,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         }
 
         if (!this.color instanceof DashColorSet) {
-            console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+            console.warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         }
 
         this.setup_styles();

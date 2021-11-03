@@ -27,7 +27,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.SetCallback = function (callback, bind_to) {
 
         if (!bind_to) {
-            // console.log("Warning: This SetCallback() callback should be passed a bind_to object");
+            // console.warn("Warning: This SetCallback() callback should be passed a bind_to object");
             this.callback = callback;
         }
         else {
@@ -120,7 +120,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     };
 
     this.error_uploading = function (file, error) {
-        console.log("Error uploading");
+        console.error("Error uploading");
         console.log(error);
     };
 

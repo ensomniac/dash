@@ -110,7 +110,7 @@ function DashUtils () {
         }
 
         else {
-            console.log("Error - Unknown hour set");
+            console.error("Error - Unknown hour set");
         }
     };
 

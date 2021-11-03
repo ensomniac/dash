@@ -28,12 +28,12 @@ class DashColorStateSet {
         //makes sure to auto-fill missing colors
 
         if (!this._base) {
-            console.log("Error: DashColorStateSet() Requires at least one color");
+            console.error("Error: DashColorStateSet() Requires at least one color");
             return;
         }
 
         if (!this._selected) {
-            console.log("Warning: Set a color for the 'Selected' property");
+            console.warn("Warning: Set a color for the 'Selected' property");
             this._selected = "red";
         }
 

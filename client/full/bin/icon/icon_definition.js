@@ -31,7 +31,7 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
         };
 
         if (!this.icon.icon_color) {
-            console.log("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
+            console.error("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
             console.trace();
             debugger;
         }

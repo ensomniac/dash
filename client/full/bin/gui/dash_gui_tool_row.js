@@ -122,7 +122,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
         if (!this.get_data_cb) {
-            console.log("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
+            console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
 
             return;
         }

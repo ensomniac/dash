@@ -12,7 +12,7 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
         this.icon_color = this.color.Button.Background.Icon;
     }
     if (!this.color.Text) {
-        console.log("Error: Incorrect color object passed to DashIcon:", this.color);
+        console.error("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
         debugger;
     }
@@ -43,7 +43,7 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
     this.SetSize = function (percentage_number) {
         percentage_number = parseInt(percentage_number);
         if (isNaN(percentage_number)) {
-            console.log("Error: DashIcon SetSize requires a number (that represents a percentage)");
+            console.error("Error: DashIcon SetSize requires a number (that represents a percentage)");
             return;
         }
         this.icon_html.css({
@@ -96,7 +96,7 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
             "color": this.icon.icon_color,
         };
         if (!this.icon.icon_color) {
-            console.log("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
+            console.error("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
             console.trace();
             debugger;
         }
@@ -252,7 +252,7 @@ function GuiIcons (icon) {
     }
     
     else if (!this.icon_map[this.icon.name]) {
-        console.log("Warning: Unable to locate icon by name '" + this.icon.name + "'");
+        console.warn("Warning: Unable to locate icon by name '" + this.icon.name + "'");
         
         console.trace();
         
@@ -17818,7 +17818,7 @@ function Dash () {
     };
     this.GetDeepCopy = function (obj) {
         if (!this.IsValidObject(obj)) {
-            console.log("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+            console.warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
             return null;
         }
         return JSON.parse(JSON.stringify(obj));
@@ -18042,7 +18042,7 @@ $(document).on("ready", function () {
         }
     });
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
-        console.log("Warning: URL Loaded with www -> Redirecting");
+        console.warn("Warning: URL Loaded with www -> Redirecting");
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
     window.InverseLerp = function (min, max, val) {
@@ -18503,7 +18503,7 @@ function DashColor () {
             colors = this.ParseToRGB(color_2) + " 0%, " + this.ParseToRGB(color_1) + " 100%";
         }
         else {
-            console.log("Error: At least 2 colors are required for a gradient");
+            console.error("Error: At least 2 colors are required for a gradient");
             return "red";
         }
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
@@ -18962,11 +18962,11 @@ class DashColorStateSet {
         // Doc: Since it's possible to only use one color, this function
         //makes sure to auto-fill missing colors
         if (!this._base) {
-            console.log("Error: DashColorStateSet() Requires at least one color");
+            console.error("Error: DashColorStateSet() Requires at least one color");
             return;
         }
         if (!this._selected) {
-            console.log("Warning: Set a color for the 'Selected' property");
+            console.warn("Warning: Set a color for the 'Selected' property");
             this._selected = "red";
         }
         this._base_hover = this._base_hover || Dash.Color.Lighten(this._base, 50);
@@ -19092,7 +19092,7 @@ function DashUtils () {
             Dash.Daypart = "Evening";
         }
         else {
-            console.log("Error - Unknown hour set");
+            console.error("Error - Unknown hour set");
         }
     };
     this.manage_timer = function (timer) {
@@ -19222,7 +19222,7 @@ function DashRequest () {
                             self.dash_requests.on_response(self, response);
                         }
                         else {
-                            console.log("Warning: Request to " + self.url + " failed:", self.params);
+                            console.warn("Warning: Request to " + self.url + " failed:", self.params);
                         }
                     }
                 );
@@ -19943,7 +19943,6 @@ function DashGui() {
                     }
                     catch {
                         // Ignore
-                        console.log("TEST fail");
                     }
                 }
             },
@@ -19989,7 +19988,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
         if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Button Style: " + this.style);
+            console.error("Error: Unknown Dash Button Style: " + this.style);
             this.style = "default";
         }
         if (this.style === "toolbar") {
@@ -20009,7 +20008,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
             DashGuiButtonStyleDefault.call(this);
         }
         if (!this.color instanceof DashColorSet) {
-            console.log("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+            console.warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         }
         this.setup_styles();
     };
@@ -20343,7 +20342,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     this.dropzone_box.hide();
     this.SetCallback = function (callback, bind_to) {
         if (!bind_to) {
-            // console.log("Warning: This SetCallback() callback should be passed a bind_to object");
+            // console.warn("Warning: This SetCallback() callback should be passed a bind_to object");
             this.callback = callback;
         }
         else {
@@ -20418,7 +20417,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.html.hide();
     };
     this.error_uploading = function (file, error) {
-        console.log("Error uploading");
+        console.error("Error uploading");
         console.log(error);
     };
     this.processing_upload = function (file) {
@@ -20501,7 +20500,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             if (!this.icon_height) {
                 this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
             }
-            console.log("Warning: Unhandled button / icon style: " + this.style);
+            console.warn("Warning: Unhandled button / icon style: " + this.style);
             this.setup_default_icon();
         }
         if (this.icon_name.startsWith("trash")) {
@@ -21849,7 +21848,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
         if (!this.get_data_cb) {
-            console.log("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
+            console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
             return;
         }
         var input = this.toolbar.AddTransparentInput(
@@ -22386,7 +22385,7 @@ function DashGuiFileExplorerData () {
             return;
         }
         if (!response["data"] || !response["order"]) {
-            console.log("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
+            console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
             return;
         }
         if (!this.initialized) {
@@ -22407,11 +22406,11 @@ function DashGuiFileExplorerData () {
     this.on_files_changed = function (response) {
         var error_context = "on_files_changed response (on upload/delete) was invalid.";
         if (!response["all_files"]) {
-            console.log("Error:", error_context, "An 'all_files' key is required to update the list:", response);
+            console.error("Error:", error_context, "An 'all_files' key is required to update the list:", response);
             return;
         }
         if (!response["all_files"]["data"] || !response["all_files"]["order"]) {
-            console.log("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
+            console.error("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
             return;
         }
         if (!Dash.ValidateResponse(response)) {
@@ -23567,7 +23566,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         text = text.trim();
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
-                console.log("Error: AddMessage() requires a 'text' param");
+                console.error("Error: AddMessage() requires a 'text' param");
             }
             return;
         }
@@ -23627,7 +23626,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
-            console.log("Warning: Toggle button already added to ChatBox, can't add another at this time.");
+            console.warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
             return;
         }
         this.toggle_local_storage_key = local_storage_key;
@@ -23900,7 +23899,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         for (var i in this.at_combo_options) {
             var label_text = this.at_combo_options[i]["label_text"];
             if (labels.includes(label_text)) {
-                console.log("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
+                console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
                 return;
             }
             labels.push(label_text);
@@ -24032,14 +24031,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         index = parseInt(index);
         
         if (!Number.isInteger(index)) {
-            console.log("Error: SetIndex() requires an integer:", index, typeof index);
+            console.error("Error: SetIndex() requires an integer:", index, typeof index);
             return;
         }
         this.index = index;
     };
     this.SetText = function (text) {
         if (typeof text !== "string") {
-            console.log("Error: SetText() requires a string");
+            console.error("Error: SetText() requires a string");
             return;
         }
         this.text = text;
@@ -24386,7 +24385,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             this.set_data_cb(property_key, selected_option);
             return;
         }
-        console.log("Error: Property Box has no callback and no endpoint information!");
+        console.error("Error: Property Box has no callback and no endpoint information!");
     };
     this.on_row_updated = function (row_input, row_details) {
         var new_value = row_input.Text();
@@ -24405,7 +24404,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 this.set_data_cb(row_details["key"], new_value);
             }
             else {
-                console.log("Error: Property Box has no callback and no endpoint information!");
+                console.error("Error: Property Box has no callback and no endpoint information!");
             }
             return;
         }
@@ -24679,7 +24678,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         // Toss a warning if this isn't a known style so we don't fail silently
         this.styles = ["default", "row"];
         if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Combo Style: " + this.style);
+            console.error("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
         }
         if (this.style === "row") {
@@ -25170,7 +25169,7 @@ function DashGuiComboInterface () {
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
         if (!Number.isInteger(offset)) {
-            console.log("Error: SetListVerticalOffset() requires an integer:", offset, typeof offset);
+            console.error("Error: SetListVerticalOffset() requires an integer:", offset, typeof offset);
             return;
         }
         this.list_offset_vertical = offset;
@@ -25222,7 +25221,7 @@ function DashGuiComboInterface () {
     this.Update = function (combo_list, selected, ignore_callback=false) {
         // If the same item is selected, don't fire the callback on updating the list
         if (typeof(selected) == "string") {
-            console.log("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+            console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
             console.log("combo_list", combo_list);
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);
@@ -26142,7 +26141,7 @@ function DashGuiLayoutToolbar (binder, color) {
             callback(selected_id, previous_selected_option, this, additional_data);
         }
         else {
-            console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
         }
     };
     this.on_input_changed = function (obj_index) {
@@ -26479,11 +26478,11 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         }
         if (!content_html) {
             if (parseInt(index) === 0) {
-                console.log("Error: Unknown content!");
+                console.error("Error: Unknown content!");
                 content_html = $("<div>Error Loading Content</div>");
             }
             else {
-                console.log("Error: Invalid index", index, ", reloading index 0");
+                console.error("Error: Invalid index", index, ", reloading index 0");
                 this.LoadIndex(0);
                 return;
             }
@@ -26743,11 +26742,11 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
     if (!(column_config instanceof DashGuiListColumnConfig)) {
-        console.log("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
         return;
     }
     if (!this.binder.GetDataForKey) {
-        console.log("Error: Calling class must contain a function named GetDataForKey()");
+        console.error("Error: Calling class must contain a function named GetDataForKey()");
         return;
     }
     this.rows = [];
@@ -26773,7 +26772,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
     this.AddHeaderRow = function (html_css, column_box_css) {
         if (this.header_row) {
-            console.log("Error: This list already has a header row, can't add another.");
+            console.error("Error: This list already has a header row, can't add another.");
             return;
         }
         this.header_row_css = {
@@ -26837,7 +26836,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
     this.SetColumnConfig = function (column_config, clear=true) {
         if (!(column_config instanceof DashGuiListColumnConfig)) {
-            console.log("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+            console.error("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
             return;
         }
         this.column_config = column_config;
@@ -27706,7 +27705,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.SetVerticalSpacePercent = function (num) {
         num = parseInt(num);
         if (isNaN(num)) {
-            console.log("Error: Invalid number passed to SetVerticalSpacePercent()");
+            console.error("Error: Invalid number passed to SetVerticalSpacePercent()");
             return;
         }
         this.VerticalSpaceTakenPercent = num.toString() + "%";
@@ -27775,7 +27774,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
         var canvas_container = canvas["container"];
         var canvas_script = canvas["script"];
         if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
-            console.log("Error: Something went wrong when updating canvas containers x0741");
+            console.error("Error: Something went wrong when updating canvas containers x0741");
             return;
         }
         var top_container = document.createElement("div");
@@ -27876,11 +27875,11 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
             DashGuiLayoutDashboardModuleRect.call(this);
         }
         else {
-            console.log("Error: Invalid Module Style:", this.style);
+            console.error("Error: Invalid Module Style:", this.style);
             return;
         }
         if (!this.styles.includes(this.sub_style)) {
-            console.log("Error: Invalid Module Sub-Style:", this.sub_style);
+            console.error("Error: Invalid Module Sub-Style:", this.sub_style);
             return;
         }
         this.html = Dash.Gui.GetHTMLBoxContext();
@@ -27922,15 +27921,15 @@ function DashGuiLayoutDashboardModuleFlex () {
     this.bar_data = {};
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
-            console.log("Error: SetBarData() only applies to Flex-Bar Modules");
+            console.error("Error: SetBarData() only applies to Flex-Bar Modules");
             return;
         }
         if (!Dash.IsValidObject(data)) {
-            console.log("Error: SetBarData() requires a dictionary to be passed in");
+            console.error("Error: SetBarData() requires a dictionary to be passed in");
             return;
         }
         if (!data["data"] || !data["order"]) {
-            console.log("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
+            console.error("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
             return;
         }
         this.bar_data = data;
@@ -28018,7 +28017,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             var key = data["order"][i];
             var value = parseInt(data["data"][key]);
             if (isNaN(value)) {
-                console.log("Error: Bar data object values must be numbers");
+                console.error("Error: Bar data object values must be numbers");
                 return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
             }
             values.push(value);
@@ -28111,7 +28110,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             self.label.fadeOut(500);
             self.label_text = text.toString().toUpperCase();
             if (self.label_text.length > 4) {
-                console.log("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+                console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
             }
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
                 self.label.css({
@@ -28126,12 +28125,12 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
     this.SetRadialFillPercent = function (percent) {
         if (this.sub_style !== "radial") {
-            console.log("Error: SetRadialFillPercent() only works for Square Radial Modules");
+            console.error("Error: SetRadialFillPercent() only works for Square Radial Modules");
             return;
         }
         percent = parseInt(percent);
         if (isNaN(percent)) {
-            console.log("Error: SetRadialFillPercent requires a number!");
+            console.error("Error: SetRadialFillPercent requires a number!");
         }
         if (percent > 100) {
             percent = 100;
@@ -28299,11 +28298,11 @@ function DashGuiLayoutDashboardModuleRect () {
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
-            console.log("Error: SetListData() only applies to Rect-List Modules");
+            console.error("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
         if (!Array.isArray(data_list)) {
-            console.log("Error: SetListData() requires a list of dicts to be passed in");
+            console.error("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
         this.list_data = data_list;
@@ -28341,12 +28340,12 @@ function DashGuiLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.log("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
             if (!Dash.IsValidObject(data)) {
-                console.log("Error: Rect List Module data expects a list of dicts");
+                console.error("Error: Rect List Module data expects a list of dicts");
                 return;
             }
             var key = Object.keys(data)[0];
@@ -28439,11 +28438,11 @@ function DashGuiLayoutDashboardModuleRect () {
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
-            console.log("Error: SetListData() only applies to Rect-List Modules");
+            console.error("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
         if (!Array.isArray(data_list)) {
-            console.log("Error: SetListData() requires a list of dicts to be passed in");
+            console.error("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
         this.list_data = data_list;
@@ -28481,12 +28480,12 @@ function DashGuiLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.log("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
             if (!Dash.IsValidObject(data)) {
-                console.log("Error: Rect List Module data expects a list of dicts");
+                console.error("Error: Rect List Module data expects a list of dicts");
                 return;
             }
             var key = Object.keys(data)[0];
@@ -28752,7 +28751,7 @@ function DashMobileLayoutCardStack (binder, color) {
     };
     this.AddBanner = function () {
         if (this.banner) {
-            console.log("Error: Stack.AddBanner() >> A banner already exists!");
+            console.error("Error: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
         };
         this.banner = new DashCardStackBanner(this);
@@ -28766,7 +28765,7 @@ function DashMobileLayoutCardStack (binder, color) {
             this.fix_banner_on_top();
         }
         else {
-            console.log("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+            console.warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         };
     };
     this.fix_banner_on_top = function () {
@@ -29706,7 +29705,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             this.callback();
         }
         else {
-            console.log("Error: No callback associated with button!");
+            console.error("Error: No callback associated with button!");
         };
         this.click_active = true;
         (function (self) {
@@ -29913,7 +29912,7 @@ function DashMobileLayoutCard (stack) {
             break;
         };
         if (!touch_found) {
-            console.log("Warning: No touches found??");
+            console.warn("Warning: No touches found??");
             return;
         };
         var screen_px_moved_x = this.pull_active["touch_now_x"]-this.pull_active["touch_start_x"];
@@ -30134,7 +30133,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             this.callback();
         }
         else {
-            console.log("Error: No callback associated with button!");
+            console.error("Error: No callback associated with button!");
         };
         this.click_active = true;
         (function (self) {

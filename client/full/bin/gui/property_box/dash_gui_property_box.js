@@ -215,7 +215,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
-        console.log("Error: Property Box has no callback and no endpoint information!");
+        console.error("Error: Property Box has no callback and no endpoint information!");
     };
 
     this.on_row_updated = function (row_input, row_details) {
@@ -240,7 +240,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
 
             else {
-                console.log("Error: Property Box has no callback and no endpoint information!");
+                console.error("Error: Property Box has no callback and no endpoint information!");
             }
 
             return;

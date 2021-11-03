@@ -86,7 +86,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             var label_text = this.at_combo_options[i]["label_text"];
 
             if (labels.includes(label_text)) {
-                console.log("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
+                console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
 
                 return;
             }

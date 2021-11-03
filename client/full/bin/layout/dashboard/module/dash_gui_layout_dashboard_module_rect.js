@@ -9,13 +9,13 @@ function DashGuiLayoutDashboardModuleRect () {
     // the key displays on the left side of the list, and value displays on the right side
     this.SetListData = function (data_list) {
         if (this.sub_style !== "list") {
-            console.log("Error: SetListData() only applies to Rect-List Modules");
+            console.error("Error: SetListData() only applies to Rect-List Modules");
 
             return;
         }
 
         if (!Array.isArray(data_list)) {
-            console.log("Error: SetListData() requires a list of dicts to be passed in");
+            console.error("Error: SetListData() requires a list of dicts to be passed in");
 
             return;
         }
@@ -62,7 +62,7 @@ function DashGuiLayoutDashboardModuleRect () {
 
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.log("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
 
                 break;
             }
@@ -70,7 +70,7 @@ function DashGuiLayoutDashboardModuleRect () {
             var data = this.list_data[i];
 
             if (!Dash.IsValidObject(data)) {
-                console.log("Error: Rect List Module data expects a list of dicts");
+                console.error("Error: Rect List Module data expects a list of dicts");
 
                 return;
             }

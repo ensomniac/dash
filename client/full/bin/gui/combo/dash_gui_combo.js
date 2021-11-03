@@ -42,7 +42,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.styles = ["default", "row"];
 
         if (!this.styles.includes(this.style)) {
-            console.log("Error: Unknown Dash Combo Style: " + this.style);
+            console.error("Error: Unknown Dash Combo Style: " + this.style);
 
             this.style = "default";
         }

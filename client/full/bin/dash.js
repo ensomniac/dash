@@ -96,7 +96,7 @@ function Dash () {
 
     this.GetDeepCopy = function (obj) {
         if (!this.IsValidObject(obj)) {
-            console.log("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
+            console.warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
 
             return null;
         }
@@ -390,7 +390,7 @@ $(document).on("ready", function () {
     });
 
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
-        console.log("Warning: URL Loaded with www -> Redirecting");
+        console.warn("Warning: URL Loaded with www -> Redirecting");
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
 

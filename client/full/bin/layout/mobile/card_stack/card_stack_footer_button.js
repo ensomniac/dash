@@ -92,7 +92,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             this.callback();
         }
         else {
-            console.log("Error: No callback associated with button!");
+            console.error("Error: No callback associated with button!");
         };
 
         this.click_active = true;

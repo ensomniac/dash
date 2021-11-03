@@ -15,7 +15,7 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
     }
 
     if (!this.color.Text) {
-        console.log("Error: Incorrect color object passed to DashIcon:", this.color);
+        console.error("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
 
         debugger;
@@ -59,7 +59,7 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
         percentage_number = parseInt(percentage_number);
 
         if (isNaN(percentage_number)) {
-            console.log("Error: DashIcon SetSize requires a number (that represents a percentage)");
+            console.error("Error: DashIcon SetSize requires a number (that represents a percentage)");
 
             return;
         }

@@ -229,7 +229,7 @@ function DashColor () {
             colors = this.ParseToRGB(color_2) + " 0%, " + this.ParseToRGB(color_1) + " 100%";
         }
         else {
-            console.log("Error: At least 2 colors are required for a gradient");
+            console.error("Error: At least 2 colors are required for a gradient");
             return "red";
         }
 

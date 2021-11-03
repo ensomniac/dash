@@ -100,7 +100,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
             this.callback();
         }
         else {
-            console.log("Error: No callback associated with button!");
+            console.error("Error: No callback associated with button!");
         };
 
         this.click_active = true;

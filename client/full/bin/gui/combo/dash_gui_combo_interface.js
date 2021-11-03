@@ -75,7 +75,7 @@ function DashGuiComboInterface () {
         offset = parseInt(offset);
 
         if (!Number.isInteger(offset)) {
-            console.log("Error: SetListVerticalOffset() requires an integer:", offset, typeof offset);
+            console.error("Error: SetListVerticalOffset() requires an integer:", offset, typeof offset);
 
             return;
         }
@@ -144,7 +144,7 @@ function DashGuiComboInterface () {
         // If the same item is selected, don't fire the callback on updating the list
 
         if (typeof(selected) == "string") {
-            console.log("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+            console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
             console.log("combo_list", combo_list);
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);

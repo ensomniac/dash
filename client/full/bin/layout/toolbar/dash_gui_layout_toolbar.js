@@ -32,7 +32,7 @@ function DashGuiLayoutToolbar (binder, color) {
         }
 
         else {
-            console.log("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
         }
     };
 

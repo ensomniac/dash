@@ -73,7 +73,7 @@ function DashGuiFileExplorerData () {
         }
 
         if (!response["data"] || !response["order"]) {
-            console.log("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
+            console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
 
             return;
         }
@@ -101,13 +101,13 @@ function DashGuiFileExplorerData () {
         var error_context = "on_files_changed response (on upload/delete) was invalid.";
 
         if (!response["all_files"]) {
-            console.log("Error:", error_context, "An 'all_files' key is required to update the list:", response);
+            console.error("Error:", error_context, "An 'all_files' key is required to update the list:", response);
 
             return;
         }
 
         if (!response["all_files"]["data"] || !response["all_files"]["order"]) {
-            console.log("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
+            console.error("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
 
             return;
         }

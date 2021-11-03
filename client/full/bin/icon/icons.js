@@ -148,7 +148,7 @@ function GuiIcons (icon) {
     }
     
     else if (!this.icon_map[this.icon.name]) {
-        console.log("Warning: Unable to locate icon by name '" + this.icon.name + "'");
+        console.warn("Warning: Unable to locate icon by name '" + this.icon.name + "'");
         
         console.trace();
         

@@ -5,13 +5,13 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.color = color || Dash.Color.Light;
 
     if (!(column_config instanceof DashGuiListColumnConfig)) {
-        console.log("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
 
         return;
     }
 
     if (!this.binder.GetDataForKey) {
-        console.log("Error: Calling class must contain a function named GetDataForKey()");
+        console.error("Error: Calling class must contain a function named GetDataForKey()");
 
         return;
     }
@@ -45,7 +45,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
     this.AddHeaderRow = function (html_css, column_box_css) {
         if (this.header_row) {
-            console.log("Error: This list already has a header row, can't add another.");
+            console.error("Error: This list already has a header row, can't add another.");
 
             return;
         }
@@ -131,7 +131,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
     this.SetColumnConfig = function (column_config, clear=true) {
         if (!(column_config instanceof DashGuiListColumnConfig)) {
-            console.log("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+            console.error("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
 
             return;
         }

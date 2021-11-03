@@ -348,7 +348,6 @@ function DashGui() {
 
                     catch {
                         // Ignore
-                        console.log("TEST fail");
                     }
                 }
             },

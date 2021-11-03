@@ -28,7 +28,7 @@ function DashGuiLayoutDashboardModuleSquare () {
             self.label_text = text.toString().toUpperCase();
 
             if (self.label_text.length > 4) {
-                console.log("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+                console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
             }
 
             if (self.sub_style === "tag" && self.label_text.length <= 3) {
@@ -47,7 +47,7 @@ function DashGuiLayoutDashboardModuleSquare () {
 
     this.SetRadialFillPercent = function (percent) {
         if (this.sub_style !== "radial") {
-            console.log("Error: SetRadialFillPercent() only works for Square Radial Modules");
+            console.error("Error: SetRadialFillPercent() only works for Square Radial Modules");
 
             return;
         }
@@ -55,7 +55,7 @@ function DashGuiLayoutDashboardModuleSquare () {
         percent = parseInt(percent);
 
         if (isNaN(percent)) {
-            console.log("Error: SetRadialFillPercent requires a number!");
+            console.error("Error: SetRadialFillPercent requires a number!");
         }
 
         if (percent > 100) {

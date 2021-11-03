@@ -221,7 +221,7 @@ function DashMobileLayoutCard (stack) {
         };
 
         if (!touch_found) {
-            console.log("Warning: No touches found??");
+            console.warn("Warning: No touches found??");
             return;
         };
 

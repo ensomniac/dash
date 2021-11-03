@@ -92,13 +92,13 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
         if (!content_html) {
             if (parseInt(index) === 0) {
-                console.log("Error: Unknown content!");
+                console.error("Error: Unknown content!");
 
                 content_html = $("<div>Error Loading Content</div>");
             }
 
             else {
-                console.log("Error: Invalid index", index, ", reloading index 0");
+                console.error("Error: Invalid index", index, ", reloading index 0");
 
                 this.LoadIndex(0);
 
