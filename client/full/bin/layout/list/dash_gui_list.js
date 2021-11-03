@@ -79,6 +79,18 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         return row;
     };
 
+    this.RemoveRow = function (row_id) {
+        var row = this.GetRow(row_id);
+
+        if (!row) {
+            return;
+        }
+
+        row.html.remove();
+
+        this.rows.splice(this.rows.indexOf(row), 1);
+    };
+
     this.DisableColumn = function (type, type_index) {
         if (!this.rows) {
             return;
@@ -157,6 +169,25 @@ function DashGuiList (binder, selected_callback, column_config, color) {
                 return row;
             }
         }
+    };
+
+    // This is handy so you can re-expand previously expanded rows after a list clear or list refresh
+    this.GetExpandedRowIDs = function () {
+        if (!this.rows) {
+            return;
+        }
+
+        var expanded_rows_ids = [];
+
+        for (var i in this.rows) {
+            var row = this.rows[i];
+
+            if (row.IsExpanded()) {
+                expanded_rows_ids.push(row.ID());
+            }
+        }
+
+        return expanded_rows_ids;
     };
 
     // Intended for cases where this is a sublist

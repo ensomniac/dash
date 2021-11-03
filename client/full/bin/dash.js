@@ -197,6 +197,26 @@ function Dash () {
 
     };
 
+    this.RevertTempLastInputText = function (temp_last_input=null, allow_empty_string=false) {
+        if (!temp_last_input) {
+            temp_last_input = this.TempLastInputSubmitted;
+        }
+
+        if (!temp_last_input) {
+            return;
+        }
+
+        var previous = temp_last_input.previous_submitted_text || "";
+
+        if (!allow_empty_string && !previous) {
+            return;
+        }
+
+        if (previous !== temp_last_input.last_submitted_text) {
+            temp_last_input.SetText(previous);
+        }
+    };
+
     this.setup_styles = function () {
 
         $("body").css({
@@ -263,11 +283,7 @@ function Dash () {
             temp_last_input.SkipNextAutosave();
         }
 
-        var previous = temp_last_input.previous_submitted_text;
-
-        if (previous && previous !== temp_last_input.last_submitted_text) {
-            temp_last_input.SetText(previous);
-        }
+        this.RevertTempLastInputText(temp_last_input);
     };
 
     this.extend_js = function () {

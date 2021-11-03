@@ -17892,6 +17892,21 @@ function Dash () {
         });
         return container;
     };
+    this.RevertTempLastInputText = function (temp_last_input=null, allow_empty_string=false) {
+        if (!temp_last_input) {
+            temp_last_input = this.TempLastInputSubmitted;
+        }
+        if (!temp_last_input) {
+            return;
+        }
+        var previous = temp_last_input.previous_submitted_text || "";
+        if (!allow_empty_string && !previous) {
+            return;
+        }
+        if (previous !== temp_last_input.last_submitted_text) {
+            temp_last_input.SetText(previous);
+        }
+    };
     this.setup_styles = function () {
         $("body").css({
             "overflow": "hidden",
@@ -17938,10 +17953,7 @@ function Dash () {
         if (!temp_last_input.submit_called_from_autosave) {
             temp_last_input.SkipNextAutosave();
         }
-        var previous = temp_last_input.previous_submitted_text;
-        if (previous && previous !== temp_last_input.last_submitted_text) {
-            temp_last_input.SetText(previous);
-        }
+        this.RevertTempLastInputText(temp_last_input);
     };
     this.extend_js = function () {
         // TODO: Move this into utils
@@ -26776,6 +26788,14 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
         return row;
     };
+    this.RemoveRow = function (row_id) {
+        var row = this.GetRow(row_id);
+        if (!row) {
+            return;
+        }
+        row.html.remove();
+        this.rows.splice(this.rows.indexOf(row), 1);
+    };
     this.DisableColumn = function (type, type_index) {
         if (!this.rows) {
             return;
@@ -26836,6 +26856,20 @@ function DashGuiList (binder, selected_callback, column_config, color) {
                 return row;
             }
         }
+    };
+    // This is handy so you can re-expand previously expanded rows after a list clear or list refresh
+    this.GetExpandedRowIDs = function () {
+        if (!this.rows) {
+            return;
+        }
+        var expanded_rows_ids = [];
+        for (var i in this.rows) {
+            var row = this.rows[i];
+            if (row.IsExpanded()) {
+                expanded_rows_ids.push(row.ID());
+            }
+        }
+        return expanded_rows_ids;
     };
     // Intended for cases where this is a sublist
     this.GetParentRow = function () {
@@ -26917,9 +26951,9 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.setup_styles();
 }
 
-function DashGuiListRow (list, arbitrary_id) {
+function DashGuiListRow (list, row_id) {
     this.list = list;
-    this.id = arbitrary_id;
+    this.id = row_id;
     this.columns = {};
     this.is_shown = true;
     this.tmp_css_cache = [];
@@ -27019,6 +27053,9 @@ function DashGuiListRow (list, arbitrary_id) {
     };
     this.IsExpanded = function () {
         return this.is_expanded;
+    };
+    this.ID = function () {
+        return this.id;
     };
     this.Hide = function () {
         if (!this.is_shown) {

@@ -1,6 +1,6 @@
-function DashGuiListRow (list, arbitrary_id) {
+function DashGuiListRow (list, row_id) {
     this.list = list;
-    this.id = arbitrary_id;
+    this.id = row_id;
 
     this.columns = {};
     this.is_shown = true;
@@ -123,6 +123,10 @@ function DashGuiListRow (list, arbitrary_id) {
 
     this.IsExpanded = function () {
         return this.is_expanded;
+    };
+
+    this.ID = function () {
+        return this.id;
     };
 
     this.Hide = function () {
