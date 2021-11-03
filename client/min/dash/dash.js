@@ -19855,27 +19855,27 @@ function DashGui() {
             () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
         );
     };
-    // This can be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
-    this.AddTooltip = function (html, text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null) {
-        // TODO: This should probably become its own style at some point (will require it to first be visually improved)
+    // This is rather quick/dirty and should probably become its own style at some point (will require it to first be visually improved)
+    // This can also be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
+    this.AddTooltip = function (html, static_text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null, text_getter=null) {
         var tooltip = $("<div></div>");
         html.append(tooltip);
         this.set_tooltip_css(tooltip, additional_css, monospaced);
-        if (text) {
-            tooltip.text(text);
+        if (static_text) {
+            tooltip.text(static_text);
         }
         tooltip.hide();
-        (function (self, html, additional_css, override_element, delay_ms, tooltip) {
+        (function (self, html, additional_css, override_element, delay_ms, tooltip, text_getter) {
             var timer;
             html.hover(
                 function () {
-                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms);
+                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms, text_getter);
                 },
                 function () {
                     self.tooltip_on_hover_out(tooltip, override_element, timer);
                 }
             );
-        })(this, html, additional_css, override_element, delay_ms, tooltip);
+        })(this, html, additional_css, override_element, delay_ms, tooltip, text_getter);
         return tooltip;
     };
     this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
@@ -19911,7 +19911,7 @@ function DashGui() {
         }
         return tooltip;
     };
-    this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms) {
+    this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms, text_getter=null) {
         if (override_element) {
             // Override element is intended to NOT show the tooltip under the below defined
             // circumstances. These will be somewhat unique depending on the element - expand as needed.
@@ -19937,6 +19937,15 @@ function DashGui() {
                     "left": left
                 });
                 tooltip.show();
+                if (text_getter) {
+                    try {
+                        tooltip.text(text_getter());
+                    }
+                    catch {
+                        // Ignore
+                        console.log("TEST fail");
+                    }
+                }
             },
             delay_ms
         );
