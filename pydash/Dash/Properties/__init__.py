@@ -12,8 +12,10 @@ from types import FunctionType
 class ConfigManager:
     def __init__(self, config_type, config_module_function):
         if not isinstance(config_module_function, FunctionType):
-            raise Exception("Param 'config_module_function' must be a function, typically "
-                            "the context-appropriate variation of 'GetModuleByConfigType'")
+            raise Exception(
+                "Param 'config_module_function' must be a function, typically "
+                "the context-appropriate variation of 'GetModuleByConfigType'"
+            )
 
         self.config_type = config_type
         self.config_module = config_module_function(config_type)

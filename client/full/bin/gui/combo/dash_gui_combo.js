@@ -23,6 +23,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.button_is_highlighted = false;
+    this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -260,10 +261,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.click.stop().animate({"opacity": 0}, 2000);
     };
 
+    // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
-        // Called when a selection in the combo is made
-
-        var previous_selected_option = this.selected_option;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
@@ -272,17 +271,22 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             return;
         }
 
+
         this.hide();
+
         this.label.text(label_text);
 
+        this.previous_selected_option = this.selected_option;
         this.selected_option = selected_option;
         this.selected_option_id = selected_option["id"];
 
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, previous_selected_option, this.additional_data, search_text);
+            this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
         }
 
         this.initialized = true;
+
+        Dash.TempLastComboChanged = this;
     };
 
     // Prior to showing, set the width of rows (this is all important so it can auto-size)

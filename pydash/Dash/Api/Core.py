@@ -10,7 +10,7 @@ import json
 
 from traceback import format_exc
 from Dash import __name__ as DashName
-from Dash.Utils import GetRandomID, SendEmail
+from Dash.Utils import GetRandomID, SendEmail, ClientAlert
 
 
 class ApiCore:
@@ -200,7 +200,7 @@ class ApiCore:
 
         self._response = response
 
-        if type(self._response) is dict and self._response.get("error") and self._send_email_on_error and not self._execute_as_module:
+        if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
             self.SendEmail()
 
         # Private errors should be deleted after sending the error email so they're not exposed to the client
@@ -304,11 +304,17 @@ class ApiCore:
         try:
             f()
 
+        # See ClientAlert docstring for explainer - don't use this without reading that first
+        except ClientAlert as e:
+            self._send_email_on_error = False
+
+            self.SetResponse({"error": str(e)})
+
         except Exception as e:
-            self.SetResponse({"error": f"{e}\nTraceback: {format_exc()}"})
+            self.SetResponse({"error": f"{e}\n\nTraceback:\n{format_exc()}"})
 
         except:
-            self.SetResponse({"error": f"There was a scripting problem: {format_exc()}"})
+            self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
 
     def Execute(uninstantiated_class_ref):
         """
@@ -321,7 +327,7 @@ class ApiCore:
             uninstantiated_class_ref()
 
         except Exception as e:
-            error = {"error": f"{e}\nTraceback: {format_exc()}"}
+            error = {"error": f"{e}\n\nTraceback:\n{format_exc()}"}
 
         except:
             error = {"error": format_exc(), "script_execution_failed": True}
@@ -329,7 +335,7 @@ class ApiCore:
         if error is not None:
             print_json(error)
 
-            sys.exit()
+        sys.exit()
 
 
 def get_response_status(response):

@@ -17763,6 +17763,7 @@ function Dash () {
     this.OnFrame = this.Utils.OnFrame.bind(this.Utils);
     this.OnHTMLResized = this.Utils.OnHTMLResized.bind(this.Utils);
     // Temp storage
+    this.TempLastComboChanged = null;
     this.TempLastInputSubmitted = null;
     this.FormatTime = function (server_iso_string) {
         var server_offset_hours = 5; // The server's time is 3 hours different
@@ -17869,11 +17870,11 @@ function Dash () {
             // This stops duplicate callbacks from being triggered after an alert window pops up
             this.handle_duplicate_callbacks_on_invalid_input();
             if (!response) {
-                console.log("Dash.ValidateResponse(1)", response);
+                console.error("Dash.ValidateResponse(1)", response);
                 alert("There was a server problem with this request: No response received");
             }
             else if (response["error"]) {
-                console.log("There was a server problem with this request:", response);
+                console.error("There was a server problem with this request:", response);
                 alert(response["error"]);
             }
             return null;
@@ -17892,6 +17893,8 @@ function Dash () {
         });
         return container;
     };
+    // This is useful as a quick "undo" on the last modified input in cases like
+    // when the server returns a response that says that input value is invalid etc
     this.RevertTempLastInputText = function (temp_last_input=null, allow_empty_string=false) {
         if (!temp_last_input) {
             temp_last_input = this.TempLastInputSubmitted;
@@ -17905,6 +17908,28 @@ function Dash () {
         }
         if (previous !== temp_last_input.last_submitted_text) {
             temp_last_input.SetText(previous);
+        }
+        else if (allow_empty_string && !previous && !temp_last_input.last_submitted_text) {
+            temp_last_input.SetText("");
+        }
+    };
+    // This is useful as a quick "undo" on the last modified combo in cases like
+    // when the server returns a response that says that combo change is invalid etc
+    this.RevertTempLastComboSelection = function (temp_last_combo=null) {
+        if (!temp_last_combo) {
+            temp_last_combo = this.TempLastComboChanged;
+        }
+        if (!temp_last_combo) {
+            return;
+        }
+        var previous = temp_last_combo.previous_selected_option;
+        if (!this.IsValidObject(previous)) {
+            // Instead of returning, might make sense to set 'previous' to
+            // the first combo option in the combo's list of options?
+            return;
+        }
+        if (JSON.stringify(previous) !== JSON.stringify(temp_last_combo.selected_option)) {
+            temp_last_combo.Update(null, previous, true);
         }
     };
     this.setup_styles = function () {
@@ -24663,6 +24688,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.button_is_highlighted = false;
+    this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -24847,22 +24873,24 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.click.stop().css({"opacity": 1});
         this.click.stop().animate({"opacity": 0}, 2000);
     };
+    // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
-        // Called when a selection in the combo is made
-        var previous_selected_option = this.selected_option;
         var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
             this.label.text("ERROR");
             return;
         }
+
         this.hide();
         this.label.text(label_text);
+        this.previous_selected_option = this.selected_option;
         this.selected_option = selected_option;
         this.selected_option_id = selected_option["id"];
         if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, previous_selected_option, this.additional_data, search_text);
+            this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
         }
         this.initialized = true;
+        Dash.TempLastComboChanged = this;
     };
     // Prior to showing, set the width of rows (this is all important so it can auto-size)
     this.pre_show_size_set = function () {
