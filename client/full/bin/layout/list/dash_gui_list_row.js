@@ -201,11 +201,19 @@ function DashGuiListRow (list, row_id) {
         row.SetExpandedSubListParentHeight(height_change);
     };
 
-    this.Expand = function (html, sublist_rows=null) {
+    this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
         if (this.is_expanded) {
             this.Collapse();
 
             return;
+        }
+
+        // Optional param so that we can hide hover tips that are intended for the collapsed row element only.
+        // Once removed, the managing code needs to re-assign the hover tip on hover in (mouse enter).
+        if (remove_hover_tip && this.html.attr("title")) {
+            console.debug("TEST remove hover tip");
+
+            this.html.removeAttr("title");
         }
 
         if (sublist_rows) {
