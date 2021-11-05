@@ -129,6 +129,10 @@ function DashGuiListRow (list, row_id) {
         return this.id;
     };
 
+    this.Remove = function () {
+        this.list.RemoveRow(this.id);
+    };
+
     this.Hide = function () {
         if (!this.is_shown) {
             return;

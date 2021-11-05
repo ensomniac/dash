@@ -86,9 +86,18 @@ function DashGuiList (binder, selected_callback, column_config, color) {
             return;
         }
 
+        row.Collapse();
+        row.Hide();
+
         row.html.remove();
 
-        this.rows.splice(this.rows.indexOf(row), 1);
+        var index = this.rows.indexOf(row);
+
+        if (index === null || index === undefined || index < 0) {
+            return;
+        }
+
+        this.rows.splice(index, 1);
     };
 
     this.DisableColumn = function (type, type_index) {
