@@ -27169,7 +27169,6 @@ function DashGuiListRow (list, row_id) {
         if (this.is_sublist) {
             this.store_css_on_expansion(this.list.rows.Last());
         }
-        this.html.css("z-index", 2000);
         if (!this.expanded_highlight) {
             this.create_expand_highlight();
         }
@@ -27215,7 +27214,6 @@ function DashGuiListRow (list, row_id) {
             );
             this.tmp_css_cache = [];
         }
-        this.html.css("z-index", "initial");
         this.expanded_content.stop().css({
             "overflow-y": "hidden",
         });
