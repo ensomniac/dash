@@ -406,11 +406,12 @@ class Users:
         }
 
     def sort_team(self, team):
-        sorted_emails = []
         sortable = []
+        sorted_emails = []
 
         for email in team:
             primary = team[email].get("display_name") or team[email].get("first_name") or email
+
             sortable.append([primary, email])
 
         sortable.sort()
@@ -430,10 +431,11 @@ class Users:
             user_data = LocalStorage.Read(user_path)
 
             if user_data.get("first_name") and user_data.get("last_name"):
-                user_data["display_name"] = user_data["first_name"] + " "
-                user_data["display_name"] += user_data["last_name"]
+                user_data["display_name"] = user_data["first_name"] + " " + user_data["last_name"]
+
             elif user_data.get("first_name"):
                 user_data["display_name"] = user_data["first_name"]
+
             else:
                 user_data["display_name"] = user_email
 

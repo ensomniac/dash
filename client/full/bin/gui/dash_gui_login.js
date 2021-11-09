@@ -64,7 +64,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.Submit = function () {
-        var email = this.email_input.Text();
+        var email = this.get_email();
         var pass = this.password_input.Text();
 
         if (email && pass) {
@@ -73,7 +73,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.Login = function () {
-        var email = this.email_input.Text();
+        var email = this.get_email();
         var pass = this.password_input.Text();
 
         if (!Dash.IsValidEmail(email)) {
@@ -107,7 +107,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.ResetLogin = function () {
-        var email = this.email_input.Text();
+        var email = this.get_email();
 
         if (!Dash.IsValidEmail(email)) {
             alert("Please enter a valid email");
@@ -124,6 +124,10 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             this.on_reset_response,
             this
         );
+    };
+
+    this.get_email = function () {
+        return this.email_input.Text().trim();
     };
 
     this.setup_desktop_sizing = function () {
@@ -247,7 +251,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.store_input = function () {
-        Dash.Local.Set("email", this.email_input.Text());
+        Dash.Local.Set("email", this.get_email());
     };
 
     this.on_reset_response = function (response) {
@@ -271,7 +275,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
 
         console.log("******* LOG IN *******", response);
 
-        Dash.User.SetUserAuthentication(this.email_input.Text(), response);
+        Dash.User.SetUserAuthentication(this.get_email(), response);
 
         (function (self) {
             self.html.animate({"opacity": 0}, 150, function () {
