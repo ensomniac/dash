@@ -118,8 +118,8 @@ class _ClientCompiler:
         css_anchor_found = False
 
         # TODO: Clean/Shorten these lines:
-        js_anchor = f"""        <script src='dash/dash.js?v={str(self.VersionInfo['version'])}'></script>\n"""
-        css_anchor = f"""\n        <link rel="stylesheet" href="dash/dash.css?v={str(self.VersionInfo['version'])}">"""
+        js_anchor = f'''        <script src="dash/dash.js?v={str(self.VersionInfo['version'])}"></script>\n'''
+        css_anchor = f'''\n        <link rel="stylesheet" href="dash/dash.css?v={str(self.VersionInfo['version'])}">'''
 
         lines = open(os.path.join(
             self.ClientPathFull,
@@ -131,22 +131,21 @@ class _ClientCompiler:
                 continue
 
             if ".css" in line:
-
                 if "_mobile" in line:
-
                     path = self.parse_source_path(line)
+
                     if path:
                         # At the time of writing, there is only one css file
                         # but we run it through with all the rest for compatibility
                         css_mobile_source_paths.append(path)
-
                 else:
-
                     if not css_anchor_found:
                         css_anchor_found = True
+
                         index_content.append(css_anchor)
 
                     path = self.parse_source_path(line)
+
                     if path:
                         css_source_paths.append(path)
 
@@ -155,6 +154,7 @@ class _ClientCompiler:
             if ".js" in line:
                 if not js_anchor_found:
                     js_anchor_found = True
+
                     index_content.append(js_anchor)
 
                 path = self.parse_source_path(line)
@@ -337,8 +337,8 @@ class _ClientCompiler:
 
         lines.append('''<script type="text/javascript">''')
         lines.append('''    if (''' + nav_desc + '''i.test(navigator.userAgent)) {''')
-        lines.append('''        document.write('<link rel="stylesheet" type="text/css" href="dash/mdash.css?v=''' + str(self.VersionInfo["version"]) + '''"/>');''')
-        lines.append('''    };''')
+        lines.append('''        document.write("<link rel='stylesheet' type='text/css' href='dash/mdash.css?v=''' + str(self.VersionInfo["version"]) + ''''/>");''')
+        lines.append('''    }''')
         lines.append('''</script>''')
 
         return lines
@@ -367,14 +367,26 @@ class _ClientCompiler:
         header = [
             '''''', '''<!-- DASH START -->''',
             '''<script type="text/javascript">''',
-            '''    var DASH_AUTHOR = "Ryan Martin ryan@ensomniac.com";''',
+            '''    var DASH_AUTHOR = "Ryan Martin ryan@ensomniac.com, Andrew Stet stetandrew@gmail.com";''',
             '''    var DASH_VERSION = ''' + str(self.VersionInfo["version"]) + ''';''',
             '''    var DASH_VERSION_DATE = "''' + str(self.VersionInfo["date_hr"]) + '''";''',
-            '''    var DASH_CONTEXT = ''' + str(json.dumps(clean_context)) + ''';''',
-            '''</script>''',
-            '''<script src='dash/dash.js?v=''' + str(self.VersionInfo["version"]) + ''''></script>''',
-            '''<link rel="stylesheet" href="dash/dash.css?v=''' + str(self.VersionInfo["version"]) + '''">'''
+            '''    var DASH_CONTEXT = {'''
         ]
+
+        # str(json.dumps(clean_context))
+
+        for key in clean_context:
+            header.append(f'''        "{key}": "{clean_context[key]}",''')
+
+        # Remove trailing comma from last dict line
+        header[-1].rstrip(",")
+
+        header.extend([
+            '''    };''',
+            '''</script>''',
+            '''<script src="dash/dash.js?v=''' + str(self.VersionInfo["version"]) + '''"></script>''',
+            '''<link rel="stylesheet" href="dash/dash.css?v=''' + str(self.VersionInfo["version"]) + '''">'''
+        ])
 
         header.extend(self.get_mobile_css_include())
         header.append('''<!-- DASH END -->''')
@@ -433,7 +445,7 @@ class _ClientCompiler:
                 if not line.strip():
                     continue
 
-            if ".js" in line and "dash/" not in line and "</script>" in line:
+            if ".js" in line and "dash/" not in line and "</script>" in line and not 'type="module"' in line:
                 line = self.version_arbitrary(line, True, False)
 
             if ".css" in line and "dash/" not in line and "stylesheet" in line:
@@ -464,6 +476,7 @@ class _ClientCompiler:
         tail = line.split(extension)[-1].split(quote_type)[-1]
         head = f"{line.split(extension)[0]}{extension}"
         vstring = f"?v={str(self.VersionInfo['version'])}"
+
         return f"{head}{vstring}{quote_type}{tail}"
 
 
