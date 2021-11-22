@@ -23709,11 +23709,32 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         }
         this.valid_mentions.forEach(
             function (label_text) {
-                if (!text.includes(label_text)) {
-                    return;
+                var label_text_lower = label_text.toLowerCase();
+                if (!text.includes("@" + label_text) && !text.includes("@" + label_text_lower)) {
+                    if (!label_text.includes(" ")) {
+                        return;
+                    }
+                    var first = label_text.split(" ")[0];
+                    var first_lower = first.toLowerCase();
+                    if (!text.includes("@" + first) && !text.includes("@" + first_lower)) {
+                        return;
+                    }
+                    var occurrences = 0;
+                    this.valid_mentions.forEach(function (label) {
+                        if (label.startsWith(first)) {
+                            occurrences += 1;
+                        }
+                    });
+                    if (occurrences !== 1) {
+                        return;
+                    }
+                    text = text.replaceAll(
+                        text.includes("@" + first) ? "@" + first : "@" + first_lower,
+                        "@" + label_text
+                    );
                 }
                 text = text.replaceAll(
-                    "@" + label_text,
+                    text.includes("@" + label_text) ? "@" + label_text : "@" + label_text_lower,
                     "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
                 );
                 if (track && !this.callback_mentions.includes(label_text)) {
@@ -23815,6 +23836,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
     this.add_message = function () {
         var text = this.message_input.Text();
+        // Wait for the user to make a mention selection or finish typing it out
         if (text.endsWith("@")) {
             (function (self) {
                 setTimeout(
