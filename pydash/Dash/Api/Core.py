@@ -325,9 +325,21 @@ class ApiCore:
         except:
             self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
 
+    # TODO: Since class functions expect 'self' as the first variable,
+    #       Execute() should sit outside of this class and be a standalone function,
+    #  turning this:
+    #         if __name__ == "__main__":
+    #             ApiCore.Execute(Desktop)
+    #  into this:
+    #         if __name__ == "__main__":
+    #             from Dash.Api.Core import Execute
+    #             Execute(Desktop)
+
     def Execute(uninstantiated_class_ref):
         """
         This exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
+
+        :param class uninstantiated_class_ref: Any uninstantiated class reference object to test
         """
 
         error = None
