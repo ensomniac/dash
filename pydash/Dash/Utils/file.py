@@ -3,7 +3,7 @@
 # Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
-# TODO: Ideally, we should get rid of all old "orig" key tags (from old image upload
+# TODO: Ideally, we should get rid of all old "orig_" key prefixes (from old image upload
 #  system), but it will likely break things on the front end, so maybe in the future
 
 import os
@@ -16,7 +16,7 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 debug_log = []
 
 
-def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True):
+def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}):
     if filename.count(".") != 1:
         raise Exception(f"Invalid filename, or no file extension: {filename}")
 
@@ -32,21 +32,24 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server
     is_image = file_ext in ImageExtensions
 
     if is_image:
-        img, file_data = get_image_with_data(file_bytes, filename, user)
+        img, file_data = get_image_with_data(file_bytes, existing_data_for_update.get("orig_filename") or filename)
     else:
-        file_data = {"filename": filename}
+        file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
-    file_data = add_default_keys(file_data, user)
+    file_data = add_default_keys(file_data, user, existing_id=existing_data_for_update.get("id"))
     file_root = get_root(file_root, file_data["id"], nested_on_server)
 
-    file_data["parent_folders"] = parse_parent_folders(file_root, file_data["id"], parent_folders)
+    if existing_data_for_update:
+        file_data["parent_folders"] = existing_data_for_update.get("parent_folders")
+    else:
+        file_data["parent_folders"] = parse_parent_folders(file_root, file_data["id"], parent_folders)
 
     if is_image:
-        file_data = update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context)
+        file_data = update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=bool(existing_data_for_update))
     else:
-        file_data = update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context)
+        file_data = update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context, replace_existing=bool(existing_data_for_update))
 
-    if enforce_unique_filename_key:
+    if enforce_unique_filename_key and not existing_data_for_update:
         file_data = ensure_filename_key_is_unique(file_data, file_root, nested_on_server, is_image)
 
     Write(os.path.join(file_root, f"{file_data['id']}.json"), file_data)
@@ -58,14 +61,21 @@ def GetURL(dash_context, server_file_path):
     return f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
 
 
-def add_default_keys(file_data, user):
+def add_default_keys(file_data, user, existing_id=""):
     from datetime import datetime
     from .number import GetRandomID
 
+    if existing_id:
+        action = "modified"
+        file_id = existing_id
+    else:
+        action = "uploaded"
+        file_id = GetRandomID()
+
     file_data.update({
-        "id": GetRandomID(),
-        "uploaded_by": user["email"],
-        "uploaded_on": datetime.now().isoformat()
+        "id": file_id,
+        f"{action}_by": user["email"],
+        f"{action}_on": datetime.now().isoformat()
     })
 
     return file_data
@@ -109,7 +119,7 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes, filename, user):
+def get_image_with_data(file_bytes, filename):
     from PIL import Image
     from io import BytesIO
 
@@ -133,10 +143,15 @@ def get_image_with_data(file_bytes, filename, user):
     return img, file_data
 
 
-def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context):
+def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=False):
     file_path = os.path.join(file_root, f"{file_data['id']}_orig.{file_ext}")
     thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg")
     thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg")
+
+    if replace_existing:
+        for path in [file_path, thumb_path, thumb_square_path]:
+            if os.path.exists(path):
+                os.remove(path)
 
     img = save_images(img, file_path, thumb_path, thumb_square_path)
 
@@ -152,15 +167,18 @@ def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_cont
     return file_data
 
 
-def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context):
+def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context, replace_existing=False):
     file_path = os.path.join(file_root, f"{file_data['id']}.{file_ext}")
 
-    file_data["url"] = GetURL(dash_context, file_path)
+    if replace_existing and os.path.exists(file_path):
+        os.remove(file_path)
 
     Write(file_path, file_bytes)
 
+    file_data["url"] = GetURL(dash_context, file_path)
+
     if file_ext in ModelExtensions:
-        glb_path = convert_model_to_glb(file_ext, file_path)
+        glb_path = convert_model_to_glb(file_ext, file_path, replace_existing=replace_existing)
 
         if os.path.exists(glb_path):
             file_data["glb_url"] = GetURL(dash_context, glb_path)
@@ -282,8 +300,11 @@ def check_filename_key_match(filename, key, parent_folders, other_filename, othe
     return None
 
 
-def convert_model_to_glb(source_model_file_ext, source_model_file_path):
+def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_existing=False):
     glb_path = f"{source_model_file_path.strip().rstrip(source_model_file_ext)}glb"
+
+    if replace_existing and os.path.exists(glb_path):
+        os.remove(glb_path)
 
     if source_model_file_ext == "fbx":
         from .model import ConvertFBXToGLB
