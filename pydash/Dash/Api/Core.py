@@ -232,6 +232,10 @@ class ApiCore:
         if not error and self._response.get("error"):
             error = self._response["error"]
 
+            # Special case (there's not really a better place to handle this without breaking other functionality)
+            if error == "Incorrect login information":
+                return
+
             if self._response.get("_error"):
                 private_error = self._response['_error'].replace("\n", "<br>")
 
