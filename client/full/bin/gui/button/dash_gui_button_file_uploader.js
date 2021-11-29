@@ -120,8 +120,9 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     };
 
     this.error_uploading = function (file, error) {
-        console.error("Error uploading");
-        console.log(error);
+        console.error("Error uploading", error);
+
+        alert(error["error"] || error);
     };
 
     this.processing_upload = function (file) {

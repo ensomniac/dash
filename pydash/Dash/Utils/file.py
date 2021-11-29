@@ -13,7 +13,6 @@ from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write
 
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
-debug_log = []
 
 
 def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}):
@@ -36,7 +35,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server
     else:
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
-    file_data = add_default_keys(file_data, user, existing_id=existing_data_for_update.get("id"))
+    file_data = add_default_keys(file_data, user, existing_data=existing_data_for_update)
     file_root = get_root(file_root, file_data["id"], nested_on_server)
 
     if existing_data_for_update:
@@ -61,22 +60,24 @@ def GetURL(dash_context, server_file_path):
     return f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
 
 
-def add_default_keys(file_data, user, existing_id=""):
+def add_default_keys(file_data, user, existing_data={}):
     from datetime import datetime
     from .number import GetRandomID
 
-    if existing_id:
-        action = "modified"
-        file_id = existing_id
-    else:
-        action = "uploaded"
-        file_id = GetRandomID()
+    default_data = {
+        "id": GetRandomID(),
+        "uploaded_by": user["email"],
+        "uploaded_on": datetime.now().isoformat()
+    }
 
-    file_data.update({
-        "id": file_id,
-        f"{action}_by": user["email"],
-        f"{action}_on": datetime.now().isoformat()
-    })
+    for key, default_value in default_data.items():
+        if existing_data.get(key):
+            file_data[key] = existing_data[key]
+
+            if key != "id":
+                file_data[key.replace("uploaded", "modified")] = default_value
+        else:
+            file_data[key] = default_value
 
     return file_data
 
@@ -198,34 +199,36 @@ def ensure_filename_key_is_unique(file_data, file_root, nested, is_image):
 
     if nested:
         file_root = file_root.rstrip("/").rstrip(file_data["id"])
-        debug_log.append(f"file root: {file_root}")
 
         for file_id in os.listdir(file_root):
             other_file_root = os.path.join(file_root, file_id)
-            debug_log.append(f"\nother file root: {other_file_root}")
+            other_file_data_path = os.path.join(other_file_root, f"{file_id}.json")
 
-            for other_filename in os.listdir(other_file_root):
-                if not other_filename.endswith(".json"):
-                    continue
+            if not os.path.exists(other_file_data_path):
+                continue
 
-                tag_number = check_filename_key_match(filename, key, parent_folders, other_filename, other_file_root)
+            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
 
-                if tag_number is not None:
-                    debug_log.append(f"match added: {tag_number}")
-                    matches.append(tag_number)
-
-                break
+            if tag_number is not None:
+                matches.append(tag_number)
     else:
         for other_filename in os.listdir(file_root):
             if not other_filename.endswith(".json"):
                 continue
 
-            tag_number = check_filename_key_match(filename, key, parent_folders, other_filename, file_root)
+            other_file_data_path = os.path.join(file_root, other_filename)
+
+            if not os.path.exists(other_file_data_path):
+                continue
+
+            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
 
             if tag_number is not None:
                 matches.append(tag_number)
 
-    file_data[key] = update_filename_based_on_matches(filename, matches)
+    if 0 in matches:
+        # We confirmed that the original filename exists, so we must add a numerical tag
+        file_data[key] = update_filename_based_on_matches(filename, matches)
 
     return file_data
 
@@ -236,11 +239,9 @@ def update_filename_based_on_matches(filename, matches=[]):
 
     matches.sort()
 
-    debug_log.append(f"matches: {matches}")
-
     num = None
 
-    for n in range(0, 10000):
+    for n in range(1, 10000):
         if n not in matches:
             num = n
 
@@ -249,12 +250,7 @@ def update_filename_based_on_matches(filename, matches=[]):
     if num is None:
         num = len(matches)
 
-    # Using the default Mac convention here, may want to change this at some point. It doesn't
-    # adhere to our typical naming conventions on the server, but this 'filename' is only for
-    # client display purposes anyway, so it's not a big deal unless it isn't optimal for Windows.
     tag = f"({num})"
-
-    debug_log.append(f"tag: {tag}")
 
     if "." in filename:
         split = filename.split(".")
@@ -265,17 +261,15 @@ def update_filename_based_on_matches(filename, matches=[]):
     return f"{filename} {tag}"
 
 
-def check_filename_key_match(filename, key, parent_folders, other_filename, other_file_root):
-    tag_number = 0
-    other_file_data = Read(os.path.join(other_file_root, other_filename))
+def check_filename_key_match(filename, key, parent_folders, other_file_data_path):
+    tag_number = 1
+    other_file_data = Read(other_file_data_path)
     other_file_parents = other_file_data.get("parent_folders")
     other_filename_value = other_file_data.get(key)
 
-    if other_filename_value and other_filename_value.startswith("test") and other_filename_value.endswith(".txt"):
-        debug_log.append(f"filename: {filename}, key: {key}, parent_folders: {parent_folders}")
-        debug_log.append(f"(check match) other_filename: {other_filename}, other_filename_value: {other_filename_value}, other_file_parents: {other_file_parents}")
+    if filename == other_filename_value and parent_folders == other_file_parents:  # Perfect match
+        return 0
 
-    # other_filename_value: "test (1).txt"
     if other_filename_value and " (" in other_filename_value:
         split = other_filename_value.split(" (")
 

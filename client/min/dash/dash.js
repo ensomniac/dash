@@ -20442,8 +20442,8 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.html.hide();
     };
     this.error_uploading = function (file, error) {
-        console.error("Error uploading");
-        console.log(error);
+        console.error("Error uploading", error);
+        alert(error["error"] || error);
     };
     this.processing_upload = function (file) {
         this.on_start_callback();
