@@ -262,6 +262,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         if (row_details["key"].includes("password") && this.endpoint === "Users") {
             params["f"] = "update_password";
             params["p"] = new_value;
+
+            if (this.update_inputs && this.update_inputs["email"]) {
+                var email = this.update_inputs["email"].Text();
+
+                if (email) {
+                    params["email"] = email;
+                }
+            }
         }
 
         (function (self, row_input, row_details, params) {

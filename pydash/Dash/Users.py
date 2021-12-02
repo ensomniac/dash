@@ -196,7 +196,10 @@ class Users:
                 "_error": f"user: {user}"
             }
 
-        new_password = self.request_params.get("p")
+        new_password = self.request_params.get("p").strip()
+
+        # If updating someone else's password from the client, there will be an 'email' param, otherwise, update the requesting user's password
+        email = self.request_params.get("email").lower().strip() or user["email"].lower().strip()
 
         if not new_password or len(new_password) < 5:
             return {"error": "Select a password with at least 6 characters - x72378"}
@@ -204,14 +207,15 @@ class Users:
         from passlib.apps import custom_app_context as pwd_context
 
         hashed_password = pwd_context.hash(new_password)
-        user_root = os.path.join(self.UsersPath, user["email"])
+        user_root = os.path.join(self.UsersPath, email)
         pass_path = os.path.join(user_root, "phash")
 
         open(pass_path, "w").write(hashed_password)
 
-        return_data = {"updated": True}
-
-        return return_data
+        return {
+            "updated": True,
+            "user_email": email
+        }
 
     def Login(self):
         email = self.request_params.get("email").lower().strip()
@@ -224,7 +228,6 @@ class Users:
             }
 
         user_root = os.path.join(self.UsersPath, email)
-        sessions_path = os.path.join(user_root, "sessions")
         pass_path = os.path.join(user_root, "phash")
 
         if not os.path.exists(pass_path):
@@ -242,12 +245,19 @@ class Users:
             return {
                 "error": "Incorrect login information",
                 "_error": f"email: {email}",
-                "h": hashed_password,
+                # "h": hashed_password,
                 "p": password,
+
+                # TESTING
+                "email": email,
+                "pass_path": pass_path,
+                "hash": hashed_password,
             }
 
         from json import dumps
         from base64 import urlsafe_b64encode
+
+        sessions_path = os.path.join(user_root, "sessions")
 
         os.makedirs(sessions_path, exist_ok=True)
 

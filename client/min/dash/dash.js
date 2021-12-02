@@ -24471,6 +24471,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         if (row_details["key"].includes("password") && this.endpoint === "Users") {
             params["f"] = "update_password";
             params["p"] = new_value;
+            if (this.update_inputs && this.update_inputs["email"]) {
+                var email = this.update_inputs["email"].Text();
+                if (email) {
+                    params["email"] = email;
+                }
+            }
         }
         (function (self, row_input, row_details, params) {
             row_input.Request(
@@ -25871,58 +25877,70 @@ function DashGuiLayoutUserProfile (user_data, options, include_password_field=tr
         return this.user_data;
     };
     this.set_data = function () {
-        console.log("set data");
+        // Setting data is taken care of in DashGuiPropertyBox
     };
     this.log_out = function (button) {
         Dash.Logout();
     };
-    this.set_group = function (button, group_name, group_option) {
-        console.log("this.set_group");
-        // var api = "https://altona.io/Users";
-        // var server_data = {};
-        // server_data["f"] = "update_group_information";
-        // server_data["token"] = localStorage.getItem("login_token");
-        // server_data["as_user"] = this.user_data["email"];
-        // server_data["group_name"] = group_name;
-        // server_data["group_option"] = group_option;
-        // button.Request(api, server_data, this.on_info_saved, this);
-    };
-    this.update_password = function () {
-        if (!this.new_password_row.Text()) {
-            return;
-        }
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    self.on_info_saved(response, self.new_password_row);
-                },
-                "Users",
-                {
-                    "f": "update_password",
-                    "p": self.new_password_row.Text()
-                }
-            );
-        })(this);
-    };
-    this.update_first_name = function () {
-        this.update_personal_information(this.first_name);
-    };
-    this.update_last_name = function () {
-        this.update_personal_information(this.last_name);
-    };
-    this.update_personal_information = function (button) {
-        console.log("this.update_personal_information");
-    };
-    this.on_info_saved = function (response, input_row) {
-        if (response["error"]) {
-            console.log(response);
-            alert(response["error"]);
-            return;
-        }
-        console.log("** Info saved successfully **");
-        input_row.FlashSave();
-    };
+    // this.set_group = function (button, group_name, group_option) {
+    //     console.log("this.set_group");
+    //
+    //     var api = "https://altona.io/Users";
+    //     var server_data = {};
+    //     server_data["f"] = "update_group_information";
+    //     server_data["token"] = localStorage.getItem("login_token");
+    //     server_data["as_user"] = this.user_data["email"];
+    //     server_data["group_name"] = group_name;
+    //     server_data["group_option"] = group_option;
+    //
+    //     button.Request(api, server_data, this.on_info_saved, this);
+    // };
+    //
+    // this.update_password = function () {
+    //     if (!this.new_password_row.Text()) {
+    //         return;
+    //     }
+    //
+    //     (function (self) {
+    //         Dash.Request(
+    //             self,
+    //             function (response) {
+    //                 self.on_info_saved(response, self.new_password_row);
+    //             },
+    //             "Users",
+    //             {
+    //                 "f": "update_password",
+    //                 "p": self.new_password_row.Text()
+    //             }
+    //         );
+    //     })(this);
+    // };
+    //
+    // this.update_first_name = function () {
+    //     this.update_personal_information(this.first_name);
+    // };
+    //
+    // this.update_last_name = function () {
+    //     this.update_personal_information(this.last_name);
+    // };
+    //
+    // this.update_personal_information = function (button) {
+    //     console.log("this.update_personal_information");
+    // };
+    //
+    // this.on_info_saved = function (response, input_row) {
+    //     if (response["error"]) {
+    //         console.log(response);
+    //
+    //         alert(response["error"]);
+    //
+    //         return;
+    //     }
+    //
+    //     console.log("** Info saved successfully **");
+    //
+    //     input_row.FlashSave();
+    // };
     this.setup_styles();
 }
 
