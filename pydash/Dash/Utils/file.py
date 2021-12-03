@@ -4,7 +4,7 @@
 #                Andrew Stet, stetandrew@gmail.com
 
 # TODO: Ideally, we should get rid of all old "orig_" key prefixes (from old image upload
-#  system), but it will likely break things on the front end, so maybe in the future
+#  system), but it will likely break things across the front end, so maybe at some point in the future
 
 import os
 import sys
@@ -15,7 +15,7 @@ from Dash.LocalStorage import Read, Write
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
-def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}):
+def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}):
     if filename.count(".") != 1:
         raise Exception(f"Invalid filename, or no file extension: {filename}")
 
@@ -36,7 +36,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
     file_data = add_default_keys(file_data, user, existing_data=existing_data_for_update)
-    file_root = get_root(file_root, file_data["id"], nested_on_server)
+    file_root = get_root(file_root, file_data["id"], nested)
 
     if existing_data_for_update:
         file_data["parent_folders"] = existing_data_for_update.get("parent_folders")
@@ -49,7 +49,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server
         file_data = update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context, replace_existing=bool(existing_data_for_update))
 
     if enforce_unique_filename_key and not existing_data_for_update:
-        file_data = ensure_filename_key_is_unique(file_data, file_root, nested_on_server, is_image)
+        file_data = EnsureUniqueFilename(file_data, file_root, nested, is_image)
 
     Write(os.path.join(file_root, f"{file_data['id']}.json"), file_data)
 
@@ -58,6 +58,55 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested_on_server
 
 def GetURL(dash_context, server_file_path):
     return f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
+
+
+def EnsureUniqueFilename(file_data, file_root, nested, is_image):
+    if not file_data or not file_root:
+        return file_data
+
+    if is_image:
+        key = "orig_filename"
+    else:
+        key = "filename"
+
+    matches = []
+    filename = file_data[key]
+    parent_folders = file_data["parent_folders"]
+
+    if nested:
+        file_root = file_root.rstrip("/").rstrip(file_data["id"])
+
+        for file_id in os.listdir(file_root):
+            other_file_root = os.path.join(file_root, file_id)
+            other_file_data_path = os.path.join(other_file_root, f"{file_id}.json")
+
+            if not os.path.exists(other_file_data_path):
+                continue
+
+            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
+
+            if tag_number is not None:
+                matches.append(tag_number)
+    else:
+        for other_filename in os.listdir(file_root):
+            if not other_filename.endswith(".json"):
+                continue
+
+            other_file_data_path = os.path.join(file_root, other_filename)
+
+            if not os.path.exists(other_file_data_path):
+                continue
+
+            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
+
+            if tag_number is not None:
+                matches.append(tag_number)
+
+    if 0 in matches:
+        # We confirmed that the original filename exists, so we must add a numerical tag
+        file_data[key] = update_filename_based_on_matches(filename, matches)
+
+    return file_data
 
 
 def add_default_keys(file_data, user, existing_data={}):
@@ -183,52 +232,6 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash
 
         if os.path.exists(glb_path):
             file_data["glb_url"] = GetURL(dash_context, glb_path)
-
-    return file_data
-
-
-def ensure_filename_key_is_unique(file_data, file_root, nested, is_image):
-    if is_image:
-        key = "orig_filename"
-    else:
-        key = "filename"
-
-    matches = []
-    filename = file_data[key]
-    parent_folders = file_data["parent_folders"]
-
-    if nested:
-        file_root = file_root.rstrip("/").rstrip(file_data["id"])
-
-        for file_id in os.listdir(file_root):
-            other_file_root = os.path.join(file_root, file_id)
-            other_file_data_path = os.path.join(other_file_root, f"{file_id}.json")
-
-            if not os.path.exists(other_file_data_path):
-                continue
-
-            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
-
-            if tag_number is not None:
-                matches.append(tag_number)
-    else:
-        for other_filename in os.listdir(file_root):
-            if not other_filename.endswith(".json"):
-                continue
-
-            other_file_data_path = os.path.join(file_root, other_filename)
-
-            if not os.path.exists(other_file_data_path):
-                continue
-
-            tag_number = check_filename_key_match(filename, key, parent_folders, other_file_data_path)
-
-            if tag_number is not None:
-                matches.append(tag_number)
-
-    if 0 in matches:
-        # We confirmed that the original filename exists, so we must add a numerical tag
-        file_data[key] = update_filename_based_on_matches(filename, matches)
 
     return file_data
 
