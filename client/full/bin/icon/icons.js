@@ -68,6 +68,7 @@ function GuiIcons (icon) {
         "download":              new GuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
         "download_file":         new GuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
+        "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),

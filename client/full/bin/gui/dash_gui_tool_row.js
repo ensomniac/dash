@@ -54,7 +54,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
-        var label = this.toolbar.AddLabel(text, false);
+        var label = this.toolbar.AddLabel(text, false, this.color);
 
         if (right_margin !== null) {
             label.html.css({
