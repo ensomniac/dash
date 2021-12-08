@@ -173,6 +173,7 @@ function GuiIcons (icon) {
         "download":              new GuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
         "download_file":         new GuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
+        "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
@@ -197,6 +198,7 @@ function GuiIcons (icon) {
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
+        "list_offset":           new GuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
         "minus_circle":          new GuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
@@ -18047,6 +18049,50 @@ function Dash () {
                 return this;
             }
         };
+        String.prototype.Trim = function (char) {
+            try {
+                if (!char) {
+                    return this.trim();
+                }
+                return this.LTrim(char).RTrim(char);
+            }
+            catch {
+                console.log("String.prototype.Trim() failed:", typeof this, this);
+                return this;
+            }
+        };
+        String.prototype.LTrim = function (char) {
+            try {
+                var trimmed = "";
+                if (this.startsWith(char)) {
+                    trimmed = this.substring(char.length, this.length);
+                }
+                if (this.startsWith(char)) {
+                    return trimmed.LTrim(char);
+                }
+                return this;
+            }
+            catch {
+                console.log("String.prototype.LTrim() failed:", typeof this, this);
+                return this;
+            }
+        };
+        String.prototype.RTrim = function (char) {
+            try {
+                var trimmed = "";
+                if (this.endsWith(char)) {
+                    trimmed = this.substring(0, this.length - char.length);
+                }
+                if (this.endsWith(char)) {
+                    return trimmed.RTrim(char);
+                }
+                return this;
+            }
+            catch {
+                console.log("String.prototype.RTrim() failed:", typeof this, this);
+                return this;
+            }
+        };
     };
     this.Initialize = function () {
         // Called once when document ready
@@ -19005,6 +19051,10 @@ class DashSiteColors {
     };
     get Background() {
         return this._col["background"] || "orange";
+    };
+    get BackgroundTrue() {
+        // Placeholder - see note in Altona core.js
+        return null;
     };
     get BackgroundRaised() {
         return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
@@ -21673,13 +21723,16 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.IsChecked = function () {
         return this.checked;
     };
+    this.LocalStorageKey = function () {
+        return this.local_storage_key;
+    };
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return) {
         this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
     };
-    this.Toggle = function () {
+    this.Toggle = function (skip_callback=false) {
         if (this.toggle_confirmation_msg) {
             if (!window.confirm(this.toggle_confirmation_msg)) {
                 return;
@@ -21697,6 +21750,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         }
         this.html.empty();
         this.redraw();
+        if (skip_callback) {
+            return;
+        }
         this.callback(this);
     };
     this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {
@@ -21713,12 +21769,16 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.restyle_icon_button();
     };
     this.redraw = function () {
-        this.icon_button = new Dash.Gui.IconButton(
-            this.checked ? "checked_box" : "unchecked_box",
-            this.Toggle,
-            this,
-            this.color
-        );
+        (function (self) {
+            self.icon_button = new Dash.Gui.IconButton(
+                self.checked ? "checked_box" : "unchecked_box",
+                function () {
+                    self.Toggle();
+                },
+                self,
+                self.color
+            );
+        })(this);
         if (this.label_first) {
             this.html.append(this.label.html);
             this.html.append(this.icon_button.html);
@@ -21821,7 +21881,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.toolbar.AddText(text, color);
     };
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
-        var label = this.toolbar.AddLabel(text, false);
+        var label = this.toolbar.AddLabel(text, false, this.color);
         if (right_margin !== null) {
             label.html.css({
                 "margin-right": right_margin

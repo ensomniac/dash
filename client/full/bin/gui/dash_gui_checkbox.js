@@ -36,6 +36,10 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         return this.checked;
     };
 
+    this.LocalStorageKey = function () {
+        return this.local_storage_key;
+    };
+
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
     };
