@@ -44,7 +44,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
     };
 
-    this.Toggle = function () {
+    this.Toggle = function (skip_callback=false) {
         if (this.toggle_confirmation_msg) {
             if (!window.confirm(this.toggle_confirmation_msg)) {
                 return;
@@ -69,6 +69,10 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         this.redraw();
 
+        if (skip_callback) {
+            return;
+        }
+
         this.callback(this);
     };
 
@@ -91,12 +95,16 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.redraw = function () {
-        this.icon_button = new Dash.Gui.IconButton(
-            this.checked ? "checked_box" : "unchecked_box",
-            this.Toggle,
-            this,
-            this.color
-        );
+        (function (self) {
+            self.icon_button = new Dash.Gui.IconButton(
+                self.checked ? "checked_box" : "unchecked_box",
+                function () {
+                    self.Toggle();
+                },
+                self,
+                self.color
+            );
+        })(this);
 
         if (this.label_first) {
             this.html.append(this.label.html);
