@@ -16,8 +16,6 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.toggle_confirmation_msg = null;
     this.icon_button_redraw_styling = null;
 
-    // This is a quick, simple abstraction of something I've been recreating often - will expand/improve as needed
-
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
         this.html = $("<div></div>");

@@ -226,19 +226,26 @@ class _ClientCompiler:
 
     def Distribute(self):
         print("CC -> DIST -> Distributing (from " + self.ClientPathMin + ") ...")
-        distribution_packages = SyncUtils.GetLocalDashClientPaths(self.Packages)
 
         column_width = 0
+        distribution_packages = SyncUtils.GetLocalDashClientPaths(self.Packages)
+
         for package in distribution_packages:
             if len(package["asset_path"]) > column_width:
                 column_width = len(package["asset_path"])
 
         for package in distribution_packages:
+            msg = ""
             col_diff = column_width - len(package["asset_path"])
-            msg = "CC -> DIST -> " + package["asset_path"] + (" " * col_diff)
-            msg += " (to " + package["client_root"] + ") ..."
 
-            print(msg)
+            for key in ["client_root", "sync_client_root"]:
+                if not package.get(key):
+                    continue
+
+                msg += "CC -> DIST -> " + package["asset_path"] + (" " * col_diff)
+                msg += " (to " + package[key] + ") ..."
+
+                print(msg)
 
         for package in distribution_packages:
             if package["asset_path"] == "pydash":
@@ -247,28 +254,29 @@ class _ClientCompiler:
             self.distribute_client(package)
 
     def distribute_client(self, package):
-        # package["client_root"] == client.LocalDirectory
+        for key in ["client_root", "sync_client_root"]:
+            if not package.get(key):
+                continue
 
-        os.makedirs(package["client_root"], exist_ok=True)
+            os.makedirs(package[key], exist_ok=True)
 
-        expected_index_path = os.path.join(package["client_root"], "index.html")
+            expected_index_path = os.path.join(package[key], "index.html")
 
-        if not os.path.exists(expected_index_path):
-            self.initialize_root(package)
+            if not os.path.exists(expected_index_path):
+                self.initialize_root(package, key)
 
-        self.update_publish_index_source(package, expected_index_path)
+            self.update_publish_index_source(package, expected_index_path)
 
-    def initialize_root(self, package):
-        # Called for a new dash portal where there is no index / bin
-        # TODO: Test this code. During my refactor, I wasn't able
-        # to test the initialization of a new package
+    # Called for a new dash portal where there is no index / bin
+    def initialize_root(self, package, root_key):
+        # TODO: Test this code. During my refactor, I wasn't able to test the initialization of a new package.
 
-        print(f"\tInitializing new portal @ {package['client_root']}")
+        print(f"\tInitializing new portal @ {package[root_key]}")
 
         index_path_min = os.path.join(self.ClientPathMin, "index.html")
-        expected_index_path = os.path.join(package["client_root"], "index.html")
-        expected_bin_path = os.path.join(package["client_root"], "bin")
-        expected_core_path = os.path.join(package["client_root"], "bin", "core.js")
+        expected_index_path = os.path.join(package[root_key], "index.html")
+        expected_bin_path = os.path.join(package[root_key], "bin")
+        expected_core_path = os.path.join(package[root_key], "bin", "core.js")
 
         os.makedirs(expected_bin_path, exist_ok=True)
 
@@ -445,7 +453,7 @@ class _ClientCompiler:
                 if not line.strip():
                     continue
 
-            if ".js" in line and "dash/" not in line and "</script>" in line and not 'type="module"' in line:
+            if ".js" in line and "dash/" not in line and "</script>" in line and 'type="module"' not in line:
                 line = self.version_arbitrary(line, True, False)
 
             if ".css" in line and "dash/" not in line and "stylesheet" in line:
@@ -459,7 +467,7 @@ class _ClientCompiler:
 
     def version_arbitrary(self, line, is_js, is_css):
         # TODO: Reformat this code back away from pem - it looks blurry AF
-        # " or ':
+        #  " or ':
 
         if is_js and not is_css:
             separator = "src="

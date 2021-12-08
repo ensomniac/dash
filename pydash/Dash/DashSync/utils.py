@@ -240,6 +240,12 @@ class _SyncUtils:
                 continue
 
             package["client_root"] = client_root
+
+            sync_client_root = os.path.join(usr_path_git, "sync_client", "client/")
+
+            if os.path.exists(sync_client_root):
+                package["sync_client_root"] = sync_client_root
+
             distribution_packages.append(package)
 
         return distribution_packages
