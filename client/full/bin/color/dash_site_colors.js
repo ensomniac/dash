@@ -8,6 +8,11 @@ class DashSiteColors {
         return this._col["background"] || "orange";
     };
 
+    get BackgroundTrue() {
+        // Placeholder - see note in Altona core.js
+        return null;
+    };
+
     get BackgroundRaised() {
         return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
     };

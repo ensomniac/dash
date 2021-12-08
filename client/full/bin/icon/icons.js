@@ -93,6 +93,7 @@ function GuiIcons (icon) {
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
+        "list_offset":           new GuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
         "minus_circle":          new GuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),

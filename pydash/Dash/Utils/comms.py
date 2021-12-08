@@ -22,6 +22,14 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender="ryan@enso
     if len(error) and error != "NoneType: None" and error != "None":
         msg += f"<br><br>Exception/Traceback:<br><br>{error}"
 
+    if "\n" in msg:
+        msg.strip("\n")
+
+        msg = msg.replace("\n", "<br>")
+
+    if "\t" in msg:
+        msg = msg.replace("\t", "&nbsp;" * 4)
+
     message = Mail.create(sender)
     message.set_sender_name(f"{sender_name} <{sender}>")
 
@@ -34,3 +42,9 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender="ryan@enso
     message.set_subject(subject)
     message.set_body_html(msg)
     message.send()
+
+    return {
+        "recipients": notify_email_list,
+        "subject": subject,
+        "body": msg
+    }

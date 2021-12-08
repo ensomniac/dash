@@ -396,6 +396,66 @@ function Dash () {
                 return this;
             }
         };
+
+        String.prototype.Trim = function (char) {
+            try {
+                if (!char) {
+                    return this.trim();
+                }
+
+                return this.LTrim(char).RTrim(char);
+            }
+
+            catch {
+                console.log("String.prototype.Trim() failed:", typeof this, this);
+
+                return this;
+            }
+        };
+
+        String.prototype.LTrim = function (char) {
+            try {
+                var trimmed = "";
+
+                if (this.startsWith(char)) {
+                    trimmed = this.substring(char.length, this.length);
+                }
+
+                if (this.startsWith(char)) {
+                    return trimmed.LTrim(char);
+                }
+
+                return this;
+            }
+
+            catch {
+                console.log("String.prototype.LTrim() failed:", typeof this, this);
+
+                return this;
+            }
+        };
+
+        String.prototype.RTrim = function (char) {
+            try {
+                var trimmed = "";
+
+                if (this.endsWith(char)) {
+                    trimmed = this.substring(0, this.length - char.length);
+                }
+
+                if (this.endsWith(char)) {
+                    return trimmed.RTrim(char);
+                }
+
+                return this;
+            }
+
+            catch {
+                console.log("String.prototype.RTrim() failed:", typeof this, this);
+
+                return this;
+            }
+        };
     };
 
     this.Initialize = function () {
