@@ -21082,8 +21082,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         Dash.Local.Set("email", this.get_email());
     };
     this.on_reset_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
+        if (!Dash.ValidateResponse(response)) {
             return;
         }
         if (response["success"]) {
@@ -21091,8 +21090,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         }
     };
     this.on_login_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
+        if (!Dash.ValidateResponse(response)) { 
             return;
         }
         console.log("******* LOG IN *******", response);

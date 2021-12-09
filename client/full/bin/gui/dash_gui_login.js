@@ -255,9 +255,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.on_reset_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
-
+        if (!Dash.ValidateResponse(response)) {
             return;
         }
 
@@ -267,9 +265,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.on_login_response = function (response) {
-        if (response["error"]) {
-            alert(response["error"]);
-
+        if (!Dash.ValidateResponse(response)) {
             return;
         }
 
