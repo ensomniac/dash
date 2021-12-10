@@ -19291,13 +19291,13 @@ function DashRequest () {
                         self.dash_requests.on_response(self, response);
                     }
                 ).fail(
-                    function (request) {
+                    function (request, status, error) {
                         var response = request.responseJSON || request.responseText;
                         if (response) {
                             self.dash_requests.on_response(self, response);
                         }
                         else {
-                            console.warn("Warning: Request to " + self.url + " failed:", self.params);
+                            alert("Warning: Request to " + self.url + " failed. Error:\n" + error + "\nParams:\n" + self.params);
                         }
                     }
                 );
@@ -21090,7 +21090,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         }
     };
     this.on_login_response = function (response) {
-        if (!Dash.ValidateResponse(response)) { 
+        if (!Dash.ValidateResponse(response)) {
             return;
         }
         console.log("******* LOG IN *******", response);

@@ -29,7 +29,7 @@ function DashRequest () {
                         self.dash_requests.on_response(self, response);
                     }
                 ).fail(
-                    function (request) {
+                    function (request, status, error) {
                         var response = request.responseJSON || request.responseText;
 
                         if (response) {
@@ -37,7 +37,7 @@ function DashRequest () {
                         }
 
                         else {
-                            console.warn("Warning: Request to " + self.url + " failed:", self.params);
+                            alert("Warning: Request to " + self.url + " failed. Error:\n" + error + "\nParams:\n" + self.params);
                         }
                     }
                 );
