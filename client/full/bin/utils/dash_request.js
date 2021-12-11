@@ -37,7 +37,10 @@ function DashRequest () {
                         }
 
                         else {
-                            alert("Warning: Request to " + self.url + " failed. Error:\n" + error + "\nParams:\n" + self.params);
+                            alert(
+                                "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
+                                "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params)
+                            );
                         }
                     }
                 );
