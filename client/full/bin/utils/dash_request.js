@@ -41,6 +41,8 @@ function DashRequest () {
                                 "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
                                 "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params)
                             );
+
+                            location.reload();
                         }
                     }
                 );

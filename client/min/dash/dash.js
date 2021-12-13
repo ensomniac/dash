@@ -19301,6 +19301,7 @@ function DashRequest () {
                                 "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
                                 "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params)
                             );
+                            location.reload();
                         }
                     }
                 );
@@ -22106,7 +22107,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "right_margin": -Dash.Size.Padding
             }
         };
-        this.get_init_files_data();
+
+        Dash.SetInterval(this, this.get_files_data, 2250);
         this.add_header();
         this.add_tool_row();
         this.add_upload_button();
@@ -22455,10 +22457,10 @@ function DashGuiFileExplorerData () {
             }
         );
     };
-    this.get_init_files_data = function () {
+    this.get_files_data = function () {
         Dash.Request(
             this,
-            this.on_init_files_data,
+            this.on_files_data,
             this.api,
             {
                 "f": "get_files",
@@ -22471,7 +22473,7 @@ function DashGuiFileExplorerData () {
         this.original_order = data["order"];
         this.get_order();
     };
-    this.on_init_files_data = function (response) {
+    this.on_files_data = function (response) {
         if (!Dash.ValidateResponse(response)) {
             return;
         }
@@ -22483,14 +22485,17 @@ function DashGuiFileExplorerData () {
             (function (self, response) {
                 setTimeout(
                     function () {
-                        self.on_init_files_data(response);
+                        self.on_files_data(response);
                     },
                     250
                 );
             })(this, response);
             return;
         }
-        console.log("(File Explorer) Init files data:", response);
+        if (Dash.IsValidObject(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+            return;
+        }
+        console.log("(File Explorer) Files data:", response);
         this.update_cached_data(response);
         this.redraw_rows();
     };
@@ -22643,7 +22648,7 @@ function DashGuiFileExplorerSync () {
             // Only one
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
-                console.debug("Sending signal to desktop session to open file", file_id);
+                console.log("Sending signal to desktop session to open file", file_id);
                 this.send_signal_to_desktop_session(
                     machine_id,
                     active_session["id"],
@@ -22667,7 +22672,7 @@ function DashGuiFileExplorerSync () {
                 if (!Dash.ValidateResponse(response)) {
                     alert("Failed to send signal to Altona IO File Sync app.");
                 }
-                console.debug("Signal sent:", response["sent"]);
+                console.log("Signal sent:", response["sent"]);
             },
             this.api,
             {

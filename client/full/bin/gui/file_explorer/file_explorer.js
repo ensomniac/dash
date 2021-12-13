@@ -67,7 +67,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             }
         };
 
-        this.get_init_files_data();
+
+        Dash.SetInterval(this, this.get_files_data, 2250);
+
         this.add_header();
         this.add_tool_row();
         this.add_upload_button();

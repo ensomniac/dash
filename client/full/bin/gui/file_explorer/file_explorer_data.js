@@ -48,10 +48,10 @@ function DashGuiFileExplorerData () {
         );
     };
 
-    this.get_init_files_data = function () {
+    this.get_files_data = function () {
         Dash.Request(
             this,
-            this.on_init_files_data,
+            this.on_files_data,
             this.api,
             {
                 "f": "get_files",
@@ -67,7 +67,7 @@ function DashGuiFileExplorerData () {
         this.get_order();
     };
 
-    this.on_init_files_data = function (response) {
+    this.on_files_data = function (response) {
         if (!Dash.ValidateResponse(response)) {
             return;
         }
@@ -82,7 +82,7 @@ function DashGuiFileExplorerData () {
             (function (self, response) {
                 setTimeout(
                     function () {
-                        self.on_init_files_data(response);
+                        self.on_files_data(response);
                     },
                     250
                 );
@@ -91,7 +91,11 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        console.log("(File Explorer) Init files data:", response);
+        if (Dash.IsValidObject(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+            return;
+        }
+
+        console.log("(File Explorer) Files data:", response);
 
         this.update_cached_data(response);
         this.redraw_rows();

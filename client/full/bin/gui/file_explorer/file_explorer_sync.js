@@ -83,7 +83,7 @@ function DashGuiFileExplorerSync () {
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
 
-                console.debug("Sending signal to desktop session to open file", file_id);
+                console.log("Sending signal to desktop session to open file", file_id);
 
                 this.send_signal_to_desktop_session(
                     machine_id,
@@ -112,7 +112,7 @@ function DashGuiFileExplorerSync () {
                     alert("Failed to send signal to Altona IO File Sync app.");
                 }
 
-                console.debug("Signal sent:", response["sent"]);
+                console.log("Signal sent:", response["sent"]);
             },
             this.api,
             {
