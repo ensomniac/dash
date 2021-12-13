@@ -109,6 +109,22 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
     return file_data
 
 
+def CreateZIP(dir_path):
+    from shutil import make_archive
+
+    split = dir_path.strip("/").split("/")
+    dir_to_zip = split.pop(-1)
+    dir_path_root = f"/{os.path.join(*split)}/"
+
+    # Returns newly created zip path
+    return make_archive(
+        base_name=dir_path,
+        format="zip",
+        root_dir=dir_path_root,
+        base_dir=dir_to_zip
+    )
+
+
 def add_default_keys(file_data, user, existing_data={}):
     from datetime import datetime
     from .number import GetRandomID

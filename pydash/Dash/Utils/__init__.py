@@ -43,6 +43,12 @@ def GetImageExtensions():
     return ImageExtensions
 
 
+def CreateZip(dir_path):
+    from .file import CreateZIP
+
+    return CreateZIP(dir_path)
+
+
 # ------------------------------------------------- MODEL ---------------------------------------------------
 def GetModelExtensions():
     from .model import ModelExtensions
