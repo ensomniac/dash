@@ -7,10 +7,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_files":         Get all files and return dict with data/order keys
-     *         - "upload_file":       Upload a file
-     *         - "delete_file":       Delete a file
-     *         - "set_file_property": Set a property for a file with provided key/value
+     *         - "get_files":                      Get all files and return dict with data/order keys
+     *         - "upload_file":                    Upload a file
+     *         - "delete_file":                    Delete a file
+     *         - "set_file_property":              Set a property for a file with provided key/value
+     *         - "get_desktop_sessions":           Get all of the user's desktop sessions (includes active and last terminated)
+     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
      *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
@@ -34,6 +36,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.original_order = null;
     this.display_folders_first = true;
+    this.pending_file_view_requests = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.border_color = this.color.BackgroundTrue || this.color.Background;
 
@@ -49,7 +52,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "callback": this.view_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (requires LiveSync)" :
+                                 "View locally in your computer's file system (or in a browser tab, if desktop app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {

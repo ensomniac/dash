@@ -22051,10 +22051,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_files":         Get all files and return dict with data/order keys
-     *         - "upload_file":       Upload a file
-     *         - "delete_file":       Delete a file
-     *         - "set_file_property": Set a property for a file with provided key/value
+     *         - "get_files":                      Get all files and return dict with data/order keys
+     *         - "upload_file":                    Upload a file
+     *         - "delete_file":                    Delete a file
+     *         - "set_file_property":              Set a property for a file with provided key/value
+     *         - "get_desktop_sessions":           Get all of the user's desktop sessions (includes active and last terminated)
+     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
      *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
@@ -22076,6 +22078,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.original_order = null;
     this.display_folders_first = true;
+    this.pending_file_view_requests = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.border_color = this.color.BackgroundTrue || this.color.Background;
     DashGuiFileExplorerGUI.call(this);
@@ -22089,7 +22092,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "callback": this.view_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (requires LiveSync)" :
+                                 "View locally in your computer's file system (or in a browser tab, if desktop app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {
@@ -22580,30 +22583,103 @@ function DashGuiFileExplorerData () {
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerSync () {
     this.view_file = function (file_id) {
-        if (this.supports_desktop_client) {
-            if (this.check_livesync_connected()) {
-                this.open_file_in_desktop_file_system();
+        if (!this.supports_desktop_client) {
+            this.open_file_in_browser_tab(file_id);
+            return;
+        }
+        this.get_desktop_client_sessions(file_id);
+    };
+    this.get_desktop_client_sessions = function (file_id) {
+        if (!(file_id in this.pending_file_view_requests)) {
+            this.pending_file_view_requests[file_id] = 0;
+        }
+        if (this.pending_file_view_requests[file_id] > 0) {
+            alert("This file is currently in process of being opened on your computer.");
+            return;
+        }
+        this.pending_file_view_requests[file_id] += 1;
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_desktop_client_sessions(response, file_id);
+                },
+                self.api,
+                {"f": "get_desktop_sessions"}
+            );
+        })(this);
+    };
+    this.on_desktop_client_sessions = function (response, file_id) {
+        this.pending_file_view_requests[file_id] -= 1;
+        if (!Dash.ValidateResponse(response)) {
+            return;
+        }
+        if (!Dash.IsValidObject(response["sessions"]) || Dash.IsValidObject(!response["sessions"]["active"])) {
+            var msg = "Error: Unable to find any Altona IO File Sync app active session data\n\n";
+            console.error(msg + response);
+            alert(msg + JSON.stringify(response));
+            return;
+        }
+        var machine_id;
+        var ask_msg = "";
+        var active_session;
+        var active_session_count = 0;
+        for (machine_id in response["sessions"]["active"]) {
+            active_session = response["sessions"]["active"][machine_id];
+            if (active_session["kill"]) {
+                continue;
             }
-            else {
-                // TODO: Remove "(coming soon)" and instead, mention how to enable it
-                var msg = "Opening this file in your computer's local file system requires LiveSync to be enabled " +
-                          "(coming soon).\n\nWould you like to open a new browser tab to view/download the file?";
-                if (!window.confirm(msg)) {
-                    return;
-                }
-                this.open_file_in_browser_tab(file_id);
-            }
+            active_session_count += 1;
+        }
+        if (active_session_count > 1) {
+            ask_msg = "Can't open the file on your computer's file system - you currently " +
+                "have more than one Altona IO File Sync app running (on different devices).";
+        }
+        else if (active_session_count < 1) {
+            ask_msg = "Opening this file in your computer's local file system requires " +
+                "you to have the Altona IO File Sync app running on your computer.";
         }
         else {
+            // Only one
+            for (machine_id in response["sessions"]["active"]) {
+                active_session = response["sessions"]["active"][machine_id];
+                console.debug("Sending signal to desktop session to open file", file_id);
+                this.send_signal_to_desktop_session(
+                    machine_id,
+                    active_session["id"],
+                    "open_local_file_path",
+                    null,
+                    this.get_file_data(file_id)
+                );
+            }
+        }
+        if (ask_msg) {
+            if (!window.confirm(ask_msg + "\n\nWould you like to open a new browser tab to view/download the file?")) {
+                return;
+            }
             this.open_file_in_browser_tab(file_id);
         }
     };
-    this.check_livesync_connected = function () {
-        // TODO: Check if live sync is active/enabled
-        return false;
-    };
-    this.open_file_in_desktop_file_system = function () {
-        // TODO: Show the file in the user's computer's local file system
+    this.send_signal_to_desktop_session = function (machine_id, session_id, key, value=null, value_json=null) {
+        Dash.Request(
+            this,
+            function (response) {
+                if (!Dash.ValidateResponse(response)) {
+                    alert("Failed to send signal to Altona IO File Sync app.");
+                }
+                console.debug("Signal sent:", response["sent"]);
+            },
+            this.api,
+            {
+                "f": "send_signal_to_desktop_session",
+                "key": key,
+                "value": value,
+                "value_json": Dash.IsValidObject(value_json) ? JSON.stringify(value_json) : null,
+                "session_id": session_id,
+                "machine_id": machine_id,
+                "parent_obj_id": this.parent_obj_id
+            }
+        );
     };
     this.open_file_in_browser_tab = function (file_id) {
         window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
