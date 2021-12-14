@@ -80,7 +80,7 @@ class PackageContext:
         #     'email_access_csv': 'ryan@ensomniac.com, stetandrew@gmail.com',
         #     'usr_local_repo_path_ryan_ensomniac.com': '/Users/rmartin/Google Drive/dash_guide/',
         #     'git_repo': 'https://github.com/ensomniac/altona_io.git',
-        #     'path_usr_git_stetandrew_gmail.com': '/Users/andrewstet/altona_bin/repos/altona/',
+        #     'path_usr_git_stetandrew_gmail.com': '/Users/andrewstet/ensomniac_bin/repos/altona_io/',
         #     'usr_path_git_ryan@ensomniac.com': '/Users/rmartin/Google Drive/altona/altona_io/',
         #     'code_copyright_text': 'Altona',
         #     'srv_path_git_oapi': '/var/www/vhosts/oapi.co/altona/altona_io/',

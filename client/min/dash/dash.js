@@ -21640,11 +21640,12 @@ function LoadDot(dots) {
     this.setup_styles();
 }
 
-function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_to_append_to=null) {
+function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;
     this.label_prefix = label_prefix;
     this.html_to_append_to = html_to_append_to;
+    this.simple = simple;
     // Not using 'this.html' is unconventional, but in order for this to be a single GUI element
     // with a transparent background and an opaque bubble, we can't use the typical 'this.html',
     // because then all the elements are either transparent or opaque, not able to be individually
@@ -21680,6 +21681,16 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         this.html_to_append_to = html;
     };
     this.Show = function () {
+        console.debug("TEST SHOW");
+        if (this.simple) {
+            this.background.css({
+                "opacity": 0.5
+            });
+            this.bubble.css({
+                "opacity": 1
+            });
+            return;
+        }
         if (this.background.is(":visible")) {
             return;
         }
@@ -21689,7 +21700,21 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         }
         this.AppendTo(this.html_to_append_to);
     };
+    this.Hide = function () {
+        console.debug("TEST HIDE");
+        this.background.css({
+            "opacity": 0
+        });
+        this.bubble.css({
+            "opacity": 0
+        });
+    };
     this.Remove = function () {
+        console.debug("TEST REMOVE");
+        if (this.simple) {
+            this.Hide();
+            return;
+        }
         this.bubble_dots.Stop();
         this.background.remove();
         this.bubble.remove();
@@ -21729,7 +21754,9 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
             "opacity": 1
         });
         this.setup_label();
-        this.setup_dots();
+        if (!this.simple) {
+            this.setup_dots();
+        }
     };
     this.setup_dots = function () {
         this.bubble_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight * 0.75);
@@ -21751,7 +21778,12 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         if (isNaN(progress)) {
             return;
         }
-        return (this.label_prefix + " (" + progress.toString() + "%)");
+        if (this.simple) {
+            return (this.label_prefix + "...");
+        }
+        else {
+            return (this.label_prefix + " (" + progress.toString() + "%)");
+        }
     };
     
     this.setup_styles();
