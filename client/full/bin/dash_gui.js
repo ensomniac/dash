@@ -15,6 +15,7 @@ function DashGui() {
     this.InputRow                    = DashGuiInputRow;
     this.Layout                      = new DashGuiLayout();
     this.LoadDots                    = DashGuiLoadDots;
+    this.LoadingOverlay              = DashGuiLoadingOverlay;
     this.Login                       = DashGuiLogin;
     this.PaneSlider                  = this.Layout.PaneSlider; // This is redundant, but unsure if it's referenced in other projects
     this.PropertyBox                 = DashGuiPropertyBox;
