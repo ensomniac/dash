@@ -21681,7 +21681,6 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         this.html_to_append_to = html;
     };
     this.Show = function () {
-        console.debug("TEST SHOW");
         if (this.simple) {
             this.background.css({
                 "opacity": 0.5
@@ -21701,7 +21700,6 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         this.AppendTo(this.html_to_append_to);
     };
     this.Hide = function () {
-        console.debug("TEST HIDE");
         this.background.css({
             "opacity": 0
         });
@@ -21710,7 +21708,6 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         });
     };
     this.Remove = function () {
-        console.debug("TEST REMOVE");
         if (this.simple) {
             this.Hide();
             return;
