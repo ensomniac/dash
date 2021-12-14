@@ -99,7 +99,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         );
 
         if (fire_callback) {
-            this.add_msg_callback(text, message.ID());
+            this.add_msg_callback(text, message.ID(), user_email);
             this.handle_mentions(text, message);
         }
 

@@ -17795,7 +17795,10 @@ function Dash () {
         // TODO: Move this to dash.guide as a context property
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
-            dt.setHours(dt.getHours() - 4);
+            // TODO: It appears that UTC doesn't observe daylight savings time, which makes sense,
+            //  so we need to write a way to programmatically know how many hours difference there is
+            // dt.setHours(dt.getHours() - 4);  // Spring/Summer
+            dt.setHours(dt.getHours() - 5);  // Fall/Winter
         }
         var date = dt.toLocaleDateString();
         var time = dt.toLocaleTimeString();
@@ -23766,7 +23769,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             id
         );
         if (fire_callback) {
-            this.add_msg_callback(text, message.ID());
+            this.add_msg_callback(text, message.ID(), user_email);
             this.handle_mentions(text, message);
         }
         if (this.dual_sided) {
@@ -24323,8 +24326,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     };
     this.add_iso_ts_label = function () {
         var side_padding = Dash.Size.Padding * 4.9;
-        var user = Dash.User.GetByEmail(user_email);
-        var name = user ? user["first_name"] : "Unknown";
+        var user = Dash.User.GetByEmail(this.user_email);
+        var name = user ? user["first_name"] : (this.user_email && !(this.user_email.includes("@"))) ? this.user_email.Title() : "Unknown";
         var iso_ts_css = {
             "color": this.secondary_css_color,
             "font-family": "sans_serif_italic",

@@ -191,8 +191,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
     this.add_iso_ts_label = function () {
         var side_padding = Dash.Size.Padding * 4.9;
-        var user = Dash.User.GetByEmail(user_email);
-        var name = user ? user["first_name"] : "Unknown";
+        var user = Dash.User.GetByEmail(this.user_email);
+        var name = user ? user["first_name"] : (this.user_email && !(this.user_email.includes("@"))) ? this.user_email.Title() : "Unknown";
 
         var iso_ts_css = {
             "color": this.secondary_css_color,

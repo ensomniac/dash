@@ -62,7 +62,11 @@ function Dash () {
         // TODO: Move this to dash.guide as a context property
         if (this.Context["domain"] === "altona.io") {
             tz_label = "EST";
-            dt.setHours(dt.getHours() - 4);
+
+            // TODO: It appears that UTC doesn't observe daylight savings time, which makes sense,
+            //  so we need to write a way to programmatically know how many hours difference there is
+            // dt.setHours(dt.getHours() - 4);  // Spring/Summer
+            dt.setHours(dt.getHours() - 5);  // Fall/Winter
         }
 
         var date = dt.toLocaleDateString();
