@@ -28,24 +28,30 @@ function DashRequest () {
                     function (response) {
                         self.dash_requests.on_response(self, response);
                     }
-                ).fail(
-                    function (request, status, error) {
-                        var response = request.responseJSON || request.responseText;
+                ).fail(function (request, status, error) {
+                    var response = request.responseJSON || request.responseText;
 
-                        if (response) {
-                            self.dash_requests.on_response(self, response);
-                        }
+                    if (response) {
+                        self.dash_requests.on_response(self, response);
 
-                        else {
-                            alert(
-                                "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
-                                "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params)
-                            );
-
-                            location.reload();
-                        }
+                        return;
                     }
-                );
+
+                    var msg;
+
+                    if (error) {
+                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
+                        "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params);
+                    }
+
+                    else {
+                        msg = "The portal must refresh due to a recent update. Sorry for the inconvenience!";
+                    }
+
+                    alert(msg);
+
+                    location.reload();
+                });
             })(this);
         };
 
