@@ -222,7 +222,13 @@ class ApiCore:
             if request_details:
                 request_details += "<br>"
 
-            request_details += f"Params: {self.Params}<br><br>"
+            # Make a copy of self.Params so we don't modify the original, in case the script is continuing
+            params = {k: v for k, v in self.Params}
+
+            if params.get("file"):
+                params["file"] = "truncated..."
+
+            request_details += f"Params: {params}<br><br>"
 
         if not msg:
             msg = request_details
@@ -237,7 +243,7 @@ class ApiCore:
                 return
 
             if self._response.get("_error"):
-                private_error = self._response['_error'].replace("\n", "<br>")
+                private_error = self._response["_error"].replace("\n", "<br>")
 
                 error += f"<br><br>Private error:<br>{private_error}"
 

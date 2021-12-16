@@ -4,7 +4,7 @@
 #                Andrew Stet, stetandrew@gmail.com
 
 # TODO: Ideally, we should get rid of all old "orig_" key prefixes (from old image upload
-#  system), but it will likely break things across the front end, so maybe at some point in the future
+#  system), but it will likely break things across some projects, so maybe at some point in the future
 
 import os
 import sys
@@ -15,17 +15,29 @@ from Dash.LocalStorage import Read, Write
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
-def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}):
-    if filename.count(".") != 1:
-        raise Exception(f"Invalid filename, or no file extension: {filename}")
+def Upload(
+        dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[],
+        enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allow_executables=False
+):
+    period_count = filename.count(".")
+
+    if enforce_single_period:
+        if period_count != 1:
+            raise Exception(f"Filename is invalid, it must have a single period (for the extension): {filename}")
+    else:
+        if period_count < 1:
+            raise Exception(f"Filename is invalid, there must be at least one period (for the extension): {filename}")
 
     file_ext = get_file_extension(filename)
 
     if not file_ext or not (2 <= len(file_ext) <= 4):
         raise Exception(f"Invalid file extension: {file_ext}")
 
-    if file_ext in executable_extensions:
+    if not allow_executables and file_ext in executable_extensions:
         raise Exception(f"Executable files are not permitted ({file_ext}). If you believe this is in error, please let an admin know.")
+
+    if period_count > 1:
+        filename = replace_extra_periods(filename, file_ext)
 
     img = None
     is_image = file_ext in ImageExtensions
@@ -123,6 +135,14 @@ def CreateZIP(dir_path):
         root_dir=dir_path_root,
         base_dir=dir_to_zip
     )
+
+
+def replace_extra_periods(filename, extension):
+    split = filename.split(".")
+
+    split.pop()
+
+    return f"{'_'.join(split)}.{extension}"
 
 
 def add_default_keys(file_data, user, existing_data={}):
@@ -271,13 +291,12 @@ def update_filename_based_on_matches(filename, matches=[]):
 
     tag = f"({num})"
 
-    if "." in filename:
-        split = filename.split(".")
-        extension = split.pop(-1)
+    if "." not in filename:
+        return f"{filename} {tag}"
 
-        return f"{''.join(split)} {tag}.{extension}"
+    ext_index = filename.rfind(".")
 
-    return f"{filename} {tag}"
+    return f"{filename[:ext_index]} {tag}{filename[ext_index:]}"
 
 
 def check_filename_key_match(filename, key, parent_folders, other_file_data_path):
