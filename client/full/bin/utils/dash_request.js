@@ -1,5 +1,6 @@
 function DashRequest () {
     this.requests = [];
+    this.ReloadAlertTriggered = false;
 
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
@@ -37,15 +38,25 @@ function DashRequest () {
                         return;
                     }
 
+                    if (self.ReloadAlertTriggered) {
+                        return;
+                    }
+
+                    self.ReloadAlertTriggered = true;
+
                     var msg;
 
                     if (error) {
-                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
-                        "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params);
+                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status.toString() + "' status - page will " +
+                        "be reloaded.\n\nError:\n'" + error.toString() + "'\n\nParams:\n" + JSON.stringify(self.params) + "\n\nResponse:\n" + request;
                     }
 
                     else {
                         msg = "The portal must refresh due to a recent update. Sorry for the inconvenience!";
+
+                        if (status) {
+                            msg += ("\n\nStatus:" + status.toString());
+                        }
                     }
 
                     alert(msg);

@@ -53,11 +53,11 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     this.Show = function () {
         if (this.simple) {
             this.background.css({
-                "opacity": 0.5
+                "display": "initial"
             });
 
             this.bubble.css({
-                "opacity": 1
+                "display": "initial"
             });
 
             return;
@@ -78,11 +78,11 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
 
     this.Hide = function () {
         this.background.css({
-            "opacity": 0
+            "display": "none"
         });
 
         this.bubble.css({
-            "opacity": 0
+            "display": "none"
         });
     };
 

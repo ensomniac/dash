@@ -334,9 +334,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.html.append(this.header_area);
     };
 
-    // If overflow, auto-scroll to bottom
     this.scroll_to_bottom_on_overflow = function () {
-        if (this.message_area[0].offsetHeight < this.message_area[0].scrollHeight) {
+        if (Dash.Gui.HasOverflow(this.message_area)) {
             this.ScrollToBottom();
         }
     };

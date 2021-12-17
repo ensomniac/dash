@@ -103,6 +103,7 @@ function DashGuiListRowElements () {
         spacer.css({
             "height": Dash.Size.RowHeight,
             "flex-grow": 2,
+            "flex-shrink": 2
         });
 
         return spacer;

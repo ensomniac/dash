@@ -19270,6 +19270,7 @@ function DashLocal () {
 
 function DashRequest () {
     this.requests = [];
+    this.ReloadAlertTriggered = false;
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
             endpoint = endpoint.split("/").Last();
@@ -19299,13 +19300,20 @@ function DashRequest () {
                         self.dash_requests.on_response(self, response);
                         return;
                     }
+                    if (self.ReloadAlertTriggered) {
+                        return;
+                    }
+                    self.ReloadAlertTriggered = true;
                     var msg;
                     if (error) {
-                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status + "' status - page will " +
-                        "be reloaded.\n\nError:\n'" + error + "'\n\nParams:\n" + JSON.stringify(self.params);
+                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status.toString() + "' status - page will " +
+                        "be reloaded.\n\nError:\n'" + error.toString() + "'\n\nParams:\n" + JSON.stringify(self.params) + "\n\nResponse:\n" + request;
                     }
                     else {
                         msg = "The portal must refresh due to a recent update. Sorry for the inconvenience!";
+                        if (status) {
+                            msg += ("\n\nStatus:" + status.toString());
+                        }
                     }
                     alert(msg);
                     location.reload();
@@ -19820,6 +19828,14 @@ function DashGui() {
         }
         html.css(css);
         return html;
+    };
+    this.HasOverflow = function (html) {
+        try {
+            return html[0].offsetHeight < html[0].scrollHeight;
+        }
+        catch {
+            return false;
+        }
     };
     this.GetTipBox = function (code, msg, optional_style_css) {
         // A full width box that is meant to display information
@@ -21683,10 +21699,10 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     this.Show = function () {
         if (this.simple) {
             this.background.css({
-                "opacity": 0.5
+                "display": "initial"
             });
             this.bubble.css({
-                "opacity": 1
+                "display": "initial"
             });
             return;
         }
@@ -21701,10 +21717,10 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     };
     this.Hide = function () {
         this.background.css({
-            "opacity": 0
+            "display": "none"
         });
         this.bubble.css({
-            "opacity": 0
+            "display": "none"
         });
     };
     this.Remove = function () {
@@ -24094,9 +24110,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.header_area.append(this.header.html);
         this.html.append(this.header_area);
     };
-    // If overflow, auto-scroll to bottom
     this.scroll_to_bottom_on_overflow = function () {
-        if (this.message_area[0].offsetHeight < this.message_area[0].scrollHeight) {
+        if (Dash.Gui.HasOverflow(this.message_area)) {
             this.ScrollToBottom();
         }
     };
@@ -27307,7 +27322,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
                 // When re-using a cached preview, need to refresh the connections
                 preview.rows.forEach(
                     function (sublist_row) {
-                        sublist_row.refresh_connections();
+                        sublist_row.RefreshConnections();
                     }
                 );
             }
@@ -27598,6 +27613,25 @@ function DashGuiListRow (list, row_id) {
         }
         // Add conditions for the other types as needed
     };
+    this.SetHoverPreview = function (content="") {
+        if (this.is_expanded || !content) {
+            if (this.html.attr("title")) {
+                this.html.removeAttr("title");
+            }
+            return;
+        }
+        this.html.attr("title", content);
+    };
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.column_box.off("click");
+        this.setup_connections();
+    };
+    this.RedrawColumns = function () {
+        this.column_box.empty();
+        this.setup_columns();
+    };
     this.store_css_on_expansion = function (row) {
         var border_bottom = row.html.css("border-bottom");
         if (!border_bottom || border_bottom === "none") {
@@ -27638,20 +27672,24 @@ function DashGuiListRow (list, row_id) {
         }
         return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
-    this.refresh_connections = function () {
-        this.html.off("mouseenter");
-        this.html.off("mouseleave");
-        this.column_box.off("click");
-        this.setup_connections();
-    };
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {
+                if (self.is_header) {
+                    return;
+                }
                 self.highlight.stop().animate({"opacity": 1}, 100);
+                for (var divider of self.columns["dividers"]) {
+                    divider["obj"].css({"background": self.color.Button.Background.Base});
+                }
             });
             self.html.on("mouseleave", function () {
-                if (!self.is_expanded) {
-                    self.highlight.stop().animate({"opacity": 0}, 250);
+                if (self.is_expanded || self.is_header) {
+                    return;
+                }
+                self.highlight.stop().animate({"opacity": 0}, 250);
+                for (var divider of self.columns["dividers"]) {
+                    divider["obj"].css({"background": self.color.AccentGood});
                 }
             });
             self.column_box.on("click", function (e) {
@@ -27903,6 +27941,7 @@ function DashGuiListRowElements () {
         spacer.css({
             "height": Dash.Size.RowHeight,
             "flex-grow": 2,
+            "flex-shrink": 2
         });
         return spacer;
     };

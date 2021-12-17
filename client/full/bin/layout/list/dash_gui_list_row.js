@@ -342,6 +342,32 @@ function DashGuiListRow (list, row_id) {
         // Add conditions for the other types as needed
     };
 
+    this.SetHoverPreview = function (content="") {
+        if (this.is_expanded || !content) {
+            if (this.html.attr("title")) {
+                this.html.removeAttr("title");
+            }
+
+            return;
+        }
+
+        this.html.attr("title", content);
+    };
+
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.column_box.off("click");
+
+        this.setup_connections();
+    };
+
+    this.RedrawColumns = function () {
+        this.column_box.empty();
+
+        this.setup_columns();
+    };
+
     this.store_css_on_expansion = function (row) {
         var border_bottom = row.html.css("border-bottom");
 
@@ -393,23 +419,29 @@ function DashGuiListRow (list, row_id) {
         return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
     };
 
-    this.refresh_connections = function () {
-        this.html.off("mouseenter");
-        this.html.off("mouseleave");
-        this.column_box.off("click");
-
-        this.setup_connections();
-    };
-
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {
+                if (self.is_header) {
+                    return;
+                }
+
                 self.highlight.stop().animate({"opacity": 1}, 100);
+
+                for (var divider of self.columns["dividers"]) {
+                    divider["obj"].css({"background": self.color.Button.Background.Base});
+                }
             });
 
             self.html.on("mouseleave", function () {
-                if (!self.is_expanded) {
-                    self.highlight.stop().animate({"opacity": 0}, 250);
+                if (self.is_expanded || self.is_header) {
+                    return;
+                }
+
+                self.highlight.stop().animate({"opacity": 0}, 250);
+
+                for (var divider of self.columns["dividers"]) {
+                    divider["obj"].css({"background": self.color.AccentGood});
                 }
             });
 

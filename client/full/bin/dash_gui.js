@@ -83,6 +83,16 @@ function DashGui() {
         return html;
     };
 
+    this.HasOverflow = function (html) {
+        try {
+            return html[0].offsetHeight < html[0].scrollHeight;
+        }
+
+        catch {
+            return false;
+        }
+    };
+
     this.GetTipBox = function (code, msg, optional_style_css) {
         // A full width box that is meant to display information
 
