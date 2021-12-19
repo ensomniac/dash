@@ -223,7 +223,7 @@ class ApiCore:
                 request_details += "<br>"
 
             # Make a copy of self.Params so we don't modify the original, in case the script is continuing
-            params = {k: v for k, v in self.Params}
+            params = {k: v for (k, v) in self.Params.items()}
 
             if params.get("file"):
                 params["file"] = "truncated..."
