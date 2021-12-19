@@ -15,10 +15,7 @@ from Dash.LocalStorage import Read, Write
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
-def Upload(
-        dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[],
-        enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allow_executables=False
-):
+def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allow_executables=False):
     period_count = filename.count(".")
 
     if enforce_single_period:
