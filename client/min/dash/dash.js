@@ -26028,6 +26028,7 @@ function DashGuiLayout () {
     this.List = DashGuiList;
     this.List.ColumnConfig = DashGuiListColumnConfig;
     this.PaneSlider = DashGuiPaneSlider;
+    this.RevolvingList = DashGuiRevolvingList;
     this.Tabs = {};
     this.Tabs.Top = DashGuiLayoutTabsTop;
     this.Tabs.Side = DashGuiLayoutTabsSide;
@@ -27359,8 +27360,14 @@ function DashGuiListRow (list, row_id) {
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
-    this.is_header = this.id === this.list.header_row_tag;
-    this.is_sublist = this.id.startsWith(this.list.sublist_row_tag);
+    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
+    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
+    this.anim_delay = {
+        "highlight_show": 100,
+        "highlight_hide": 250,
+        "expanded_content": 180,
+        "expanded_highlight": 270
+    };
     DashGuiListRowElements.call(this);
     this.setup_styles = function () {
         if (this.is_header) {
@@ -27414,6 +27421,14 @@ function DashGuiListRow (list, row_id) {
         });
         this.setup_columns();
         this.setup_connections();
+    };
+    this.DisableAnimation = function () {
+        this.anim_delay = {
+            "highlight_show": 0,
+            "highlight_hide": 0,
+            "expanded_content": 0,
+            "expanded_highlight": 0
+        };
     };
     this.AddToSublistQueue = function (row_id, css=null) {
         if (!this.is_sublist || !row_id) {
@@ -27495,12 +27510,15 @@ function DashGuiListRow (list, row_id) {
         // those as well, but that functionality isn't needed right now
     };
     this.SetExpandedSubListParentHeight = function (height_change) {
+        if (!this.list.hasOwnProperty("GetParentRow")) {
+            return;  // RevolvingList style
+        }
         var row = this.list.GetParentRow();
         if (!row || !row.is_sublist || !row.is_expanded) {
             return;
         }
         var size_now = parseInt(row.expanded_content.css("height").replace("px", ""));
-        row.expanded_content.stop().animate({"height": size_now + height_change}, 180);
+        row.expanded_content.stop().animate({"height": size_now + height_change}, this.anim_delay["expanded_content"]);
         // This will recursively continue up the stack
         row.SetExpandedSubListParentHeight(height_change);
     };
@@ -27523,13 +27541,16 @@ function DashGuiListRow (list, row_id) {
         if (!this.expanded_highlight) {
             this.create_expand_highlight();
         }
-        this.expanded_highlight.stop().animate({"opacity": 1}, 270);
+        this.expanded_highlight.stop().animate({"opacity": 1}, this.anim_delay["expanded_highlight"]);
         var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
         this.expanded_content.stop().css({
             "overflow-y": "auto",
             "opacity": 1,
             "height": "auto",
             "padding-top": Dash.Size.RowHeight,
+        });
+        html.css({
+            "border-bottom": "1px solid rgb(200, 200, 200)"
         });
         this.expanded_content.append(html);
         var target_size = parseInt(this.expanded_content.css("height").replace("px", ""));
@@ -27540,7 +27561,7 @@ function DashGuiListRow (list, row_id) {
         (function (self) {
             self.expanded_content.animate(
                 {"height": target_size},
-                180,
+                self.anim_delay["expanded_content"],
                 function () {
                     self.expanded_content.css({
                         "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
@@ -27550,6 +27571,7 @@ function DashGuiListRow (list, row_id) {
             );
         })(this);
         this.SetExpandedSubListParentHeight(target_size);
+        return target_size;
     };
     this.Collapse = function () {
         if (!this.is_expanded) {
@@ -27572,7 +27594,7 @@ function DashGuiListRow (list, row_id) {
         (function (self) {
             self.expanded_content.animate(
                 {"height": 0},
-                180,
+                self.anim_delay["expanded_content"],
                 function () {
                     self.expanded_content.stop().css({
                         "overflow-y": "hidden",
@@ -27589,6 +27611,7 @@ function DashGuiListRow (list, row_id) {
             );
         })(this);
         this.SetExpandedSubListParentHeight(-expanded_height);
+        return expanded_height;
     };
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !this.columns[type]) {
@@ -27678,7 +27701,7 @@ function DashGuiListRow (list, row_id) {
                 if (self.is_header) {
                     return;
                 }
-                self.highlight.stop().animate({"opacity": 1}, 100);
+                self.highlight.stop().animate({"opacity": 1}, self.anim_delay["highlight_show"]);
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.Button.Background.Base});
                 }
@@ -27687,7 +27710,7 @@ function DashGuiListRow (list, row_id) {
                 if (self.is_expanded || self.is_header) {
                     return;
                 }
-                self.highlight.stop().animate({"opacity": 0}, 250);
+                self.highlight.stop().animate({"opacity": 0}, self.anim_delay["highlight_hide"]);
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.AccentGood});
                 }
@@ -28090,6 +28113,433 @@ function DashGuiListColumnConfig () {
             "type": "divider",
             "css": css
         });
+    };
+}
+
+// This is an alternate to DashGuiList that is ideal for lists with high row counts
+function DashGuiRevolvingList (binder, column_config, color=null, include_header_row=false) {
+    this.binder = binder;
+    this.column_config = column_config;
+    this.color = color || Dash.Color.Light;
+    this.include_header_row = include_header_row;
+    if (!(column_config instanceof DashGuiListColumnConfig)) {
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+        return;
+    }
+    if (!this.binder.GetDataForKey) {
+        console.error("Error: Calling class must contain a function named GetDataForKey()");
+        return;
+    }
+    this.data = null;
+    this.parent = null;
+    this.row_objects = [];
+    this.header_row = null;
+    this.expanded_ids = {};
+    this.row_count_buffer = 6;
+    this.included_row_ids = [];
+    this.html = $("<div></div>");
+    this.get_expand_preview = null;
+    this.header_row_backing = null;
+    this.container = $("<div></div>");
+    this.last_column_config = null;
+    this.get_hover_preview_content = null;
+    this.header_row_tag = "_top_header_row";
+    // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
+    this.row_height = Dash.Size.RowHeight + 1;
+    DashGuiRevolvingListScrolling.call(this);
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0
+        });
+        this.container.css({
+            "position": "absolute",
+            "inset": 0,
+            "top": this.include_header_row ? this.row_height : 0,
+            "overflow-y": "auto"
+        });
+        this.add_header_row();
+        this.html.append(this.container);
+        this.setup_scroll_connections();
+    };
+    this.SetHoverPreviewGetter = function (binder, getter) {
+        if (!getter) {
+            return;
+        }
+        this.get_hover_preview_content = binder ? getter.bind(binder) : getter;
+    };
+    this.SetExpandPreviewGetter = function (binder, getter) {
+        if (!getter) {
+            return;
+        }
+        this.get_expand_preview = binder ? getter.bind(binder) : getter;
+    };
+    this.SetColumnConfig = function (column_config, row_ids_to_include=[]) {
+        if (!(column_config instanceof DashGuiListColumnConfig)) {
+            console.error("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+            return;
+        }
+        this.last_column_config = this.column_config;
+        this.column_config = column_config;
+        if (Dash.IsValidObject(row_ids_to_include)) {
+            this.Draw(row_ids_to_include);
+        }
+    };
+    this.Draw = function (row_ids_to_include=[]) {
+        this.expanded_ids = {};
+        this.included_row_ids = row_ids_to_include;
+        this.cleanup_rows();
+        this.create_filler_space();
+        for (var row of this.row_objects) {
+            this.container.append(row.html);
+        }
+        this.on_view_scrolled();
+    };
+    this.add_header_row = function () {
+        if (!this.include_header_row) {
+            return;
+        }
+        this.header_row = this.get_new_row(true);
+        if (!this.header_row_backing) {
+            this.add_header_row_backing();
+        }
+        this.set_header_scrollbar_offset();
+        this.html.append(this.header_row.html);
+        this.header_row.Update();
+    };
+    this.add_header_row_backing = function () {
+        this.header_row_backing = this.get_new_row(false, true);
+        this.header_row_backing.css({
+            "height": this.row_height,
+            "background": this.header_row.column_box.css("background-color")
+        });
+        this.html.append(this.header_row_backing);
+    };
+    this.create_filler_space = function () {
+        var filler_content = "";
+        for (var row_id of this.included_row_ids) {
+            filler_content += row_id + "<br>";
+        }
+        var filler_html = $("<div" + filler_content + "</div>");
+        filler_html.css({
+            "text-align": "left",
+            "overflow": "hidden",
+            "text-overflow": "clip",
+            "white-space": "nowrap",
+            "max-height": this.row_height,
+            "height": this.row_height,
+            "line-height": this.row_height + "px",
+            "opacity": 0
+        });
+        this.container.append(filler_html);
+        this.set_header_scrollbar_offset();
+    };
+    this.cleanup_rows = function () {
+        var config_changed = this.column_config !== this.last_column_config;
+        this.last_column_config = this.column_config;
+        for (var row of this.row_objects) {
+            if (config_changed) {
+                row.RedrawColumns();
+            }
+            this.hide_row(row);
+            row.html.detach();
+        }
+        if (config_changed && this.header_row) {
+            this.header_row.RedrawColumns();
+            this.header_row.Update();
+        }
+        this.container.empty();
+    };
+    this.get_new_row = function (header=false, placeholder=false) {
+        var row;
+        var css = {
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0
+        };
+        if (placeholder) {
+            row = $("<div></div>");
+            row.css(css);
+        }
+        else {
+            row = new DashGuiListRow(this, header ? this.header_row_tag : "");
+            row.html.css(css);
+            // The on-scroll revolving row system used in this style doesn't work when the rows
+            // are animated to expand/collapse. That anim delay breaks the revolving system when a
+            // row is left expanded and the view gets scrolled. Delaying the revolving system doesn't
+            // work to solve that, because the scroll events keep coming, causing further breakage.
+            row.DisableAnimation();
+        }
+        return row;
+    };
+    this.create_row_objects = function (total_needed) {
+        for (var i = 0; i < total_needed; i++) {
+            var row = this.get_new_row();
+            this.hide_row(row);
+            this.container.append(row.html);
+            this.row_objects.push(row);
+        }
+    };
+    this.show_row = function (row, row_index) {
+        row.Collapse();
+        // Original ID's expanded data (before moving row)
+        var expanded_data = this.expanded_ids[row.ID()];
+        if (Dash.IsValidObject(expanded_data) && row.index === expanded_data["row_index"]) {
+            var preview_height = parseInt(expanded_data["preview_content"].css("height"));
+            this.adjust_row_tops(row, preview_height, false);
+            this.expanded_ids[row.ID()]["row_index"] = -1;
+        }
+        row.index = row_index;
+        row.id = this.included_row_ids[row_index];
+        row.html.css({
+            "top": row_index * this.row_height,
+            "display": "initial",
+            "pointer-events": "auto"
+        });
+        row.Update();
+        this.setup_row_connections(row);
+    };
+    this.on_row_selected = function (row, preview_content=null, force_expand=false) {
+        if (!row || (!preview_content && !this.get_expand_preview)) {
+            return;
+        }
+        if (!force_expand && row.IsExpanded()) {
+            this.adjust_row_tops(row, row.Collapse(), false);
+            delete this.expanded_ids[row.ID()];
+            this.setup_row_connections(row);
+            return;
+        }
+        if (!preview_content) {
+            preview_content = this.get_expand_preview(row);
+        }
+        if (!preview_content) {
+            return;
+        }
+        this.adjust_row_tops(row, row.Expand(preview_content, null, true), true);
+        this.set_expanded_id(row, preview_content);
+    };
+    this.set_expanded_id = function (row, preview_content) {
+        var row_id = row.ID();
+        if (!(row_id in this.expanded_ids)) {
+            this.expanded_ids[row_id] = {};
+        }
+        this.expanded_ids[row_id]["row_index"] = row.index;
+        this.expanded_ids[row_id]["preview_content"] = preview_content;
+    };
+    // The 'expanded' param exists just in case row.IsExpanded() isn't immediately ready when this is called
+    this.adjust_row_tops = function (row, height_adj, expanded=true) {
+        var row_buffer = Math.ceil(height_adj / this.row_height);
+        if (row_buffer > this.row_count_buffer) {
+            this.row_count_buffer = row_buffer;
+        }
+        for (var other_row of this.row_objects) {
+            if (other_row.index <= row.index || other_row.ID() === row.ID()) {
+                continue;
+            }
+            var top_pos = parseInt(other_row.html.css("top"));
+            var default_top_pos = other_row.index * this.row_height;
+            if (expanded || top_pos > default_top_pos) {
+                var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;
+                if (new_top < default_top_pos) {
+                    new_top = default_top_pos;
+                }
+                other_row.html.css({
+                    "top": new_top
+                });
+            }
+        }
+    };
+    this.hide_row = function (row) {
+        row.Collapse();
+        row.index = -1;
+        row.html.css({
+            "top": 0,
+            "display": "none",
+            "pointer-events": "none"
+        });
+    };
+    this.set_hover_preview = function (row) {
+        (function (self) {
+            row.html.on("mouseenter", function () {
+                if (!self.get_hover_preview_content) {
+                    return;
+                }
+                row.SetHoverPreview(self.get_hover_preview_content(row.ID()) || "");
+            });
+        })(this);
+    };
+    // Replace the DashGuiList-driven click behavior
+    this.set_on_row_click = function (row) {
+        row.column_box.off("click");
+        (function (self) {
+            row.column_box.on("click", function (e) {
+                if (e.target && e.target.className.includes(" fa-")) {
+                    // Don't set selection if it was an icon button that was clicked
+                    return;
+                }
+                self.on_row_selected(row);
+            });
+        })(this);
+    };
+    this.setup_row_connections = function (row) {
+        row.RefreshConnections();
+        this.set_on_row_click(row);
+        this.set_hover_preview(row);
+    };
+    this.setup_styles();
+}
+
+/**@member DashGuiRevolvingList*/
+function DashGuiRevolvingListScrolling () {
+    this.on_view_scrolled = function () {
+        if (!this.parent) {
+            return;
+        }
+        var [start_index, end_index] = this.get_scroll_indexes();
+        var needed_count = this.get_scroll_needed_count(start_index, end_index);
+        var needed_indexes = this.get_scroll_needed_indexes(start_index);
+        var [can_move, already_moved] = this.get_scroll_moves(needed_indexes);
+        this.show_scroll_moves(needed_count, already_moved, can_move, start_index);
+    };
+    this.get_scroll_index_components = function (start_pos=0) {
+        if (start_pos < 0) {
+            start_pos = 0;
+        }
+        var end_pos = start_pos + window.innerHeight + this.row_height;
+        var start_index = Math.floor(parseInt((start_pos / this.row_height).toString()));
+        return [start_pos, end_pos, start_index];
+    };
+    this.get_scroll_indexes = function () {
+        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.row_height);
+        for (var row_id in this.expanded_ids) {
+            var expanded_data = this.expanded_ids[row_id];
+            if (!Dash.IsValidObject(expanded_data) || !expanded_data["preview_content"]) {
+                continue;
+            }
+            if (start_index < expanded_data["row_index"]) {
+                continue;
+            }
+            var preview_height = parseInt(expanded_data["preview_content"].css("height"));
+            var index_buffer = Math.ceil(preview_height / this.row_height);
+            if (start_index > (expanded_data["row_index"] + index_buffer)) {
+                start_pos -= preview_height;
+                [start_pos, end_pos, start_index] = this.get_scroll_index_components(start_pos);
+                continue;
+            }
+            start_index = expanded_data["row_index"] - 1;
+            end_pos -= preview_height;
+            break;
+        }
+        var end_index = parseInt((end_pos / this.row_height).toString());
+        if (start_index < 0) {
+            start_index = 0;
+        }
+        if (end_index > this.included_row_ids.length) {
+            end_index = this.included_row_ids.length;
+        }
+        return [start_index, end_index];
+    };
+    this.get_scroll_needed_count = function (start_index, end_index) {
+        var needed = (end_index - start_index) + this.row_count_buffer;
+        if (needed > this.row_objects.length) {
+            this.create_row_objects(needed);
+        }
+        return needed;
+    };
+    this.get_scroll_needed_indexes = function (row_index) {
+        var needed_indexes = [];
+        for (var i = 0; i < this.row_objects.length; i++) {
+            needed_indexes.push(row_index);
+            row_index += 1;
+        }
+        return needed_indexes;
+    };
+    this.get_scroll_moves = function (needed_indexes) {
+        var can_move = [];
+        var already_moved = [];
+        for (var i = 0; i < this.row_objects.length; i++) {
+            if (needed_indexes.includes(this.row_objects[i].index)) {
+                already_moved.push(this.row_objects[i].index);
+            }
+            else {
+                can_move.push(this.row_objects[i]);
+            }
+        }
+        return [can_move, already_moved];
+    };
+    this.show_scroll_moves = function (needed_count, already_moved, can_move, row_index) {
+        var available_index = 0;
+        for (var i = 0; i < needed_count; i++) {
+            if (already_moved.includes(row_index)) {
+                row_index += 1;
+                continue;
+            }
+            if (row_index >= this.included_row_ids.length) {
+                continue;
+            }
+            this.show_row(can_move[available_index], row_index);
+            available_index += 1;
+            row_index += 1;
+        }
+        this.re_expand_rows();
+        this.tighten_scroll_moves();
+    };
+    this.tighten_scroll_moves = function () {
+        var row;
+        for (row of this.row_objects) {
+            if (!row.IsExpanded()) {
+                continue;
+            }
+            return;
+        }
+        for (row of this.row_objects) {
+            row.html.css({
+                "top": row.index * this.row_height
+            });
+        }
+    };
+    this.re_expand_rows = function () {
+        for (var row_id in this.expanded_ids) {
+            var expanded_data = this.expanded_ids[row_id];
+            if (!Dash.IsValidObject(expanded_data)) {
+                return;
+            }
+            for (var row of this.row_objects) {
+                if (row.ID() !== row_id) {
+                    continue;
+                }
+                if (!row.IsExpanded()) {
+                    this.on_row_selected(row, expanded_data["preview_content"], true);
+                }
+                break;
+            }
+        }
+    };
+    // If scrollbar exists in container, shift the header to the left to compensate and prevent misalignment
+    this.set_header_scrollbar_offset = function () {
+        if (!this.header_row) {
+            return;
+        }
+        var margin = 0;
+        if (Dash.Gui.HasOverflow(this.container)) {
+            margin = Dash.Size.Padding * 1.5;
+        }
+        this.header_row.html.css({
+            "margin-right": margin
+        });
+    };
+    this.setup_scroll_connections = function () {
+        (function (self) {
+            self.parent = self.html.parent();
+            self.parent.on("scroll", function () {
+                self.on_view_scrolled();
+            });
+            self.container.on("scroll", function () {
+                self.on_view_scrolled();
+            });
+        })(this);
+        this.on_view_scrolled();
     };
 }
 

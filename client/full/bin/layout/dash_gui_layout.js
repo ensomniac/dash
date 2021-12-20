@@ -6,6 +6,8 @@ function DashGuiLayout () {
 
     this.PaneSlider = DashGuiPaneSlider;
 
+    this.RevolvingList = DashGuiRevolvingList;
+
     this.Tabs = {};
     this.Tabs.Top = DashGuiLayoutTabsTop;
     this.Tabs.Side = DashGuiLayoutTabsSide;

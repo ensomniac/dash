@@ -14,8 +14,15 @@ function DashGuiListRow (list, row_id) {
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
-    this.is_header = this.id === this.list.header_row_tag;
-    this.is_sublist = this.id.startsWith(this.list.sublist_row_tag);
+    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
+    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
+
+    this.anim_delay = {
+        "highlight_show": 100,
+        "highlight_hide": 250,
+        "expanded_content": 180,
+        "expanded_highlight": 270
+    };
 
     DashGuiListRowElements.call(this);
 
@@ -79,6 +86,15 @@ function DashGuiListRow (list, row_id) {
 
         this.setup_columns();
         this.setup_connections();
+    };
+
+    this.DisableAnimation = function () {
+        this.anim_delay = {
+            "highlight_show": 0,
+            "highlight_hide": 0,
+            "expanded_content": 0,
+            "expanded_highlight": 0
+        };
     };
 
     this.AddToSublistQueue = function (row_id, css=null) {
@@ -187,6 +203,10 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.SetExpandedSubListParentHeight = function (height_change) {
+        if (!this.list.hasOwnProperty("GetParentRow")) {
+            return;  // RevolvingList style
+        }
+
         var row = this.list.GetParentRow();
 
         if (!row || !row.is_sublist || !row.is_expanded) {
@@ -195,7 +215,7 @@ function DashGuiListRow (list, row_id) {
 
         var size_now = parseInt(row.expanded_content.css("height").replace("px", ""));
 
-        row.expanded_content.stop().animate({"height": size_now + height_change}, 180);
+        row.expanded_content.stop().animate({"height": size_now + height_change}, this.anim_delay["expanded_content"]);
 
         // This will recursively continue up the stack
         row.SetExpandedSubListParentHeight(height_change);
@@ -226,7 +246,7 @@ function DashGuiListRow (list, row_id) {
             this.create_expand_highlight();
         }
 
-        this.expanded_highlight.stop().animate({"opacity": 1}, 270);
+        this.expanded_highlight.stop().animate({"opacity": 1}, this.anim_delay["expanded_highlight"]);
 
         var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
 
@@ -235,6 +255,10 @@ function DashGuiListRow (list, row_id) {
             "opacity": 1,
             "height": "auto",
             "padding-top": Dash.Size.RowHeight,
+        });
+
+        html.css({
+            "border-bottom": "1px solid rgb(200, 200, 200)"
         });
 
         this.expanded_content.append(html);
@@ -249,7 +273,7 @@ function DashGuiListRow (list, row_id) {
         (function (self) {
             self.expanded_content.animate(
                 {"height": target_size},
-                180,
+                self.anim_delay["expanded_content"],
                 function () {
                     self.expanded_content.css({
                         "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
@@ -261,6 +285,8 @@ function DashGuiListRow (list, row_id) {
         })(this);
 
         this.SetExpandedSubListParentHeight(target_size);
+
+        return target_size;
     };
 
     this.Collapse = function () {
@@ -289,7 +315,7 @@ function DashGuiListRow (list, row_id) {
         (function (self) {
             self.expanded_content.animate(
                 {"height": 0},
-                180,
+                self.anim_delay["expanded_content"],
                 function () {
                     self.expanded_content.stop().css({
                         "overflow-y": "hidden",
@@ -310,6 +336,8 @@ function DashGuiListRow (list, row_id) {
         })(this);
 
         this.SetExpandedSubListParentHeight(-expanded_height);
+
+        return expanded_height;
     };
 
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
@@ -426,7 +454,7 @@ function DashGuiListRow (list, row_id) {
                     return;
                 }
 
-                self.highlight.stop().animate({"opacity": 1}, 100);
+                self.highlight.stop().animate({"opacity": 1}, self.anim_delay["highlight_show"]);
 
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.Button.Background.Base});
@@ -438,7 +466,7 @@ function DashGuiListRow (list, row_id) {
                     return;
                 }
 
-                self.highlight.stop().animate({"opacity": 0}, 250);
+                self.highlight.stop().animate({"opacity": 0}, self.anim_delay["highlight_hide"]);
 
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.AccentGood});
