@@ -19270,7 +19270,6 @@ function DashLocal () {
 
 function DashRequest () {
     this.requests = [];
-    this.ReloadAlertTriggered = false;
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
             endpoint = endpoint.split("/").Last();
@@ -19299,24 +19298,9 @@ function DashRequest () {
                     if (response) {
                         self.dash_requests.on_response(self, response);
                         return;
-                    }
-                    if (self.ReloadAlertTriggered) {
-                        return;
-                    }
-                    self.ReloadAlertTriggered = true;
-                    var msg;
-                    if (error) {
-                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status.toString() + "' status - page will " +
-                        "be reloaded.\n\nError:\n'" + error.toString() + "'\n\nParams:\n" + JSON.stringify(self.params) + "\n\nResponse:\n" + request;
-                    }
-                    else {
-                        msg = "The portal must refresh due to a recent update. Sorry for the inconvenience!";
-                        if (status) {
-                            msg += ("\n\nStatus:" + status.toString());
-                        }
-                    }
-                    alert(msg);
-                    location.reload();
+                    };
+                    console.log("Dash Request Warning: A request failed, but callback will be triggered regardless.");
+                    self.dash_requests.on_response(self, response);
                 });
             })(this);
         };
@@ -19355,7 +19339,7 @@ function DashRequest () {
         })(this, gzip_bytes, request, response);
     };
     this.on_response = function (request, response) {
-        if (response["gzip"]) {
+        if (response && response["gzip"]) {
             this.decompress_response(request, response);
             return;
         }
@@ -19783,6 +19767,7 @@ function DashGui() {
     this.PropertyBox                 = DashGuiPropertyBox;
     this.Slider                      = DashGuiSlider;
     this.ToolRow                     = DashGuiToolRow;
+    this.LoadingLabel                = DashGuiLoadingLabel;
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {
             color = Dash.Color.Light;
@@ -21655,6 +21640,64 @@ function LoadDot(dots) {
     };
     this.setup_styles();
 }
+
+function DashGuiLoadingLabel (binder, label_text) {
+    this.binder       = binder;
+    this.color        = this.binder.color || Dash.Color.Light;
+    this.label_text   = label_text;
+    this.height       = Dash.Size.ButtonHeight;
+    this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
+    this.html         = this.loading_dots.html;
+    this.label        = $("<div>" + this.label_text + "</div>");
+    this.setup_styles = function () {
+        this.html.append(this.label);
+        this.html.css({
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-bottom": this.height,
+            // "background": "black",
+        });
+        this.label.css({
+            "position": "absolute",
+            "left": -100,
+            "right": -100,
+            "top": this.height-Dash.Size.Padding,
+            "bottom": -(this.height-Dash.Size.Padding),
+            "height": this.height,
+            "line-height": this.height + "px",
+            "text-align": "center",
+            "color": this.color.Text,
+            "opacity": 0,
+        });
+        this.loading_dots.Start();
+        this.label.animate({"opacity": 1}, 250);
+    };
+    this.destroy = function () {
+        // Called after fade out is complete
+        this.label.remove();
+        this.loading_dots.html.remove();
+        this.html.remove();
+        this.label = null;
+        this.loading_dots = null;
+        this.html = null;
+    };
+    this.Clear = function () {
+        // This function will fade out the loading label while converting
+        // it to an absolutely positioned element. Since this element is
+        // really meant to be used to show while something is loading, once
+        // loading is complete, this flow makes it easy to build the loaded
+        // content without having to wait to fade out the label
+        // first and fire a callback
+        this.html.css({
+            "position": "absolute",
+            "top": this.html[0].offsetTop,
+            "left": this.html[0].offsetLeft,
+        });
+        this.label.stop().animate({"opacity": 0}, 250, this.destroy.bind(this));
+        this.loading_dots.Stop();
+    };
+    this.setup_styles();
+};
 
 function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
     this.color = color || Dash.Color.Light;
@@ -24584,9 +24627,17 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
+        // DashGlobalImpactChange | 12/21/21 | Ryan
+        // Updating the property box's background color to reflect
+        // a slightly brighter color than whatever background it's
+        // placed over. This change will affect the look of all
+        // property boxes, but it does not change mobile styles.
+        this.html.css({
+            "background": "rgba(255, 255, 255, 0.25)",
+        });
         if (Dash.IsMobile) {
             this.setup_mobile_styles();
-        }
+        };
     };
     this.setup_mobile_styles = function () {
         this.html.css({
@@ -24697,7 +24748,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        }
+        };
         (function (self, row, callback, data_key) {
             var button = new Dash.Gui.IconButton(
                 "trash",
@@ -24721,7 +24772,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         })(this, row, callback, data_key);
         if (row.button) {
             row.button.html.css("margin-right", Dash.Size.RowHeight);
-        }
+        };
         return row;
     };
     this.on_combo_updated = function (property_key, selected_option) {
@@ -26807,7 +26858,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.color = Dash.Color.Light;
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
-    }
+    };
     this.setup_styles = function () {
         if (this.side_tabs) {
             this.set_styles_for_side_tabs();
@@ -26826,6 +26877,11 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     };
     this.GetCurrentIndex = function () {
         return this.current_index;
+    };
+    this.is_class = function(func) {
+        // A pretty cheap but flimsy hack to see if this is a function
+        // or a class that can be instantiated
+        return Function.prototype.toString.call(func).includes("setup_styles");
     };
     this.LoadIndex = function (index) {
         if (index > this.all_content.length-1) {
@@ -26850,7 +26906,21 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             content_html = this.all_content[index]["content_div_html_class"];
         }
         else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
-            content_html = new this.all_content[index]["content_div_html_class"]().html;
+            // DashGlobalImpactChange | 12/21/21 | Ryan
+            // Updating this function to pass optional_params to callback while also
+            // binding the callback correctly to the parent class
+            // This is likely a very low impact change that *shouldn't* affect anything
+            var callback   = this.all_content[index]["content_div_html_class"].bind(this.binder);
+            var inst_class = null;
+            if (this.is_class(this.all_content[index]["content_div_html_class"])) {
+                inst_class = new callback(this.all_content[index]["optional_params"]);
+                content_html = inst_class.html;
+            }
+            else {
+                // Calling a function with 'new' will result in an incorrect binding
+                inst_class = callback(this.all_content[index]["optional_params"]);
+                content_html = inst_class.html;
+            };
         }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
@@ -26926,14 +26996,16 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.set_styles_for_side_tabs = function () {
         this.html.css({
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "background": this.color.TabBackground,
         });
         this.content_area.css({
             "position": "absolute",
             "top": 0,
             "left": this.tab_area_size,
             "bottom": 0,
-            "right": 0
+            "right": 0,
+            "background": Dash.Color.Light.Background,
         });
         this.tab_area.css({
             "display": "flex",
@@ -26943,7 +27015,6 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "left": 0,
             "bottom": 0,
             "width": this.tab_area_size,
-            "background": this.color.Background
         });
         this.tab_top.css({
             "width": this.tab_area_size
@@ -26967,7 +27038,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.set_styles_for_top_tabs = function () {
         this.html.css({
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "background": this.color.TabBackground,
         });
         this.list_backing.css({
             "position": "absolute",
@@ -26975,7 +27047,6 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "top": 0,
             "right": 0,
             "height": this.tab_area_size,
-            "background": this.color.Tab.AreaBackground
         });
         this.tab_top.css({
             "position": "absolute",

@@ -17,14 +17,13 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.tab_middle = $("<div></div>");
         this.tab_area_size = Dash.Size.ColumnWidth;
     }
-
     else {
         // TODO: This should probably also be converted to a better div grouping
 
         this.color = Dash.Color.Light;
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
-    }
+    };
 
     this.setup_styles = function () {
         if (this.side_tabs) {
@@ -48,6 +47,12 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
     this.GetCurrentIndex = function () {
         return this.current_index;
+    };
+
+    this.is_class = function(func) {
+        // A pretty cheap but flimsy hack to see if this is a function
+        // or a class that can be instantiated
+        return Function.prototype.toString.call(func).includes("setup_styles");
     };
 
     this.LoadIndex = function (index) {
@@ -81,22 +86,37 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         if (typeof this.all_content[index]["content_div_html_class"] === "object") {
             content_html = this.all_content[index]["content_div_html_class"];
         }
-
         else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
-            content_html = new this.all_content[index]["content_div_html_class"]().html;
-        }
 
+            // DashGlobalImpactChange | 12/21/21 | Ryan
+            // Updating this function to pass optional_params to callback while also
+            // binding the callback correctly to the parent class
+            // This is likely a very low impact change that *shouldn't* affect anything
+
+            var callback   = this.all_content[index]["content_div_html_class"].bind(this.binder);
+            var inst_class = null;
+
+            if (this.is_class(this.all_content[index]["content_div_html_class"])) {
+                inst_class = new callback(this.all_content[index]["optional_params"]);
+                content_html = inst_class.html;
+            }
+            else {
+                // Calling a function with 'new' will result in an incorrect binding
+                inst_class = callback(this.all_content[index]["optional_params"]);
+                content_html = inst_class.html;
+            };
+
+        }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
         }
-
         if (!content_html) {
+
             if (parseInt(index) === 0) {
                 console.error("Error: Unknown content!");
 
                 content_html = $("<div>Error Loading Content</div>");
             }
-
             else {
                 console.error("Error: Invalid index", index, ", reloading index 0");
 
@@ -104,6 +124,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
                 return;
             }
+
         }
 
         this.content_area.append(content_html);
@@ -187,7 +208,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.set_styles_for_side_tabs = function () {
         this.html.css({
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "background": this.color.TabBackground,
         });
 
         this.content_area.css({
@@ -195,7 +217,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "top": 0,
             "left": this.tab_area_size,
             "bottom": 0,
-            "right": 0
+            "right": 0,
+            "background": Dash.Color.Light.Background,
         });
 
         this.tab_area.css({
@@ -206,7 +229,6 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "left": 0,
             "bottom": 0,
             "width": this.tab_area_size,
-            "background": this.color.Background
         });
 
         this.tab_top.css({
@@ -236,7 +258,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.set_styles_for_top_tabs = function () {
         this.html.css({
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "background": this.color.TabBackground,
         });
 
         this.list_backing.css({
@@ -245,7 +268,6 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "top": 0,
             "right": 0,
             "height": this.tab_area_size,
-            "background": this.color.Tab.AreaBackground
         });
 
         this.tab_top.css({
@@ -281,6 +303,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     };
 
     this.load_last_selection = function () {
+
         if (parseInt(this.selected_index) !== -1) {
             // A selection was already made externally
             return;
@@ -297,6 +320,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         }
 
         this.LoadIndex(last_index);
+
     };
 
     this._add = function (label_text, content_div_html_class, anchor_div, optional_params={}) {

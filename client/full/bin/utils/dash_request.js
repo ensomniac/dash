@@ -1,6 +1,5 @@
 function DashRequest () {
     this.requests = [];
-    this.ReloadAlertTriggered = false;
 
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
@@ -34,34 +33,12 @@ function DashRequest () {
 
                     if (response) {
                         self.dash_requests.on_response(self, response);
-
                         return;
-                    }
+                    };
 
-                    if (self.ReloadAlertTriggered) {
-                        return;
-                    }
+                    console.log("Dash Request Warning: A request failed, but callback will be triggered regardless.");
+                    self.dash_requests.on_response(self, response);
 
-                    self.ReloadAlertTriggered = true;
-
-                    var msg;
-
-                    if (error) {
-                        msg = "Warning:\nRequest to " + self.url + " failed with a '" + status.toString() + "' status - page will " +
-                        "be reloaded.\n\nError:\n'" + error.toString() + "'\n\nParams:\n" + JSON.stringify(self.params) + "\n\nResponse:\n" + request;
-                    }
-
-                    else {
-                        msg = "The portal must refresh due to a recent update. Sorry for the inconvenience!";
-
-                        if (status) {
-                            msg += ("\n\nStatus:" + status.toString());
-                        }
-                    }
-
-                    alert(msg);
-
-                    location.reload();
                 });
             })(this);
         };
@@ -113,9 +90,8 @@ function DashRequest () {
     };
 
     this.on_response = function (request, response) {
-        if (response["gzip"]) {
+        if (response && response["gzip"]) {
             this.decompress_response(request, response);
-
             return;
         }
 

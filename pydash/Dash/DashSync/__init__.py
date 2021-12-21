@@ -90,13 +90,15 @@ class DashSync:
         # Called when there is a change to the /client/full/ Dash code
         # We want to re-compile the package into /client/full/ then
         # distribute the new version to all local clients
-        from Dash.ClientCompiler import ClientCompiler
+        import Dash.ClientCompiler
+        import importlib
+        importlib.reload(Dash.ClientCompiler)
 
         # Since we have local packages, we can set them
         # like this to make things faster. Without this, it
         # will pull them from the server as this code does on startup
-        ClientCompiler.SetPackages(self.packages)
-        ClientCompiler.CompileAndDistribute()
+        Dash.ClientCompiler.ClientCompiler.SetPackages(self.packages)
+        Dash.ClientCompiler.ClientCompiler.CompileAndDistribute()
 
 
 if __name__ == "__main__":

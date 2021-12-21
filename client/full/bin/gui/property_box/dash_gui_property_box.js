@@ -19,9 +19,21 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     DashGuiPropertyBoxInterface.call(this);
 
     this.setup_styles = function () {
+
+        // DashGlobalImpactChange | 12/21/21 | Ryan
+        // Updating the property box's background color to reflect
+        // a slightly brighter color than whatever background it's
+        // placed over. This change will affect the look of all
+        // property boxes, but it does not change mobile styles.
+
+        this.html.css({
+            "background": "rgba(255, 255, 255, 0.25)",
+        });
+
         if (Dash.IsMobile) {
             this.setup_mobile_styles();
-        }
+        };
+
     };
 
     this.setup_mobile_styles = function () {
@@ -158,7 +170,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         if (!this.buttons) {
             this.buttons = [];
-        }
+        };
 
         (function (self, row, callback, data_key) {
             var button = new Dash.Gui.IconButton(
@@ -187,7 +199,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         if (row.button) {
             row.button.html.css("margin-right", Dash.Size.RowHeight);
-        }
+        };
 
         return row;
     };

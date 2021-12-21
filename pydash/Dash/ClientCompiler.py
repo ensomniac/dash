@@ -372,19 +372,30 @@ class _ClientCompiler:
 
             clean_context[key] = package[key]
 
+        dash_authors = [
+            "Ryan Martin ryan@ensomniac.com",
+            "Andrew Stet stetandrew@gmail.com"
+        ]
+
         header = [
             '''''', '''<!-- DASH START -->''',
             '''<script type="text/javascript">''',
-            '''    var DASH_AUTHOR = "Ryan Martin ryan@ensomniac.com, Andrew Stet stetandrew@gmail.com";''',
+            '''    var DASH_AUTHORS = "''' + ", ".join(dash_authors) + '''";''',
             '''    var DASH_VERSION = ''' + str(self.VersionInfo["version"]) + ''';''',
             '''    var DASH_VERSION_DATE = "''' + str(self.VersionInfo["date_hr"]) + '''";''',
             '''    var DASH_CONTEXT = {'''
         ]
 
-        # str(json.dumps(clean_context))
+        max_key_len = [len(x) for x in list(clean_context.keys())]
+        max_key_len.sort()
+        max_key_len = max_key_len[-1]
 
+        indent = " " * 8
         for key in clean_context:
-            header.append(f'''        "{key}": "{clean_context[key]}",''')
+            spacer = " " * (max_key_len-len(key))
+            line   = indent + '"' + key.zfill(len(key)-max_key_len) + '": '
+            line   += spacer + '"' + clean_context[key] + '",'
+            header.append(line)
 
         # Remove trailing comma from last dict line
         header[-1].rstrip(",")
