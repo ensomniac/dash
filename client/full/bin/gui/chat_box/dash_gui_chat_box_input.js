@@ -10,7 +10,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.at_button = null;
     this.submit_button = null;
     this.dark_mode = this.chat_box.dark_mode;
-    this.combo_enter_key_event_fired = false;
     this.secondary_css_color = this.chat_box.secondary_css_color;
 
     this.setup_styles = function () {
@@ -113,8 +112,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     };
 
     this.on_combo_changed = function (selected_combo) {
-        this.combo_enter_key_event_fired = true;
-
         var new_text = "";
         var old_text = this.Text();
 

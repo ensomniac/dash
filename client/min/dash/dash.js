@@ -24157,8 +24157,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             })(this);
             return;
         }
-        if (this.message_input.combo_enter_key_event_fired) {
-            this.message_input.combo_enter_key_event_fired = false;
+        if (this.message_input.at_button.enter_key_event_fired) {
+            this.message_input.at_button.enter_key_event_fired = false;
             return;
         }
         this.AddMessage(
@@ -24198,7 +24198,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.at_button = null;
     this.submit_button = null;
     this.dark_mode = this.chat_box.dark_mode;
-    this.combo_enter_key_event_fired = false;
     this.secondary_css_color = this.chat_box.secondary_css_color;
     this.setup_styles = function () {
         this.html = Dash.Gui.GetHTMLContext(
@@ -24278,7 +24277,6 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.html.append(this.at_button.html);
     };
     this.on_combo_changed = function (selected_combo) {
-        this.combo_enter_key_event_fired = true;
         var new_text = "";
         var old_text = this.Text();
         if (old_text.endsWith("@")) {
@@ -25036,6 +25034,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
+    // This is managed in this.handle_arrow_input(), but should ideally also
+    // be set back to false in whatever code is referencing this attribute
+    this.enter_key_event_fired = false;
     this.random_id = "combo_" + Dash.RandomID() + "_" +
                      (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
                      "_" + this.option_list[0]["id"];
@@ -25431,6 +25432,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (self.is_searchable) {
             buttons = self.search_result_rows;
         }
+        self.enter_key_event_fired = false;
         if (event.key === "Down" || event.key === "ArrowDown") {
             var new_index = self.combo_option_index + 1;
             if (new_index > buttons.length - 1) {
@@ -25451,6 +25453,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             return;
         }
         else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+            self.enter_key_event_fired = true;
             for (i in self.option_list) {
                 var option = self.option_list[i];
                 if (parseInt(i) === self.combo_option_index) {
@@ -25465,7 +25468,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (draw) {
             for (i in buttons) {
                 var button = buttons[i];
-                if (parseInt(i) === parseInt(self.combo_option_index)) {
+                if (parseInt(i) === parseInt(self.combo_option_index.toString())) {
                     self.button_is_highlighted = true;
                     button.SetSearchResultActive(true);
                 }
