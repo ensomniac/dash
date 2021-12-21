@@ -8,10 +8,6 @@ function DashGuiListRowElements () {
 
         this.column_box.append(column.html);
 
-        if (!this.columns["default"]) {
-            this.columns["default"] = [];
-        }
-
         this.columns["default"].push({
             "obj": column,
             "column_config_data": column_config_data
@@ -27,10 +23,6 @@ function DashGuiListRowElements () {
 
         this.column_box.append(spacer);
 
-        if (!this.columns["spacers"]) {
-            this.columns["spacers"] = [];
-        }
-
         this.columns["spacers"].push({
             "obj": spacer,
             "column_config_data": column_config_data
@@ -41,10 +33,6 @@ function DashGuiListRowElements () {
         var divider = this.get_divider(column_config_data);
 
         this.column_box.append(divider);
-
-        if (!this.columns["dividers"]) {
-            this.columns["dividers"] = [];
-        }
 
         this.columns["dividers"].push({
             "obj": divider,
@@ -57,10 +45,6 @@ function DashGuiListRowElements () {
 
         this.column_box.append(combo.html);
 
-        if (!this.columns["combos"]) {
-            this.columns["combos"] = [];
-        }
-
         this.columns["combos"].push({
             "obj": combo,
             "column_config_data": column_config_data
@@ -72,10 +56,6 @@ function DashGuiListRowElements () {
 
         this.column_box.append(input.html);
 
-        if (!this.columns["inputs"]) {
-            this.columns["inputs"] = [];
-        }
-
         this.columns["inputs"].push({
             "obj": input,
             "column_config_data": column_config_data
@@ -86,10 +66,6 @@ function DashGuiListRowElements () {
         var icon_button = this.get_icon_button(column_config_data);
 
         this.column_box.append(icon_button.html);
-
-        if (!this.columns["icon_buttons"]) {
-            this.columns["icon_buttons"] = [];
-        }
 
         this.columns["icon_buttons"].push({
             "obj": icon_button,

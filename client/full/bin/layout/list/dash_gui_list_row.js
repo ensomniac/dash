@@ -2,7 +2,6 @@ function DashGuiListRow (list, row_id) {
     this.list = list;
     this.id = row_id;
 
-    this.columns = {};
     this.is_shown = true;
     this.tmp_css_cache = [];
     this.sublist_queue = [];
@@ -16,6 +15,15 @@ function DashGuiListRow (list, row_id) {
     this.expanded_content = $("<div></div>");
     this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
     this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
+
+    this.columns = {
+        "combos": [],
+        "inputs": [],
+        "default": [],
+        "spacers": [],
+        "dividers": [],
+        "icon_buttons": []
+    };
 
     this.anim_delay = {
         "highlight_show": 100,
@@ -34,7 +42,7 @@ function DashGuiListRow (list, row_id) {
                 "left": 0,
                 "right": 0,
                 "padding-left": Dash.Size.Padding,
-                "padding-right": Dash.Size.Padding,
+                "padding-right": Dash.Size.Padding
             });
         }
 
@@ -46,7 +54,7 @@ function DashGuiListRow (list, row_id) {
                 "margin-left": Dash.Size.Padding * (this.is_sublist ? 1 : -1),
                 "margin-right": -Dash.Size.Padding,
                 "overflow-y": "hidden",
-                "height": 0,
+                "height": 0
             });
 
             this.highlight.css({
@@ -57,13 +65,13 @@ function DashGuiListRow (list, row_id) {
                 "height": Dash.Size.RowHeight,
                 "background": this.color.AccentGood, // Not correct
                 "pointer-events": "none",
-                "opacity": 0,
+                "opacity": 0
             });
 
             this.column_box.css({
                 "left": Dash.Size.Padding,
                 "right": Dash.Size.Padding,
-                "cursor": "pointer",
+                "cursor": "pointer"
             });
         }
 
@@ -73,7 +81,7 @@ function DashGuiListRow (list, row_id) {
             "position": "absolute",
             "top": 0,
             "height": Dash.Size.RowHeight,
-            "display": "flex",
+            "display": "flex"
         });
 
         this.html.css({
@@ -81,7 +89,7 @@ function DashGuiListRow (list, row_id) {
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            "min-height": Dash.Size.RowHeight,
+            "min-height": Dash.Size.RowHeight
         });
 
         this.setup_columns();
@@ -168,27 +176,21 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.Update = function () {
-        var i;
-
-        // Reset this to force a redraw next time it's expanded
-        this.SetCachedPreview(null);
+        this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
 
         for (var type in this.columns) {
-            if (!this.columns[type] || this.columns[type].length < 1) {
+            if (!Dash.IsValidObject(this.columns[type])) {
                 continue;
             }
 
             if (type === "default") {
-                for (i in this.columns[type]) {
-                    var column = this.columns[type][i];
-
+                for (var column of this.columns[type]) {
                     column["obj"].Update();
                 }
             }
 
             else if (type === "inputs") {
-                for (i in this.columns[type]) {
-                    var input = this.columns[type][i];
+                for (var input of this.columns[type]) {
                     var new_value = this.get_data_for_key(input["column_config_data"]);
 
                     if (new_value) {
@@ -341,7 +343,7 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
-        if (!this.columns || !this.columns[type]) {
+        if (!this.columns || !Dash.IsValidObject(this.columns[type])) {
             return;
         }
 
@@ -456,6 +458,10 @@ function DashGuiListRow (list, row_id) {
 
                 self.highlight.stop().animate({"opacity": 1}, self.anim_delay["highlight_show"]);
 
+                if (self.list.allow_row_divider_color_change_on_hover === false) {
+                    return;
+                }
+
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.Button.Background.Base});
                 }
@@ -467,6 +473,10 @@ function DashGuiListRow (list, row_id) {
                 }
 
                 self.highlight.stop().animate({"opacity": 0}, self.anim_delay["highlight_hide"]);
+
+                if (self.list.allow_row_divider_color_change_on_hover === false) {
+                    return;
+                }
 
                 for (var divider of self.columns["dividers"]) {
                     divider["obj"].css({"background": self.color.AccentGood});

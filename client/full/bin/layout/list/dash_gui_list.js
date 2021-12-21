@@ -24,6 +24,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.last_selection_id = null;
     this.sublist_row_tag = "_sublist_row_";
     this.header_row_tag = "_top_header_row";
+    this.allow_row_divider_color_change_on_hover = true;
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
 
@@ -207,6 +208,11 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     // Intended for cases where this is a sublist
     this.SetParentRow = function (row) {
         this.parent_row = row;
+    };
+
+    // Intended to be used when custom CSS is used on divider elements
+    this.DisableDividerColorChangeOnHover = function () {
+        this.allow_row_divider_color_change_on_hover = false;
     };
 
     this.add_header_row = function () {
