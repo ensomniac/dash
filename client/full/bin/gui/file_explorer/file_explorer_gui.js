@@ -232,6 +232,8 @@ function DashGuiFileExplorerGUI () {
 
         this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config);
 
+        this.list.DisableDividerColorChangeOnHover();
+
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
             border_css

@@ -32,6 +32,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.label_container = $("<div class='ComboLabel Combo'></div>");
 
+    // This is managed in this.handle_arrow_input(), but should ideally also
+    // be set back to false in whatever code is referencing this attribute
+    this.enter_key_event_fired = false;
+
     this.random_id = "combo_" + Dash.RandomID() + "_" +
                      (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
                      "_" + this.option_list[0]["id"];
@@ -555,6 +559,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             buttons = self.search_result_rows;
         }
 
+        self.enter_key_event_fired = false;
+
         if (event.key === "Down" || event.key === "ArrowDown") {
             var new_index = self.combo_option_index + 1;
 
@@ -584,6 +590,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+            self.enter_key_event_fired = true;
+
             for (i in self.option_list) {
                 var option = self.option_list[i];
 
@@ -603,7 +611,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             for (i in buttons) {
                 var button = buttons[i];
 
-                if (parseInt(i) === parseInt(self.combo_option_index)) {
+                if (parseInt(i) === parseInt(self.combo_option_index.toString())) {
                     self.button_is_highlighted = true;
 
                     button.SetSearchResultActive(true);

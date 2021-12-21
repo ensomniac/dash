@@ -390,8 +390,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             return;
         }
 
-        if (this.message_input.combo_enter_key_event_fired) {
-            this.message_input.combo_enter_key_event_fired = false;
+        if (this.message_input.at_button.enter_key_event_fired) {
+            this.message_input.at_button.enter_key_event_fired = false;
 
             return;
         }
