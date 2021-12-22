@@ -15,7 +15,7 @@ from Dash.LocalStorage import Read, Write
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
-def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allow_executables=False):
+def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]):
     period_count = filename.count(".")
 
     if enforce_single_period:
@@ -30,8 +30,8 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, pa
     if not file_ext or not (2 <= len(file_ext) <= 4):
         raise Exception(f"Invalid file extension: {file_ext}")
 
-    if not allow_executables and file_ext in executable_extensions:
-        raise Exception(f"Executable files are not permitted ({file_ext}). If you believe this is in error, please let an admin know.")
+    if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
+        raise Exception(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
 
     if period_count > 1:
         filename = replace_extra_periods(filename, file_ext)
@@ -314,8 +314,12 @@ def check_filename_key_match(filename, key, parent_folders, other_file_data_path
 
         elif ")." in other_filename_value:
             sub_split = split[-1].split(").")
-            tag_number = int(sub_split[0].strip())
-            other_filename_value = f"{split[0]}.{sub_split[-1]}"
+
+            try:
+                tag_number = int(sub_split[0].strip())
+                other_filename_value = f"{split[0]}.{sub_split[-1]}"
+            except:
+                pass
 
     if other_filename_value != filename:
         return None
