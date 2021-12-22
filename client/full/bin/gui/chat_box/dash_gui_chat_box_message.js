@@ -63,6 +63,10 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         return this.id;
     };
 
+    this.UserEmail = function () {
+        return this.user_email;
+    };
+
     this.IsoTimestamp = function () {
         return this.iso_ts;
     };

@@ -203,7 +203,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             }
         }
 
-        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp());
+        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp(), message_obj.UserEmail());
     };
 
     this.bold_mentions = function (text, track=false) {
