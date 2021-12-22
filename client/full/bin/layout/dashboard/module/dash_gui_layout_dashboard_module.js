@@ -13,8 +13,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
-    this.secondary_color = this.color.Tab.AreaBackground;
+    this.secondary_color = this.color.Text;
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
@@ -43,13 +42,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     };
 
     this.initialize_style = function () {
-        if (this.color === Dash.Color.Dark) {
-            this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
-        }
-
-        else if (this.color === Dash.Color.Light) {
-            this.secondary_color = Dash.Color.Dark.Tab.AreaBackground;
-        }
 
         if (this.style === "flex") {
             DashGuiLayoutDashboardModuleFlex.call(this);

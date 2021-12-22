@@ -215,7 +215,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
+            "background": this.color.Tab.AreaBackground,
         });
 
         this.content_area.css({
@@ -224,7 +224,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             "left": this.tab_area_size,
             "bottom": 0,
             "right": 0,
-            "background": Dash.Color.Light.Background
+            "background": Dash.Color.GetOpposite(this.color).Background,
         });
 
         this.tab_area.css({
@@ -265,7 +265,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
+            "background": this.color.Tab.AreaBackground,
         });
 
         this.list_backing.css({
@@ -298,7 +298,8 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             "position": "absolute",
             "inset": 0,
             "overflow-y": "auto",
-            "background": Dash.Color.Light.Background,
+            // "background": Dash.Color.GetOpposite(this.color).Background,
+            "background": this.color.Background,
             "top": this.tab_area_size
         });
 

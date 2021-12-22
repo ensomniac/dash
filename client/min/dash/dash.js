@@ -18905,16 +18905,16 @@ function DashColor () {
 
 class DashColorSet {
     constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
-        this._background  = background;       // HTML Color
-        this._background_raised  = background_raised;       // HTML Color
-        this._text        = text;             // HTML Color
-        this._text_header = text_header;      // HTML Color
-        this._accent_good = accent_good;      // HTML Color
-        this._accent_bad  = accent_bad;       // HTML Color
-        this._button      = button;           // DashColorButtonSet()
-        this._tab         = tab;              // DashColorButtonSet()
-        this._input       = input;            // DashColorButtonSet()
-        this._placeholder_class = "";         // DashColorButtonSet()
+        this._background  = background;               // HTML Color
+        this._background_raised  = background_raised; // HTML Color
+        this._text        = text;                     // HTML Color
+        this._text_header = text_header;              // HTML Color
+        this._accent_good = accent_good;              // HTML Color
+        this._accent_bad  = accent_bad;               // HTML Color
+        this._button      = button;                   // DashColorButtonSet()
+        this._tab         = tab;                      // DashColorButtonSet()
+        this._input       = input;                    // DashColorButtonSet()
+        this._placeholder_class = "";                 // String
     };
     get Background() {
         return this._background;
@@ -18946,12 +18946,6 @@ class DashColorSet {
     get PlaceholderClass() {
         return this._placeholder_class;
     };
-    /////////////////////////
-    ///// INTERMEDIATES /////
-    /////////////////////////
-    // get BackgroundRaised() {
-    //     return Dash.Color.Lighten(this._background, 20);
-    // };
     /////////////////////////
     set Background(color) {
         this._background = color;
@@ -27012,7 +27006,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
+            "background": this.color.Tab.AreaBackground,
         });
         this.content_area.css({
             "position": "absolute",
@@ -27020,7 +27014,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             "left": this.tab_area_size,
             "bottom": 0,
             "right": 0,
-            "background": Dash.Color.Light.Background
+            "background": Dash.Color.GetOpposite(this.color).Background,
         });
         this.tab_area.css({
             "display": "flex",
@@ -27054,7 +27048,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
+            "background": this.color.Tab.AreaBackground,
         });
         this.list_backing.css({
             "position": "absolute",
@@ -27083,7 +27077,8 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             "position": "absolute",
             "inset": 0,
             "overflow-y": "auto",
-            "background": Dash.Color.Light.Background,
+            // "background": Dash.Color.GetOpposite(this.color).Background,
+            "background": this.color.Background,
             "top": this.tab_area_size
         });
         this.html.append(this.list_backing);
@@ -28781,8 +28776,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
-    this.secondary_color = this.color.Tab.AreaBackground;
+    this.secondary_color = this.color.Text;
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
@@ -28805,12 +28799,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
         this.header.text(text);
     };
     this.initialize_style = function () {
-        if (this.color === Dash.Color.Dark) {
-            this.secondary_color = Dash.Color.Light.Tab.AreaBackground;
-        }
-        else if (this.color === Dash.Color.Light) {
-            this.secondary_color = Dash.Color.Dark.Tab.AreaBackground;
-        }
         if (this.style === "flex") {
             DashGuiLayoutDashboardModuleFlex.call(this);
         }
