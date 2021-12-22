@@ -17750,6 +17750,9 @@ function Dash () {
     this.Local = new DashLocal();
     this.Math = new DashMath();
     this.Color = new DashColor();
+    this.Color.Set = DashColorSet;
+    this.Color.ButtonSet = DashColorButtonSet;
+    this.Color.StateSet = DashColorStateSet;
     this.Size = new DashSize(this.IsMobile);
     this.User = new DashUser();
     this.Gui = new DashGui();
@@ -18396,7 +18399,7 @@ function DashColor () {
             "background": "#e3e8ea",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
-            "button_text": "rgb(234 239 255)",
+            "button_text": "rgb(234, 239, 255)",
             // "accent_good": "#f3d057",
             "accent_good": "#f2c96c",  // Slightly easier on the eyes in the short term
             "accent_bad": "#f9663c",
@@ -18427,7 +18430,7 @@ function DashColor () {
             "background": "#23262b",
             "background_raised": "#444b54",
             "button": "#5c9fb7",
-            "button_text": "rgb(234 239 255)",
+            "button_text": "rgb(234, 239, 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
@@ -19298,8 +19301,8 @@ function DashRequest () {
                     if (response) {
                         self.dash_requests.on_response(self, response);
                         return;
-                    };
-                    console.log("Dash Request Warning: A request failed, but callback will be triggered regardless.");
+                    }
+                    console.warn("Dash Request Warning: A request failed (status ", status, "), but callback will be triggered regardless. Error\n", error);
                     self.dash_requests.on_response(self, response);
                 });
             })(this);
@@ -19311,8 +19314,7 @@ function DashRequest () {
         //console.log(">> on_no_further_requests_pending <<");
     };
     this.decompress_response = function (request, response) {
-        // This is called immediately before returning a
-        // response that has been compressed with gzip
+        // This is called immediately before returning a response that has been compressed with gzip
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
         (function (self, gzip_bytes, request, response) {
             zlib.unzip(gzip_bytes, function (_, decompressed_data) {
@@ -26841,7 +26843,7 @@ function DashGuiLayoutToolbarInterface () {
     };
 }
 
-function DashGuiLayoutTabs(binder, side_tabs) {
+function DashGuiLayoutTabs (binder, side_tabs) {
     this.binder = binder;
     this.side_tabs = side_tabs;
     this.all_content = [];
@@ -26858,12 +26860,11 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.tab_middle = $("<div></div>");
         this.tab_area_size = Dash.Size.ColumnWidth;
     }
-    else {
-        // TODO: This should probably also be converted to a better div grouping
+    else {  // TODO: This should probably also be converted to a better div grouping
         this.color = Dash.Color.Light;
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
-    };
+    }
     this.setup_styles = function () {
         if (this.side_tabs) {
             this.set_styles_for_side_tabs();
@@ -26883,13 +26884,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.GetCurrentIndex = function () {
         return this.current_index;
     };
-    this.is_class = function(func) {
-        // A pretty cheap but flimsy hack to see if this is a function
-        // or a class that can be instantiated
-        return Function.prototype.toString.call(func).includes("setup_styles");
-    };
     this.LoadIndex = function (index) {
-        if (index > this.all_content.length-1) {
+        if (index > this.all_content.length - 1) {
             return;
         }
         Dash.Local.Set("sidebar_index_" + this.recall_id, index);
@@ -26915,9 +26911,10 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             // Updating this function to pass optional_params to callback while also
             // binding the callback correctly to the parent class
             // This is likely a very low impact change that *shouldn't* affect anything
-            var callback   = this.all_content[index]["content_div_html_class"].bind(this.binder);
-            var inst_class = null;
-            if (this.is_class(this.all_content[index]["content_div_html_class"])) {
+            var inst_class;
+            var html_class = this.all_content[index]["content_div_html_class"];
+            var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
+            if (this.is_class(html_class)) {
                 inst_class = new callback(this.all_content[index]["optional_params"]);
                 content_html = inst_class.html;
             }
@@ -26925,7 +26922,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
                 // Calling a function with 'new' will result in an incorrect binding
                 inst_class = callback(this.all_content[index]["optional_params"]);
                 content_html = inst_class.html;
-            };
+            }
         }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
@@ -26948,9 +26945,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     };
     this.AppendHTML = function (html) {
         html.css({
-            "margin-bottom": 1,
+            "margin-bottom": 1
         });
-        
         this.tab_top.append(html);
     };
     this.MidpendHTML = function (html) {
@@ -26966,7 +26962,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     };
     this.PrependHTML = function (html) {
         html.css({
-            "margin-top": 1,
+            "margin-top": 1
         });
         this.tab_bottom.append(html);
     };
@@ -26980,7 +26976,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
-            "background-position": "center",
+            "background-position": "center"
         });
         this.tab_top.append(image);
         return image;
@@ -26998,11 +26994,19 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     this.Prepend = function (label_text, content_div_html_class, optional_params) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params);
     };
+    // A pretty cheap but flimsy hack to see if this is a function or a class that can be instantiated
+    this.is_class = function (func) {
+        var dummy = Function.prototype.toString.call(func);
+        // Ryan, this was failing for class abstractions such as DashUserView, which don't have 'setup_styles',
+        // so I added the backup check for 'html', as well as just adding 'this.' to both checks for good measure.
+        // I don't believe there are any non-classes that we've assigned 'this.html' to, but correct me if I'm wrong!
+        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
+    };
     this.set_styles_for_side_tabs = function () {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground,
+            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
         });
         this.content_area.css({
             "position": "absolute",
@@ -27010,7 +27014,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "left": this.tab_area_size,
             "bottom": 0,
             "right": 0,
-            "background": Dash.Color.Light.Background,
+            "background": Dash.Color.Light.Background
         });
         this.tab_area.css({
             "display": "flex",
@@ -27019,7 +27023,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "top": 0,
             "left": 0,
             "bottom": 0,
-            "width": this.tab_area_size,
+            "width": this.tab_area_size
         });
         this.tab_top.css({
             "width": this.tab_area_size
@@ -27044,14 +27048,14 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground,
+            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
         });
         this.list_backing.css({
             "position": "absolute",
             "left": 0,
             "top": 0,
             "right": 0,
-            "height": this.tab_area_size,
+            "height": this.tab_area_size
         });
         this.tab_top.css({
             "position": "absolute",
@@ -27090,12 +27094,12 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             return;
         }
         var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
-        if (last_index > this.all_content.length-1) {
+        if (last_index > this.all_content.length - 1) {
             last_index = 0;
         }
         this.LoadIndex(last_index);
     };
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_params={}) {
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_params = {}) {
         var content_data = {
             "label_text": label_text,
             "content_div_html_class": content_div_html_class,

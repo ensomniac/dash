@@ -26,7 +26,7 @@ function DashColor () {
             "background": "#e3e8ea",
             "background_raised": "#e3e8ea",
             "button": "#659cba",
-            "button_text": "rgb(234 239 255)",
+            "button_text": "rgb(234, 239, 255)",
             // "accent_good": "#f3d057",
             "accent_good": "#f2c96c",  // Slightly easier on the eyes in the short term
             "accent_bad": "#f9663c",
@@ -65,7 +65,7 @@ function DashColor () {
             "background": "#23262b",
             "background_raised": "#444b54",
             "button": "#5c9fb7",
-            "button_text": "rgb(234 239 255)",
+            "button_text": "rgb(234, 239, 255)",
             "accent_good": "#ffc74d",
             "accent_bad": "#ff624c",
             "text_header": "#c4d4dd",
@@ -183,7 +183,6 @@ function DashColor () {
 
         this.Light.SetPlaceholderClass("placeholder_light");
         this.Dark.SetPlaceholderClass("placeholder_dark");
-
     };
 
     this.GetOpposite = function (dash_color_instance) {

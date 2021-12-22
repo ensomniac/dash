@@ -1,4 +1,4 @@
-function DashGuiLayoutTabs(binder, side_tabs) {
+function DashGuiLayoutTabs (binder, side_tabs) {
     this.binder = binder;
     this.side_tabs = side_tabs;
 
@@ -17,13 +17,12 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.tab_middle = $("<div></div>");
         this.tab_area_size = Dash.Size.ColumnWidth;
     }
-    else {
-        // TODO: This should probably also be converted to a better div grouping
 
+    else {  // TODO: This should probably also be converted to a better div grouping
         this.color = Dash.Color.Light;
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
-    };
+    }
 
     this.setup_styles = function () {
         if (this.side_tabs) {
@@ -49,14 +48,8 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         return this.current_index;
     };
 
-    this.is_class = function(func) {
-        // A pretty cheap but flimsy hack to see if this is a function
-        // or a class that can be instantiated
-        return Function.prototype.toString.call(func).includes("setup_styles");
-    };
-
     this.LoadIndex = function (index) {
-        if (index > this.all_content.length-1) {
+        if (index > this.all_content.length - 1) {
             return;
         }
 
@@ -86,37 +79,41 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         if (typeof this.all_content[index]["content_div_html_class"] === "object") {
             content_html = this.all_content[index]["content_div_html_class"];
         }
-        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
 
+        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
             // DashGlobalImpactChange | 12/21/21 | Ryan
             // Updating this function to pass optional_params to callback while also
             // binding the callback correctly to the parent class
             // This is likely a very low impact change that *shouldn't* affect anything
 
-            var callback   = this.all_content[index]["content_div_html_class"].bind(this.binder);
-            var inst_class = null;
+            var inst_class;
+            var html_class = this.all_content[index]["content_div_html_class"];
+            var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
 
-            if (this.is_class(this.all_content[index]["content_div_html_class"])) {
+            if (this.is_class(html_class)) {
                 inst_class = new callback(this.all_content[index]["optional_params"]);
                 content_html = inst_class.html;
             }
+
             else {
                 // Calling a function with 'new' will result in an incorrect binding
                 inst_class = callback(this.all_content[index]["optional_params"]);
                 content_html = inst_class.html;
-            };
+            }
 
         }
+
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
         }
-        if (!content_html) {
 
+        if (!content_html) {
             if (parseInt(index) === 0) {
                 console.error("Error: Unknown content!");
 
                 content_html = $("<div>Error Loading Content</div>");
             }
+
             else {
                 console.error("Error: Invalid index", index, ", reloading index 0");
 
@@ -136,10 +133,9 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
     this.AppendHTML = function (html) {
         html.css({
-            "margin-bottom": 1,
+            "margin-bottom": 1
         });
 
-        
         this.tab_top.append(html);
     };
 
@@ -160,7 +156,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
     this.PrependHTML = function (html) {
         html.css({
-            "margin-top": 1,
+            "margin-top": 1
         });
 
         this.tab_bottom.append(html);
@@ -179,7 +175,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
-            "background-position": "center",
+            "background-position": "center"
         });
 
         this.tab_top.append(image);
@@ -205,11 +201,21 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params);
     };
 
+    // A pretty cheap but flimsy hack to see if this is a function or a class that can be instantiated
+    this.is_class = function (func) {
+        var dummy = Function.prototype.toString.call(func);
+
+        // Ryan, this was failing for class abstractions such as DashUserView, which don't have 'setup_styles',
+        // so I added the backup check for 'html', as well as just adding 'this.' to both checks for good measure.
+        // I don't believe there are any non-classes that we've assigned 'this.html' to, but correct me if I'm wrong!
+        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
+    };
+
     this.set_styles_for_side_tabs = function () {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground,
+            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
         });
 
         this.content_area.css({
@@ -218,7 +224,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "left": this.tab_area_size,
             "bottom": 0,
             "right": 0,
-            "background": Dash.Color.Light.Background,
+            "background": Dash.Color.Light.Background
         });
 
         this.tab_area.css({
@@ -228,7 +234,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "top": 0,
             "left": 0,
             "bottom": 0,
-            "width": this.tab_area_size,
+            "width": this.tab_area_size
         });
 
         this.tab_top.css({
@@ -259,7 +265,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.TabBackground,
+            "background": this.color.TabBackground  // TODO: Ryan, I confirmed this does not yet exist in Dash, want to keep it?
         });
 
         this.list_backing.css({
@@ -267,7 +273,7 @@ function DashGuiLayoutTabs(binder, side_tabs) {
             "left": 0,
             "top": 0,
             "right": 0,
-            "height": this.tab_area_size,
+            "height": this.tab_area_size
         });
 
         this.tab_top.css({
@@ -303,7 +309,6 @@ function DashGuiLayoutTabs(binder, side_tabs) {
     };
 
     this.load_last_selection = function () {
-
         if (parseInt(this.selected_index) !== -1) {
             // A selection was already made externally
             return;
@@ -315,15 +320,14 @@ function DashGuiLayoutTabs(binder, side_tabs) {
 
         var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
 
-        if (last_index > this.all_content.length-1) {
+        if (last_index > this.all_content.length - 1) {
             last_index = 0;
         }
 
         this.LoadIndex(last_index);
-
     };
 
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_params={}) {
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_params = {}) {
         var content_data = {
             "label_text": label_text,
             "content_div_html_class": content_div_html_class,

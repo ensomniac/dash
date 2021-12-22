@@ -10,6 +10,9 @@ function Dash () {
     this.Local = new DashLocal();
     this.Math = new DashMath();
     this.Color = new DashColor();
+    this.Color.Set = DashColorSet;
+    this.Color.ButtonSet = DashColorButtonSet;
+    this.Color.StateSet = DashColorStateSet;
     this.Size = new DashSize(this.IsMobile);
     this.User = new DashUser();
     this.Gui = new DashGui();

@@ -33,12 +33,13 @@ function DashRequest () {
 
                     if (response) {
                         self.dash_requests.on_response(self, response);
+
                         return;
-                    };
+                    }
 
-                    console.log("Dash Request Warning: A request failed, but callback will be triggered regardless.");
+                    console.warn("Dash Request Warning: A request failed (status ", status, "), but callback will be triggered regardless. Error\n", error);
+
                     self.dash_requests.on_response(self, response);
-
                 });
             })(this);
         };
@@ -52,8 +53,7 @@ function DashRequest () {
     };
 
     this.decompress_response = function (request, response) {
-        // This is called immediately before returning a
-        // response that has been compressed with gzip
+        // This is called immediately before returning a response that has been compressed with gzip
 
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
 
