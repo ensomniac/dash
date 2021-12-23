@@ -3,16 +3,12 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
     this.name = icon_name || "unknown";
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult || 1;
-    this.icon_color = icon_color ||this.color.Text;
+    this.icon_color = icon_color || this.color.Button.Background.Base;
 
     this.theme = "light";
     this.icon_html = null;
     this.icon_definition = new GuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
-
-    if (this.color.Button.Background.Icon && !icon_color) {
-        this.icon_color = this.color.Button.Background.Icon;
-    }
 
     if (!this.color.Text) {
         console.error("Error: Incorrect color object passed to DashIcon:", this.color);

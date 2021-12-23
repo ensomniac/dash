@@ -66,9 +66,7 @@ function DashGuiComboInterface () {
         this.label.remove();
         this.highlight.remove();
 
-        if (this.color_set.Background.Icon) {
-            this.dropdown_icon.SetColor(this.color_set.Background.Icon);
-        }
+        this.dropdown_icon.SetColor(this.color_set.Background.Base);
     };
 
     this.DisableFlash = function () {
