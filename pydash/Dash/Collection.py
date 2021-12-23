@@ -29,37 +29,58 @@ from Dash import LocalStorage
 
 
 class Collection:
-    _ctx: dict
+    _all: dict
+    _root: dict
+    _all_ids = list
 
     def __init__(self, store_path, nested=False, dash_context=None, sort_by_key=""):
-        self.nested = nested
         self.store_path = store_path
-        self._sort_by_key = sort_by_key
+        self.nested = nested
         self._dash_context = dash_context
+        self._sort_by_key = sort_by_key
 
+    # Deprecated in favor of DashContext
     @property
     def Ctx(self):
-        if not hasattr(self, "_ctx"):
-            if self._dash_context:
-                self._ctx = self._dash_context
-            else:
-                from Dash.Utils import Memory
+        return self.DashContext
 
-                self._ctx = Memory.Global.Context
+    @property
+    def DashContext(self):
+        if not self._dash_context:
+            from Dash.Utils import Memory
 
-        return self._ctx
+            self._dash_context = Memory.Global.Context
+
+        return self._dash_context
 
     @property
     def AssetPath(self):
-        return self.Ctx["asset_path"]
+        return self.DashContext["asset_path"]
 
     @property
     def Root(self):
-        return LocalStorage.GetRecordRoot(
-            self.Ctx,
-            self.store_path,
-            nested=self.nested,
-        )
+        if not hasattr(self, "_root"):
+            self._root = LocalStorage.GetRecordRoot(
+                self.DashContext,
+                self.store_path,
+                nested=self.nested,
+            )
+
+        return self._root
+
+    @property
+    def All(self):
+        if not hasattr(self, "_all"):
+            self.GetAll()
+
+        return self._all
+
+    @property
+    def AllIDs(self):
+        if not hasattr(self, "_all_ids"):
+            self.GetAllIDs()
+
+        return self._all_ids
 
     @property
     def sort_by_key(self):
@@ -68,16 +89,9 @@ class Collection:
     def SetSortByKey(self, key):
         self._sort_by_key = key
 
-    @property
-    def All(self):
-        if not hasattr(self, "_all"):
-            self._all = self.GetAll()
-
-        return self._all
-
     def GetAll(self):
         self._all = LocalStorage.GetAll(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             nested=self.nested,
             sort_by_key=self._sort_by_key
@@ -85,16 +99,18 @@ class Collection:
 
         return self._all
 
-    def AllIDs(self):
-        return LocalStorage.GetAllIDs(
-            self.Ctx,
+    def GetAllIDs(self):
+        self._all_ids = LocalStorage.GetAllIDs(
+            self.DashContext,
             self.store_path,
             nested=self.nested
         )
 
-    def Overview(self, filter_out_keys, sort_by_key=""):
+        return self._all_ids
+
+    def GetOverview(self, filter_out_keys, sort_by_key=""):
         return LocalStorage.GetAll(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             nested=self.nested,
             sort_by_key=(sort_by_key or self._sort_by_key),
@@ -103,7 +119,7 @@ class Collection:
 
     def Get(self, obj_id, filter_out_keys=[]):
         return LocalStorage.GetData(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             obj_id,
             nested=self.nested,
@@ -112,14 +128,14 @@ class Collection:
 
     def New(self, additional_data={}, return_all_data=True):
         new_obj = LocalStorage.New(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             additional_data=additional_data,
             nested=self.nested,
         )
 
         if return_all_data:
-            data = self.All()
+            data = self.GetAll()
             data["new_object"] = new_obj["id"]
 
             return data
@@ -129,18 +145,18 @@ class Collection:
 
     def Delete(self, obj_id, return_all_data=True):
         LocalStorage.Delete(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             obj_id=obj_id,
             nested=self.nested,
         )
 
         if return_all_data:
-            return self.All()
+            return self.GetAll()
 
     def SetProperty(self, obj_id, key, value, return_all_data=True):
         updated_data = LocalStorage.SetProperty(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             obj_id,
             key,
@@ -149,13 +165,13 @@ class Collection:
         )["updated_data"]
 
         if return_all_data:
-            return self.All()
+            return self.GetAll()
         else:
             return updated_data
 
     def SetProperties(self, obj_id, properties, return_all_data=True):
         updated_data = LocalStorage.SetProperties(
-            self.Ctx,
+            self.DashContext,
             self.store_path,
             obj_id,
             properties,
@@ -163,7 +179,7 @@ class Collection:
         )
 
         if return_all_data:
-            return self.All()
+            return self.GetAll()
         else:
             return updated_data
 
