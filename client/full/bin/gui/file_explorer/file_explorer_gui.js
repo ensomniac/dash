@@ -73,7 +73,7 @@ function DashGuiFileExplorerGUI () {
         combo.html.css({
             "margin-right": 0,
             "margin-top": -Dash.Size.Padding * 0.151,
-            "border": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border": "1px dotted " + Dash.Color.GetTransparent(this.color.Text, 0.25)
         });
 
         combo.label.css({
@@ -120,7 +120,7 @@ function DashGuiFileExplorerGUI () {
     };
 
     this.add_sublist = function (row_id, list) {
-        var row = list.AddSubList(row_id, this.border_color, true);
+        var row = list.AddSubList(row_id, this.color.Pinstripe, true);
 
         row.html.css({
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
@@ -166,7 +166,7 @@ function DashGuiFileExplorerGUI () {
 
     this.add_list = function () {
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
-        var border_css = {"background": this.border_color};
+        var border_css = {"background": this.color.Pinstripe};
 
         column_config.AddColumn(
             "Filename",
@@ -230,7 +230,11 @@ function DashGuiFileExplorerGUI () {
             );
         }
 
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config);
+        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
+
+        // this.list.html.css({
+        //     "background": "none"
+        // });
 
         this.list.DisableDividerColorChangeOnHover();
 

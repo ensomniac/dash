@@ -18371,13 +18371,12 @@ function DashAnimationCurves() {
 };
 
 function DashColor () {
-    this.Primary = "#95ae6c";
-    this.Dark = "#202229";
-    this.Light = "rgb(230, 230, 230)";
-    this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
-    this.Warning = "#fab964";
-    this.Light = null;
     this.Dark = null;
+    this.Light = null;
+    this.Primary = "#95ae6c";
+    this.Warning = "#fab964";
+    this.parsed_color_data = {};
+    this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.setup_color_sets = function () {
         var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg_text = "rgb(30, 30, 30)";
@@ -18528,10 +18527,23 @@ function DashColor () {
         }
         return dash_color_instance === this.Light ? this.Dark : this.Light;
     };
+    this.GetTransparent = function (cstr, opacity) {
+        if (!this.parsed_color_data[cstr]) {
+            this.parsed_color_data[cstr] = Dash.Color.Parse(cstr);
+        }
+        return Dash.Color.ToRGBA([
+            this.parsed_color_data[cstr][0], // Red
+            this.parsed_color_data[cstr][1], // Green
+            this.parsed_color_data[cstr][2], // Blue
+            opacity
+        ]);
+    };
+    // What is this?
     this.Raise = function (cstr, raise_steps) {
         raise_steps = raise_steps || 1;
         return cstr;
     };
+    // Should tmp_colors point to this.Names instead? This isn't very random
     this.Random = function (cstr, lighten_rgb) {
         var tmp_colors = ["red", "blue", "green", "orange"];
         return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
@@ -18560,6 +18572,181 @@ function DashColor () {
             return "red";
         }
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
+    };
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
+    };
+    this.to_rgba = function (color_data) {
+        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
+    };
+    this.to_rgb = function (color_data) {
+        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
+    };
+    this.ParseToRGB = function (cstr) {
+        return this.to_rgb(this.Parse(cstr));
+    };
+    this.ParseToRGBA = function (cstr) {
+        return this.to_rgba(this.Parse(cstr));
+    };
+    this.Lighten = function (cstr, lighten_rgb) {
+        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
+        var pcolor = this.Parse(cstr);
+        pcolor[0] += lighten_rgb;
+        pcolor[1] += lighten_rgb;
+        pcolor[2] += lighten_rgb;
+        return this.to_rgb(pcolor);
+    };
+    this.Darken = function (cstr, darken_rgb) {
+        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
+        var pcolor = this.Parse(cstr);
+        pcolor[0] -= darken_rgb;
+        pcolor[1] -= darken_rgb;
+        pcolor[2] -= darken_rgb;
+        return this.to_rgb(pcolor);
+    };
+    // TODO: break this up
+    this.Parse = function (cstr) {
+        if (this.parsed_color_data[cstr]) {
+            return this.parsed_color_data[cstr];
+        }
+        var base;
+        var size;
+        var m = null;
+        var alpha = 1;
+        var parts = [];
+        var space = null;
+        if (typeof cstr === "string") {  // keyword
+            if (this.Names[cstr]) {
+                parts = this.Names[cstr].slice();
+                space = "rgb";
+            }
+            else if (cstr === "transparent") {  // reserved words
+                alpha = 0;
+                space = "rgb";
+                parts = [0,0,0];
+            }
+            else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {  // hex
+                alpha = 1;
+                base = cstr.slice(1);
+                size = base.length;
+                var is_short = size <= 4;
+                if (is_short) {
+                    parts = [
+                        parseInt(base[0] + base[0], 16),
+                        parseInt(base[1] + base[1], 16),
+                        parseInt(base[2] + base[2], 16)
+                    ];
+                    if (size === 4) {
+                        alpha = parseInt(base[3] + base[3], 16) / 255;
+                    }
+                }
+                else {
+                    parts = [
+                        parseInt(base[0] + base[1], 16),
+                        parseInt(base[2] + base[3], 16),
+                        parseInt(base[4] + base[5], 16)
+                    ];
+                    if (size === 8) {
+                        alpha = parseInt(base[6] + base[7], 16) / 255;
+                    }
+                }
+                if (!parts[0]) {
+                    parts[0] = 0;
+                }
+                if (!parts[1]) {
+                    parts[1] = 0;
+                }
+                if (!parts[2]) {
+                    parts[2] = 0;
+                }
+                space = "rgb";
+            }
+            // TODO: What is happening in this conditional? m = regex? Mistaken single equal sign?
+            else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {  // color space
+                var name = m[1];
+                var isRGB = name === "rgb";
+                base = name.replace(/a$/, "");
+                space = base;
+                size = base === "cmyk" ? 4 : base === "gray" ? 1 : 3;
+                parts = m[2].trim()
+                    .split(/\s*[,\/]\s*|\s+/)
+                    .map(function (x, i) {
+                        if (/%$/.test(x)) {  // <percentage>
+                            if (i === size) {  // alpha
+                                return parseFloat(x) / 100;
+                            }
+                            if (base === "rgb") {  // rgb
+                                return parseFloat(x) * 255 / 100;
+                            }
+                            return parseFloat(x);
+                        }
+                        else if (base[i] === "h") {  // hue
+                            if (/deg$/.test(x)) {  // <deg>
+                                return parseFloat(x);
+                            }
+                            // TODO: What is baseHues supposed to be? It's not defined anywhere
+                            else if (baseHues[x] !== undefined) {  // <base-hue>
+                                return baseHues[x];
+                            }
+                        }
+                        return parseFloat(x);
+                    });
+                if (name === base) {
+                    parts.push(1);
+                }
+                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
+                parts = parts.slice(0, size);
+            }
+            else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {  // named channels case
+                parts = cstr.match(/([0-9]+)/g).map(function (value) {
+                    return parseFloat(value);
+                });
+                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
+            }
+        }
+        else if (!isNaN(cstr)) {  // numeric case
+            space = "rgb";
+            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
+        }
+        else if (Array.isArray(cstr) || cstr.length) {  // array-like
+            parts = [cstr[0], cstr[1], cstr[2]];
+            space = "rgb";
+            alpha = cstr.length === 4 ? cstr[3] : 1;
+        }
+        else if (cstr instanceof Object) {  // object case - detects css cases of rgb and hsl
+            if (cstr.r != null || cstr.red != null || cstr.R != null) {
+                space = "rgb";
+                parts = [
+                    cstr.r || cstr.red || cstr.R || 0,
+                    cstr.g || cstr.green || cstr.G || 0,
+                    cstr.b || cstr.blue || cstr.B || 0
+                ];
+            }
+            else {
+                space = "hsl";
+                parts = [
+                    cstr.h || cstr.hue || cstr.H || 0,
+                    cstr.s || cstr.saturation || cstr.S || 0,
+                    cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
+                ];
+            }
+            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
+            if (cstr.opacity != null) {
+                alpha /= 100;
+            }
+        }
+        this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];
+        return this.parsed_color_data[cstr];
+    };
+    // This function will set the placeholder text for an input element
+    this.SetPlaceholderColor = function (input_html, placeholder_color) {
+        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
+        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
+        var node = document.createElement("style");
+        node.innerHTML = style_str;
+        document.body.appendChild(node);
+        input_html.addClass(class_name);
+        return input_html;
     };
     this.Names = {
         "aliceblue": [240, 248, 255],
@@ -18711,174 +18898,6 @@ function DashColor () {
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
     };
-    this.ToRGBA = function (color_data) {
-        return this.to_rgba(color_data);
-    };
-    this.to_rgba = function (color_data) {
-        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
-    };
-    this.to_rgb = function (color_data) {
-        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
-    };
-    this.ParseToRGB = function (cstr) {
-        return this.to_rgb(this.Parse(cstr));
-    };
-    this.ParseToRGBA = function (cstr) {
-        return this.to_rgba(this.Parse(cstr));
-    };
-    this.Lighten = function (cstr, lighten_rgb) {
-        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
-        var pcolor = this.Parse(cstr);
-        pcolor[0] += lighten_rgb;
-        pcolor[1] += lighten_rgb;
-        pcolor[2] += lighten_rgb;
-        return this.to_rgb(pcolor);
-    };
-    this.Darken = function (cstr, darken_rgb) {
-        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
-        var pcolor = this.Parse(cstr);
-        pcolor[0] -= darken_rgb;
-        pcolor[1] -= darken_rgb;
-        pcolor[2] -= darken_rgb;
-        return this.to_rgb(pcolor);
-    };
-    this.Parse = function (cstr) {
-        var base;
-        var size;
-        var m = null;
-        var parts = [];
-        var alpha = 1;
-        var space = null;
-        if (typeof cstr === 'string') {
-            //keyword
-            if (this.Names[cstr]) {
-                parts = this.Names[cstr].slice();
-                space = 'rgb';
-            }
-            //reserved words
-            else if (cstr === 'transparent') {
-                alpha = 0;
-                space = 'rgb';
-                parts = [0,0,0];
-            }
-            //hex
-            else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {
-                base = cstr.slice(1);
-                size = base.length;
-                var isShort = size <= 4;
-                alpha = 1;
-                if (isShort) {
-                    parts = [
-                        parseInt(base[0] + base[0], 16),
-                        parseInt(base[1] + base[1], 16),
-                        parseInt(base[2] + base[2], 16)
-                    ];
-                    if (size === 4) {
-                        alpha = parseInt(base[3] + base[3], 16) / 255;
-                    }
-                }
-                else {
-                    parts = [
-                        parseInt(base[0] + base[1], 16),
-                        parseInt(base[2] + base[3], 16),
-                        parseInt(base[4] + base[5], 16)
-                    ];
-                    if (size === 8) {
-                        alpha = parseInt(base[6] + base[7], 16) / 255;
-                    }
-                }
-                if (!parts[0]) parts[0] = 0;
-                if (!parts[1]) parts[1] = 0;
-                if (!parts[2]) parts[2] = 0;
-                space = 'rgb';
-            }
-            //color space
-            else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {
-                var name = m[1];
-                var isRGB = name === 'rgb';
-                base = name.replace(/a$/, '');
-                space = base;
-                size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3;
-                parts = m[2].trim()
-                    .split(/\s*[,\/]\s*|\s+/)
-                    .map(function (x, i) {
-                        //<percentage>
-                        if (/%$/.test(x)) {
-                            //alpha
-                            if (i === size) return parseFloat(x) / 100;
-                            //rgb
-                            if (base === 'rgb') return parseFloat(x) * 255 / 100;
-                            return parseFloat(x);
-                        }
-                        //hue
-                        else if (base[i] === 'h') {
-                            //<deg>
-                            if (/deg$/.test(x)) {
-                                return parseFloat(x);
-                            }
-                            //<base-hue>
-                            else if (baseHues[x] !== undefined) {
-                                return baseHues[x];
-                            }
-                        }
-                        return parseFloat(x);
-                    });
-                if (name === base) parts.push(1);
-                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
-                parts = parts.slice(0, size);
-            }
-            //named channels case
-            else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {
-                parts = cstr.match(/([0-9]+)/g).map(function (value) {
-                    return parseFloat(value);
-                });
-                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
-            }
-        }
-        //numeric case
-        else if (!isNaN(cstr)) {
-            space = 'rgb';
-            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
-        }
-        //array-like
-        else if (Array.isArray(cstr) || cstr.length) {
-            parts = [cstr[0], cstr[1], cstr[2]];
-            space = 'rgb';
-            alpha = cstr.length === 4 ? cstr[3] : 1;
-        }
-        //object case - detects css cases of rgb and hsl
-        else if (cstr instanceof Object) {
-            if (cstr.r != null || cstr.red != null || cstr.R != null) {
-                space = 'rgb';
-                parts = [
-                    cstr.r || cstr.red || cstr.R || 0,
-                    cstr.g || cstr.green || cstr.G || 0,
-                    cstr.b || cstr.blue || cstr.B || 0
-                ];
-            }
-            else {
-                space = 'hsl';
-                parts = [
-                    cstr.h || cstr.hue || cstr.H || 0,
-                    cstr.s || cstr.saturation || cstr.S || 0,
-                    cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
-                ];
-            }
-            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
-            if (cstr.opacity != null) alpha /= 100;
-        }
-        return [parts[0], parts[1], parts[2], alpha, space];
-    };
-    // This function will set the placeholder text for an input element
-    this.SetPlaceholderColor = function (input_html, placeholder_color) {
-        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
-        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
-        var node = document.createElement("style");
-        node.innerHTML = style_str;
-        document.body.appendChild(node);
-        input_html.addClass(class_name);
-        return input_html;
-    };
     this.setup_color_sets();
 }
 
@@ -18895,96 +18914,96 @@ class DashColorSet {
         this._input       = input;                    // DashColorButtonSet()
         this._placeholder_class = "";                 // String
     };
-    get Background() {
+    get Background () {
         return this._background;
     };
-    get BackgroundRaised() {
+    get BackgroundRaised () {
         return this._background_raised;
     };
-    get Text() {
+    get Text () {
         return this._text;
     };
-    get TextHeader() {
+    get TextHeader () {
         return this._text_header;
     };
-    get AccentGood() {
+    get AccentGood () {
         return this._accent_good;
     };
-    get AccentBad() {
+    get AccentBad () {
         return this._accent_bad;
     };
-    get Button() {
+    get Button () {
         return this._button;
     };
-    get Tab() {
+    get Tab () {
         return this._tab;
     };
-    get Input() {
+    get Input () {
         return this._input;
     };
     get PlaceholderClass() {
         return this._placeholder_class;
     };
     ///////////// PROGRAMMATIC START ////////////
-    get TextColorData() {
+    get TextColorData () {
         if (this._text_color_data == null) {
             // Cache this once since parsing can be expensive
             this._text_color_data = Dash.Color.Parse(this._text);
-        };
+        }
         return this._text_color_data;
     };
-    get Stroke() {
-        // Use to draw lines and boxes that compliment the interface
-        // Think of this color as a lighter version of Text
+    // Use to draw lines and boxes that compliment the interface
+    // Think of this color as a lighter version of Text
+    get Stroke () {
         if (this._stroke == null) {
             this._stroke = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
-                0.5                    // Opacity NOTE: Andrew, adjust this value and delete this note!
+                0.65
             ]);
-        };
+        }
         return this._stroke;
     };
+    // Use to draw very fine lines to suggest depth / shadow
     get Pinstripe() {
-        // Use to draw very fine lines to suggest depth / shadow
         if (this._pinstripe == null) {
             this._pinstripe = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
-                0.2                    // Opacity
+                0.1                    // Opacity
             ]);
-        };
+        }
         return this._pinstripe;
     };
     ///////////// PROGRAMMATIC END ////////////
     /////////////////////////
-    set Background(color) {
+    set Background (color) {
         this._background = color;
     };
-    set Text(color) {
+    set Text (color) {
         this._text = color;
     };
-    set TextHeader(color) {
+    set TextHeader (color) {
         this._text_header = color;
     };
-    set AccentGood(color) {
+    set AccentGood (color) {
         this._accent_good = color;
     };
-    set AccentBad(color) {
+    set AccentBad (color) {
         this._accent_bad = color;
     };
-    set Button(color_button_set) {
+    set Button (color_button_set) {
         this._button = color_button_set;
     };
-    set Tab(color_button_set) {
+    set Tab (color_button_set) {
         this._tab = color_button_set;
     };
-    set Input(color_button_set) {
+    set Input (color_button_set) {
         this._input = color_button_set;
     };
-    SetPlaceholderClass(placeholder_class_name) {
+    SetPlaceholderClass (placeholder_class_name) {
         this._placeholder_class = placeholder_class_name;
     };
 }
@@ -19064,10 +19083,6 @@ class DashSiteColors {
     };
     get Background() {
         return this._col["background"] || "orange";
-    };
-    get BackgroundTrue() {
-        // Placeholder - see note in Altona core.js
-        return null;
     };
     get BackgroundRaised() {
         return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
@@ -22071,6 +22086,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
         this.toolbar.stroke_sep.remove();
         this.toolbar.html.css({
+            "background": "none",
             "padding-left": Dash.Size.Padding * 0.1,
             "padding-right": 0,
             "height": this.height,
@@ -22301,7 +22317,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.display_folders_first = true;
     this.pending_file_view_requests = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.border_color = this.color.BackgroundTrue || this.color.Background;
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
     DashGuiFileExplorerSync.call(this);
@@ -22499,7 +22514,7 @@ function DashGuiFileExplorerGUI () {
         combo.html.css({
             "margin-right": 0,
             "margin-top": -Dash.Size.Padding * 0.151,
-            "border": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border": "1px dotted " + Dash.Color.GetTransparent(this.color.Text, 0.25)
         });
         combo.label.css({
             "margin-left": Dash.Size.Padding * 0.5
@@ -22534,7 +22549,7 @@ function DashGuiFileExplorerGUI () {
         return row;
     };
     this.add_sublist = function (row_id, list) {
-        var row = list.AddSubList(row_id, this.border_color, true);
+        var row = list.AddSubList(row_id, this.color.Pinstripe, true);
         row.html.css({
             "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
@@ -22568,7 +22583,7 @@ function DashGuiFileExplorerGUI () {
     };
     this.add_list = function () {
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
-        var border_css = {"background": this.border_color};
+        var border_css = {"background": this.color.Pinstripe};
         column_config.AddColumn(
             "Filename",
             "filename",
@@ -22623,7 +22638,10 @@ function DashGuiFileExplorerGUI () {
                 }
             );
         }
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config);
+        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
+        // this.list.html.css({
+        //     "background": "none"
+        // });
         this.list.DisableDividerColorChangeOnHover();
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
@@ -26573,10 +26591,10 @@ function DashGuiLayoutToolbar (binder, color) {
     DashGuiLayoutToolbarInterface.call(this);
     this.setup_styles = function () {
         console.log("Stroke color: " + this.color.Stroke);
-        console.log("pnstripe color: " + this.color.Pinstripe);
+        console.log("Pinstripe color: " + this.color.Pinstripe);
         this.html.css({
-            // "background": this.color.Background,
-            "background": "rgba(255, 255, 255, 0.2)",
+            "background": this.color.Background,
+            // "background": "rgba(255, 255, 255, 0.2)",  // This shouldn't be the default, right?
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",
@@ -27337,7 +27355,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
     this.setup_styles = function () {
         this.html.css({
-            "background": Dash.Color.Light.Background
+            // "background": Dash.Color.Light.Background
         });
     };
     this.AddRow = function (row_id) {
@@ -27620,7 +27638,8 @@ function DashGuiListRow (list, row_id) {
             "display": "flex"
         });
         this.html.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
+            "color": this.color.Text,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
@@ -27959,10 +27978,11 @@ function DashGuiListRow (list, row_id) {
     this.setup_styles();
 }
 
-function DashGuiListRowColumn (list_row, column_config_data, index) {
+function DashGuiListRowColumn (list_row, column_config_data, index, color=null) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
+    this.color = color || Dash.Color.Light;
     this.list = this.list_row.list;
     this.html = $("<div></div>");
     this.width = this.column_config_data["width"] || -1;
@@ -27977,7 +27997,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
         var css = {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
-            "color": Dash.Color.Light.Text,
+            "color": this.color.Text,
             "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
@@ -27998,12 +28018,15 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
         if (!this.list_row.is_header) {
             return css;
         }
-        if (this.list.color === Dash.Color.Dark) {
-            css["color"] = Dash.Color.Light.BackgroundRaised;
-        }
-        else if (this.list.color === Dash.Color.Light) {
-            css["color"] = Dash.Color.Dark.BackgroundRaised;
-        }
+        // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
+        // if (this.color === Dash.Color.Light) {
+        //     css["color"] = Dash.Color.Lighten(this.color.Text, 50);
+        // }
+        //
+        // else if (this.color === Dash.Color.Dark) {
+        //     css["color"] = Dash.Color.Darken(this.color.Text, 50);
+        // }
+        css["color"] = this.color.Stroke;
         return css;
     };
     this.get_column_config_css = function (css) {
@@ -28100,7 +28123,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
 function DashGuiListRowElements () {
     this.add_default_column = function (column_config_data, index) {
         column_config_data["left_aligned"] = true;
-        var column = new DashGuiListRowColumn(this, column_config_data, index);
+        var column = new DashGuiListRowColumn(this, column_config_data, index, this.color);
         this.column_box.append(column.html);
         this.columns["default"].push({
             "obj": column,
@@ -28170,6 +28193,11 @@ function DashGuiListRowElements () {
         if (column_config_data["css"]) {
             divider_line.css(column_config_data["css"]);
         }
+        if (this.is_header) {
+            divider_line.css({
+                "opacity": 0
+            });
+        }
         return divider_line;
     };
     this.get_combo = function (column_config_data) {
@@ -28206,6 +28234,7 @@ function DashGuiListRowElements () {
             column_config_data["options"]["color"] || this.color
         );
         input.html.css({
+            "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
             "margin-top": Dash.Size.Padding * 0.1,
             "box-shadow": "0px 0px 4px 1px rgba(0, 0, 0, 0.2)"
@@ -28891,10 +28920,18 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = Dash.Color.Darken(this.color.Text, 60);
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
+    // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
+    // if (this.color === Dash.Color.Dark) {
+    //     this.secondary_color = Dash.Color.Darken(this.color.Text, 60);
+    // }
+    //
+    // else if (this.color === Dash.Color.Light) {
+    //     this.secondary_color = Dash.Color.Lighten(this.color.Text, 60);
+    // }
+    this.secondary_color = this.color.Stroke;
     this.text_css = {
         "font-family": this.bold_font,
         "overflow": "hidden",

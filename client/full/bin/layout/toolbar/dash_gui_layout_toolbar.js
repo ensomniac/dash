@@ -12,11 +12,11 @@ function DashGuiLayoutToolbar (binder, color) {
 
     this.setup_styles = function () {
         console.log("Stroke color: " + this.color.Stroke);
-        console.log("pnstripe color: " + this.color.Pinstripe);
+        console.log("Pinstripe color: " + this.color.Pinstripe);
 
         this.html.css({
-            // "background": this.color.Background,
-            "background": "rgba(255, 255, 255, 0.2)",
+            "background": this.color.Background,
+            // "background": "rgba(255, 255, 255, 0.2)",  // This shouldn't be the default, right?
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",

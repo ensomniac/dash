@@ -85,7 +85,8 @@ function DashGuiListRow (list, row_id) {
         });
 
         this.html.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
+            "color": this.color.Text,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,

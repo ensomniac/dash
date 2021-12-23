@@ -4,7 +4,7 @@ function DashGuiListRowElements () {
     this.add_default_column = function (column_config_data, index) {
         column_config_data["left_aligned"] = true;
 
-        var column = new DashGuiListRowColumn(this, column_config_data, index);
+        var column = new DashGuiListRowColumn(this, column_config_data, index, this.color);
 
         this.column_box.append(column.html);
 
@@ -99,6 +99,12 @@ function DashGuiListRowElements () {
             divider_line.css(column_config_data["css"]);
         }
 
+        if (this.is_header) {
+            divider_line.css({
+                "opacity": 0
+            });
+        }
+
         return divider_line;
     };
 
@@ -143,6 +149,7 @@ function DashGuiListRowElements () {
         );
 
         input.html.css({
+            "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
             "margin-top": Dash.Size.Padding * 0.1,
             "box-shadow": "0px 0px 4px 1px rgba(0, 0, 0, 0.2)"

@@ -1,7 +1,8 @@
-function DashGuiListRowColumn (list_row, column_config_data, index) {
+function DashGuiListRowColumn (list_row, column_config_data, index, color=null) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
+    this.color = color || Dash.Color.Light;
 
     this.list = this.list_row.list;
     this.html = $("<div></div>");
@@ -21,7 +22,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
         var css = {
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
-            "color": Dash.Color.Light.Text,
+            "color": this.color.Text,
             "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
@@ -48,13 +49,16 @@ function DashGuiListRowColumn (list_row, column_config_data, index) {
             return css;
         }
 
-        if (this.list.color === Dash.Color.Dark) {
-            css["color"] = Dash.Color.Light.BackgroundRaised;
-        }
+        // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
+        // if (this.color === Dash.Color.Light) {
+        //     css["color"] = Dash.Color.Lighten(this.color.Text, 50);
+        // }
+        //
+        // else if (this.color === Dash.Color.Dark) {
+        //     css["color"] = Dash.Color.Darken(this.color.Text, 50);
+        // }
 
-        else if (this.list.color === Dash.Color.Light) {
-            css["color"] = Dash.Color.Dark.BackgroundRaised;
-        }
+        css["color"] = this.color.Stroke;
 
         return css;
     };

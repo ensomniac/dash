@@ -1,5 +1,4 @@
 class DashColorSet {
-
     constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
         this._background  = background;               // HTML Color
         this._background_raised  = background_raised; // HTML Color
@@ -13,39 +12,39 @@ class DashColorSet {
         this._placeholder_class = "";                 // String
     };
 
-    get Background() {
+    get Background () {
         return this._background;
     };
 
-    get BackgroundRaised() {
+    get BackgroundRaised () {
         return this._background_raised;
     };
 
-    get Text() {
+    get Text () {
         return this._text;
     };
 
-    get TextHeader() {
+    get TextHeader () {
         return this._text_header;
     };
 
-    get AccentGood() {
+    get AccentGood () {
         return this._accent_good;
     };
 
-    get AccentBad() {
+    get AccentBad () {
         return this._accent_bad;
     };
 
-    get Button() {
+    get Button () {
         return this._button;
     };
 
-    get Tab() {
+    get Tab () {
         return this._tab;
     };
 
-    get Input() {
+    get Input () {
         return this._input;
     };
 
@@ -55,93 +54,82 @@ class DashColorSet {
 
     ///////////// PROGRAMMATIC START ////////////
 
-    get TextColorData() {
-
+    get TextColorData () {
         if (this._text_color_data == null) {
             // Cache this once since parsing can be expensive
             this._text_color_data = Dash.Color.Parse(this._text);
-        };
+        }
 
         return this._text_color_data;
-
     };
 
-    get Stroke() {
-
-        // Use to draw lines and boxes that compliment the interface
-        // Think of this color as a lighter version of Text
-
+    // Use to draw lines and boxes that compliment the interface
+    // Think of this color as a lighter version of Text
+    get Stroke () {
         if (this._stroke == null) {
-
             this._stroke = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
-                0.5                    // Opacity NOTE: Andrew, adjust this value and delete this note!
+                0.65
             ]);
-
-        };
+        }
 
         return this._stroke;
-
     };
 
+    // Use to draw very fine lines to suggest depth / shadow
     get Pinstripe() {
-
-        // Use to draw very fine lines to suggest depth / shadow
-
         if (this._pinstripe == null) {
-
             this._pinstripe = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
-                0.2                    // Opacity
+                0.1                    // Opacity
             ]);
 
-        };
+        }
 
         return this._pinstripe;
-
     };
 
     ///////////// PROGRAMMATIC END ////////////
 
     /////////////////////////
 
-    set Background(color) {
+    set Background (color) {
         this._background = color;
     };
 
-    set Text(color) {
+    set Text (color) {
         this._text = color;
     };
 
-    set TextHeader(color) {
+    set TextHeader (color) {
         this._text_header = color;
     };
 
-    set AccentGood(color) {
+    set AccentGood (color) {
         this._accent_good = color;
     };
 
-    set AccentBad(color) {
+    set AccentBad (color) {
         this._accent_bad = color;
     };
 
-    set Button(color_button_set) {
+    set Button (color_button_set) {
         this._button = color_button_set;
     };
 
-    set Tab(color_button_set) {
+    set Tab (color_button_set) {
         this._tab = color_button_set;
     };
 
-    set Input(color_button_set) {
+    set Input (color_button_set) {
         this._input = color_button_set;
     };
 
-    SetPlaceholderClass(placeholder_class_name) {
+    SetPlaceholderClass (placeholder_class_name) {
         this._placeholder_class = placeholder_class_name;
     };
 }
