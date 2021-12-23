@@ -81,18 +81,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.add_dropdown_icon = function (icon_size_mult=0.75, icon_name="arrow_down") {
-        var icon_color = null;
-
-        if (this.style === "default" && this.color_set.Background.Base === this.color_set.Background.Icon) {
-            icon_color = this.color_set.Text.Base;
-        }
-
         this.dropdown_icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
             Dash.Size.RowHeight,
             icon_size_mult,
-            icon_color
+            this.style === "default" ? this.color.Button.Text.Base : null
         );
 
         this.dropdown_icon.html.addClass("ComboLabel");

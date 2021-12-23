@@ -3,14 +3,11 @@ function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=
     this.name = icon_name || "unknown";
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult || 1;
-    this.icon_color = icon_color ||this.color.Text;
+    this.icon_color = icon_color || this.color.Button.Background.Base;
     this.theme = "light";
     this.icon_html = null;
     this.icon_definition = new GuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
-    if (this.color.Button.Background.Icon && !icon_color) {
-        this.icon_color = this.color.Button.Background.Icon;
-    }
     if (!this.color.Text) {
         console.error("Error: Incorrect color object passed to DashIcon:", this.color);
         console.trace();
@@ -25098,16 +25095,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.click_skirt = null;
     };
     this.add_dropdown_icon = function (icon_size_mult=0.75, icon_name="arrow_down") {
-        var icon_color = null;
-        if (this.style === "default" && this.color_set.Background.Base === this.color_set.Background.Icon) {
-            icon_color = this.color_set.Text.Base;
-        }
         this.dropdown_icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
             Dash.Size.RowHeight,
             icon_size_mult,
-            icon_color
+            this.style === "default" ? this.color.Button.Text.Base : null
         );
         this.dropdown_icon.html.addClass("ComboLabel");
         this.dropdown_icon.html.addClass("Combo");
@@ -25562,9 +25555,7 @@ function DashGuiComboInterface () {
         });
         this.label.remove();
         this.highlight.remove();
-        if (this.color_set.Background.Icon) {
-            this.dropdown_icon.SetColor(this.color_set.Background.Icon);
-        }
+        this.dropdown_icon.SetColor(this.color_set.Background.Base);
     };
     this.DisableFlash = function () {
         this.flash_enabled = false;
@@ -28763,7 +28754,7 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;
-    this.secondary_color = this.color.Text;
+    this.secondary_color = Dash.Color.Darken(this.color.Text, 60);
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
