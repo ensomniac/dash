@@ -30,7 +30,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
     this.setup_styles = function () {
         this.html.css({
-            "background": Dash.Color.Light.Background
+            // "background": Dash.Color.Light.Background
         });
     };
 

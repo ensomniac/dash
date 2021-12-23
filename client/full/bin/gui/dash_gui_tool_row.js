@@ -15,6 +15,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.toolbar.stroke_sep.remove();
 
         this.toolbar.html.css({
+            "background": "none",
             "padding-left": Dash.Size.Padding * 0.1,
             "padding-right": 0,
             "height": this.height,

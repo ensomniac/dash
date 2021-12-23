@@ -38,7 +38,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.display_folders_first = true;
     this.pending_file_view_requests = {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.border_color = this.color.BackgroundTrue || this.color.Background;
 
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);

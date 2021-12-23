@@ -1,11 +1,10 @@
 function DashColor () {
-    this.Primary = "#95ae6c";
-    this.Dark = "#202229";
-    this.Light = "rgb(230, 230, 230)";
-    this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
-    this.Warning = "#fab964";
-    this.Light = null;
     this.Dark = null;
+    this.Light = null;
+    this.Primary = "#95ae6c";
+    this.Warning = "#fab964";
+    this.parsed_color_data = {};
+    this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
 
     this.setup_color_sets = function () {
         var dark_bg_text = "rgb(245, 245, 245)";
@@ -165,12 +164,27 @@ function DashColor () {
         return dash_color_instance === this.Light ? this.Dark : this.Light;
     };
 
+    this.GetTransparent = function (cstr, opacity) {
+        if (!this.parsed_color_data[cstr]) {
+            this.parsed_color_data[cstr] = Dash.Color.Parse(cstr);
+        }
+
+        return Dash.Color.ToRGBA([
+            this.parsed_color_data[cstr][0], // Red
+            this.parsed_color_data[cstr][1], // Green
+            this.parsed_color_data[cstr][2], // Blue
+            opacity
+        ]);
+    };
+
+    // What is this?
     this.Raise = function (cstr, raise_steps) {
         raise_steps = raise_steps || 1;
 
         return cstr;
     };
 
+    // Should tmp_colors point to this.Names instead? This isn't very random
     this.Random = function (cstr, lighten_rgb) {
         var tmp_colors = ["red", "blue", "green", "orange"];
 
@@ -205,6 +219,232 @@ function DashColor () {
         }
 
         return "linear-gradient(" + degrees + "deg, " + colors + ")";
+    };
+
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
+    };
+
+    this.to_rgba = function (color_data) {
+        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
+    };
+
+    this.to_rgb = function (color_data) {
+        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
+    };
+
+    this.ParseToRGB = function (cstr) {
+        return this.to_rgb(this.Parse(cstr));
+    };
+
+    this.ParseToRGBA = function (cstr) {
+        return this.to_rgba(this.Parse(cstr));
+    };
+
+    this.Lighten = function (cstr, lighten_rgb) {
+        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
+
+        var pcolor = this.Parse(cstr);
+        pcolor[0] += lighten_rgb;
+        pcolor[1] += lighten_rgb;
+        pcolor[2] += lighten_rgb;
+
+        return this.to_rgb(pcolor);
+    };
+
+    this.Darken = function (cstr, darken_rgb) {
+        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
+
+        var pcolor = this.Parse(cstr);
+        pcolor[0] -= darken_rgb;
+        pcolor[1] -= darken_rgb;
+        pcolor[2] -= darken_rgb;
+
+        return this.to_rgb(pcolor);
+    };
+
+    // TODO: break this up
+    this.Parse = function (cstr) {
+        if (this.parsed_color_data[cstr]) {
+            return this.parsed_color_data[cstr];
+        }
+
+        var base;
+        var size;
+        var m = null;
+        var alpha = 1;
+        var parts = [];
+        var space = null;
+
+        if (typeof cstr === "string") {  // keyword
+            if (this.Names[cstr]) {
+                parts = this.Names[cstr].slice();
+                space = "rgb";
+            }
+
+            else if (cstr === "transparent") {  // reserved words
+                alpha = 0;
+                space = "rgb";
+                parts = [0,0,0];
+            }
+
+            else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {  // hex
+                alpha = 1;
+                base = cstr.slice(1);
+                size = base.length;
+
+                var is_short = size <= 4;
+
+                if (is_short) {
+                    parts = [
+                        parseInt(base[0] + base[0], 16),
+                        parseInt(base[1] + base[1], 16),
+                        parseInt(base[2] + base[2], 16)
+                    ];
+
+                    if (size === 4) {
+                        alpha = parseInt(base[3] + base[3], 16) / 255;
+                    }
+                }
+
+                else {
+                    parts = [
+                        parseInt(base[0] + base[1], 16),
+                        parseInt(base[2] + base[3], 16),
+                        parseInt(base[4] + base[5], 16)
+                    ];
+
+                    if (size === 8) {
+                        alpha = parseInt(base[6] + base[7], 16) / 255;
+                    }
+                }
+
+                if (!parts[0]) {
+                    parts[0] = 0;
+                }
+
+                if (!parts[1]) {
+                    parts[1] = 0;
+                }
+
+                if (!parts[2]) {
+                    parts[2] = 0;
+                }
+
+                space = "rgb";
+            }
+
+            // TODO: What is happening in this conditional? m = regex? Mistaken single equal sign?
+            else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {  // color space
+                var name = m[1];
+                var isRGB = name === "rgb";
+
+                base = name.replace(/a$/, "");
+                space = base;
+                size = base === "cmyk" ? 4 : base === "gray" ? 1 : 3;
+
+                parts = m[2].trim()
+                    .split(/\s*[,\/]\s*|\s+/)
+                    .map(function (x, i) {
+                        if (/%$/.test(x)) {  // <percentage>
+                            if (i === size) {  // alpha
+                                return parseFloat(x) / 100;
+                            }
+
+                            if (base === "rgb") {  // rgb
+                                return parseFloat(x) * 255 / 100;
+                            }
+
+                            return parseFloat(x);
+                        }
+
+                        else if (base[i] === "h") {  // hue
+                            if (/deg$/.test(x)) {  // <deg>
+                                return parseFloat(x);
+                            }
+
+                            // TODO: What is baseHues supposed to be? It's not defined anywhere
+                            else if (baseHues[x] !== undefined) {  // <base-hue>
+                                return baseHues[x];
+                            }
+                        }
+
+                        return parseFloat(x);
+                    });
+
+                if (name === base) {
+                    parts.push(1);
+                }
+
+                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
+                parts = parts.slice(0, size);
+            }
+
+            else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {  // named channels case
+                parts = cstr.match(/([0-9]+)/g).map(function (value) {
+                    return parseFloat(value);
+                });
+
+                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
+            }
+        }
+
+        else if (!isNaN(cstr)) {  // numeric case
+            space = "rgb";
+            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
+        }
+
+        else if (Array.isArray(cstr) || cstr.length) {  // array-like
+            parts = [cstr[0], cstr[1], cstr[2]];
+            space = "rgb";
+            alpha = cstr.length === 4 ? cstr[3] : 1;
+        }
+
+        else if (cstr instanceof Object) {  // object case - detects css cases of rgb and hsl
+            if (cstr.r != null || cstr.red != null || cstr.R != null) {
+                space = "rgb";
+
+                parts = [
+                    cstr.r || cstr.red || cstr.R || 0,
+                    cstr.g || cstr.green || cstr.G || 0,
+                    cstr.b || cstr.blue || cstr.B || 0
+                ];
+            }
+
+            else {
+                space = "hsl";
+
+                parts = [
+                    cstr.h || cstr.hue || cstr.H || 0,
+                    cstr.s || cstr.saturation || cstr.S || 0,
+                    cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
+                ];
+            }
+
+            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
+
+            if (cstr.opacity != null) {
+                alpha /= 100;
+            }
+        }
+
+        this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];
+
+        return this.parsed_color_data[cstr];
+    };
+
+    // This function will set the placeholder text for an input element
+    this.SetPlaceholderColor = function (input_html, placeholder_color) {
+        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
+        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
+        var node = document.createElement("style");
+
+        node.innerHTML = style_str;
+        document.body.appendChild(node);
+
+        input_html.addClass(class_name);
+
+        return input_html;
     };
 
     this.Names = {
@@ -356,206 +596,6 @@ function DashColor () {
         "whitesmoke": [245, 245, 245],
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
-    };
-
-    this.ToRGBA = function (color_data) {
-        return this.to_rgba(color_data);
-    };
-
-    this.to_rgba = function (color_data) {
-        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
-    };
-
-    this.to_rgb = function (color_data) {
-        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
-    };
-
-    this.ParseToRGB = function (cstr) {
-        return this.to_rgb(this.Parse(cstr));
-    };
-
-    this.ParseToRGBA = function (cstr) {
-        return this.to_rgba(this.Parse(cstr));
-    };
-
-    this.Lighten = function (cstr, lighten_rgb) {
-        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
-
-        var pcolor = this.Parse(cstr);
-        pcolor[0] += lighten_rgb;
-        pcolor[1] += lighten_rgb;
-        pcolor[2] += lighten_rgb;
-
-        return this.to_rgb(pcolor);
-    };
-
-    this.Darken = function (cstr, darken_rgb) {
-        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
-
-        var pcolor = this.Parse(cstr);
-        pcolor[0] -= darken_rgb;
-        pcolor[1] -= darken_rgb;
-        pcolor[2] -= darken_rgb;
-
-        return this.to_rgb(pcolor);
-    };
-
-    this.Parse = function (cstr) {
-        var base;
-        var size;
-        var m = null;
-        var parts = [];
-        var alpha = 1;
-        var space = null;
-
-        if (typeof cstr === 'string') {
-            //keyword
-            if (this.Names[cstr]) {
-                parts = this.Names[cstr].slice();
-                space = 'rgb';
-            }
-
-            //reserved words
-            else if (cstr === 'transparent') {
-                alpha = 0;
-                space = 'rgb';
-                parts = [0,0,0];
-            }
-
-            //hex
-            else if (/^#[A-Fa-f0-9]+$/.test(cstr)) {
-                base = cstr.slice(1);
-                size = base.length;
-                var isShort = size <= 4;
-                alpha = 1;
-
-                if (isShort) {
-                    parts = [
-                        parseInt(base[0] + base[0], 16),
-                        parseInt(base[1] + base[1], 16),
-                        parseInt(base[2] + base[2], 16)
-                    ];
-                    if (size === 4) {
-                        alpha = parseInt(base[3] + base[3], 16) / 255;
-                    }
-                }
-                else {
-                    parts = [
-                        parseInt(base[0] + base[1], 16),
-                        parseInt(base[2] + base[3], 16),
-                        parseInt(base[4] + base[5], 16)
-                    ];
-                    if (size === 8) {
-                        alpha = parseInt(base[6] + base[7], 16) / 255;
-                    }
-                }
-
-                if (!parts[0]) parts[0] = 0;
-                if (!parts[1]) parts[1] = 0;
-                if (!parts[2]) parts[2] = 0;
-
-                space = 'rgb';
-            }
-
-            //color space
-            else if (m = /^((?:rgb|hs[lvb]|hwb|cmyk?|xy[zy]|gray|lab|lchu?v?|[ly]uv|lms)a?)\s*\(([^\)]*)\)/.exec(cstr)) {
-                var name = m[1];
-                var isRGB = name === 'rgb';
-                base = name.replace(/a$/, '');
-                space = base;
-                size = base === 'cmyk' ? 4 : base === 'gray' ? 1 : 3;
-                parts = m[2].trim()
-                    .split(/\s*[,\/]\s*|\s+/)
-                    .map(function (x, i) {
-                        //<percentage>
-                        if (/%$/.test(x)) {
-                            //alpha
-                            if (i === size) return parseFloat(x) / 100;
-                            //rgb
-                            if (base === 'rgb') return parseFloat(x) * 255 / 100;
-                            return parseFloat(x);
-                        }
-                        //hue
-                        else if (base[i] === 'h') {
-                            //<deg>
-                            if (/deg$/.test(x)) {
-                                return parseFloat(x);
-                            }
-                            //<base-hue>
-                            else if (baseHues[x] !== undefined) {
-                                return baseHues[x];
-                            }
-                        }
-                        return parseFloat(x);
-                    });
-
-                if (name === base) parts.push(1);
-                alpha = (isRGB) ? 1 : (parts[size] === undefined) ? 1 : parts[size];
-                parts = parts.slice(0, size);
-            }
-
-            //named channels case
-            else if (cstr.length > 10 && /[0-9](?:\s|\/)/.test(cstr)) {
-                parts = cstr.match(/([0-9]+)/g).map(function (value) {
-                    return parseFloat(value);
-                });
-
-                space = cstr.match(/([a-z])/ig).join('').toLowerCase();
-            }
-        }
-
-        //numeric case
-        else if (!isNaN(cstr)) {
-            space = 'rgb';
-            parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
-        }
-
-        //array-like
-        else if (Array.isArray(cstr) || cstr.length) {
-            parts = [cstr[0], cstr[1], cstr[2]];
-            space = 'rgb';
-            alpha = cstr.length === 4 ? cstr[3] : 1;
-        }
-
-        //object case - detects css cases of rgb and hsl
-        else if (cstr instanceof Object) {
-            if (cstr.r != null || cstr.red != null || cstr.R != null) {
-                space = 'rgb';
-                parts = [
-                    cstr.r || cstr.red || cstr.R || 0,
-                    cstr.g || cstr.green || cstr.G || 0,
-                    cstr.b || cstr.blue || cstr.B || 0
-                ];
-            }
-            else {
-                space = 'hsl';
-                parts = [
-                    cstr.h || cstr.hue || cstr.H || 0,
-                    cstr.s || cstr.saturation || cstr.S || 0,
-                    cstr.l || cstr.lightness || cstr.L || cstr.b || cstr.brightness
-                ];
-            }
-
-            alpha = cstr.a || cstr.alpha || cstr.opacity || 1;
-
-            if (cstr.opacity != null) alpha /= 100;
-        }
-
-        return [parts[0], parts[1], parts[2], alpha, space];
-    };
-
-    // This function will set the placeholder text for an input element
-    this.SetPlaceholderColor = function (input_html, placeholder_color) {
-        var class_name = "placeholder_inline_style_" + (Math.random() * 1000000).toString();
-        var style_str = "." + class_name + "::placeholder {color: " + placeholder_color + "}";
-        var node = document.createElement("style");
-
-        node.innerHTML = style_str;
-        document.body.appendChild(node);
-
-        input_html.addClass(class_name);
-
-        return input_html;
     };
 
     this.setup_color_sets();
