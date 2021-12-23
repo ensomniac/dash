@@ -18711,6 +18711,9 @@ function DashColor () {
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
     };
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
+    };
     this.to_rgba = function (color_data) {
         return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
     };
@@ -18922,6 +18925,40 @@ class DashColorSet {
     get PlaceholderClass() {
         return this._placeholder_class;
     };
+    ///////////// PROGRAMMATIC START ////////////
+    get TextColorData() {
+        if (this._text_color_data == null) {
+            // Cache this once since parsing can be expensive
+            this._text_color_data = Dash.Color.Parse(this._text);
+        };
+        return this._text_color_data;
+    };
+    get Stroke() {
+        // Use to draw lines and boxes that compliment the interface
+        // Think of this color as a lighter version of Text
+        if (this._stroke == null) {
+            this._stroke = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.5                    // Opacity NOTE: Andrew, adjust this value and delete this note!
+            ]);
+        };
+        return this._stroke;
+    };
+    get Pinstripe() {
+        // Use to draw very fine lines to suggest depth / shadow
+        if (this._pinstripe == null) {
+            this._pinstripe = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.2                    // Opacity
+            ]);
+        };
+        return this._pinstripe;
+    };
+    ///////////// PROGRAMMATIC END ////////////
     /////////////////////////
     set Background(color) {
         this._background = color;
@@ -26532,17 +26569,21 @@ function DashGuiLayoutToolbar (binder, color) {
     this.stroke_sep    = new Dash.Gui.GetHTMLAbsContext();
     this.stroke_height = 1;
     this.height        = Dash.Size.ButtonHeight + this.stroke_height;
+    this.refactor_itom_padding_requested = false;
     DashGuiLayoutToolbarInterface.call(this);
     this.setup_styles = function () {
+        console.log("Stroke color: " + this.color.Stroke);
+        console.log("pnstripe color: " + this.color.Pinstripe);
         this.html.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
+            "background": "rgba(255, 255, 255, 0.2)",
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",
             "padding-left": Dash.Size.Padding * 0.5
         });
         this.stroke_sep.css({
-            "background": this.color.AccentGood,
+            "background": this.color.Pinstripe,
             "top": "auto",
             "height": this.stroke_height
         });
@@ -26568,6 +26609,38 @@ function DashGuiLayoutToolbar (binder, color) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
     };
+    this.refactor_item_padding = function () {
+        // refactor padding, but do it on the next frame since
+        // the most likely time to do this happens after packing
+        // a bunch of elements in the initialization of the Toolbar
+        if (this.refactor_itom_padding_requested) {
+            return;
+        };
+        this.refactor_itom_padding_requested = true;
+        (function(self){
+            requestAnimationFrame(function(){
+                self._refactor_item_padding();
+            });
+        })(this);
+    };
+    this._refactor_item_padding = function () {
+        // Note: Never call this directly. Instead, use this.refactor_item_padding()
+        if (!this.refactor_itom_padding_requested) {
+            return;
+        };
+        this.refactor_itom_padding_requested = false;
+        for (var i = 0; i < this.objects.length; i++) {
+            var html = this.objects[i]["html_elem"];
+            if (i == this.objects.length-1) {
+                // This is the last element and it gets no right-margin
+                //since the toolbar itself has a margin built in to the left and right
+                html.css({"margin-right": 0, "margin-left": 0});
+            }
+            else {
+                html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
+            };
+        };
+    };
     this.setup_styles();
 }
 
@@ -26579,6 +26652,12 @@ function DashGuiLayoutToolbarInterface () {
             "flex-grow": 2,
         });
         this.html.append(expander);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": expander,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return expander;
     };
     this.GetHeight = function () {
@@ -26589,6 +26668,12 @@ function DashGuiLayoutToolbarInterface () {
         space.css({
             "width": width,
         });
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": space,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         this.html.append(space);
     };
     this.AddIconButton = function (icon_name, callback, width=null, data=null) {
@@ -26607,10 +26692,12 @@ function DashGuiLayoutToolbarInterface () {
             self.html.append(button.html);
             self.objects.push({
                 "html": button,
+                "html_elem": button.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, obj_index, data);
+        this.refactor_item_padding();
         return button;
     };
     this.AddButton = function (label_text, callback, width=null, data=null) {
@@ -26627,22 +26714,24 @@ function DashGuiLayoutToolbarInterface () {
                 {"style": "toolbar"}
             );
             self.html.append(button.html);
-            // If this is the last item, prevent padding on the right
-            if (self.objects.length == obj_index) {
-                button.html.css({
-                    "margin-right": 0,
-                });
-            };
             self.objects.push({
                 "html": button,
+                "html_elem": button.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, obj_index, data);
+        this.refactor_item_padding();
         return button;
     };
     this.AddHTML = function (html) {
         this.html.append(html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": html,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
     };
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
         var button = new Dash.Gui.Button(
@@ -26654,6 +26743,14 @@ function DashGuiLayoutToolbarInterface () {
         );
         button.SetFileUploader(api, params);
         this.html.append(button.html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": button,
+            "html_elem": button.html,
+            "callback": callback,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return button;
     };
     this.AddDivider = function () {
@@ -26664,6 +26761,13 @@ function DashGuiLayoutToolbarInterface () {
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
         });
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": divider_line,
+            "html_elem": divider_line.html,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return divider_line;
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
@@ -26691,6 +26795,13 @@ function DashGuiLayoutToolbarInterface () {
             "background": this.color.AccentGood,
         });
         this.html.append(end_border);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": end_border,
+            "callback": null,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return header;
     };
     this.AddText = function (text, color=null) {
@@ -26705,6 +26816,14 @@ function DashGuiLayoutToolbarInterface () {
             "padding-left": 0
         });
         this.html.append(label.html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": label,
+            "html_elem": label.html,
+            "callback": null,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return label;
     };
     this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
@@ -26737,6 +26856,14 @@ function DashGuiLayoutToolbarInterface () {
             "width": width,
             "text-align": text_align
         });
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": input,
+            "html_elem": input.html,
+            "callback": null,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
         return input;
     };
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
@@ -26752,6 +26879,7 @@ function DashGuiLayoutToolbarInterface () {
         });
         var obj = {
             "html": input,
+            "html_elem": input.html,
             "callback": callback.bind(this.binder),
             "index": obj_index,
             "additional_data": additional_data
@@ -26781,6 +26909,7 @@ function DashGuiLayoutToolbarInterface () {
             });
         })(this, input, obj_index, obj);
         this.html.append(input.html);
+        this.refactor_item_padding();
         return input;
     };
     this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
@@ -26818,11 +26947,13 @@ function DashGuiLayoutToolbarInterface () {
             });
             self.objects.push({
                 "html": combo,
+                "html_elem": combo.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, selected_id, combo_options, callback, return_full_option, additional_data);
         var obj = this.objects[obj_index];
+        this.refactor_item_padding();
         return obj["html"];
     };
 }
@@ -28605,7 +28736,7 @@ function DashGuiRevolvingListScrolling () {
 
 function DashGuiLayoutDashboard (binder, color=null) {
     this.binder = binder;
-    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.color  = color || this.binder.color || Dash.Color.Dark;
     this.modules = [];
     this.canvas_containers = [];
     this.margin = 1;

@@ -53,6 +53,60 @@ class DashColorSet {
         return this._placeholder_class;
     };
 
+    ///////////// PROGRAMMATIC START ////////////
+
+    get TextColorData() {
+
+        if (this._text_color_data == null) {
+            // Cache this once since parsing can be expensive
+            this._text_color_data = Dash.Color.Parse(this._text);
+        };
+
+        return this._text_color_data;
+
+    };
+
+    get Stroke() {
+
+        // Use to draw lines and boxes that compliment the interface
+        // Think of this color as a lighter version of Text
+
+        if (this._stroke == null) {
+
+            this._stroke = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.5                    // Opacity NOTE: Andrew, adjust this value and delete this note!
+            ]);
+
+        };
+
+        return this._stroke;
+
+    };
+
+    get Pinstripe() {
+
+        // Use to draw very fine lines to suggest depth / shadow
+
+        if (this._pinstripe == null) {
+
+            this._pinstripe = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.2                    // Opacity
+            ]);
+
+        };
+
+        return this._pinstripe;
+
+    };
+
+    ///////////// PROGRAMMATIC END ////////////
+
     /////////////////////////
 
     set Background(color) {

@@ -10,6 +10,14 @@ function DashGuiLayoutToolbarInterface () {
 
         this.html.append(expander);
 
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": expander,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
+
         return expander;
     };
 
@@ -23,6 +31,14 @@ function DashGuiLayoutToolbarInterface () {
         space.css({
             "width": width,
         });
+
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": space,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
 
         this.html.append(space);
     };
@@ -46,10 +62,13 @@ function DashGuiLayoutToolbarInterface () {
 
             self.objects.push({
                 "html": button,
+                "html_elem": button.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, obj_index, data);
+
+        this.refactor_item_padding();
 
         return button;
     };
@@ -71,25 +90,29 @@ function DashGuiLayoutToolbarInterface () {
 
             self.html.append(button.html);
 
-            // If this is the last item, prevent padding on the right
-            if (self.objects.length == obj_index) {
-                button.html.css({
-                    "margin-right": 0,
-                });
-            };
-
             self.objects.push({
                 "html": button,
+                "html_elem": button.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, obj_index, data);
+
+        this.refactor_item_padding();
 
         return button;
     };
 
     this.AddHTML = function (html) {
         this.html.append(html);
+
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": html,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
     };
 
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
@@ -105,6 +128,16 @@ function DashGuiLayoutToolbarInterface () {
 
         this.html.append(button.html);
 
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": button,
+            "html_elem": button.html,
+            "callback": callback,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
+
         return button;
     };
 
@@ -117,6 +150,15 @@ function DashGuiLayoutToolbarInterface () {
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
         });
+
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": divider_line,
+            "html_elem": divider_line.html,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
 
         return divider_line;
     };
@@ -153,6 +195,15 @@ function DashGuiLayoutToolbarInterface () {
 
         this.html.append(end_border);
 
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": end_border,
+            "callback": null,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
+
         return header;
     };
 
@@ -172,6 +223,16 @@ function DashGuiLayoutToolbarInterface () {
         });
 
         this.html.append(label.html);
+
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": label,
+            "html_elem": label.html,
+            "callback": null,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
 
         return label;
     };
@@ -212,7 +273,18 @@ function DashGuiLayoutToolbarInterface () {
             "text-align": text_align
         });
 
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": input,
+            "html_elem": input.html,
+            "callback": null,
+            "index": obj_index
+        });
+
+        this.refactor_item_padding();
+
         return input;
+
     };
 
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
@@ -231,6 +303,7 @@ function DashGuiLayoutToolbarInterface () {
 
         var obj = {
             "html": input,
+            "html_elem": input.html,
             "callback": callback.bind(this.binder),
             "index": obj_index,
             "additional_data": additional_data
@@ -267,6 +340,8 @@ function DashGuiLayoutToolbarInterface () {
         })(this, input, obj_index, obj);
 
         this.html.append(input.html);
+
+        this.refactor_item_padding();
 
         return input;
     };
@@ -313,12 +388,15 @@ function DashGuiLayoutToolbarInterface () {
 
             self.objects.push({
                 "html": combo,
+                "html_elem": combo.html,
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
         })(this, selected_id, combo_options, callback, return_full_option, additional_data);
 
         var obj = this.objects[obj_index];
+
+        this.refactor_item_padding();
 
         return obj["html"];
     };

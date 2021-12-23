@@ -1,6 +1,6 @@
 function DashGuiLayoutDashboard (binder, color=null) {
     this.binder = binder;
-    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.color  = color || this.binder.color || Dash.Color.Dark;
 
     this.modules = [];
     this.canvas_containers = [];

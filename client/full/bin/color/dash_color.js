@@ -358,6 +358,10 @@ function DashColor () {
         "yellowgreen": [154, 205, 50]
     };
 
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
+    };
+
     this.to_rgba = function (color_data) {
         return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
     };

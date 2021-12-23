@@ -6,12 +6,17 @@ function DashGuiLayoutToolbar (binder, color) {
     this.stroke_sep    = new Dash.Gui.GetHTMLAbsContext();
     this.stroke_height = 1;
     this.height        = Dash.Size.ButtonHeight + this.stroke_height;
+    this.refactor_itom_padding_requested = false;
 
     DashGuiLayoutToolbarInterface.call(this);
 
     this.setup_styles = function () {
+        console.log("Stroke color: " + this.color.Stroke);
+        console.log("pnstripe color: " + this.color.Pinstripe);
+
         this.html.css({
-            "background": this.color.Background,
+            // "background": this.color.Background,
+            "background": "rgba(255, 255, 255, 0.2)",
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",
@@ -19,7 +24,7 @@ function DashGuiLayoutToolbar (binder, color) {
         });
 
         this.stroke_sep.css({
-            "background": this.color.AccentGood,
+            "background": this.color.Pinstripe,
             "top": "auto",
             "height": this.stroke_height
         });
@@ -53,6 +58,50 @@ function DashGuiLayoutToolbar (binder, color) {
         var obj = this.objects[obj_index];
 
         obj["callback"](obj["html"], data, this);
+    };
+
+    this.refactor_item_padding = function () {
+        // refactor padding, but do it on the next frame since
+        // the most likely time to do this happens after packing
+        // a bunch of elements in the initialization of the Toolbar
+
+        if (this.refactor_itom_padding_requested) {
+            return;
+        };
+
+        this.refactor_itom_padding_requested = true;
+
+        (function(self){
+            requestAnimationFrame(function(){
+                self._refactor_item_padding();
+            });
+        })(this);
+
+    };
+
+    this._refactor_item_padding = function () {
+        // Note: Never call this directly. Instead, use this.refactor_item_padding()
+
+        if (!this.refactor_itom_padding_requested) {
+            return;
+        };
+
+        this.refactor_itom_padding_requested = false;
+
+        for (var i = 0; i < this.objects.length; i++) {
+            var html = this.objects[i]["html_elem"];
+
+            if (i == this.objects.length-1) {
+                // This is the last element and it gets no right-margin
+                //since the toolbar itself has a margin built in to the left and right
+                html.css({"margin-right": 0, "margin-left": 0});
+            }
+            else {
+                html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
+            };
+
+        };
+
     };
 
     this.setup_styles();
