@@ -23940,7 +23940,12 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
-    this.secondary_css_color = this.dark_mode ? "rgba(245, 245, 245, 0.4)" : "gray";
+    if (this.color === Dash.Color.Light) {
+        this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
+    }
+    else if (this.dark_mode) {
+        this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
+    }
     // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
     this.setup_styles = function () {
@@ -26593,10 +26598,10 @@ function DashGuiLayoutToolbar (binder, color) {
         console.log("Stroke color: " + this.color.Stroke);
         console.log("Pinstripe color: " + this.color.Pinstripe);
         this.html.css({
-            "background": this.color.Background,
-            // "background": "rgba(255, 255, 255, 0.2)",  // This shouldn't be the default, right?
+            // "background": this.color.Background,
+            "background": "rgba(255, 255, 255, 0.2)",
             "height": this.height, // +1 for the bottom stroke
-            "padding-right": Dash.Size.Padding  *0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
             "display": "flex",
             "padding-left": Dash.Size.Padding * 0.5
         });
@@ -26633,7 +26638,7 @@ function DashGuiLayoutToolbar (binder, color) {
         // a bunch of elements in the initialization of the Toolbar
         if (this.refactor_itom_padding_requested) {
             return;
-        };
+        }
         this.refactor_itom_padding_requested = true;
         (function(self){
             requestAnimationFrame(function(){
@@ -26645,7 +26650,7 @@ function DashGuiLayoutToolbar (binder, color) {
         // Note: Never call this directly. Instead, use this.refactor_item_padding()
         if (!this.refactor_itom_padding_requested) {
             return;
-        };
+        }
         this.refactor_itom_padding_requested = false;
         for (var i = 0; i < this.objects.length; i++) {
             var html = this.objects[i]["html_elem"];
@@ -26656,8 +26661,8 @@ function DashGuiLayoutToolbar (binder, color) {
             }
             else {
                 html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
-            };
-        };
+            }
+        }
     };
     this.setup_styles();
 }
@@ -28018,14 +28023,6 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
         if (!this.list_row.is_header) {
             return css;
         }
-        // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
-        // if (this.color === Dash.Color.Light) {
-        //     css["color"] = Dash.Color.Lighten(this.color.Text, 50);
-        // }
-        //
-        // else if (this.color === Dash.Color.Dark) {
-        //     css["color"] = Dash.Color.Darken(this.color.Text, 50);
-        // }
         css["color"] = this.color.Stroke;
         return css;
     };
@@ -28923,14 +28920,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
-    // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
-    // if (this.color === Dash.Color.Dark) {
-    //     this.secondary_color = Dash.Color.Darken(this.color.Text, 60);
-    // }
-    //
-    // else if (this.color === Dash.Color.Light) {
-    //     this.secondary_color = Dash.Color.Lighten(this.color.Text, 60);
-    // }
     this.secondary_color = this.color.Stroke;
     this.text_css = {
         "font-family": this.bold_font,

@@ -16,16 +16,6 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.margin = this.dashboard.margin;
     this.padding = this.dashboard.padding;
     this.canvas = null;
-
-    // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
-    // if (this.color === Dash.Color.Dark) {
-    //     this.secondary_color = Dash.Color.Darken(this.color.Text, 60);
-    // }
-    //
-    // else if (this.color === Dash.Color.Light) {
-    //     this.secondary_color = Dash.Color.Lighten(this.color.Text, 60);
-    // }
-
     this.secondary_color = this.color.Stroke;
 
     this.text_css = {

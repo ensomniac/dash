@@ -49,15 +49,6 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
             return css;
         }
 
-        // DO NOT USE this.color.Pinstripe here, it is not a valid usage - this is different
-        // if (this.color === Dash.Color.Light) {
-        //     css["color"] = Dash.Color.Lighten(this.color.Text, 50);
-        // }
-        //
-        // else if (this.color === Dash.Color.Dark) {
-        //     css["color"] = Dash.Color.Darken(this.color.Text, 50);
-        // }
-
         css["color"] = this.color.Stroke;
 
         return css;

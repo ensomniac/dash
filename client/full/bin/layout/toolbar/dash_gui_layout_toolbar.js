@@ -15,10 +15,10 @@ function DashGuiLayoutToolbar (binder, color) {
         console.log("Pinstripe color: " + this.color.Pinstripe);
 
         this.html.css({
-            "background": this.color.Background,
-            // "background": "rgba(255, 255, 255, 0.2)",  // This shouldn't be the default, right?
+            // "background": this.color.Background,
+            "background": "rgba(255, 255, 255, 0.2)",
             "height": this.height, // +1 for the bottom stroke
-            "padding-right": Dash.Size.Padding  *0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
             "display": "flex",
             "padding-left": Dash.Size.Padding * 0.5
         });
@@ -67,7 +67,7 @@ function DashGuiLayoutToolbar (binder, color) {
 
         if (this.refactor_itom_padding_requested) {
             return;
-        };
+        }
 
         this.refactor_itom_padding_requested = true;
 
@@ -84,7 +84,7 @@ function DashGuiLayoutToolbar (binder, color) {
 
         if (!this.refactor_itom_padding_requested) {
             return;
-        };
+        }
 
         this.refactor_itom_padding_requested = false;
 
@@ -98,9 +98,9 @@ function DashGuiLayoutToolbar (binder, color) {
             }
             else {
                 html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
-            };
+            }
 
-        };
+        }
 
     };
 
