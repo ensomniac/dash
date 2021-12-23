@@ -71,6 +71,13 @@ function DashGuiLayoutToolbarInterface () {
 
             self.html.append(button.html);
 
+            // If this is the last item, prevent padding on the right
+            if (self.objects.length == obj_index) {
+                button.html.css({
+                    "margin-right": 0,
+                });
+            };
+
             self.objects.push({
                 "html": button,
                 "callback": callback.bind(self.binder),
