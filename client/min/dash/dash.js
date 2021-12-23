@@ -18375,7 +18375,7 @@ function DashColor () {
     this.Light = null;
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
-    // this.parsed_color_data = {};
+    this.parsed_color_data = {};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.setup_color_sets = function () {
         var dark_bg_text = "rgb(245, 245, 245)";
@@ -18528,20 +18528,13 @@ function DashColor () {
         return dash_color_instance === this.Light ? this.Dark : this.Light;
     };
     this.GetTransparent = function (cstr, opacity) {
-        // if (!this.parsed_color_data[cstr]) {
-        //     this.parsed_color_data[cstr] = Dash.Color.Parse(cstr);
-        // }
-        // return Dash.Color.ToRGBA([
-        //     this.parsed_color_data[cstr][0], // Red
-        //     this.parsed_color_data[cstr][1], // Green
-        //     this.parsed_color_data[cstr][2], // Blue
-        //     opacity
-        // ]);
-        var parsed = Dash.Color.Parse(cstr);
-        return Dash.Color.ToRGBA([
-            parsed[0], // Red
-            parsed[1], // Green
-            parsed[2], // Blue
+        if (!this.parsed_color_data[cstr]) {
+            this.parsed_color_data[cstr] = this.Parse(cstr);
+        }
+        return this.ToRGBA([
+            this.parsed_color_data[cstr][0], // Red
+            this.parsed_color_data[cstr][1], // Green
+            this.parsed_color_data[cstr][2], // Blue
             opacity
         ]);
     };
@@ -18595,19 +18588,14 @@ function DashColor () {
     this.ParseToRGBA = function (cstr) {
         return this.to_rgba(this.Parse(cstr));
     };
-    this.Lighten = function (cstr, lighten_rgb) {
-        lighten_rgb = lighten_rgb || 15; // How many units to add to r/g/b
-
+    this.Lighten = function (cstr, lighten_rgb=15) {  // How many units to add to r/g/b
         var pcolor = this.Parse(cstr);
-        console.log(cstr, "LIGHTENING " + lighten_rgb, pcolor);
-
         pcolor[0] += lighten_rgb;
         pcolor[1] += lighten_rgb;
         pcolor[2] += lighten_rgb;
         return this.to_rgb(pcolor);
     };
-    this.Darken = function (cstr, darken_rgb) {
-        darken_rgb = darken_rgb || 15; // How many units to subtract to r/g/b
+    this.Darken = function (cstr, darken_rgb=15) {  // How many units to subtract to r/g/b
         var pcolor = this.Parse(cstr);
         pcolor[0] -= darken_rgb;
         pcolor[1] -= darken_rgb;
@@ -18616,10 +18604,9 @@ function DashColor () {
     };
     // TODO: break this up
     this.Parse = function (cstr) {
-        console.log("-->", cstr);
-        // if (this.parsed_color_data[cstr]) {
-        //     return this.parsed_color_data[cstr];
-        // }
+        if (this.parsed_color_data[cstr]) {
+            return JSON.parse(JSON.stringify(this.parsed_color_data[cstr]));
+        }
         var base;
         var size;
         var m = null;
@@ -18627,7 +18614,6 @@ function DashColor () {
         var parts = [];
         var space = null;
         if (typeof cstr === "string") {  // keyword
-            console.log("str");
             if (this.Names[cstr]) {
                 parts = this.Names[cstr].slice();
                 space = "rgb";
@@ -18717,18 +18703,15 @@ function DashColor () {
             }
         }
         else if (!isNaN(cstr)) {  // numeric case
-            console.log("numeric?");
             space = "rgb";
             parts = [cstr >>> 16, (cstr & 0x00ff00) >>> 8, cstr & 0x0000ff];
         }
         else if (Array.isArray(cstr) || cstr.length) {  // array-like
-            console.log("array like?");
             parts = [cstr[0], cstr[1], cstr[2]];
             space = "rgb";
             alpha = cstr.length === 4 ? cstr[3] : 1;
         }
         else if (cstr instanceof Object) {  // object case - detects css cases of rgb and hsl
-            console.log("obj like?");
             if (cstr.r != null || cstr.red != null || cstr.R != null) {
                 space = "rgb";
                 parts = [
@@ -18751,11 +18734,10 @@ function DashColor () {
             }
         }
         else {
-            console.log("Warning: Dash.Color.Parse failed to parse color!", cstr);
+            console.warn("Warning: Dash.Color.Parse failed to parse color!", cstr);
         }
-        // this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];
-        // return this.parsed_color_data[cstr];
-        return [parts[0], parts[1], parts[2], alpha, space];
+        this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];
+        return JSON.parse(JSON.stringify(this.parsed_color_data[cstr]));
     };
     // This function will set the placeholder text for an input element
     this.SetPlaceholderColor = function (input_html, placeholder_color) {
