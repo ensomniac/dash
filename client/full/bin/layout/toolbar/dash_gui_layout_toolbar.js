@@ -1,17 +1,18 @@
 function DashGuiLayoutToolbar (binder, color) {
-    this.binder = binder;
-    this.color = color || this.binder.color || Dash.Color.Dark;
-
-    this.objects = [];
-    this.html = new Dash.Gui.GetHTMLContext();
-    this.stroke_sep = new Dash.Gui.GetHTMLAbsContext();
+    this.binder        = binder;
+    this.color         = color || this.binder.color || Dash.Color.Dark;
+    this.objects       = [];
+    this.html          = new Dash.Gui.GetHTMLContext();
+    this.stroke_sep    = new Dash.Gui.GetHTMLAbsContext();
+    this.stroke_height = 1;
+    this.height        = Dash.Size.ButtonHeight + this.stroke_height;
 
     DashGuiLayoutToolbarInterface.call(this);
 
     this.setup_styles = function () {
         this.html.css({
             "background": this.color.Background,
-            "height": Dash.Size.ButtonHeight + 1, // +1 for the bottom stroke
+            "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",
             "padding-left": Dash.Size.Padding * 0.5
@@ -20,7 +21,7 @@ function DashGuiLayoutToolbar (binder, color) {
         this.stroke_sep.css({
             "background": this.color.AccentGood,
             "top": "auto",
-            "height": 1
+            "height": this.stroke_height
         });
 
         this.html.append(this.stroke_sep);

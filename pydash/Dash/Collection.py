@@ -68,13 +68,22 @@ class Collection:
     def SetSortByKey(self, key):
         self._sort_by_key = key
 
+    @property
     def All(self):
-        return LocalStorage.GetAll(
+        if not hasattr(self, "_all"):
+            self._all = self.GetAll()
+
+        return self._all
+
+    def GetAll(self):
+        self._all = LocalStorage.GetAll(
             self.Ctx,
             self.store_path,
             nested=self.nested,
             sort_by_key=self._sort_by_key
         )
+
+        return self._all
 
     def AllIDs(self):
         return LocalStorage.GetAllIDs(

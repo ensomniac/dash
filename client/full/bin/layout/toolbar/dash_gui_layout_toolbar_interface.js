@@ -13,6 +13,10 @@ function DashGuiLayoutToolbarInterface () {
         return expander;
     };
 
+    this.GetHeight = function () {
+        return this.height;
+    };
+
     this.AddSpace = function (width) {
         var space = $("<div></div>");
 
