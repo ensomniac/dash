@@ -11,12 +11,9 @@ function DashGuiLayoutToolbar (binder, color) {
     DashGuiLayoutToolbarInterface.call(this);
 
     this.setup_styles = function () {
-        console.log("Stroke color: " + this.color.Stroke);
-        console.log("pnstripe color: " + this.color.Pinstripe);
 
         this.html.css({
-            // "background": this.color.Background,
-            "background": "rgba(255, 255, 255, 0.2)",
+            "background": Dash.Color.Lighten(this.color.Background, 7),
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding  *0.5,
             "display": "flex",
