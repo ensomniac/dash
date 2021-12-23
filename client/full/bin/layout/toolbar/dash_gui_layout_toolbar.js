@@ -14,7 +14,6 @@ function DashGuiLayoutToolbar (binder, color) {
 
         this.html.css({
             "background": Dash.Color.Lighten(this.color.Background, 7),
-            // "background": this.color.Background,
             "height": this.height, // +1 for the bottom stroke
             "padding-right": Dash.Size.Padding * 0.5,
             "display": "flex",
