@@ -33,25 +33,25 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
         }
 
         if (this.style === "toolbar") {
-            this.color_set  = this.color.Button;
+            this.color_set = this.color.Button;
 
             DashGuiButtonStyleToolbar.call(this);
         }
 
         else if (this.style === "tab_top") {
-            this.color_set  = this.color.Tab;
+            this.color_set = this.color.Tab;
 
             DashGuiButtonStyleTabTop.call(this);
         }
 
         else if (this.style === "tab_side") {
-            this.color_set  = this.color.Tab;
+            this.color_set = this.color.Tab;
 
             DashGuiButtonStyleTabSide.call(this);
         }
 
         else {
-            this.color_set  = this.color.Button;
+            this.color_set = this.color.Button;
 
             DashGuiButtonStyleDefault.call(this);
         }
