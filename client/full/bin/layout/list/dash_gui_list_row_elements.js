@@ -137,6 +137,8 @@ function DashGuiListRowElements () {
             combo.html.css({
                 "opacity": 0
             });
+
+            this.prevent_events_for_header_placeholder(combo.html);
         }
 
         return combo;
@@ -164,6 +166,8 @@ function DashGuiListRowElements () {
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
+
+            this.prevent_events_for_header_placeholder(input.html);
 
             return input;
         }
@@ -227,6 +231,8 @@ function DashGuiListRowElements () {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             icon_button.icon.icon_html.remove();
 
+            this.prevent_events_for_header_placeholder(icon_button.html);
+
             return icon_button;
         }
 
@@ -235,5 +241,13 @@ function DashGuiListRowElements () {
         }
 
         return icon_button;
+    };
+
+    this.prevent_events_for_header_placeholder = function (html) {
+        html.css({
+            "pointer-events": "none"
+        });
+
+        html.off("click");
     };
 }

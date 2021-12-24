@@ -232,10 +232,6 @@ function DashGuiFileExplorerGUI () {
 
         this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
 
-        // this.list.html.css({
-        //     "background": "none"
-        // });
-
         this.list.DisableDividerColorChangeOnHover();
 
         this.list.AddHeaderRow(

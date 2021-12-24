@@ -183,6 +183,7 @@ function GuiIcons (icon) {
         "file_video":            new GuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
         "file_word":             new GuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
         "filter":                new GuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
+        "folder_tree":           new GuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
         "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
         "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
@@ -17870,21 +17871,25 @@ function Dash () {
         }
         return test;
     };
-    this.ValidateResponse = function (response) {
-        if (!response || response["error"]) {
-            // This stops duplicate callbacks from being triggered after an alert window pops up
-            this.handle_duplicate_callbacks_on_invalid_input();
-            if (!response) {
-                console.error("Dash.ValidateResponse(1)", response);
-                alert("There was a server problem with this request: No response received");
+    this.ValidateResponse = function (response, show_alert=true) {
+        if (response && !response["error"]) {
+            return response;
+        }
+        // This stops duplicate callbacks from being triggered after an alert window pops up
+        this.handle_duplicate_callbacks_on_invalid_input();
+        if (!response) {
+            console.error("(Dash.ValidateResponse) No response received:", response);
+            if (show_alert) {
+                alert("There was a server problem with this request:\nNo response received");
             }
-            else if (response["error"]) {
-                console.error("There was a server problem with this request:", response);
+        }
+        else if (response["error"]) {
+            console.error("There was a server problem with this request:", response);
+            if (show_alert) {
                 alert(response["error"]);
             }
-            return null;
         }
-        return response;
+        return null;
     };
     this.GetFormContainer = function () {
         var container = $("<div></div>");
@@ -21931,7 +21936,7 @@ function DashGuiHeader (label_text, color, include_border=true) {
     this.setup_styles();
 }
 
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null) {
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
     this.label_text = label_text;
     this.binder = binder;
     this.callback = callback.bind(this.binder);
@@ -21940,6 +21945,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label_first = label_first;
     this.include_border = include_border;
     this.color = color || Dash.Color.Light;
+    this.hover_hint = hover_hint;
     this.html = null;
     this.label = null;
     this.icon_button = null;
@@ -21985,7 +21991,6 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         else {
             Dash.Local.Set(this.local_storage_key, "false");
         }
-        this.html.empty();
         this.redraw();
         if (skip_callback) {
             return;
@@ -22006,16 +22011,19 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.restyle_icon_button();
     };
     this.redraw = function () {
+        this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
                 self.checked ? "checked_box" : "unchecked_box",
                 function () {
+                    // We don't want the args from IconButton's callback
                     self.Toggle();
                 },
                 self,
                 self.color
             );
         })(this);
+        this.icon_button.SetHoverHint(this.hover_hint);
         if (this.label_first) {
             this.html.append(this.label.html);
             this.html.append(this.icon_button.html);
@@ -22062,7 +22070,12 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         }
     };
     this.get_checked_state = function () {
-        var local = Dash.Local.Get(this.local_storage_key);
+        if (!this.local_storage_key) {
+            return false;
+        }
+        else {
+            var local = Dash.Local.Get(this.local_storage_key);
+        }
         if (local === "true") {
             return true;
         }
@@ -22232,7 +22245,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             default_state,                                          // Default state
             true,                                                   // Label first
             label_border,                                           // Include border
-            this.color                                              // Color
+            this.color,                                             // Color
+            hover_hint                                              // Hover hint text
         );
         checkbox.html.css({
             "margin-top": 0
@@ -22258,7 +22272,6 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
-        checkbox.icon_button.SetHoverHint(hover_hint);
         if (checkbox_redraw_styling) {
             checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);
         }
@@ -22640,9 +22653,6 @@ function DashGuiFileExplorerGUI () {
             );
         }
         this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
-        // this.list.html.css({
-        //     "background": "none"
-        // });
         this.list.DisableDividerColorChangeOnHover();
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
@@ -23920,14 +23930,14 @@ function DashGuiInputRowInterface () {
     };
 }
 
-function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=null, dual_sided=true) {
-    this.header_text = header_text;
+function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_msg_cb=null, mention_cb=null, at_combo_options=[], color=null, dual_sided=true) {
     this.binder = binder;
-    this.add_msg_callback = add_msg_cb.bind(this.binder);
-    this.del_msg_callback = del_msg_cb.bind(this.binder);
-    this.mention_callback = mention_cb.bind(this.binder);
+    this.header_text = header_text;
+    this.add_msg_callback = binder && add_msg_cb ? add_msg_cb.bind(binder) : add_msg_cb;
+    this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
+    this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
     this.at_combo_options = at_combo_options;
-    this.color = color || Dash.Color.Light;
+    this.color = color || Dash.Color.Dark;
     this.dual_sided = dual_sided;
     this.html = null;
     this.messages = [];
@@ -23941,6 +23951,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
+    this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
     if (this.color === Dash.Color.Light) {
         this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
     }
@@ -23975,6 +23986,13 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             this.add_header_area();
         }
         return this.header;
+    };
+    // If it needs to be different than the default, which is "comments_square"
+    this.SetHeaderIcon = function (icon_name) {
+        if (!icon_name) {
+            return;
+        }
+        this.header.ReplaceBorderWithIcon(icon_name);
     };
     this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
         text = text.trim();
@@ -24059,7 +24077,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             default_state,                  // Default state
             true,                           // Label first
             include_border,                 // Include border
-            this.color                      // Color
+            this.color,                     // Color
+            "Toggle Activity Feed"          // Hover hint text
         );
         this.toggle_hide_button.html.css({
             "position": "absolute",
@@ -24069,7 +24088,6 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.toggle_hide_button.label.label.css({
             "font-family": "sans_serif_bold"
         });
-        this.toggle_hide_button.icon_button.SetHoverHint("Toggle Activity Feed");
         this.header_area.append(this.toggle_hide_button.html);
     };
     this.handle_mentions = function (text, message_obj) {
@@ -24132,7 +24150,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         return text;
     };
     this.set_valid_mentions = function () {
-        if (!this.at_combo_options) {
+        if (!Dash.IsValidObject(this.at_combo_options)) {
             return;
         }
         this.valid_mentions = [];
@@ -24154,6 +24172,9 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.scroll_to_bottom_on_overflow();
     };
     this.check_to_show_message = function (align_right) {
+        if (!this.toggle_hide_button) {
+            return true;
+        }
         if (this.toggle_hide_button.IsChecked()) {
             return true;
         }
@@ -24171,9 +24192,10 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.header_area = Dash.Gui.GetHTMLContext(
             "",
             {
-                "margin-bottom": Dash.Size.Padding * 3,
+                "margin-bottom": Dash.Size.Padding,
                 "margin-left": Dash.Size.Padding * 0.25,
-                "height": Dash.Size.RowHeight
+                "height": Dash.Size.RowHeight,
+                "flex": "none"
             },
             this.color
         );
@@ -24200,8 +24222,9 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
                 "box-shadow": "none",
                 "background": "none",
                 "flex-grow": 2,
-                "margin-top": Dash.Size.Padding * 0.25,
-                "margin-bottom": Dash.Size.Padding * 2,
+                "flex-shrink": 2,
+                "margin-top": Dash.Size.Padding,
+                "margin-bottom": this.read_only ? 0 : Dash.Size.Padding * 2,
                 "overflow-y": "auto"
             },
             this.color
@@ -24219,14 +24242,17 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         }
         this.del_msg_callback(message);
     };
-    this.add_message = function () {
+    this.add_message_from_input = function () {
+        if (!this.message_input) {
+            return;
+        }
         var text = this.message_input.Text();
         // Wait for the user to make a mention selection or finish typing it out
         if (text.endsWith("@")) {
             (function (self) {
                 setTimeout(
                     function () {
-                        self.add_message();
+                        self.add_message_from_input();
                     },
                     100
                 );
@@ -24251,9 +24277,12 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.callback_mentions = [];
     };
     this.add_message_input = function () {
+        if (this.read_only) {
+            return;
+        }
         this.message_input = new Dash.Gui.ChatBox.Input(
             this,
-            this.add_message,
+            this.add_message_from_input,
             this.at_combo_options,
             this.color
         );
@@ -24281,7 +24310,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             {
                 "display": "flex",
                 "height": Dash.Size.RowHeight,
-                "background": "none"
+                "background": "none",
+                "flex": "none"  // Don't allow this.html to flex in its parent container
             },
             this.color
         );
@@ -27357,9 +27387,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
     this.setup_styles = function () {
-        this.html.css({
-            // "background": Dash.Color.Light.Background
-        });
+        // Placeholder
     };
     this.AddRow = function (row_id) {
         var row = new DashGuiListRow(this, row_id);
@@ -27509,7 +27537,12 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         this.header_row.Update();
     };
     this.get_sublist = function () {
-        return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+        var sublist = new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+        // Any changes to the list like this one should be re-applied to the sublist here
+        if (!this.allow_row_divider_color_change_on_hover) {
+            sublist.DisableDividerColorChangeOnHover();
+        }
+        return sublist;
     };
     this.expand_sublist = function (row, is_selected) {
         if (is_selected) {
@@ -27601,7 +27634,6 @@ function DashGuiListRow (list, row_id) {
         if (this.is_header) {
             this.column_box.css({
                 "background": this.color.AccentGood,
-                "pointer-events": "none",
                 "left": 0,
                 "right": 0,
                 "padding-left": Dash.Size.Padding,
@@ -27629,8 +27661,7 @@ function DashGuiListRow (list, row_id) {
             });
             this.column_box.css({
                 "left": Dash.Size.Padding,
-                "right": Dash.Size.Padding,
-                "cursor": "pointer"
+                "right": Dash.Size.Padding
             });
         }
         this.html.append(this.column_box);
@@ -27646,7 +27677,8 @@ function DashGuiListRow (list, row_id) {
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            "min-height": Dash.Size.RowHeight
+            "min-height": Dash.Size.RowHeight,
+            "cursor": "pointer"  // This is changed in setup_columns(), if relevant
         });
         this.setup_columns();
         this.setup_connections();
@@ -27956,6 +27988,7 @@ function DashGuiListRow (list, row_id) {
         })(this);
     };
     this.setup_columns = function () {
+        var default_columns_only = true;
         for (var i in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[i];
             if (column_config_data["type"] === "spacer") {
@@ -27965,18 +27998,26 @@ function DashGuiListRow (list, row_id) {
                 this.add_divider_column(column_config_data);
             }
             else if (column_config_data["type"] === "combo") {
+                default_columns_only = false;
                 this.add_combo_column(column_config_data);
             }
             else if (column_config_data["type"] === "input") {
+                default_columns_only = false;
                 this.add_input_column(column_config_data);
             }
             else if (column_config_data["type"] === "icon_button") {
+                default_columns_only = false;
                 this.add_icon_button_column(column_config_data);
             }
             else {
                 this.add_default_column(column_config_data, i);
             }
         }
+        this.html.css({
+            // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
+            // The change only pertains to the row itself, and then each element controls their own cursor behavior.
+            "cursor": this.is_header ? "auto" : this.is_sublist ? "context-menu" : default_columns_only ? "pointer" : "cell"
+        });
     };
     this.setup_styles();
 }
@@ -28001,7 +28042,6 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
             "color": this.color.Text,
-            "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
@@ -28220,6 +28260,7 @@ function DashGuiListRowElements () {
             combo.html.css({
                 "opacity": 0
             });
+            this.prevent_events_for_header_placeholder(combo.html);
         }
         return combo;
     };
@@ -28242,6 +28283,7 @@ function DashGuiListRowElements () {
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
+            this.prevent_events_for_header_placeholder(input.html);
             return input;
         }
         input.input.css({
@@ -28289,12 +28331,19 @@ function DashGuiListRowElements () {
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             icon_button.icon.icon_html.remove();
+            this.prevent_events_for_header_placeholder(icon_button.html);
             return icon_button;
         }
         if (column_config_data["options"]["hover_text"]) {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
         }
         return icon_button;
+    };
+    this.prevent_events_for_header_placeholder = function (html) {
+        html.css({
+            "pointer-events": "none"
+        });
+        html.off("click");
     };
 }
 

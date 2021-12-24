@@ -18,7 +18,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             {
                 "display": "flex",
                 "height": Dash.Size.RowHeight,
-                "background": "none"
+                "background": "none",
+                "flex": "none"  // Don't allow this.html to flex in its parent container
             },
             this.color
         );

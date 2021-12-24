@@ -29,9 +29,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
 
     this.setup_styles = function () {
-        this.html.css({
-            // "background": Dash.Color.Light.Background
-        });
+        // Placeholder
     };
 
     this.AddRow = function (row_id) {
@@ -235,7 +233,14 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
 
     this.get_sublist = function () {
-        return new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+        var sublist = new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+
+        // Any changes to the list like this one should be re-applied to the sublist here
+        if (!this.allow_row_divider_color_change_on_hover) {
+            sublist.DisableDividerColorChangeOnHover();
+        }
+
+        return sublist;
     };
 
     this.expand_sublist = function (row, is_selected) {

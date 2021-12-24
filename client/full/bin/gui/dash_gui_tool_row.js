@@ -196,7 +196,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             default_state,                                          // Default state
             true,                                                   // Label first
             label_border,                                           // Include border
-            this.color                                              // Color
+            this.color,                                             // Color
+            hover_hint                                              // Hover hint text
         );
 
         checkbox.html.css({
@@ -227,8 +228,6 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
-
-        checkbox.icon_button.SetHoverHint(hover_hint);
 
         if (checkbox_redraw_styling) {
             checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);

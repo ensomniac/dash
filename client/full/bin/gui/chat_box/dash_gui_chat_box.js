@@ -1,11 +1,11 @@
-function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb, at_combo_options, color=null, dual_sided=true) {
-    this.header_text = header_text;
+function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_msg_cb=null, mention_cb=null, at_combo_options=[], color=null, dual_sided=true) {
     this.binder = binder;
-    this.add_msg_callback = add_msg_cb.bind(this.binder);
-    this.del_msg_callback = del_msg_cb.bind(this.binder);
-    this.mention_callback = mention_cb.bind(this.binder);
+    this.header_text = header_text;
+    this.add_msg_callback = binder && add_msg_cb ? add_msg_cb.bind(binder) : add_msg_cb;
+    this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
+    this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
     this.at_combo_options = at_combo_options;
-    this.color = color || Dash.Color.Light;
+    this.color = color || Dash.Color.Dark;
     this.dual_sided = dual_sided;
 
     this.html = null;
@@ -20,6 +20,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     this.toggle_hide_button = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
+    this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
 
     if (this.color === Dash.Color.Light) {
         this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
@@ -63,6 +64,15 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         }
 
         return this.header;
+    };
+
+    // If it needs to be different than the default, which is "comments_square"
+    this.SetHeaderIcon = function (icon_name) {
+        if (!icon_name) {
+            return;
+        }
+
+        this.header.ReplaceBorderWithIcon(icon_name);
     };
 
     this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
@@ -171,7 +181,8 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             default_state,                  // Default state
             true,                           // Label first
             include_border,                 // Include border
-            this.color                      // Color
+            this.color,                     // Color
+            "Toggle Activity Feed"          // Hover hint text
         );
 
         this.toggle_hide_button.html.css({
@@ -183,8 +194,6 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.toggle_hide_button.label.label.css({
             "font-family": "sans_serif_bold"
         });
-
-        this.toggle_hide_button.icon_button.SetHoverHint("Toggle Activity Feed");
 
         this.header_area.append(this.toggle_hide_button.html);
     };
@@ -268,7 +277,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
 
     this.set_valid_mentions = function () {
-        if (!this.at_combo_options) {
+        if (!Dash.IsValidObject(this.at_combo_options)) {
             return;
         }
 
@@ -298,6 +307,10 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
 
     this.check_to_show_message = function (align_right) {
+        if (!this.toggle_hide_button) {
+            return true;
+        }
+
         if (this.toggle_hide_button.IsChecked()) {
             return true;
         }
@@ -319,9 +332,10 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.header_area = Dash.Gui.GetHTMLContext(
             "",
             {
-                "margin-bottom": Dash.Size.Padding * 3,
+                "margin-bottom": Dash.Size.Padding,
                 "margin-left": Dash.Size.Padding * 0.25,
-                "height": Dash.Size.RowHeight
+                "height": Dash.Size.RowHeight,
+                "flex": "none"
             },
             this.color
         );
@@ -355,8 +369,9 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
                 "box-shadow": "none",
                 "background": "none",
                 "flex-grow": 2,
-                "margin-top": Dash.Size.Padding * 0.25,
-                "margin-bottom": Dash.Size.Padding * 2,
+                "flex-shrink": 2,
+                "margin-top": Dash.Size.Padding,
+                "margin-bottom": this.read_only ? 0 : Dash.Size.Padding * 2,
                 "overflow-y": "auto"
             },
             this.color
@@ -380,7 +395,11 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
         this.del_msg_callback(message);
     };
 
-    this.add_message = function () {
+    this.add_message_from_input = function () {
+        if (!this.message_input) {
+            return;
+        }
+
         var text = this.message_input.Text();
 
         // Wait for the user to make a mention selection or finish typing it out
@@ -388,7 +407,7 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
             (function (self) {
                 setTimeout(
                     function () {
-                        self.add_message();
+                        self.add_message_from_input();
                     },
                     100
                 );
@@ -419,9 +438,13 @@ function DashGuiChatBox (header_text, binder, add_msg_cb, del_msg_cb, mention_cb
     };
 
     this.add_message_input = function () {
+        if (this.read_only) {
+            return;
+        }
+
         this.message_input = new Dash.Gui.ChatBox.Input(
             this,
-            this.add_message,
+            this.add_message_from_input,
             this.at_combo_options,
             this.color
         );

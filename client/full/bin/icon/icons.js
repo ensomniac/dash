@@ -81,6 +81,7 @@ function GuiIcons (icon) {
         "file_video":            new GuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
         "file_word":             new GuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
         "filter":                new GuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
+        "folder_tree":           new GuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
         "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
         "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),

@@ -1,4 +1,4 @@
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null) {
+function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
     this.label_text = label_text;
     this.binder = binder;
     this.callback = callback.bind(this.binder);
@@ -7,6 +7,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label_first = label_first;
     this.include_border = include_border;
     this.color = color || Dash.Color.Light;
+    this.hover_hint = hover_hint;
 
     this.html = null;
     this.label = null;
@@ -67,8 +68,6 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
             Dash.Local.Set(this.local_storage_key, "false");
         }
 
-        this.html.empty();
-
         this.redraw();
 
         if (skip_callback) {
@@ -97,16 +96,21 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.redraw = function () {
+        this.html.empty();
+
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
                 self.checked ? "checked_box" : "unchecked_box",
                 function () {
+                    // We don't want the args from IconButton's callback
                     self.Toggle();
                 },
                 self,
                 self.color
             );
         })(this);
+
+        this.icon_button.SetHoverHint(this.hover_hint);
 
         if (this.label_first) {
             this.html.append(this.label.html);
@@ -166,7 +170,13 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.get_checked_state = function () {
-        var local = Dash.Local.Get(this.local_storage_key);
+        if (!this.local_storage_key) {
+            return false;
+        }
+
+        else {
+            var local = Dash.Local.Get(this.local_storage_key);
+        }
 
         if (local === "true") {
             return true;

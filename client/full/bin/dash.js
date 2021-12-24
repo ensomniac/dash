@@ -166,27 +166,31 @@ function Dash () {
         return test;
     };
 
-    this.ValidateResponse = function (response) {
-        if (!response || response["error"]) {
-            // This stops duplicate callbacks from being triggered after an alert window pops up
-            this.handle_duplicate_callbacks_on_invalid_input();
-
-            if (!response) {
-                console.error("Dash.ValidateResponse(1)", response);
-
-                alert("There was a server problem with this request: No response received");
-            }
-
-            else if (response["error"]) {
-                console.error("There was a server problem with this request:", response);
-
-                alert(response["error"]);
-            }
-
-            return null;
+    this.ValidateResponse = function (response, show_alert=true) {
+        if (response && !response["error"]) {
+            return response;
         }
 
-        return response;
+        // This stops duplicate callbacks from being triggered after an alert window pops up
+        this.handle_duplicate_callbacks_on_invalid_input();
+
+        if (!response) {
+            console.error("(Dash.ValidateResponse) No response received:", response);
+
+            if (show_alert) {
+                alert("There was a server problem with this request:\nNo response received");
+            }
+        }
+
+        else if (response["error"]) {
+            console.error("There was a server problem with this request:", response);
+
+            if (show_alert) {
+                alert(response["error"]);
+            }
+        }
+
+        return null;
     };
 
     this.GetFormContainer = function () {
