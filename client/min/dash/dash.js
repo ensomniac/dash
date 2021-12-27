@@ -19785,6 +19785,7 @@ function DashGui() {
     this.FileExplorer                = DashGuiFileExplorer;
     this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
     this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
+    this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
     this.Header                      = DashGuiHeader;
     this.Icon                        = DashIcon;
     this.IconButton                  = DashGuiIconButton;
@@ -19922,7 +19923,7 @@ function DashGui() {
                 "right": Dash.Size.Padding * 5
             });
         }
-        (function (self, icon_id, callback, data_key, additional_data, binder) {
+        return (function (self, icon_id, callback, data_key, additional_data, binder) {
             var button = new Dash.Gui.IconButton(
                 icon_id,
                 function (response) {
@@ -19940,9 +19941,8 @@ function DashGui() {
                 "height": Dash.Size.RowHeight,
                 "z-index": 1
             });
-            self._tmp_button = button;
+            return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
-        return this._tmp_button;
     };
     this.OpenFileURLDownloadDialog = function (url, filename) {
         var dialog_id = "__dash_file_url_download_dialog";
@@ -22335,6 +22335,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.supports_desktop_client = supports_desktop_client;
     this.rows = {};
     this.list = null;
+    this.extra_gui = [];
     this.buttons = null;
     this.tool_row = null;
     this.subheader = null;
@@ -22344,11 +22345,11 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.original_order = null;
     this.display_folders_first = true;
-    this.pending_file_view_requests = {};
+    this.desktop_client_name = "desktop";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
-    DashGuiFileExplorerSync.call(this);
     this.setup_styles = function () {
         // this.buttons must be populated here so that the callbacks are not undefined
         this.buttons = {
@@ -22357,7 +22358,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "callback": this.view_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (or in a browser tab, if desktop app isn't running)" :
+                                 "View locally in your computer's file system (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {
@@ -22377,6 +22378,39 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.add_tool_row();
         this.add_upload_button();
         this.initialized = true;
+    };
+    this.SetDesktopClientName = function (name) {
+        if (!name) {
+            return;
+        }
+        this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
+        this.desktop_client_name = name;
+        this.loader.SetDesktopClientName(name);
+    };
+    this.AddHTML = function (html, wait_for_list=false) {
+        if (!html || (wait_for_list && this.extra_gui.includes(html))) {
+            return;
+        }
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddHTML(html, wait_for_list);
+                    },
+                    250
+                );
+            })(this);
+            return;
+        }
+        if (wait_for_list) {
+            if (!this.list) {
+                html.css({
+                    "opacity": 0
+                });
+            }
+            this.extra_gui.push(html);
+        }
+        this.html.append(html);
     };
     this.show_subheader = function (text="") {
         if (!this.subheader) {
@@ -22435,6 +22469,11 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 return;
             }
             this.add_list();
+            for (var extra_gui of this.extra_gui) {
+                extra_gui.css({
+                    "opacity": 1
+                });
+            }
         }
         if (this.display_folders_first) {
             this.draw_subfolders();
@@ -22682,6 +22721,9 @@ function DashGuiFileExplorerGUI () {
 
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerData () {
+    this.view_file = function (file_id) {
+        this.loader.ViewFile(this.get_file_data(file_id));
+    };
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
@@ -22850,109 +22892,141 @@ function DashGuiFileExplorerData () {
     };
 }
 
-/**@member DashGuiFileExplorer*/
-function DashGuiFileExplorerSync () {
-    this.view_file = function (file_id) {
+function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true) {
+    /** See docstring in DashGuiFileExplorer for explanation of 'api' and 'parent_object_id' params */
+    this.api = api;
+    this.parent_obj_id = parent_obj_id;
+    this.supports_desktop_client = supports_desktop_client;
+    this.desktop_client_name = "desktop";
+    this.pending_file_view_requests = {};
+    this.ViewFile = function (file_data) {
         if (!this.supports_desktop_client) {
-            this.open_file_in_browser_tab(file_id);
+            this.open_file_in_browser_tab(file_data);
             return;
         }
-        this.get_desktop_client_sessions(file_id);
+        this.get_desktop_client_sessions(file_data);
     };
-    this.get_desktop_client_sessions = function (file_id) {
-        if (!(file_id in this.pending_file_view_requests)) {
-            this.pending_file_view_requests[file_id] = 0;
-        }
-        if (this.pending_file_view_requests[file_id] > 0) {
-            alert("This file is currently in process of being opened on your computer.");
+    // If parent_folders are not provided, it will open the main parent folder, such as a job folder
+    this.ViewFolder = function (binder, backup_cb, parent_folders=[]) {
+        backup_cb = binder && backup_cb ? backup_cb.bind(binder) : backup_cb;
+        if (!this.supports_desktop_client || !this.parent_obj_id) {
+            backup_cb(this.parent_obj_id, parent_folders);
             return;
         }
-        this.pending_file_view_requests[file_id] += 1;
+        this.get_desktop_client_sessions({"id": this.parent_obj_id, "parent_folders": parent_folders}, true, backup_cb);
+    };
+    this.SetDesktopClientName = function (name) {
+        if (!name) {
+            return;
+        }
+        this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
+        this.desktop_client_name = name;
+    };
+    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null) {
+        if (!(file_data["id"] in this.pending_file_view_requests)) {
+            this.pending_file_view_requests[file_data["id"]] = 0;
+        }
+        if (this.pending_file_view_requests[file_data["id"]] > 0) {
+            alert("This " + (folder ? "folder" : "file") + " is currently in process of being opened on your computer.");
+            return;
+        }
+        this.pending_file_view_requests[file_data["id"]] += 1;
         (function (self) {
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_desktop_client_sessions(response, file_id);
+                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb);
                 },
                 self.api,
                 {"f": "get_desktop_sessions"}
             );
         })(this);
     };
-    this.on_desktop_client_sessions = function (response, file_id) {
-        this.pending_file_view_requests[file_id] -= 1;
+    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null) {
+        this.pending_file_view_requests[file_data["id"]] -= 1;
         if (!Dash.ValidateResponse(response)) {
-            return;
-        }
-        if (!Dash.IsValidObject(response["sessions"]) || Dash.IsValidObject(!response["sessions"]["active"])) {
-            var msg = "Error: Unable to find any Altona IO File Sync app active session data\n\n";
-            console.error(msg + response);
-            alert(msg + JSON.stringify(response));
             return;
         }
         var machine_id;
         var ask_msg = "";
         var active_session;
         var active_session_count = 0;
-        for (machine_id in response["sessions"]["active"]) {
-            active_session = response["sessions"]["active"][machine_id];
-            if (active_session["kill"]) {
-                continue;
+        if (Dash.IsValidObject(response["sessions"]) && Dash.IsValidObject(response["sessions"]["active"])) {
+            for (machine_id in response["sessions"]["active"]) {
+                active_session = response["sessions"]["active"][machine_id];
+                if (active_session["kill"]) {
+                    continue;
+                }
+                active_session_count += 1;
             }
-            active_session_count += 1;
         }
         if (active_session_count > 1) {
-            ask_msg = "Can't open the file on your computer's file system - you currently " +
-                "have more than one Altona IO File Sync app running (on different devices).";
+            ask_msg = "Can't open the " + (folder ? "folder" : "file") + " on your computer's file system - you currently " +
+                "have more than one " + this.desktop_client_name + " app running (on different devices).";
         }
         else if (active_session_count < 1) {
-            ask_msg = "Opening this file in your computer's local file system requires " +
-                "you to have the Altona IO File Sync app running on your computer.";
+            ask_msg = "Opening this " + (folder ? "folder" : "file") + " in your computer's local file system requires " +
+                "you to have the " + this.desktop_client_name + " app running on your computer.";
         }
         else {
             // Only one
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
-                console.log("Sending signal to desktop session to open file", file_id);
+                console.log("Sending signal to desktop session to open " + (folder ? "folder" : "file"), file_data["id"]);
                 this.send_signal_to_desktop_session(
                     machine_id,
                     active_session["id"],
-                    "open_local_file_path",
+                    "open_local_" + (folder ? "folder" : "file") + "_path",
                     null,
-                    this.get_file_data(file_id)
+                    file_data
                 );
             }
         }
         if (ask_msg) {
-            if (!window.confirm(ask_msg + "\n\nWould you like to open a new browser tab to view/download the file?")) {
-                return;
+            if (folder) {
+                if (backup_cb) {
+                    alert(ask_msg);
+                    backup_cb(this.parent_obj_id, file_data["parent_folders"]);
+                }
             }
-            this.open_file_in_browser_tab(file_id);
+            else {
+                if (!window.confirm(ask_msg + "\n\nWould you like to open a new browser tab to view/download the file?")) {
+                    return;
+                }
+                this.open_file_in_browser_tab(file_data);
+            }
         }
     };
     this.send_signal_to_desktop_session = function (machine_id, session_id, key, value=null, value_json=null) {
-        Dash.Request(
-            this,
-            function (response) {
-                if (!Dash.ValidateResponse(response)) {
-                    alert("Failed to send signal to Altona IO File Sync app.");
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.ValidateResponse(response)) {
+                        alert("Failed to send signal to " + self.desktop_client_name + " app.");
+                    }
+                    console.log("Signal sent:", response["sent"]);
+                },
+                self.api,
+                {
+                    "f": "send_signal_to_desktop_session",
+                    "key": key,
+                    "value": value,
+                    "value_json": Dash.IsValidObject(value_json) ? JSON.stringify(value_json) : null,
+                    "session_id": session_id,
+                    "machine_id": machine_id,
+                    "parent_obj_id": self.parent_obj_id
                 }
-                console.log("Signal sent:", response["sent"]);
-            },
-            this.api,
-            {
-                "f": "send_signal_to_desktop_session",
-                "key": key,
-                "value": value,
-                "value_json": Dash.IsValidObject(value_json) ? JSON.stringify(value_json) : null,
-                "session_id": session_id,
-                "machine_id": machine_id,
-                "parent_obj_id": this.parent_obj_id
-            }
-        );
+            );
+        })(this);
     };
-    this.open_file_in_browser_tab = function (file_id) {
-        window.open(this.get_file_url(this.get_file_data(file_id)), "_blank");
+    this.open_file_in_browser_tab = function (file_data) {
+        var url = file_data["url"] || file_data["orig_url"] || "";
+        if (!url) {
+            console.warn("Couldn't open file in browser tab, no URL found in file data:", url);
+            return;
+        }
+        window.open(url, "_blank");
     };
 }
 

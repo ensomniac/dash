@@ -1,6 +1,10 @@
 /**@member DashGuiFileExplorer*/
 
 function DashGuiFileExplorerData () {
+    this.view_file = function (file_id) {
+        this.loader.ViewFile(this.get_file_data(file_id));
+    };
+
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;

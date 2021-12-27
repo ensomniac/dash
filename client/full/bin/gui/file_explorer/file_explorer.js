@@ -27,6 +27,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
     this.rows = {};
     this.list = null;
+    this.extra_gui = [];
     this.buttons = null;
     this.tool_row = null;
     this.subheader = null;
@@ -36,12 +37,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.upload_button = null;
     this.original_order = null;
     this.display_folders_first = true;
-    this.pending_file_view_requests = {};
+    this.desktop_client_name = "desktop";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
 
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
-    DashGuiFileExplorerSync.call(this);
 
     this.setup_styles = function () {
         // this.buttons must be populated here so that the callbacks are not undefined
@@ -51,7 +52,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
                 "callback": this.view_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (or in a browser tab, if desktop app isn't running)" :
+                                 "View locally in your computer's file system (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {
@@ -74,6 +75,49 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.add_upload_button();
 
         this.initialized = true;
+    };
+
+    this.SetDesktopClientName = function (name) {
+        if (!name) {
+            return;
+        }
+
+        this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
+
+        this.desktop_client_name = name;
+
+        this.loader.SetDesktopClientName(name);
+    };
+
+    this.AddHTML = function (html, wait_for_list=false) {
+        if (!html || (wait_for_list && this.extra_gui.includes(html))) {
+            return;
+        }
+
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddHTML(html, wait_for_list);
+                    },
+                    250
+                );
+            })(this);
+
+            return;
+        }
+
+        if (wait_for_list) {
+            if (!this.list) {
+                html.css({
+                    "opacity": 0
+                });
+            }
+
+            this.extra_gui.push(html);
+        }
+
+        this.html.append(html);
     };
 
     this.show_subheader = function (text="") {
@@ -152,6 +196,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
             }
 
             this.add_list();
+
+            for (var extra_gui of this.extra_gui) {
+                extra_gui.css({
+                    "opacity": 1
+                });
+            }
         }
 
         if (this.display_folders_first) {

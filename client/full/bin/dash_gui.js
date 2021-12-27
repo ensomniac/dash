@@ -8,6 +8,7 @@ function DashGui() {
     this.FileExplorer                = DashGuiFileExplorer;
     this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
     this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
+    this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
     this.Header                      = DashGuiHeader;
     this.Icon                        = DashIcon;
     this.IconButton                  = DashGuiIconButton;
@@ -186,7 +187,7 @@ function DashGui() {
             });
         }
 
-        (function (self, icon_id, callback, data_key, additional_data, binder) {
+        return (function (self, icon_id, callback, data_key, additional_data, binder) {
             var button = new Dash.Gui.IconButton(
                 icon_id,
                 function (response) {
@@ -206,10 +207,8 @@ function DashGui() {
                 "z-index": 1
             });
 
-            self._tmp_button = button;
+            return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
-
-        return this._tmp_button;
     };
 
     this.OpenFileURLDownloadDialog = function (url, filename) {
