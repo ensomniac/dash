@@ -48,19 +48,21 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         if (this.on_click) {
             this.input.OnSubmit(this.on_submit, this);
+
             this.create_save_button();
         }
 
         else {
             this.input.SetLocked(true);
+
             highlight_color = this.color.AccentBad;
         }
 
         this.html.css({
-            "cursor": "pointer",
+            "cursor": "auto",
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
 
         this.invalid_input_highlight.css({
@@ -70,7 +72,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
             "background": this.color.AccentBad,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.highlight.css({
@@ -80,7 +82,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "top": 0,
             "bottom": 0,
             "background": highlight_color,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.flash_save.css({
@@ -90,12 +92,12 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "top": 0,
             "bottom": 0,
             "background": Dash.Color.SaveHighlight,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.input.html.css({
             "flex-grow": 2,
-            "margin-right": Dash.Size.Padding,
+            "margin-right": Dash.Size.Padding
         });
 
         this.label.css({
@@ -104,12 +106,14 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": "80%"
         });
 
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         }
+
+        this.update_label_cursor();
     };
 
     this.set_initial_text = function () {
@@ -150,14 +154,16 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
     this.create_save_button = function () {
         this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
+
         this.html.append(this.button.html);
 
         if (Dash.IsMobile) {
             // No submit button on mobile - but it's used to process the result, so we'll hide it
             this.button.html.css({
                 "pointer-events": "none",
-                "opacity": 0,
+                "opacity": 0
             });
+
             return;
         }
 
@@ -170,6 +176,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "width": Dash.Size.ColumnWidth,
             "background": "none",
             "opacity": 0,
+            "cursor": "auto"  // While hidden
         });
 
         this.button.highlight.css({
@@ -195,20 +202,36 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
     };
 
-    this.on_label_clicked = function () {
-        var active_text = this.input.Text();
+    this.on_label_clicked = function (check_validity=false) {
+        var active_text = this.input.Text().toString();
         var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
 
-        if (active_text.slice(0, 8) === "https://") {
+        if (active_text.startsWith("https://")) {
+            if (check_validity) {
+                return true;
+            }
+
             window.open(active_text, "_blank");
         }
 
         else if (Dash.IsValidEmail(active_text)) {
+            if (check_validity) {
+                return true;
+            }
+
             window.open("mailto:" + active_text, "_blank");
         }
 
         else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+            if (check_validity) {
+                return true;
+            }
+
             window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
+        }
+
+        if (check_validity) {
+            return false;
         }
     };
 
@@ -265,7 +288,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.load_dots.html.css({
             "position": "absolute",
             "left": -Dash.Size.Padding,
-            "top": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5
         });
     };
 
@@ -273,6 +296,10 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         if (this.save_button_visible || !this.button) {
             return;
         }
+
+        this.button.html.css({
+            "cursor": "pointer"
+        });
 
         this.button.html.stop().animate({"opacity": 1});
 
@@ -283,6 +310,10 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         if (!this.save_button_visible || !this.button) {
             return;
         }
+
+        this.button.html.css({
+            "cursor": "auto"
+        });
 
         this.button.html.stop().animate({"opacity": 0});
 
@@ -321,7 +352,21 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         //     this.toggle_lock();
         // }
 
+        this.update_label_cursor();
+
         response_callback(this);
+    };
+
+    this.update_label_cursor = function () {
+        var cursor = "auto";
+
+        if (this.on_label_clicked(true)) {
+            cursor = "pointer";
+        }
+
+        this.label.css({
+            "cursor": cursor
+        });
     };
 
     this.toggle_lock = function (data_key) {

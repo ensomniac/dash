@@ -79,7 +79,7 @@ class DashColorSet {
     };
 
     // Use to draw very fine lines to suggest depth / shadow
-    get Pinstripe() {
+    get Pinstripe () {
         if (this._pinstripe == null) {
             this._pinstripe = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red

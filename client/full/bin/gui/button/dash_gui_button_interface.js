@@ -9,6 +9,22 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.StyleAsDeleteButton = function (width=null, faint=true) {
+        if (faint) {
+            this.html.css({
+                "background": this.color.Pinstripe
+            });
+        }
+
+        this.html.css({
+            "width": width || "auto"
+        });
+
+        this.highlight.css({
+            "background": this.color.AccentBad
+        });
+    };
+
     this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
         if (!base && !highlight && !load_bar && !click_highlight) {
             this.reset_background_colors();

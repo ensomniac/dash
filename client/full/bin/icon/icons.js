@@ -70,6 +70,7 @@ function GuiIcons (icon) {
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
+        "empty_folder":          new GuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),

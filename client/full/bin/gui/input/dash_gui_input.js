@@ -106,14 +106,14 @@ function DashGuiInput (placeholder_text, color) {
 
     this.SetLocked = function (is_locked) {
         if (is_locked) {
-            this.input.css({"pointer-events": "none"});
+            this.input.prop("readOnly", true);
 
             // Prevent navigating to locked box via tab
-            this.input[0].tabIndex = "-1";
+            this.input[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
         }
 
         else {
-            this.input.css({"pointer-events": "auto"});
+            this.input.prop("readOnly", false);
         }
     };
 

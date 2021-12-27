@@ -172,6 +172,7 @@ function GuiIcons (icon) {
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
+        "empty_folder":          new GuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
@@ -18972,7 +18973,7 @@ class DashColorSet {
         return this._stroke;
     };
     // Use to draw very fine lines to suggest depth / shadow
-    get Pinstripe() {
+    get Pinstripe () {
         if (this._pinstripe == null) {
             this._pinstripe = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
@@ -20233,6 +20234,19 @@ function DashGuiButtonInterface () {
         if (width) {
             this.html.css({"width": width});
         }
+    };
+    this.StyleAsDeleteButton = function (width=null, faint=true) {
+        if (faint) {
+            this.html.css({
+                "background": this.color.Pinstripe
+            });
+        }
+        this.html.css({
+            "width": width || "auto"
+        });
+        this.highlight.css({
+            "background": this.color.AccentBad
+        });
     };
     this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
         if (!base && !highlight && !load_bar && !click_highlight) {
@@ -21887,6 +21901,7 @@ function DashGuiHeader (label_text, color, include_border=true) {
         this.html.css({
             "height": Dash.Size.RowHeight,
             "margin-bottom": Dash.Size.Padding,
+            "cursor": "auto"
         });
         this.label.css({
             "text-align": "left",
@@ -23314,12 +23329,12 @@ function DashGuiInput (placeholder_text, color) {
     };
     this.SetLocked = function (is_locked) {
         if (is_locked) {
-            this.input.css({"pointer-events": "none"});
+            this.input.prop("readOnly", true);
             // Prevent navigating to locked box via tab
-            this.input[0].tabIndex = "-1";
+            this.input[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
         }
         else {
-            this.input.css({"pointer-events": "auto"});
+            this.input.prop("readOnly", false);
         }
     };
     this.SetDarkMode = function (dark_mode_on) {
@@ -23537,10 +23552,10 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             highlight_color = this.color.AccentBad;
         }
         this.html.css({
-            "cursor": "pointer",
+            "cursor": "auto",
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
         this.invalid_input_highlight.css({
             "position": "absolute",
@@ -23549,7 +23564,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "bottom": 0,
             "width": Dash.Size.Padding*0.5,
             "background": this.color.AccentBad,
-            "opacity": 0,
+            "opacity": 0
         });
         this.highlight.css({
             "position": "absolute",
@@ -23558,7 +23573,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "top": 0,
             "bottom": 0,
             "background": highlight_color,
-            "opacity": 0,
+            "opacity": 0
         });
         this.flash_save.css({
             "position": "absolute",
@@ -23567,11 +23582,11 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "top": 0,
             "bottom": 0,
             "background": Dash.Color.SaveHighlight,
-            "opacity": 0,
+            "opacity": 0
         });
         this.input.html.css({
             "flex-grow": 2,
-            "margin-right": Dash.Size.Padding,
+            "margin-right": Dash.Size.Padding
         });
         this.label.css({
             "height": Dash.Size.RowHeight,
@@ -23579,11 +23594,12 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": "80%"
         });
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
         }
+        this.update_label_cursor();
     };
     this.set_initial_text = function () {
         this.input.SetText(this.parse_value(this.initial_value));
@@ -23621,7 +23637,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             // No submit button on mobile - but it's used to process the result, so we'll hide it
             this.button.html.css({
                 "pointer-events": "none",
-                "opacity": 0,
+                "opacity": 0
             });
             return;
         }
@@ -23634,6 +23650,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "width": Dash.Size.ColumnWidth,
             "background": "none",
             "opacity": 0,
+            "cursor": "auto"  // While hidden
         });
         this.button.highlight.css({
             "background": "none",
@@ -23653,17 +23670,29 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             this.on_submit();
         }
     };
-    this.on_label_clicked = function () {
-        var active_text = this.input.Text();
+    this.on_label_clicked = function (check_validity=false) {
+        var active_text = this.input.Text().toString();
         var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
-        if (active_text.slice(0, 8) === "https://") {
+        if (active_text.startsWith("https://")) {
+            if (check_validity) {
+                return true;
+            }
             window.open(active_text, "_blank");
         }
         else if (Dash.IsValidEmail(active_text)) {
+            if (check_validity) {
+                return true;
+            }
             window.open("mailto:" + active_text, "_blank");
         }
         else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+            if (check_validity) {
+                return true;
+            }
             window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
+        }
+        if (check_validity) {
+            return false;
         }
     };
     this.setup_connections = function () {
@@ -23706,13 +23735,16 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.load_dots.html.css({
             "position": "absolute",
             "left": -Dash.Size.Padding,
-            "top": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5
         });
     };
     this.show_save_button = function () {
         if (this.save_button_visible || !this.button) {
             return;
         }
+        this.button.html.css({
+            "cursor": "pointer"
+        });
         this.button.html.stop().animate({"opacity": 1});
         this.save_button_visible = true;
     };
@@ -23720,6 +23752,9 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         if (!this.save_button_visible || !this.button) {
             return;
         }
+        this.button.html.css({
+            "cursor": "auto"
+        });
         this.button.html.stop().animate({"opacity": 0});
         this.save_button_visible = false;
     };
@@ -23745,7 +23780,17 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         // if (this.lock_button && this.Text() && !this.locked) {
         //     this.toggle_lock();
         // }
+        this.update_label_cursor();
         response_callback(this);
+    };
+    this.update_label_cursor = function () {
+        var cursor = "auto";
+        if (this.on_label_clicked(true)) {
+            cursor = "pointer";
+        }
+        this.label.css({
+            "cursor": cursor
+        });
     };
     this.toggle_lock = function (data_key) {
         this.locked = !this.locked;
@@ -24674,13 +24719,13 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.setup_styles();
 }
 
-function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
+function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options={}) {
     this.binder = binder;
     this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
     this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
-    this.options = options || {};
+    this.options = options;
     this.data = {};
     this.num_headers = 0;
     this.update_inputs = {};
@@ -24702,7 +24747,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         });
         if (Dash.IsMobile) {
             this.setup_mobile_styles();
-        };
+        }
     };
     this.setup_mobile_styles = function () {
         this.html.css({
@@ -24761,6 +24806,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             "color": this.color.Text,
             "opacity": 0.6,
             "z-index": 1,
+            "cursor": "auto"
         });
         this.html.append(this.top_right_label);
     };
@@ -24813,7 +24859,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         callback = callback.bind(this.binder);
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
         (function (self, row, callback, data_key) {
             var button = new Dash.Gui.IconButton(
                 "trash",
@@ -24837,7 +24883,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         })(this, row, callback, data_key);
         if (row.button) {
             row.button.html.css("margin-right", Dash.Size.RowHeight);
-        };
+        }
         return row;
     };
     this.on_combo_updated = function (property_key, selected_option) {
@@ -24991,14 +25037,30 @@ function DashGuiPropertyBoxInterface () {
             this.buttons = [];
         }
         (function (self, callback) {
-            var button = new Dash.Gui.Button(label_text, function () {
-                callback(button);
-            }, self, self.color);
+            var button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    callback(button);
+                },
+                self,
+                self.color
+            );
             self.buttons.push(button);
-            button.html.css("margin-top", Dash.Size.Padding);
+            button.html.css({
+                "margin-top": Dash.Size.Padding
+            });
             self.html.append(button.html);
         })(this, callback);
         return this.buttons.Last();
+    };
+    this.AddDeleteButton = function (callback, faint=true) {
+        var button = this.AddButton("Delete", callback);
+        button.StyleAsDeleteButton(Dash.Size.ColumnWidth, faint);
+        button.html.css({
+            "margin-left": Dash.Size.Padding * 2,
+            "margin-right": "auto"
+        });
+        return button;
     };
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
         var indent_px = Dash.Size.Padding*2;
@@ -25012,9 +25074,9 @@ function DashGuiPropertyBoxInterface () {
             "",
             "",
             function (row_input) {
-                console.log("Do nothing, dummy row");
+                // Do nothing, dummy row
             },
-            self
+            this
         );
         row.input.input.css("pointer-events", "none");
         this.html.append(row.html);

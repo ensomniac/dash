@@ -84,18 +84,38 @@ function DashGuiPropertyBoxInterface () {
         }
 
         (function (self, callback) {
-            var button = new Dash.Gui.Button(label_text, function () {
-                callback(button);
-            }, self, self.color);
+            var button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    callback(button);
+                },
+                self,
+                self.color
+            );
 
             self.buttons.push(button);
 
-            button.html.css("margin-top", Dash.Size.Padding);
+            button.html.css({
+                "margin-top": Dash.Size.Padding
+            });
 
             self.html.append(button.html);
         })(this, callback);
 
         return this.buttons.Last();
+    };
+
+    this.AddDeleteButton = function (callback, faint=true) {
+        var button = this.AddButton("Delete", callback);
+
+        button.StyleAsDeleteButton(Dash.Size.ColumnWidth, faint);
+
+        button.html.css({
+            "margin-left": Dash.Size.Padding * 2,
+            "margin-right": "auto"
+        });
+
+        return button;
     };
 
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
@@ -112,12 +132,13 @@ function DashGuiPropertyBoxInterface () {
             "",
             "",
             function (row_input) {
-                console.log("Do nothing, dummy row");
+                // Do nothing, dummy row
             },
-            self
+            this
         );
 
         row.input.input.css("pointer-events", "none");
+
         this.html.append(row.html);
 
         if (indent_row) {
@@ -127,7 +148,6 @@ function DashGuiPropertyBoxInterface () {
         var selected_key = default_value || this.get_data_cb()[property_key];
 
         (function (self, row, selected_key, property_key, combo_options, bool) {
-
             var callback = function (selected_option) {
                 self.on_combo_updated(property_key, selected_option["id"]);
             };
