@@ -80,15 +80,15 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {
         this.icon_button_redraw_styling = {};
 
-        if (Dash.IsValidObject(button_container_css)) {
+        if (Dash.Validate.Object(button_container_css)) {
             this.icon_button_redraw_styling["button_container_css"] = button_container_css;
         }
 
-        if (Dash.IsValidObject(icon_container_css)) {
+        if (Dash.Validate.Object(icon_container_css)) {
             this.icon_button_redraw_styling["icon_container_css"] = icon_container_css;
         }
 
-        if (Dash.IsValidObject(icon_css)) {
+        if (Dash.Validate.Object(icon_css)) {
             this.icon_button_redraw_styling["icon_css"] = icon_css;
         }
 
@@ -126,19 +126,19 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.restyle_icon_button = function () {
-        if (!Dash.IsValidObject(this.icon_button_redraw_styling)) {
+        if (!Dash.Validate.Object(this.icon_button_redraw_styling)) {
             return;
         }
 
-        if (Dash.IsValidObject(this.icon_button_redraw_styling["button_container_css"])) {
+        if (Dash.Validate.Object(this.icon_button_redraw_styling["button_container_css"])) {
             this.icon_button.html.css(this.icon_button_redraw_styling["button_container_css"]);
         }
 
-        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_container_css"])) {
+        if (Dash.Validate.Object(this.icon_button_redraw_styling["icon_container_css"])) {
             this.icon_button.icon.html.css(this.icon_button_redraw_styling["icon_container_css"]);
         }
 
-        if (Dash.IsValidObject(this.icon_button_redraw_styling["icon_css"])) {
+        if (Dash.Validate.Object(this.icon_button_redraw_styling["icon_css"])) {
             this.icon_button.icon.icon_html.css(this.icon_button_redraw_styling["icon_css"]);
         }
     };

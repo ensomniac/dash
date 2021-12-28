@@ -69,7 +69,7 @@ function DashGuiLayoutDashboardModuleRect () {
 
             var data = this.list_data[i];
 
-            if (!Dash.IsValidObject(data)) {
+            if (!Dash.Validate.Object(data)) {
                 console.error("Error: Rect List Module data expects a list of dicts");
 
                 return;

@@ -11,7 +11,7 @@ function DashGuiLayoutDashboardModuleFlex () {
             return;
         }
 
-        if (!Dash.IsValidObject(data)) {
+        if (!Dash.Validate.Object(data)) {
             console.error("Error: SetBarData() requires a dictionary to be passed in");
 
             return;
@@ -45,7 +45,7 @@ function DashGuiLayoutDashboardModuleFlex () {
         (function (self) {
             setTimeout(
                 function () {
-                    if (!Dash.IsValidObject(self.bar_data)) {
+                    if (!Dash.Validate.Object(self.bar_data)) {
                         self.update_bar_data({"-": 1, "--": 2, "---": 3});
                     }
                 },
@@ -123,7 +123,7 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 
     this.get_bar_data_sets = function (data) {
-        if (!Dash.IsValidObject(data)) {
+        if (!Dash.Validate.Object(data)) {
             data = this.bar_data;
         }
 

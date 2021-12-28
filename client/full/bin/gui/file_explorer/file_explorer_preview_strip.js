@@ -48,7 +48,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     };
 
     this.ReloadFileContentPreview = function () {
-        if (!Dash.IsValidObject(this.get_data())) {
+        if (!Dash.Validate.Object(this.get_data())) {
             return;
         }
 
@@ -60,7 +60,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     };
 
     this.ReloadFileDetailsPropertyBox = function () {
-        if (!Dash.IsValidObject(this.get_data())) {
+        if (!Dash.Validate.Object(this.get_data())) {
             return;
         }
 

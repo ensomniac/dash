@@ -9,7 +9,7 @@ function DashGuiComboInterface () {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result
 
-        if (!Dash.IsValidObject(combo_option) || !combo_option["id"] || !combo_option["label_text"]) {
+        if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !combo_option["label_text"]) {
             console.log("Invalid combo option, cannot set default search submit combo:", combo_option);
 
             return;

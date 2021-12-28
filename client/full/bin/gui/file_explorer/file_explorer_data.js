@@ -72,7 +72,7 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_files_data = function (response) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 
@@ -95,7 +95,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (Dash.IsValidObject(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+        if (Dash.Validate.Object(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
             return;
         }
 
@@ -120,7 +120,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 

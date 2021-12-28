@@ -76,7 +76,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         var email = this.get_email();
         var pass = this.password_input.Text();
 
-        if (!Dash.IsValidEmail(email)) {
+        if (!Dash.Validate.Email(email)) {
             alert("Please enter a valid email");
 
             return;
@@ -109,7 +109,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     this.ResetLogin = function () {
         var email = this.get_email();
 
-        if (!Dash.IsValidEmail(email)) {
+        if (!Dash.Validate.Email(email)) {
             alert("Please enter a valid email");
 
             return;
@@ -255,7 +255,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.on_reset_response = function (response) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 
@@ -265,7 +265,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.on_login_response = function (response) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 

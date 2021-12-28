@@ -263,7 +263,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
 
         var queue = row.GetSublistQueue();
 
-        if (Dash.IsValidObject(queue)) {
+        if (Dash.Validate.Object(queue)) {
             queue.forEach(
                 function (entry) {
                     var added_row = preview.GetRow(entry["row_id"]);

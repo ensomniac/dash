@@ -297,7 +297,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
 
     this.on_server_response = function (response, row_details, row_input) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
 
             if (row_input) {
                 row_input.SetInputValidity(false);

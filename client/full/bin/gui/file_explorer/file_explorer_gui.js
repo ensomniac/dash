@@ -141,7 +141,7 @@ function DashGuiFileExplorerGUI () {
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
 
-            if (!Dash.IsValidObject(parents)) {
+            if (!Dash.Validate.Object(parents)) {
                 continue;
             }
 

@@ -69,7 +69,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null) {
         this.pending_file_view_requests[file_data["id"]] -= 1;
 
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 
@@ -78,7 +78,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         var active_session;
         var active_session_count = 0;
 
-        if (Dash.IsValidObject(response["sessions"]) && Dash.IsValidObject(response["sessions"]["active"])) {
+        if (Dash.Validate.Object(response["sessions"]) && Dash.Validate.Object(response["sessions"]["active"])) {
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
 
@@ -141,7 +141,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             Dash.Request(
                 self,
                 function (response) {
-                    if (!Dash.ValidateResponse(response)) {
+                    if (!Dash.Validate.Response(response)) {
                         alert("Failed to send signal to " + self.desktop_client_name + " app.");
                     }
 
@@ -152,7 +152,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
                     "f": "send_signal_to_desktop_session",
                     "key": key,
                     "value": value,
-                    "value_json": Dash.IsValidObject(value_json) ? JSON.stringify(value_json) : null,
+                    "value_json": Dash.Validate.Object(value_json) ? JSON.stringify(value_json) : null,
                     "session_id": session_id,
                     "machine_id": machine_id,
                     "parent_obj_id": self.parent_obj_id

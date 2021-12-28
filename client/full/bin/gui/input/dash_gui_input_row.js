@@ -136,12 +136,12 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         // Initial value is ISO datetime string
-        if (Dash.IsServerIsoDate(value)) {
-            value = Dash.ReadableDateTime(value);
+        if (Dash.DT.IsIsoFormat(value)) {
+            value = Dash.DT.Readable(value);
         }
 
         // Initial value is team member email
-        else if (Dash.IsValidEmail(value) && !(this.data_key.includes("email"))) {
+        else if (Dash.Validate.Email(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
                     value = Dash.User.Init["team"][value]["display_name"];
@@ -214,7 +214,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             window.open(active_text, "_blank");
         }
 
-        else if (Dash.IsValidEmail(active_text)) {
+        else if (Dash.Validate.Email(active_text)) {
             if (check_validity) {
                 return true;
             }

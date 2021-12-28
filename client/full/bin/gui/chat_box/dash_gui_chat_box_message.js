@@ -7,7 +7,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.include_delete_button = include_delete_button;
     this.index = index;
     this.color = color || Dash.Color.Light;
-    this.id = id || Dash.RandomID();
+    this.id = id || Dash.Math.RandomID();
 
     this.html = null;
     this.user_icon = null;
@@ -210,8 +210,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
         var timestamp = this.iso_ts;
 
-        if (Dash.IsServerIsoDate(timestamp)) {
-            timestamp = Dash.ReadableDateTime(timestamp, false);
+        if (Dash.DT.IsIsoFormat(timestamp)) {
+            timestamp = Dash.DT.Readable(timestamp, false);
         }
 
         if (this.align_right) {

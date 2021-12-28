@@ -83,7 +83,7 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         this.last_column_config = this.column_config;
         this.column_config = column_config;
 
-        if (Dash.IsValidObject(row_ids_to_include)) {
+        if (Dash.Validate.Object(row_ids_to_include)) {
             this.Draw(row_ids_to_include);
         }
     };
@@ -228,7 +228,7 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         // Original ID's expanded data (before moving row)
         var expanded_data = this.expanded_ids[row.ID()];
 
-        if (Dash.IsValidObject(expanded_data) && row.index === expanded_data["row_index"]) {
+        if (Dash.Validate.Object(expanded_data) && row.index === expanded_data["row_index"]) {
             var preview_height = parseInt(expanded_data["preview_content"].css("height"));
 
             this.adjust_row_tops(row, preview_height, false);

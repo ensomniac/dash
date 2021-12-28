@@ -179,7 +179,7 @@ function DashGuiListRow (list, row_id) {
         this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
 
         for (var type in this.columns) {
-            if (!Dash.IsValidObject(this.columns[type])) {
+            if (!Dash.Validate.Object(this.columns[type])) {
                 continue;
             }
 
@@ -296,7 +296,7 @@ function DashGuiListRow (list, row_id) {
             return;
         }
 
-        if (Dash.IsValidObject(this.tmp_css_cache)) {
+        if (Dash.Validate.Object(this.tmp_css_cache)) {
             this.tmp_css_cache.forEach(
                 function (entry) {
                     if (entry && entry["row"] && entry["row"].html && entry["css"]) {
@@ -343,7 +343,7 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
-        if (!this.columns || !Dash.IsValidObject(this.columns[type])) {
+        if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
             return;
         }
 
@@ -527,6 +527,10 @@ function DashGuiListRow (list, row_id) {
             }
 
             else {
+                if (column_config_data["on_click_callback"]) {
+                    default_columns_only = false;
+                }
+
                 this.add_default_column(column_config_data, i);
             }
         }

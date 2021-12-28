@@ -8,7 +8,7 @@ function DashAdminSettings () {
     };
 
     this.SetData = function (response) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 

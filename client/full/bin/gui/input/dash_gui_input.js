@@ -90,14 +90,14 @@ function DashGuiInput (placeholder_text, color) {
         this.blur_enabled = true;
     };
 
-    // This is primarily intended to be called on error by Dash.ValidateResponse
+    // This is primarily intended to be called on error by Dash.Validate.Response
     this.SkipNextBlur = function () {
         if (this.blur_enabled) {
             this.skip_next_blur = true;
         }
     };
 
-    // This is primarily intended to be called on error by Dash.ValidateResponse
+    // This is primarily intended to be called on error by Dash.Validate.Response
     this.SkipNextAutosave = function () {
         if (this.autosave) {
             this.skip_next_autosave = true;
@@ -225,7 +225,7 @@ function DashGuiInput (placeholder_text, color) {
         // Also important in case Dash.ValidateInput throws an error
         this.submit_called_from_autosave = from_autosave;
 
-        Dash.TempLastInputSubmitted = this;
+        Dash.Temp.SetLastInputSubmitted(this);
 
         if (from_autosave) {
             this.on_autosave_callback();

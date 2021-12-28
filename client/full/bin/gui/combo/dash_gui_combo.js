@@ -36,7 +36,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     // be set back to false in whatever code is referencing this attribute
     this.enter_key_event_fired = false;
 
-    this.random_id = "combo_" + Dash.RandomID() + "_" +
+    this.random_id = "combo_" + Dash.Math.RandomID() + "_" +
                      (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
                      "_" + this.option_list[0]["id"];
 
@@ -284,7 +284,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
         this.initialized = true;
 
-        Dash.TempLastComboChanged = this;
+        Dash.Temp.SetLastComboChanged(this);
     };
 
     // Prior to showing, set the width of rows (this is all important so it can auto-size)

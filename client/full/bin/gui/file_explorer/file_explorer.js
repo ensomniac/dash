@@ -211,7 +211,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             function (file_id) {
-                if (!Dash.IsValidObject(this.get_file_data(file_id)["parent_folders"])) {
+                if (!Dash.Validate.Object(this.get_file_data(file_id)["parent_folders"])) {
                     this.add_row(file_id);
                 }
             },
@@ -243,8 +243,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         var value = this.get_file_data(file_id)[key];
 
         if (key === "uploaded_on") {
-            if (Dash.IsServerIsoDate(value)) {
-                return Dash.ReadableDateTime(value, false);
+            if (Dash.DT.IsIsoFormat(value)) {
+                return Dash.DT.Readable(value, false);
             }
         }
 

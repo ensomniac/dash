@@ -131,7 +131,7 @@ function DashPDFView (options) {
     };
 
     this.on_data = function (response) {
-        if (!Dash.ValidateResponse(response)) {return;}
+        if (!Dash.Validate.Response(response)) {return;}
 
         this.data = null;
 

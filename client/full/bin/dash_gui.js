@@ -132,6 +132,21 @@ function DashGui() {
         return tip;
     };
 
+    this.GetFormContainer = function () {
+        var container = $("<div></div>");
+
+        container.css({
+            "background": ContainerColor,  // TODO: What is this meant to be?
+            "margin": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            "color": "rgba(0, 0, 0, 0.8)",
+            "border-radius": 6,
+        });
+
+        return container;
+    };
+
     this.GetFlexSpacer = function (flex_grow_value=2) {
         var html = $("<div></div>");
         

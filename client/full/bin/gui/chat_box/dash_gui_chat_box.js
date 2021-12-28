@@ -277,7 +277,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.set_valid_mentions = function () {
-        if (!Dash.IsValidObject(this.at_combo_options)) {
+        if (!Dash.Validate.Object(this.at_combo_options)) {
             return;
         }
 
