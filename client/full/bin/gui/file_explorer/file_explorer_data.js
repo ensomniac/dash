@@ -1,8 +1,8 @@
 /**@member DashGuiFileExplorer*/
 
 function DashGuiFileExplorerData () {
-    this.view_file = function (file_id) {
-        this.loader.ViewFile(this.get_file_data(file_id));
+    this.open_file = function (file_id) {
+        this.loader.OpenFile(this.get_file_data(file_id));
     };
 
     this.delete_file = function (file_id) {

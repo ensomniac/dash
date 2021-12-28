@@ -158,6 +158,7 @@ function GuiIcons (icon) {
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
         "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
+        "invoice_alt":           new GuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
@@ -22402,12 +22403,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.setup_styles = function () {
         // this.buttons must be populated here so that the callbacks are not undefined
         this.buttons = {
-            "view": {
+            "open": {
                 "icon_name": "link",
-                "callback": this.view_file,
+                "callback": this.open_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
+                                 "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {
@@ -22770,8 +22771,8 @@ function DashGuiFileExplorerGUI () {
 
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerData () {
-    this.view_file = function (file_id) {
-        this.loader.ViewFile(this.get_file_data(file_id));
+    this.open_file = function (file_id) {
+        this.loader.OpenFile(this.get_file_data(file_id));
     };
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
@@ -23085,6 +23086,13 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     this.supports_desktop_client = supports_desktop_client;
     this.desktop_client_name = "desktop";
     this.pending_file_view_requests = {};
+    this.OpenFile = function (file_data) {
+        if (!this.supports_desktop_client) {
+            this.open_file_in_browser_tab(file_data);
+            return;
+        }
+        this.get_desktop_client_sessions(file_data, false, null, true);
+    };
     this.ViewFile = function (file_data) {
         if (!this.supports_desktop_client) {
             this.open_file_in_browser_tab(file_data);
@@ -23093,7 +23101,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         this.get_desktop_client_sessions(file_data);
     };
     // If parent_folders are not provided, it will open the main parent folder, such as a job folder
-    this.ViewFolder = function (binder, backup_cb, parent_folders=[]) {
+    this.ViewFolder = function (binder=null, backup_cb=null, parent_folders=[]) {
         backup_cb = binder && backup_cb ? backup_cb.bind(binder) : backup_cb;
         if (!this.supports_desktop_client || !this.parent_obj_id) {
             backup_cb(this.parent_obj_id, parent_folders);
@@ -23108,12 +23116,12 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
         this.desktop_client_name = name;
     };
-    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null) {
+    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null, open=false) {
         if (!(file_data["id"] in this.pending_file_view_requests)) {
             this.pending_file_view_requests[file_data["id"]] = 0;
         }
         if (this.pending_file_view_requests[file_data["id"]] > 0) {
-            alert("This " + (folder ? "folder" : "file") + " is currently in process of being opened on your computer.");
+            alert("This " + (folder ? "folder" : "file") + " is currently in process of being " + (open ? "opened" : "shown") + " on your computer.");
             return;
         }
         this.pending_file_view_requests[file_data["id"]] += 1;
@@ -23121,14 +23129,17 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb);
+                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb, open);
                 },
                 self.api,
                 {"f": "get_desktop_sessions"}
             );
         })(this);
     };
-    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null) {
+    // TODO: Could we significantly increase the desktop file view time if we do the session check on the signal
+    //  request rather than on the front end, which currently requires the request for session data? That would
+    //  cut back a whole request and the server could process it faster, and directly send the signal after.
+    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null, open=false) {
         this.pending_file_view_requests[file_data["id"]] -= 1;
         if (!Dash.Validate.Response(response)) {
             return;
@@ -23147,22 +23158,22 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             }
         }
         if (active_session_count > 1) {
-            ask_msg = "Can't open the " + (folder ? "folder" : "file") + " on your computer's file system - you currently " +
-                "have more than one " + this.desktop_client_name + " app running (on different devices).";
+            ask_msg = "Can't " + (open ? "open" : "show") + " the " + (folder ? "folder" : "file") + " on your computer's file " +
+                "system - you currently have more than one " + this.desktop_client_name + " app running (on different devices).";
         }
         else if (active_session_count < 1) {
-            ask_msg = "Opening this " + (folder ? "folder" : "file") + " in your computer's local file system requires " +
-                "you to have the " + this.desktop_client_name + " app running on your computer.";
+            ask_msg = (open ? "Opening" : "Showing") + " this " + (folder ? "folder" : "file") + " in your computer's local " +
+                "file system requires you to have the " + this.desktop_client_name + " app running on your computer.";
         }
         else {
             // Only one
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
-                console.log("Sending signal to desktop session to open " + (folder ? "folder" : "file"), file_data["id"]);
+                console.log("Sending signal to desktop session to", (open ? "open" : "show"), (folder ? "folder" : "file"), file_data["id"]);
                 this.send_signal_to_desktop_session(
                     machine_id,
                     active_session["id"],
-                    "open_local_" + (folder ? "folder" : "file") + "_path",
+                    (open ? "open" : "show") + "_local_" + (folder ? "folder" : "file") + "_path",
                     null,
                     file_data
                 );

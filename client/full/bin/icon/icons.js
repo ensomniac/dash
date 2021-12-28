@@ -92,6 +92,7 @@ function GuiIcons (icon) {
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
         "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
+        "invoice_alt":           new GuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),

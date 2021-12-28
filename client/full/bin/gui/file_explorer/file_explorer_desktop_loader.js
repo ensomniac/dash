@@ -8,6 +8,16 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     this.desktop_client_name = "desktop";
     this.pending_file_view_requests = {};
 
+    this.OpenFile = function (file_data) {
+        if (!this.supports_desktop_client) {
+            this.open_file_in_browser_tab(file_data);
+
+            return;
+        }
+
+        this.get_desktop_client_sessions(file_data, false, null, true);
+    };
+
     this.ViewFile = function (file_data) {
         if (!this.supports_desktop_client) {
             this.open_file_in_browser_tab(file_data);
@@ -19,7 +29,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     };
 
     // If parent_folders are not provided, it will open the main parent folder, such as a job folder
-    this.ViewFolder = function (binder, backup_cb, parent_folders=[]) {
+    this.ViewFolder = function (binder=null, backup_cb=null, parent_folders=[]) {
         backup_cb = binder && backup_cb ? backup_cb.bind(binder) : backup_cb;
 
         if (!this.supports_desktop_client || !this.parent_obj_id) {
@@ -41,13 +51,13 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         this.desktop_client_name = name;
     };
 
-    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null) {
+    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null, open=false) {
         if (!(file_data["id"] in this.pending_file_view_requests)) {
             this.pending_file_view_requests[file_data["id"]] = 0;
         }
 
         if (this.pending_file_view_requests[file_data["id"]] > 0) {
-            alert("This " + (folder ? "folder" : "file") + " is currently in process of being opened on your computer.");
+            alert("This " + (folder ? "folder" : "file") + " is currently in process of being " + (open ? "opened" : "shown") + " on your computer.");
 
             return;
         }
@@ -58,7 +68,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb);
+                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb, open);
                 },
                 self.api,
                 {"f": "get_desktop_sessions"}
@@ -66,7 +76,11 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         })(this);
     };
 
-    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null) {
+    // TODO: Could we significantly increase the desktop file view time if we do the session check on the signal
+    //  request rather than on the front end, which currently requires the request for session data? That would
+    //  cut back a whole request and the server could process it faster, and directly send the signal after.
+
+    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null, open=false) {
         this.pending_file_view_requests[file_data["id"]] -= 1;
 
         if (!Dash.Validate.Response(response)) {
@@ -91,13 +105,13 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         }
 
         if (active_session_count > 1) {
-            ask_msg = "Can't open the " + (folder ? "folder" : "file") + " on your computer's file system - you currently " +
-                "have more than one " + this.desktop_client_name + " app running (on different devices).";
+            ask_msg = "Can't " + (open ? "open" : "show") + " the " + (folder ? "folder" : "file") + " on your computer's file " +
+                "system - you currently have more than one " + this.desktop_client_name + " app running (on different devices).";
         }
 
         else if (active_session_count < 1) {
-            ask_msg = "Opening this " + (folder ? "folder" : "file") + " in your computer's local file system requires " +
-                "you to have the " + this.desktop_client_name + " app running on your computer.";
+            ask_msg = (open ? "Opening" : "Showing") + " this " + (folder ? "folder" : "file") + " in your computer's local " +
+                "file system requires you to have the " + this.desktop_client_name + " app running on your computer.";
         }
 
         else {
@@ -105,12 +119,12 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             for (machine_id in response["sessions"]["active"]) {
                 active_session = response["sessions"]["active"][machine_id];
 
-                console.log("Sending signal to desktop session to open " + (folder ? "folder" : "file"), file_data["id"]);
+                console.log("Sending signal to desktop session to", (open ? "open" : "show"), (folder ? "folder" : "file"), file_data["id"]);
 
                 this.send_signal_to_desktop_session(
                     machine_id,
                     active_session["id"],
-                    "open_local_" + (folder ? "folder" : "file") + "_path",
+                    (open ? "open" : "show") + "_local_" + (folder ? "folder" : "file") + "_path",
                     null,
                     file_data
                 );

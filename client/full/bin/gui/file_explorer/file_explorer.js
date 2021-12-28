@@ -47,12 +47,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.setup_styles = function () {
         // this.buttons must be populated here so that the callbacks are not undefined
         this.buttons = {
-            "view": {
+            "open": {
                 "icon_name": "link",
-                "callback": this.view_file,
+                "callback": this.open_file,
                 "right_margin": -Dash.Size.Padding * 0.25,
                 "hover_preview": this.supports_desktop_client ?
-                                 "View locally in your computer's file system (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
+                                 "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
                                  "View file in new browser tab"
             },
             "delete": {
