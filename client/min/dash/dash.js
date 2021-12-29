@@ -82,6 +82,7 @@ function GuiIcons (icon) {
         "admin_tools":           new GuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new GuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation", 0.9),
         "alert_triangle":        new GuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle", 0.9),
+        "apple_logo":            new GuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
         "arrow_down":            new GuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down", 1.5),
         "arrow_left":            new GuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left", 1.5),
         "arrow_left_alt":        new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
@@ -210,6 +211,7 @@ function GuiIcons (icon) {
         "video":                 new GuiIconDefinition(this.icon, "Video", this.weight["regular"], "video", 0.85),
         "view":                  new GuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
         "web":                   new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
+        "windows_logo":          new GuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                new GuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
     };
     // Return icon map for use in portal editor > font icons
@@ -18231,7 +18233,7 @@ function DashGui() {
             return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
     };
-    this.OpenFileURLDownloadDialog = function (url, filename) {
+    this.OpenFileURLDownloadDialog = function (url, filename, callback=null) {
         var dialog_id = "__dash_file_url_download_dialog";
         fetch(
             url
@@ -18254,9 +18256,17 @@ function DashGui() {
                 dialog.click();
                 window.URL.revokeObjectURL(url_pointer);
                 document.body.removeChild(dialog);
+                if (callback) {
+                    callback();
+                }
             }
         ).catch(
-            () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
+            () => {
+                if (callback) {
+                    callback();
+                }
+                alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url);
+            }
         );
     };
     // This is rather quick/dirty and should probably become its own style at some point (will require it to first be visually improved)
@@ -20469,7 +20479,7 @@ function DashGuiButtonInterface () {
     this.IsLoading = function () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
-    this.SetLoading = function (is_loading) {
+    this.SetLoading = function (is_loading, size_mult=1, vertical=true) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -20481,14 +20491,16 @@ function DashGuiButtonInterface () {
             this.load_dots = null;
             return;
         }
-        this.load_dots = new Dash.Gui.LoadDots(this.html.outerHeight()-Dash.Size.Padding);
-        this.load_dots.SetOrientation("vertical");
+        this.load_dots = new Dash.Gui.LoadDots((this.html.outerHeight() - Dash.Size.Padding) * size_mult);
+        if (vertical) {
+            this.load_dots.SetOrientation("vertical");
+        }
         this.html.append(this.load_dots.html);
         this.load_dots.html.css({
             "position": "absolute",
-            "top": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding * 0.5,
             "bottom": 0,
-            "right": 0,
+            "right": 0
         });
         this.load_dots.Start();
     };
@@ -21989,11 +22001,11 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
 function DashGuiLoadDots (size, color) {
     this.size = size || Dash.Size.RowHeight;
+    this.color = color || Dash.Color.Light;
     this.html = $("<div></div>");
     this.layout = "horizontal";
     this.num_dots = 3;
     this.dots = [];
-    this.color = color || Dash.Color.Light;
     this.iteration = 0;
     this.t = 0;
     this.cycle_duration = 1000;
@@ -22003,7 +22015,9 @@ function DashGuiLoadDots (size, color) {
         return this.is_active;
     };
     this.Start = function () {
-        if (this.is_active) {return;}
+        if (this.is_active) {
+            return;
+        }
         this.is_active = true;
         this.activation_t = this.t;
         this.show_t = 0;
@@ -22013,7 +22027,9 @@ function DashGuiLoadDots (size, color) {
         }
     };
     this.Stop = function (callback, binder) {
-        if (!this.is_active) {return;}
+        if (!this.is_active) {
+            return;
+        }
         if (callback && binder) {
             callback = callback.bind(binder);
         }
@@ -22026,13 +22042,15 @@ function DashGuiLoadDots (size, color) {
             this.dots[x].Stop();
         }
         if (this.on_stopped_callback) {
-            // This is wrong. Obviously. But I don't have time
-            // to hook up firing the callback correctly rn
+            // TODO: This is wrong. Obviously. But I don't have time to hook up firing the callback correctly rn
             (function (self) {
-                setTimeout(function () {
-                    self.on_stopped_callback();
-                    self.on_stopped_callback = null;
-                }, 500);
+                setTimeout(
+                    function () {
+                        self.on_stopped_callback();
+                        self.on_stopped_callback = null;
+                    },
+                    500
+                );
             })(this);
         }
     };
@@ -22053,19 +22071,25 @@ function DashGuiLoadDots (size, color) {
         }
         this.html.css({
             "width": this.size,
-            "height": this.size,
+            "height": this.size
         });
     };
     this.update = function (t) {
         if (this.stop_requested) {
             return;
         }
-        (function (self) {requestAnimationFrame(function (t) {self.update(t);});})(this);
+        (function (self) {
+            requestAnimationFrame(function (t) {
+                self.update(t);
+            });
+        })(this);
         if (this.t >= 1) {
             this.iteration += 1;
         }
-        this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t-(this.iteration*this.cycle_duration));
-        if (this.t > 1) {this.t = 1;}
+        this.t = Dash.Math.InverseLerp(0, this.cycle_duration, t - (this.iteration*this.cycle_duration));
+        if (this.t > 1) {
+            this.t = 1;
+        }
         if (!this.is_active) {
             return;
         }
@@ -22080,7 +22104,7 @@ function DashGuiLoadDots (size, color) {
     this.setup_styles();
     this.update(0);
 }
-function LoadDot(dots) {
+function LoadDot (dots) {
     this.dots = dots;
     this.color = this.dots.color;
     this.html = $("<div></div>");
@@ -22088,53 +22112,61 @@ function LoadDot(dots) {
     this.hold_t = 0.25;
     this.Update = function (cycle_t) {
         var t;
-        var cycle_offset = Dash.Math.Lerp(0, 0.5, 1-Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
+        var cycle_offset = Dash.Math.Lerp(0, 0.5, 1 - Dash.Math.InverseLerp(0, this.dots.dots.length, this.index));
         cycle_t += cycle_offset;
-        if (cycle_t > 1) {cycle_t = cycle_t-1;}
+        if (cycle_t > 1) {
+            cycle_t = cycle_t - 1;
+        }
         if (cycle_t < this.hold_t) {
             t = Dash.Math.InverseLerp(0, this.hold_t, cycle_t);
         }
-        else if (cycle_t > 1-this.hold_t) {
-            t = 1-Dash.Math.InverseLerp(1-this.hold_t, 1, cycle_t);
+        else if (cycle_t > 1 - this.hold_t) {
+            t = 1 - Dash.Math.InverseLerp(1 - this.hold_t, 1, cycle_t);
         }
         else {
             t = 1;
         }
-        t = t*this.dots.show_t;
+        t = t * this.dots.show_t;
         this.html.css({
             "opacity": t
         });
     };
     this.Start = function (cycle_t) {
         this.html.stop().css({
-            "left": (this.dots.size*0.5)-(this.size*0.5),
-            "top": (this.dots.size*0.5)-(this.size*0.5),
+            "left": (this.dots.size * 0.5) - (this.size * 0.5),
+            "top": (this.dots.size * 0.5) - (this.size * 0.5),
         });
-        this.html.animate({
-            "left": this.left,
-            "top": this.top,
-        }, 300);
+        this.html.animate(
+            {
+                "left": this.left,
+                "top": this.top,
+            },
+            300
+        );
     };
     this.Stop = function (cycle_t) {
-        this.html.stop().animate({
-            "left": (this.dots.size*0.5)-(this.size*0.5),
-            "top": (this.dots.size*0.5)-(this.size*0.5),
-            "opacity": 0,
-        }, 300);
+        this.html.stop().animate(
+            {
+                "left": (this.dots.size * 0.5) - (this.size * 0.5),
+                "top": (this.dots.size * 0.5) - (this.size * 0.5),
+                "opacity": 0
+            },
+            300
+        );
     };
     this.SetOrientation = function () {
-        this.size = this.dots.size/(this.dots.num_dots+1.5);
-        this.padding = (this.dots.size-((this.size*this.dots.num_dots)))/((this.dots.num_dots-1)+1);
-        this.left = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
-        this.top = (this.dots.size*0.5)-(this.size*0.5);
-        if (this.dots.layout != "horizontal") {
-            this.left = (this.dots.size*0.5)-(this.size*0.5);
-            this.top = (this.padding*0.5) + (this.index*this.size) + (this.index*this.padding);
+        this.size = this.dots.size / (this.dots.num_dots + 1.5);
+        this.padding = (this.dots.size - ((this.size * this.dots.num_dots))) / ((this.dots.num_dots - 1) + 1);
+        this.left = (this.padding * 0.5) + (this.index * this.size) + (this.index * this.padding);
+        this.top = (this.dots.size * 0.5) - (this.size * 0.5);
+        if (this.dots.layout !== "horizontal") {
+            this.left = (this.dots.size * 0.5) - (this.size * 0.5);
+            this.top = (this.padding * 0.5) + (this.index * this.size) + (this.index * this.padding);
         }
     };
     this.SetColor = function (color) {
         this.html.css({
-            "background": color,
+            "background": color
         });
     };
     this.setup_styles = function () {
@@ -22146,8 +22178,8 @@ function LoadDot(dots) {
             "background": this.color.Text,
             "width": this.size,
             "height": this.size,
-            "border-radius": this.size*0.5,
-            "opacity": 0,
+            "border-radius": this.size * 0.5,
+            "opacity": 0
         });
         this.dots.html.append(this.html);
     };

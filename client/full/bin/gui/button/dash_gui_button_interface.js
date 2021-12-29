@@ -133,7 +133,7 @@ function DashGuiButtonInterface () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
 
-    this.SetLoading = function (is_loading) {
+    this.SetLoading = function (is_loading, size_mult=1, vertical=true) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -144,20 +144,25 @@ function DashGuiButtonInterface () {
 
         if (!is_loading && this.load_dots) {
             this.load_dots.Stop();
+
             this.load_dots = null;
+
             return;
         }
 
-        this.load_dots = new Dash.Gui.LoadDots(this.html.outerHeight()-Dash.Size.Padding);
-        this.load_dots.SetOrientation("vertical");
+        this.load_dots = new Dash.Gui.LoadDots((this.html.outerHeight() - Dash.Size.Padding) * size_mult);
+
+        if (vertical) {
+            this.load_dots.SetOrientation("vertical");
+        }
+
         this.html.append(this.load_dots.html);
 
         this.load_dots.html.css({
             "position": "absolute",
-            "top": Dash.Size.Padding*0.5,
+            "top": Dash.Size.Padding * 0.5,
             "bottom": 0,
-            "right": 0,
-
+            "right": 0
         });
 
         this.load_dots.Start();

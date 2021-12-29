@@ -226,7 +226,7 @@ function DashGui() {
         })(this, icon_id, callback, data_key, additional_data, binder);
     };
 
-    this.OpenFileURLDownloadDialog = function (url, filename) {
+    this.OpenFileURLDownloadDialog = function (url, filename, callback=null) {
         var dialog_id = "__dash_file_url_download_dialog";
 
         fetch(
@@ -259,9 +259,19 @@ function DashGui() {
                 window.URL.revokeObjectURL(url_pointer);
 
                 document.body.removeChild(dialog);
+
+                if (callback) {
+                    callback();
+                }
             }
         ).catch(
-            () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
+            () => {
+                if (callback) {
+                    callback();
+                }
+
+                alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url);
+            }
         );
     };
 

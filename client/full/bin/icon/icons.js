@@ -16,6 +16,7 @@ function GuiIcons (icon) {
         "admin_tools":           new GuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new GuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation", 0.9),
         "alert_triangle":        new GuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle", 0.9),
+        "apple_logo":            new GuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
         "arrow_down":            new GuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down", 1.5),
         "arrow_left":            new GuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left", 1.5),
         "arrow_left_alt":        new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
@@ -144,6 +145,7 @@ function GuiIcons (icon) {
         "video":                 new GuiIconDefinition(this.icon, "Video", this.weight["regular"], "video", 0.85),
         "view":                  new GuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
         "web":                   new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
+        "windows_logo":          new GuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                new GuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
     };
 
