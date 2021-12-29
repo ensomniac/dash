@@ -15,15 +15,15 @@ from Dash.Utils import Memory, GetRandomID
 
 
 class DashLocalStorage:
-    def __init__(self, dash_context, store_path="", nested=False, sort_by_key="", filter_out_keys=[]):
+    def __init__(self, dash_context=None, store_path="", nested=False, sort_by_key="", filter_out_keys=[]):
         """
-        Utility for reading, writing and maintaining common data
+        Utility for reading, writing and maintaining common data.
 
-        :param dash_context: Dash Context
-        :param str store_path: users, packages, jobs, etc
-        :param bool nested: If True, core record is considered data.json in a directory named after the ID
-        :param str sort_by_key: dict key to sort the ordered data by
-        :param list filter_out_keys: dict keys to filter out of each final data object
+        :param dash_context: Dash Context (default=None)
+        :param str store_path: users, packages, jobs, etc (default="")
+        :param bool nested: If True, core record is considered data.json in a directory named after the ID (default=False)
+        :param str sort_by_key: dict key to sort the ordered data by (default="")
+        :param list filter_out_keys: dict keys to filter out of each final data object (default=[])
         """
 
         self.nested = nested
@@ -254,6 +254,30 @@ class DashLocalStorage:
 
         return data
 
+    def ConvertToNested(self):
+        from shutil import move
+
+        ids = self.GetAllIDs()
+        converted_ids = []
+
+        for flat_id in ids:
+            flat_path = self.get_record_path(flat_id)
+
+            if os.path.isdir(flat_path):
+                continue
+
+            flat_path_renamed = flat_path.replace(flat_id, "data.json")
+
+            os.rename(flat_path, flat_path_renamed)
+
+            os.makedirs(flat_path)
+
+            move(flat_path_renamed, os.path.join(flat_path, "data.json"))
+
+            converted_ids.append(flat_id)
+
+        return converted_ids
+
     def filter_data_entry(self, data):
         if not self.filter_out_keys:
             return data
@@ -346,26 +370,26 @@ class DashLocalStorage:
             # /local/store_path/202283291732434/data.json <- This is the data
             return os.path.join(self.get_store_root(obj_id_email), obj_id_email + "/")
 
-    def get_store_root(self, obj_id_email=None):
+    def get_store_root(self, obj_id=None):
         """
         | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
-        | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id_email
+        | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id
         """
 
         if self.store_path == "users":
-            if not obj_id_email:
+            if not obj_id:
                 from Dash.Utils import Memory
 
                 params = Memory.Global.RequestData
-                obj_id_email = params.get("email")
+                obj_id = params.get("email")
 
-            if not obj_id_email:
+            if not obj_id:
                 raise Exception("An email address is required. Error x8392")
 
             store_root = os.path.join(
                 self.dash_context["srv_path_local"],
                 self.store_path,
-                obj_id_email + "/",  # Email address
+                obj_id + "/",  # Email address
             )
         else:
             store_root = os.path.join(
@@ -490,8 +514,12 @@ def GetRecordPath(dash_context, store_path, obj_id, nested=False):
 
 
 def Read(full_path):
-    return DashLocalStorage(None).Read(full_path)
+    return DashLocalStorage().Read(full_path)
 
 
 def Write(full_path, data):
-    return DashLocalStorage(None).Write(full_path, data)
+    return DashLocalStorage().Write(full_path, data)
+
+
+def ConvertToNested(dash_context, store_path):
+    return DashLocalStorage(dash_context, store_path).ConvertToNested()
