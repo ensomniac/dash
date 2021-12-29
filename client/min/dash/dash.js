@@ -23080,7 +23080,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
 }
 
 function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true) {
-    /** See docstring in DashGuiFileExplorer for explanation of 'api' and 'parent_object_id' params */
+    /** See docstring in DashGuiFileExplorer for explanation of 'api' and 'parent_object_id' params, and request function naming */
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
@@ -23091,23 +23091,30 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             this.open_file_in_browser_tab(file_data);
             return;
         }
-        this.get_desktop_client_sessions(file_data, false, null, true);
+        this.send_signal_to_desktop_session(file_data, "open_local_file_path");
     };
     this.ViewFile = function (file_data) {
         if (!this.supports_desktop_client) {
             this.open_file_in_browser_tab(file_data);
             return;
         }
-        this.get_desktop_client_sessions(file_data);
+        this.send_signal_to_desktop_session(file_data, "show_local_file_path");
     };
     // If parent_folders are not provided, it will open the main parent folder, such as a job folder
     this.ViewFolder = function (binder=null, backup_cb=null, parent_folders=[]) {
         backup_cb = binder && backup_cb ? backup_cb.bind(binder) : backup_cb;
         if (!this.supports_desktop_client || !this.parent_obj_id) {
-            backup_cb(this.parent_obj_id, parent_folders);
+            if (backup_cb) {
+                backup_cb(this.parent_obj_id, parent_folders);
+            }
             return;
         }
-        this.get_desktop_client_sessions({"id": this.parent_obj_id, "parent_folders": parent_folders}, true, backup_cb);
+        this.send_signal_to_desktop_session(
+            {"id": this.parent_obj_id, "parent_folders": parent_folders},
+            "show_local_folder_path",
+            true,
+            backup_cb
+        );
     };
     this.SetDesktopClientName = function (name) {
         if (!name) {
@@ -23116,106 +23123,50 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
         this.desktop_client_name = name;
     };
-    this.get_desktop_client_sessions = function (file_data, folder=false, backup_cb=null, open=false) {
+    this.send_signal_to_desktop_session = function (file_data, key, folder=false, backup_cb=null) {
         if (!(file_data["id"] in this.pending_file_view_requests)) {
             this.pending_file_view_requests[file_data["id"]] = 0;
         }
         if (this.pending_file_view_requests[file_data["id"]] > 0) {
-            alert("This " + (folder ? "folder" : "file") + " is currently in process of being " + (open ? "opened" : "shown") + " on your computer.");
+            alert("This " + (folder ? "folder" : "file") + " is currently in process of being accessed on your computer.");
             return;
         }
         this.pending_file_view_requests[file_data["id"]] += 1;
+        console.log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
         (function (self) {
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_desktop_client_sessions(response, file_data, folder, backup_cb, open);
-                },
-                self.api,
-                {"f": "get_desktop_sessions"}
-            );
-        })(this);
-    };
-    // TODO: Could we significantly increase the desktop file view time if we do the session check on the signal
-    //  request rather than on the front end, which currently requires the request for session data? That would
-    //  cut back a whole request and the server could process it faster, and directly send the signal after.
-    this.on_desktop_client_sessions = function (response, file_data, folder=false, backup_cb=null, open=false) {
-        this.pending_file_view_requests[file_data["id"]] -= 1;
-        if (!Dash.Validate.Response(response)) {
-            return;
-        }
-        var machine_id;
-        var ask_msg = "";
-        var active_session;
-        var active_session_count = 0;
-        if (Dash.Validate.Object(response["sessions"]) && Dash.Validate.Object(response["sessions"]["active"])) {
-            for (machine_id in response["sessions"]["active"]) {
-                active_session = response["sessions"]["active"][machine_id];
-                if (active_session["kill"]) {
-                    continue;
-                }
-                active_session_count += 1;
-            }
-        }
-        if (active_session_count > 1) {
-            ask_msg = "Can't " + (open ? "open" : "show") + " the " + (folder ? "folder" : "file") + " on your computer's file " +
-                "system - you currently have more than one " + this.desktop_client_name + " app running (on different devices).";
-        }
-        else if (active_session_count < 1) {
-            ask_msg = (open ? "Opening" : "Showing") + " this " + (folder ? "folder" : "file") + " in your computer's local " +
-                "file system requires you to have the " + this.desktop_client_name + " app running on your computer.";
-        }
-        else {
-            // Only one
-            for (machine_id in response["sessions"]["active"]) {
-                active_session = response["sessions"]["active"][machine_id];
-                console.log("Sending signal to desktop session to", (open ? "open" : "show"), (folder ? "folder" : "file"), file_data["id"]);
-                this.send_signal_to_desktop_session(
-                    machine_id,
-                    active_session["id"],
-                    (open ? "open" : "show") + "_local_" + (folder ? "folder" : "file") + "_path",
-                    null,
-                    file_data
-                );
-            }
-        }
-        if (ask_msg) {
-            if (folder) {
-                if (backup_cb) {
-                    alert(ask_msg);
-                    backup_cb(this.parent_obj_id, file_data["parent_folders"]);
-                }
-            }
-            else {
-                if (!window.confirm(ask_msg + "\n\nWould you like to open a new browser tab to view/download the file?")) {
-                    return;
-                }
-                this.open_file_in_browser_tab(file_data);
-            }
-        }
-    };
-    this.send_signal_to_desktop_session = function (machine_id, session_id, key, value=null, value_json=null) {
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        alert("Failed to send signal to " + self.desktop_client_name + " app.");
-                    }
-                    console.log("Signal sent:", response["sent"]);
+                    self.on_signal_sent(response, file_data, folder, backup_cb);
                 },
                 self.api,
                 {
                     "f": "send_signal_to_desktop_session",
                     "key": key,
-                    "value": value,
-                    "value_json": Dash.Validate.Object(value_json) ? JSON.stringify(value_json) : null,
-                    "session_id": session_id,
-                    "machine_id": machine_id,
+                    "value": JSON.stringify(file_data),
                     "parent_obj_id": self.parent_obj_id
                 }
             );
         })(this);
+    };
+    this.on_signal_sent = function (response, file_data, folder=false, backup_cb=null) {
+        this.pending_file_view_requests[file_data["id"]] -= 1;
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+        console.log("Signal sent:", response["sent"]);
+        if (!response["msg"]) {
+            return;
+        }
+        if (folder && backup_cb) {
+            alert(response["msg"]);
+            backup_cb(this.parent_obj_id, file_data["parent_folders"]);
+            return;
+        }
+        if (!window.confirm(response["msg"] + "\n\nWould you like to open a new browser tab to view/download the file?")) {
+            return;
+        }
+        this.open_file_in_browser_tab(file_data);
     };
     this.open_file_in_browser_tab = function (file_data) {
         var url = file_data["url"] || file_data["orig_url"] || "";
