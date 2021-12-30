@@ -2,16 +2,16 @@
 
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        var header = new Dash.Gui.Header("Files", this.color);
+        this.header = new Dash.Gui.Header("Files", this.color);
 
-        header.ReplaceBorderWithIcon("paperclip");
-        header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("paperclip");
+        this.header.icon.AddShadow();
 
-        header.html.css({
+        this.header.html.css({
             "margin-bottom": 0
         });
 
-        this.html.append(header.html);
+        this.html.append(this.header.html);
     };
 
     this.add_subheader = function () {
@@ -24,7 +24,8 @@ function DashGuiFileExplorerGUI () {
             "position": "absolute",
             "right": Dash.Size.Padding * 1.1,
             "top": Dash.Size.Padding * 4,
-            "z-index": 10000
+            "z-index": 10000,
+            ...this.subheader_styling
         });
 
         this.subheader.label.css({
@@ -46,14 +47,16 @@ function DashGuiFileExplorerGUI () {
             this.on_sort_changed
         );
 
-        this.add_combo_to_tool_row(
-            "Folders Display:",
-            [
-                {"id": "top", "label_text": "Top"},
-                {"id": "bottom", "label_text": "Bottom"}
-            ],
-            this.on_folder_display_changed
-        );
+        if (this.supports_folders) {
+            this.add_combo_to_tool_row(
+                "Folders Display:",
+                [
+                    {"id": "top", "label_text": "Top"},
+                    {"id": "bottom", "label_text": "Bottom"}
+                ],
+                this.on_folder_display_changed
+            );
+        }
 
         this.tool_row.html.css({
             "position": "absolute",
@@ -138,6 +141,10 @@ function DashGuiFileExplorerGUI () {
     };
 
     this.draw_subfolders = function () {
+        if (!this.supports_folders) {
+            return;
+        }
+
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
 

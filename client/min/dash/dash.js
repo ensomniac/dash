@@ -22390,7 +22390,7 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     this.setup_styles();
 }
 
-function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false) {
+function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -22410,13 +22410,16 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      * @param {string} api - API name for requests
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
      * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
+     * @param {boolean} supports_folders - Whether or not this context uses folders/subfolders
      */
     this.color = color || Dash.Color.Light;
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
+    this.supports_folders = supports_folders;
     this.rows = {};
     this.list = null;
+    this.header = null;
     this.extra_gui = [];
     this.buttons = null;
     this.tool_row = null;
@@ -22426,6 +22429,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.initialized = false;
     this.upload_button = null;
     this.original_order = null;
+    this.subheader_styling = {};
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -22460,6 +22464,16 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.add_tool_row();
         this.add_upload_button();
         this.initialized = true;
+    };
+    // Only necessary in unique cases, like hijacking the subheader's spot
+    this.SetSubheaderStyling = function (css) {
+        if (!Dash.Validate.Object(css)) {
+            return;
+        }
+        this.subheader_styling = css;
+    };
+    this.SetHeaderText = function (label_text="") {
+        this.header.SetText(label_text);
     };
     this.SetDesktopClientName = function (name) {
         if (!name) {
@@ -22609,13 +22623,13 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        var header = new Dash.Gui.Header("Files", this.color);
-        header.ReplaceBorderWithIcon("paperclip");
-        header.icon.AddShadow();
-        header.html.css({
+        this.header = new Dash.Gui.Header("Files", this.color);
+        this.header.ReplaceBorderWithIcon("paperclip");
+        this.header.icon.AddShadow();
+        this.header.html.css({
             "margin-bottom": 0
         });
-        this.html.append(header.html);
+        this.html.append(this.header.html);
     };
     this.add_subheader = function () {
         this.subheader = new Dash.Gui.Header("...", this.color);
@@ -22625,7 +22639,8 @@ function DashGuiFileExplorerGUI () {
             "position": "absolute",
             "right": Dash.Size.Padding * 1.1,
             "top": Dash.Size.Padding * 4,
-            "z-index": 10000
+            "z-index": 10000,
+            ...this.subheader_styling
         });
         this.subheader.label.css({
             "font-family": "sans_serif_italic"
@@ -22642,14 +22657,16 @@ function DashGuiFileExplorerGUI () {
             ],
             this.on_sort_changed
         );
-        this.add_combo_to_tool_row(
-            "Folders Display:",
-            [
-                {"id": "top", "label_text": "Top"},
-                {"id": "bottom", "label_text": "Bottom"}
-            ],
-            this.on_folder_display_changed
-        );
+        if (this.supports_folders) {
+            this.add_combo_to_tool_row(
+                "Folders Display:",
+                [
+                    {"id": "top", "label_text": "Top"},
+                    {"id": "bottom", "label_text": "Bottom"}
+                ],
+                this.on_folder_display_changed
+            );
+        }
         this.tool_row.html.css({
             "position": "absolute",
             "right": Dash.Size.Padding * 4.25,
@@ -22712,6 +22729,9 @@ function DashGuiFileExplorerGUI () {
         return row;
     };
     this.draw_subfolders = function () {
+        if (!this.supports_folders) {
+            return;
+        }
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
             if (!Dash.Validate.Object(parents)) {

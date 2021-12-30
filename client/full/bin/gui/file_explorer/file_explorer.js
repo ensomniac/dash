@@ -1,4 +1,4 @@
-function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false) {
+function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -18,15 +18,18 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      * @param {string} api - API name for requests
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
      * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
+     * @param {boolean} supports_folders - Whether or not this context uses folders/subfolders
      */
 
     this.color = color || Dash.Color.Light;
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
+    this.supports_folders = supports_folders;
 
     this.rows = {};
     this.list = null;
+    this.header = null;
     this.extra_gui = [];
     this.buttons = null;
     this.tool_row = null;
@@ -36,6 +39,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.initialized = false;
     this.upload_button = null;
     this.original_order = null;
+    this.subheader_styling = {};
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -75,6 +79,19 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.add_upload_button();
 
         this.initialized = true;
+    };
+
+    // Only necessary in unique cases, like hijacking the subheader's spot
+    this.SetSubheaderStyling = function (css) {
+        if (!Dash.Validate.Object(css)) {
+            return;
+        }
+
+        this.subheader_styling = css;
+    };
+
+    this.SetHeaderText = function (label_text="") {
+        this.header.SetText(label_text);
     };
 
     this.SetDesktopClientName = function (name) {
