@@ -5,6 +5,26 @@ function DashGuiFileExplorerData () {
         this.loader.OpenFile(this.get_file_data(file_id));
     };
 
+    this.update_file_content = function (file_id) {
+        if (!window.confirm(this.UpdateContentButtonConfig["hover_preview"] + "?")) {
+            return;
+        }
+
+        this.reset_upload_button_uploader = true;
+
+        // Hijack the main upload button's uploader
+        this.upload_button.SetFileUploader(
+            this.api,
+            {
+                ...this.upload_button_params,
+                "existing_id_to_update": file_id
+            },
+            this.on_file_upload_started
+        );
+
+        this.upload_button.file_uploader.html.trigger("click");
+    };
+
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
@@ -136,7 +156,15 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_file_uploaded = function (data_key, additional_data, response) {
-        if (!response || response["originalEvent"]) {
+        if (this.reset_upload_button_uploader) {
+            this.upload_button.SetFileUploader(
+                this.api,
+                this.upload_button_params,
+                this.on_file_upload_started
+            );
+        }
+
+        if (!response || response["originalEvent"] || response["isTrigger"]) {
             return;
         }
 

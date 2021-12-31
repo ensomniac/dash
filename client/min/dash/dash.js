@@ -118,6 +118,7 @@ function GuiIcons (icon) {
         "checked_box":           new GuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
         "circle_dot":            new GuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
         "clipboard":             new GuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
+        "clone":                 new GuiIconDefinition(this.icon, "Clone", this.weight["regular"], "clone"),
         "close":                 new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times", 1.2, 0.25, 0.25),
         "close_thin":            new GuiIconDefinition(this.icon, "Close", this.weight["light"], "times", 1.2, 0.25, 0.25),
         "close_square":          new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square", 1.2, 0.25, 0.25),
@@ -158,6 +159,7 @@ function GuiIcons (icon) {
         "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
+        "import_file":           new GuiIconDefinition(this.icon, "Import File", this.weight["regular"], "file-import"),
         "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "invoice_alt":           new GuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
@@ -22428,37 +22430,33 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
+    this.column_config = null;
     this.original_order = null;
     this.subheader_styling = {};
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
+    this.reset_upload_button_uploader = false;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
+    this.upload_button_params = {
+        "f": "upload_file",
+        "parent_obj_id": this.parent_obj_id
+    };
+    // See this.instantiate_button_configs()
+    this.OpenButtonConfig = null;
+    this.DeleteButtonConfig = null;
+    this.DownloadButtonConfig = null;
+    this.UpdateContentButtonConfig = null;
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
-        // this.buttons must be populated here so that the callbacks are not undefined
-        this.buttons = {
-            "open": {
-                "icon_name": "link",
-                "callback": this.open_file,
-                "right_margin": -Dash.Size.Padding * 0.25,
-                "hover_preview": this.supports_desktop_client ?
-                                 "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
-                                 "View file in new browser tab"
-            },
-            "delete": {
-                "icon_name": "trash",
-                "callback": this.delete_file,
-                "right_margin": -Dash.Size.Padding * 0.5
-            },
-            "download": {
-                "icon_name": "download_file",
-                "callback": this.download_file,
-                "right_margin": -Dash.Size.Padding
-            }
-        };
-
+        this.instantiate_button_configs();
+        // Default button config
+        this.buttons = [
+            this.OpenButtonConfig,
+            this.DownloadButtonConfig,
+            this.DeleteButtonConfig
+        ];
         Dash.SetInterval(this, this.get_files_data, 2250);
         this.add_header();
         this.add_tool_row();
@@ -22508,6 +22506,58 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         }
         this.html.append(html);
     };
+    // Use this if different buttons are desired than the default config. Config list
+    // provided must consist of this class' ButtonConfig properties, such as this.OpenButtonConfig.
+    this.SetButtonConfig = function (config_list) {
+        if (!Dash.Validate.Object(config_list)) {
+            return;
+        }
+        this.buttons = config_list;
+        var column_config = this.get_column_config(true);
+        if (this.list) {
+            this.list.SetColumnConfig(column_config);
+        }
+        this.redraw_rows();
+    };
+    this.CreateCustomButtonConfig = function (display_name, icon_name, callback, binder=null, right_margin=null, hover_text="") {
+        return {
+            "config_name": display_name,
+            "icon_name": icon_name,
+            "callback": binder ? callback.bind(binder) : callback,
+            "right_margin": right_margin || -Dash.Size.Padding * 0.25,
+            "hover_preview": hover_text
+        };
+    };
+    this.instantiate_button_configs = function () {
+        this.OpenButtonConfig = {
+            "config_name": "Open",
+            "icon_name": "link",
+            "callback": this.open_file,
+            "right_margin": -Dash.Size.Padding * 0.25,
+            "hover_preview": this.supports_desktop_client ?
+                "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
+                "View file in new browser tab"
+        };
+        this.UpdateContentButtonConfig = {
+            "config_name": "Update Content",
+            "icon_name": "sync",
+            "callback": this.update_file_content,
+            "right_margin": -Dash.Size.Padding * 0.25,
+            "hover_preview": "Upload an updated version of this file"
+        };
+        this.DownloadButtonConfig = {
+            "config_name": "Download",
+            "icon_name": "download_file",
+            "callback": this.download_file,
+            "right_margin": -Dash.Size.Padding * 0.5
+        };
+        this.DeleteButtonConfig = {
+            "config_name": "Delete",
+            "icon_name": "trash",
+            "callback": this.delete_file,
+            "right_margin": -Dash.Size.Padding
+        };
+    };
     this.show_subheader = function (text="") {
         if (!this.subheader) {
             this.add_subheader();
@@ -22556,6 +22606,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         row.Expand(preview.html);
     };
     this.redraw_rows = function () {
+        if (!Dash.Validate.Object(this.files_data)) {
+            return;
+        }
         this.rows = {};
         if (this.list) {
             this.list.Clear();
@@ -22691,10 +22744,7 @@ function DashGuiFileExplorerGUI () {
         this.upload_button = Dash.Gui.GetTopRightIconButton(this, this.on_file_uploaded, "upload_file");
         this.upload_button.SetFileUploader(
             this.api,
-            {
-                "f": "upload_file",
-                "parent_obj_id": this.parent_obj_id
-            },
+            this.upload_button_params,
             this.on_file_upload_started
         );
         this.upload_button.html.css({
@@ -22751,7 +22801,10 @@ function DashGuiFileExplorerGUI () {
             }
         }
     };
-    this.add_list = function () {
+    this.get_column_config = function (force=false) {
+        if (!force && this.column_config) {
+            return this.column_config;
+        }
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
         column_config.AddColumn(
@@ -22780,39 +22833,42 @@ function DashGuiFileExplorerGUI () {
             {"css": {"flex": "none"}}
         );
         column_config.AddDivider(border_css);
-        for (var key in this.buttons) {
-            var name = key.Title();
+        for (var button_config of this.buttons) {
             column_config.AddColumn(
-                name,
+                button_config["config_name"],
                 "",
                 false,
                 Dash.Size.ColumnWidth * 0.15,
                 {
                     "type": "icon_button",
                     "options": {
-                        "icon_name": this.buttons[key]["icon_name"],
-                        "callback": this.buttons[key]["callback"],
+                        "icon_name": button_config["icon_name"],
+                        "callback": button_config["callback"],
                         "binder": this,
                         "color": this.color,
-                        "hover_text": this.buttons[key]["hover_preview"] || name,
+                        "hover_text": button_config["hover_preview"] || button_config["config_name"],
                         "options": {
                             "size_mult": 0.85
                         }
                     },
                     "css": {
                         "margin-left": Dash.Size.Padding,
-                        "margin-right": this.buttons[key]["right_margin"],
+                        "margin-right": button_config["right_margin"],
                         "margin-top": Dash.Size.Padding * 0.15,
                         "flex": "none"
                     }
                 }
             );
         }
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
+        this.column_config = column_config;
+        return column_config;
+    };
+    this.add_list = function () {
+        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
         this.list.DisableDividerColorChangeOnHover();
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
-            border_css
+            {"background": this.color.Pinstripe}
         );
         this.list.html.css({
             "margin-top": Dash.Size.Padding
@@ -22825,6 +22881,22 @@ function DashGuiFileExplorerGUI () {
 function DashGuiFileExplorerData () {
     this.open_file = function (file_id) {
         this.loader.OpenFile(this.get_file_data(file_id));
+    };
+    this.update_file_content = function (file_id) {
+        if (!window.confirm(this.UpdateContentButtonConfig["hover_preview"] + "?")) {
+            return;
+        }
+        this.reset_upload_button_uploader = true;
+        // Hijack the main upload button's uploader
+        this.upload_button.SetFileUploader(
+            this.api,
+            {
+                ...this.upload_button_params,
+                "existing_id_to_update": file_id
+            },
+            this.on_file_upload_started
+        );
+        this.upload_button.file_uploader.html.trigger("click");
     };
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
@@ -22931,7 +23003,14 @@ function DashGuiFileExplorerData () {
         this.disable_load_buttons();
     };
     this.on_file_uploaded = function (data_key, additional_data, response) {
-        if (!response || response["originalEvent"]) {
+        if (this.reset_upload_button_uploader) {
+            this.upload_button.SetFileUploader(
+                this.api,
+                this.upload_button_params,
+                this.on_file_upload_started
+            );
+        }
+        if (!response || response["originalEvent"] || response["isTrigger"]) {
             return;
         }
         this.on_files_changed(response);

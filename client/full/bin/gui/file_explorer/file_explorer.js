@@ -38,39 +38,38 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
+    this.column_config = null;
     this.original_order = null;
     this.subheader_styling = {};
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
+    this.reset_upload_button_uploader = false;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
+
+    this.upload_button_params = {
+        "f": "upload_file",
+        "parent_obj_id": this.parent_obj_id
+    };
+
+    // See this.instantiate_button_configs()
+    this.OpenButtonConfig = null;
+    this.DeleteButtonConfig = null;
+    this.DownloadButtonConfig = null;
+    this.UpdateContentButtonConfig = null;
 
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
 
     this.setup_styles = function () {
-        // this.buttons must be populated here so that the callbacks are not undefined
-        this.buttons = {
-            "open": {
-                "icon_name": "link",
-                "callback": this.open_file,
-                "right_margin": -Dash.Size.Padding * 0.25,
-                "hover_preview": this.supports_desktop_client ?
-                                 "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
-                                 "View file in new browser tab"
-            },
-            "delete": {
-                "icon_name": "trash",
-                "callback": this.delete_file,
-                "right_margin": -Dash.Size.Padding * 0.5
-            },
-            "download": {
-                "icon_name": "download_file",
-                "callback": this.download_file,
-                "right_margin": -Dash.Size.Padding
-            }
-        };
+        this.instantiate_button_configs();
 
+        // Default button config
+        this.buttons = [
+            this.OpenButtonConfig,
+            this.DownloadButtonConfig,
+            this.DeleteButtonConfig
+        ];
 
         Dash.SetInterval(this, this.get_files_data, 2250);
 
@@ -137,6 +136,68 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.html.append(html);
     };
 
+    // Use this if different buttons are desired than the default config. Config list
+    // provided must consist of this class' ButtonConfig properties, such as this.OpenButtonConfig.
+    this.SetButtonConfig = function (config_list) {
+        if (!Dash.Validate.Object(config_list)) {
+            return;
+        }
+
+        this.buttons = config_list;
+
+        var column_config = this.get_column_config(true);
+
+        if (this.list) {
+            this.list.SetColumnConfig(column_config);
+        }
+
+        this.redraw_rows();
+    };
+
+    this.CreateCustomButtonConfig = function (display_name, icon_name, callback, binder=null, right_margin=null, hover_text="") {
+        return {
+            "config_name": display_name,
+            "icon_name": icon_name,
+            "callback": binder ? callback.bind(binder) : callback,
+            "right_margin": right_margin || -Dash.Size.Padding * 0.25,
+            "hover_preview": hover_text
+        };
+    };
+
+    this.instantiate_button_configs = function () {
+        this.OpenButtonConfig = {
+            "config_name": "Open",
+            "icon_name": "link",
+            "callback": this.open_file,
+            "right_margin": -Dash.Size.Padding * 0.25,
+            "hover_preview": this.supports_desktop_client ?
+                "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
+                "View file in new browser tab"
+        };
+
+        this.UpdateContentButtonConfig = {
+            "config_name": "Update Content",
+            "icon_name": "sync",
+            "callback": this.update_file_content,
+            "right_margin": -Dash.Size.Padding * 0.25,
+            "hover_preview": "Upload an updated version of this file"
+        };
+
+        this.DownloadButtonConfig = {
+            "config_name": "Download",
+            "icon_name": "download_file",
+            "callback": this.download_file,
+            "right_margin": -Dash.Size.Padding * 0.5
+        };
+
+        this.DeleteButtonConfig = {
+            "config_name": "Delete",
+            "icon_name": "trash",
+            "callback": this.delete_file,
+            "right_margin": -Dash.Size.Padding
+        };
+    };
+
     this.show_subheader = function (text="") {
         if (!this.subheader) {
             this.add_subheader();
@@ -201,6 +262,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     };
 
     this.redraw_rows = function () {
+        if (!Dash.Validate.Object(this.files_data)) {
+            return;
+        }
+
         this.rows = {};
 
         if (this.list) {

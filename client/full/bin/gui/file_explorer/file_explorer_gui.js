@@ -89,10 +89,7 @@ function DashGuiFileExplorerGUI () {
 
         this.upload_button.SetFileUploader(
             this.api,
-            {
-                "f": "upload_file",
-                "parent_obj_id": this.parent_obj_id
-            },
+            this.upload_button_params,
             this.on_file_upload_started
         );
 
@@ -171,7 +168,11 @@ function DashGuiFileExplorerGUI () {
         }
     };
 
-    this.add_list = function () {
+    this.get_column_config = function (force=false) {
+        if (!force && this.column_config) {
+            return this.column_config;
+        }
+
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
 
@@ -207,29 +208,27 @@ function DashGuiFileExplorerGUI () {
 
         column_config.AddDivider(border_css);
 
-        for (var key in this.buttons) {
-            var name = key.Title();
-
+        for (var button_config of this.buttons) {
             column_config.AddColumn(
-                name,
+                button_config["config_name"],
                 "",
                 false,
                 Dash.Size.ColumnWidth * 0.15,
                 {
                     "type": "icon_button",
                     "options": {
-                        "icon_name": this.buttons[key]["icon_name"],
-                        "callback": this.buttons[key]["callback"],
+                        "icon_name": button_config["icon_name"],
+                        "callback": button_config["callback"],
                         "binder": this,
                         "color": this.color,
-                        "hover_text": this.buttons[key]["hover_preview"] || name,
+                        "hover_text": button_config["hover_preview"] || button_config["config_name"],
                         "options": {
                             "size_mult": 0.85
                         }
                     },
                     "css": {
                         "margin-left": Dash.Size.Padding,
-                        "margin-right": this.buttons[key]["right_margin"],
+                        "margin-right": button_config["right_margin"],
                         "margin-top": Dash.Size.Padding * 0.15,
                         "flex": "none"
                     }
@@ -237,13 +236,19 @@ function DashGuiFileExplorerGUI () {
             );
         }
 
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
+        this.column_config = column_config;
+
+        return column_config;
+    };
+
+    this.add_list = function () {
+        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
 
         this.list.DisableDividerColorChangeOnHover();
 
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
-            border_css
+            {"background": this.color.Pinstripe}
         );
 
         this.list.html.css({
