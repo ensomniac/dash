@@ -111,10 +111,6 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             return;
         }
 
-        if (!window.confirm(response["msg"] + "\n\nWould you like to open a new browser tab to view/download the file?")) {
-            return;
-        }
-
         this.open_file_in_browser_tab(file_data);
     };
 

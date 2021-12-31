@@ -1,4 +1,4 @@
-function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true) {
+function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -11,7 +11,6 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      *         - "upload_file":                    Upload a file
      *         - "delete_file":                    Delete a file
      *         - "set_file_property":              Set a property for a file with provided key/value
-     *         - "get_desktop_sessions":           Get all of the user's desktop sessions (includes active and last terminated)
      *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
      *
      * @param {DashColorSet} color - DashColorSet instance
@@ -19,6 +18,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
      * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
      * @param {boolean} supports_folders - Whether or not this context uses folders/subfolders
+     * @param {boolean} include_modified_keys_columns - Whether or not to include list columns for "modified_on" and "modified_by"
      */
 
     this.color = color || Dash.Color.Light;
@@ -26,6 +26,12 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
     this.supports_folders = supports_folders;
+    this.include_modified_keys_columns = include_modified_keys_columns;
+
+    // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
+    if (window.innerWidth < 1065) {
+        this.include_modified_keys_columns = false;
+    }
 
     this.rows = {};
     this.list = null;
@@ -324,13 +330,13 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
         var value = this.get_file_data(file_id)[key];
 
-        if (key === "uploaded_on") {
+        if (key === "uploaded_on" || key === "modified_on") {
             if (Dash.DT.IsIsoFormat(value)) {
                 return Dash.DT.Readable(value, false);
             }
         }
 
-        else if (key === "uploaded_by") {
+        else if (key === "uploaded_by" || key === "modified_by") {
             var user = Dash.User.Init["team"][value];
 
             if (user && user["display_name"]) {

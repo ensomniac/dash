@@ -188,6 +188,28 @@ function DashGuiFileExplorerGUI () {
         column_config.AddSpacer(true);
         column_config.AddDivider(border_css);
 
+        if (this.include_modified_keys_columns) {
+            column_config.AddColumn(
+                "Modified By",
+                "modified_by",
+                false,
+                Dash.Size.ColumnWidth * 0.7,
+                {"css": {"flex": "none"}}
+            );
+
+            column_config.AddDivider(border_css);
+
+            column_config.AddColumn(
+                "Modified On",
+                "modified_on",
+                false,
+                Dash.Size.ColumnWidth * 0.95,
+                {"css": {"flex": "none"}}
+            );
+
+            column_config.AddDivider(border_css);
+        }
+
         column_config.AddColumn(
             "Uploaded By",
             "uploaded_by",

@@ -246,12 +246,7 @@ class Users:
                 "error": "Incorrect login information",
                 "_error": f"email: {email}",
                 # "h": hashed_password,
-                "p": password,
-
-                # TESTING
-                "email": email,
-                "pass_path": pass_path,
-                "hash": hashed_password,
+                "p": password
             }
 
         from json import dumps
