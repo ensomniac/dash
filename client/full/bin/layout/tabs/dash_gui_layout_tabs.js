@@ -74,6 +74,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
 
         this.content_area.empty();
 
+        var inst_class;
         var content_html;
 
         if (typeof this.all_content[index]["content_div_html_class"] === "object") {
@@ -86,7 +87,6 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             // binding the callback correctly to the parent class
             // This is likely a very low impact change that *shouldn't* affect anything
 
-            var inst_class;
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
 
@@ -128,6 +128,14 @@ function DashGuiLayoutTabs (binder, side_tabs) {
 
         if (this.on_tab_changed_cb) {
             this.on_tab_changed_cb(this.all_content[index]);
+        }
+
+        if (this.all_content[index]["url_hash_text"]) {
+            Dash.History.TabAdd(
+                this.all_content[index]["url_hash_text"],
+                this,
+                index
+            );
         }
     };
 
@@ -183,31 +191,27 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         return image;
     };
 
-    this.Append = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.tab_top, optional_params);
+    this.Append = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_top, optional_params, additional_content_data);
     };
 
-    this.Midpend = function (label_text, content_div_html_class, optional_params) {
+    this.Midpend = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
         if (!this.side_tabs) {
-            console.log("Midpend only works for side tabs right now");
+            console.error("Error: Midpend only works for side tabs for now");
 
             return;
         }
 
-        return this._add(label_text, content_div_html_class, this.tab_middle, optional_params);
+        return this._add(label_text, content_div_html_class, this.tab_middle, optional_params, additional_content_data);
     };
 
-    this.Prepend = function (label_text, content_div_html_class, optional_params) {
-        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params);
+    this.Prepend = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params, additional_content_data);
     };
 
-    // A pretty cheap but flimsy hack to see if this is a function or a class that can be instantiated
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
 
-        // Ryan, this was failing for class abstractions such as DashUserView, which don't have 'setup_styles',
-        // so I added the backup check for 'html', as well as just adding 'this.' to both checks for good measure.
-        // I don't believe there are any non-classes that we've assigned 'this.html' to, but correct me if I'm wrong!
         return dummy.includes("this.setup_styles") || dummy.includes("this.html");
     };
 
@@ -328,12 +332,13 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.LoadIndex(last_index);
     };
 
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_params = {}) {
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_params={}, additional_content_data={}) {
         var content_data = {
             "label_text": label_text,
             "content_div_html_class": content_div_html_class,
             "button": null,
-            "optional_params": optional_params
+            "optional_params": optional_params,
+            ...additional_content_data  // Extra data that doesn't belong in optional_params (since optional_params gets sent to the callback)
         };
 
         (function (self, index) {
