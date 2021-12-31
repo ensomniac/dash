@@ -18607,6 +18607,9 @@ function DashTemp () {
 
 function DashValidate () {
     this.Response = function (response, show_alert=true) {
+        // Setting show_alert to false is best utilized for interval functions that may not need
+        // to alert when a single interval fails (from server updates, or any other reason) -
+        // in addition, you can track those interval failures in Dash.Requests (see TrackRequestFailureForID docstring)
         if (response && !response["error"]) {
             return response;
         }
@@ -19670,6 +19673,7 @@ function DashLocal () {
 
 function DashRequest () {
     this.requests = [];
+    this.request_failures = {};
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
             endpoint = endpoint.split("/").Last();
@@ -19706,9 +19710,40 @@ function DashRequest () {
         };
         this.post();
     }
+    this.TrackRequestFailureForID = function (req_id, max_allowed) {
+        /**
+         * This system (not in use by default) is a basic tracker for interval request failures, but it doesn't fully solve
+         * the problem of the portal knowing when updates have been pushed to the server and then needing to reload.
+         *
+         * Example usage:
+         *     if (!Dash.Validate.Response(response, false)) {  // Second param is "show_alert" (setting to false is key to this system)
+         *
+         *        // In this example, the requests are made every 5 seconds, so reload if still not resolved after 20 seconds (4 failures)
+         *        Dash.Requests.TrackRequestFailureForID(request_failure_id, 4)   // 'request_failure_id' is similar to a local storage key
+         *
+         *        return;
+         *     }
+         *
+         *     // If the request was successful, reset the failure tally
+         *     Dash.Requests.ResetRequestFailuresForID(request_failure_id);
+         */
+        if (!req_id in this.request_failures) {
+            this.request_failures[req_id] = 0;
+        }
+        this.request_failures[req_id] += 1;
+        if (this.request_failures[req_id] >= max_allowed) {
+            alert("The page must reload, sorry for the inconvenience.");
+            window.location.reload();
+        }
+        return this.request_failures[req_id];
+    };
+    // See docstring for TrackRequestFailureForID
+    this.ResetRequestFailuresForID = function (req_id) {
+        this.request_failures[req_id] = 0;
+    };
     this.on_no_further_requests_pending = function () {
         // Called when a request finishes, and there are no more requests queued
-        //console.log(">> on_no_further_requests_pending <<");
+        // console.log(">> on_no_further_requests_pending <<");
     };
     this.decompress_response = function (request, response) {
         // This is called immediately before returning a response that has been compressed with gzip
@@ -22442,6 +22477,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.desktop_client_name = "desktop";
     this.reset_upload_button_uploader = false;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.request_failure_id = "dash_gui_file_explorer_on_files_data";
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
     this.upload_button_params = {
         "f": "upload_file",
@@ -22978,9 +23014,13 @@ function DashGuiFileExplorerData () {
         this.get_order();
     };
     this.on_files_data = function (response) {
-        if (!Dash.Validate.Response(response)) {
+        if (!Dash.Validate.Response(response, false)) {
+            // The requests are made every 2.25 seconds, so if it's still not resolved after ~20
+            // seconds, the portal was updated or something is wrong - either way, need to reload.
+            Dash.Requests.TrackRequestFailureForID(this.request_failure_id, 9);
             return;
         }
+        Dash.Requests.ResetRequestFailuresForID(this.request_failure_id);
         if (!response["data"] || !response["order"]) {
             console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
             return;

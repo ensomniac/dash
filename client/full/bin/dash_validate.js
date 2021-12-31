@@ -1,5 +1,9 @@
 function DashValidate () {
     this.Response = function (response, show_alert=true) {
+        // Setting show_alert to false is best utilized for interval functions that may not need
+        // to alert when a single interval fails (from server updates, or any other reason) -
+        // in addition, you can track those interval failures in Dash.Requests (see TrackRequestFailureForID docstring)
+
         if (response && !response["error"]) {
             return response;
         }

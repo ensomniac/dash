@@ -92,9 +92,16 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_files_data = function (response) {
-        if (!Dash.Validate.Response(response)) {
+        if (!Dash.Validate.Response(response, false)) {
+
+            // The requests are made every 2.25 seconds, so if it's still not resolved after ~20
+            // seconds, the portal was updated or something is wrong - either way, need to reload.
+            Dash.Requests.TrackRequestFailureForID(this.request_failure_id, 9);
+
             return;
         }
+
+        Dash.Requests.ResetRequestFailuresForID(this.request_failure_id);
 
         if (!response["data"] || !response["order"]) {
             console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);

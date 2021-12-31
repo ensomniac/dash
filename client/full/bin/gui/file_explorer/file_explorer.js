@@ -51,6 +51,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.desktop_client_name = "desktop";
     this.reset_upload_button_uploader = false;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.request_failure_id = "dash_gui_file_explorer_on_files_data";
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
 
     this.upload_button_params = {
