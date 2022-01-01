@@ -12,18 +12,26 @@ function DashValidate () {
         this.handle_duplicate_callbacks_on_invalid_input();
 
         if (!response) {
-            console.error("(Dash.Validate.Response) No response received:", response);
-
             if (show_alert) {
+                console.error("(Dash.Validate.Response) No response received:", response);
+
                 alert("There was a server problem with this request:\nNo response received");
+            }
+
+            else {
+                console.warn("(Dash.Validate.Response) No response received:", response);
             }
         }
 
         else if (response["error"]) {
-            console.error("There was a server problem with this request:", response);
-
             if (show_alert) {
+                console.error("There was a server problem with this request:", response);
+
                 alert(response["error"]);
+            }
+
+            else {
+                console.warn("There was a server problem with this request:", response);
             }
         }
 
