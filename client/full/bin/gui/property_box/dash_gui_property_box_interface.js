@@ -50,7 +50,8 @@ function DashGuiPropertyBoxInterface () {
         return expander;
     };
 
-    this.AddHeader = function (label_text) {
+    this.AddHeader = function (label_text, update_key=null) {
+
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
 
@@ -61,7 +62,15 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(header);
         this.num_headers += 1;
 
+        if (update_key != null && this.get_data_cb) {
+            this.header_update_objects.push({
+                "obj": header_obj,
+                "update_key": update_key
+            });
+        };
+
         return header_obj;
+
     };
 
     this.AddButtonBar = function (label_text) {

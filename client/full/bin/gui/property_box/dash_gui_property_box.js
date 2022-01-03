@@ -15,6 +15,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.header_update_objects = [];
 
     DashGuiPropertyBoxInterface.call(this);
 
@@ -78,6 +79,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row_input.SetText(this.get_data_cb()[data_key]);
             }
         }
+
+        // Update headers...
+        for (var i = 0; i < this.header_update_objects.length; i++) {
+            this.header_update_objects[i]["obj"].SetText(
+                this.get_data_cb()[this.header_update_objects[i]["update_key"]]
+            );
+        };
+
     };
 
     this.on_server_property_set = function (property_set_data) {

@@ -24660,6 +24660,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.header_update_objects = [];
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         // DashGlobalImpactChange | 12/21/21 | Ryan
@@ -24710,6 +24711,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row_input.SetText(this.get_data_cb()[data_key]);
             }
         }
+        // Update headers...
+        for (var i = 0; i < this.header_update_objects.length; i++) {
+            this.header_update_objects[i]["obj"].SetText(
+                this.get_data_cb()[this.header_update_objects[i]["update_key"]]
+            );
+        };
     };
     this.on_server_property_set = function (property_set_data) {
         if (property_set_data["error"]) {
@@ -24937,7 +24944,7 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(expander);
         return expander;
     };
-    this.AddHeader = function (label_text) {
+    this.AddHeader = function (label_text, update_key=null) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
         if (this.num_headers > 0) {
@@ -24945,6 +24952,12 @@ function DashGuiPropertyBoxInterface () {
         }
         this.html.append(header);
         this.num_headers += 1;
+        if (update_key != null && this.get_data_cb) {
+            this.header_update_objects.push({
+                "obj": header_obj,
+                "update_key": update_key
+            });
+        };
         return header_obj;
     };
     this.AddButtonBar = function (label_text) {
