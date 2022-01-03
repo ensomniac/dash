@@ -12,6 +12,7 @@ function DashGuiHeader (label_text, color, include_border=true) {
         this.html.css({
             "height": Dash.Size.RowHeight,
             "margin-bottom": Dash.Size.Padding,
+            "cursor": "auto"
         });
 
         this.label.css({

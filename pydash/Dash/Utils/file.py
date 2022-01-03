@@ -15,7 +15,18 @@ from Dash.LocalStorage import Read, Write
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 
-def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]):
+# Using an existing path instead of file bytes is a way to spoof a copied file as an upload
+def Upload(
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
+        enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]
+):
+    if type(file_bytes_or_existing_path) is not bytes:
+        if type(file_bytes_or_existing_path) is not str:
+            raise Exception("Param 'file_bytes_or_existing_path' must be either bytes or string")
+
+        if not os.path.exists(file_bytes_or_existing_path):
+            raise Exception("When param 'file_bytes_or_existing_path' is a string, it must be an existing path")
+
     period_count = filename.count(".")
 
     if enforce_single_period:
@@ -40,7 +51,7 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, pa
     is_image = file_ext in ImageExtensions
 
     if is_image:
-        img, file_data = get_image_with_data(file_bytes, existing_data_for_update.get("orig_filename") or filename)
+        img, file_data = get_image_with_data(file_bytes_or_existing_path, existing_data_for_update.get("orig_filename") or filename)
     else:
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
@@ -53,9 +64,24 @@ def Upload(dash_context, user, file_root, file_bytes, filename, nested=False, pa
         file_data["parent_folders"] = parse_parent_folders(file_root, file_data["id"], parent_folders)
 
     if is_image:
-        file_data = update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=bool(existing_data_for_update))
+        file_data = update_data_with_saved_images(
+            file_data,
+            file_root,
+            file_ext,
+            img,
+            dash_context,
+            replace_existing=bool(existing_data_for_update)
+        )
+
     else:
-        file_data = update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context, replace_existing=bool(existing_data_for_update))
+        file_data = update_data_with_saved_file(
+            file_data,
+            file_root,
+            file_ext,
+            file_bytes_or_existing_path,
+            dash_context,
+            replace_existing=bool(existing_data_for_update)
+        )
 
     if enforce_unique_filename_key and not existing_data_for_update:
         file_data = EnsureUniqueFilename(file_data, file_root, nested, is_image)
@@ -202,14 +228,21 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes, filename):
+def get_image_with_data(file_bytes_or_existing_path, filename):
     from PIL import Image
-    from io import BytesIO
 
     # Allow large uploads, no concern for DecompressionBombError
     Image.MAX_IMAGE_PIXELS = None
 
-    img = Image.open(BytesIO(file_bytes))
+    img = None
+
+    if type(file_bytes_or_existing_path) is bytes:
+        from io import BytesIO
+
+        img = Image.open(BytesIO(file_bytes_or_existing_path))
+
+    elif type(file_bytes_or_existing_path) is str:
+        img = Image.open(file_bytes_or_existing_path)
 
     file_data = {
         "exif": process_exif_image_data(img),
@@ -250,13 +283,19 @@ def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_cont
     return file_data
 
 
-def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes, dash_context, replace_existing=False):
+def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_existing_path, dash_context, replace_existing=False):
     file_path = os.path.join(file_root, f"{file_data['id']}.{file_ext}")
 
     if replace_existing and os.path.exists(file_path):
         os.remove(file_path)
 
-    Write(file_path, file_bytes)
+    if type(file_bytes_or_existing_path) is bytes:
+        Write(file_path, file_bytes_or_existing_path)
+
+    elif type(file_bytes_or_existing_path) is str:
+        from shutil import copyfile
+
+        copyfile(file_bytes_or_existing_path, file_path)
 
     file_data["url"] = GetURL(dash_context, file_path)
 

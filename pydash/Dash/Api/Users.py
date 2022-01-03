@@ -15,6 +15,7 @@ class ApiUsers:
     RandomID: str
     Add: callable
     DashContext: dict
+    ParseParam: callable
     SetResponse: callable
 
     def __init__(self, execute_as_module, asset_path):
@@ -135,14 +136,9 @@ class ApiUsers:
         from Dash.Users import GetUserDataRoot
         from Dash.LocalStorage import Read, Write
 
-        user_data = self.Params.get("user_data") or self.User
+        self.ParseParam("user_data", dict, self.User)
 
-        if type(user_data) == str:  # Sent from the client
-            from json import loads
-
-            user_data = loads(user_data)
-
-        data_root = GetUserDataRoot(user_data["email"])
+        data_root = GetUserDataRoot(self.Params["user_data"]["email"])
         img_root = os.path.join(data_root, "img/")
         user_data_path = os.path.join(data_root, "usr.data")
         user_data = Read(user_data_path)

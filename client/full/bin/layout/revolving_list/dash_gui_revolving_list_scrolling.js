@@ -31,7 +31,7 @@ function DashGuiRevolvingListScrolling () {
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
 
-            if (!Dash.IsValidObject(expanded_data) || !expanded_data["preview_content"]) {
+            if (!Dash.Validate.Object(expanded_data) || !expanded_data["preview_content"]) {
                 continue;
             }
 
@@ -156,7 +156,7 @@ function DashGuiRevolvingListScrolling () {
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
 
-            if (!Dash.IsValidObject(expanded_data)) {
+            if (!Dash.Validate.Object(expanded_data)) {
                 return;
             }
 

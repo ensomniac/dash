@@ -1,6 +1,30 @@
 /**@member DashGuiFileExplorer*/
 
 function DashGuiFileExplorerData () {
+    this.open_file = function (file_id) {
+        this.loader.OpenFile(this.get_file_data(file_id));
+    };
+
+    this.update_file_content = function (file_id) {
+        if (!window.confirm(this.UpdateContentButtonConfig["hover_preview"] + "?")) {
+            return;
+        }
+
+        this.reset_upload_button_uploader = true;
+
+        // Hijack the main upload button's uploader
+        this.upload_button.SetFileUploader(
+            this.api,
+            {
+                ...this.upload_button_params,
+                "existing_id_to_update": file_id
+            },
+            this.on_file_upload_started
+        );
+
+        this.upload_button.file_uploader.html.trigger("click");
+    };
+
     this.delete_file = function (file_id) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
@@ -68,9 +92,16 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_files_data = function (response) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response, false)) {
+
+            // The requests are made every 2.25 seconds, so if it's still not resolved after ~20
+            // seconds, the portal was updated or something is wrong - either way, need to reload.
+            Dash.Requests.TrackRequestFailureForID(this.request_failure_id, 9);
+
             return;
         }
+
+        Dash.Requests.ResetRequestFailuresForID(this.request_failure_id);
 
         if (!response["data"] || !response["order"]) {
             console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
@@ -91,7 +122,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (Dash.IsValidObject(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+        if (Dash.Validate.Object(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
             return;
         }
 
@@ -116,7 +147,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
             return;
         }
 
@@ -132,7 +163,15 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_file_uploaded = function (data_key, additional_data, response) {
-        if (!response || response["originalEvent"]) {
+        if (this.reset_upload_button_uploader) {
+            this.upload_button.SetFileUploader(
+                this.api,
+                this.upload_button_params,
+                this.on_file_upload_started
+            );
+        }
+
+        if (!response || response["originalEvent"] || response["isTrigger"]) {
             return;
         }
 

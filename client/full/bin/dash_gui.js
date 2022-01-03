@@ -8,6 +8,7 @@ function DashGui() {
     this.FileExplorer                = DashGuiFileExplorer;
     this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
     this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
+    this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
     this.Header                      = DashGuiHeader;
     this.Icon                        = DashIcon;
     this.IconButton                  = DashGuiIconButton;
@@ -131,6 +132,21 @@ function DashGui() {
         return tip;
     };
 
+    this.GetFormContainer = function () {
+        var container = $("<div></div>");
+
+        container.css({
+            "background": ContainerColor,  // TODO: What is this meant to be?
+            "margin": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            "color": "rgba(0, 0, 0, 0.8)",
+            "border-radius": 6,
+        });
+
+        return container;
+    };
+
     this.GetFlexSpacer = function (flex_grow_value=2) {
         var html = $("<div></div>");
         
@@ -186,7 +202,7 @@ function DashGui() {
             });
         }
 
-        (function (self, icon_id, callback, data_key, additional_data, binder) {
+        return (function (self, icon_id, callback, data_key, additional_data, binder) {
             var button = new Dash.Gui.IconButton(
                 icon_id,
                 function (response) {
@@ -206,13 +222,11 @@ function DashGui() {
                 "z-index": 1
             });
 
-            self._tmp_button = button;
+            return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
-
-        return this._tmp_button;
     };
 
-    this.OpenFileURLDownloadDialog = function (url, filename) {
+    this.OpenFileURLDownloadDialog = function (url, filename, callback=null) {
         var dialog_id = "__dash_file_url_download_dialog";
 
         fetch(
@@ -245,9 +259,19 @@ function DashGui() {
                 window.URL.revokeObjectURL(url_pointer);
 
                 document.body.removeChild(dialog);
+
+                if (callback) {
+                    callback();
+                }
             }
         ).catch(
-            () => alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url)
+            () => {
+                if (callback) {
+                    callback();
+                }
+
+                alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url);
+            }
         );
     };
 

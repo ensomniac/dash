@@ -23,7 +23,6 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
             "color": this.color.Text,
-            "cursor": "pointer",
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
@@ -100,6 +99,10 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
         if (!this.column_config_data["on_click_callback"]) {
             return;
         }
+
+        this.html.css({
+            "cursor": "pointer"
+        });
 
         var binder = this.list.binder;
 

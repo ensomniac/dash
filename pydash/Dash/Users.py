@@ -246,12 +246,7 @@ class Users:
                 "error": "Incorrect login information",
                 "_error": f"email: {email}",
                 # "h": hashed_password,
-                "p": password,
-
-                # TESTING
-                "email": email,
-                "pass_path": pass_path,
-                "hash": hashed_password,
+                "p": password
             }
 
         from json import dumps
@@ -401,7 +396,7 @@ class Users:
                 obj_id=email,
             )
 
-        return user_data
+        return self.set_display_name(user_data)
 
     def get_user_init(self, email):
         if type(email) == bytes:
@@ -437,21 +432,23 @@ class Users:
         users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
 
         for user_email in os.listdir(users_root):
-            user_path = os.path.join(users_root, user_email, "usr.data")
-            user_data = LocalStorage.Read(user_path)
-
-            if user_data.get("first_name") and user_data.get("last_name"):
-                user_data["display_name"] = user_data["first_name"] + " " + user_data["last_name"]
-
-            elif user_data.get("first_name"):
-                user_data["display_name"] = user_data["first_name"]
-
-            else:
-                user_data["display_name"] = user_email
-
-            team[user_email] = user_data
+            team[user_email] = self.get_user_info(user_email)
 
         return team
+
+    # At some point, we may want to actually permanently include this key in the user data,
+    # which would also mean updating it anytime "first_name" and/or "last_name" are updated
+    def set_display_name(self, user_data):
+        if user_data.get("first_name") and user_data.get("last_name"):
+            user_data["display_name"] = user_data["first_name"] + " " + user_data["last_name"]
+
+        elif user_data.get("first_name"):
+            user_data["display_name"] = user_data["first_name"]
+
+        elif user_data.get("email"):
+            user_data["display_name"] = user_data["email"]
+
+        return user_data
 
     def get_token_data(self, token):
         from base64 import urlsafe_b64decode

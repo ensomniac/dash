@@ -19,14 +19,17 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 
 # ------------------------------------------------- FILE ----------------------------------------------------
-def UploadFile(dash_context, user, file_root, file_bytes, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]):
+def UploadFile(
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
+        enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]
+):
     from .file import Upload
 
     return Upload(
         dash_context=dash_context,
         user=user,
         file_root=file_root,
-        file_bytes=file_bytes,
+        file_bytes_or_existing_path=file_bytes_or_existing_path,
         filename=filename,
         nested=nested,
         parent_folders=parent_folders,
@@ -87,10 +90,10 @@ def GetRandomID():
     return GetRandomID()
 
 
-def Lerp(valA, valB, t):
+def Lerp(val_a, val_b, t):
     from .number import Lerp
 
-    return Lerp(valA, valB, t)
+    return Lerp(val_a, val_b, t)
 
 
 def InverseLerp(_min, _max, val, unclamped=False):

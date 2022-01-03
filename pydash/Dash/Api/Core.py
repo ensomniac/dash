@@ -151,7 +151,6 @@ class ApiCore:
             if falsy:
                 if param not in self.Params:
                     raise Exception(f"Missing param '{param}'")
-
             else:
                 if not self.Params.get(param):
                     raise Exception(f"Missing param '{param}'")
@@ -174,6 +173,18 @@ class ApiCore:
             self.dash_global.RequestData = params
         except:
             pass
+
+    def ParseParam(self, key, target_type, default_value=None):
+        if key in self._params:
+            if type(self._params[key]) is target_type:
+                return
+
+            self._params[key] = json.loads(self._params[key])
+        else:
+            if default_value is None:
+                return
+
+            self._params[key] = default_value
 
     def StopExecutionOnError(self, error):
         self._response["error"] = error
@@ -335,38 +346,43 @@ class ApiCore:
         except:
             self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
 
-    # TODO: Since class functions expect 'self' as the first variable,
-    #       Execute() should sit outside of this class and be a standalone function,
-    #  turning this:
+    # DEPRECATED:
+    #  Since class functions expect 'self' as the first variable, Execute() belongs outside of this class as a standalone function.
+    #
+    #  --Previous usage--
     #         if __name__ == "__main__":
     #             ApiCore.Execute(Desktop)
-    #  into this:
+    #
+    #  --New usage--
     #         if __name__ == "__main__":
     #             from Dash.Api.Core import Execute
     #             Execute(Desktop)
-
     def Execute(uninstantiated_class_ref):
-        """
-        This exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
+        Execute(uninstantiated_class_ref)
 
-        :param class uninstantiated_class_ref: Any uninstantiated class reference object to test
-        """
 
-        error = None
+def Execute(uninstantiated_class_ref):
+    """
+    This exists as a wrapper to cgi scripts using ApiCore and helps to catch common errors more flexibly.
 
-        try:
-            uninstantiated_class_ref()
+    :param class uninstantiated_class_ref: Any uninstantiated class reference object to test
+    """
 
-        except Exception as e:
-            error = {"error": f"{e}\n\nTraceback:\n{format_exc()}"}
+    error = None
 
-        except:
-            error = {"error": format_exc(), "script_execution_failed": True}
+    try:
+        uninstantiated_class_ref()
 
-        if error is not None:
-            print_json(error)
+    except Exception as e:
+        error = {"error": f"{e}\n\nTraceback:\n{format_exc()}"}
 
-        sys.exit()
+    except:
+        error = {"error": format_exc(), "script_execution_failed": True}
+
+    if error is not None:
+        print_json(error)
+
+    sys.exit()
 
 
 def get_response_status(response):

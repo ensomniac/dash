@@ -1,5 +1,6 @@
 function DashRequest () {
     this.requests = [];
+    this.request_failures = {};
 
     this.Request = function (binder, callback, endpoint, params) {
         if (endpoint.includes("/")) {
@@ -47,9 +48,47 @@ function DashRequest () {
         this.post();
     }
 
+    this.TrackRequestFailureForID = function (req_id, max_allowed) {
+        /**
+         * This system (not in use by default) is a basic tracker for interval request failures, but it doesn't fully solve
+         * the problem of the portal knowing when updates have been pushed to the server and then needing to reload.
+         *
+         * Example usage:
+         *     if (!Dash.Validate.Response(response, false)) {  // Second param is "show_alert" (setting to false is key to this system)
+         *
+         *        // In this example, the requests are made every 5 seconds, so reload if still not resolved after 20 seconds (4 failures)
+         *        Dash.Requests.TrackRequestFailureForID(request_failure_id, 4)   // 'request_failure_id' is similar to a local storage key
+         *
+         *        return;
+         *     }
+         *
+         *     // If the request was successful, reset the failure tally
+         *     Dash.Requests.ResetRequestFailuresForID(request_failure_id);
+         */
+
+        if (!req_id in this.request_failures) {
+            this.request_failures[req_id] = 0;
+        }
+
+        this.request_failures[req_id] += 1;
+
+        if (this.request_failures[req_id] >= max_allowed) {
+            alert("The page must reload, sorry for the inconvenience.");
+
+            window.location.reload();
+        }
+
+        return this.request_failures[req_id];
+    };
+
+    // See docstring for TrackRequestFailureForID
+    this.ResetRequestFailuresForID = function (req_id) {
+        this.request_failures[req_id] = 0;
+    };
+
     this.on_no_further_requests_pending = function () {
         // Called when a request finishes, and there are no more requests queued
-        //console.log(">> on_no_further_requests_pending <<");
+        // console.log(">> on_no_further_requests_pending <<");
     };
 
     this.decompress_response = function (request, response) {

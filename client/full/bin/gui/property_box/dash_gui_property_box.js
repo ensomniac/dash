@@ -1,10 +1,10 @@
-function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options) {
+function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options={}) {
     this.binder = binder;
     this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
     this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
-    this.options = options || {};
+    this.options = options;
 
     this.data = {};
     this.num_headers = 0;
@@ -33,8 +33,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         if (Dash.IsMobile) {
             this.setup_mobile_styles();
-        };
-
+        }
     };
 
     this.setup_mobile_styles = function () {
@@ -114,6 +113,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             "color": this.color.Text,
             "opacity": 0.6,
             "z-index": 1,
+            "cursor": "auto"
         });
 
         this.html.append(this.top_right_label);
@@ -179,7 +179,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         if (!this.buttons) {
             this.buttons = [];
-        };
+        }
 
         (function (self, row, callback, data_key) {
             var button = new Dash.Gui.IconButton(
@@ -208,7 +208,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         if (row.button) {
             row.button.html.css("margin-right", Dash.Size.RowHeight);
-        };
+        }
 
         return row;
     };
@@ -306,7 +306,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
 
     this.on_server_response = function (response, row_details, row_input) {
-        if (!Dash.ValidateResponse(response)) {
+        if (!Dash.Validate.Response(response)) {
 
             if (row_input) {
                 row_input.SetInputValidity(false);

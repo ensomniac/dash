@@ -1,6 +1,4 @@
-
-function DashAnimation() {
-
+function DashAnimation () {
     this.Curves = new DashAnimationCurves();
 
     this.Eval = function (curve, t) {
@@ -9,8 +7,9 @@ function DashAnimation() {
 
     this.Start = function (duration_ms, callback, curve=null) {
         var animation_set = new DashAnimationSet(duration_ms, callback, curve);
+
         animation_set.Start();
+
         return animation_set;
     };
-
-};
+}

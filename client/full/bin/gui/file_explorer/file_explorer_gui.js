@@ -2,16 +2,16 @@
 
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        var header = new Dash.Gui.Header("Files", this.color);
+        this.header = new Dash.Gui.Header("Files", this.color);
 
-        header.ReplaceBorderWithIcon("paperclip");
-        header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("paperclip");
+        this.header.icon.AddShadow();
 
-        header.html.css({
+        this.header.html.css({
             "margin-bottom": 0
         });
 
-        this.html.append(header.html);
+        this.html.append(this.header.html);
     };
 
     this.add_subheader = function () {
@@ -24,7 +24,8 @@ function DashGuiFileExplorerGUI () {
             "position": "absolute",
             "right": Dash.Size.Padding * 1.1,
             "top": Dash.Size.Padding * 4,
-            "z-index": 10000
+            "z-index": 10000,
+            ...this.subheader_styling
         });
 
         this.subheader.label.css({
@@ -46,14 +47,16 @@ function DashGuiFileExplorerGUI () {
             this.on_sort_changed
         );
 
-        this.add_combo_to_tool_row(
-            "Folders Display:",
-            [
-                {"id": "top", "label_text": "Top"},
-                {"id": "bottom", "label_text": "Bottom"}
-            ],
-            this.on_folder_display_changed
-        );
+        if (this.supports_folders) {
+            this.add_combo_to_tool_row(
+                "Folders Display:",
+                [
+                    {"id": "top", "label_text": "Top"},
+                    {"id": "bottom", "label_text": "Bottom"}
+                ],
+                this.on_folder_display_changed
+            );
+        }
 
         this.tool_row.html.css({
             "position": "absolute",
@@ -86,10 +89,7 @@ function DashGuiFileExplorerGUI () {
 
         this.upload_button.SetFileUploader(
             this.api,
-            {
-                "f": "upload_file",
-                "parent_obj_id": this.parent_obj_id
-            },
+            this.upload_button_params,
             this.on_file_upload_started
         );
 
@@ -138,10 +138,14 @@ function DashGuiFileExplorerGUI () {
     };
 
     this.draw_subfolders = function () {
+        if (!this.supports_folders) {
+            return;
+        }
+
         for (var file_id in this.files_data["data"]) {
             var parents = this.get_file_data(file_id)["parent_folders"];
 
-            if (!Dash.IsValidObject(parents)) {
+            if (!Dash.Validate.Object(parents)) {
                 continue;
             }
 
@@ -164,7 +168,11 @@ function DashGuiFileExplorerGUI () {
         }
     };
 
-    this.add_list = function () {
+    this.get_column_config = function (force=false) {
+        if (!force && this.column_config) {
+            return this.column_config;
+        }
+
         var column_config = new Dash.Gui.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
 
@@ -179,6 +187,28 @@ function DashGuiFileExplorerGUI () {
 
         column_config.AddSpacer(true);
         column_config.AddDivider(border_css);
+
+        if (this.include_modified_keys_columns) {
+            column_config.AddColumn(
+                "Modified By",
+                "modified_by",
+                false,
+                Dash.Size.ColumnWidth * 0.7,
+                {"css": {"flex": "none"}}
+            );
+
+            column_config.AddDivider(border_css);
+
+            column_config.AddColumn(
+                "Modified On",
+                "modified_on",
+                false,
+                Dash.Size.ColumnWidth * 0.95,
+                {"css": {"flex": "none"}}
+            );
+
+            column_config.AddDivider(border_css);
+        }
 
         column_config.AddColumn(
             "Uploaded By",
@@ -200,29 +230,27 @@ function DashGuiFileExplorerGUI () {
 
         column_config.AddDivider(border_css);
 
-        for (var key in this.buttons) {
-            var name = key.Title();
-
+        for (var button_config of this.buttons) {
             column_config.AddColumn(
-                name,
+                button_config["config_name"],
                 "",
                 false,
                 Dash.Size.ColumnWidth * 0.15,
                 {
                     "type": "icon_button",
                     "options": {
-                        "icon_name": this.buttons[key]["icon_name"],
-                        "callback": this.buttons[key]["callback"],
+                        "icon_name": button_config["icon_name"],
+                        "callback": button_config["callback"],
                         "binder": this,
                         "color": this.color,
-                        "hover_text": this.buttons[key]["hover_preview"] || name,
+                        "hover_text": button_config["hover_preview"] || button_config["config_name"],
                         "options": {
                             "size_mult": 0.85
                         }
                     },
                     "css": {
                         "margin-left": Dash.Size.Padding,
-                        "margin-right": this.buttons[key]["right_margin"],
+                        "margin-right": button_config["right_margin"],
                         "margin-top": Dash.Size.Padding * 0.15,
                         "flex": "none"
                     }
@@ -230,17 +258,19 @@ function DashGuiFileExplorerGUI () {
             );
         }
 
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, column_config, this.color);
+        this.column_config = column_config;
 
-        // this.list.html.css({
-        //     "background": "none"
-        // });
+        return column_config;
+    };
+
+    this.add_list = function () {
+        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
 
         this.list.DisableDividerColorChangeOnHover();
 
         this.list.AddHeaderRow(
             {"margin-left": Dash.Size.Padding * 2},
-            border_css
+            {"background": this.color.Pinstripe}
         );
 
         this.list.html.css({

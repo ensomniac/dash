@@ -38,7 +38,6 @@ function DashGuiListRow (list, row_id) {
         if (this.is_header) {
             this.column_box.css({
                 "background": this.color.AccentGood,
-                "pointer-events": "none",
                 "left": 0,
                 "right": 0,
                 "padding-left": Dash.Size.Padding,
@@ -70,8 +69,7 @@ function DashGuiListRow (list, row_id) {
 
             this.column_box.css({
                 "left": Dash.Size.Padding,
-                "right": Dash.Size.Padding,
-                "cursor": "pointer"
+                "right": Dash.Size.Padding
             });
         }
 
@@ -90,7 +88,8 @@ function DashGuiListRow (list, row_id) {
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            "min-height": Dash.Size.RowHeight
+            "min-height": Dash.Size.RowHeight,
+            "cursor": "pointer"  // This is changed in setup_columns(), if relevant
         });
 
         this.setup_columns();
@@ -180,7 +179,7 @@ function DashGuiListRow (list, row_id) {
         this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
 
         for (var type in this.columns) {
-            if (!Dash.IsValidObject(this.columns[type])) {
+            if (!Dash.Validate.Object(this.columns[type])) {
                 continue;
             }
 
@@ -297,7 +296,7 @@ function DashGuiListRow (list, row_id) {
             return;
         }
 
-        if (Dash.IsValidObject(this.tmp_css_cache)) {
+        if (Dash.Validate.Object(this.tmp_css_cache)) {
             this.tmp_css_cache.forEach(
                 function (entry) {
                     if (entry && entry["row"] && entry["row"].html && entry["css"]) {
@@ -344,7 +343,7 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
-        if (!this.columns || !Dash.IsValidObject(this.columns[type])) {
+        if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
             return;
         }
 
@@ -496,6 +495,8 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.setup_columns = function () {
+        var default_columns_only = true;
+
         for (var i in this.list.column_config.columns) {
             var column_config_data = this.list.column_config.columns[i];
 
@@ -508,21 +509,37 @@ function DashGuiListRow (list, row_id) {
             }
 
             else if (column_config_data["type"] === "combo") {
+                default_columns_only = false;
+
                 this.add_combo_column(column_config_data);
             }
 
             else if (column_config_data["type"] === "input") {
+                default_columns_only = false;
+
                 this.add_input_column(column_config_data);
             }
 
             else if (column_config_data["type"] === "icon_button") {
+                default_columns_only = false;
+
                 this.add_icon_button_column(column_config_data);
             }
 
             else {
+                if (column_config_data["on_click_callback"]) {
+                    default_columns_only = false;
+                }
+
                 this.add_default_column(column_config_data, i);
             }
         }
+
+        this.html.css({
+            // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
+            // The change only pertains to the row itself, and then each element controls their own cursor behavior.
+            "cursor": this.is_header ? "auto" : this.is_sublist ? "context-menu" : default_columns_only ? "pointer" : "cell"
+        });
     };
 
     this.setup_styles();
