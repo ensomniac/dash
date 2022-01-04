@@ -332,8 +332,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         var value = this.get_file_data(file_id)[key];
 
         if (key === "uploaded_on" || key === "modified_on") {
-            if (Dash.DT.IsIsoFormat(value)) {
-                return Dash.DT.Readable(value, false);
+            if (Dash.DateTime.IsIsoFormat(value)) {
+                return Dash.DateTime.Readable(value, false);
             }
         }
 

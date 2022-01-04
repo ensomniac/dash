@@ -210,8 +210,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
         var timestamp = this.iso_ts;
 
-        if (Dash.DT.IsIsoFormat(timestamp)) {
-            timestamp = Dash.DT.Readable(timestamp, false);
+        if (Dash.DateTime.IsIsoFormat(timestamp)) {
+            timestamp = Dash.DateTime.Readable(timestamp, false);
         }
 
         if (this.align_right) {

@@ -6,6 +6,8 @@ function DashHistory () {
     this.last_added_hash_text = "";
     this.skip_hash_change_event = false;
 
+    // TODO: At some point, extra consideration should be added for "inactive" tabs
+
     // Use for any GUI elements that are explicitly loaded/instantiated by a specific function/callback
     // (This is also useful when you have a tab layout within a tab layout, like a top tab in the content
     // area of a side tab, and you need to first load the side tab index before loading the top tab index)

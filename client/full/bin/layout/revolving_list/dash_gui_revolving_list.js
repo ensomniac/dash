@@ -88,6 +88,42 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         }
     };
 
+    this.RemoveRow = function (row_id) {
+        if (!Dash.Validate.Object(this.included_row_ids) || !row_id) {
+            return;
+        }
+
+        this.included_row_ids.splice(this.included_row_ids.indexOf(row_id), 1);
+
+        this.Draw(this.included_row_ids);
+    };
+
+    this.AddRow = function (row_id, top=false) {
+        if (!row_id) {
+            return;
+        }
+
+        if (top) {
+            this.included_row_ids.push(row_id);
+        }
+
+        else {
+            this.included_row_ids.unshift(row_id);
+        }
+
+        this.Draw(this.included_row_ids);
+    };
+
+    this.UpdateRow = function (row_id) {
+        var row = this.get_row(row_id);
+
+        if (!row) {
+            return;
+        }
+
+        row.Update();
+    };
+
     this.Draw = function (row_ids_to_include=[]) {
         this.expanded_ids = {};
         this.included_row_ids = row_ids_to_include;
@@ -100,6 +136,20 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         }
 
         this.on_view_scrolled();
+    };
+
+    this.get_row = function (row_id) {
+        if (!Dash.Validate.Object(this.row_objects) || !row_id) {
+            return;
+        }
+
+        for (var row of this.row_objects) {
+            if (row.ID() === row_id) {
+                return row;
+            }
+        }
+
+        return null;
     };
 
     this.add_header_row = function () {

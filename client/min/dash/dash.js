@@ -17749,13 +17749,13 @@ function Dash () {
     this.height = 0;
     this.html = $("<div></div>");
     this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5 minute background update interval
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     this.Local            = new DashLocal();
     this.Math             = new DashMath();
     this.Temp             = new DashTemp();
     this.Validate         = new DashValidate();
-    this.DT               = new DashDT();
+    this.DateTime         = new DashDateTime();
     this.Color            = new DashColor();
     this.Color.Set        = DashColorSet;
     this.Color.ButtonSet  = DashColorButtonSet;
@@ -17778,9 +17778,9 @@ function Dash () {
     this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
     // Prevent older projects from not breaking due to these having been moved
     this.RandomID         = this.Math.RandomID.bind(this.Math);
-    this.ReadableDateTime = this.DT.Readable.bind(this.DT);
-    this.IsServerIsoDate  = this.DT.IsIsoFormat.bind(this.DT);
-    this.FormatTime       = this.DT.FormatTime.bind(this.DT);
+    this.ReadableDateTime = this.DateTime.Readable.bind(this.DateTime);
+    this.IsServerIsoDate  = this.DateTime.IsIsoFormat.bind(this.DateTime);
+    this.FormatTime       = this.DateTime.FormatTime.bind(this.DateTime);
     this.GetFormContainer = this.Gui.GetFormContainer.bind(this.Gui);
     this.IsValidEmail     = this.Validate.Email.bind(this.Validate);
     this.IsValidObject    = this.Validate.Object.bind(this.Validate);
@@ -17821,7 +17821,7 @@ function Dash () {
         // will not work effectively. Instead, you must use Object.defineProperty,
         // or defineProperties, as in the example for Array.prototype.Last below.
         // When extending an Object type in the incorrect way above, it
-        // technically work and you can successfully call the new function.
+        // technically works, and you can successfully call the new function.
         // However, doing it that way makes the newly created function
         // enumerable, which breaks any and all enumerations of the extended
         // object type. For example, if you loop through an Array like this:
@@ -17983,7 +17983,7 @@ $(document).on("ready", function () {
     }
 });
 
-function DashDT () {
+function DashDateTime () {
     this.server_offset_hours = 5;
     this.Readable = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
@@ -18613,6 +18613,7 @@ function DashHistory () {
     this.last_new_url = null;
     this.last_added_hash_text = "";
     this.skip_hash_change_event = false;
+    // TODO: At some point, extra consideration should be added for "inactive" tabs
     // Use for any GUI elements that are explicitly loaded/instantiated by a specific function/callback
     // (This is also useful when you have a tab layout within a tab layout, like a top tab in the content
     // area of a side tab, and you need to first load the side tab index before loading the top tab index)
@@ -22903,8 +22904,8 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         }
         var value = this.get_file_data(file_id)[key];
         if (key === "uploaded_on" || key === "modified_on") {
-            if (Dash.DT.IsIsoFormat(value)) {
-                return Dash.DT.Readable(value, false);
+            if (Dash.DateTime.IsIsoFormat(value)) {
+                return Dash.DateTime.Readable(value, false);
             }
         }
         else if (key === "uploaded_by" || key === "modified_by") {
@@ -24100,8 +24101,8 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             value = JSON.stringify(value);
         }
         // Initial value is ISO datetime string
-        if (Dash.DT.IsIsoFormat(value)) {
-            value = Dash.DT.Readable(value);
+        if (Dash.DateTime.IsIsoFormat(value)) {
+            value = Dash.DateTime.Readable(value);
         }
         // Initial value is team member email
         else if (Dash.Validate.Email(value) && !(this.data_key.includes("email"))) {
@@ -25136,8 +25137,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             "font-size": (Dash.Size.Padding * 1.2) + "px"
         };
         var timestamp = this.iso_ts;
-        if (Dash.DT.IsIsoFormat(timestamp)) {
-            timestamp = Dash.DT.Readable(timestamp, false);
+        if (Dash.DateTime.IsIsoFormat(timestamp)) {
+            timestamp = Dash.DateTime.Readable(timestamp, false);
         }
         if (this.align_right) {
             this.iso_ts_label = Dash.Gui.GetHTMLContext(
@@ -27911,7 +27912,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.setup_styles();
 }
 
-function DashGuiList (binder, selected_callback, column_config, color) {
+function DashGuiList (binder, selected_callback, column_config, color=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
@@ -28001,8 +28002,8 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
     };
     this.Update = function () {
-        for (var i in this.rows) {
-            this.rows[i].Update();
+        for (var row of this.rows) {
+            row.Update();
         }
     };
     this.Clear = function () {
@@ -29004,6 +29005,32 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
             this.Draw(row_ids_to_include);
         }
     };
+    this.RemoveRow = function (row_id) {
+        if (!Dash.Validate.Object(this.included_row_ids) || !row_id) {
+            return;
+        }
+        this.included_row_ids.splice(this.included_row_ids.indexOf(row_id), 1);
+        this.Draw(this.included_row_ids);
+    };
+    this.AddRow = function (row_id, top=false) {
+        if (!row_id) {
+            return;
+        }
+        if (top) {
+            this.included_row_ids.push(row_id);
+        }
+        else {
+            this.included_row_ids.unshift(row_id);
+        }
+        this.Draw(this.included_row_ids);
+    };
+    this.UpdateRow = function (row_id) {
+        var row = this.get_row(row_id);
+        if (!row) {
+            return;
+        }
+        row.Update();
+    };
     this.Draw = function (row_ids_to_include=[]) {
         this.expanded_ids = {};
         this.included_row_ids = row_ids_to_include;
@@ -29013,6 +29040,17 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
             this.container.append(row.html);
         }
         this.on_view_scrolled();
+    };
+    this.get_row = function (row_id) {
+        if (!Dash.Validate.Object(this.row_objects) || !row_id) {
+            return;
+        }
+        for (var row of this.row_objects) {
+            if (row.ID() === row_id) {
+                return row;
+            }
+        }
+        return null;
     };
     this.add_header_row = function () {
         if (!this.include_header_row) {

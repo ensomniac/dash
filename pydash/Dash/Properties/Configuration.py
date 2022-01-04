@@ -111,15 +111,13 @@ class Configuration:
 
             self.set_combo_id(obj_id, value)
 
-        result = LocalStorage.SetProperty(
+        return LocalStorage.SetProperty(
             dash_context=self.DashContext,
             store_path=self.StorePath,
             obj_id=obj_id,
             key=key,
             value=value
         )
-
-        return result
 
     def Delete(self, obj_id):
         delete_result = LocalStorage.Delete(

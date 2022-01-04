@@ -136,8 +136,8 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         }
 
         // Initial value is ISO datetime string
-        if (Dash.DT.IsIsoFormat(value)) {
-            value = Dash.DT.Readable(value);
+        if (Dash.DateTime.IsIsoFormat(value)) {
+            value = Dash.DateTime.Readable(value);
         }
 
         // Initial value is team member email
