@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Altona 2021 Ryan Martin, ryan@ensomniac.com
+# Altona 2022 Ryan Martin, ryan@ensomniac.com
 #             Andrew Stet, stetandrew@gmail.com
 
 import os
