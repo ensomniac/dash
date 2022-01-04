@@ -86,6 +86,16 @@ function DashHistory () {
             window.addEventListener(
                 "hashchange",
                 function (event) {  // Don't break out this function, this particular code must stay here
+                    var hash = self.get_hash_from_url(event.newURL);
+
+                    if (!hash) {
+                        if (self.skip_hash_change_event) {
+                            self.skip_hash_change_event = false;
+                        }
+
+                        return;
+                    }
+
                     var previous_old_url = self.last_old_url;
                     var previous_new_url = self.last_new_url;
 
@@ -102,7 +112,7 @@ function DashHistory () {
                         return;  // Duplicate event
                     }
 
-                    console.log("Loading URL hash from history:", self.get_hash_from_url(event.newURL));
+                    console.log("Loading URL hash from history:", hash);
 
                     self.on_hash_change(event);
                 },
@@ -112,6 +122,10 @@ function DashHistory () {
     };
 
     this.get_hash_from_url = function (url) {
+        if (!url.includes("#")) {
+            return "";
+        }
+
         return url.split("#").Last() || "";
     };
 
