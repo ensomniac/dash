@@ -10,7 +10,7 @@ import sys
 def SendEmail(subject, notify_email_list=[], msg="", error="", sender="ryan@ensomniac.com", sender_name="Dash"):
     from . import OapiRoot
 
-    # This is a temporary stop until we setup Dash to be able to always run this, regardless of server
+    # This is a temporary stop until we set up Dash to be able to always run this, regardless of server
     if not os.path.exists(OapiRoot):
         raise Exception("The Mail Module can currently only run directly from the server.")
 

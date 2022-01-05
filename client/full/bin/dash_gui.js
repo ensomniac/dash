@@ -347,7 +347,7 @@ function DashGui() {
     this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms, text_getter=null) {
         if (override_element) {
             // Override element is intended to NOT show the tooltip under the below defined
-            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+            // circumstances. These will be unique depending on the element - expand as needed.
 
             if (override_element instanceof DashGuiListRow) {
                 if (override_element.IsExpanded()) {
@@ -394,7 +394,7 @@ function DashGui() {
     this.tooltip_on_hover_out = function (tooltip, override_element, timer) {
         if (override_element && !tooltip.is(":visible")) {
             // Override element is intended to NOT show the tooltip under the below defined
-            // circumstances. These will be somewhat unique depending on the element - expand as needed.
+            // circumstances. These will be unique depending on the element - expand as needed.
 
             if (override_element instanceof DashGuiListRow) {
                 if (override_element.IsExpanded()) {

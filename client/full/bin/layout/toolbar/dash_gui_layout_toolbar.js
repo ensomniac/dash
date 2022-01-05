@@ -89,7 +89,7 @@ function DashGuiLayoutToolbar (binder, color) {
             var html = this.objects[i]["html_elem"];
 
             if (i == this.objects.length-1) {
-                // This is the last element and it gets no right-margin
+                // This is the last element, and it gets no right-margin
                 //since the toolbar itself has a margin built in to the left and right
                 html.css({"margin-right": 0, "margin-left": 0});
             }

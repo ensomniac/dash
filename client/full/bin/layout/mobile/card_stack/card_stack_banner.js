@@ -63,7 +63,7 @@ function DashCardStackBanner (stack) {
 
             return;
 
-        };
+        }
 
         if (html_color_or_url.includes("http")) {
             this.background_skirt.css({
@@ -79,7 +79,7 @@ function DashCardStackBanner (stack) {
                 "display": "block",
                 "background": html_color_or_url,
             });
-        };
+        }
 
     };
 
@@ -118,13 +118,13 @@ function DashCardStackBanner (stack) {
         var scroll_norm = 1; // Scrolled past the banner
         if (scroll_top <= scroll_max) {
             scroll_norm = scroll_top / scroll_max;
-        };
+        }
 
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
 
         if (this.footer_row) {
             footer_row_height = this.footer_row.row_height;
-        };
+        }
 
         // var scroll_norm = scroll_top / current_height;
         var max_offset = current_height + footer_row_height;
@@ -133,11 +133,11 @@ function DashCardStackBanner (stack) {
         if (this.headline) {
             headline_offset = this.headline.GetHeight();
             this.headline.OnScroll(scroll_norm);
-        };
+        }
 
         if (this.footer_row) {
             this.footer_row.OnScroll(scroll_norm, headline_offset);
-        };
+        }
 
         if (this.background_skirt) {
             var shadow_opacity = 0.7*scroll_norm;
@@ -145,7 +145,7 @@ function DashCardStackBanner (stack) {
                 "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
                 "box-shadow": "0px 0px 40px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
             });
-        };
+        }
 
     };
 
@@ -154,7 +154,7 @@ function DashCardStackBanner (stack) {
         if (this.header_row) {
             // Header already exists
             return;
-        };
+        }
 
         this.header_row = new DashCardStackBannerTopButtonRow(this);
         this.content.prepend(this.header_row.html);
@@ -167,7 +167,7 @@ function DashCardStackBanner (stack) {
         if (this.footer_row) {
             // Footer already exists
             return;
-        };
+        }
 
         this.footer_row = new DashCardStackBannerFooterButtonRow(this);
         this.content.append(this.footer_row.html);
@@ -211,7 +211,7 @@ function DashCardStackBanner (stack) {
             // top button row when there is no footer
             bottom_margin = Dash.Size.ButtonHeight;
             this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
-        };
+        }
 
         if (this.header_row && this.footer_row) {
 
@@ -227,7 +227,7 @@ function DashCardStackBanner (stack) {
             this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
             this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
 
-        };
+        }
 
         if (!this.header_row && this.footer_row) {
 
@@ -246,12 +246,12 @@ function DashCardStackBanner (stack) {
             this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
             this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
 
-        };
+        }
 
         if (mode == this.last_sizing_mode) {
             // Correct properties are already set
             return;
-        };
+        }
 
         this.headline.SetTopBottomMargins(
             headline_top_margin,
@@ -272,4 +272,4 @@ function DashCardStackBanner (stack) {
 
     this.setup_styles();
 
-};
+}

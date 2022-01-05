@@ -102,7 +102,7 @@ function DashCardStackBannerTopButtonRow (banner) {
 
             this.left_icon_callback();
 
-        };
+        }
 
     };
 
@@ -121,7 +121,7 @@ function DashCardStackBannerTopButtonRow (banner) {
             })(this);
 
             this.right_icon_callback();
-        };
+        }
 
     };
 
@@ -153,4 +153,4 @@ function DashCardStackBannerTopButtonRow (banner) {
 
     this.setup_styles();
 
-};
+}

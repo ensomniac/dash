@@ -11,7 +11,7 @@
 |     from Dash.Utils import ClientAlert
 |
 | It may make more sense to instead import them from something like
-  Dash.Errors, but since this file is so small and it's not going to
+  Dash.Errors, but since this file is so small, and it's not going to
   ever be much of a module, I figured this was a more appropriate place.
 """
 
@@ -19,7 +19,7 @@ import os
 import sys
 
 
-class _dash_error(Exception):
+class _DashError(Exception):
     """
     Base class for other errors to inherit from, in case we want to add shared functionality.
     """
@@ -27,7 +27,7 @@ class _dash_error(Exception):
     pass
 
 
-class ClientAlert(_dash_error):
+class ClientAlert(_DashError):
     """
     | **This should not be used for errors that we need to know about or get alerts/emails for.**
     |

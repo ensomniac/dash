@@ -23,4 +23,4 @@ function DashGuiLayout () {
     this.Mobile.CardStack = DashMobileLayoutCardStack;
     this.Mobile.UserProfile = DashMobileLayoutUserProfile;
 
-};
+}

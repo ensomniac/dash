@@ -91,8 +91,12 @@ def Upload(
     return file_data
 
 
-def GetURL(dash_context, server_file_path):
+def GetURLFromPath(dash_context, server_file_path):
     return f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
+
+
+def GetPathFromURL(dash_context, server_file_url):
+    return os.path.join(dash_context["srv_path_http_root"], server_file_url.replace(f"https://{dash_context['domain']}", ""))
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):
@@ -272,9 +276,9 @@ def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_cont
     img = save_images(img, file_path, thumb_path, thumb_square_path)
 
     file_data.update({
-        "orig_url": GetURL(dash_context, file_path),
-        "thumb_url": GetURL(dash_context, thumb_path),
-        "thumb_sq_url": GetURL(dash_context, thumb_square_path),
+        "orig_url": GetURLFromPath(dash_context, file_path),
+        "thumb_url": GetURLFromPath(dash_context, thumb_path),
+        "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path),
         "width": img.size[0],
         "height": img.size[1],
         "aspect": img.size[0] / float(img.size[1])
@@ -297,13 +301,13 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
 
         copyfile(file_bytes_or_existing_path, file_path)
 
-    file_data["url"] = GetURL(dash_context, file_path)
+    file_data["url"] = GetURLFromPath(dash_context, file_path)
 
     if file_ext in ModelExtensions:
         glb_path = convert_model_to_glb(file_ext, file_path, replace_existing=replace_existing)
 
         if os.path.exists(glb_path):
-            file_data["glb_url"] = GetURL(dash_context, glb_path)
+            file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
 
     return file_data
 

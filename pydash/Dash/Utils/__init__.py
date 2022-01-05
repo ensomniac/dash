@@ -46,10 +46,16 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
     return EnsureUniqueFilename(file_data, file_root, nested, is_image)
 
 
-def GetFileURL(dash_context, server_file_path):
-    from .file import GetURL
+def GetFileURLFromPath(dash_context, server_file_path):
+    from .file import GetURLFromPath
 
-    return GetURL(dash_context, server_file_path)
+    return GetURLFromPath(dash_context, server_file_path)
+
+
+def GetFilePathFromURL(dash_context, server_file_url):
+    from .file import GetPathFromURL
+
+    return GetPathFromURL(dash_context, server_file_url)
 
 
 def GetImageExtensions():

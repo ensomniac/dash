@@ -18,7 +18,7 @@ class _SyncUtils:
         from json import loads
         from requests import post
 
-        # Get all active packages for the logged in user
+        # Get all active packages for the logged-in user
         dash_data_path = os.path.join(expanduser("~"), ".dash")
 
         if not os.path.exists(dash_data_path):

@@ -27,10 +27,11 @@ class SharedProperty:
         self._property_set_key = property_set_key
 
     def ToDict(self):
-        data = {}
-        data["display_name"] = self._display_name
-        data["key"] = self._key
-        data["prop_type"] = self._prop_type.ToDict()
+        data = {
+            "display_name": self._display_name,
+            "key": self._key,
+            "prop_type": self._prop_type.ToDict()
+        }
 
         if self._min_value is not None:
             data["min_value"] = self._min_value

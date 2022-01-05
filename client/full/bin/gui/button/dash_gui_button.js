@@ -23,7 +23,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
     DashGuiButtonInterface.call(this);
 
     this.initialize_style = function () {
-        // Toss a warning if this isn't a known style so we don't fail silently
+        // Toss a warning if this isn't a known style, so we don't fail silently
         this.styles = ["default", "toolbar", "tab_top", "tab_side"];
 
         if (!this.styles.includes(this.style)) {

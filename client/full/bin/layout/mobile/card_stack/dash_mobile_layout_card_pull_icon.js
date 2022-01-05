@@ -30,7 +30,7 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
         if (this.icon_name) {
             this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
             this.html.append(this.icon.html);
-        };
+        }
 
     };
 
@@ -39,11 +39,11 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
 
         if (this.IsTriggered && norm_t < 0.4) {
             this.IsTriggered = false;
-        };
+        }
 
         if (!this.icon) {
             return;
-        };
+        }
 
         var px_pulled = Dash.Math.Lerp(0, $(window).width(), norm_t);
         var px_max = this.size + (Dash.Size.Padding*0.5);
@@ -55,7 +55,7 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
         }
         else {
             norm_t = Dash.Math.InverseLerp(0.0, px_max, px_pulled);
-        };
+        }
 
         this.html.css({
             "opacity": norm_t,
@@ -66,4 +66,4 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
 
     this.setup_styles();
 
-};
+}

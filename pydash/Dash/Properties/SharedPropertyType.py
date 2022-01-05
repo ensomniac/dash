@@ -51,11 +51,10 @@ class SharedPropertyType:
         return self._property_set_key
 
     def ToDict(self):
-        data = {}
-        data["display_name"] = self._display_name
-        data["asset_path"] = self._asset_path
-
-        return data
+        return {
+            "display_name": self._display_name,
+            "asset_path": self._asset_path
+        }
 
     def Validate(self, value, config_module):
         return {"error": f"No validation data for property type: {self.AssetPath}"}

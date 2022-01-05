@@ -1,4 +1,4 @@
-function DashGuiLoadDots (size, color) {
+function DashGuiLoadDots (size=null, color=null) {
     this.size = size || Dash.Size.RowHeight;
     this.color = color || Dash.Color.Light;
 

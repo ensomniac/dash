@@ -68,7 +68,7 @@ class CSV:
     def Import(self):
         """
         This should only need to handle actually importing the file.
-        Data management after the fact should be handled outside of this script.
+        Data management after the fact should be handled outside this script.
 
         :return: Imported CSV path.
         :rtype: str

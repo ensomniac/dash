@@ -76,7 +76,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     };
 
     this.set_pdf_preview = function () {
-        this.html = $("<object data='" + this.file_url + "'/>");
+        this.html = $("<object data='" + this.file_url + "'></object>");
     };
 
     this.set_plain_text_preview = function () {
@@ -91,7 +91,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
             "background": Dash.Color.Light.Background  // This is deliberate
         });
 
-        this.html.append($("<object data='" + this.file_url + "'/>"));
+        this.html.append($("<object data='" + this.file_url + "'></object>"));
     };
 
     this.set_image_preview = function () {

@@ -116,7 +116,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         );
 
         if (fire_callback) {
-            this.add_msg_callback(text, message.ID(), user_email);
+            if (this.add_msg_callback) {
+                this.add_msg_callback(text, message.ID(), user_email);
+            }
+
             this.handle_mentions(text, message);
         }
 
@@ -219,7 +222,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             }
         }
 
-        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp(), message_obj.UserEmail());
+        if (this.mention_callback) {
+            this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp(), message_obj.UserEmail());
+        }
     };
 
     this.bold_mentions = function (text, track=false) {
@@ -392,7 +397,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             }
         }
 
-        this.del_msg_callback(message);
+        if (this.del_msg_callback) {
+            this.del_msg_callback(message);
+        }
     };
 
     this.add_message_from_input = function () {

@@ -56,7 +56,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         });
 
         this.input.input.css({
-            "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element and it was bleeding outside of its html container
+            "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element, and it was bleeding outside its html container
         });
 
         this.input.DisableBlurSubmit();

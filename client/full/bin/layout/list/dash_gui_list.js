@@ -179,7 +179,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         }
     };
 
-    // This is handy so you can re-expand previously expanded rows after a list clear or list refresh
+    // This is handy, so you can re-expand previously expanded rows after a list clear or list refresh
     this.GetExpandedRowIDs = function () {
         if (!this.rows) {
             return;

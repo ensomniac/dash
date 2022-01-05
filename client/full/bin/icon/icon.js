@@ -1,8 +1,8 @@
-function DashIcon (color, icon_name, container_size, icon_size_mult, icon_color=null) {
+function DashIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
     this.color = color || Dash.Color.Light;
-    this.name = icon_name || "unknown";
+    this.name = icon_name;
     this.size = container_size || Dash.Size.RowHeight;
-    this.size_mult = icon_size_mult || 1;
+    this.size_mult = icon_size_mult;
     this.icon_color = icon_color || this.color.Button.Background.Base;
 
     this.theme = "light";

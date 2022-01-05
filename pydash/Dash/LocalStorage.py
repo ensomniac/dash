@@ -20,7 +20,7 @@ class DashLocalStorage:
         Utility for reading, writing and maintaining common data.
 
         :param dash_context: Dash Context (default=None)
-        :param str store_path: users, packages, jobs, etc (default="")
+        :param str store_path: users, packages, jobs, etc. (default="")
         :param bool nested: If True, core record is considered data.json in a directory named after the ID (default=False)
         :param str sort_by_key: dict key to sort the ordered data by (default="")
         :param list filter_out_keys: dict keys to filter out of each final data object (default=[])
@@ -322,7 +322,7 @@ class DashLocalStorage:
 
         og_keys_to_sort = keys_to_sort.copy()
 
-        # Check if all keys are ints so we can sort accordingly
+        # Check if all keys are ints, so we can sort accordingly
         for index, key in enumerate(keys_to_sort):
             try:
                 if len(key) > 1 and key.startswith("0") and key.endswith("0"):
@@ -360,7 +360,7 @@ class DashLocalStorage:
     def get_data_root(self, obj_id_email):
         """
         Nearly identical to self.get_store_root, but returns slightly
-        different paths depending on whether or not the record is nested
+        different paths depending on whether the record is nested
         """
 
         if not self.nested:

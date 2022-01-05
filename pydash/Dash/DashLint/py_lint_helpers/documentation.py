@@ -54,7 +54,7 @@ class PyDoc:
         | - All docstrings should include a description, of one line or more, first.
         | - If desired, description lines can be separated by line breaks by adding "|" followed by a space,
           to the front of the description line, preceding any of the main description line's text.
-        | - The main description (this block) should be separated from the params etc by a single line break.
+        | - The main description (this block) should be separated from the params etc. by a single line break.
         | - Descriptions should be followed by params and return descriptions, if applicable.
         | - Return descriptions can be an explainer, or simply state the variable being returned.
         |
@@ -413,7 +413,7 @@ class PyDoc:
         for block_line in reversed(self.source_code[line_index:(self.current_block_end_index + 1)]):
 
             # Ryan - the space in "return " below is intentional, please don't change
-            # If it is triggering an error, please give me the details so I
+            # If it is triggering an error, please give me the details, so I
             # can debug that fringe case and rework this if needed, thanks!
             if block_line.strip().startswith("return ") and len(block_line.split("return ")[1].strip()):
                 return_statements += 1

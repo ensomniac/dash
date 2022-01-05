@@ -59,7 +59,7 @@ function DashMobileLayoutCard (stack) {
 
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
-        };
+        }
 
         this.left_pull_icon = icon;
 
@@ -108,7 +108,7 @@ function DashMobileLayoutCard (stack) {
 
         if (this.left_pull_area) {
             return;
-        };
+        }
 
         this.left_pull_area = new DashMobileLayoutCardPullIcon(this, this.left_pull_icon);
         this.right_pull_area = new DashMobileLayoutCardPullIcon(this, this.right_pull_icon);
@@ -161,7 +161,7 @@ function DashMobileLayoutCard (stack) {
         for (var i in event.originalEvent["changedTouches"]) {
             var touch = event.originalEvent["changedTouches"][i];
             return [touch.clientX, touch.clientY];
-        };
+        }
 
         return null;
 
@@ -170,11 +170,11 @@ function DashMobileLayoutCard (stack) {
     this.on_drag_start = function (event) {
         if (this.pull_active || this.restoring_pull) {
             return;
-        };
+        }
 
         if (!this.slider) {
             this.setup_slider();
-        };
+        }
 
         this.position_pull_icons();
 
@@ -193,12 +193,12 @@ function DashMobileLayoutCard (stack) {
             this.pull_active["touch_now_y"] = touch.clientY;
             touch_found = true;
             break;
-        };
+        }
 
         if (!touch_found) {
             this.pull_active = null;
             return;
-        };
+        }
 
         this.pull_active["offset_x"] = this.html.offset()["left"];
         this.pull_active["offset_y"] = this.html.offset()["top"];
@@ -208,7 +208,7 @@ function DashMobileLayoutCard (stack) {
     this.on_drag = function (event) {
         if (!this.pull_active || this.restoring_pull) {
             return;
-        };
+        }
 
         var touch_found = false;
 
@@ -218,12 +218,12 @@ function DashMobileLayoutCard (stack) {
             this.pull_active["touch_now_y"] = touch.clientY;
             touch_found = true;
             break;
-        };
+        }
 
         if (!touch_found) {
             console.warn("Warning: No touches found??");
             return;
-        };
+        }
 
         var screen_px_moved_x = this.pull_active["touch_now_x"]-this.pull_active["touch_start_x"];
         var screen_px_moved_y = this.pull_active["touch_now_y"]-this.pull_active["touch_start_y"];
@@ -236,7 +236,7 @@ function DashMobileLayoutCard (stack) {
         }
         else {
             this.right_pull_area.OnDrag(pulled_norm);
-        };
+        }
 
         this.slider.css({
             "left": screen_px_moved_x,
@@ -248,15 +248,15 @@ function DashMobileLayoutCard (stack) {
 
         if (!this.pull_active || this.restoring_pull) {
             return;
-        };
+        }
 
         if (this.left_pull_callback && this.left_pull_area.IsTriggered) {
             this.left_pull_callback();
-        };
+        }
 
         if (this.right_pull_callback && this.right_pull_area.IsTriggered) {
             this.right_pull_callback();
-        };
+        }
 
         this.pull_active = null;
         this.restoring_pull = true;
@@ -306,7 +306,7 @@ function DashMobileLayoutCard (stack) {
         }, 550, function () {
             $(this).css({
                 "height": "auto",
-            })
+            });
         });
 
     };
@@ -336,7 +336,7 @@ function DashMobileLayoutCard (stack) {
         if (t >= 1.0) {
             this.restoring_pull = false;
             this.restore_slider_content();
-        };
+        }
 
     };
 
@@ -344,7 +344,7 @@ function DashMobileLayoutCard (stack) {
 
         if (!event.cancelable || this.pull_active) {
             return;
-        };
+        }
 
         // Reset this to ensure that if we do activate a pull and want to use
         // the positioning from this event, it's a fresh event
@@ -362,11 +362,11 @@ function DashMobileLayoutCard (stack) {
                     }
                     else {
                         self.on_drag_start(event);
-                    };
+                    }
 
                     event.preventDefault();
 
-                };
+                }
 
             }, 150);
 
@@ -395,7 +395,7 @@ function DashMobileLayoutCard (stack) {
 
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
-                };
+                }
 
             });
 
@@ -405,7 +405,7 @@ function DashMobileLayoutCard (stack) {
 
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
-                };
+                }
 
             });
 
@@ -414,7 +414,7 @@ function DashMobileLayoutCard (stack) {
 
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
-                };
+                }
 
             });
 
@@ -430,4 +430,4 @@ function DashMobileLayoutCard (stack) {
 
     this.setup_styles();
 
-};
+}

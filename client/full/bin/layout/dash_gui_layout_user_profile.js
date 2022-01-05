@@ -1,7 +1,7 @@
-// Profile page layout for the currently logged in user
-function DashGuiLayoutUserProfile (user_data, options, include_password_field=true) {
+// Profile page layout for the currently logged-in user
+function DashGuiLayoutUserProfile (user_data=null, options={}, include_password_field=true) {
     this.user_data = user_data || Dash.User.Data;
-    this.options = options || {};
+    this.options = options;
     this.include_password_field = include_password_field;
 
     this.as_overview = false;

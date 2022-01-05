@@ -19,4 +19,4 @@ function DashCardStackUserBanner (stack) {
 
     this.setup_styles();
 
-};
+}

@@ -18,14 +18,14 @@ def GetRandomID():
            f"{randint(10, 99)}"
 
 
-def Lerp(valA, valB, t):
+def Lerp(val_a, val_b, t):
     if t > 1:
         t = 1
 
     if t < 0:
         t = 0
 
-    return valA + t * (valB - valA)
+    return val_a + t * (val_b - val_a)
 
 
 def InverseLerp(_min, _max, val, unclamped=False):

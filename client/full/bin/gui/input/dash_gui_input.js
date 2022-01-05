@@ -218,11 +218,11 @@ function DashGuiInput (placeholder_text, color) {
             }
         }
 
-        // Store the previous value so we can reset the input value from
+        // Store the previous value, so we can reset the input value from
         // Dash.ValidateInput, in case the new value throws an error
         this.previous_submitted_text = this.last_submitted_text;
 
-        // Also important in case Dash.ValidateInput throws an error
+        // Also, important in case Dash.ValidateInput throws an error
         this.submit_called_from_autosave = from_autosave;
 
         Dash.Temp.SetLastInputSubmitted(this);

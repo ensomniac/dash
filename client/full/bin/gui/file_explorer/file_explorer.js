@@ -16,9 +16,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
-     * @param {boolean} supports_desktop_client - Whether or not this context has a related desktop client app it should try to connect to
-     * @param {boolean} supports_folders - Whether or not this context uses folders/subfolders
-     * @param {boolean} include_modified_keys_columns - Whether or not to include list columns for "modified_on" and "modified_by"
+     * @param {boolean} supports_desktop_client - Whether this context has a related desktop client app it should try to connect to
+     * @param {boolean} supports_folders - Whether this context uses folders/subfolders
+     * @param {boolean} include_modified_keys_columns - Whether to include list columns for "modified_on" and "modified_by"
      */
 
     this.color = color || Dash.Color.Light;

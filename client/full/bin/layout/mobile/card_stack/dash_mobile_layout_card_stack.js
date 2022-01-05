@@ -1,4 +1,4 @@
-function DashMobileLayoutCardStack (binder, color) {
+function DashMobileLayoutCardStack (binder, color=null) {
 
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
@@ -98,7 +98,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
                 if (!self.vertical_scroll_timer_id) {
                     self.set_scroll_active(false);
-                };
+                }
 
             });
 
@@ -107,7 +107,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
                 if ( !self.vertical_scroll_timer_id) {
                     self.set_scroll_active(false);
-                };
+                }
 
             });
 
@@ -129,7 +129,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (!this.touch_active) {
             this.set_scroll_active(false);
-        };
+        }
 
     };
 
@@ -153,7 +153,7 @@ function DashMobileLayoutCardStack (binder, color) {
         if (this.vertical_scroll_timer_id) {
             clearTimeout(this.vertical_scroll_timer_id);
             this.vertical_scroll_timer_id = null;
-        };
+        }
 
         (function (self) {
             self.vertical_scroll_timer_id = setTimeout(function () {
@@ -163,7 +163,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (!this.banner_fixed) {
             return;
-        };
+        }
 
         var banner_height = this.banner.html.height();
         this.banner_spacer.css("height", banner_height);
@@ -204,12 +204,12 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.footer_button_overlay) {
             this.set_footer_overlay_size();
-        };
+        }
 
         if (this.banner_fixed) {
             this.set_fixed_banner_size();
             this.on_center_scroll();
-        };
+        }
 
     };
 
@@ -246,7 +246,7 @@ function DashMobileLayoutCardStack (binder, color) {
         if (this.banner) {
             console.error("Error: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
-        };
+        }
 
         this.banner = new DashCardStackBanner(this);
         this.AppendHTML(this.banner.html);
@@ -263,7 +263,7 @@ function DashMobileLayoutCardStack (binder, color) {
         }
         else {
             console.warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
-        };
+        }
 
     };
 
@@ -271,7 +271,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.banner_fixed || !this.banner) {
             return;
-        };
+        }
 
         this.banner_fixed = true;
         this.set_fixed_banner_size();
@@ -319,7 +319,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.footer_spacer) {
             this.center_content.append(this.footer_spacer);
-        };
+        }
 
     };
 
@@ -331,7 +331,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.active_panel_index == 0) {
             console.error("The left panel is already loaded");
-        };
+        }
 
         // Force hardware acceleration
         html.css({
@@ -367,7 +367,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (this.active_panel_index == 2) {
             console.error("The right panel is already loaded");
-        };
+        }
 
         // Force hardware acceleration
         html.css({
@@ -389,7 +389,7 @@ function DashMobileLayoutCardStack (binder, color) {
 
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
-        };
+        }
 
         var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback);
         this.footer_buttons.push(button);
@@ -495,7 +495,7 @@ function DashMobileLayoutCardStack (binder, color) {
             this.left_content.stop().animate({"opacity":  0}, this.anim_duration);
             this.right_content.stop().animate({"opacity": 0}, this.anim_duration);
 
-        };
+        }
 
 
         if (target_index == 1) {
@@ -503,11 +503,11 @@ function DashMobileLayoutCardStack (binder, color) {
 
             if (this.footer_button_overlay) {
                 this.footer_button_overlay.stop().animate({"opacity": 1}, this.anim_duration*0.25);
-            };
+            }
 
             if (this.banner_fixed) {
                 this.banner.html.stop().animate({"opacity": 1}, this.anim_duration*0.25);
-            };
+            }
 
         }
         else {
@@ -515,13 +515,13 @@ function DashMobileLayoutCardStack (binder, color) {
 
             if (this.footer_button_overlay) {
                 this.footer_button_overlay.stop().animate({"opacity": 0}, this.anim_duration*1.5);
-            };
+            }
 
             if (this.banner_fixed) {
                 this.banner.html.stop().animate({"opacity": 0}, this.anim_duration*1.5);
-            };
+            }
 
-        };
+        }
 
         (function (self) {
 
@@ -537,7 +537,7 @@ function DashMobileLayoutCardStack (binder, color) {
                     "opacity": backing_opacity,
                 }, self.anim_duration);
 
-            };
+            }
 
         })(this);
 
@@ -565,10 +565,10 @@ function DashMobileLayoutCardStack (binder, color) {
             // Right is visible
             this.left_content.css({"display": "none"});
             this.right_content.css({"display": "none"});
-        };
+        }
 
     };
 
     this.setup_styles();
 
-};
+}

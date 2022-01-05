@@ -91,7 +91,7 @@ function DashGuiComboInterface () {
 
     this.GetActiveOption = function () {
         return this.ActiveOption();
-    }
+    };
 
     this.ActiveOption = function () {
         return this.selected_option;
