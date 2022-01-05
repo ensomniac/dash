@@ -96,7 +96,11 @@ def GetURLFromPath(dash_context, server_file_path):
 
 
 def GetPathFromURL(dash_context, server_file_url):
-    return os.path.join(dash_context["srv_path_http_root"], server_file_url.replace(f"https://{dash_context['domain']}", ""))
+    # For some weird reason, join() wasn't working properly without splitting both elements first
+    return "/" + os.path.join(
+        *dash_context["srv_path_http_root"].split("/"),
+        *server_file_url.replace(f"https://{dash_context['domain']}", "").split("/")
+    )
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):

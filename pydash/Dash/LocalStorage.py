@@ -33,13 +33,13 @@ class DashLocalStorage:
         self.dash_context = dash_context
 
     def CreateOrUpdate(self, additional_data, obj_id):
-        record_path = self.get_record_path(obj_id)
+        record_path = self.GetRecordPath(obj_id)
 
         if not os.path.exists(record_path):
             return self.New(additional_data, obj_id)
 
         # Get existing data and modify
-        data = self.GetData(obj_id)
+        data = self.GetData(obj_id, record_path=record_path)
 
         try:
             for key in additional_data:
@@ -75,13 +75,13 @@ class DashLocalStorage:
 
         os.makedirs(self.get_data_root(record_id), exist_ok=True)
 
-        self.Write(self.get_record_path(record_id), data)
+        self.Write(self.GetRecordPath(record_id), data)
 
         return data
 
     def GetAllIDs(self):
         all_ids = []
-        store_root = self.get_store_root()
+        store_root = self.GetRecordRoot()
 
         if not os.path.exists(store_root):
             return all_ids
@@ -104,7 +104,7 @@ class DashLocalStorage:
             "order": []
         }
 
-        store_root = self.get_store_root()
+        store_root = self.GetRecordRoot()
 
         if not os.path.exists(store_root):
             return all_data
@@ -133,8 +133,9 @@ class DashLocalStorage:
 
         return all_data
 
-    def GetData(self, obj_id, create=False, additional_data={}):
-        record_path = self.get_record_path(obj_id)
+    def GetData(self, obj_id, create=False, additional_data={}, record_path=""):
+        if not record_path:
+            record_path = self.GetRecordPath(obj_id)
 
         if not record_path:
             return {}
@@ -181,7 +182,7 @@ class DashLocalStorage:
             "key": key,
             "value": value,
             "obj_id": obj_id,
-            "record_path": self.get_record_path(obj_id)
+            "record_path": self.GetRecordPath(obj_id)
         }
 
         data = self.GetData(obj_id, create=create)
@@ -199,7 +200,7 @@ class DashLocalStorage:
         if self.nested:
             record_path = self.get_data_root(obj_id)
         else:
-            record_path = self.get_record_path(obj_id)
+            record_path = self.GetRecordPath(obj_id)
 
         result = {
             "existed": os.path.exists(record_path),
@@ -219,7 +220,7 @@ class DashLocalStorage:
         return result
 
     def WriteData(self, obj_id, data):
-        self.Write(self.get_record_path(obj_id), data)
+        self.Write(self.GetRecordPath(obj_id), data)
 
         return data
 
@@ -261,7 +262,7 @@ class DashLocalStorage:
         converted_ids = []
 
         for flat_id in ids:
-            flat_path = self.get_record_path(flat_id)
+            flat_path = self.GetRecordPath(flat_id)
 
             if os.path.isdir(flat_path):
                 continue
@@ -277,6 +278,69 @@ class DashLocalStorage:
             converted_ids.append(flat_id)
 
         return converted_ids
+
+    def GetRecordPath(self, obj_id):
+        if self.store_path == "users":
+            return os.path.join(
+                self.GetRecordRoot(obj_id),
+                "usr.data"
+            )
+        else:
+            if self.nested:
+                obj_id_path = os.path.join(
+                    self.GetRecordRoot(obj_id),
+                    obj_id
+                )
+
+                if not os.path.isdir(obj_id_path):
+                    return ""
+
+                return os.path.join(
+                    obj_id_path,
+                    "data.json"
+                )
+            else:
+                return os.path.join(
+                    self.GetRecordRoot(obj_id),
+                    obj_id
+                )
+
+    def GetRecordRoot(self, obj_id=None):
+        """
+        | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
+        | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id
+        """
+
+        if self.store_path == "users":
+            if not obj_id:
+                from Dash.Utils import Memory
+
+                params = Memory.Global.RequestData
+                obj_id = params.get("email")
+
+            if not obj_id:
+                raise Exception("An email address is required. Error x8392")
+
+            store_root = os.path.join(
+                self.dash_context["srv_path_local"],
+                self.store_path,
+                obj_id + "/",  # Email address
+            )
+        else:
+            store_root = os.path.join(
+                self.dash_context["srv_path_local"],
+                self.store_path + "/"
+            )
+
+        return store_root
+
+    def GetRecordCount(self):
+        store_root = self.GetRecordRoot()
+
+        if os.path.exists(store_root):
+            return len(os.listdir(store_root))
+        else:
+            return 0
 
     def filter_data_entry(self, data):
         if not self.filter_out_keys:
@@ -365,73 +429,10 @@ class DashLocalStorage:
 
         if not self.nested:
             # /local/store_path/202283291732434 <- This is the data
-            return self.get_store_root()
+            return self.GetRecordRoot()
         else:
             # /local/store_path/202283291732434/data.json <- This is the data
-            return os.path.join(self.get_store_root(obj_id_email), obj_id_email + "/")
-
-    def get_store_root(self, obj_id=None):
-        """
-        | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
-        | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id
-        """
-
-        if self.store_path == "users":
-            if not obj_id:
-                from Dash.Utils import Memory
-
-                params = Memory.Global.RequestData
-                obj_id = params.get("email")
-
-            if not obj_id:
-                raise Exception("An email address is required. Error x8392")
-
-            store_root = os.path.join(
-                self.dash_context["srv_path_local"],
-                self.store_path,
-                obj_id + "/",  # Email address
-            )
-        else:
-            store_root = os.path.join(
-                self.dash_context["srv_path_local"],
-                self.store_path + "/"
-            )
-
-        return store_root
-
-    def get_record_count(self):
-        store_root = self.get_store_root()
-
-        if os.path.exists(store_root):
-            return len(os.listdir(store_root))
-        else:
-            return 0
-
-    def get_record_path(self, obj_id):
-        if self.store_path == "users":
-            return os.path.join(
-                self.get_store_root(obj_id),
-                "usr.data"
-            )
-        else:
-            if self.nested:
-                obj_id_path = os.path.join(
-                    self.get_store_root(obj_id),
-                    obj_id
-                )
-
-                if not os.path.isdir(obj_id_path):
-                    return ""
-
-                return os.path.join(
-                    obj_id_path,
-                    "data.json"
-                )
-            else:
-                return os.path.join(
-                    self.get_store_root(obj_id),
-                    obj_id
-                )
+            return os.path.join(self.GetRecordRoot(obj_id_email), obj_id_email + "/")
 
     def write_binary(self, full_path, data):
         return open(full_path, "wb").write(data)
@@ -502,15 +503,15 @@ def SetProperties(dash_context, store_path, obj_id, properties={}, create=False,
 
 
 def GetRecordCount(dash_context, store_path, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).get_record_count()
+    return DashLocalStorage(dash_context, store_path, nested).GetRecordCount()
 
 
 def GetRecordRoot(dash_context, store_path, obj_id=None, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).get_store_root(obj_id)
+    return DashLocalStorage(dash_context, store_path, nested).GetRecordRoot(obj_id)
 
 
 def GetRecordPath(dash_context, store_path, obj_id, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).get_record_path(obj_id)
+    return DashLocalStorage(dash_context, store_path, nested).GetRecordPath(obj_id)
 
 
 def Read(full_path):
