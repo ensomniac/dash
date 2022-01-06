@@ -8,6 +8,11 @@
 __version__ = "1.4"
 __copyright__ = "Copyright (c) 2021 Ensomniac"
 
+AdminEmails = [
+    "ryan@ensomniac.com",
+    "stetandrew@gmail.com"
+]
+
 
 def Sync():
     try:

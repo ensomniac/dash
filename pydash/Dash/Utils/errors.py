@@ -5,7 +5,8 @@
 
 """
 | The point of these errors, at time of writing, is to have few custom error names to be
-  able to call from anywhere, which can then be handled in unique ways from ApiCore.
+  able to call from anywhere, which can then be handled in unique ways from ApiCore
+  (see ApiCore's implementation/handling of ClientAlert for an example).
 |
 | They can be imported as:
 |     from Dash.Utils import ClientAlert
@@ -18,10 +19,14 @@
 import os
 import sys
 
+# TODO: Propagate these throughout the code, replacing applicable uses of 'raise Exception'
+
 
 class _DashError(Exception):
     """
     Base class for other errors to inherit from, in case we want to add shared functionality.
+    Since this inherits from Exception, exceptions will still be raised as normal, in addition
+    to any extra wrapper class functionality.
     """
 
     pass
@@ -36,6 +41,14 @@ class ClientAlert(_DashError):
     |
     | This is most useful when we don't necessarily want to raise a ValueError, but we still need
       to let the client user know that something they did was invalid, without showing a traceback.
+    """
+
+    pass
+
+
+class DevError(_DashError):
+    """
+    This exists purely as a wrapper to signify developer errors vs other errors, such as system or user errors.
     """
 
     pass

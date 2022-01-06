@@ -98,7 +98,7 @@ class ApiCore:
         return self._response
 
     def SetUser(self, user_data):
-        if not user_data["email"]:
+        if not user_data or type(user_data) is not dict or not user_data.get("email"):
             raise Exception("Invalid user_data format!")
 
         self._user = user_data
@@ -165,7 +165,7 @@ class ApiCore:
 
     def SetParams(self, params):
         if not params or type(params) is not dict:
-            raise Exception(f"Error: SetParams requires a dict: {params}")
+            raise Exception(f"SetParams requires a dict: {params}")
 
         self._params = params
 
@@ -220,7 +220,7 @@ class ApiCore:
 
         return self._response
 
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=["ryan@ensomniac.com", "stetandrew@gmail.com"]):
+    def SendEmail(self, subject="", msg="", error="", notify_email_list=[]):
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
@@ -238,6 +238,9 @@ class ApiCore:
 
             if params.get("file"):
                 params["file"] = "truncated..."
+
+            # Keep this private
+            del params["pass"]
 
             request_details += f"Params: {params}<br><br>"
 

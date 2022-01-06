@@ -9,6 +9,7 @@
 import os
 import sys
 
+from .errors import ClientAlert
 from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write
 
@@ -31,18 +32,18 @@ def Upload(
 
     if enforce_single_period:
         if period_count != 1:
-            raise Exception(f"Filename is invalid, it must have a single period (for the extension): {filename}")
+            raise ClientAlert(f"Filename is invalid, it must have a single period (for the extension): {filename}")
     else:
         if period_count < 1:
-            raise Exception(f"Filename is invalid, there must be at least one period (for the extension): {filename}")
+            raise ClientAlert(f"Filename is invalid, there must be at least one period (for the extension): {filename}")
 
     file_ext = get_file_extension(filename)
 
     if not file_ext or not (2 <= len(file_ext) <= 4):
-        raise Exception(f"Invalid file extension: {file_ext}")
+        raise ClientAlert(f"Invalid file extension: {file_ext}")
 
     if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
-        raise Exception(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
+        raise ClientAlert(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
 
     if period_count > 1:
         filename = replace_extra_periods(filename, file_ext)
