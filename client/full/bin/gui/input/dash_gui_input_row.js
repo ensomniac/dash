@@ -38,8 +38,8 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "padding-left": Dash.Size.Padding * 0.5
         });
 
-        this.input.OnChange(this.input_changed, this);
-        this.input.OnAutosave(this.trigger_autosave, this);
+        this.input.SetOnChange(this.input_changed, this);
+        this.input.SetOnAutosave(this.trigger_autosave, this);
 
         this.html.append(this.label);
         this.html.append(this.input.html);
@@ -47,7 +47,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         var highlight_color = this.color.AccentGood;
 
         if (this.on_click) {
-            this.input.OnSubmit(this.on_submit, this);
+            this.input.SetOnSubmit(this.on_submit, this);
 
             this.create_save_button();
         }

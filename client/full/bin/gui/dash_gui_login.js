@@ -35,10 +35,10 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         this.email_input.DisableAutosave();
         this.email_input.DisableBlurSubmit();
 
-        this.email_input.OnSubmit(this.Submit, this);
-        this.password_input.OnSubmit(this.Submit, this);
-        this.email_input.OnChange(this.store_input, this);
-        this.password_input.OnChange(this.store_input, this);
+        this.email_input.SetOnSubmit(this.Submit, this);
+        this.password_input.SetOnSubmit(this.Submit, this);
+        this.email_input.SetOnChange(this.store_input, this);
+        this.password_input.SetOnChange(this.store_input, this);
 
         this.email_row.append(this.email_input.html);
         this.password_row.append(this.password_input.html);

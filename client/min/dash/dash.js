@@ -21268,10 +21268,10 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         this.password_input.DisableBlurSubmit();
         this.email_input.DisableAutosave();
         this.email_input.DisableBlurSubmit();
-        this.email_input.OnSubmit(this.Submit, this);
-        this.password_input.OnSubmit(this.Submit, this);
-        this.email_input.OnChange(this.store_input, this);
-        this.password_input.OnChange(this.store_input, this);
+        this.email_input.SetOnSubmit(this.Submit, this);
+        this.password_input.SetOnSubmit(this.Submit, this);
+        this.email_input.SetOnChange(this.store_input, this);
+        this.password_input.SetOnChange(this.store_input, this);
         this.email_row.append(this.email_input.html);
         this.password_row.append(this.password_input.html);
         this.html.append(this.login_box);
@@ -23792,7 +23792,7 @@ function DashGuiInput (placeholder_text, color) {
                     self.skip_next_blur = false;
                     return;
                 }
-                if (self.Text() !== self.last_submitted_text) {
+                if (self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.on_submit();
                 }
             });
@@ -23849,12 +23849,24 @@ function DashGuiInput (placeholder_text, color) {
         this.last_submitted_text = text;
         return this.input.val(text);
     };
+    this.SetOnChange = function (callback, bind_to) {
+        this.on_change_callback = callback.bind(bind_to);
+    };
+    this.SetOnAutosave = function (callback, bind_to) {
+        this.on_autosave_callback = callback.bind(bind_to);
+    };
+    this.SetOnSubmit = function (callback, bind_to) {
+        this.on_submit_callback = callback.bind(bind_to);
+    };
+    // DEPRECATED
     this.OnChange = function (callback, bind_to) {
         this.on_change_callback = callback.bind(bind_to);
     };
+    // DEPRECATED
     this.OnAutosave = function (callback, bind_to) {
         this.on_autosave_callback = callback.bind(bind_to);
     };
+    // DEPRECATED
     this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
@@ -23924,42 +23936,45 @@ function DashGuiInput (placeholder_text, color) {
         (function (self) {
             self.autosave_timeout = setTimeout(
                 function () {
-                    var now = new Date();
-                    // Don't fire if the user manually submitted a change in the autosave time window
-                    if (self.last_submit_ts !== null) {
-                        if (self.last_change_ts < self.last_submit_ts < now) {
-                            if (now - self.last_submit_ts < self.autosave_delay_ms) {
-                                return;
-                            }
-                        }
-                    }
-                    // Reset autosave attempt if, after a change, the user navigated using the arrow keys during the autosave time window
-                    if (self.last_arrow_navigation_ts !== null) {
-                        if (self.last_change_ts < self.last_arrow_navigation_ts < now) {
-                            if (now - self.last_arrow_navigation_ts < self.autosave_delay_ms) {
-                                self.attempt_autosave();
-                                return;
-                            }
-                        }
-                    }
-                    // In case autosave is toggled while there are active timers
-                    if (!self.autosave) {
-                        return;
-                    }
-                    if (self.skip_next_autosave) {
-                        self.skip_next_autosave = false;
-                        return;
-                    }
-                    if (self.on_autosave_callback) {
-                        self.on_submit(true);
-                    }
-                    else {
-                        self.on_submit();
-                    }
+                    self._attempt_autosave();
                 },
                 self.autosave_delay_ms
             );
         })(this);
+    };
+    this._attempt_autosave = function () {
+        var now = new Date();
+        // Don't fire if the user manually submitted a change in the autosave time window
+        if (this.last_submit_ts !== null) {
+            if (this.last_change_ts < this.last_submit_ts < now) {
+                if (now - this.last_submit_ts < this.autosave_delay_ms) {
+                    return;
+                }
+            }
+        }
+        // Reset autosave attempt if, after a change, the user navigated using the arrow keys during the autosave time window
+        if (this.last_arrow_navigation_ts !== null) {
+            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
+                if (now - this.last_arrow_navigation_ts < this.autosave_delay_ms) {
+                    this.attempt_autosave();
+                    return;
+                }
+            }
+        }
+        // In case autosave is toggled while there are active timers
+        if (!this.autosave) {
+            return;
+        }
+        if (this.skip_next_autosave) {
+            this.skip_next_autosave = false;
+            return;
+        }
+        if (this.on_autosave_callback) {
+            this.on_submit(true);
+        }
+        else {
+            this.on_submit();
+        }
     };
     this.setup_connections = function () {
         (function (self) {
@@ -24022,13 +24037,13 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.input.input.css({
             "padding-left": Dash.Size.Padding * 0.5
         });
-        this.input.OnChange(this.input_changed, this);
-        this.input.OnAutosave(this.trigger_autosave, this);
+        this.input.SetOnChange(this.input_changed, this);
+        this.input.SetOnAutosave(this.trigger_autosave, this);
         this.html.append(this.label);
         this.html.append(this.input.html);
         var highlight_color = this.color.AccentGood;
         if (this.on_click) {
-            this.input.OnSubmit(this.on_submit, this);
+            this.input.SetOnSubmit(this.on_submit, this);
             this.create_save_button();
         }
         else {
@@ -24879,8 +24894,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element, and it was bleeding outside its html container
         });
         this.input.DisableBlurSubmit();
-        this.input.OnSubmit(this.msg_submit_callback, this.chat_box);
-        this.input.OnChange(this.on_input, this);
+        this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+        this.input.SetOnChange(this.on_input, this);
         this.html.append(this.input.html);
     };
     this.on_input = function () {
@@ -26222,8 +26237,8 @@ function DashGuiComboSearch () {
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
         this.search_input.SetText(this.selected_option["label_text"]);
-        this.search_input.OnChange(this.on_search_text_changed, this);
-        this.search_input.OnSubmit(this.on_search_text_submitted, this);
+        this.search_input.SetOnChange(this.on_search_text_changed, this);
+        this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
         this.search_container.append(this.search_input.html);
         this.search_input.html.css({
@@ -27221,27 +27236,27 @@ function DashGuiLayoutToolbar (binder, color) {
             return;
         }
         this.refactor_itom_padding_requested = true;
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self._refactor_item_padding();
             });
         })(this);
     };
+    // Note: Never call this directly. Instead, use this.refactor_item_padding()
     this._refactor_item_padding = function () {
-        // Note: Never call this directly. Instead, use this.refactor_item_padding()
         if (!this.refactor_itom_padding_requested) {
             return;
         }
         this.refactor_itom_padding_requested = false;
         for (var i = 0; i < this.objects.length; i++) {
             var html = this.objects[i]["html_elem"];
-            if (i == this.objects.length-1) {
+            if (i === (this.objects.length - 1)) {
                 // This is the last element, and it gets no right-margin
                 //since the toolbar itself has a margin built in to the left and right
                 html.css({"margin-right": 0, "margin-left": 0});
             }
             else {
-                html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
+                html.css({"margin-right": Dash.Size.Padding * 0.5, "margin-left": 0});
             }
         }
     };
@@ -27460,12 +27475,11 @@ function DashGuiLayoutToolbarInterface () {
             "width": width,
             "text-align": text_align
         });
-        var obj_index = this.objects.length;
         this.objects.push({
             "html": input,
             "html_elem": input.html,
             "callback": null,
-            "index": obj_index
+            "index": this.objects.length
         });
         this.refactor_item_padding();
         return input;
@@ -27474,12 +27488,12 @@ function DashGuiLayoutToolbarInterface () {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
         input.html.css({
-            "padding-left": Dash.Size.Padding*0.5,
-            "margin-top": Dash.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5
         });
         input.input.css({
             "padding-left": 0,
-            "color": "rgb(20, 20, 20)",
+            "color": "rgb(20, 20, 20)"
         });
         var obj = {
             "html": input,
@@ -27493,14 +27507,14 @@ function DashGuiLayoutToolbarInterface () {
         }
         this.objects.push(obj);
         (function (self, input, obj_index, obj) {
-            input.OnChange(
+            input.SetOnChange(
                 function () {
                     self.on_input_changed(obj_index);
                 },
                 self
             );
             if (obj["on_enter_callback"]) {
-                input.OnSubmit(
+                input.SetOnSubmit(
                     function () {
                         self.on_input_submitted(obj_index);
                     },
@@ -28861,7 +28875,7 @@ function DashGuiListRowElements () {
         if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
             var row_id = this.id;
             (function (self, column_config_data, row_id, input) {
-                input.OnSubmit(
+                input.SetOnSubmit(
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
                         callback(row_id, input.Text());

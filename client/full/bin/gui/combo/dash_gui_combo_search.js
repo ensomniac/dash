@@ -90,8 +90,8 @@ function DashGuiComboSearch () {
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
         this.search_input.SetText(this.selected_option["label_text"]);
 
-        this.search_input.OnChange(this.on_search_text_changed, this);
-        this.search_input.OnSubmit(this.on_search_text_submitted, this);
+        this.search_input.SetOnChange(this.on_search_text_changed, this);
+        this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
 
         this.search_container.append(this.search_input.html);

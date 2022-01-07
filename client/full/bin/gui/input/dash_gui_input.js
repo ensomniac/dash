@@ -81,7 +81,7 @@ function DashGuiInput (placeholder_text, color) {
                     return;
                 }
 
-                if (self.Text() !== self.last_submitted_text) {
+                if (self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.on_submit();
                 }
             });
@@ -152,14 +152,29 @@ function DashGuiInput (placeholder_text, color) {
         return this.input.val(text);
     };
 
+    this.SetOnChange = function (callback, bind_to) {
+        this.on_change_callback = callback.bind(bind_to);
+    };
+
+    this.SetOnAutosave = function (callback, bind_to) {
+        this.on_autosave_callback = callback.bind(bind_to);
+    };
+
+    this.SetOnSubmit = function (callback, bind_to) {
+        this.on_submit_callback = callback.bind(bind_to);
+    };
+
+    // DEPRECATED
     this.OnChange = function (callback, bind_to) {
         this.on_change_callback = callback.bind(bind_to);
     };
 
+    // DEPRECATED
     this.OnAutosave = function (callback, bind_to) {
         this.on_autosave_callback = callback.bind(bind_to);
     };
 
+    // DEPRECATED
     this.OnSubmit = function (callback, bind_to) {
         this.on_submit_callback = callback.bind(bind_to);
     };
@@ -251,50 +266,54 @@ function DashGuiInput (placeholder_text, color) {
         (function (self) {
             self.autosave_timeout = setTimeout(
                 function () {
-                    var now = new Date();
-
-                    // Don't fire if the user manually submitted a change in the autosave time window
-                    if (self.last_submit_ts !== null) {
-                        if (self.last_change_ts < self.last_submit_ts < now) {
-                            if (now - self.last_submit_ts < self.autosave_delay_ms) {
-                                return;
-                            }
-                        }
-                    }
-
-                    // Reset autosave attempt if, after a change, the user navigated using the arrow keys during the autosave time window
-                    if (self.last_arrow_navigation_ts !== null) {
-                        if (self.last_change_ts < self.last_arrow_navigation_ts < now) {
-                            if (now - self.last_arrow_navigation_ts < self.autosave_delay_ms) {
-                                self.attempt_autosave();
-
-                                return;
-                            }
-                        }
-                    }
-
-                    // In case autosave is toggled while there are active timers
-                    if (!self.autosave) {
-                        return;
-                    }
-
-                    if (self.skip_next_autosave) {
-                        self.skip_next_autosave = false;
-
-                        return;
-                    }
-
-                    if (self.on_autosave_callback) {
-                        self.on_submit(true);
-                    }
-
-                    else {
-                        self.on_submit();
-                    }
+                    self._attempt_autosave();
                 },
                 self.autosave_delay_ms
             );
         })(this);
+    };
+
+    this._attempt_autosave = function () {
+        var now = new Date();
+
+        // Don't fire if the user manually submitted a change in the autosave time window
+        if (this.last_submit_ts !== null) {
+            if (this.last_change_ts < this.last_submit_ts < now) {
+                if (now - this.last_submit_ts < this.autosave_delay_ms) {
+                    return;
+                }
+            }
+        }
+
+        // Reset autosave attempt if, after a change, the user navigated using the arrow keys during the autosave time window
+        if (this.last_arrow_navigation_ts !== null) {
+            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
+                if (now - this.last_arrow_navigation_ts < this.autosave_delay_ms) {
+                    this.attempt_autosave();
+
+                    return;
+                }
+            }
+        }
+
+        // In case autosave is toggled while there are active timers
+        if (!this.autosave) {
+            return;
+        }
+
+        if (this.skip_next_autosave) {
+            this.skip_next_autosave = false;
+
+            return;
+        }
+
+        if (this.on_autosave_callback) {
+            this.on_submit(true);
+        }
+
+        else {
+            this.on_submit();
+        }
     };
 
     this.setup_connections = function () {

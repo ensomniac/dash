@@ -188,7 +188,7 @@ function DashGuiListRowElements () {
             var row_id = this.id;
 
             (function (self, column_config_data, row_id, input) {
-                input.OnSubmit(
+                input.SetOnSubmit(
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
 

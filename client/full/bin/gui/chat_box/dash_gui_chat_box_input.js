@@ -60,8 +60,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         });
 
         this.input.DisableBlurSubmit();
-        this.input.OnSubmit(this.msg_submit_callback, this.chat_box);
-        this.input.OnChange(this.on_input, this);
+        this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+        this.input.SetOnChange(this.on_input, this);
 
         this.html.append(this.input.html);
     };
