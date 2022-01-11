@@ -457,7 +457,10 @@ class DashLocalStorage:
         directory = full_path.rstrip(filename) + "/"
         tmp_filename = f"{directory}_tmp_{randint(100000, 999999)}_{filename}"
 
-        open(tmp_filename, "w").write(dumps(data))
+        try:
+            open(tmp_filename, "w").write(dumps(data))
+        except:
+            raise Exception("Write fail at " + tmp_filename + " from " + full_path)
 
         os.rename(tmp_filename, full_path)
         os.chown(full_path, 10000, 1004)
