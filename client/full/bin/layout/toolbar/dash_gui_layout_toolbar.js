@@ -2,8 +2,8 @@ function DashGuiLayoutToolbar (binder, color) {
     this.binder        = binder;
     this.color         = color || this.binder.color || Dash.Color.Dark;
     this.objects       = [];
-    this.html          = new Dash.Gui.GetHTMLContext();
-    this.stroke_sep    = new Dash.Gui.GetHTMLAbsContext();
+    this.html          = Dash.Gui.GetHTMLContext();
+    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
     this.stroke_height = 1;
     this.height        = Dash.Size.ButtonHeight + this.stroke_height;
     this.refactor_itom_padding_requested = false;

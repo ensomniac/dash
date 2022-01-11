@@ -38,10 +38,6 @@ function DashGuiComboInterface () {
         }
     };
 
-    this.GetActiveOption = function () {
-        console.log("GetActiveOption() ??");
-    };
-
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null) {
         if (icon_name || icon_size_mult) {
@@ -89,6 +85,7 @@ function DashGuiComboInterface () {
         return this.selected_option_id;
     };
 
+    // Why does this exist when we can simply call ActiveOption()?
     this.GetActiveOption = function () {
         return this.ActiveOption();
     };

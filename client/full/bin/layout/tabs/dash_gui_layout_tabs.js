@@ -89,18 +89,44 @@ function DashGuiLayoutTabs (binder, side_tabs) {
 
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
+            var optional_params = Dash.Validate.Object(this.all_content[index]["optional_params"]) ? this.all_content[index]["optional_params"] : null;
+            var unpack = this.all_content[index]["unpack_params"] && Array.isArray(optional_params);
 
             if (this.is_class(html_class)) {
-                inst_class = new callback(this.all_content[index]["optional_params"]);
+                if (unpack) {
+                    inst_class = new callback(...optional_params);
+                }
+
+                else {
+                    if (optional_params) {
+                        inst_class = new callback(optional_params);
+                    }
+
+                    else {
+                        inst_class = new callback();
+                    }
+                }
+
                 content_html = inst_class.html;
             }
 
-            else {
-                // Calling a function with 'new' will result in an incorrect binding
-                inst_class = callback(this.all_content[index]["optional_params"]);
+            else {  // Calling a function with 'new' will result in an incorrect binding
+                if (unpack) {
+                    inst_class = callback(...optional_params);
+                }
+
+                else {
+                    if (optional_params) {
+                        inst_class = new callback(optional_params);
+                    }
+
+                    else {
+                        inst_class = new callback();
+                    }
+                }
+
                 content_html = inst_class.html;
             }
-
         }
 
         else {
@@ -127,7 +153,7 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.content_area.append(content_html);
 
         if (this.on_tab_changed_cb) {
-            this.on_tab_changed_cb(this.all_content[index]);
+            this.on_tab_changed_cb(this.all_content[index], inst_class);
         }
 
         if (this.all_content[index]["url_hash_text"]) {

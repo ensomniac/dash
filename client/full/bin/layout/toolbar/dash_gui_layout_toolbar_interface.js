@@ -290,13 +290,14 @@ function DashGuiLayoutToolbarInterface () {
         var input = new Dash.Gui.Input(placeholder_label, this.color);
 
         input.html.css({
+            "background": this.color.BackgroundRaised,
             "padding-left": Dash.Size.Padding * 0.5,
             "margin-top": Dash.Size.Padding * 0.5
         });
 
         input.input.css({
             "padding-left": 0,
-            "color": "rgb(20, 20, 20)"
+            "color": this.color.Input.Text.Base
         });
 
         var obj = {
