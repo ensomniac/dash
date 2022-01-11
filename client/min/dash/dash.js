@@ -27811,22 +27811,20 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         }
         else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
             // DashGlobalImpactChange | 12/21/21 | Ryan
-            // Updating this function to pass optional_params to callback while also
+            // Updating this function to pass optional_args to callback while also
             // binding the callback correctly to the parent class
             // This is likely a very low impact change that *shouldn't* affect anything
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
-            var optional_params = this.all_content[index]["optional_params"];
-            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_params) && Array.isArray(optional_params);
-            // var optional_params = Dash.Validate.Object(this.all_content[index]["optional_params"]) ? this.all_content[index]["optional_params"] : null;
-            // var unpack = this.all_content[index]["unpack_params"] && Array.isArray(optional_params);
+            var optional_args = this.all_content[index]["optional_args"];
+            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_args) && Array.isArray(optional_args);
             if (this.is_class(html_class)) {
                 if (unpack) {
-                    inst_class = new callback(...optional_params);
+                    inst_class = new callback(...optional_args);
                 }
                 else {
-                    if (optional_params) {
-                        inst_class = new callback(optional_params);
+                    if (optional_args) {
+                        inst_class = new callback(optional_args);
                     }
                     else {
                         inst_class = new callback();
@@ -27836,11 +27834,11 @@ function DashGuiLayoutTabs (binder, side_tabs) {
             }
             else {  // Calling a function with 'new' will result in an incorrect binding
                 if (unpack) {
-                    inst_class = callback(...optional_params);
+                    inst_class = callback(...optional_args);
                 }
                 else {
-                    if (optional_params) {
-                        inst_class = new callback(optional_params);
+                    if (optional_args) {
+                        inst_class = new callback(optional_args);
                     }
                     else {
                         inst_class = new callback();
@@ -27913,18 +27911,18 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         this.tab_top.append(image);
         return image;
     };
-    this.Append = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
-        return this._add(label_text, content_div_html_class, this.tab_top, optional_params, additional_content_data);
+    this.Append = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_top, optional_args, additional_content_data);
     };
-    this.Midpend = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
+    this.Midpend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
         if (!this.side_tabs) {
             console.error("Error: Midpend only works for side tabs for now");
             return;
         }
-        return this._add(label_text, content_div_html_class, this.tab_middle, optional_params, additional_content_data);
+        return this._add(label_text, content_div_html_class, this.tab_middle, optional_args, additional_content_data);
     };
-    this.Prepend = function (label_text, content_div_html_class, optional_params={}, additional_content_data={}) {
-        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_params, additional_content_data);
+    this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
@@ -28028,13 +28026,15 @@ function DashGuiLayoutTabs (binder, side_tabs) {
         }
         this.LoadIndex(last_index);
     };
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_params={}, additional_content_data={}) {
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_args=null, additional_content_data={}) {
         var content_data = {
             "label_text": label_text,
             "content_div_html_class": content_div_html_class,
             "button": null,
-            "optional_params": optional_params,
-            ...additional_content_data  // Extra data that doesn't belong in optional_params (since optional_params gets sent to the callback)
+            // Any extra arg to pass to the class (if it's an array, it can be unpacked by passing "unpack_params": true (in additional_content_data))
+            "optional_args": optional_args,
+            // Extra data that doesn't belong in optional_args (since optional_args gets sent to the callback)
+            ...additional_content_data
         };
         (function (self, index) {
             var style = self.side_tabs ? "tab_side" : "tab_top";

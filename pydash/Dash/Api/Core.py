@@ -197,8 +197,16 @@ class ApiCore:
         else:
             self._public[f.__name__] = f
 
-    def SetError(self, error_str):
-        self.SetResponse({"error": error_str})
+    def SetError(self, error="", format_exception=False):
+        if format_exception:
+            # This exists as a wrapper so that if we need to raise an exception before self.Run() is
+            # called, we can do so without losing the functionality of handling it from self.run().
+            if error:
+                self.SetResponse({"error": f"{error}\n\nTraceback:\n{format_exc()}"})
+            else:
+                self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
+        else:
+            self.SetResponse({"error": error})
 
     def SetResponse(self, response=None):
         if type(response) == str:
@@ -240,7 +248,8 @@ class ApiCore:
                 params["file"] = "truncated..."
 
             # Keep this private
-            del params["pass"]
+            if "pass" in params:
+                del params["pass"]
 
             request_details += f"Params: {params}<br><br>"
 
@@ -344,23 +353,24 @@ class ApiCore:
             self.SetResponse({"error": str(e)})
 
         except Exception as e:
-            self.SetResponse({"error": f"{e}\n\nTraceback:\n{format_exc()}"})
+            self.SetError(e, format_exception=True)
 
         except:
-            self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
+            self.SetError(format_exception=True)
 
-    # DEPRECATED:
-    #  Since class functions expect 'self' as the first variable, Execute() belongs outside this class as a standalone function.
-    #
-    #  --Previous usage--
-    #         if __name__ == "__main__":
-    #             ApiCore.Execute(Desktop)
-    #
-    #  --New usage--
-    #         if __name__ == "__main__":
-    #             from Dash.Api.Core import Execute
-    #             Execute(Desktop)
+    # DEPRECATED (see comment)
     def Execute(uninstantiated_class_ref):
+        #  Since class functions expect 'self' as the first variable, Execute() belongs outside this class as a standalone function.
+        #
+        #  --Previous usage--
+        #         if __name__ == "__main__":
+        #             ApiCore.Execute(Desktop)
+        #
+        #  --New usage--
+        #         if __name__ == "__main__":
+        #             from Dash.Api.Core import Execute
+        #             Execute(Desktop)
+
         Execute(uninstantiated_class_ref)
 
 
