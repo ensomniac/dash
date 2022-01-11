@@ -89,8 +89,12 @@ function DashGuiLayoutTabs (binder, side_tabs) {
 
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
-            var optional_params = Dash.Validate.Object(this.all_content[index]["optional_params"]) ? this.all_content[index]["optional_params"] : null;
-            var unpack = this.all_content[index]["unpack_params"] && Array.isArray(optional_params);
+
+            var optional_params = this.all_content[index]["optional_params"];
+            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_params) && Array.isArray(optional_params);
+
+            // var optional_params = Dash.Validate.Object(this.all_content[index]["optional_params"]) ? this.all_content[index]["optional_params"] : null;
+            // var unpack = this.all_content[index]["unpack_params"] && Array.isArray(optional_params);
 
             if (this.is_class(html_class)) {
                 if (unpack) {
