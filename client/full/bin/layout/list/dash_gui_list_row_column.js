@@ -104,9 +104,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
             "cursor": "pointer"
         });
 
-        var binder = this.list.binder;
-
-        this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
+        this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(this.list.binder);
 
         (function (self) {
             self.html.on("click", function (e) {

@@ -103,8 +103,6 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
                 "transform": "translate(-50%, -50%)"
             });
 
-            console.debug("TEST", this.modal_box);
-
             this.html.parent().append(this.modal_box.html);
         }
 

@@ -27100,7 +27100,6 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
                 "left": "50%",
                 "transform": "translate(-50%, -50%)"
             });
-            console.debug("TEST", this.modal_box);
             this.html.parent().append(this.modal_box.html);
         }
         this.modal_background.show();
@@ -28855,8 +28854,7 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
         this.html.css({
             "cursor": "pointer"
         });
-        var binder = this.list.binder;
-        this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(binder);
+        this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(this.list.binder);
         (function (self) {
             self.html.on("click", function (e) {
                 self.column_config_data["on_click_callback"](self.list_row.id);
@@ -28992,13 +28990,13 @@ function DashGuiListRowElements () {
     };
     this.get_combo = function (column_config_data) {
         var combo = new Dash.Gui.Combo (
-            column_config_data["options"]["label_text"] || "",                                             // Label
-            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,  // Callback
-            column_config_data["options"]["binder"] || null,                                               // Binder
-            column_config_data["options"]["combo_options"] || null,                                        // Option List
-            this.get_data_for_key(column_config_data, "", true),           // Selected ID
-            this.color,                                                                                    // Color set
-            {"style": "row", "additional_data": {"row_id": this.id}}                                       // Options
+            column_config_data["options"]["label_text"] || "",
+            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
+            column_config_data["options"]["binder"] || null,
+            column_config_data["options"]["combo_options"] || null,
+            this.get_data_for_key(column_config_data, "", true),
+            this.color,
+            {"style": "row", "additional_data": {"row_id": this.id}}  // Using this.id here probably won't work well with revolving lists
         );
         combo.html.css({
             "height": Dash.Size.RowHeight
@@ -29051,32 +29049,32 @@ function DashGuiListRowElements () {
             input.SetText(starting_value.toString());
         }
         if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
-            var row_id = this.id;
-            (function (self, column_config_data, row_id, input) {
+            (function (self, column_config_data, input) {
                 input.SetOnSubmit(
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
-                        callback(row_id, input.Text());
+                        callback(self.id, input.Text());
                     },
                     column_config_data["options"]["binder"]
                 );
                 input.EnableAutosave();
-            })(this, column_config_data, row_id, input);
+            })(this, column_config_data, input);
         }
         return input;
     };
     this.get_icon_button = function (column_config_data) {
-        var row_id = this.id;
-        var icon_button = new Dash.Gui.IconButton(
-            column_config_data["options"]["icon_name"],
-            function () {
-                var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
-                callback(row_id);
-            },
-            column_config_data["options"]["binder"],
-            column_config_data["options"]["color"] || this.color,
-            column_config_data["options"]["options"] || {}
-        );
+        var icon_button = (function (self) {
+            return new Dash.Gui.IconButton(
+                column_config_data["options"]["icon_name"],
+                function () {
+                    var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
+                    callback(self.id);
+                },
+                column_config_data["options"]["binder"],
+                column_config_data["options"]["color"] || self.color,
+                column_config_data["options"]["options"] || {}
+            );
+        })(this);
         icon_button.html.css({
             "height": Dash.Size.RowHeight
         });
@@ -29230,10 +29228,15 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         }
         row.Update();
     };
-    this.Draw = function (row_ids_to_include=[]) {
+    // This shouldn't be used in most situations, since Draw handles it all
+    this.Clear = function () {
         this.expanded_ids = {};
-        this.included_row_ids = row_ids_to_include;
+        this.included_row_ids = [];
         this.cleanup_rows();
+    };
+    this.Draw = function (row_ids_to_include=[]) {
+        this.Clear();
+        this.included_row_ids = row_ids_to_include;
         this.create_filler_space();
         for (var row of this.row_objects) {
             this.container.append(row.html);

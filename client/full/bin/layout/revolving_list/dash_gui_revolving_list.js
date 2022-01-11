@@ -124,11 +124,19 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         row.Update();
     };
 
-    this.Draw = function (row_ids_to_include=[]) {
+    // This shouldn't be used in most situations, since Draw handles it all
+    this.Clear = function () {
         this.expanded_ids = {};
-        this.included_row_ids = row_ids_to_include;
+        this.included_row_ids = [];
 
         this.cleanup_rows();
+    };
+
+    this.Draw = function (row_ids_to_include=[]) {
+        this.Clear();
+
+        this.included_row_ids = row_ids_to_include;
+
         this.create_filler_space();
 
         for (var row of this.row_objects) {
