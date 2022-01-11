@@ -20,6 +20,6 @@ function DashSize (is_mobile) {
         this.BorderRadius = 9; // For containers
         this.BorderRadiusInteractive = 30; // For interactive elements (buttons, inputs, combos, etc)
 
-    };
+    }
 
-};
+}

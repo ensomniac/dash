@@ -38,7 +38,10 @@ function DashRequest () {
                         return;
                     }
 
-                    console.warn("Dash Request Warning: A request failed (status ", status, "), but callback will be triggered regardless. Error\n", error);
+                    console.warn(
+                        "Dash Request Warning: A request failed (status ", status, "), but callback " +
+                        "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
+                    );
 
                     self.dash_requests.on_response(self, response);
                 });

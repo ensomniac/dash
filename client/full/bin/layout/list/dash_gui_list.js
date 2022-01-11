@@ -1,4 +1,4 @@
-function DashGuiList (binder, selected_callback, column_config, color) {
+function DashGuiList (binder, selected_callback, column_config, color=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
@@ -120,8 +120,8 @@ function DashGuiList (binder, selected_callback, column_config, color) {
     };
 
     this.Update = function () {
-        for (var i in this.rows) {
-            this.rows[i].Update();
+        for (var row of this.rows) {
+            row.Update();
         }
     };
 
@@ -179,7 +179,7 @@ function DashGuiList (binder, selected_callback, column_config, color) {
         }
     };
 
-    // This is handy so you can re-expand previously expanded rows after a list clear or list refresh
+    // This is handy, so you can re-expand previously expanded rows after a list clear or list refresh
     this.GetExpandedRowIDs = function () {
         if (!this.rows) {
             return;

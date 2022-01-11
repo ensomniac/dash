@@ -31,7 +31,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
         }
         else {
             this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
-        };
+        }
 
     };
 
@@ -43,7 +43,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
 
         if (this.on_exit_callback) {
             this.on_exit_callback();
-        };
+        }
 
     };
 
@@ -92,7 +92,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
     this.on_user_img_uploaded = function (response) {
         if (response.timeStamp) {
             return;
-        };
+        }
 
         console.log("<< on_user_img_uploaded >>");
         console.log(response);
@@ -100,7 +100,7 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
         if (response["img"]) {
             this.user_data["img"] = response["img"];
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
-        };
+        }
 
     };
 
@@ -141,4 +141,4 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
 
     this.setup_styles();
 
-};
+}

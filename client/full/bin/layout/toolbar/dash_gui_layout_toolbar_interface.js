@@ -273,18 +273,16 @@ function DashGuiLayoutToolbarInterface () {
             "text-align": text_align
         });
 
-        var obj_index = this.objects.length;
         this.objects.push({
             "html": input,
             "html_elem": input.html,
             "callback": null,
-            "index": obj_index
+            "index": this.objects.length
         });
 
         this.refactor_item_padding();
 
         return input;
-
     };
 
     this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
@@ -292,13 +290,14 @@ function DashGuiLayoutToolbarInterface () {
         var input = new Dash.Gui.Input(placeholder_label, this.color);
 
         input.html.css({
-            "padding-left": Dash.Size.Padding*0.5,
-            "margin-top": Dash.Size.Padding*0.5,
+            "background": this.color.BackgroundRaised,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5
         });
 
         input.input.css({
             "padding-left": 0,
-            "color": "rgb(20, 20, 20)",
+            "color": this.color.Input.Text.Base
         });
 
         var obj = {
@@ -316,7 +315,7 @@ function DashGuiLayoutToolbarInterface () {
         this.objects.push(obj);
 
         (function (self, input, obj_index, obj) {
-            input.OnChange(
+            input.SetOnChange(
                 function () {
                     self.on_input_changed(obj_index);
                 },
@@ -324,7 +323,7 @@ function DashGuiLayoutToolbarInterface () {
             );
 
             if (obj["on_enter_callback"]) {
-                input.OnSubmit(
+                input.SetOnSubmit(
                     function () {
                         self.on_input_submitted(obj_index);
                     },

@@ -1,4 +1,4 @@
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -34,7 +34,7 @@ class Flags:
             # if line.strip().startswith(self.comment_token):
             #     continue
 
-            # This works for many different cases when wanting to add a trailing comment based on a keyword
+            # This works for many cases when wanting to add a trailing comment based on a keyword
             # While this example is no longer valid, it shows how this can function should be used
             if not line.strip().startswith(self.comment_token):
                 line = self.add_flags_by_keyword(index, line, self.GetFormattedCommentedLine(line),

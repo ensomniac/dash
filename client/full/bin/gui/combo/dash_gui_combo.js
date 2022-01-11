@@ -43,7 +43,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     DashGuiComboInterface.call(this);
 
     this.initialize_style = function () {
-        // Toss a warning if this isn't a known style so we don't fail silently
+        // Toss a warning if this isn't a known style, so we don't fail silently
         this.styles = ["default", "row"];
 
         if (!this.styles.includes(this.style)) {
@@ -287,7 +287,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         Dash.Temp.SetLastComboChanged(this);
     };
 
-    // Prior to showing, set the width of rows (this is all important so it can auto-size)
+    // Prior to showing, set the width of rows (this is all important, so it can auto-size)
     this.pre_show_size_set = function () {
         this.setup_label_list();
 

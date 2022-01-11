@@ -86,14 +86,14 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
         if (this.click_active) {
             return;
-        };
+        }
 
         if (this.callback) {
             this.callback();
         }
         else {
             console.error("Error: No callback associated with button!");
-        };
+        }
 
         this.click_active = true;
 
@@ -109,12 +109,12 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
         if (is_active && !this.notification_icon) {
             this.create_notification_icon();
-        };
+        }
 
         if (!is_active && this.notification_icon) {
             this.notification_icon.remove();
             this.notification_icon = null;
-        };
+        }
 
     };
 
@@ -141,4 +141,4 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
     this.setup_styles();
 
-};
+}

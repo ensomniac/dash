@@ -22,7 +22,7 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
     if ((this.row_height-this.width) < this.label_height) {
         this.label_height = this.row_height-this.width;
-    };
+    }
 
     this.setup_styles = function () {
 
@@ -94,14 +94,14 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
         if (this.click_active) {
             return;
-        };
+        }
 
         if (this.callback) {
             this.callback();
         }
         else {
             console.error("Error: No callback associated with button!");
-        };
+        }
 
         this.click_active = true;
 
@@ -117,14 +117,14 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
         if (!this.notification_icon) {
             this.create_notification_icon();
-        };
+        }
 
         if (is_active) {
             this.notification_icon.stop().animate({"opacity": 1}, 350);
         }
         else {
             this.notification_icon.stop().animate({"opacity": 0}, 350);
-        };
+        }
 
     };
 
@@ -152,4 +152,4 @@ function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", lab
 
     this.setup_styles();
 
-};
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -68,7 +68,7 @@ class CSV:
     def Import(self):
         """
         This should only need to handle actually importing the file.
-        Data management after the fact should be handled outside of this script.
+        Data management after the fact should be handled outside this script.
 
         :return: Imported CSV path.
         :rtype: str

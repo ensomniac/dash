@@ -72,13 +72,13 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     this.OnScroll = function (scroll_norm, headline_offset) {
 
-        var anim_clamp = 0.7
+        var anim_clamp = 0.7;
         if (scroll_norm < anim_clamp) {
             scroll_norm = Dash.Math.InverseLerp(0, anim_clamp, scroll_norm);
         }
         else {
             scroll_norm = 1;
-        };
+        }
 
         // This is technically a double ease out...
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
@@ -137,7 +137,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
             this.buttons.Last().html.css({
                 "margin-right": Dash.Size.Padding*2,
             });
-        };
+        }
 
         this.center_content.append(button.html);
         this.buttons.push(button);
@@ -152,4 +152,4 @@ function DashCardStackBannerFooterButtonRow (banner) {
 
     this.setup_styles();
 
-};
+}

@@ -1,39 +1,44 @@
-function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
+function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;
     this.label_prefix = label_prefix;
     this.html_to_append_to = html_to_append_to;
+
+    // Simple shows a static "..." instead of the animated loading dots.
+    // This is intended for overlays that will often be quick and not left on screen long. With
+    // certain operations, like loading heavy data, drawing a ton of rows, etc, the loading dots
+    // stay frozen and don't actually animate, so if it's heavy and/or quick, simple may be preferred.
     this.simple = simple;
 
     // Not using 'this.html' is unconventional, but in order for this to be a single GUI element
     // with a transparent background and an opaque bubble, we can't use the typical 'this.html',
     // because then all the elements are either transparent or opaque, not able to be individually
-    // set. So instead of appending 'this.html' to the desired element, use this.AppendTo().
+    // set. You also shouldn't need to append this to any html manually, but in the case that is needed,
+    // use this.AppendTo(), instead of the standard method of appending 'this.html' to the desired element.
 
     this.bubble = null;
+    this.is_showing=false;
     this.background = null;
     this.bubble_dots = null;
     this.bubble_label = null;
 
     this.setup_styles = function () {
-        this.background = new Dash.Gui.GetHTMLAbsContext();
-
-        this.background.css({
-            "z-index": 100000,
-            "background": this.color.BackgroundRaised,
-            "opacity": 0.5
-        });
-
-        // Block any elements from being clicked until app is done loading/processing/etc
-        this.background.on("click", function (event) {
-            event.stopPropagation();
-        });
+        this.background = Dash.Gui.GetModalBackground(this.color);
 
         this.setup_bubble();
 
         if (this.html_to_append_to) {
             this.AppendTo(this.html_to_append_to);
         }
+    };
+
+    this.SetCSS = function (css) {
+        if (!Dash.Validate.Object(css)) {
+            return;
+        }
+
+        this.background.css(css);
+        this.bubble.css(css);
     };
 
     // See note at the top
@@ -47,10 +52,15 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         html.append(this.background);
         html.append(this.bubble);
 
+        this.is_showing = true;
         this.html_to_append_to = html;
     };
 
     this.Show = function () {
+        if (this.is_showing) {
+            return;
+        }
+
         if (this.simple) {
             this.background.css({
                 "display": "initial"
@@ -59,6 +69,8 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
             this.bubble.css({
                 "display": "initial"
             });
+
+            this.is_showing = true;
 
             return;
         }
@@ -77,6 +89,10 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     };
 
     this.Hide = function () {
+        if (!this.is_showing) {
+            return;
+        }
+
         this.background.css({
             "display": "none"
         });
@@ -84,6 +100,8 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
         this.bubble.css({
             "display": "none"
         });
+
+        this.is_showing = false;
     };
 
     this.Remove = function () {
@@ -128,12 +146,12 @@ function DashGuiLoadingOverlay (color, progress=0, label_prefix="Loading", html_
     };
 
     this.setup_bubble = function () {
-        this.bubble = new Dash.Gui.GetHTMLBoxContext();
+        this.bubble = Dash.Gui.GetHTMLBoxContext();
 
         this.bubble.css({
             "position": "absolute",
             "inset": 0,
-            "z-index": 100001,
+            "z-index": this.background.css("z-index") + 1,
             "display": "flex",
             "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding,

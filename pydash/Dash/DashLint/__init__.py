@@ -1,15 +1,15 @@
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 """
-Stub for a module to run whenever a python or javascript file is saved
+Stub for a module to run whenever a python or javascript file is saved.
 
 Unresolved Notes / Thoughts for Python:
 
-+ Time the compilation / read time for each file and flag time consuming imports
++ Time the compilation / read time for each file and flag time-consuming imports
 + Create a format for comment / description (like this) and force it to exist - for docs?
 + Consider a formatting ability to specify that the name of a function had changed so that we can auto migrate other code
-+ For js lint: Find print( and change to console.log(!
++ For js lint: Find 'print' and change to 'console.log'!
 """
 
 import os

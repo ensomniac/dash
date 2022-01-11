@@ -1,4 +1,4 @@
-function DashDT () {
+function DashDateTime () {
     this.server_offset_hours = 5;
 
     this.Readable = function (iso_string, include_tz_label=true) {

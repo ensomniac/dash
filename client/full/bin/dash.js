@@ -4,14 +4,14 @@ function Dash () {
     this.html = $("<div></div>");
 
     this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5 minute background update interval
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     this.Local            = new DashLocal();
     this.Math             = new DashMath();
     this.Temp             = new DashTemp();
     this.Validate         = new DashValidate();
-    this.DT               = new DashDT();
+    this.DateTime         = new DashDateTime();
     this.Color            = new DashColor();
     this.Color.Set        = DashColorSet;
     this.Color.ButtonSet  = DashColorButtonSet;
@@ -35,9 +35,9 @@ function Dash () {
 
     // Prevent older projects from not breaking due to these having been moved
     this.RandomID         = this.Math.RandomID.bind(this.Math);
-    this.ReadableDateTime = this.DT.Readable.bind(this.DT);
-    this.IsServerIsoDate  = this.DT.IsIsoFormat.bind(this.DT);
-    this.FormatTime       = this.DT.FormatTime.bind(this.DT);
+    this.ReadableDateTime = this.DateTime.Readable.bind(this.DateTime);
+    this.IsServerIsoDate  = this.DateTime.IsIsoFormat.bind(this.DateTime);
+    this.FormatTime       = this.DateTime.FormatTime.bind(this.DateTime);
     this.GetFormContainer = this.Gui.GetFormContainer.bind(this.Gui);
     this.IsValidEmail     = this.Validate.Email.bind(this.Validate);
     this.IsValidObject    = this.Validate.Object.bind(this.Validate);
@@ -85,7 +85,7 @@ function Dash () {
         // will not work effectively. Instead, you must use Object.defineProperty,
         // or defineProperties, as in the example for Array.prototype.Last below.
         // When extending an Object type in the incorrect way above, it
-        // technically work and you can successfully call the new function.
+        // technically works, and you can successfully call the new function.
         // However, doing it that way makes the newly created function
         // enumerable, which breaks any and all enumerations of the extended
         // object type. For example, if you loop through an Array like this:

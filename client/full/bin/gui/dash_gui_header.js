@@ -1,4 +1,4 @@
-function DashGuiHeader (label_text, color, include_border=true) {
+function DashGuiHeader (label_text, color=null, include_border=true) {
     this.label_text = label_text;
     this.color = color || Dash.Color.Light;
     this.include_border = include_border;

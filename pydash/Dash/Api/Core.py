@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -48,7 +48,7 @@ class ApiCore:
 
         if not execute_as_module:
             # This was causing problems for threaded instances when executed as a module.
-            # Changing this this shouldn't cause any problems, and hasn't, but this
+            # Changing this shouldn't cause any problems, and hasn't, but this
             # change is not thoroughly tested yet and may need to be reverted or altered.
             self.set_dash_globals()
 
@@ -98,7 +98,7 @@ class ApiCore:
         return self._response
 
     def SetUser(self, user_data):
-        if not user_data["email"]:
+        if not user_data or type(user_data) is not dict or not user_data.get("email"):
             raise Exception("Invalid user_data format!")
 
         self._user = user_data
@@ -115,7 +115,7 @@ class ApiCore:
 
         elif self._params.get("f") in self._private:
             if self.User:
-                # This needs to be set again in order to capture the logged in user's data
+                # This needs to be set again in order to capture the logged-in user's data
                 self.set_dash_globals()
                 self.run(self._private[self._params.get("f")])
         else:
@@ -134,7 +134,7 @@ class ApiCore:
         Ensures the request has all required params before processing anything.
 
         :param list required_params: All param names to check for
-        :param bool falsy: Whether or not required_params is a list of falsy params
+        :param bool falsy: Whether required_params is a list of falsy params
         """
 
         if type(required_params) == str:
@@ -165,7 +165,7 @@ class ApiCore:
 
     def SetParams(self, params):
         if not params or type(params) is not dict:
-            raise Exception(f"Error: SetParams requires a dict: {params}")
+            raise Exception(f"SetParams requires a dict: {params}")
 
         self._params = params
 
@@ -214,13 +214,13 @@ class ApiCore:
         if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
             self.SendEmail()
 
-        # Private errors should be deleted after sending the error email so they're not exposed to the client
+        # Private errors should be deleted after sending the error email, so they're not exposed to the client
         if "_error" in self._response:
             del self._response["_error"]
 
         return self._response
 
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=["ryan@ensomniac.com", "stetandrew@gmail.com"]):
+    def SendEmail(self, subject="", msg="", error="", notify_email_list=[]):
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
@@ -238,6 +238,9 @@ class ApiCore:
 
             if params.get("file"):
                 params["file"] = "truncated..."
+
+            # Keep this private
+            del params["pass"]
 
             request_details += f"Params: {params}<br><br>"
 
@@ -292,7 +295,7 @@ class ApiCore:
 
             mini_field_storage = self._fs[key]
 
-            # This catches Github Webhook param issues
+            # This catches GitHub Webhook param issues
             if type(mini_field_storage) == list:
                 mini_field_storage = mini_field_storage[0]
 
@@ -347,7 +350,7 @@ class ApiCore:
             self.SetResponse({"error": f"There was a scripting problem:\n{format_exc()}"})
 
     # DEPRECATED:
-    #  Since class functions expect 'self' as the first variable, Execute() belongs outside of this class as a standalone function.
+    #  Since class functions expect 'self' as the first variable, Execute() belongs outside this class as a standalone function.
     #
     #  --Previous usage--
     #         if __name__ == "__main__":

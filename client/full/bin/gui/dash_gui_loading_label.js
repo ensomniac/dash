@@ -71,4 +71,4 @@ function DashGuiLoadingLabel (binder, label_text) {
 
     this.setup_styles();
 
-};
+}

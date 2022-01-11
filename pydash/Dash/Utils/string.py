@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -42,7 +42,7 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     if time_format == 0:
         return date_markup
 
-    # Display just the date in a human readable format
+    # Display just the date in a human-readable format
     elif time_format == 1:
         return datetime_object.strftime("%m/%d/%y at %I:%M %p")
 
@@ -101,7 +101,7 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     elif time_format == 10:
         return f"{datetime_object.month}/{datetime_object.day}"
 
-    # Format date and time in a human readable format
+    # Format date and time in a human-readable format
     else:
         return f"{date_markup} at {time_markup}"
 

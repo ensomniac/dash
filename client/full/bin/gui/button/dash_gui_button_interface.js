@@ -1,12 +1,17 @@
 /**@member DashGuiButton*/
 
 function DashGuiButtonInterface () {
-    this.ChangeLabel = function (label_text, width=null) {
+    this.SetText = function (label_text, width=null) {
         this.label.text(label_text);
 
         if (width) {
             this.html.css({"width": width});
         }
+    };
+
+    // Deprecated
+    this.ChangeLabel = function (label_text, width=null) {
+        this.SetText(label_text, width);
     };
 
     this.StyleAsDeleteButton = function (width=null, faint=true) {

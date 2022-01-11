@@ -17,7 +17,7 @@ class Measurement:
         Object that manages operations between measurements
 
         :param str system: metric or imperial
-        :param str unit: inch, meter, etc
+        :param str unit: inch, meter, etc.
         :param float value: numerical value of unit
         """
 

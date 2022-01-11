@@ -39,7 +39,7 @@ function DashCardStackBannerHeadline (banner) {
     };
 
     this.GetHeight = function () {
-        return this.html.height() + (Dash.Size.Padding*6)
+        return this.html.height() + (Dash.Size.Padding*6);
     };
 
     this.OnScroll = function (scroll_norm) {
@@ -55,7 +55,7 @@ function DashCardStackBannerHeadline (banner) {
         else {
             opac_norm = 1;
             // this.html.css("height", 10);
-        };
+        }
 
         this.label_top.css("opacity", opac_norm);
         this.label_bottom.css("opacity", opac_norm);
@@ -79,4 +79,4 @@ function DashCardStackBannerHeadline (banner) {
 
     this.setup_styles();
 
-};
+}

@@ -2,8 +2,8 @@ function DashGuiLayoutToolbar (binder, color) {
     this.binder        = binder;
     this.color         = color || this.binder.color || Dash.Color.Dark;
     this.objects       = [];
-    this.html          = new Dash.Gui.GetHTMLContext();
-    this.stroke_sep    = new Dash.Gui.GetHTMLAbsContext();
+    this.html          = Dash.Gui.GetHTMLContext();
+    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
     this.stroke_height = 1;
     this.height        = Dash.Size.ButtonHeight + this.stroke_height;
     this.refactor_itom_padding_requested = false;
@@ -68,17 +68,15 @@ function DashGuiLayoutToolbar (binder, color) {
 
         this.refactor_itom_padding_requested = true;
 
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self._refactor_item_padding();
             });
         })(this);
-
     };
 
+    // Note: Never call this directly. Instead, use this.refactor_item_padding()
     this._refactor_item_padding = function () {
-        // Note: Never call this directly. Instead, use this.refactor_item_padding()
-
         if (!this.refactor_itom_padding_requested) {
             return;
         }
@@ -88,17 +86,16 @@ function DashGuiLayoutToolbar (binder, color) {
         for (var i = 0; i < this.objects.length; i++) {
             var html = this.objects[i]["html_elem"];
 
-            if (i == this.objects.length-1) {
-                // This is the last element and it gets no right-margin
+            if (i === (this.objects.length - 1)) {
+                // This is the last element, and it gets no right-margin
                 //since the toolbar itself has a margin built in to the left and right
                 html.css({"margin-right": 0, "margin-left": 0});
             }
+
             else {
-                html.css({"margin-right": Dash.Size.Padding*0.5, "margin-left": 0});
+                html.css({"margin-right": Dash.Size.Padding * 0.5, "margin-left": 0});
             }
-
         }
-
     };
 
     this.setup_styles();

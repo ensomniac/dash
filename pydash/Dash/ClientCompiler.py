@@ -1,10 +1,10 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 """
-This script can be ran by itself or called as a module:
+This script can be run by itself or called as a module:
 from Dash.ClientCompiler import ClientCompiler
 
 It will compile the dash client code into a minified version
@@ -135,7 +135,7 @@ class _ClientCompiler:
                     path = self.parse_source_path(line)
 
                     if path:
-                        # At the time of writing, there is only one css file
+                        # At the time of writing, there is only one css file,
                         # but we run it through with all the rest for compatibility
                         css_mobile_source_paths.append(path)
                 else:

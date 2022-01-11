@@ -116,7 +116,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         );
 
         if (fire_callback) {
-            this.add_msg_callback(text, message.ID(), user_email);
+            if (this.add_msg_callback) {
+                this.add_msg_callback(text, message.ID(), user_email);
+            }
+
             this.handle_mentions(text, message);
         }
 
@@ -205,21 +208,21 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
         var ids = [];
 
-        for (var i in this.callback_mentions) {
-            var mention = this.callback_mentions[i];
-
-            for (var x in this.at_combo_options) {
-                var name = this.at_combo_options[x]["label_text"];
+        for (var mention of this.callback_mentions) {
+            for (var combo_option of this.at_combo_options) {
+                var name = combo_option["label_text"];
 
                 if (name === mention) {
-                    ids.push(this.at_combo_options[x]["id"]);
+                    ids.push(combo_option["id"]);
 
                     break;
                 }
             }
         }
 
-        this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp(), message_obj.UserEmail());
+        if (this.mention_callback) {
+            this.mention_callback(ids, text, message_obj.ID(), message_obj.IsoTimestamp(), message_obj.UserEmail());
+        }
     };
 
     this.bold_mentions = function (text, track=false) {
@@ -227,51 +230,54 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return text;
         }
 
-        this.valid_mentions.forEach(
-            function (label_text) {
-                var label_text_lower = label_text.toLowerCase();
+        for (var label_text of this.valid_mentions) {
+            text = this.process_mention(label_text, text, track);
+        }
 
-                if (!text.includes("@" + label_text) && !text.includes("@" + label_text_lower)) {
-                    if (!label_text.includes(" ")) {
-                        return;
-                    }
+        return text;
+    };
 
-                    var first = label_text.split(" ")[0];
-                    var first_lower = first.toLowerCase();
+    this.process_mention = function (label_text, text, track=false) {
+        var label_text_lower = label_text.toLowerCase();
 
-                    if (!text.includes("@" + first) && !text.includes("@" + first_lower)) {
-                        return;
-                    }
+        if (!text.includes("@" + label_text) && !text.includes("@" + label_text_lower)) {
+            if (!label_text.includes(" ")) {
+                return text;
+            }
 
-                    var occurrences = 0;
+            var first = label_text.split(" ")[0];
+            var first_lower = first.toLowerCase();
 
-                    this.valid_mentions.forEach(function (label) {
-                        if (label.startsWith(first)) {
-                            occurrences += 1;
-                        }
-                    });
+            if (!text.includes("@" + first) && !text.includes("@" + first_lower)) {
+                return text;
+            }
 
-                    if (occurrences !== 1) {
-                        return;
-                    }
+            var occurrences = 0;
 
-                    text = text.replaceAll(
-                        text.includes("@" + first) ? "@" + first : "@" + first_lower,
-                        "@" + label_text
-                    );
+            for (var label of this.valid_mentions) {
+                if (label.startsWith(first)) {
+                    occurrences += 1;
                 }
+            }
 
-                text = text.replaceAll(
-                    text.includes("@" + label_text) ? "@" + label_text : "@" + label_text_lower,
-                    "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
-                );
+            if (occurrences !== 1) {
+                return text;
+            }
 
-                if (track && !this.callback_mentions.includes(label_text)) {
-                    this.callback_mentions.push(label_text);
-                }
-            },
-            this
+            text = text.replaceAll(
+                text.includes("@" + first) ? "@" + first : "@" + first_lower,
+                "@" + label_text
+            );
+        }
+
+        text = text.replaceAll(
+            text.includes("@" + label_text) ? "@" + label_text : "@" + label_text_lower,
+            "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
         );
+
+        if (track && !this.callback_mentions.includes(label_text)) {
+            this.callback_mentions.push(label_text);
+        }
 
         return text;
     };
@@ -283,24 +289,26 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
         this.valid_mentions = [];
 
-        for (var i in this.at_combo_options) {
-            this.valid_mentions.push(this.at_combo_options[i]["label_text"]);
+        for (var combo_option of this.at_combo_options) {
+            this.valid_mentions.push(combo_option["label_text"]);
         }
     };
 
     this.on_checkbox_toggled = function () {
         this.message_area.empty();
 
-        for (var i in this.messages) {
-            var message = this.messages[i];
-
-            if (this.check_to_show_message(message.RightAligned())) {
-                this.message_area.append(message.html);
-
-                if (message.delete_button) {
-                    message.delete_button.RefreshConnections();
-                }
+        for (var message of this.messages) {
+            if (!this.check_to_show_message(message.RightAligned())) {
+                continue;
             }
+
+            this.message_area.append(message.html);
+
+            if (!message.delete_button) {
+                continue;
+            }
+
+            message.delete_button.RefreshConnections();
         }
 
         this.scroll_to_bottom_on_overflow();
@@ -392,7 +400,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             }
         }
 
-        this.del_msg_callback(message);
+        if (this.del_msg_callback) {
+            this.del_msg_callback(message);
+        }
     };
 
     this.add_message_from_input = function () {

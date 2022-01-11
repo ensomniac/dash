@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 
@@ -18,7 +18,7 @@ class _SyncUtils:
         from json import loads
         from requests import post
 
-        # Get all active packages for the logged in user
+        # Get all active packages for the logged-in user
         dash_data_path = os.path.join(expanduser("~"), ".dash")
 
         if not os.path.exists(dash_data_path):

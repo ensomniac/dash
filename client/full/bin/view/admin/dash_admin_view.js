@@ -1,17 +1,16 @@
-function DashAdminView () {
+function DashAdminView (users_class_override=null) {
+    this.users_class_override = users_class_override;
 
     this.layout = new Dash.Gui.Layout.Tabs.Top(this);
     this.html = this.layout.html;
 
     this.setup_styles = function () {
-        this.layout.Append("Users", DashAdminSettings);
+        this.layout.Append("Users", this.users_class_override ? this.users_class_override : DashAdminSettings);
         // this.layout.Append("Color", DashAdminColor);
 
-        for (var i in Dash.View.SiteSettingsTabs.user_tabs) {
-            var tab_settings = Dash.View.SiteSettingsTabs.user_tabs[i];
+        for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {
             this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
         }
-
     };
 
     this.AddTab = function () {
@@ -19,5 +18,4 @@ function DashAdminView () {
     };
 
     this.setup_styles();
-
 }

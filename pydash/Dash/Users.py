@@ -1,15 +1,15 @@
 #!/usr/bin/python
 #
-# Ensomniac 2021 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
 import sys
 
-from datetime import datetime
 from Dash import LocalStorage
-from Dash.Utils import Memory
+from datetime import datetime
 from traceback import format_exc
+from Dash.Utils import Memory, SendEmail
 
 
 class Users:
@@ -432,7 +432,19 @@ class Users:
         users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
 
         for user_email in os.listdir(users_root):
-            team[user_email] = self.get_user_info(user_email)
+            try:
+                team[user_email] = self.get_user_info(user_email)
+
+            # In cases where a specific user's data is corrupted etc, we don't
+            # want that to prevent everyone else from logging in etc
+            except Exception as e:
+                team[user_email] = {"error": e}
+
+                SendEmail(
+                    subject="Dash Error - Users.get_team()",
+                    msg=f"Failed to get user info for {user_email}, data may be corrupted",
+                    error=e
+                )
 
         return team
 
