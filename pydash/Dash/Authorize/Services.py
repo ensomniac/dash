@@ -53,25 +53,6 @@ def get_by_name(name):
     return services.get(name)
 
 
-def get_spotify_scope():
-    return " ".join([
-        "playlist-read-private",
-        "playlist-read-collaborative",
-        "playlist-modify-public",
-        "playlist-modify-private",
-        "streaming",
-        "user-follow-modify",
-        "user-follow-read",
-        "user-library-read",
-        "user-library-modify",
-        "user-read-private",
-        "user-read-birthdate",
-        "user-read-email",
-        "user-top-read",
-        "user-read-recently-played"
-    ])
-
-
 # client_id
 #     Required. The client ID provided to you by Spotify when you register your application.
 # response_type
@@ -92,33 +73,6 @@ def get_spotify_scope():
 #     Optional. A space-separated list of scopes: see Using Scopes. If no scopes are specified, authorization will be granted only
 #     to access publicly available information: that is, only information normally visible in the Spotify desktop, web and mobile players.
 
-
-Spotify = Service(
-    name="spotify",
-    client_id="ae4837343ed54a3c82cc2ab7f8f8d2e1",
-    client_secret="96c9ecb0aa3b47e2a4b12f99865fe877",
-    authorize_url="https://accounts.spotify.com/authorize",
-    token_endpoint="https://accounts.spotify.com/api/token",
-    token_refresh_endpoint="https://accounts.spotify.com/api/token",
-    scope=get_spotify_scope(),
-    success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
-    access_token_key="access_token",
-    token_valid_url="https://api.spotify.com/v1/me"
-)
-
-Gmail = Service(
-    name="gmail",
-    client_id="947806183438-e1hirfb16k1h1d4jnc7u05u1vu3n2pnh.apps.googleusercontent.com",
-    client_secret="EjgANOKgqRT2FViDD7nyjj58",
-    authorize_url="",
-    token_endpoint="",
-    token_refresh_endpoint="",
-    scope="https://mail.google.com/",
-    success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
-    access_token_key="access_token",
-    token_valid_url=""
-)
-
 GoogleDrive = Service(
     name="gdrive",
     client_id="70801449898-hs1k8e0hcn5sfs84oslqr97hpekcjtve.apps.googleusercontent.com",
@@ -132,13 +86,42 @@ GoogleDrive = Service(
         "https://www.googleapis.com/auth/drive.readonly",
         "https://www.googleapis.com/auth/drive.metadata.readonly",
         "https://www.googleapis.com/auth/drive.metadata",
-        "https://www.googleapis.com/auth/drive.photos.readonly"
+        "https://www.googleapis.com/auth/drive.photos.readonly",
+        "https://www.googleapis.com/auth/userinfo.email"  # This is important so we know whose credentials we're getting
     ],
     success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
     access_token_key="access_token",
     token_valid_url=""
 )
 
+Gmail = Service(
+    name="gmail",
+    client_id="947806183438-e1hirfb16k1h1d4jnc7u05u1vu3n2pnh.apps.googleusercontent.com",
+    client_secret="EjgANOKgqRT2FViDD7nyjj58",
+    authorize_url="",
+    # token_endpoint="",  # This was empty for some reason and wasn't working because of it
+    token_endpoint="google",
+    token_refresh_endpoint="",
+    scope=[
+        "https://mail.google.com/",
+        "https://www.googleapis.com/auth/userinfo.email"  # This is important so we know whose credentials we're getting
+    ],
+    success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
+    access_token_key="access_token",
+    token_valid_url=""
+)
+
+# TODO: Ryan, you need to login to the Google Cloud Console that provided this client_id and add 'https://authorize.oapi.co/r' as an "Authorized redirect URI"
+#  Ref: https://stackoverflow.com/questions/68764885/google-oauth-2-0-api-authentication-error-error-400-redirect-uri-mismatch-do
+#  ----------------------------------------------
+#     Error 400: redirect_uri_mismatch
+#     You can't sign in to this app because it doesn't comply with Google's OAuth 2.0 policy.
+#     If you're the app developer, register the redirect URI in the Google Cloud Console.
+#     Learn more
+#     Request Details
+#     The content in this section has been provided by the app developer. This content has not been reviewed or verified by Google.
+#     If you’re the app developer, make sure that these request details comply with Google policies.
+#     redirect_uri: https://authorize.oapi.co/r
 Photos = Service(
     name="photos",
     # client_id="208470372375-4qsgihu8d8fpbla1mo7m9cb5ujlh9s03.apps.googleusercontent.com",
@@ -148,8 +131,44 @@ Photos = Service(
     authorize_url="",
     token_endpoint="google",
     token_refresh_endpoint="",
-    scope="https://www.googleapis.com/auth/photoslibrary.readonly",
+    scope=[
+        "https://www.googleapis.com/auth/photoslibrary.readonly",
+        "https://www.googleapis.com/auth/userinfo.email"  # This is important so we know whose credentials we're getting
+    ],
     success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
     access_token_key="access_token",
     token_valid_url=""
+)
+
+# TODO: Ryan, you can resolve this error by authorizing 'https://authorize.oapi.co/r' in whatever console/portal you got this client_id from
+#  INVALID_CLIENT: Invalid redirect URI
+# TODO: Since the above error prevents me from seeing the response structure, you'll have to update the code Api.py > redirect()
+#  that handles the getting of the email from the token response data. Based on your scope param including "user-read-email", it's
+#  safe to assume that the email is already included in the response, just need to parse it in Api.py > redirect() specifically for spotify redirects.
+Spotify = Service(
+    name="spotify",
+    client_id="ae4837343ed54a3c82cc2ab7f8f8d2e1",
+    client_secret="96c9ecb0aa3b47e2a4b12f99865fe877",
+    authorize_url="https://accounts.spotify.com/authorize",
+    token_endpoint="https://accounts.spotify.com/api/token",
+    token_refresh_endpoint="https://accounts.spotify.com/api/token",
+    scope=" ".join([
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "playlist-modify-public",
+        "playlist-modify-private",
+        "streaming",
+        "user-follow-modify",
+        "user-follow-read",
+        "user-library-read",
+        "user-library-modify",
+        "user-read-private",
+        "user-read-birthdate",
+        "user-read-email",
+        "user-top-read",
+        "user-read-recently-played"
+    ]),
+    success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
+    access_token_key="access_token",
+    token_valid_url="https://api.spotify.com/v1/me"
 )

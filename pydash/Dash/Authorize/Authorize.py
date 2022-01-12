@@ -47,9 +47,9 @@ class Authorize:
 
     def exchange_code_for_token(self, code):
         if self.service.token_endpoint == "google":
-            return self.exchange_code_for_token_google(code)  # Manage using Google's oAuth 2 thing
+            return self.exchange_code_for_token_google(code)  # Manage using Google's OAuth2
         else:
-            return self.exchange_code_for_token_oauth(code)  # Normal oAuth
+            return self.exchange_code_for_token_oauth(code)  # Normal OAuth
 
     def exchange_code_for_token_google(self, code):
         flow = self.get_flow()
@@ -230,12 +230,6 @@ class Authorize:
                 "include_granted_scopes": "true"
             }
         )
-
-        # Ref: https://github.com/googleapis/google-api-python-client/issues/213
-        # flow.params["prompt"] = "consent"
-        #
-        # flow.params["access_type"] = "offline"  # offline access
-        # flow.params["include_granted_scopes"] = "true"  # incremental auth
 
         return flow
 

@@ -164,7 +164,7 @@ class EnsomniacMail:
 
             return
 
-        flow_data_filename = all_flows[0][1]
+        service_name = all_flows[0][1]
         flow_data = all_flows[0][2]
 
         flow_data["code"] = code
@@ -183,11 +183,25 @@ class EnsomniacMail:
         flow_data["token_data"] = token_result["token_data"]
         flow_data["token_stored_on"] = datetime.now()
 
-        path = os.path.join(self.flow_path, flow_data_filename)
+        email = ""
+
+        # TODO: Once Spotify service error has been resolved (see TODO in Services.py),
+        #  update the method of getting the email from the response here, specifically for spotify
+        if flow_data["token_data"].get("id_token"):
+            email = flow_data["token_data"]["id_token"].get("email")
+
+        if not email:
+            raise Exception("User email missing from response data, can't identify who these credentials are for.")
+
+        path = self.get_data_path(email, service_name)
 
         self.write_data(path, flow_data)
 
-        self.return_data = {"error": None, "authorization_successful": True, "path": path, "data": str(flow_data)}
+        self.return_data = {"error": None, "authorization_successful": True, "path": path, "data": str(flow_data), "TEST": email}
+
+    # TODO: propagate this throughout the code (why did it still create a 'gdrive' file?)
+    def get_data_path(self, email, service_name):
+        return os.path.join(self.flow_path, f"{email}_{service_name}")
 
     def get_token(self):
         token = None
