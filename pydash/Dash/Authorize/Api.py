@@ -12,12 +12,13 @@ import os
 import sys
 import cgi
 import json
-import Authorize
 
 from dateutil import parser
 from datetime import datetime
+from Authorize import Authorize
 from Dash.Utils import OapiRoot
 from traceback import format_exc
+from Services import get_by_name
 
 
 class EnsomniacMail:
@@ -55,63 +56,62 @@ class EnsomniacMail:
         else:
             self.print_return_data()
 
-    # This is what gets called by the redirected endpoint
+    # This is what gets called by the redirected endpoint (authorize.oapi.co/{service_name})
     def authorize_service(self):
         if self.data.get("service_name") == "r":
             self.redirect()
-            
+
             return
 
         if self.data.get("token"):
             self.get_token()
-            
+
             return
 
         if self.data.get("all"):
             self.get_all()
-            
+
             return
 
         if self.data.get("service_data"):
             self.merge_service_data()
-            
+
             return
 
         # self.return_data = {"error": None, "keys": str(self.data.keys()), "service": self.data.get("service")}
         #
         # return
 
-        service = Authorize.Services.get_by_name(self.data.get("service_name"))
+        service = get_by_name(self.data.get("service_name"))
 
         if not service:
             self.return_data = {"error": f"Unknown Service Name '{self.data.get('service_name')}'"}
-            
+
             return
 
-        auth = Authorize.Authorize(self.data.get("service_name"))
+        auth = Authorize(self.data.get("service_name"))
 
+        # Always re-authorize anyway, doesn't hurt, no need to skip
         # if auth.is_authorized():
         #     self.return_data = {"error": "This service is authorized"}
-        #
         #     return
-        #
+
         # We're not authorized
 
         auth_uri = auth.get_step1_authorize_url()
 
         if not auth_uri:
-            self.return_data = {"error": f"Unable to obtain authorization URL for service {auth.service.name}"}
-            
+            self.return_data = {"error": f"Unable to obtain authorization URL for service: {auth.service.name}"}
+
             return
 
         button = f'''<div style="padding:0px;margin:10px;margin-top:15px;border:0px;"><a href="{auth_uri}'''
-        button += auth_uri + '''" style="text-decoration:none;font-weight:normal;color:#FFFFFF;'''
-        button += '''background-color:#4865C7;font-size:12px;text-align:center;'''
-        button += '''font-family:arial, helvetica, sans-serif;'''
-        button += '''padding:10px;margin:0px;border:0px;">Authorize ''' + auth.service.name.title() + ''' Now</a></div>'''
+        button += '''" style="text-decoration:none;font-weight:normal;color:#FFFFFF;font-size:12px;'''
+        button += '''background-color:#4865C7;text-align:center;font-family:arial, helvetica, sans-serif;'''
+        button += f'''padding:10px;margin:0px;border:0px;">Authorize {auth.service.name.title()} Now</a></div>'''
 
-        self.write_data(
-            os.path.join(self.flow_path, auth.service.name),
+        self.write_data(os.path.join(
+            self.flow_path, auth.service.name),
             {
                 "service_name": auth.service.name,
                 "flow_initiated": datetime.now()
@@ -119,11 +119,7 @@ class EnsomniacMail:
         )
 
         self.html_content = button
-
-        self.return_data = {
-            "error": None,
-            "url": auth_uri
-        }
+        self.return_data = {"error": None, "url": auth_uri}
 
     # Print the error to the window rather than displaying it as json
     def format_error_html(self):
@@ -155,7 +151,7 @@ class EnsomniacMail:
         for auth_path in os.listdir(self.flow_path):
             auth_data = self.read_data(os.path.join(self.flow_path, auth_path))
             seconds_since = (now - auth_data["flow_initiated"]).total_seconds()
-            
+
             if seconds_since > 300:
                 continue  # Change this to 60
 
@@ -176,7 +172,7 @@ class EnsomniacMail:
 
         # Now that we have the code, let's exchange it for a token
 
-        auth = Authorize.Authorize(flow_data.get("service_name"))
+        auth = Authorize(flow_data.get("service_name"))
         token_result = auth.exchange_code_for_token(flow_data["code"])
 
         if token_result.get("error"):
@@ -186,7 +182,7 @@ class EnsomniacMail:
 
         flow_data["token_data"] = token_result["token_data"]
         flow_data["token_stored_on"] = datetime.now()
-        
+
         path = os.path.join(self.flow_path, flow_data_filename)
 
         self.write_data(path, flow_data)
@@ -197,7 +193,7 @@ class EnsomniacMail:
         token = None
 
         try:
-            auth = Authorize.Authorize(self.data.get("service_name"))
+            auth = Authorize(self.data.get("service_name"))
             auth_data = self.read_data(os.path.join(self.flow_path, auth.service.name))
             token_data = auth_data.get("token_data")
             token = token_data.get(auth.service.access_token_key)
@@ -208,7 +204,7 @@ class EnsomniacMail:
 
     def get_token_data(self):
         try:
-            auth = Authorize.Authorize(self.data.get("service_name"))
+            auth = Authorize(self.data.get("service_name"))
             auth_data = self.read_data(os.path.join(self.flow_path, auth.service.name))
             token_data = auth_data.get("token_data")
         except:
@@ -220,7 +216,7 @@ class EnsomniacMail:
         self.return_data = {"error": None, "token_data": str(token_data)}
 
     def get_all(self):
-        auth = Authorize.Authorize(self.data.get("service_name"))
+        auth = Authorize(self.data.get("service_name"))
         auth_data = self.read_data(os.path.join(self.flow_path, auth.service.name))
 
         if auth_data:
@@ -229,7 +225,7 @@ class EnsomniacMail:
             self.return_data = {"error": "Authorization data isn't available on the server"}
 
     def merge_service_data(self):
-        auth = Authorize.Authorize(self.data.get("service_name"))
+        auth = Authorize(self.data.get("service_name"))
         service_data = json.loads(self.data.get("service_data"))
 
         self.write_data(os.path.join(self.flow_path, auth.service.name), service_data)

@@ -23,7 +23,7 @@ class Authorize:
         self.service = get_by_name(service_name)
 
         if not self.service:
-            raise Exception(f"Unable to locate service by name '{service_name}'")
+            raise Exception(f"Unable to locate service by name: {service_name}")
 
         self._service_data = None
         self.flow = self.get_flow()
@@ -223,16 +223,19 @@ class Authorize:
             client_id=self.service.client_id,
             client_secret=self.service.client_secret,
             scope=self.service.scope,
-            redirect_uri=self.service.redirect_uri
+            redirect_uri=self.service.redirect_uri,
+            **{
+                "prompt": "consent",  # Ref: https://github.com/googleapis/google-api-python-client/issues/213
+                "access_type": "offline",
+                "include_granted_scopes": "true"
+            }
         )
 
+        # Ref: https://github.com/googleapis/google-api-python-client/issues/213
+        # flow.params["prompt"] = "consent"
+        #
         # flow.params["access_type"] = "offline"  # offline access
         # flow.params["include_granted_scopes"] = "true"  # incremental auth
-
-        # Ref: https://github.com/googleapis/google-api-python-client/issues/213
-        flow.params["prompt"] = "consent"
-        flow.params["access_type"] = "offline"  # offline access
-        flow.params["include_granted_scopes"] = "true"  # incremental auth
 
         return flow
 
