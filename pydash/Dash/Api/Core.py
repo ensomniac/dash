@@ -27,7 +27,15 @@ class ApiCore:
         self._public = {}
         self._private = {}  # Requires an authenticated user
         self._render_html = None
-        self._fs = cgi.FieldStorage()
+
+        try:
+            self._fs = cgi.FieldStorage()
+        except:
+            error = format_exc()
+            msg = "Failed to process Python's native cgi.FieldStorage() "
+            msg += "with given request! Full Traceback: " + error
+            raise Exception(msg)
+
         self._response = {"error": "Unauthorized"}
 
         try:

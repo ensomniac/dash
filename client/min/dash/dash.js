@@ -27036,7 +27036,7 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.modal_background = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
-    this.is_admin = this.options["is_admin"] || false;
+    this.is_admin = this.options["is_admin"] || true; // TODO: Resolve this
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
