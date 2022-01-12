@@ -9,10 +9,20 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.modal_background = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
-    this.is_admin = this.options["is_admin"] || true; // TODO: Resolve this
+
+    // True by default, but ideally, options["is_admin"] should be provided for added
+    // security between non-admins. This is referenced by this.has_privileges when this element
+    // is pertaining to the current user, so that users (and admins) can only change their own data.
+    this.is_admin = "is_admin" in this.options ? this.options["is_admin"] : true;
+
+    // This manages whether:
+    //     - rows are editable (excluding the ones that are hard-coded)
+    //     - the "Update Password" field is visible
+    //     - the user image can be updated
+    this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
+
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
     this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
     this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
 

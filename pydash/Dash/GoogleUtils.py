@@ -62,7 +62,6 @@ class GUtils:
         if not hasattr(self, "_creds"):
             from json import loads
             from requests import post
-            from oauth2client.client import OAuth2Credentials
 
             # These unused imports are required for the eval() call for some reason (inspection suppressed with noqa tag)
             import datetime                  # noqa
@@ -72,8 +71,14 @@ class GUtils:
 
             try:
                 response = loads(response.text)
-            except:
-                raise Exception("Failed to get Google token from server")
+
+            except Exception as e:
+                raise Exception(
+                    f"Failed to get Google token from server, details:\n\n"
+                    f"Response:\n{response.text}\n\nError:\n{e}"
+                )
+
+            from oauth2client.client import OAuth2Credentials
 
             token_json = eval(response["token_data"])
 
