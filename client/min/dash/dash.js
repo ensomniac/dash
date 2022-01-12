@@ -27849,10 +27849,10 @@ function DashGuiLayoutTabs (binder, side_tabs) {
                 }
                 else {
                     if (optional_args) {
-                        inst_class = new callback(optional_args);
+                        inst_class = callback(optional_args);
                     }
                     else {
-                        inst_class = new callback();
+                        inst_class = callback();
                     }
                 }
                 content_html = inst_class.html;
