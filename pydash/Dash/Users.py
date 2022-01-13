@@ -83,7 +83,7 @@ class Users:
             subject=subject,
             notify_email_list=[email],
             msg=body_text,
-            sender=self.dash_context["admin_from_email"],
+            sender_email=self.dash_context["admin_from_email"],
             sender_name=f"{self.dash_context['display_name']} - Reset Login"
         )
 

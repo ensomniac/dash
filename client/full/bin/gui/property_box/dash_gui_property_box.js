@@ -84,8 +84,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]
             );
-        };
-
+        }
     };
 
     this.on_server_property_set = function (property_set_data) {
@@ -104,6 +103,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         this.top_right_label = Dash.Gui.GetHTMLAbsContext();
 
         this.top_right_label.css({
+            "background": "none",
             "left": "auto",
             "bottom": "auto",
             "top": Dash.Size.Padding,
