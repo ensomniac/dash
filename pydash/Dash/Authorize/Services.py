@@ -12,18 +12,17 @@ import os
 import sys
 
 from urllib.parse import urlencode
+from Dash.LocalStorage import Read
 
 services = {}
 
 
 class Service:
     def __init__(
-            self, name, client_id, client_secret, authorize_url, token_endpoint, token_refresh_endpoint,
+            self, name, authorize_url, token_endpoint, token_refresh_endpoint,
             scope, success_token_exchange_key, access_token_key, token_valid_url
     ):
         self.name = name
-        self.client_id = client_id
-        self.client_secret = client_secret
         self.authorize_url = authorize_url
         self.token_endpoint = token_endpoint
         self.token_refresh_endpoint = token_refresh_endpoint
@@ -33,6 +32,9 @@ class Service:
         self.token_valid_url = token_valid_url
 
         self.redirect_uri = "https://authorize.oapi.co/r"
+        self.priv_data = Read(os.path.join("/var", "priv", f"{self.name}.json"))
+        self.client_id = self.priv_data["client_id"]
+        self.client_secret = self.priv_data["client_secret"]
 
         services[self.name] = self
 
@@ -53,30 +55,8 @@ def get_by_name(name):
     return services.get(name)
 
 
-# client_id
-#     Required. The client ID provided to you by Spotify when you register your application.
-# response_type
-#     Required. Set it to code.
-# redirect_uri
-#     Required. The URI to redirect to after the user grants/denies permission. This URI needs to have been
-#     entered in the Redirect URI whitelist that you specified when you registered your application. The value
-#     of redirect_uri here must exactly match one of the values you entered when you registered your application,
-#     including upper/lowercase, terminating slashes, etc.
-# state
-#     Optional, but strongly recommended. The state can be useful for correlating requests and responses.
-#     Because your redirect_uri can be guessed, using a state value can increase your assurance that an
-#     incoming connection is the result of an authentication request. If you generate a random string or
-#     encode the hash of some client state (e.g., a cookie) in this state variable, you can validate the
-#     response to additionally ensure that the request and response originated in the same browser. This
-#     provides protection against attacks such as cross-site request forgery. See RFC-6749.
-# scope
-#     Optional. A space-separated list of scopes: see Using Scopes. If no scopes are specified, authorization will be granted only
-#     to access publicly available information: that is, only information normally visible in the Spotify desktop, web and mobile players.
-
 GoogleDrive = Service(
     name="gdrive",
-    client_id="70801449898-hs1k8e0hcn5sfs84oslqr97hpekcjtve.apps.googleusercontent.com",
-    client_secret="MT2PJEwUmuHTnNx5REEGWFDv",
     authorize_url="",
     token_endpoint="google",
     token_refresh_endpoint="",
@@ -96,10 +76,7 @@ GoogleDrive = Service(
 
 Gmail = Service(
     name="gmail",
-    client_id="947806183438-e1hirfb16k1h1d4jnc7u05u1vu3n2pnh.apps.googleusercontent.com",
-    client_secret="EjgANOKgqRT2FViDD7nyjj58",
     authorize_url="",
-    # token_endpoint="",  # This was empty for some reason and wasn't working because of it
     token_endpoint="google",
     token_refresh_endpoint="",
     scope=[
@@ -124,10 +101,6 @@ Gmail = Service(
 #     redirect_uri: https://authorize.oapi.co/r
 Photos = Service(
     name="photos",
-    # client_id="208470372375-4qsgihu8d8fpbla1mo7m9cb5ujlh9s03.apps.googleusercontent.com",
-    # client_secret="s5L4Z-I4f3qVlWK75tcZqONL",
-    client_id="70801449898-n4ofpd1536a9ia4hag1ii7b7gc8lvrlf.apps.googleusercontent.com",
-    client_secret="5Vvx9sXdNtggDl3NVbptcs7I",
     authorize_url="",
     token_endpoint="google",
     token_refresh_endpoint="",
@@ -147,8 +120,6 @@ Photos = Service(
 #  safe to assume that the email is already included in the response, just need to parse it in Api.py > redirect() specifically for spotify redirects.
 Spotify = Service(
     name="spotify",
-    client_id="ae4837343ed54a3c82cc2ab7f8f8d2e1",
-    client_secret="96c9ecb0aa3b47e2a4b12f99865fe877",
     authorize_url="https://accounts.spotify.com/authorize",
     token_endpoint="https://accounts.spotify.com/api/token",
     token_refresh_endpoint="https://accounts.spotify.com/api/token",

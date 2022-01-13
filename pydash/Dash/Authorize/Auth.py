@@ -15,10 +15,15 @@ import requests
 
 from httplib2 import Http
 from base64 import encodestring
-from Services import get_by_name
+
+# Assurance, since this can be called not only as a module from Dash, but also externally
+try:
+    from .Services import get_by_name
+except:
+    from Services import get_by_name
 
 
-class Authorize:
+class Auth:
     def __init__(self, service_name):
         self.service = get_by_name(service_name)
 
@@ -235,17 +240,4 @@ class Authorize:
 
 
 if __name__ == "__main__":
-    auth = Authorize("spotify")
-
-    # tmp_code = "AQDUIi0kTAg5P0oRGR6QE9dh33JcHixOSzzBQu8vxdjEQQJ9WJLNe7hsKSs9maUQ9pJdlSu3dzDmsxlZ_nq" \
-    #            "px2FjugHWCgfRKtfwBOpIHbGlGy_PnKP40kxp-ETxTQTxsjAlxk8ZW6Gc-yjwU1txopjUcazSc4_d1xiKrc" \
-    #            "DFnquIwPvhghtDTrU1c1TmYDM0_YPc4pWrIlTPZJ8et-jdmmK6EkO-aW5_j3OKsnebVWQm0IYNt0cBO0WMn" \
-    #            "EsU-GDAFFcI3puiXZjKkLdKysmMRDoas4Yi110mthY0JlK_gS3oGwF0zl3Yx-WpXBsXWsd7AULYRriJ3xfi" \
-    #            "kXHNFunn8gzKZyCwukOCB_I_Rl0KJ4M-skaSV-1x3R8JIqABxYfMmWJMJRnpIwJ-hLFGY-zcC-Icsj78Wa3" \
-    #            "GczF66ePvMzlSCsC3qS3Kr-Ecqf7OG_bqqhSthlRMAsV-fPTKtJYqDUA4v-vdhAturRawiljvnKvkTA_abb" \
-    #            "19pdH8qC07fXJoimdtpRHjvW1IC_HQD26Be7EKfr1q1g"
-
-    # if auth.is_authorized():
-    #     print("Authorized")
-    # else:
-    #     print(auth.get_token())
+    auth = Auth("spotify")
