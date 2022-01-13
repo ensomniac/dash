@@ -15,15 +15,20 @@ import requests
 
 from httplib2 import Http
 from base64 import encodestring
-from Services import get_by_name
+
+# Assurance, since this can be called not only as a module from Dash, but also externally
+try:
+    from .services import get_by_name
+except:
+    from services import get_by_name
 
 
-class Authorize:
+class Auth:
     def __init__(self, service_name):
         self.service = get_by_name(service_name)
 
         if not self.service:
-            raise Exception(f"Unable to locate service by name '{service_name}'")
+            raise Exception(f"Unable to locate service by name: {service_name}")
 
         self._service_data = None
         self.flow = self.get_flow()
@@ -47,9 +52,9 @@ class Authorize:
 
     def exchange_code_for_token(self, code):
         if self.service.token_endpoint == "google":
-            return self.exchange_code_for_token_google(code)  # Manage using Google's oAuth 2 thing
+            return self.exchange_code_for_token_google(code)  # Manage using Google's OAuth2
         else:
-            return self.exchange_code_for_token_oauth(code)  # Normal oAuth
+            return self.exchange_code_for_token_oauth(code)  # Normal OAuth
 
     def exchange_code_for_token_google(self, code):
         flow = self.get_flow()
@@ -223,32 +228,16 @@ class Authorize:
             client_id=self.service.client_id,
             client_secret=self.service.client_secret,
             scope=self.service.scope,
-            redirect_uri=self.service.redirect_uri
+            redirect_uri=self.service.redirect_uri,
+            **{
+                "prompt": "consent",  # Ref: https://github.com/googleapis/google-api-python-client/issues/213
+                "access_type": "offline",
+                "include_granted_scopes": "true"
+            }
         )
-
-        # flow.params["access_type"] = "offline"  # offline access
-        # flow.params["include_granted_scopes"] = "true"  # incremental auth
-
-        # Ref: https://github.com/googleapis/google-api-python-client/issues/213
-        flow.params["prompt"] = "consent"
-        flow.params["access_type"] = "offline"  # offline access
-        flow.params["include_granted_scopes"] = "true"  # incremental auth
 
         return flow
 
 
 if __name__ == "__main__":
-    auth = Authorize("spotify")
-
-    # tmp_code = "AQDUIi0kTAg5P0oRGR6QE9dh33JcHixOSzzBQu8vxdjEQQJ9WJLNe7hsKSs9maUQ9pJdlSu3dzDmsxlZ_nq" \
-    #            "px2FjugHWCgfRKtfwBOpIHbGlGy_PnKP40kxp-ETxTQTxsjAlxk8ZW6Gc-yjwU1txopjUcazSc4_d1xiKrc" \
-    #            "DFnquIwPvhghtDTrU1c1TmYDM0_YPc4pWrIlTPZJ8et-jdmmK6EkO-aW5_j3OKsnebVWQm0IYNt0cBO0WMn" \
-    #            "EsU-GDAFFcI3puiXZjKkLdKysmMRDoas4Yi110mthY0JlK_gS3oGwF0zl3Yx-WpXBsXWsd7AULYRriJ3xfi" \
-    #            "kXHNFunn8gzKZyCwukOCB_I_Rl0KJ4M-skaSV-1x3R8JIqABxYfMmWJMJRnpIwJ-hLFGY-zcC-Icsj78Wa3" \
-    #            "GczF66ePvMzlSCsC3qS3Kr-Ecqf7OG_bqqhSthlRMAsV-fPTKtJYqDUA4v-vdhAturRawiljvnKvkTA_abb" \
-    #            "19pdH8qC07fXJoimdtpRHjvW1IC_HQD26Be7EKfr1q1g"
-
-    # if auth.is_authorized():
-    #     print("Authorized")
-    # else:
-    #     print(auth.get_token())
+    auth = Auth("spotify")

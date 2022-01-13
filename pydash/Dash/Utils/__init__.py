@@ -129,10 +129,10 @@ def OSListDirCleaned(path):
 
 
 # ------------------------------------------------- COMMS ---------------------------------------------------
-def SendEmail(subject, notify_email_list=[], msg="", error="", sender="ryan@ensomniac.com", sender_name="Dash"):
+def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash"):
     from .comms import SendEmail
 
-    return SendEmail(subject, notify_email_list, msg, error, sender, sender_name)
+    return SendEmail(subject, notify_email_list, msg, error, sender_email, sender_name)
 
 
 # ------------------------------------------------- MEMORY --------------------------------------------------

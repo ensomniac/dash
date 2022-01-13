@@ -6,6 +6,8 @@
 import os
 import sys
 
+from Dash import AdminEmails
+
 
 class GUtils:
     _creds: object
@@ -14,8 +16,12 @@ class GUtils:
     _drive_client: callable
     _sheets_client: callable
 
-    def __init__(self):
-        pass
+    def __init__(self, user_email=""):
+        self._user_email = user_email or AdminEmails[0]
+
+    @property
+    def UserEmail(self):
+        return self._user_email
 
     @property
     def DriveClient(self):
@@ -60,27 +66,15 @@ class GUtils:
     @property
     def credentials(self):
         if not hasattr(self, "_creds"):
-            from json import loads
-            from requests import post
-
-            # These unused imports are required for the eval() call for some reason (inspection suppressed with noqa tag)
-            import datetime                  # noqa
-            from dateutil.tz import tzlocal  # noqa
-
-            response = post("https://authorize.oapi.co/?f=get_token_data&service_name=gdrive")
+            from Dash.Authorize import GetTokenData
 
             try:
-                response = loads(response.text)
+                token_json = GetTokenData(service_name="gdrive", user_email=self._user_email)
 
             except Exception as e:
-                raise Exception(
-                    f"Failed to get Google token from server, details:\n\n"
-                    f"Response:\n{response.text}\n\nError:\n{e}"
-                )
+                raise Exception(f"Failed to get Google credentials, error:\n\n{e}")
 
             from oauth2client.client import OAuth2Credentials
-
-            token_json = eval(response["token_data"])
 
             self._creds = OAuth2Credentials(
                 access_token=token_json["access_token"],
