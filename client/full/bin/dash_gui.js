@@ -9,6 +9,7 @@ function DashGui() {
     this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
     this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
     this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
+    this.SearchableList              = DashGuiSearchableList;
     this.Header                      = DashGuiHeader;
     this.Icon                        = DashIcon;
     this.IconButton                  = DashGuiIconButton;
