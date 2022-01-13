@@ -20,11 +20,11 @@ from traceback import format_exc
 
 # Assurance, since this can be called not only as a module from Dash, but also externally
 try:
-    from .Auth import Auth
-    from .Services import get_by_name
+    from .auth import Auth
+    from .services import get_by_name
 except:
-    from Auth import Auth
-    from Services import get_by_name
+    from auth import Auth
+    from services import get_by_name
 
 
 class Api:
@@ -192,7 +192,7 @@ class Api:
 
         email = ""
 
-        # TODO: Once Spotify service error has been resolved (see TODO in Services.py),
+        # TODO: Once Spotify service error has been resolved (see TODO in services.py),
         #  update this to also be able to parse the spotify response data
         if flow_data["token_data"].get("id_token"):
             email = flow_data["token_data"]["id_token"].get("email")

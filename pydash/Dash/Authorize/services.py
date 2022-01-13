@@ -115,9 +115,9 @@ Photos = Service(
 
 # TODO: Ryan, you can resolve this error by authorizing 'https://authorize.oapi.co/r' in whatever console/portal you got this client_id from
 #  INVALID_CLIENT: Invalid redirect URI
-# TODO: Since the above error prevents me from seeing the response structure, you'll have to update the code Api.py > redirect()
+# TODO: Since the above error prevents me from seeing the response structure, you'll have to update the code api.py > redirect()
 #  that handles the getting of the email from the token response data. Based on your scope param including "user-read-email", it's
-#  safe to assume that the email is already included in the response, just need to parse it in Api.py > redirect() specifically for spotify redirects.
+#  safe to assume that the email is already included in the response, just need to parse it in api.py > redirect() specifically for spotify redirects.
 Spotify = Service(
     name="spotify",
     authorize_url="https://accounts.spotify.com/authorize",

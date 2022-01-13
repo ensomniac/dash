@@ -18,9 +18,9 @@ from base64 import encodestring
 
 # Assurance, since this can be called not only as a module from Dash, but also externally
 try:
-    from .Services import get_by_name
+    from .services import get_by_name
 except:
-    from Services import get_by_name
+    from services import get_by_name
 
 
 class Auth:
