@@ -225,12 +225,12 @@ class DashLocalStorage:
         return data
 
     def Write(self, full_path, data):
-        if type(data) is bytes:
+        if type(data) is bytes or type(data) is memoryview:
             return self.write_binary(full_path, data)
 
         return self.write_json_protected(full_path, data)
 
-    def Read(self, full_path):
+    def Read(self, full_path, is_json=True):
         from json import loads
         from time import sleep
 
@@ -245,9 +245,14 @@ class DashLocalStorage:
             attempts += 1
 
             try:
-                data = loads(open(full_path, "r").read())
+                data = open(full_path, "r").read()
+
+                if is_json:
+                    data = loads(data)
+
             except Exception as e:
                 error = e
+
                 sleep(0.2)
 
         if attempts >= 3 and data is None:
@@ -341,6 +346,9 @@ class DashLocalStorage:
             return len(os.listdir(store_root))
         else:
             return 0
+
+    def ConformPermissions(self, full_path):
+        os.chown(full_path, 10000, 1004)
 
     def filter_data_entry(self, data):
         if not self.filter_out_keys:
@@ -464,7 +472,8 @@ class DashLocalStorage:
             raise Exception("Write fail at " + tmp_filename + " from " + full_path)
 
         os.rename(tmp_filename, full_path)
-        os.chown(full_path, 10000, 1004)
+
+        self.ConformPermissions(full_path)
 
         return data
 
@@ -517,12 +526,16 @@ def GetRecordPath(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).GetRecordPath(obj_id)
 
 
-def Read(full_path):
-    return DashLocalStorage().Read(full_path)
+def Read(full_path, is_json=True):
+    return DashLocalStorage().Read(full_path, is_json=is_json)
 
 
 def Write(full_path, data):
     return DashLocalStorage().Write(full_path, data)
+
+
+def ConformPermissions(full_path):
+    return DashLocalStorage().ConformPermissions(full_path)
 
 
 def ConvertToNested(dash_context, store_path):

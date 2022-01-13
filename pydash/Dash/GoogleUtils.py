@@ -88,3 +88,26 @@ class GUtils:
             )
 
         return self._creds
+
+    # TODO: When the full Google module is migrated from Altona to Dash, this needs to be moved there
+    def DownloadSheetAsXLSX(self, sheet_id, xlsx_path):
+        from io import BytesIO
+        from Dash.LocalStorage import Write
+        from googleapiclient.http import MediaIoBaseDownload
+
+        done = False
+        file = BytesIO()
+
+        downloader = MediaIoBaseDownload(
+            file,
+            self.DriveClient.files().export(
+                fileId=sheet_id,
+                fields="",  # Intentionally empty to make the request faster
+                mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        )
+
+        while done is False:
+            status, done = downloader.next_chunk()
+
+        Write(xlsx_path, file.getbuffer())
