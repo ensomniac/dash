@@ -10,7 +10,6 @@
 
 import os
 import sys
-import cgi
 import json
 
 from dateutil import parser
@@ -36,7 +35,9 @@ class Api:
             self.data = data
             self.field_storage = None
         else:
-            self.field_storage = cgi.FieldStorage()
+            from cgi import FieldStorage
+
+            self.field_storage = FieldStorage()
             self.data = self.get_data()
 
         self.html_title = None
@@ -46,7 +47,7 @@ class Api:
         self.local_storage_path = os.path.join(OapiRoot, "authorize", "local_storage")
         self.flow_path = os.path.join(self.local_storage_path, "flow")
 
-        if as_module:
+        if self.as_module:
             return
 
         try:
@@ -391,7 +392,7 @@ class Api:
 
 
 def GetTokenData(service_name, user_email):
-    return Api(data={"service_name": service_name, "user_email": user_email}).get_token_data()
+    return Api(data={"service_name": service_name, "user_email": user_email}, as_module=True).get_token_data()
 
 
 if __name__ == "__main__":
