@@ -17,8 +17,7 @@ class GUtils:
     _sheets_client: callable
 
     def __init__(self, user_email=""):
-        # self._user_email = user_email or AdminEmails[0]
-        self._user_email = user_email or "3dpythonjavascript@gmail.com"
+        self._user_email = user_email or AdminEmails[0]
 
     @property
     def UserEmail(self):
