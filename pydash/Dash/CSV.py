@@ -6,19 +6,21 @@
 import os
 import sys
 
+from csv import writer
 from Dash.Users import Users
 from datetime import datetime
 from collections import OrderedDict
 from Dash.Utils import GetRandomID, FormatTime
 
 
+# This is old and was never fully written out, but Altona uses it to a minor capacity
 class CSV:
-    def __init__(self, csv_root, dash_context, all_data={}, exclude_keys=[], file=None):
+    def __init__(self, csv_root, dash_context={}, all_data={}, exclude_keys=[], file=None):
         """
         Handle all non-gsheet CSV-related actions, such as exporting and importing.
 
         :param str csv_root: Root where csv file will be stored or retrieved from
-        :param dict dash_context: Dash Context object
+        :param dict dash_context: Dash Context object (default={})
         :param dict all_data: (When exporting) Data object matching the structure of Collection.GetAll()["data"] (default={})
         :param list exclude_keys: Data keys to exclude when translating data to/from CSV (default=[])
         :param byte file: (When importing) File byte data from a file that was uploaded (default=None)
@@ -45,10 +47,65 @@ class CSV:
         else:
             self.all_data = all_data
 
-        self.ensure_roots_exist()
+        os.makedirs(self.csv_root, exist_ok=True)
+
+    def ExtractCSVsFromExcel(self, excel_file_path, csv_filename="", filename_getter=None, sheet_name_filters={}, local=False):
+        from openpyxl import load_workbook
+        from Dash.Utils import GetAssetPath
+        from Dash.LocalStorage import ConformPermissions
+
+        if local:
+            print("\nExtracting individual sheets from Excel file as CSVs...\n\tReading Excel file...")
+
+        workbook = load_workbook(excel_file_path)
+
+        for sheet_name in workbook.sheetnames:
+
+            # Follow this pattern to expand sheet_name filtering
+            if sheet_name_filters.get("startswith") and type(sheet_name_filters["startswith"]) is list:
+                skip = False
+
+                for name in sheet_name_filters["startswith"]:
+                    if not sheet_name.startswith(name):
+                        skip = True
+
+                        break
+
+                if skip:
+                    continue
+
+            if local:
+                print(f"\tExtracting {sheet_name}...")
+
+            sheet = workbook[sheet_name]
+
+            if not csv_filename and filename_getter:
+                filename = filename_getter(sheet_name)
+            else:
+                filename = csv_filename
+
+                if filename.endswith(".csv"):
+                    filename = filename.rstrip(".csv")
+
+                filename = GetAssetPath(filename)
+
+            if not filename.endswith(".csv"):
+                filename += ".csv"
+
+            csv_path = os.path.join(self.csv_root, filename)
+
+            print(f"\t\tWriting to {csv_path}...")
+
+            with open(csv_path, "w", newline="\n") as file_handle:
+                csv_writer = writer(file_handle)
+
+                for row in sheet.iter_rows():
+                    csv_writer.writerow([cell.value for cell in row])
+                    
+            ConformPermissions(csv_path)
 
     def Export(self):
-        from csv import writer
+        os.makedirs(self.csv_export_root, exist_ok=True)
 
         header = False
         csv_file = open(self.csv_export_filepath, "w")
@@ -66,6 +123,8 @@ class CSV:
         return self.csv_export_filepath
 
     def Import(self):
+        os.makedirs(self.csv_import_root, exist_ok=True)
+
         """
         This should only need to handle actually importing the file.
         Data management after the fact should be handled outside this script.

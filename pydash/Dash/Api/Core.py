@@ -61,6 +61,10 @@ class ApiCore:
             self.set_dash_globals()
 
     @property
+    def AsModule(self):
+        return self._execute_as_module
+
+    @property
     def DashContext(self):
         if not hasattr(self, "_dash_context"):
             from Dash.PackageContext import Get
