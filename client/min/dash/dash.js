@@ -29590,13 +29590,15 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         row.Update();
     };
     // This shouldn't be used in most situations, since Draw handles it all
-    this.Clear = function () {
-        this.expanded_ids = {};
+    this.Clear = function (clear_expanded_ids=true) {
+        if (clear_expanded_ids) {
+            this.expanded_ids = {};
+        }
         this.included_row_ids = [];
         this.cleanup_rows();
     };
     this.Draw = function (row_ids_to_include=[]) {
-        this.Clear();
+        this.Clear(false);
         this.included_row_ids = row_ids_to_include;
         this.create_filler_space();
         for (var row of this.row_objects) {
