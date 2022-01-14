@@ -271,6 +271,7 @@ def get_image_with_data(file_bytes_or_existing_path, filename):
 def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=False):
     file_path = os.path.join(file_root, f"{file_data['id']}_orig.{file_ext}")
     thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg")
+    thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png")
     thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg")
 
     if replace_existing:
@@ -280,14 +281,19 @@ def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_cont
 
     img = save_images(img, file_path, thumb_path, thumb_square_path)
 
-    file_data.update({
+    url_data = {
         "orig_url": GetURLFromPath(dash_context, file_path),
         "thumb_url": GetURLFromPath(dash_context, thumb_path),
         "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path),
         "width": img.size[0],
         "height": img.size[1],
         "aspect": img.size[0] / float(img.size[1])
-    })
+    }
+
+    if os.path.exists(thumb_png_path):
+        url_data["thumb_png_url"] = GetURLFromPath(dash_context, thumb_png_path)
+
+    file_data.update(url_data)
 
     return file_data
 
@@ -410,6 +416,12 @@ def save_images(img, orig_path, thumb_path, thumb_square_path):
 
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
+
+    # TODO: Check to see if the image has transparency, or at least only do this
+    # if the original image is a file format that has transparency (ex. no jpg)
+    png_thumb = img.copy()
+    png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+    png_thumb.save(thumb_path.replace("_thb.jpg", "_thb.png"), quality=40)
 
     # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
     img = img.convert("RGB")

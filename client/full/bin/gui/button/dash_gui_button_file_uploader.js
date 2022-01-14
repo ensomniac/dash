@@ -95,18 +95,15 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
             "width": dropzone_box_width,
             "height": dropzone_box_height,
             "bottom": margin_top,
-            // "box-shadow": Style.DropShadow(),
             "border": border_width + "px dashed rgba(0, 0, 0, 0.5)",
         });
 
         this.dropzone_label.css({
             "color": "rgba(0, 0, 0, 0.5)",
-            // "font-size": Style.FontSize(),
             "height": Dash.Size.ButtonHeight,
             "width": dropzone_box_width,
             "text-align": "center",
             "top": (dropzone_box_height*0.5)-(Dash.Size.ButtonHeight*0.5),
-            "background": "green",
         });
 
         this.upload_backing_bar.css(this.upload_bar_css);
