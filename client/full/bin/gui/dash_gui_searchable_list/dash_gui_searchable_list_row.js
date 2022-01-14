@@ -70,6 +70,7 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
             "line-height": Dash.Size.ButtonHeight + "px",
             "padding-left": Dash.Size.Padding*0.5,
             "color": this.color.Text,
+            // "color": "red",
         });
 
         this.content_layer.empty().append(this.display_name_label);
@@ -81,7 +82,7 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
         if (!this.display_name_label) {
             this.setup_display_name_label();
         };
-        console.log(this.get_data_callback());
+
         var row_data = this.get_data_callback()[this.row_id];
         var display_name = row_data["display_name"] || this.row_id;
         this.display_name_label.text(display_name);
@@ -95,7 +96,7 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
 
             this.html.css({
                 "background": "rgba(255, 255, 255, 0.5)",
-                "border-top": "1px solid " + "white",
+                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
             });
 
             this.content_layer.css({

@@ -23772,10 +23772,10 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
 function DashGuiSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback) {
     this.binder = binder;
     this.color = this.binder.color || Dash.Color.Light;
-    this.color = Dash.Color.Dark;
     this.rows = {};
     this.RowContent = {};
     this.current_selected_row_id = null;
+    this.filter_text = "";
     this.on_selection_callback = on_selection_callback.bind(this.binder);
     this.get_data_callback = get_data_callback.bind(this.binder);
     this.on_row_draw_callback = null;
@@ -23789,6 +23789,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.id_list = [];
     this.search_terms = [];
+    this.auto_select_disabled = false;
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -23809,6 +23810,9 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
         this.html.append(this.list_container);
         this.html.append(this.input.html);
     };
+    this.DisableAutomaticSelection = function () {
+        this.auto_select_disabled = true;
+    };
     this.SetRowContent = function (row_id, html) {
         this.RowContent[row_id] = html;
         this.rows[row_id].SetContent(html);
@@ -23817,6 +23821,14 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
         // Use this to set a unique ID that allows the
         // last loaded selection to be applied
         this.recall_id = recall_id;
+    };
+    this.SetSearchTerm = function (search_term) {
+        search_term = search_term.trim().toLowerCase();
+        if (search_term == this.filter_text) {
+            return;
+        };
+        this.filter_text = search_term;
+        this.filter_rows();
     };
     this.UpdateRows = function (order, data) {
         // order = a list of IDs
@@ -23832,7 +23844,10 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
                 this.rows[row_id] = new DashGuiSearchableListRow(this, row_id, row_data);
             };
             var search_text = this.rows[row_id].Update(row_data);
-            if (!search_text) {
+            if (search_text) {
+                search_text = search_text.trim().toLowerCase();
+            }
+            else {
                 var msg = "Warning: Dash.Gui.SearchableList > row ";
                 msg += "update callback must return a search term. Ignoring row";
                 console.log(msg);
@@ -23846,9 +23861,26 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
                 delete this.rows[id];
             };
         };
-        var last_loaded = Dash.Local.Get(this.recall_id);
-        if (last_loaded && order.includes(last_loaded)) {
-            this.SetActiveRowID(last_loaded);
+        if (this.filter_text.length > 0) {
+            this.filter_rows();
+        };
+        if (!this.auto_select_disabled) {
+            var last_loaded = Dash.Local.Get(this.recall_id);
+            if (last_loaded && order.includes(last_loaded)) {
+                this.SetActiveRowID(last_loaded);
+            };
+        };
+    };
+    this.filter_rows = function(){
+        for (var id in this.rows) {
+            this.rows[id].html.detach();
+        };
+        for (var i = 0; i < this.id_list.length; i++) {
+            var row_id = this.id_list[i];
+            var search_text = this.search_terms[i];
+            if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
+                this.list_container.append(this.rows[row_id].html);
+            };
         };
     };
     this.GetSelectedID = function(){
@@ -23935,6 +23967,7 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
             "line-height": Dash.Size.ButtonHeight + "px",
             "padding-left": Dash.Size.Padding*0.5,
             "color": this.color.Text,
+            // "color": "red",
         });
         this.content_layer.empty().append(this.display_name_label);
     };
@@ -23942,7 +23975,6 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
         if (!this.display_name_label) {
             this.setup_display_name_label();
         };
-        console.log(this.get_data_callback());
         var row_data = this.get_data_callback()[this.row_id];
         var display_name = row_data["display_name"] || this.row_id;
         this.display_name_label.text(display_name);
@@ -23952,7 +23984,7 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
         if (is_active) {
             this.html.css({
                 "background": "rgba(255, 255, 255, 0.5)",
-                "border-top": "1px solid " + "white",
+                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
             });
             this.content_layer.css({
                 "opacity": 1.0,
@@ -23985,23 +24017,87 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
 };
 
 function DashGuiSearchableListSearchInput (slist) {
-    this.slist = slist;
-    this.color = this.slist.color;
+    this.slist      = slist;
+    this.color      = this.slist.color;
     this.row_height = this.slist.row_height;
-    this.html = $("<div></div>");
-    this.hover = $("<div></div>");
-    this.display_name_label = $("<div></div>");
+    this.icon_size    = this.row_height-(Dash.Size.Padding*1.5);
+    this.input        = new Dash.Gui.Input("Search...", this.color);
+    this.icon_search  = new Dash.Gui.Icon(this.color, "search", this.icon_size);
+    this.icon_clear   = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
+    this.html         = this.input.html;
+    this.current_search_term = "";
+    this.clear_icon_visible  = false;
     this.setup_styles = function () {
+        this.input.OnChange(this.on_search, this);
+        this.html.append(this.icon_search.html);
+        this.html.append(this.icon_clear.html);
         this.html.css({
             "position": "absolute",
             "left": 0,
             "top": 0,
             "right": 0,
             "height": this.row_height,
-            "overflow-y": "auto",
             "border-bottom": "1px solid " + this.color.Pinstripe,
             "background": Dash.Color.Lighten(this.color.Background, 10),
+            "box-shadow": "none",
+            "margin-right": 0,
+            "padding-right": this.row_height + Dash.Size.Padding*0.5,
         });
+        this.icon_search.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding*0.66,
+            "top": Dash.Size.Padding*0.66,
+            "pointer-events": "none",
+            "user-select":    "none",
+        });
+        this.icon_clear.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding*0.66,
+            "top": Dash.Size.Padding*0.66,
+            "user-select":    "none",
+            "cursor": "pointer",
+            "opacity": 0,
+        });
+        (function(self){
+            self.icon_clear.html.click(function(){
+                self.clear_search();
+            });
+        })(this);
+    };
+    this.clear_search = function () {
+        this.input.SetText("");
+        this.hide_clear_icon();
+        this.on_search();
+    };
+    this.on_search = function () {
+        var _current_search_term = this.input.Text();
+        if (_current_search_term == this.current_search_term) {
+            return;
+        };
+        this.current_search_term = _current_search_term;
+        if (this.current_search_term.length > 0) {
+            this.show_clear_icon();
+        }
+        else {
+            this.hide_clear_icon();
+        };
+        this.slist.SetSearchTerm(this.current_search_term);
+    };
+    this.show_clear_icon = function () {
+        if (this.clear_icon_visible) {
+            return;
+        };
+        this.clear_icon_visible = true;
+        this.icon_search.html.stop().animate({"opacity": 0}, 250);
+        this.icon_clear.html.stop().animate( {"opacity": 1}, 250);
+    };
+    this.hide_clear_icon = function () {
+        if (!this.clear_icon_visible) {
+            return;
+        };
+        this.clear_icon_visible = false;
+        this.icon_search.html.stop().animate({"opacity": 1}, 250);
+        this.icon_clear.html.stop().animate( {"opacity": 0}, 250);
     };
     this.setup_styles();
 };

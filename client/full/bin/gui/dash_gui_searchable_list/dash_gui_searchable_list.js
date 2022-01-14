@@ -2,10 +2,10 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
 
     this.binder = binder;
     this.color = this.binder.color || Dash.Color.Light;
-    this.color = Dash.Color.Dark;
     this.rows = {};
     this.RowContent = {};
     this.current_selected_row_id = null;
+    this.filter_text = "";
 
     this.on_selection_callback = on_selection_callback.bind(this.binder);
     this.get_data_callback = get_data_callback.bind(this.binder);
@@ -23,6 +23,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.id_list = [];
     this.search_terms = [];
+    this.auto_select_disabled = false;
 
     this.setup_styles = function () {
 
@@ -49,6 +50,10 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
 
     };
 
+    this.DisableAutomaticSelection = function () {
+        this.auto_select_disabled = true;
+    };
+
     this.SetRowContent = function (row_id, html) {
         this.RowContent[row_id] = html;
         this.rows[row_id].SetContent(html);
@@ -58,6 +63,18 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
         // Use this to set a unique ID that allows the
         // last loaded selection to be applied
         this.recall_id = recall_id;
+    };
+
+    this.SetSearchTerm = function (search_term) {
+        search_term = search_term.trim().toLowerCase();
+
+        if (search_term == this.filter_text) {
+            return;
+        };
+
+        this.filter_text = search_term;
+        this.filter_rows();
+
     };
 
     this.UpdateRows = function (order, data) {
@@ -81,7 +98,10 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
 
             var search_text = this.rows[row_id].Update(row_data);
 
-            if (!search_text) {
+            if (search_text) {
+                search_text = search_text.trim().toLowerCase();
+            }
+            else {
                 var msg = "Warning: Dash.Gui.SearchableList > row ";
                 msg += "update callback must return a search term. Ignoring row";
                 console.log(msg);
@@ -101,9 +121,33 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
 
         };
 
-        var last_loaded = Dash.Local.Get(this.recall_id);
-        if (last_loaded && order.includes(last_loaded)) {
-            this.SetActiveRowID(last_loaded);
+        if (this.filter_text.length > 0) {
+            this.filter_rows();
+        };
+
+        if (!this.auto_select_disabled) {
+            var last_loaded = Dash.Local.Get(this.recall_id);
+            if (last_loaded && order.includes(last_loaded)) {
+                this.SetActiveRowID(last_loaded);
+            };
+        };
+
+    };
+
+    this.filter_rows = function(){
+
+        for (var id in this.rows) {
+            this.rows[id].html.detach();
+        };
+
+        for (var i = 0; i < this.id_list.length; i++) {
+            var row_id = this.id_list[i];
+            var search_text = this.search_terms[i];
+
+            if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
+                this.list_container.append(this.rows[row_id].html);
+            };
+
         };
 
     };
