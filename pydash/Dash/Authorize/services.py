@@ -12,7 +12,7 @@ import os
 import sys
 
 from urllib.parse import urlencode
-from Dash.LocalStorage import Read
+from Dash.LocalStorage import GetPrivKey
 
 services = {}
 
@@ -32,7 +32,7 @@ class Service:
         self.token_valid_url = token_valid_url
 
         self.redirect_uri = "https://authorize.oapi.co/r"
-        self.priv_data = Read(os.path.join("/var", "priv", f"{self.name}.json"))
+        self.priv_data = GetPrivKey(f"{self.name}.json")
         self.client_id = self.priv_data["client_id"]
         self.client_secret = self.priv_data["client_secret"]
 

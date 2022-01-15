@@ -231,11 +231,11 @@ class DashLocalStorage:
         return self.write_json_protected(full_path, data)
 
     def Read(self, full_path, is_json=True):
-        from json import loads
-        from time import sleep
-
         if not os.path.exists(full_path):
             return None
+
+        from json import loads
+        from time import sleep
 
         error = ""
         data = None
@@ -259,6 +259,32 @@ class DashLocalStorage:
             raise Exception(f"Failed to read: {full_path}, error: {error}, ({attempts} attempts)")
 
         return data
+
+    def GetPrivKey(self, filename, subfolders=[], is_json=True):
+        """
+        Get a private key from /var/priv/
+        """
+
+        if subfolders:
+            if type(subfolders) is not list:
+                raise Exception("Subfolders param must be a list")
+
+            priv_index = 1
+
+            if subfolders[0] in self.get_folder_possibilities("var"):
+                subfolders.pop(0)
+
+                priv_index = 0
+
+            if len(subfolders) > priv_index and subfolders[priv_index] in self.get_folder_possibilities("priv"):
+                subfolders.pop(priv_index)
+
+        key = self.Read(os.path.join("/var", "priv", *subfolders, filename), is_json=is_json)
+
+        if type(key) is str:
+            key = key.strip().strip("\n").strip()
+
+        return key
 
     def ConvertToNested(self):
         from shutil import move
@@ -349,6 +375,9 @@ class DashLocalStorage:
 
     def ConformPermissions(self, full_path):
         os.chown(full_path, 10000, 1004)
+
+    def get_folder_possibilities(self, name):
+        return [name, f"/{name}", f"{name}/", f"/{name}/"]
 
     def filter_data_entry(self, data):
         if not self.filter_out_keys:
@@ -532,6 +561,10 @@ def Read(full_path, is_json=True):
 
 def Write(full_path, data):
     return DashLocalStorage().Write(full_path, data)
+
+
+def GetPrivKey(filename, subfolders=[], is_json=True):
+    return DashLocalStorage().GetPrivKey(filename, subfolders, is_json)
 
 
 def ConformPermissions(full_path):
