@@ -49,6 +49,15 @@ function DashGuiInput (placeholder_text, color) {
         });
     };
 
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function () {
+        this.html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
+
     this.InFocus = function () {
         return $(this.input).is(":focus");
     };

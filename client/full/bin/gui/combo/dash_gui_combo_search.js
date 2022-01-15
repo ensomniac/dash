@@ -96,10 +96,7 @@ function DashGuiComboSearch () {
 
         this.search_container.append(this.search_input.html);
 
-        this.search_input.html.css({
-            "box-shadow": "none",
-            "background": "none",
-        });
+        this.search_input.Flatten();
 
         if (this.style === "row") {
             this.search_input.html.css({

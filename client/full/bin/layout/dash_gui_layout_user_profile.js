@@ -187,12 +187,12 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
 
         this.html.append(this.property_box.html);
 
+        this.property_box.Flatten();
+
         this.property_box.html.css({
             "margin": 0,
             "padding": 0,
-            "background": "none",
             "padding-left": this.img_box_size + Dash.Size.Padding,
-            "box-shadow": "none",
             "border-radius": 0
         });
 

@@ -10,6 +10,47 @@ function DashGuiPropertyBoxInterface () {
         this.top_right_label.text(label_text);
     };
 
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function () {
+        this.html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
+
+    // Intended for Flattened boxes
+    this.AddBottomDivider = function () {
+        if (this.bottom_divider) {
+            return;
+        }
+
+        this.html.css({
+            "margin-bottom": 0
+        });
+
+        this.bottom_divider = $("<div></div>");
+
+        this.bottom_divider.css({
+            "height": Dash.Size.Padding * 0.1,
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding * 2,
+            "width": "98%",
+            "background": this.color.AccentGood,
+        });
+
+        this.html.append(this.bottom_divider);
+
+        return this.bottom_divider;
+    };
+
+    // This is intended to nicely format a prop box that only uses locked rows for displaying
+    // data, therefore, it's only been implemented in input-related areas for now
+    this.SetGetFormattedDataCallback = function (callback, binder=null) {
+        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+    };
+
     this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
             return;
@@ -51,15 +92,15 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddHeader = function (label_text, update_key=null) {
-
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
 
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding*0.5);
+            header.css("margin-top", Dash.Size.Padding * 0.5);
         }
 
         this.html.append(header);
+
         this.num_headers += 1;
 
         if (update_key != null && this.get_data_cb) {
@@ -67,10 +108,9 @@ function DashGuiPropertyBoxInterface () {
                 "obj": header_obj,
                 "update_key": update_key
             });
-        };
+        }
 
         return header_obj;
-
     };
 
     this.AddButtonBar = function (label_text) {
@@ -192,20 +232,14 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
-        if (this.get_data_cb) {
-            this.data = this.get_data_cb();
-        }
-
-        else {
-            this.data = {};
-        }
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
 
         var row_details = {
             "key": data_key,
             "label_text": label_text,
             "default_value": default_value || null,
             "combo_options": combo_options || null,
-            "value": this.data[data_key] || default_value,
+            "value": (this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key]) || default_value,
             "can_edit": can_edit
         };
 

@@ -22462,19 +22462,19 @@ function LoadDot (dots) {
 
 function DashGuiLoadingLabel (binder, label_text) {
     this.binder       = binder;
-    this.color        = this.binder.color || Dash.Color.Light;
     this.label_text   = label_text;
     this.height       = Dash.Size.ButtonHeight;
+    this.color        = this.binder.color || Dash.Color.Light;
+    this.label        = $("<div>" + this.label_text + "</div>");
     this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
     this.html         = this.loading_dots.html;
-    this.label        = $("<div>" + this.label_text + "</div>");
     this.setup_styles = function () {
         this.html.append(this.label);
         this.html.css({
             "margin-left": "auto",
             "margin-right": "auto",
             "margin-bottom": this.height,
-            // "background": "black",
+            // "background": "black"
         });
         this.label.css({
             "position": "absolute",
@@ -22486,13 +22486,13 @@ function DashGuiLoadingLabel (binder, label_text) {
             "line-height": this.height + "px",
             "text-align": "center",
             "color": this.color.Text,
-            "opacity": 0,
+            "opacity": 0
         });
         this.loading_dots.Start();
         this.label.animate({"opacity": 1}, 250);
     };
+    // Called after fade out is complete
     this.destroy = function () {
-        // Called after fade out is complete
         this.label.remove();
         this.loading_dots.html.remove();
         this.html.remove();
@@ -22505,15 +22505,20 @@ function DashGuiLoadingLabel (binder, label_text) {
         // it to an absolutely positioned element. Since this element is
         // really meant to be used to show while something is loading, once
         // loading is complete, this flow makes it easy to build the loaded
-        // content without having to wait to fade out the label
-        // first and fire a callback
+        // content without having to wait to fade out the label first and fire a callback
         this.html.css({
             "position": "absolute",
             "top": this.html[0].offsetTop,
-            "left": this.html[0].offsetLeft,
+            "left": this.html[0].offsetLeft
         });
         this.label.stop().animate({"opacity": 0}, 250, this.destroy.bind(this));
         this.loading_dots.Stop();
+    };
+    this.Stop = function () {
+        this.loading_dots.Stop();
+    };
+    this.SetText = function (text) {
+        this.label.text(text);
     };
     this.setup_styles();
 }
@@ -24143,6 +24148,14 @@ function DashGuiInput (placeholder_text, color) {
             "color": this.color.Text,
         });
     };
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function () {
+        this.html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
     this.InFocus = function () {
         return $(this.input).is(":focus");
     };
@@ -25614,7 +25627,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.data = {};
     this.num_headers = 0;
     this.update_inputs = {};
+    this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
+    this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.indent_properties = this.options["indent_properties"] || 0;
@@ -25637,14 +25652,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
     this.setup_mobile_styles = function () {
         this.html.css({
-            "background": "none",
             "border-radius": 0,
             "margin": 0,
             "padding": 0,
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding,
-            "box-shadow": "none"
+            "padding-right": Dash.Size.Padding
         });
+        this.Flatten();
     };
     this.Load = function () {
         Dash.Request(
@@ -25668,10 +25682,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row_input.SetText(this.property_set_data[data_key]);
             }
             else {
-                row_input.SetText(this.get_data_cb()[data_key]);
+                row_input.SetText(this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key]);
             }
         }
-        // Update headers...
+        // Update headers
         for (var i = 0; i < this.header_update_objects.length; i++) {
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]
@@ -25876,6 +25890,39 @@ function DashGuiPropertyBoxInterface () {
         }
         this.top_right_label.text(label_text);
     };
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function () {
+        this.html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
+    // Intended for Flattened boxes
+    this.AddBottomDivider = function () {
+        if (this.bottom_divider) {
+            return;
+        }
+        this.html.css({
+            "margin-bottom": 0
+        });
+        this.bottom_divider = $("<div></div>");
+        this.bottom_divider.css({
+            "height": Dash.Size.Padding * 0.1,
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding * 2,
+            "width": "98%",
+            "background": this.color.AccentGood,
+        });
+        this.html.append(this.bottom_divider);
+        return this.bottom_divider;
+    };
+    // This is intended to nicely format a prop box that only uses locked rows for displaying
+    // data, therefore, it's only been implemented in input-related areas for now
+    this.SetGetFormattedDataCallback = function (callback, binder=null) {
+        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+    };
     this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
             return;
@@ -25910,7 +25957,7 @@ function DashGuiPropertyBoxInterface () {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
         var header = header_obj.html;
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding*0.5);
+            header.css("margin-top", Dash.Size.Padding * 0.5);
         }
         this.html.append(header);
         this.num_headers += 1;
@@ -25919,7 +25966,7 @@ function DashGuiPropertyBoxInterface () {
                 "obj": header_obj,
                 "update_key": update_key
             });
-        };
+        }
         return header_obj;
     };
     this.AddButtonBar = function (label_text) {
@@ -26012,18 +26059,13 @@ function DashGuiPropertyBoxInterface () {
         return row;
     };
     this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
-        if (this.get_data_cb) {
-            this.data = this.get_data_cb();
-        }
-        else {
-            this.data = {};
-        }
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
         var row_details = {
             "key": data_key,
             "label_text": label_text,
             "default_value": default_value || null,
             "combo_options": combo_options || null,
-            "value": this.data[data_key] || default_value,
+            "value": (this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key]) || default_value,
             "can_edit": can_edit
         };
         (function (self, row_details, callback) {
@@ -26634,10 +26676,7 @@ function DashGuiComboSearch () {
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
         this.search_container.append(this.search_input.html);
-        this.search_input.html.css({
-            "box-shadow": "none",
-            "background": "none",
-        });
+        this.search_input.Flatten();
         if (this.style === "row") {
             this.search_input.html.css({
                 "left": -Dash.Size.Padding
@@ -27512,12 +27551,11 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
             {"color": this.color}
         );
         this.html.append(this.property_box.html);
+        this.property_box.Flatten();
         this.property_box.html.css({
             "margin": 0,
             "padding": 0,
-            "background": "none",
             "padding-left": this.img_box_size + Dash.Size.Padding,
-            "box-shadow": "none",
             "border-radius": 0
         });
         // TODO: This should also be editable (with this.has_privileges), but I don't think
@@ -27965,6 +28003,7 @@ function DashGuiLayoutToolbarInterface () {
         if (options["center"]) {
             text_align = "center";
         }
+        input.Flatten();
         input.html.css({
             "padding": 0,
             "margin": 0,
@@ -27972,8 +28011,6 @@ function DashGuiLayoutToolbarInterface () {
             "margin-right": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
             "height": height,
-            "background": "none",
-            "box-shadow": "none",
             "width": width
         });
         input.input.css({

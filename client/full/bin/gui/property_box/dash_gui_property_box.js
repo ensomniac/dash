@@ -9,7 +9,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.data = {};
     this.num_headers = 0;
     this.update_inputs = {};
+    this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
+    this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.indent_properties = this.options["indent_properties"] || 0;
@@ -38,14 +40,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
     this.setup_mobile_styles = function () {
         this.html.css({
-            "background": "none",
             "border-radius": 0,
             "margin": 0,
             "padding": 0,
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding,
-            "box-shadow": "none"
+            "padding-right": Dash.Size.Padding
         });
+
+        this.Flatten();
     };
 
     this.Load = function () {
@@ -75,11 +77,11 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
 
             else {
-                row_input.SetText(this.get_data_cb()[data_key]);
+                row_input.SetText(this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key]);
             }
         }
 
-        // Update headers...
+        // Update headers
         for (var i = 0; i < this.header_update_objects.length; i++) {
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]

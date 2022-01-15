@@ -250,6 +250,8 @@ function DashGuiLayoutToolbarInterface () {
             text_align = "center";
         }
 
+        input.Flatten();
+
         input.html.css({
             "padding": 0,
             "margin": 0,
@@ -257,8 +259,6 @@ function DashGuiLayoutToolbarInterface () {
             "margin-right": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
             "height": height,
-            "background": "none",
-            "box-shadow": "none",
             "width": width
         });
 
