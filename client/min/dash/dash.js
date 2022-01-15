@@ -24492,26 +24492,29 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.input.SetText(this.parse_value(this.initial_value));
     };
     this.parse_value = function (value) {
-        if (!value) {
-            return value;
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (value === false) {
+            return value.toString();  // Keep this value intact, protect against '!'
         }
         // Initial value is a dict
         if (Object.keys(this.initial_value).length !== 0 && this.initial_value.constructor === Object) {
-            value = JSON.stringify(value);
+            return JSON.stringify(value);
         }
         // Initial value is an array
-        else if (this.initial_value.length && Array.isArray(this.initial_value)) {
-            value = JSON.stringify(value);
+        if (this.initial_value.length && Array.isArray(this.initial_value)) {
+            return JSON.stringify(value);
         }
         // Initial value is ISO datetime string
         if (Dash.DateTime.IsIsoFormat(value)) {
-            value = Dash.DateTime.Readable(value);
+            return Dash.DateTime.Readable(value);
         }
         // Initial value is team member email
         else if (Dash.Validate.Email(value) && !(this.data_key.includes("email"))) {
             if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
                 if ("display_name" in Dash.User.Init["team"][value]) {
-                    value = Dash.User.Init["team"][value]["display_name"];
+                    return Dash.User.Init["team"][value]["display_name"];
                 }
             }
         }
@@ -26060,12 +26063,13 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
         var row_details = {
             "key": data_key,
             "label_text": label_text,
             "default_value": default_value || null,
             "combo_options": combo_options || null,
-            "value": (this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key]) || default_value,
+            "value": value !== null && value !== undefined ? value : default_value,  // Keep 'false' intact
             "can_edit": can_edit
         };
         (function (self, row_details, callback) {

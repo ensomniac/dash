@@ -66,6 +66,29 @@ class ApiCore:
 
     @property
     def DashContext(self):
+        """
+        | Dash Context object.
+        |
+        | **Example for quick, available key reference:**
+
+        - "admin_from_email"     : "ryan@ensomniac.com",
+        - "asset_path"           : "candy",
+        - "code_copyright_text"  : "Candy Digital Inc.",
+        - "display_name"         : "Candy",
+        - "domain"               : "realtimecandy.com",
+        - "email_access_csv"     : "ryan@ensomniac.com, stetandrew@gmail.com",
+        - "email_git_webhook_csv": "ryan@ensomniac.com, rmartin@candy.com, stetandrew@gmail.com",
+        - "id"                   : "2021102719491527462",
+        - "is_server"            : "/var/www/vhosts/oapi.co/logs",
+        - "is_valid"             : True,
+        - "srv_path_git_oapi"    : "/var/www/vhosts/oapi.co/candy/realtimecandy/",
+        - "srv_path_http_root"   : "/var/www/vhosts/oapi.co/candy/",
+        - "srv_path_local"       : "/var/www/vhosts/oapi.co/candy/local/"
+
+        :return: self._dash_context
+        :rtype: dict
+        """
+
         if not hasattr(self, "_dash_context"):
             from Dash.PackageContext import Get
 
