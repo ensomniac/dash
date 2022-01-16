@@ -121,6 +121,25 @@ function DashGui() {
         }
     };
 
+    this.GetBottomDivider = function (color=null, width_percent="") {
+        var bottom_divider = $("<div></div>");
+
+        if (width_percent) {
+            width_percent = parseInt(width_percent);
+        }
+
+        bottom_divider.css({
+            "height": Dash.Size.Padding * 0.1,
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding * 2,
+            "width": width_percent ? width_percent.toString + "%" : "98%",
+            "background": color ? color.AccentGood : Dash.Color.Light.AccentGood,
+        });
+
+        return bottom_divider;
+    };
+
     this.GetTipBox = function (code, msg, optional_style_css) {
         // A full width box that is meant to display information
 
@@ -250,6 +269,25 @@ function DashGui() {
 
             return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
+    };
+
+    this.GetTopRightLabel = function (text="", color=null) {
+        var label = this.GetHTMLAbsContext(text, color);
+
+        label.css({
+            "background": "none",
+            "left": "auto",
+            "bottom": "auto",
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "text-align": "right",
+            "color": color ? color.Text : Dash.Color.Light.Text,
+            "opacity": 0.6,
+            "z-index": 1,
+            "cursor": "auto"
+        });
+
+        return label;
     };
 
     this.OpenFileURLDownloadDialog = function (url, filename="", callback=null) {

@@ -29,16 +29,7 @@ function DashGuiPropertyBoxInterface () {
             "margin-bottom": 0
         });
 
-        this.bottom_divider = $("<div></div>");
-
-        this.bottom_divider.css({
-            "height": Dash.Size.Padding * 0.1,
-            "margin-left": "auto",
-            "margin-right": "auto",
-            "margin-top": Dash.Size.Padding * 2,
-            "width": "98%",
-            "background": this.color.AccentGood,
-        });
+        this.bottom_divider = Dash.Gui.GetBottomDivider(this.color);
 
         this.html.append(this.bottom_divider);
 

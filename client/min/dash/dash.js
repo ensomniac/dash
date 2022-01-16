@@ -18157,6 +18157,21 @@ function DashGui() {
             return false;
         }
     };
+    this.GetBottomDivider = function (color=null, width_percent="") {
+        var bottom_divider = $("<div></div>");
+        if (width_percent) {
+            width_percent = parseInt(width_percent);
+        }
+        bottom_divider.css({
+            "height": Dash.Size.Padding * 0.1,
+            "margin-left": "auto",
+            "margin-right": "auto",
+            "margin-top": Dash.Size.Padding * 2,
+            "width": width_percent ? width_percent.toString + "%" : "98%",
+            "background": color ? color.AccentGood : Dash.Color.Light.AccentGood,
+        });
+        return bottom_divider;
+    };
     this.GetTipBox = function (code, msg, optional_style_css) {
         // A full width box that is meant to display information
         var tip = Dash.Gui.GetHTMLBoxContext(optional_style_css);
@@ -18258,6 +18273,22 @@ function DashGui() {
             });
             return button;
         })(this, icon_id, callback, data_key, additional_data, binder);
+    };
+    this.GetTopRightLabel = function (text="", color=null) {
+        var label = this.GetHTMLAbsContext(text, color);
+        label.css({
+            "background": "none",
+            "left": "auto",
+            "bottom": "auto",
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "text-align": "right",
+            "color": color ? color.Text : Dash.Color.Light.Text,
+            "opacity": 0.6,
+            "z-index": 1,
+            "cursor": "auto"
+        });
+        return label;
     };
     this.OpenFileURLDownloadDialog = function (url, filename="", callback=null) {
         var dialog_id = "__dash_file_url_download_dialog";
@@ -21924,7 +21955,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label_first = label_first;
     this.include_border = include_border;
     this.color = color || Dash.Color.Light;
-    this.hover_hint = hover_hint;
+    this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
     this.html = null;
     this.label = null;
     this._hover_hint = "";
@@ -22138,7 +22169,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return combo;
     };
     this.AddText = function (text, color=null) {
-        this.toolbar.AddText(text, color);
+        return this.toolbar.AddText(text, color);
     };
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
@@ -25748,19 +25779,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         this.Update();
     };
     this.add_top_right_label = function () {
-        this.top_right_label = Dash.Gui.GetHTMLAbsContext();
+        this.top_right_label = Dash.Gui.GetTopRightLabel("", this.color);
         this.top_right_label.css({
-            "background": "none",
-            "left": "auto",
-            "bottom": "auto",
-            "top": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "text-align": "right",
-            "color": this.color.Text,
-            "opacity": 0.6,
-            "z-index": 1,
-            "cursor": "auto"
+            "top": Dash.Size.Padding
         });
         this.html.append(this.top_right_label);
     };
@@ -25953,15 +25974,7 @@ function DashGuiPropertyBoxInterface () {
         this.html.css({
             "margin-bottom": 0
         });
-        this.bottom_divider = $("<div></div>");
-        this.bottom_divider.css({
-            "height": Dash.Size.Padding * 0.1,
-            "margin-left": "auto",
-            "margin-right": "auto",
-            "margin-top": Dash.Size.Padding * 2,
-            "width": "98%",
-            "background": this.color.AccentGood,
-        });
+        this.bottom_divider = Dash.Gui.GetBottomDivider(this.color);
         this.html.append(this.bottom_divider);
         return this.bottom_divider;
     };

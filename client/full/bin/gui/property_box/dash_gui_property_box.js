@@ -102,20 +102,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
 
     this.add_top_right_label = function () {
-        this.top_right_label = Dash.Gui.GetHTMLAbsContext();
+        this.top_right_label = Dash.Gui.GetTopRightLabel("", this.color);
 
         this.top_right_label.css({
-            "background": "none",
-            "left": "auto",
-            "bottom": "auto",
-            "top": Dash.Size.Padding,
-            "right": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "text-align": "right",
-            "color": this.color.Text,
-            "opacity": 0.6,
-            "z-index": 1,
-            "cursor": "auto"
+            "top": Dash.Size.Padding
         });
 
         this.html.append(this.top_right_label);

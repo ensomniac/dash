@@ -7,7 +7,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.label_first = label_first;
     this.include_border = include_border;
     this.color = color || Dash.Color.Light;
-    this.hover_hint = hover_hint;
+    this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
 
     this.html = null;
     this.label = null;

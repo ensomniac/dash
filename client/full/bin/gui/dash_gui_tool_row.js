@@ -64,7 +64,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     this.AddText = function (text, color=null) {
-        this.toolbar.AddText(text, color);
+        return this.toolbar.AddText(text, color);
     };
 
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
