@@ -286,12 +286,13 @@ class _ClientCompiler:
         found_dash_end = False
 
         for line in open(index_path_min, "r").read().split("\n"):
-
             if "DASH END" in line and not found_dash_end:
                 found_dash_end = True
+
                 index_lines.append(line)
                 index_lines.append(core_line)
                 index_lines.append("")
+
                 continue
 
             if "<title>DASH</title>" in line:
@@ -304,9 +305,7 @@ class _ClientCompiler:
         js_package_name = package["asset_path"].replace("_", " ").title().replace(" ", "")
 
         open(expected_index_path, "w").write("\n".join(index_lines))
-        open(expected_core_path, "w").write(
-            "\n".join(self.get_default_core_content(js_package_name))
-        )
+        open(expected_core_path, "w").write("\n".join(self.get_default_core_content(js_package_name)))
 
     def get_default_core_content(self, js_package_name):
         return [
@@ -370,7 +369,7 @@ class _ClientCompiler:
                 if word in key:
                     continue
 
-            clean_context[key] = package[key]
+            clean_context[key] = package[key] or ""
 
         dash_authors = [
             "Ryan Martin ryan@ensomniac.com",
@@ -391,10 +390,16 @@ class _ClientCompiler:
         max_key_len = max_key_len[-1]
 
         indent = " " * 8
-        for key in clean_context:
+
+        key_order = list(clean_context.keys())
+
+        key_order.sort()
+
+        for key in key_order:
             spacer = " " * (max_key_len-len(key))
             line   = indent + '"' + key.zfill(len(key)-max_key_len) + '": '
             line   += spacer + '"' + clean_context[key] + '",'
+
             header.append(line)
 
         # Remove trailing comma from last dict line

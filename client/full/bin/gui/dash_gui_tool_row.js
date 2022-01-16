@@ -8,6 +8,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.elements = [];
     this.toolbar = null;
     this.height = Dash.Size.RowHeight;
+    this.get_formatted_data_cb = null;
 
     this.setup_styles = function () {
         this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
@@ -28,6 +29,18 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     this.AddExpander = function () {
         return this.toolbar.AddExpander();
+    };
+
+    this.AddDivider = function () {
+        var divider = this.toolbar.AddDivider();
+
+        divider.html.css({
+            "height": this.height * 0.9,
+            "margin-top": Dash.Size.Padding * 0.1,
+            "padding-top": Dash.Size.Padding * 0.1
+        });
+
+        return divider;
     };
 
     this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
@@ -121,15 +134,29 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return label;
     };
 
-    this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
+    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
+    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
+    this.SetGetFormattedDataCallback = function (callback, binder=null) {
+        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+    };
+
+    this.AddInput = function (label_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
 
             return;
         }
 
+        if (include_label) {
+            var label = this.AddLabel(label_text, null, null, null, false);
+
+            label.html.css({
+                "margin-top": Dash.Size.Padding * 0.1
+            });
+        }
+
         var input = this.toolbar.AddTransparentInput(
-            text,
+            label_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
@@ -162,10 +189,14 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
         }
 
-        var value = this.get_data_cb()[data_key];
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
 
         if (value) {
             input.SetText(value);
+        }
+
+        if (!can_edit) {
+            input.SetLocked(true);
         }
 
         this.elements.push(input);
@@ -191,7 +222,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         var checkbox = new Dash.Gui.Checkbox(
             label_text,                                             // Label text
             this,                                                   // Binder
-            callback.bind(this.binder),                             // Callback
+            callback ? callback.bind(this.binder) : callback,       // Callback
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
             true,                                                   // Label first
@@ -210,6 +241,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-left": Dash.Size.Padding
             });
         }
+
+        // TODO: The margins applied here need to be re-evaluated, but it may break the look of a few things
 
         checkbox.label.html.css({
             "margin-left": Dash.Size.Padding * 0.1

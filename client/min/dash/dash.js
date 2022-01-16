@@ -17992,9 +17992,8 @@ function DashDateTime () {
     this.Readable = function (iso_string, include_tz_label=true) {
         var tz_label = "UTC";
         var dt_obj = new Date(Date.parse(iso_string));
-        // TODO: Move this (tz) to dash.guide as a context property
-        if (Dash.Context["domain"] === "altona.io") {
-            tz_label = "EST";
+        if (Dash.Context["timezone"]) {
+            tz_label = Dash.Context["timezone"];
             if (this.DSTInEffect(dt_obj)) {
                 dt_obj.setHours(dt_obj.getHours() - (this.server_offset_hours - 1));  // Spring/Summer
             }
@@ -21919,7 +21918,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
 function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
     this.label_text = label_text;
     this.binder = binder;
-    this.callback = callback.bind(this.binder);
+    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
     this.label_first = label_first;
@@ -21928,7 +21927,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.hover_hint = hover_hint;
     this.html = null;
     this.label = null;
+    this._hover_hint = "";
     this.icon_button = null;
+    this.is_read_only = false;
     this.able_to_toggle_cb = null;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
@@ -21954,6 +21955,24 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return) {
         this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    };
+    this.SetReadOnly = function (is_read_only=true) {
+        var pointer_events;
+        if (is_read_only) {
+            this._hover_hint = this.hover_hint;
+            this.hover_hint = "";
+            pointer_events = "none";
+        }
+        else {
+            this.hover_hint = this._hover_hint;
+            this._hover_hint = "";
+            pointer_events = "pointer";
+        }
+        this.icon_button.SetHoverHint(this.hover_hint);
+        this.html.css({
+            "pointer-events": pointer_events
+        });
+        this.is_read_only = is_read_only;
     };
     this.Toggle = function (skip_callback=false) {
         if (this.toggle_confirmation_msg) {
@@ -22076,6 +22095,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.elements = [];
     this.toolbar = null;
     this.height = Dash.Size.RowHeight;
+    this.get_formatted_data_cb = null;
     this.setup_styles = function () {
         this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
         this.toolbar.stroke_sep.remove();
@@ -22091,6 +22111,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     this.AddExpander = function () {
         return this.toolbar.AddExpander();
+    };
+    this.AddDivider = function () {
+        var divider = this.toolbar.AddDivider();
+        divider.html.css({
+            "height": this.height * 0.9,
+            "margin-top": Dash.Size.Padding * 0.1,
+            "padding-top": Dash.Size.Padding * 0.1
+        });
+        return divider;
     };
     this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
         var combo = this.toolbar.AddCombo(
@@ -22165,13 +22194,24 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(label);
         return label;
     };
-    this.AddInput = function (text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null) {
+    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
+    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
+    this.SetGetFormattedDataCallback = function (callback, binder=null) {
+        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+    };
+    this.AddInput = function (label_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
             return;
         }
+        if (include_label) {
+            var label = this.AddLabel(label_text, null, null, null, false);
+            label.html.css({
+                "margin-top": Dash.Size.Padding * 0.1
+            });
+        }
         var input = this.toolbar.AddTransparentInput(
-            text,
+            label_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
@@ -22199,9 +22239,12 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "width": "100%"
             });
         }
-        var value = this.get_data_cb()[data_key];
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
         if (value) {
             input.SetText(value);
+        }
+        if (!can_edit) {
+            input.SetLocked(true);
         }
         this.elements.push(input);
         return input;
@@ -22220,7 +22263,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         var checkbox = new Dash.Gui.Checkbox(
             label_text,                                             // Label text
             this,                                                   // Binder
-            callback.bind(this.binder),                             // Callback
+            callback ? callback.bind(this.binder) : callback,       // Callback
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
             true,                                                   // Label first
@@ -22237,6 +22280,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-left": Dash.Size.Padding
             });
         }
+        // TODO: The margins applied here need to be re-evaluated, but it may break the look of a few things
         checkbox.label.html.css({
             "margin-left": Dash.Size.Padding * 0.1
         });
@@ -25921,8 +25965,8 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(this.bottom_divider);
         return this.bottom_divider;
     };
-    // This is intended to nicely format a prop box that only uses locked rows for displaying
-    // data, therefore, it's only been implemented in input-related areas for now
+    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
+    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
     this.SetGetFormattedDataCallback = function (callback, binder=null) {
         this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
     };
@@ -25979,6 +26023,19 @@ function DashGuiPropertyBoxInterface () {
         });
         this.AddHTML(bar.html);
         return bar;
+    };
+    this.AddToolRow = function () {
+        var tool_row = new Dash.Gui.ToolRow(
+            this.binder,
+            this.get_formatted_data_cb ? this.get_formatted_data_cb : this.get_data_cb,
+            this.set_data_cb,
+            this.color
+        );
+        if (this.get_formatted_data_cb) {
+            tool_row.SetGetFormattedDataCallback(this.get_formatted_data_cb);
+        }
+        this.AddHTML(tool_row.html);
+        return tool_row;
     };
     this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
@@ -27985,6 +28042,9 @@ function DashGuiLayoutToolbarInterface () {
         });
         label.label.css({
             "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
             "padding-left": 0
         });
         this.html.append(label.html);

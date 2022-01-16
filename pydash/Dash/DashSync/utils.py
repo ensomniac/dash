@@ -43,7 +43,6 @@ class _SyncUtils:
         sync_packages = []
 
         for package_data in response["packages"]:
-
             if not quiet:
                 self.PrintPackageDetails(package_data)
 
@@ -83,6 +82,7 @@ class _SyncUtils:
             return
 
         print(package_data["display_name"])
+
         for key in print_keys:
             print("\t" + key + ": " + str(package_data[key]))
 
@@ -196,8 +196,8 @@ class _SyncUtils:
         return server_root, client_root
 
     def FindDashClientPaths(self, packages):
-
         pydash_package = None
+
         for package in packages:
             if package["asset_path"] != "pydash":
                 continue
@@ -207,15 +207,18 @@ class _SyncUtils:
             break
 
         if not pydash_package:
-            print("\nWarning: Did not find PyDash package locally, will not monitor dash client\n")
-            return
+            raise Exception("\nError: Did not find PyDash package locally, cannot monitor dash client\n")
+            # print("\nWarning: Did not find PyDash package locally, will not monitor dash client\n")
+            #
+            # return
 
         dash_git_root = pydash_package["usr_path_git"]
         client_path_full = os.path.join(dash_git_root, "client", "full/")
         client_path_min = os.path.join(dash_git_root, "client", "min/")
 
         if not os.path.exists(client_path_full):
-            print("\nWarning: Did Dash client code missing. Expected: '" + client_path_full + "'\n")
+            raise Exception("\nWarning: Dash client code missing. Expected: '" + client_path_full + "'\n")
+            # print("\nWarning: Dash client code missing. Expected: '" + client_path_full + "'\n")
 
         # if not os.path.exists(client_path_min):
         # print("\nWarning: Did Dash client code missing. Expected: '" + client_path_min + "'\n")

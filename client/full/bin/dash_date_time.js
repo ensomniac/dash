@@ -5,9 +5,8 @@ function DashDateTime () {
         var tz_label = "UTC";
         var dt_obj = new Date(Date.parse(iso_string));
 
-        // TODO: Move this (tz) to dash.guide as a context property
-        if (Dash.Context["domain"] === "altona.io") {
-            tz_label = "EST";
+        if (Dash.Context["timezone"]) {
+            tz_label = Dash.Context["timezone"];
 
             if (this.DSTInEffect(dt_obj)) {
                 dt_obj.setHours(dt_obj.getHours() - (this.server_offset_hours - 1));  // Spring/Summer

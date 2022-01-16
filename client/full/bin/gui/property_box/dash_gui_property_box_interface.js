@@ -45,8 +45,8 @@ function DashGuiPropertyBoxInterface () {
         return this.bottom_divider;
     };
 
-    // This is intended to nicely format a prop box that only uses locked rows for displaying
-    // data, therefore, it's only been implemented in input-related areas for now
+    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
+    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
     this.SetGetFormattedDataCallback = function (callback, binder=null) {
         this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
     };
@@ -123,6 +123,23 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(bar.html);
 
         return bar;
+    };
+
+    this.AddToolRow = function () {
+        var tool_row = new Dash.Gui.ToolRow(
+            this.binder,
+            this.get_formatted_data_cb ? this.get_formatted_data_cb : this.get_data_cb,
+            this.set_data_cb,
+            this.color
+        );
+
+        if (this.get_formatted_data_cb) {
+            tool_row.SetGetFormattedDataCallback(this.get_formatted_data_cb);
+        }
+
+        this.AddHTML(tool_row.html);
+
+        return tool_row;
     };
 
     this.AddButton = function (label_text, callback) {

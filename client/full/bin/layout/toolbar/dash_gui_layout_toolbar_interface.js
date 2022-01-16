@@ -152,6 +152,7 @@ function DashGuiLayoutToolbarInterface () {
         });
 
         var obj_index = this.objects.length;
+
         this.objects.push({
             "html": divider_line,
             "html_elem": divider_line.html,
@@ -219,6 +220,9 @@ function DashGuiLayoutToolbarInterface () {
 
         label.label.css({
             "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
             "padding-left": 0
         });
 

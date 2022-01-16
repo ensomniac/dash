@@ -1,7 +1,7 @@
 function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
     this.label_text = label_text;
     this.binder = binder;
-    this.callback = callback.bind(this.binder);
+    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
     this.label_first = label_first;
@@ -11,7 +11,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
     this.html = null;
     this.label = null;
+    this._hover_hint = "";
     this.icon_button = null;
+    this.is_read_only = false;
     this.able_to_toggle_cb = null;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
@@ -45,6 +47,32 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
     this.SetAbleToToggleCallback = function (callback_with_bool_return) {
         this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    };
+
+    this.SetReadOnly = function (is_read_only=true) {
+        var pointer_events;
+
+        if (is_read_only) {
+            this._hover_hint = this.hover_hint;
+            this.hover_hint = "";
+
+            pointer_events = "none";
+        }
+
+        else {
+            this.hover_hint = this._hover_hint;
+            this._hover_hint = "";
+
+            pointer_events = "pointer";
+        }
+
+        this.icon_button.SetHoverHint(this.hover_hint);
+
+        this.html.css({
+            "pointer-events": pointer_events
+        });
+
+        this.is_read_only = is_read_only;
     };
 
     this.Toggle = function (skip_callback=false) {

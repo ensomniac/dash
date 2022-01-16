@@ -84,6 +84,7 @@ class ApiCore:
         - "srv_path_git_oapi"    : "/var/www/vhosts/oapi.co/candy/realtimecandy/",
         - "srv_path_http_root"   : "/var/www/vhosts/oapi.co/candy/",
         - "srv_path_local"       : "/var/www/vhosts/oapi.co/candy/local/"
+        - "timezone"             : "EST"
 
         :return: self._dash_context
         :rtype: dict
