@@ -374,6 +374,91 @@ function DashGui() {
         return tooltip;
     };
 
+    this.GetImageContainer = function (url, height=100, centered=false, minimizable=false) {
+        var image = $("<div></div>");
+
+        image.css({
+            "background-image": "url(" + url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "margin": Dash.Size.Padding,
+            "height": height,
+            "width": height,
+            "border-radius": 3
+        });
+
+        if (centered) {
+            image.css({
+                "background-position": "center center"
+            });
+        }
+
+        if (!minimizable) {
+            return image;
+        }
+
+        this.add_corner_button_to_image_container(image, height);
+
+        return image;
+    };
+
+    this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
+        var color = Dash.Color.Light;
+
+        var button = (function (self) {
+            return self.GetTopRightIconButton(
+                this,
+                function () {
+                    // Dummy, will be overwritten
+                },
+                minimize ? "minimize" : "expand"
+            );
+        })(this);
+
+        button.SetIconColor(color.Button.Text.Base);
+        button.SetHoverHint(minimize ? "Minimize" : "Expand");
+
+        button.icon.icon_html.css({
+            "font-size": (container_height * 0.04).toString() + "px",
+            "transform": "scale(-1, 1)"
+        });
+
+        button.icon.html.css({
+            "margin-top": Dash.Size.Padding * 0.2,
+            "margin-left": Dash.Size.Padding * 0.2
+        });
+
+        button.html.css({
+            "background": color.Button.Background.Base,
+            "width": container_height * 0.05,
+            "height": container_height * 0.05,
+            "top": Dash.Size.Padding * 0.7,
+            "left": Dash.Size.Padding * 0.7,
+            "box-shadow": "0px 0px 2px 1px " + Dash.Color.ParseToRGB(color.Button.Text.Base).replace(")", ", 0.75)"),
+            "opacity": 0.75
+        });
+
+        // Separate closure to override button's default click behavior, while retaining access to it
+        (function (self) {
+            button.html.on("click", function () {
+                image_container.stop().animate(
+                    {
+                        "width": minimize ? container_height * 0.25 : container_height,
+                        "height": minimize ? container_height * 0.25 : container_height
+                    },
+                    50,
+                    function () {  // On animate complete
+                        button.html.remove();
+
+                        self.add_corner_button_to_image_container(image_container, container_height, !minimize);
+                    }
+                );
+            });
+        })(this);
+
+        image_container.append(button.html);
+    };
+
     this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
         var color = Dash.Color.Dark;
         var padding = Dash.Size.Padding * 0.5;
