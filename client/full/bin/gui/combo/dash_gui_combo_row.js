@@ -29,7 +29,6 @@ function DashGuiComboRow (combo, option) {
             "height": this.height,
             "line-height": this.height + "px",
             "white-space": "nowrap",
-            // "margin-right": Dash.Size.Padding * 0.1,
             "border-bottom": "1px solid rgba(255, 255, 255, 0.1)",
             "color": this.color_set.Text.Base,
         });
