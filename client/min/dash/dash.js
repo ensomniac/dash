@@ -22915,9 +22915,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.buttons = [];
     this.header = null;
     this.extra_gui = [];
+    this.files_data = {};
     this.tool_row = null;
     this.subheader = null;
-    this.files_data = null;
     this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
@@ -22925,7 +22925,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.original_order = null;
     this.subheader_styling = {};
     this.display_folders_first = true;
+    this.include_list_header_row = true;
     this.desktop_client_name = "desktop";
+    this.include_uploaded_keys_columns = true;
     this.reset_upload_button_uploader = false;
     this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -22944,7 +22946,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log("(File Explorer) Set to read-only because 'api' and/or 'parent_obj_id' were not provided");
+            console.log("(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided");
         }
         if (!this.read_only) {
             this.instantiate_button_configs();
@@ -23030,6 +23032,54 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             "right_margin": right_margin || -Dash.Size.Padding * 0.25,
             "hover_preview": hover_text
         };
+    };
+    // Intended for read-only mode
+    this.OverrideGetDataForKey = function (binder, new_get_data_for_key_function) {
+        this.GetDataForKey = new_get_data_for_key_function.bind(binder);
+    };
+    this.AddRow = function (file_data, file_id="") {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) AddRow function is only for use when this element " +
+                "is read-only, otherwise, rows are added and managed automatically."
+            );
+            return;
+        }
+        if (!file_id) {
+            file_id = file_data["id"];
+        }
+        if (!("data" in this.files_data)) {
+            this.files_data["data"] = {};
+        }
+        if (!("order" in this.files_data)) {
+            this.files_data["order"] = [];
+        }
+        this.files_data["data"][file_id] = file_data;
+        this.files_data["order"].push(file_id);
+        if (!this.list) {
+            this.add_list();
+        }
+        this.add_row(file_id);
+    };
+    this.SetIncludeUploadedKeysColumns = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeUploadedKeysColumns function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+            return;
+        }
+        this.include_uploaded_keys_columns = include;
+    };
+    this.SetIncludeListHeaderRow = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeListHeaderRow function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+            return;
+        }
+        this.include_list_header_row = include;
     };
     this.instantiate_button_configs = function () {
         this.OpenButtonConfig = {
@@ -23319,7 +23369,9 @@ function DashGuiFileExplorerGUI () {
         );
 
         column_config.AddSpacer(true);
-        column_config.AddDivider(border_css);
+        if (this.include_uploaded_keys_columns || this.include_modified_keys_columns || this.buttons.length) {
+            column_config.AddDivider(border_css);
+        }
         if (this.include_modified_keys_columns) {
             column_config.AddColumn(
                 "Modified By",
@@ -23338,22 +23390,24 @@ function DashGuiFileExplorerGUI () {
             );
             column_config.AddDivider(border_css);
         }
-        column_config.AddColumn(
-            "Uploaded By",
-            "uploaded_by",
-            false,
-            Dash.Size.ColumnWidth * 0.7,
-            {"css": {"flex": "none"}}
-        );
-        column_config.AddDivider(border_css);
-        column_config.AddColumn(
-            "Uploaded On",
-            "uploaded_on",
-            false,
-            Dash.Size.ColumnWidth * 0.95,
-            {"css": {"flex": "none"}}
-        );
-        column_config.AddDivider(border_css);
+        if (this.include_uploaded_keys_columns) {
+            column_config.AddColumn(
+                "Uploaded By",
+                "uploaded_by",
+                false,
+                Dash.Size.ColumnWidth * 0.7,
+                {"css": {"flex": "none"}}
+            );
+            column_config.AddDivider(border_css);
+            column_config.AddColumn(
+                "Uploaded On",
+                "uploaded_on",
+                false,
+                Dash.Size.ColumnWidth * 0.95,
+                {"css": {"flex": "none"}}
+            );
+            column_config.AddDivider(border_css);
+        }
         for (var button_config of this.buttons) {
             column_config.AddColumn(
                 button_config["config_name"],
@@ -23387,10 +23441,12 @@ function DashGuiFileExplorerGUI () {
     this.add_list = function () {
         this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
         this.list.DisableDividerColorChangeOnHover();
-        this.list.AddHeaderRow(
-            {"margin-left": Dash.Size.Padding * 2},
-            {"background": this.color.Pinstripe}
-        );
+        if (this.include_list_header_row) {
+            this.list.AddHeaderRow(
+                {"margin-left": Dash.Size.Padding * 2},
+                {"background": this.color.Pinstripe}
+            );
+        }
         this.list.html.css({
             "margin-top": Dash.Size.Padding
         });
@@ -23608,14 +23664,40 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.preview_box = $("<div></div>");
     this.color = this.file_explorer.color;
     this.height = Dash.Size.RowHeight * 15;
+    this.read_only = this.file_explorer.read_only;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
+    // These have not all been tested for the ability to display a preview
     this.extensions = {
-        "model_viewer": ["gltf", "glb"],
+        "image": [
+            "gif",
+            "jpeg",
+            "jpg",
+            "png",
+            "svg",
+            "webp"
+        ],
+        "model_viewer": [
+            "gltf",
+            "glb"
+        ],
         // Add to these categories as we become aware of more extensions that are commonly being uploaded
-        "video":        ["mp4", "mov"],
-        "audio":        ["mp3", "wav"],
-        "model":        ["fbx", "obj"],
-        "drafting":     ["cad"]
+        "video": [
+            "mp4",
+            "mov"
+        ],
+        "audio": [
+            "mp3",
+            "wav"
+        ],
+        "model": [
+            "fbx",
+            "obj"
+        ],
+        "drafting": [
+            "cad",
+            "pdg",
+            "3d"
+        ]
     };
     this.setup_styles = function () {
         this.html.css({
@@ -23673,9 +23755,16 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         this.details_property_box.SetTopRightLabel(file_data["id"]);
         var is_image = "aspect" in file_data;
         this.add_header_to_property_box(file_data, is_image);
-        this.add_primary_inputs(file_data, is_image);
+        if (this.read_only) {
+            this.add_read_only_inputs(file_data);
+        }
+        else {
+            this.add_primary_inputs(file_data, is_image);
+        }
         this.details_property_box.AddExpander();
-        this.add_server_data_inputs(file_data);
+        if (!this.read_only) {
+            this.add_server_data_inputs(file_data);
+        }
         this.details_property_box.html.css({
             "position": "absolute",
             "inset": 0,
@@ -23685,6 +23774,19 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             "box-shadow": "none",
             "overflow-y": "auto"
         });
+    };
+    this.add_read_only_inputs = function (file_data) {
+        var added = false;
+        for (var key in file_data) {
+            if (key === "id" || key === "url" || key === "filename" || key === "name") {
+                continue;
+            }
+            this.details_property_box.AddInput(key, key.Title(), file_data[key], null, false);
+            added = true;
+        }
+        if (!added) {
+            this.details_property_box.AddText("(No details for this file)", this.color);
+        }
     };
     this.add_header_to_property_box = function (file_data, is_image) {
         var file_ext = this.get_file_ext(this.file_explorer.get_file_url(file_data));
@@ -23841,7 +23943,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     this.file_explorer = this.preview_strip.file_explorer;
     this.opposite_color = this.preview_strip.opposite_color;
     this.file_url = this.file_explorer.get_file_url(this.file_data);
-    this.file_ext = this.preview_strip.get_file_ext(this.file_url);
+    this.file_ext = this.preview_strip.get_file_ext(this.file_url) || this.file_url.split(".").Last();
     this.abs_center_css = {
         "position": "absolute",
         "top": "50%",
@@ -23858,7 +23960,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
             this.set_plain_text_preview();
             width = "77%";
         }
-        else if ("aspect" in this.file_data) {
+        else if (this.extensions["image"].includes(this.file_ext) || "aspect" in this.file_data) {
             this.set_image_preview();
         }
         else if (this.extensions["model_viewer"].includes(this.file_ext)) {
@@ -26315,6 +26417,31 @@ function DashGuiPropertyBoxInterface () {
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
+    };
+    this.AddLabel = function (text, color=null) {
+        var header = new Dash.Gui.Header(text, color);
+        header.html.css({
+            "margin-left": Dash.Size.Padding * 2
+        });
+        this.html.append(header.html);
+        return header;
+    };
+    this.AddText = function (text, color=null) {
+        var label = this.AddLabel(text, false, color);
+        label.border.remove();
+        label.html.css({
+            // "padding-left": 0,
+            // "margin-top": 0
+        });
+        label.label.css({
+            "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "padding-left": 0
+        });
+        this.html.append(label.html);
+        return label;
     };
 }
 

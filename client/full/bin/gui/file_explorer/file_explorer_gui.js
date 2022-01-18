@@ -186,7 +186,10 @@ function DashGuiFileExplorerGUI () {
 
 
         column_config.AddSpacer(true);
-        column_config.AddDivider(border_css);
+
+        if (this.include_uploaded_keys_columns || this.include_modified_keys_columns || this.buttons.length) {
+            column_config.AddDivider(border_css);
+        }
 
         if (this.include_modified_keys_columns) {
             column_config.AddColumn(
@@ -210,25 +213,27 @@ function DashGuiFileExplorerGUI () {
             column_config.AddDivider(border_css);
         }
 
-        column_config.AddColumn(
-            "Uploaded By",
-            "uploaded_by",
-            false,
-            Dash.Size.ColumnWidth * 0.7,
-            {"css": {"flex": "none"}}
-        );
+        if (this.include_uploaded_keys_columns) {
+            column_config.AddColumn(
+                "Uploaded By",
+                "uploaded_by",
+                false,
+                Dash.Size.ColumnWidth * 0.7,
+                {"css": {"flex": "none"}}
+            );
 
-        column_config.AddDivider(border_css);
+            column_config.AddDivider(border_css);
 
-        column_config.AddColumn(
-            "Uploaded On",
-            "uploaded_on",
-            false,
-            Dash.Size.ColumnWidth * 0.95,
-            {"css": {"flex": "none"}}
-        );
+            column_config.AddColumn(
+                "Uploaded On",
+                "uploaded_on",
+                false,
+                Dash.Size.ColumnWidth * 0.95,
+                {"css": {"flex": "none"}}
+            );
 
-        column_config.AddDivider(border_css);
+            column_config.AddDivider(border_css);
+        }
 
         for (var button_config of this.buttons) {
             column_config.AddColumn(
@@ -268,10 +273,12 @@ function DashGuiFileExplorerGUI () {
 
         this.list.DisableDividerColorChangeOnHover();
 
-        this.list.AddHeaderRow(
-            {"margin-left": Dash.Size.Padding * 2},
-            {"background": this.color.Pinstripe}
-        );
+        if (this.include_list_header_row) {
+            this.list.AddHeaderRow(
+                {"margin-left": Dash.Size.Padding * 2},
+                {"background": this.color.Pinstripe}
+            );
+        }
 
         this.list.html.css({
             "margin-top": Dash.Size.Padding

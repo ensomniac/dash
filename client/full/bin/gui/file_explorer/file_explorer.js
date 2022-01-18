@@ -38,9 +38,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.buttons = [];
     this.header = null;
     this.extra_gui = [];
+    this.files_data = {};
     this.tool_row = null;
     this.subheader = null;
-    this.files_data = null;
     this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
@@ -48,7 +48,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.original_order = null;
     this.subheader_styling = {};
     this.display_folders_first = true;
+    this.include_list_header_row = true;
     this.desktop_client_name = "desktop";
+    this.include_uploaded_keys_columns = true;
     this.reset_upload_button_uploader = false;
     this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -71,7 +73,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
 
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log("(File Explorer) Set to read-only because 'api' and/or 'parent_obj_id' were not provided");
+            console.log("(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided");
         }
 
         if (!this.read_only) {
@@ -183,6 +185,70 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             "right_margin": right_margin || -Dash.Size.Padding * 0.25,
             "hover_preview": hover_text
         };
+    };
+
+    // Intended for read-only mode
+    this.OverrideGetDataForKey = function (binder, new_get_data_for_key_function) {
+        this.GetDataForKey = new_get_data_for_key_function.bind(binder);
+    };
+
+    this.AddRow = function (file_data, file_id="") {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) AddRow function is only for use when this element " +
+                "is read-only, otherwise, rows are added and managed automatically."
+            );
+
+            return;
+        }
+
+        if (!file_id) {
+            file_id = file_data["id"];
+        }
+
+        if (!("data" in this.files_data)) {
+            this.files_data["data"] = {};
+        }
+
+        if (!("order" in this.files_data)) {
+            this.files_data["order"] = [];
+        }
+
+        this.files_data["data"][file_id] = file_data;
+
+        this.files_data["order"].push(file_id);
+
+        if (!this.list) {
+            this.add_list();
+        }
+
+        this.add_row(file_id);
+    };
+
+    this.SetIncludeUploadedKeysColumns = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeUploadedKeysColumns function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+
+            return;
+        }
+
+        this.include_uploaded_keys_columns = include;
+    };
+
+    this.SetIncludeListHeaderRow = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeListHeaderRow function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+
+            return;
+        }
+
+        this.include_list_header_row = include;
     };
 
     this.instantiate_button_configs = function () {
