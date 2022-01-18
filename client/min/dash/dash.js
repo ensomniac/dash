@@ -20111,8 +20111,16 @@ function DashRequest () {
         this.request_failures[req_id] += 1;
         if (this.request_failures[req_id] >= max_allowed) {
             alert("The page must reload, sorry for the inconvenience.");
+            console.log(
+                "(Dash Interval Request Failure Manager) Max failures reached for '" + req_id +
+                "', reloading:", this.request_failures[req_id] + "/" + max_allowed
+            );
             window.location.reload();
         }
+        console.log(
+            "(Dash Interval Request Failure Manager) Request failure for '" + req_id +
+            "' has been tracked:", this.request_failures[req_id] + "/" + max_allowed
+        );
         return this.request_failures[req_id];
     };
     // See docstring for TrackRequestFailureForID
