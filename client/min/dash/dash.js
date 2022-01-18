@@ -18371,15 +18371,18 @@ function DashGui() {
         })(this, html, additional_css, override_element, delay_ms, tooltip, text_getter);
         return tooltip;
     };
-    this.GetImageContainer = function (url, height=100, centered=false, minimizable=false) {
+    this.GetImageContainer = function (url, height=100, centered=false, minimizable=false, start_minimized=false) {
+        if (start_minimized && !minimizable) {
+            minimizable = true;
+        }
         var image = $("<div></div>");
         image.css({
             "background-image": "url(" + url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "margin": Dash.Size.Padding,
-            "height": height,
-            "width": height,
+            "height": start_minimized ? height * 0.25 : height,
+            "width": start_minimized ? height * 0.25 : height,
             "border-radius": 3
         });
         if (centered) {
@@ -18390,10 +18393,19 @@ function DashGui() {
         if (!minimizable) {
             return image;
         }
-        this.add_corner_button_to_image_container(image, height);
+        this.add_corner_button_to_image_container(image, height, !start_minimized);
         return image;
     };
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function (html) {
+        html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
+        var opacity = 0.75;
         var color = Dash.Color.Light;
         var button = (function (self) {
             return self.GetTopRightIconButton(
@@ -18421,7 +18433,7 @@ function DashGui() {
             "top": Dash.Size.Padding * 0.7,
             "left": Dash.Size.Padding * 0.7,
             "box-shadow": "0px 0px 2px 1px " + Dash.Color.ParseToRGB(color.Button.Text.Base).replace(")", ", 0.75)"),
-            "opacity": 0.75
+            "opacity": opacity
         });
         // Separate closure to override button's default click behavior, while retaining access to it
         (function (self) {
@@ -18436,6 +18448,18 @@ function DashGui() {
                         button.html.remove();
                         self.add_corner_button_to_image_container(image_container, container_height, !minimize);
                     }
+                );
+            });
+            button.html.on("mouseenter", function () {
+                button.html.stop().animate(
+                    {"opacity": 1},
+                    25,
+                );
+            });
+            button.html.on("mouseleave", function () {
+                button.html.stop().animate(
+                    {"opacity": opacity},
+                    25,
                 );
             });
         })(this);
@@ -22846,7 +22870,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     this.setup_styles();
 }
 
-function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -22880,9 +22904,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     }
     this.rows = {};
     this.list = null;
+    this.buttons = [];
     this.header = null;
     this.extra_gui = [];
-    this.buttons = null;
     this.tool_row = null;
     this.subheader = null;
     this.files_data = null;
@@ -22895,6 +22919,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
     this.reset_upload_button_uploader = false;
+    this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.request_failure_id = "dash_gui_file_explorer_on_files_data";
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
@@ -22910,17 +22935,24 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
-        this.instantiate_button_configs();
-        // Default button config
-        this.buttons = [
-            this.OpenButtonConfig,
-            this.DownloadButtonConfig,
-            this.DeleteButtonConfig
-        ];
-        Dash.SetInterval(this, this.get_files_data, 2250);
+        if (this.read_only) {
+            console.log("(File Explorer) Set to read-only because 'api' and/or 'parent_obj_id' were not provided");
+        }
+        if (!this.read_only) {
+            this.instantiate_button_configs();
+            // Default button config
+            this.buttons = [
+                this.OpenButtonConfig,
+                this.DownloadButtonConfig,
+                this.DeleteButtonConfig
+            ];
+            Dash.SetInterval(this, this.get_files_data, 2250);
+        }
         this.add_header();
-        this.add_tool_row();
-        this.add_upload_button();
+        if (!this.read_only) {
+            this.add_tool_row();
+            this.add_upload_button();
+        }
         this.initialized = true;
     };
     // Only necessary in unique cases, like hijacking the subheader's spot
@@ -22940,6 +22972,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
         this.desktop_client_name = name;
         this.loader.SetDesktopClientName(name);
+    };
+    this.Flatten = function () {
+        Dash.Gui.Flatten(this.html);
     };
     this.AddHTML = function (html, wait_for_list=false) {
         if (!html || (wait_for_list && this.extra_gui.includes(html))) {
@@ -24312,13 +24347,8 @@ function DashGuiInput (placeholder_text, color) {
             "color": this.color.Text,
         });
     };
-    // This styles it in the Candy way - this is meant to stay simple and has been
-    // propagated throughout a few places in Dash, so be cautious if altering this
     this.Flatten = function () {
-        this.html.css({
-            "box-shadow": "none",
-            "background": "none",
-        });
+        Dash.Gui.Flatten(this.html);
     };
     this.InFocus = function () {
         return $(this.input).is(":focus");
@@ -26047,13 +26077,8 @@ function DashGuiPropertyBoxInterface () {
         }
         this.top_right_label.text(label_text);
     };
-    // This styles it in the Candy way - this is meant to stay simple and has been
-    // propagated throughout a few places in Dash, so be cautious if altering this
     this.Flatten = function () {
-        this.html.css({
-            "box-shadow": "none",
-            "background": "none",
-        });
+        Dash.Gui.Flatten(this.html);
     };
     // Intended for Flattened boxes
     this.AddBottomDivider = function () {

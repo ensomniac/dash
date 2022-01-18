@@ -374,7 +374,11 @@ function DashGui() {
         return tooltip;
     };
 
-    this.GetImageContainer = function (url, height=100, centered=false, minimizable=false) {
+    this.GetImageContainer = function (url, height=100, centered=false, minimizable=false, start_minimized=false) {
+        if (start_minimized && !minimizable) {
+            minimizable = true;
+        }
+
         var image = $("<div></div>");
 
         image.css({
@@ -382,8 +386,8 @@ function DashGui() {
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "margin": Dash.Size.Padding,
-            "height": height,
-            "width": height,
+            "height": start_minimized ? height * 0.25 : height,
+            "width": start_minimized ? height * 0.25 : height,
             "border-radius": 3
         });
 
@@ -397,12 +401,22 @@ function DashGui() {
             return image;
         }
 
-        this.add_corner_button_to_image_container(image, height);
+        this.add_corner_button_to_image_container(image, height, !start_minimized);
 
         return image;
     };
 
+    // This styles it in the Candy way - this is meant to stay simple and has been
+    // propagated throughout a few places in Dash, so be cautious if altering this
+    this.Flatten = function (html) {
+        html.css({
+            "box-shadow": "none",
+            "background": "none",
+        });
+    };
+
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
+        var opacity = 0.75;
         var color = Dash.Color.Light;
 
         var button = (function (self) {
@@ -435,7 +449,7 @@ function DashGui() {
             "top": Dash.Size.Padding * 0.7,
             "left": Dash.Size.Padding * 0.7,
             "box-shadow": "0px 0px 2px 1px " + Dash.Color.ParseToRGB(color.Button.Text.Base).replace(")", ", 0.75)"),
-            "opacity": 0.75
+            "opacity": opacity
         });
 
         // Separate closure to override button's default click behavior, while retaining access to it
@@ -452,6 +466,20 @@ function DashGui() {
 
                         self.add_corner_button_to_image_container(image_container, container_height, !minimize);
                     }
+                );
+            });
+
+            button.html.on("mouseenter", function () {
+                button.html.stop().animate(
+                    {"opacity": 1},
+                    25,
+                );
+            });
+
+            button.html.on("mouseleave", function () {
+                button.html.stop().animate(
+                    {"opacity": opacity},
+                    25,
                 );
             });
         })(this);

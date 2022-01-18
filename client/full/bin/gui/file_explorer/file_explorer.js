@@ -1,4 +1,4 @@
-function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -35,9 +35,9 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
 
     this.rows = {};
     this.list = null;
+    this.buttons = [];
     this.header = null;
     this.extra_gui = [];
-    this.buttons = null;
     this.tool_row = null;
     this.subheader = null;
     this.files_data = null;
@@ -50,6 +50,7 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     this.display_folders_first = true;
     this.desktop_client_name = "desktop";
     this.reset_upload_button_uploader = false;
+    this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.request_failure_id = "dash_gui_file_explorer_on_files_data";
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
@@ -69,20 +70,29 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
     DashGuiFileExplorerData.call(this);
 
     this.setup_styles = function () {
-        this.instantiate_button_configs();
+        if (this.read_only) {
+            console.log("(File Explorer) Set to read-only because 'api' and/or 'parent_obj_id' were not provided");
+        }
 
-        // Default button config
-        this.buttons = [
-            this.OpenButtonConfig,
-            this.DownloadButtonConfig,
-            this.DeleteButtonConfig
-        ];
+        if (!this.read_only) {
+            this.instantiate_button_configs();
 
-        Dash.SetInterval(this, this.get_files_data, 2250);
+            // Default button config
+            this.buttons = [
+                this.OpenButtonConfig,
+                this.DownloadButtonConfig,
+                this.DeleteButtonConfig
+            ];
+
+            Dash.SetInterval(this, this.get_files_data, 2250);
+        }
 
         this.add_header();
-        this.add_tool_row();
-        this.add_upload_button();
+
+        if (!this.read_only) {
+            this.add_tool_row();
+            this.add_upload_button();
+        }
 
         this.initialized = true;
     };
@@ -110,6 +120,10 @@ function DashGuiFileExplorer (color, api, parent_obj_id, supports_desktop_client
         this.desktop_client_name = name;
 
         this.loader.SetDesktopClientName(name);
+    };
+
+    this.Flatten = function () {
+        Dash.Gui.Flatten(this.html);
     };
 
     this.AddHTML = function (html, wait_for_list=false) {
