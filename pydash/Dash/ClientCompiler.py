@@ -16,9 +16,9 @@ import sys
 import json
 
 from datetime import datetime
-from shutil import rmtree, copytree
-
+from Dash.LocalStorage import Read
 from Dash.DashSync import SyncUtils
+from shutil import rmtree, copytree
 
 
 class _ClientCompiler:
@@ -34,7 +34,7 @@ class _ClientCompiler:
     def VersionInfo(self):
         if not hasattr(self, "_version_info"):
             if os.path.exists(SyncUtils.VersionInfoPath):
-                self._version_info = json.loads(open(SyncUtils.VersionInfoPath, "r").read())
+                self._version_info = Read(SyncUtils.VersionInfoPath, "r")
             else:
                 self._version_info = {"version": 1.0, "date": datetime.now().isoformat()}
 
