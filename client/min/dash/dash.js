@@ -142,6 +142,8 @@ function GuiIcons (icon) {
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
+        "expand-square":         new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
+        "expand-square-arrows":  new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
         "file":                  new GuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
         "file_lined":            new GuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
         "file_image":            new GuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),
@@ -18138,18 +18140,15 @@ function DashGui() {
             color = Dash.Color.Light;
         }
         var html = $("<div></div>");
-        var css = {
+        html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "background": color.BackgroundRaised,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
-        };
-        for (var key in optional_style_css) {
-            css[key] = optional_style_css[key];
-        }
-        html.css(css);
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            ...optional_style_css
+        });
         return html;
     };
     this.GetModalBackground = function (color=null) {

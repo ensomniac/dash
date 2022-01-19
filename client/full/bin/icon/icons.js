@@ -76,6 +76,8 @@ function GuiIcons (icon) {
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
+        "expand-square":         new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
+        "expand-square-arrows":  new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
         "file":                  new GuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
         "file_lined":            new GuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
         "file_image":            new GuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),

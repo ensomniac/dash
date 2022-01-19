@@ -72,20 +72,15 @@ function DashGui() {
 
         var html = $("<div></div>");
 
-        var css = {
+        html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "background": color.BackgroundRaised,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
-        };
-
-        for (var key in optional_style_css) {
-            css[key] = optional_style_css[key];
-        }
-
-        html.css(css);
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            ...optional_style_css
+        });
 
         return html;
     };
