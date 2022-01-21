@@ -51,7 +51,8 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
     this.Update = function () {
         if (this.on_row_draw_callback) {
             // Ryan, the rows were not previously updating in this case, so I updated this
-            return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
+            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
+            return this.on_row_draw_callback(this.row_id);
         }
 
         else {
