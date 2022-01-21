@@ -22080,6 +22080,8 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.html = null;
     this.label = null;
     this._hover_hint = "";
+    this.icon_color = null;
+    this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
     this.able_to_toggle_cb = null;
@@ -22098,6 +22100,14 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     };
     this.IsChecked = function () {
         return this.checked;
+    };
+    this.SetIconColor = function (color) {
+        this.icon_color = color;
+        this.icon_button.SetIconColor(color);
+    };
+    this.SetIconShadow = function (shadow) {
+        this.icon_shadow = shadow;
+        this.icon_button.AddIconShadow(shadow);
     };
     this.SetChecked = function (is_checked=true, skip_callback=true) {
         if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
@@ -22180,6 +22190,12 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
+        if (this.icon_color) {
+            this.icon_button.SetIconColor(this.icon_color);
+        }
+        if (this.icon_shadow) {
+            this.icon_button.SetIconShadow(this.icon_shadow);
+        }
         if (this.label_first) {
             if (this.label) {
                 this.html.append(this.label.html);
