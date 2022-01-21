@@ -1,13 +1,13 @@
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
-    this.label_text = label_text;
-    this.binder = binder;
-    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
+function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
-    this.label_first = label_first;
-    this.include_border = include_border;
     this.color = color || Dash.Color.Light;
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
+    this.binder = binder;
+    this.callback = callback && binder ? callback.bind(binder) : callback;
+    this.label_text = label_text;
+    this.label_first = label_first;
+    this.include_border = include_border;
 
     this.html = null;
     this.label = null;
@@ -37,6 +37,12 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         return this.checked;
     };
 
+    this.SetChecked = function (is_checked=true, skip_callback=true) {
+        if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
+            this.Toggle(skip_callback);
+        }
+    };
+
     this.LocalStorageKey = function () {
         return this.local_storage_key;
     };
@@ -45,8 +51,8 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.toggle_confirmation_msg = msg;
     };
 
-    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
-        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
     };
 
     this.SetReadOnly = function (is_read_only=true) {
@@ -98,7 +104,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         this.redraw();
 
-        if (skip_callback) {
+        if (skip_callback || !this.callback) {
             return;
         }
 
@@ -141,13 +147,19 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.icon_button.SetHoverHint(this.hover_hint);
 
         if (this.label_first) {
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
+
             this.html.append(this.icon_button.html);
         }
 
         else {
             this.html.append(this.icon_button.html);
-            this.html.append(this.label.html);
+
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
         }
 
         this.restyle_icon_button();
@@ -172,6 +184,10 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.draw_label = function () {
+        if (!this.label_text) {
+            return;
+        }
+
         this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
 
         this.label.label.css({

@@ -177,15 +177,15 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
 
         this.toggle_hide_button = new Dash.Gui.Checkbox(
-            "Activity",                     // Label text
-            this,                           // Binder
-            this.on_checkbox_toggled,       // Callback
             this.toggle_local_storage_key,  // Local storage key
             default_state,                  // Default state
-            true,                           // Label first
-            include_border,                 // Include border
             this.color,                     // Color
-            "Toggle Activity Feed"          // Hover hint text
+            "Toggle Activity Feed",         // Hover hint text
+            this,                           // Binder
+            this.on_checkbox_toggled,       // Callback
+            "Activity",                     // Label text
+            true,                           // Label first
+            include_border                  // Include border
         );
 
         this.toggle_hide_button.html.css({

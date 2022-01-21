@@ -22067,16 +22067,16 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.setup_styles();
 }
 
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
-    this.label_text = label_text;
-    this.binder = binder;
-    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
+function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
-    this.label_first = label_first;
-    this.include_border = include_border;
     this.color = color || Dash.Color.Light;
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
+    this.binder = binder;
+    this.callback = callback && binder ? callback.bind(binder) : callback;
+    this.label_text = label_text;
+    this.label_first = label_first;
+    this.include_border = include_border;
     this.html = null;
     this.label = null;
     this._hover_hint = "";
@@ -22099,14 +22099,19 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.IsChecked = function () {
         return this.checked;
     };
+    this.SetChecked = function (is_checked=true, skip_callback=true) {
+        if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
+            this.Toggle(skip_callback);
+        }
+    };
     this.LocalStorageKey = function () {
         return this.local_storage_key;
     };
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
     };
-    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
-        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
     };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
@@ -22143,7 +22148,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
             Dash.Local.Set(this.local_storage_key, "false");
         }
         this.redraw();
-        if (skip_callback) {
+        if (skip_callback || !this.callback) {
             return;
         }
         this.callback(this);
@@ -22176,12 +22181,16 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
         if (this.label_first) {
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
             this.html.append(this.icon_button.html);
         }
         else {
             this.html.append(this.icon_button.html);
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
         }
         this.restyle_icon_button();
     };
@@ -22200,6 +22209,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         }
     };
     this.draw_label = function () {
+        if (!this.label_text) {
+            return;
+        }
         this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
         this.label.label.css({
             "font-family": "sans_serif_normal",
@@ -22413,15 +22425,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
         var checkbox = new Dash.Gui.Checkbox(
-            label_text,                                             // Label text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
-            true,                                                   // Label first
-            label_border,                                           // Include border
             this.color,                                             // Color
-            hover_hint                                              // Hover hint text
+            hover_hint,                                             // Hover hint text
+            this,                                                   // Binder
+            callback ? callback.bind(this.binder) : callback,       // Callback
+            label_text,                                             // Label text
+            true,                                                   // Label first
+            label_border                                            // Include border
         );
         checkbox.html.css({
             "margin-top": 0
@@ -25321,15 +25333,15 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
 
         this.toggle_hide_button = new Dash.Gui.Checkbox(
-            "Activity",                     // Label text
-            this,                           // Binder
-            this.on_checkbox_toggled,       // Callback
             this.toggle_local_storage_key,  // Local storage key
             default_state,                  // Default state
-            true,                           // Label first
-            include_border,                 // Include border
             this.color,                     // Color
-            "Toggle Activity Feed"          // Hover hint text
+            "Toggle Activity Feed",         // Hover hint text
+            this,                           // Binder
+            this.on_checkbox_toggled,       // Callback
+            "Activity",                     // Label text
+            true,                           // Label first
+            include_border                  // Include border
         );
         this.toggle_hide_button.html.css({
             "position": "absolute",
