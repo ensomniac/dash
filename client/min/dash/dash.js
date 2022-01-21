@@ -22087,6 +22087,8 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.able_to_toggle_cb = null;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
+    this.true_icon_name = "checked_box";
+    this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
@@ -22122,6 +22124,20 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
         this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
+    };
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetTrueIconName = function (icon_name) {
+        this.true_icon_name = icon_name;
+        if (this.checked) {
+            this.redraw();
+        }
+    };
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetFalseIconName = function (icon_name) {
+        this.false_icon_name = icon_name;
+        if (!this.checked) {
+            this.redraw();
+        }
     };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
@@ -22180,7 +22196,7 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? "checked_box" : "unchecked_box",
+                self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
