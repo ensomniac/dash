@@ -22079,6 +22079,7 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.include_border = include_border;
     this.html = null;
     this.label = null;
+    this.can_click = true;
     this._hover_hint = "";
     this.icon_color = null;
     this.icon_shadow = null;
@@ -22111,8 +22112,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.icon_shadow = shadow;
         this.icon_button.AddIconShadow(shadow);
     };
-    this.SetChecked = function (is_checked=true, skip_callback=true) {
+    this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
         if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
+            if (hover_hint) {
+                this.hover_hint = hover_hint;
+            }
             this.Toggle(skip_callback);
         }
     };
@@ -22139,6 +22143,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             this.redraw();
         }
     };
+    this.DisableClick = function () {
+        this.can_click = false;
+        this.html.off("click");
+        this.icon_button.html.off("click");
+    };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
         if (is_read_only) {
@@ -22155,6 +22164,7 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.html.css({
             "pointer-events": pointer_events
         });
+        this.DisableClick();
         this.is_read_only = is_read_only;
     };
     this.Toggle = function (skip_callback=false) {
@@ -22225,6 +22235,9 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             }
         }
         this.restyle_icon_button();
+        if (!this.can_click) {
+            this.DisableClick();
+        }
     };
     this.restyle_icon_button = function () {
         if (!Dash.Validate.Object(this.icon_button_redraw_styling)) {
