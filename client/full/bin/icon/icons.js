@@ -137,6 +137,7 @@ function GuiIcons (icon) {
         "toggle_off":            new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
         "toggle_on":             new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
         "tools":                 new GuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
+        "transferring":          new GuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
         "trash_solid":           new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
         "trash_alt":             new GuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
