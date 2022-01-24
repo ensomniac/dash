@@ -314,4 +314,39 @@ function DashGuiPropertyBoxInterface () {
 
         return this.update_inputs[data_key];
     };
+
+    this.AddLabel = function (text, color=null) {
+        var header = new Dash.Gui.Header(text, color);
+
+        header.html.css({
+            "margin-left": Dash.Size.Padding * 2
+        });
+
+        this.html.append(header.html);
+
+        return header;
+    };
+
+    this.AddText = function (text, color=null) {
+        var label = this.AddLabel(text, false, color);
+
+        label.border.remove();
+
+        label.html.css({
+            // "padding-left": 0,
+            // "margin-top": 0
+        });
+
+        label.label.css({
+            "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "padding-left": 0
+        });
+
+        this.html.append(label.html);
+
+        return label;
+    };
 }

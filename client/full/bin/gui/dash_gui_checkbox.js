@@ -1,22 +1,27 @@
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
-    this.label_text = label_text;
-    this.binder = binder;
-    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
+function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
-    this.label_first = label_first;
-    this.include_border = include_border;
     this.color = color || Dash.Color.Light;
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
+    this.binder = binder;
+    this.callback = callback && binder ? callback.bind(binder) : callback;
+    this.label_text = label_text;
+    this.label_first = label_first;
+    this.include_border = include_border;
 
     this.html = null;
     this.label = null;
+    this.can_click = true;
     this._hover_hint = "";
+    this.icon_color = null;
+    this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
     this.able_to_toggle_cb = null;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
+    this.true_icon_name = "checked_box";
+    this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
 
     this.setup_styles = function () {
@@ -37,6 +42,28 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         return this.checked;
     };
 
+    this.SetIconColor = function (color) {
+        this.icon_color = color;
+
+        this.icon_button.SetIconColor(color);
+    };
+
+    this.SetIconShadow = function (shadow) {
+        this.icon_shadow = shadow;
+
+        this.icon_button.AddIconShadow(shadow);
+    };
+
+    this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
+        if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
+            if (hover_hint) {
+                this.hover_hint = hover_hint;
+            }
+
+            this.Toggle(skip_callback);
+        }
+    };
+
     this.LocalStorageKey = function () {
         return this.local_storage_key;
     };
@@ -45,8 +72,33 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.toggle_confirmation_msg = msg;
     };
 
-    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
-        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
+    };
+
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetTrueIconName = function (icon_name) {
+        this.true_icon_name = icon_name;
+
+        if (this.checked) {
+            this.redraw();
+        }
+    };
+
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetFalseIconName = function (icon_name) {
+        this.false_icon_name = icon_name;
+
+        if (!this.checked) {
+            this.redraw();
+        }
+    };
+
+    this.DisableClick = function () {
+        this.can_click = false;
+
+        this.html.off("click");
+        this.icon_button.html.off("click");
     };
 
     this.SetReadOnly = function (is_read_only=true) {
@@ -71,6 +123,8 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.html.css({
             "pointer-events": pointer_events
         });
+
+        this.DisableClick();
 
         this.is_read_only = is_read_only;
     };
@@ -98,7 +152,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         this.redraw();
 
-        if (skip_callback) {
+        if (skip_callback || !this.callback) {
             return;
         }
 
@@ -128,7 +182,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? "checked_box" : "unchecked_box",
+                self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -140,17 +194,35 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
+        if (this.icon_color) {
+            this.icon_button.SetIconColor(this.icon_color);
+        }
+
+        if (this.icon_shadow) {
+            this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+
         if (this.label_first) {
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
+
             this.html.append(this.icon_button.html);
         }
 
         else {
             this.html.append(this.icon_button.html);
-            this.html.append(this.label.html);
+
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
         }
 
         this.restyle_icon_button();
+
+        if (!this.can_click) {
+            this.DisableClick();
+        }
     };
 
     this.restyle_icon_button = function () {
@@ -172,6 +244,10 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     };
 
     this.draw_label = function () {
+        if (!this.label_text) {
+            return;
+        }
+
         this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
 
         this.label.label.css({

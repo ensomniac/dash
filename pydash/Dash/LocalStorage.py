@@ -224,11 +224,11 @@ class DashLocalStorage:
 
         return data
 
-    def Write(self, full_path, data):
+    def Write(self, full_path, data, conform_permissions=True):
         if type(data) is bytes or type(data) is memoryview:
             return self.write_binary(full_path, data)
 
-        return self.write_json_protected(full_path, data)
+        return self.write_json_protected(full_path, data, conform_permissions)
 
     def Read(self, full_path, is_json=True):
         if not os.path.exists(full_path):
@@ -481,7 +481,7 @@ class DashLocalStorage:
 
         return data
 
-    def write_json_protected(self, full_path, data):
+    def write_json_protected(self, full_path, data, conform_permissions=True):
         """
         This is a newer system that first writes a unique filename to
         disk, then moves that file into the correct location. This should resolve
@@ -498,11 +498,12 @@ class DashLocalStorage:
         try:
             open(tmp_filename, "w").write(dumps(data))
         except:
-            raise Exception("Write fail at " + tmp_filename + " from " + full_path)
+            raise Exception(f"Write fail at {tmp_filename} from {full_path}")
 
         os.rename(tmp_filename, full_path)
 
-        self.ConformPermissions(full_path)
+        if conform_permissions:
+            self.ConformPermissions(full_path)
 
         return data
 
@@ -559,8 +560,8 @@ def Read(full_path, is_json=True):
     return DashLocalStorage().Read(full_path, is_json=is_json)
 
 
-def Write(full_path, data):
-    return DashLocalStorage().Write(full_path, data)
+def Write(full_path, data, conform_permissions=True):
+    return DashLocalStorage().Write(full_path, data, conform_permissions)
 
 
 def GetPrivKey(filename, subfolders=[], is_json=True):

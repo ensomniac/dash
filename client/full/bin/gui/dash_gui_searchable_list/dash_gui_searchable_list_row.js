@@ -47,16 +47,17 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
         this.content_layer.empty().append(html);
     };
 
+    // Call to redraw / on new data
     this.Update = function () {
-        // Call to redraw / on new data
-
         if (this.on_row_draw_callback) {
+            // Ryan, the rows were not previously updating in this case, so I updated this
+            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
             return this.on_row_draw_callback(this.row_id);
         }
+
         else {
             return this.update_display_name_label();
-        };
-
+        }
     };
 
     this.setup_display_name_label = function(){
@@ -77,17 +78,18 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
 
     };
 
-    this.update_display_name_label = function(){
-
+    this.update_display_name_label = function(text=""){
         if (!this.display_name_label) {
             this.setup_display_name_label();
-        };
+        }
 
-        var row_data = this.get_data_callback()[this.row_id];
-        var display_name = row_data["display_name"] || this.row_id;
-        this.display_name_label.text(display_name);
-        return display_name;
+        if (!text) {
+            text = this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+        }
 
+        this.display_name_label.text(text);
+
+        return text;
     };
 
     this.SetActive = function(is_active){

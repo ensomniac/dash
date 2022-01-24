@@ -142,6 +142,8 @@ function GuiIcons (icon) {
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
+        "expand_square":         new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
+        "expand_square_arrows":  new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
         "file":                  new GuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
         "file_lined":            new GuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
         "file_image":            new GuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),
@@ -152,6 +154,7 @@ function GuiIcons (icon) {
         "filter":                new GuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
         "folder_tree":           new GuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
+        "gem":                   new GuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
         "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
         "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
@@ -18139,18 +18142,15 @@ function DashGui() {
             color = Dash.Color.Light;
         }
         var html = $("<div></div>");
-        var css = {
+        html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "background": color.BackgroundRaised,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
-        };
-        for (var key in optional_style_css) {
-            css[key] = optional_style_css[key];
-        }
-        html.css(css);
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            ...optional_style_css
+        });
         return html;
     };
     this.GetModalBackground = function (color=null) {
@@ -22068,24 +22068,29 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.setup_styles();
 }
 
-function DashGuiCheckbox (label_text, binder, callback, local_storage_key, default_state=true, label_first=true, include_border=false, color=null, hover_hint="Toggle") {
-    this.label_text = label_text;
-    this.binder = binder;
-    this.callback = callback && this.binder ? callback.bind(this.binder) : callback;
+function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
-    this.label_first = label_first;
-    this.include_border = include_border;
     this.color = color || Dash.Color.Light;
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
+    this.binder = binder;
+    this.callback = callback && binder ? callback.bind(binder) : callback;
+    this.label_text = label_text;
+    this.label_first = label_first;
+    this.include_border = include_border;
     this.html = null;
     this.label = null;
+    this.can_click = true;
     this._hover_hint = "";
+    this.icon_color = null;
+    this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
     this.able_to_toggle_cb = null;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
+    this.true_icon_name = "checked_box";
+    this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
@@ -22100,14 +22105,49 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
     this.IsChecked = function () {
         return this.checked;
     };
+    this.SetIconColor = function (color) {
+        this.icon_color = color;
+        this.icon_button.SetIconColor(color);
+    };
+    this.SetIconShadow = function (shadow) {
+        this.icon_shadow = shadow;
+        this.icon_button.AddIconShadow(shadow);
+    };
+    this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
+        if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
+            if (hover_hint) {
+                this.hover_hint = hover_hint;
+            }
+            this.Toggle(skip_callback);
+        }
+    };
     this.LocalStorageKey = function () {
         return this.local_storage_key;
     };
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
     };
-    this.SetAbleToToggleCallback = function (callback_with_bool_return) {
-        this.able_to_toggle_cb = callback_with_bool_return.bind(this.binder);
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
+    };
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetTrueIconName = function (icon_name) {
+        this.true_icon_name = icon_name;
+        if (this.checked) {
+            this.redraw();
+        }
+    };
+    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetFalseIconName = function (icon_name) {
+        this.false_icon_name = icon_name;
+        if (!this.checked) {
+            this.redraw();
+        }
+    };
+    this.DisableClick = function () {
+        this.can_click = false;
+        this.html.off("click");
+        this.icon_button.html.off("click");
     };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
@@ -22125,6 +22165,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.html.css({
             "pointer-events": pointer_events
         });
+        this.DisableClick();
         this.is_read_only = is_read_only;
     };
     this.Toggle = function (skip_callback=false) {
@@ -22144,7 +22185,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
             Dash.Local.Set(this.local_storage_key, "false");
         }
         this.redraw();
-        if (skip_callback) {
+        if (skip_callback || !this.callback) {
             return;
         }
         this.callback(this);
@@ -22166,7 +22207,7 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? "checked_box" : "unchecked_box",
+                self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -22176,15 +22217,28 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
+        if (this.icon_color) {
+            this.icon_button.SetIconColor(this.icon_color);
+        }
+        if (this.icon_shadow) {
+            this.icon_button.SetIconShadow(this.icon_shadow);
+        }
         if (this.label_first) {
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
             this.html.append(this.icon_button.html);
         }
         else {
             this.html.append(this.icon_button.html);
-            this.html.append(this.label.html);
+            if (this.label) {
+                this.html.append(this.label.html);
+            }
         }
         this.restyle_icon_button();
+        if (!this.can_click) {
+            this.DisableClick();
+        }
     };
     this.restyle_icon_button = function () {
         if (!Dash.Validate.Object(this.icon_button_redraw_styling)) {
@@ -22201,6 +22255,9 @@ function DashGuiCheckbox (label_text, binder, callback, local_storage_key, defau
         }
     };
     this.draw_label = function () {
+        if (!this.label_text) {
+            return;
+        }
         this.label = new Dash.Gui.Header(this.label_text, this.color, this.include_border);
         this.label.label.css({
             "font-family": "sans_serif_normal",
@@ -22414,15 +22471,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
         var checkbox = new Dash.Gui.Checkbox(
-            label_text,                                             // Label text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
-            true,                                                   // Label first
-            label_border,                                           // Include border
             this.color,                                             // Color
-            hover_hint                                              // Hover hint text
+            hover_hint,                                             // Hover hint text
+            this,                                                   // Binder
+            callback ? callback.bind(this.binder) : callback,       // Callback
+            label_text,                                             // Label text
+            true,                                                   // Label first
+            label_border                                            // Include border
         );
         checkbox.html.css({
             "margin-top": 0
@@ -22916,9 +22973,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.buttons = [];
     this.header = null;
     this.extra_gui = [];
+    this.files_data = {};
     this.tool_row = null;
     this.subheader = null;
-    this.files_data = null;
     this.sort_by_key = null;
     this.initialized = false;
     this.upload_button = null;
@@ -22926,7 +22983,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.original_order = null;
     this.subheader_styling = {};
     this.display_folders_first = true;
+    this.include_list_header_row = true;
     this.desktop_client_name = "desktop";
+    this.include_uploaded_keys_columns = true;
     this.reset_upload_button_uploader = false;
     this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -22945,7 +23004,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log("(File Explorer) Set to read-only because 'api' and/or 'parent_obj_id' were not provided");
+            console.log("(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided");
         }
         if (!this.read_only) {
             this.instantiate_button_configs();
@@ -23031,6 +23090,54 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             "right_margin": right_margin || -Dash.Size.Padding * 0.25,
             "hover_preview": hover_text
         };
+    };
+    // Intended for read-only mode
+    this.OverrideGetDataForKey = function (binder, new_get_data_for_key_function) {
+        this.GetDataForKey = new_get_data_for_key_function.bind(binder);
+    };
+    this.AddRow = function (file_data, file_id="") {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) AddRow function is only for use when this element " +
+                "is read-only, otherwise, rows are added and managed automatically."
+            );
+            return;
+        }
+        if (!file_id) {
+            file_id = file_data["id"];
+        }
+        if (!("data" in this.files_data)) {
+            this.files_data["data"] = {};
+        }
+        if (!("order" in this.files_data)) {
+            this.files_data["order"] = [];
+        }
+        this.files_data["data"][file_id] = file_data;
+        this.files_data["order"].push(file_id);
+        if (!this.list) {
+            this.add_list();
+        }
+        this.add_row(file_id);
+    };
+    this.SetIncludeUploadedKeysColumns = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeUploadedKeysColumns function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+            return;
+        }
+        this.include_uploaded_keys_columns = include;
+    };
+    this.SetIncludeListHeaderRow = function (include=false) {
+        if (!this.read_only) {
+            console.warn(
+                "(File Explorer) SetIncludeListHeaderRow function is intended for use when " +
+                "this element is read-only. It has not been written to support the standard mode."
+            );
+            return;
+        }
+        this.include_list_header_row = include;
     };
     this.instantiate_button_configs = function () {
         this.OpenButtonConfig = {
@@ -23320,7 +23427,9 @@ function DashGuiFileExplorerGUI () {
         );
 
         column_config.AddSpacer(true);
-        column_config.AddDivider(border_css);
+        if (this.include_uploaded_keys_columns || this.include_modified_keys_columns || this.buttons.length) {
+            column_config.AddDivider(border_css);
+        }
         if (this.include_modified_keys_columns) {
             column_config.AddColumn(
                 "Modified By",
@@ -23339,22 +23448,24 @@ function DashGuiFileExplorerGUI () {
             );
             column_config.AddDivider(border_css);
         }
-        column_config.AddColumn(
-            "Uploaded By",
-            "uploaded_by",
-            false,
-            Dash.Size.ColumnWidth * 0.7,
-            {"css": {"flex": "none"}}
-        );
-        column_config.AddDivider(border_css);
-        column_config.AddColumn(
-            "Uploaded On",
-            "uploaded_on",
-            false,
-            Dash.Size.ColumnWidth * 0.95,
-            {"css": {"flex": "none"}}
-        );
-        column_config.AddDivider(border_css);
+        if (this.include_uploaded_keys_columns) {
+            column_config.AddColumn(
+                "Uploaded By",
+                "uploaded_by",
+                false,
+                Dash.Size.ColumnWidth * 0.7,
+                {"css": {"flex": "none"}}
+            );
+            column_config.AddDivider(border_css);
+            column_config.AddColumn(
+                "Uploaded On",
+                "uploaded_on",
+                false,
+                Dash.Size.ColumnWidth * 0.95,
+                {"css": {"flex": "none"}}
+            );
+            column_config.AddDivider(border_css);
+        }
         for (var button_config of this.buttons) {
             column_config.AddColumn(
                 button_config["config_name"],
@@ -23388,10 +23499,12 @@ function DashGuiFileExplorerGUI () {
     this.add_list = function () {
         this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
         this.list.DisableDividerColorChangeOnHover();
-        this.list.AddHeaderRow(
-            {"margin-left": Dash.Size.Padding * 2},
-            {"background": this.color.Pinstripe}
-        );
+        if (this.include_list_header_row) {
+            this.list.AddHeaderRow(
+                {"margin-left": Dash.Size.Padding * 2},
+                {"background": this.color.Pinstripe}
+            );
+        }
         this.list.html.css({
             "margin-top": Dash.Size.Padding
         });
@@ -23609,14 +23722,40 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.preview_box = $("<div></div>");
     this.color = this.file_explorer.color;
     this.height = Dash.Size.RowHeight * 15;
+    this.read_only = this.file_explorer.read_only;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
+    // These have not all been tested for the ability to display a preview
     this.extensions = {
-        "model_viewer": ["gltf", "glb"],
+        "image": [
+            "gif",
+            "jpeg",
+            "jpg",
+            "png",
+            "svg",
+            "webp"
+        ],
+        "model_viewer": [
+            "gltf",
+            "glb"
+        ],
         // Add to these categories as we become aware of more extensions that are commonly being uploaded
-        "video":        ["mp4", "mov"],
-        "audio":        ["mp3", "wav"],
-        "model":        ["fbx", "obj"],
-        "drafting":     ["cad"]
+        "video": [
+            "mp4",
+            "mov"
+        ],
+        "audio": [
+            "mp3",
+            "wav"
+        ],
+        "model": [
+            "fbx",
+            "obj"
+        ],
+        "drafting": [
+            "cad",
+            "pdg",
+            "3d"
+        ]
     };
     this.setup_styles = function () {
         this.html.css({
@@ -23674,9 +23813,16 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         this.details_property_box.SetTopRightLabel(file_data["id"]);
         var is_image = "aspect" in file_data;
         this.add_header_to_property_box(file_data, is_image);
-        this.add_primary_inputs(file_data, is_image);
+        if (this.read_only) {
+            this.add_read_only_inputs(file_data);
+        }
+        else {
+            this.add_primary_inputs(file_data, is_image);
+        }
         this.details_property_box.AddExpander();
-        this.add_server_data_inputs(file_data);
+        if (!this.read_only) {
+            this.add_server_data_inputs(file_data);
+        }
         this.details_property_box.html.css({
             "position": "absolute",
             "inset": 0,
@@ -23686,6 +23832,19 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             "box-shadow": "none",
             "overflow-y": "auto"
         });
+    };
+    this.add_read_only_inputs = function (file_data) {
+        var added = false;
+        for (var key in file_data) {
+            if (key === "id" || key === "url" || key === "filename" || key === "name") {
+                continue;
+            }
+            this.details_property_box.AddInput(key, key.Title(), file_data[key], null, false);
+            added = true;
+        }
+        if (!added) {
+            this.details_property_box.AddText("(No details for this file)", this.color);
+        }
     };
     this.add_header_to_property_box = function (file_data, is_image) {
         var file_ext = this.get_file_ext(this.file_explorer.get_file_url(file_data));
@@ -23842,7 +24001,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     this.file_explorer = this.preview_strip.file_explorer;
     this.opposite_color = this.preview_strip.opposite_color;
     this.file_url = this.file_explorer.get_file_url(this.file_data);
-    this.file_ext = this.preview_strip.get_file_ext(this.file_url);
+    this.file_ext = this.preview_strip.get_file_ext(this.file_url) || this.file_url.split(".").Last();
     this.abs_center_css = {
         "position": "absolute",
         "top": "50%",
@@ -23859,7 +24018,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
             this.set_plain_text_preview();
             width = "77%";
         }
-        else if ("aspect" in this.file_data) {
+        else if (this.extensions["image"].includes(this.file_ext) || "aspect" in this.file_data) {
             this.set_image_preview();
         }
         else if (this.extensions["model_viewer"].includes(this.file_ext)) {
@@ -23979,27 +24138,25 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     this.setup_styles();
 }
 
-function DashGuiSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback) {
+function DashGuiSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback=null) {
     this.binder = binder;
-    this.color = this.binder.color || Dash.Color.Light;
-    this.rows = {};
-    this.RowContent = {};
-    this.current_selected_row_id = null;
-    this.filter_text = "";
     this.on_selection_callback = on_selection_callback.bind(this.binder);
     this.get_data_callback = get_data_callback.bind(this.binder);
-    this.on_row_draw_callback = null;
-    if (on_row_draw_callback) {
-        this.on_row_draw_callback = on_row_draw_callback.bind(this.binder);
-    };
-    this.row_height = Dash.Size.ButtonHeight;
+    this.on_row_draw_callback = on_row_draw_callback ? on_row_draw_callback.bind(this.binder) : null;
+    this.rows = {};
+    this.id_list = [];
+    this.RowContent = {};
+    this.filter_text = "";
+    this.search_terms = [];
     this.html = $("<div></div>");
+    this.row_content_classes = {};
+    this.auto_select_disabled = false;
+    this.current_selected_row_id = null;
     this.list_container = $("<div></div>");
+    this.row_height = Dash.Size.ButtonHeight;
+    this.color = this.binder.color || Dash.Color.Light;
     this.input = new DashGuiSearchableListSearchInput(this);
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
-    this.id_list = [];
-    this.search_terms = [];
-    this.auto_select_disabled = false;
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -24007,7 +24164,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": Dash.Color.Lighten(this.color.Background, 5),
+            "background": Dash.Color.Lighten(this.color.Background, 5)
         });
         this.list_container.css({
             "position": "absolute",
@@ -24015,7 +24172,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
             "top": this.row_height + 1, // Include search pinstripe
             "right": 0,
             "bottom": 0,
-            "overflow-y": "auto",
+            "overflow-y": "auto"
         });
         this.html.append(this.list_container);
         this.html.append(this.input.html);
@@ -24023,20 +24180,22 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
     this.DisableAutomaticSelection = function () {
         this.auto_select_disabled = true;
     };
-    this.SetRowContent = function (row_id, html) {
+    this.SetRowContent = function (row_id, html, class_with_update_function=null) {
+        if (class_with_update_function && class_with_update_function.hasOwnProperty("Update")) {
+            this.row_content_classes[row_id] = class_with_update_function;
+        }
         this.RowContent[row_id] = html;
         this.rows[row_id].SetContent(html);
     };
+    // Use this to set a unique ID that allows the last loaded selection to be applied
     this.SetRecallID = function (recall_id) {
-        // Use this to set a unique ID that allows the
-        // last loaded selection to be applied
         this.recall_id = recall_id;
     };
     this.SetSearchTerm = function (search_term) {
         search_term = search_term.trim().toLowerCase();
         if (search_term == this.filter_text) {
             return;
-        };
+        }
         this.filter_text = search_term;
         this.filter_rows();
     };
@@ -24044,68 +24203,71 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
         // order = a list of IDs
         // data  = a dict of data that corresponds to each ID in order
         this.id_list = order;
-        for (var id in this.rows) {
+        var id;
+        for (id in this.rows) {
             this.rows[id].html.detach();
-        };
+        }
         for (var i = 0; i < order.length; i++) {
             var row_id = order[i];
             var row_data = data[row_id];
             if (!this.rows[row_id]) {
                 this.rows[row_id] = new DashGuiSearchableListRow(this, row_id, row_data);
-            };
+            }
+
+            if (this.row_content_classes[row_id]) {
+                this.row_content_classes[row_id].Update(row_data);
+            }
             var search_text = this.rows[row_id].Update(row_data);
             if (search_text) {
                 search_text = search_text.trim().toLowerCase();
             }
             else {
-                var msg = "Warning: Dash.Gui.SearchableList > row ";
-                msg += "update callback must return a search term. Ignoring row";
-                console.log(msg);
-            };
+                console.log("Warning: Dash.Gui.SearchableList > row update callback must return a search term. Ignoring row");
+            }
             this.search_terms.push(search_text);
             this.list_container.append(this.rows[row_id].html);
-        };
-        for (var id in this.rows) {
+        }
+        for (id in this.rows) {
             if (!order.includes(id)) {
                 this.rows[id].html.remove();
                 delete this.rows[id];
-            };
-        };
+            }
+        }
         if (this.filter_text.length > 0) {
             this.filter_rows();
-        };
+        }
         if (!this.auto_select_disabled) {
             var last_loaded = Dash.Local.Get(this.recall_id);
             if (last_loaded && order.includes(last_loaded)) {
                 this.SetActiveRowID(last_loaded);
-            };
-        };
+            }
+        }
     };
-    this.filter_rows = function(){
+    this.filter_rows = function () {
         for (var id in this.rows) {
             this.rows[id].html.detach();
-        };
+        }
         for (var i = 0; i < this.id_list.length; i++) {
             var row_id = this.id_list[i];
             var search_text = this.search_terms[i];
             if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
                 this.list_container.append(this.rows[row_id].html);
-            };
-        };
+            }
+        }
     };
-    this.GetSelectedID = function(){
+    this.GetSelectedID = function () {
         var selected = this.current_selected_row_id || Dash.Local.Get(this.recall_id);
         if (this.id_list.includes(selected)) {
             return selected;
         }
         else {
             return null;
-        };
+        }
     };
-    this.SetActiveRowID = function(row_id){
+    this.SetActiveRowID = function (row_id) {
         if (this.current_selected_row_id == row_id) {
             return;
-        };
+        }
         this.current_selected_row_id = row_id;
         Dash.Local.Set(this.recall_id, row_id);
         for (var id in this.rows) {
@@ -24114,12 +24276,12 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
             }
             else {
                 this.rows[id].SetActive(false);
-            };
-        };
+            }
+        }
         this.on_selection_callback(this.current_selected_row_id);
     };
     this.setup_styles();
-};
+}
 
 function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
     this.slist      = slist;
@@ -24159,14 +24321,16 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
     this.SetContent = function (html) {
         this.content_layer.empty().append(html);
     };
+    // Call to redraw / on new data
     this.Update = function () {
-        // Call to redraw / on new data
         if (this.on_row_draw_callback) {
+            // Ryan, the rows were not previously updating in this case, so I updated this
+            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
             return this.on_row_draw_callback(this.row_id);
         }
         else {
             return this.update_display_name_label();
-        };
+        }
     };
     this.setup_display_name_label = function(){
         // The display name label is used if there is no callback to draw the
@@ -24181,14 +24345,15 @@ function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
         });
         this.content_layer.empty().append(this.display_name_label);
     };
-    this.update_display_name_label = function(){
+    this.update_display_name_label = function(text=""){
         if (!this.display_name_label) {
             this.setup_display_name_label();
-        };
-        var row_data = this.get_data_callback()[this.row_id];
-        var display_name = row_data["display_name"] || this.row_id;
-        this.display_name_label.text(display_name);
-        return display_name;
+        }
+        if (!text) {
+            text = this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+        }
+        this.display_name_label.text(text);
+        return text;
     };
     this.SetActive = function(is_active){
         if (is_active) {
@@ -25214,15 +25379,15 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
 
         this.toggle_hide_button = new Dash.Gui.Checkbox(
-            "Activity",                     // Label text
-            this,                           // Binder
-            this.on_checkbox_toggled,       // Callback
             this.toggle_local_storage_key,  // Local storage key
             default_state,                  // Default state
-            true,                           // Label first
-            include_border,                 // Include border
             this.color,                     // Color
-            "Toggle Activity Feed"          // Hover hint text
+            "Toggle Activity Feed",         // Hover hint text
+            this,                           // Binder
+            this.on_checkbox_toggled,       // Callback
+            "Activity",                     // Label text
+            true,                           // Label first
+            include_border                  // Include border
         );
         this.toggle_hide_button.html.css({
             "position": "absolute",
@@ -26316,6 +26481,31 @@ function DashGuiPropertyBoxInterface () {
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
+    };
+    this.AddLabel = function (text, color=null) {
+        var header = new Dash.Gui.Header(text, color);
+        header.html.css({
+            "margin-left": Dash.Size.Padding * 2
+        });
+        this.html.append(header.html);
+        return header;
+    };
+    this.AddText = function (text, color=null) {
+        var label = this.AddLabel(text, false, color);
+        label.border.remove();
+        label.html.css({
+            // "padding-left": 0,
+            // "margin-top": 0
+        });
+        label.label.css({
+            "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "padding-left": 0
+        });
+        this.html.append(label.html);
+        return label;
     };
 }
 
@@ -28061,6 +28251,9 @@ function DashGuiLayoutToolbarInterface () {
                 "index": obj_index
             });
         })(this, obj_index, data);
+        if (width) {
+            button.SetIconSize(width);
+        }
         this.refactor_item_padding();
         return button;
     };

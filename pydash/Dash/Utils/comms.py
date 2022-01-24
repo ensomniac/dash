@@ -7,12 +7,15 @@ import os
 import sys
 
 
-def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash"):
+def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False):
     from . import OapiRoot
 
     # This is a temporary stop until we set up Dash to be able to always run this, regardless of server
     if not os.path.exists(OapiRoot):
         raise Exception("The Mail Module can currently only run directly from the server.")
+
+    if strict_notify and not notify_email_list:
+        raise Exception("The 'strict_notify' parameter requires 'notify_email_list' to not be empty.")
 
     import Mail
     from Dash import AdminEmails
@@ -40,12 +43,13 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     for email_address in notify_email_list:
         message.add_recipient(f"{email_address.split('@')[0].strip().title()} <{email_address}>")
 
-    for email_address in AdminEmails:
-        if email_address not in notify_email_list:
-            message.add_bcc_recipient(email_address)
+    if not strict_notify:
+        for email_address in AdminEmails:
+            if email_address not in notify_email_list:
+                message.add_bcc_recipient(email_address)
 
-    if sender_email not in notify_email_list:
-        message.add_bcc_recipient(sender_email)
+        if sender_email not in notify_email_list:
+            message.add_bcc_recipient(sender_email)
 
     message.set_subject(subject)
     message.set_body_html(msg)

@@ -9,16 +9,42 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.preview_box = $("<div></div>");
     this.color = this.file_explorer.color;
     this.height = Dash.Size.RowHeight * 15;
+    this.read_only = this.file_explorer.read_only;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
+    // These have not all been tested for the ability to display a preview
     this.extensions = {
-        "model_viewer": ["gltf", "glb"],
+        "image": [
+            "gif",
+            "jpeg",
+            "jpg",
+            "png",
+            "svg",
+            "webp"
+        ],
+        "model_viewer": [
+            "gltf",
+            "glb"
+        ],
 
         // Add to these categories as we become aware of more extensions that are commonly being uploaded
-        "video":        ["mp4", "mov"],
-        "audio":        ["mp3", "wav"],
-        "model":        ["fbx", "obj"],
-        "drafting":     ["cad"]
+        "video": [
+            "mp4",
+            "mov"
+        ],
+        "audio": [
+            "mp3",
+            "wav"
+        ],
+        "model": [
+            "fbx",
+            "obj"
+        ],
+        "drafting": [
+            "cad",
+            "pdg",
+            "3d"
+        ]
     };
 
     this.setup_styles = function () {
@@ -98,11 +124,20 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         var is_image = "aspect" in file_data;
 
         this.add_header_to_property_box(file_data, is_image);
-        this.add_primary_inputs(file_data, is_image);
+
+        if (this.read_only) {
+            this.add_read_only_inputs(file_data);
+        }
+
+        else {
+            this.add_primary_inputs(file_data, is_image);
+        }
 
         this.details_property_box.AddExpander();
 
-        this.add_server_data_inputs(file_data);
+        if (!this.read_only) {
+            this.add_server_data_inputs(file_data);
+        }
 
         this.details_property_box.html.css({
             "position": "absolute",
@@ -113,6 +148,24 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             "box-shadow": "none",
             "overflow-y": "auto"
         });
+    };
+
+    this.add_read_only_inputs = function (file_data) {
+        var added = false;
+
+        for (var key in file_data) {
+            if (key === "id" || key === "url" || key === "filename" || key === "name") {
+                continue;
+            }
+
+            this.details_property_box.AddInput(key, key.Title(), file_data[key], null, false);
+
+            added = true;
+        }
+
+        if (!added) {
+            this.details_property_box.AddText("(No details for this file)", this.color);
+        }
     };
 
     this.add_header_to_property_box = function (file_data, is_image) {

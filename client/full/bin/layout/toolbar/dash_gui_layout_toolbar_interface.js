@@ -68,6 +68,10 @@ function DashGuiLayoutToolbarInterface () {
             });
         })(this, obj_index, data);
 
+        if (width) {
+            button.SetIconSize(width);
+        }
+
         this.refactor_item_padding();
 
         return button;

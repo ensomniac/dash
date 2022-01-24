@@ -220,15 +220,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
         var checkbox = new Dash.Gui.Checkbox(
-            label_text,                                             // Label text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
             "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
             default_state,                                          // Default state
-            true,                                                   // Label first
-            label_border,                                           // Include border
             this.color,                                             // Color
-            hover_hint                                              // Hover hint text
+            hover_hint,                                             // Hover hint text
+            this,                                                   // Binder
+            callback ? callback.bind(this.binder) : callback,       // Callback
+            label_text,                                             // Label text
+            true,                                                   // Label first
+            label_border                                            // Include border
         );
 
         checkbox.html.css({

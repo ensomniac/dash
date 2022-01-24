@@ -9,7 +9,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
     this.file_explorer = this.preview_strip.file_explorer;
     this.opposite_color = this.preview_strip.opposite_color;
     this.file_url = this.file_explorer.get_file_url(this.file_data);
-    this.file_ext = this.preview_strip.get_file_ext(this.file_url);
+    this.file_ext = this.preview_strip.get_file_ext(this.file_url) || this.file_url.split(".").Last();
 
     this.abs_center_css = {
         "position": "absolute",
@@ -32,7 +32,7 @@ function DashGuiFileExplorerContentPreview (preview_strip) {
             width = "77%";
         }
 
-        else if ("aspect" in this.file_data) {
+        else if (this.extensions["image"].includes(this.file_ext) || "aspect" in this.file_data) {
             this.set_image_preview();
         }
 
