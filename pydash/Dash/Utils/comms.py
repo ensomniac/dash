@@ -6,6 +6,8 @@
 import os
 import sys
 
+from googleapiclient.errors import HttpError
+
 
 def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False):
     from . import OapiRoot
@@ -53,7 +55,16 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
 
     message.set_subject(subject)
     message.set_body_html(msg)
-    message.send()
+    
+    try:
+        message.send()
+    
+    # Attempt to decode Google's "unprintable" error
+    except HttpError as http_error:
+        raise Exception(str(http_error))
+        
+    except Exception as e:
+        raise Exception(e)
 
     return {
         "recipients": notify_email_list,
