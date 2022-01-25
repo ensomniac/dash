@@ -27,6 +27,9 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
         this.html.append(this.icon_html);
     };
     this.SetIcon = function (icon_name) {
+        if (icon_name === this.name) {
+            return;
+        }
         this.name = icon_name || "unknown";
         this.icon_definition = new GuiIcons(this);
         var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
@@ -125,7 +128,7 @@ function GuiIcons (icon) {
         "close":                 new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times", 1.2, 0.25, 0.25),
         "close_thin":            new GuiIconDefinition(this.icon, "Close", this.weight["light"], "times", 1.2, 0.25, 0.25),
         "close_square":          new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square", 1.2, 0.25, 0.25),
-        "color_palette":         new GuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"), 
+        "color_palette":         new GuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
         "comment":               new GuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
         "comments":              new GuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight["solid"], "comments"),
         "comments_square":       new GuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
@@ -142,6 +145,7 @@ function GuiIcons (icon) {
         "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
+        "empty":                 new GuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
         "empty_folder":          new GuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
         "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
@@ -166,6 +170,7 @@ function GuiIcons (icon) {
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
         "hockey_puck":           new GuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
+        "horizontal_line":       new GuiIconDefinition(this.icon, "Horizontal Line", this.weight["regular"], "horizontal-rule"),
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
         "images":                new GuiIconDefinition(this.icon, "Images", this.weight["regular"], "images"),
@@ -204,6 +209,7 @@ function GuiIcons (icon) {
         "signal_full":           new GuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
         "signal_none":           new GuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
         "signal_some":           new GuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
+        "slash":                 new GuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
         "soccer_ball":           new GuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "spinner":               new GuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stop":                  new GuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),

@@ -35,6 +35,10 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
     };
 
     this.SetIcon = function (icon_name) {
+        if (icon_name === this.name) {
+            return;
+        }
+
         this.name = icon_name || "unknown";
         this.icon_definition = new GuiIcons(this);
 
