@@ -229,6 +229,7 @@ function DashGuiPropertyBoxInterface () {
                 "line-height": Dash.Size.RowHeight + "px",
             });
 
+            row.property_box_input_combo = combo;
         })(this, row, selected_key, property_key, combo_options, bool);
 
         return row;

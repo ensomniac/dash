@@ -197,7 +197,7 @@ function DashGui() {
         return html;
     };
 
-    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#ff0000") {
+    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#000000") {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
