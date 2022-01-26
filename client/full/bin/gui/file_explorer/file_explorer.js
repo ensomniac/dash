@@ -13,6 +13,10 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
      *         - "set_file_property":              Set a property for a file with provided key/value
      *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
      *
+     *         (Archive Mode)
+     *         - "get_archived_files":    Get all archived files and return dict with data/order keys
+     *         - "restore_archived_file": Restore a file
+     *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
@@ -39,13 +43,16 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.header = null;
     this.extra_gui = [];
     this.files_data = {};
+    this._buttons = null;
     this.tool_row = null;
     this.subheader = null;
     this.sort_by_key = null;
     this.initialized = false;
+    this.archive_mode = false;
     this.upload_button = null;
     this.column_config = null;
     this.original_order = null;
+    this.header_text = "Files";
     this.subheader_styling = {};
     this.display_folders_first = true;
     this.include_list_header_row = true;
@@ -65,6 +72,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     // See this.instantiate_button_configs()
     this.OpenButtonConfig = null;
     this.DeleteButtonConfig = null;
+    this.RestoreButtonConfig = null;
     this.DownloadButtonConfig = null;
     this.UpdateContentButtonConfig = null;
 
@@ -109,6 +117,8 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     };
 
     this.SetHeaderText = function (label_text="") {
+        this.header_text = label_text;
+
         this.header.SetText(label_text);
     };
 
@@ -251,6 +261,44 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         this.include_list_header_row = include;
     };
 
+    this.ToggleArchiveMode = function () {
+        this.show_subheader("Switching...");
+        this.disable_load_buttons();
+
+        if (this._buttons === null) {
+            this._buttons = this.buttons;
+        }
+
+        this.archive_mode = !this.archive_mode;
+
+        var tag = " (Archive)";
+
+        if (this.archive_mode) {
+            this.header_text += tag;
+        }
+
+        else {
+            this.header_text = this.header_text.replace(tag, "");
+        }
+
+        this.SetHeaderText(this.header_text);
+
+        this.get_files_data(this.update_button_config_on_archive_toggled);
+    };
+
+    this.update_button_config_on_archive_toggled = function () {
+        if (this.archive_mode) {
+            this.SetButtonConfig([this.RestoreButtonConfig]);
+        }
+
+        else {
+            this.SetButtonConfig(this._buttons);
+        }
+
+        this.hide_subheader();
+        this.enable_load_buttons();
+    };
+
     this.instantiate_button_configs = function () {
         this.OpenButtonConfig = {
             "config_name": "Open",
@@ -281,6 +329,13 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             "config_name": "Delete",
             "icon_name": "trash",
             "callback": this.delete_file,
+            "right_margin": -Dash.Size.Padding
+        };
+
+        this.RestoreButtonConfig = {
+            "config_name": "Restore",
+            "icon_name": "trash_restore",
+            "callback": this.restore_file,
             "right_margin": -Dash.Size.Padding
         };
     };
@@ -333,6 +388,10 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     };
 
     this.on_row_selected = function (file_id, is_selected, row) {
+        if (this.archive_mode) {
+            return;
+        }
+
         if (!row) {
             row = this.list.GetRow(file_id);
         }

@@ -15,6 +15,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     this.SetIconSize = function (percentage_number) {
         this.icon.SetSize(percentage_number);
+
+        this.update_container_size();
     };
 
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
@@ -54,9 +56,18 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             this.setup_default_icon();
         }
 
+        this.update_container_size();
+
         if (this.icon_name.startsWith("trash")) {
             this.SetHoverHint("Delete");
         }
+    };
+
+    this.update_container_size = function () {
+        this.html.css({
+            "height": this.icon.html.height(),
+            "width": this.icon.html.width()
+        });
     };
 
     this.setup_toolbar_icon = function () {

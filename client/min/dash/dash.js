@@ -86,6 +86,8 @@ function GuiIcons (icon) {
         "alert":                 new GuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation", 0.9),
         "alert_triangle":        new GuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle", 0.9),
         "apple_logo":            new GuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
+        "archive":               new GuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
+        "archive_light":         new GuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
         "arrow_down":            new GuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down", 1.5),
         "arrow_left":            new GuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left", 1.5),
         "arrow_left_alt":        new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
@@ -169,6 +171,7 @@ function GuiIcons (icon) {
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
+        "history":               new GuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
         "hockey_puck":           new GuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
         "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
         "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
@@ -222,8 +225,9 @@ function GuiIcons (icon) {
         "tools":                 new GuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
         "transferring":          new GuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
-        "trash_solid":           new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
         "trash_alt":             new GuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
+        "trash_restore":         new GuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
+        "trash_solid":           new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
         "unchecked_box":         new GuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
         "undo":                  new GuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new GuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
@@ -20740,6 +20744,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     };
     this.SetIconSize = function (percentage_number) {
         this.icon.SetSize(percentage_number);
+        this.update_container_size();
     };
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
@@ -20768,9 +20773,16 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             console.warn("Warning: Unhandled button / icon style: " + this.style);
             this.setup_default_icon();
         }
+        this.update_container_size();
         if (this.icon_name.startsWith("trash")) {
             this.SetHoverHint("Delete");
         }
+    };
+    this.update_container_size = function () {
+        this.html.css({
+            "height": this.icon.html.height(),
+            "width": this.icon.html.width()
+        });
     };
     this.setup_toolbar_icon = function () {
         this.icon = this.get_icon();
@@ -20982,6 +20994,10 @@ function DashGuiButtonInterface () {
                 }
             );
         })(this);
+        this.file_uploader.html.css({
+            "height": this.html.height(),
+            "width": this.html.width()
+        });
         this.html.append(this.file_uploader.html);
     };
     this.Request = function (endpoint, params, callback, binder=null) {
@@ -22965,6 +22981,10 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
      *         - "set_file_property":              Set a property for a file with provided key/value
      *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
      *
+     *         (Archive Mode)
+     *         - "get_archived_files":    Get all archived files and return dict with data/order keys
+     *         - "restore_archived_file": Restore a file
+     *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
      * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
@@ -22988,13 +23008,16 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     this.header = null;
     this.extra_gui = [];
     this.files_data = {};
+    this._buttons = null;
     this.tool_row = null;
     this.subheader = null;
     this.sort_by_key = null;
     this.initialized = false;
+    this.archive_mode = false;
     this.upload_button = null;
     this.column_config = null;
     this.original_order = null;
+    this.header_text = "Files";
     this.subheader_styling = {};
     this.display_folders_first = true;
     this.include_list_header_row = true;
@@ -23012,6 +23035,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     // See this.instantiate_button_configs()
     this.OpenButtonConfig = null;
     this.DeleteButtonConfig = null;
+    this.RestoreButtonConfig = null;
     this.DownloadButtonConfig = null;
     this.UpdateContentButtonConfig = null;
     DashGuiFileExplorerGUI.call(this);
@@ -23045,6 +23069,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         this.subheader_styling = css;
     };
     this.SetHeaderText = function (label_text="") {
+        this.header_text = label_text;
         this.header.SetText(label_text);
     };
     this.SetDesktopClientName = function (name) {
@@ -23153,6 +23178,33 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         }
         this.include_list_header_row = include;
     };
+    this.ToggleArchiveMode = function () {
+        this.show_subheader("Switching...");
+        this.disable_load_buttons();
+        if (this._buttons === null) {
+            this._buttons = this.buttons;
+        }
+        this.archive_mode = !this.archive_mode;
+        var tag = " (Archive)";
+        if (this.archive_mode) {
+            this.header_text += tag;
+        }
+        else {
+            this.header_text = this.header_text.replace(tag, "");
+        }
+        this.SetHeaderText(this.header_text);
+        this.get_files_data(this.update_button_config_on_archive_toggled);
+    };
+    this.update_button_config_on_archive_toggled = function () {
+        if (this.archive_mode) {
+            this.SetButtonConfig([this.RestoreButtonConfig]);
+        }
+        else {
+            this.SetButtonConfig(this._buttons);
+        }
+        this.hide_subheader();
+        this.enable_load_buttons();
+    };
     this.instantiate_button_configs = function () {
         this.OpenButtonConfig = {
             "config_name": "Open",
@@ -23180,6 +23232,12 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             "config_name": "Delete",
             "icon_name": "trash",
             "callback": this.delete_file,
+            "right_margin": -Dash.Size.Padding
+        };
+        this.RestoreButtonConfig = {
+            "config_name": "Restore",
+            "icon_name": "trash_restore",
+            "callback": this.restore_file,
             "right_margin": -Dash.Size.Padding
         };
     };
@@ -23220,6 +23278,9 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         }
     };
     this.on_row_selected = function (file_id, is_selected, row) {
+        if (this.archive_mode) {
+            return;
+        }
         if (!row) {
             row = this.list.GetRow(file_id);
         }
@@ -23301,7 +23362,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        this.header = new Dash.Gui.Header("Files", this.color);
+        this.header = new Dash.Gui.Header(this.header_text, this.color);
         this.header.ReplaceBorderWithIcon("paperclip");
         this.header.icon.AddShadow();
         this.header.html.css({
@@ -23564,6 +23625,25 @@ function DashGuiFileExplorerData () {
             }
         );
     };
+    this.restore_file = function (file_id) {
+        if (!window.confirm("Are you sure you want to restore this file?")) {
+            return;
+        }
+        this.show_subheader("Restoring...");
+        this.disable_load_buttons();
+        Dash.Request(
+            this,
+            this.on_files_changed,
+            this.api,
+            {
+                "f": "restore_archived_file",
+                "parent_obj_id": this.parent_obj_id,
+                "file_id": file_id,
+                "return_all": false,
+                "return_all_archived": true
+            }
+        );
+    };
     this.download_file = function (file_id) {
         var file_data = this.get_file_data(file_id);
         Dash.Gui.OpenFileURLDownloadDialog(
@@ -23587,23 +23667,31 @@ function DashGuiFileExplorerData () {
             }
         );
     };
-    this.get_files_data = function () {
-        Dash.Request(
-            this,
-            this.on_files_data,
-            this.api,
-            {
-                "f": "get_files",
-                "parent_obj_id": this.parent_obj_id
-            }
-        );
+    this.get_files_data = function (callback=null) {
+        var archive_mode = this.archive_mode;  // Need archive mode at the moment of the request, not at the moment of the callback
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_data(response, archive_mode, callback);
+                },
+                self.api,
+                {
+                    "f": self.archive_mode ? "get_archived_files" : "get_files",
+                    "parent_obj_id": self.parent_obj_id
+                }
+            );
+        })(this);
     };
     this.update_cached_data = function (data) {
         this.files_data = data;
         this.original_order = data["order"];
         this.get_order();
     };
-    this.on_files_data = function (response) {
+    this.on_files_data = function (response, archive_mode=false, callback=null) {
+        if (archive_mode !== this.archive_mode) {
+            return;
+        }
         if (!Dash.Validate.Response(response, false)) {
             // The requests are made every 2.25 seconds, so if it's still not resolved after ~20
             // seconds, the portal was updated or something is wrong - either way, need to reload.
@@ -23616,14 +23704,14 @@ function DashGuiFileExplorerData () {
             return;
         }
         if (!this.initialized) {
-            (function (self, response) {
+            (function (self, response, archive_mode) {
                 setTimeout(
                     function () {
-                        self.on_files_data(response);
+                        self.on_files_data(response, archive_mode);
                     },
                     250
                 );
-            })(this, response);
+            })(this, response, archive_mode);
             return;
         }
         if (Dash.Validate.Object(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
@@ -23631,7 +23719,12 @@ function DashGuiFileExplorerData () {
         }
         console.log("(File Explorer) Files data:", response);
         this.update_cached_data(response);
-        this.redraw_rows();
+        if (callback) {
+            callback.bind(this)();
+        }
+        else {
+            this.redraw_rows();
+        }
     };
     this.on_files_changed = function (response) {
         var error_context = "on_files_changed response (on upload/delete) was invalid.";

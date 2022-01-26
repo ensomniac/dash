@@ -216,6 +216,11 @@ function DashGuiButtonInterface () {
             );
         })(this);
 
+        this.file_uploader.html.css({
+            "height": this.html.height(),
+            "width": this.html.width()
+        });
+
         this.html.append(this.file_uploader.html);
     };
 

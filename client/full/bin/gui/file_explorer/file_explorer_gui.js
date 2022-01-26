@@ -2,9 +2,10 @@
 
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        this.header = new Dash.Gui.Header("Files", this.color);
+        this.header = new Dash.Gui.Header(this.header_text, this.color);
 
         this.header.ReplaceBorderWithIcon("paperclip");
+
         this.header.icon.AddShadow();
 
         this.header.html.css({

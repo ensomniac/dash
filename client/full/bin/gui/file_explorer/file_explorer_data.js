@@ -45,6 +45,28 @@ function DashGuiFileExplorerData () {
         );
     };
 
+    this.restore_file = function (file_id) {
+        if (!window.confirm("Are you sure you want to restore this file?")) {
+            return;
+        }
+
+        this.show_subheader("Restoring...");
+        this.disable_load_buttons();
+
+        Dash.Request(
+            this,
+            this.on_files_changed,
+            this.api,
+            {
+                "f": "restore_archived_file",
+                "parent_obj_id": this.parent_obj_id,
+                "file_id": file_id,
+                "return_all": false,
+                "return_all_archived": true
+            }
+        );
+    };
+
     this.download_file = function (file_id) {
         var file_data = this.get_file_data(file_id);
 
@@ -72,16 +94,22 @@ function DashGuiFileExplorerData () {
         );
     };
 
-    this.get_files_data = function () {
-        Dash.Request(
-            this,
-            this.on_files_data,
-            this.api,
-            {
-                "f": "get_files",
-                "parent_obj_id": this.parent_obj_id
-            }
-        );
+    this.get_files_data = function (callback=null) {
+        var archive_mode = this.archive_mode;  // Need archive mode at the moment of the request, not at the moment of the callback
+
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_data(response, archive_mode, callback);
+                },
+                self.api,
+                {
+                    "f": self.archive_mode ? "get_archived_files" : "get_files",
+                    "parent_obj_id": self.parent_obj_id
+                }
+            );
+        })(this);
     };
 
     this.update_cached_data = function (data) {
@@ -91,7 +119,11 @@ function DashGuiFileExplorerData () {
         this.get_order();
     };
 
-    this.on_files_data = function (response) {
+    this.on_files_data = function (response, archive_mode=false, callback=null) {
+        if (archive_mode !== this.archive_mode) {
+            return;
+        }
+
         if (!Dash.Validate.Response(response, false)) {
 
             // The requests are made every 2.25 seconds, so if it's still not resolved after ~20
@@ -110,14 +142,14 @@ function DashGuiFileExplorerData () {
         }
 
         if (!this.initialized) {
-            (function (self, response) {
+            (function (self, response, archive_mode) {
                 setTimeout(
                     function () {
-                        self.on_files_data(response);
+                        self.on_files_data(response, archive_mode);
                     },
                     250
                 );
-            })(this, response);
+            })(this, response, archive_mode);
 
             return;
         }
@@ -129,7 +161,14 @@ function DashGuiFileExplorerData () {
         console.log("(File Explorer) Files data:", response);
 
         this.update_cached_data(response);
-        this.redraw_rows();
+
+        if (callback) {
+            callback.bind(this)();
+        }
+
+        else {
+            this.redraw_rows();
+        }
     };
 
     this.on_files_changed = function (response) {
