@@ -39,11 +39,6 @@ class Collection:
         self._dash_context = dash_context
         self._sort_by_key = sort_by_key
 
-    # Deprecated in favor of DashContext
-    @property
-    def Ctx(self):
-        return self.DashContext
-
     @property
     def DashContext(self):
         if not self._dash_context:
@@ -81,6 +76,11 @@ class Collection:
             self.GetAllIDs()
 
         return self._all_ids
+
+    # Deprecated in favor of DashContext
+    @property
+    def Ctx(self):
+        return self.DashContext
 
     @property
     def sort_by_key(self):
