@@ -223,7 +223,7 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     };
 
     this.add_user_image_box = function () {
-        var img_url = "dash/fonts/user_default.jpg";
+        var img_url = "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg";
 
         if (this.user_data["img"]) {
             img_url = this.user_data["img"]["thumb_url"];
