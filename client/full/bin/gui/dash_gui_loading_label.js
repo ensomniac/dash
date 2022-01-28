@@ -1,30 +1,32 @@
-function DashGuiLoadingLabel (binder, label_text) {
-    this.binder       = binder;
-    this.label_text   = label_text;
+function DashGuiLoadingLabel (binder, label_text, height=null) {
+    this.binder = binder;
+    this.label_text = label_text;
+    this.height = height || Dash.Size.ButtonHeight;
 
-    this.height       = Dash.Size.ButtonHeight;
-    this.color        = this.binder.color || Dash.Color.Light;
-    this.label        = $("<div>" + this.label_text + "</div>");
-    this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
+    this.html = null;
+    this.loading_dots = null;
+    this.color = this.binder.color || Dash.Color.Light;
+    this.label = $("<div>" + this.label_text + "</div>");
 
-    this.html         = this.loading_dots.html;
 
     this.setup_styles = function () {
+        this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
+        this.html = this.loading_dots.html;
+
         this.html.append(this.label);
 
         this.html.css({
             "margin-left": "auto",
             "margin-right": "auto",
-            "margin-bottom": this.height,
-            // "background": "black"
+            "margin-bottom": this.height
         });
 
         this.label.css({
             "position": "absolute",
             "left": -100,
             "right": -100,
-            "top": this.height-Dash.Size.Padding,
-            "bottom": -(this.height-Dash.Size.Padding),
+            "top": this.height - Dash.Size.Padding,
+            "bottom": -(this.height - Dash.Size.Padding),
             "height": this.height,
             "line-height": this.height + "px",
             "text-align": "center",

@@ -22102,7 +22102,10 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.setup_styles();
 }
 
-function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
+function DashGuiCheckbox (
+    local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
+    callback=null, label_text="", label_first=true, include_border=false
+) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
     this.color = color || Dash.Color.Light;
@@ -22139,6 +22142,9 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.IsChecked = function () {
         return this.checked;
     };
+    this.LocalStorageKey = function () {
+        return this.local_storage_key;
+    };
     this.SetIconColor = function (color) {
         this.icon_color = color;
         this.icon_button.SetIconColor(color);
@@ -22146,6 +22152,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
         this.icon_button.AddIconShadow(shadow);
+    };
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ?
+            callback_with_bool_return.bind(binder ? binder : this.binder) :
+            callback_with_bool_return;
     };
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
         if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
@@ -22155,14 +22166,8 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             this.Toggle(skip_callback);
         }
     };
-    this.LocalStorageKey = function () {
-        return this.local_storage_key;
-    };
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
-    };
-    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
-        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
     };
     // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
     this.SetTrueIconName = function (icon_name) {
@@ -22177,11 +22182,6 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         if (!this.checked) {
             this.redraw();
         }
-    };
-    this.DisableClick = function () {
-        this.can_click = false;
-        this.html.off("click");
-        this.icon_button.html.off("click");
     };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
@@ -22201,6 +22201,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         });
         this.DisableClick();
         this.is_read_only = is_read_only;
+    };
+    this.DisableClick = function () {
+        this.can_click = false;
+        this.html.off("click");
+        this.icon_button.html.off("click");
     };
     this.Toggle = function (skip_callback=false) {
         if (this.toggle_confirmation_msg) {
@@ -22270,7 +22275,10 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             }
         }
         this.restyle_icon_button();
-        if (!this.can_click) {
+        if (this.is_read_only) {
+            this.SetReadOnly();
+        }
+        else if (!this.can_click) {
             this.DisableClick();
         }
     };
@@ -22748,28 +22756,30 @@ function LoadDot (dots) {
     this.setup_styles();
 }
 
-function DashGuiLoadingLabel (binder, label_text) {
-    this.binder       = binder;
-    this.label_text   = label_text;
-    this.height       = Dash.Size.ButtonHeight;
-    this.color        = this.binder.color || Dash.Color.Light;
-    this.label        = $("<div>" + this.label_text + "</div>");
-    this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
-    this.html         = this.loading_dots.html;
+function DashGuiLoadingLabel (binder, label_text, height=null) {
+    this.binder = binder;
+    this.label_text = label_text;
+    this.height = height || Dash.Size.ButtonHeight;
+    this.html = null;
+    this.loading_dots = null;
+    this.color = this.binder.color || Dash.Color.Light;
+    this.label = $("<div>" + this.label_text + "</div>");
+
     this.setup_styles = function () {
+        this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
+        this.html = this.loading_dots.html;
         this.html.append(this.label);
         this.html.css({
             "margin-left": "auto",
             "margin-right": "auto",
-            "margin-bottom": this.height,
-            // "background": "black"
+            "margin-bottom": this.height
         });
         this.label.css({
             "position": "absolute",
             "left": -100,
             "right": -100,
-            "top": this.height-Dash.Size.Padding,
-            "bottom": -(this.height-Dash.Size.Padding),
+            "top": this.height - Dash.Size.Padding,
+            "bottom": -(this.height - Dash.Size.Padding),
             "height": this.height,
             "line-height": this.height + "px",
             "text-align": "center",
@@ -26622,36 +26632,38 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this._label             = label;  // Unused
-    this.binder             = binder;
-    this.callback           = callback.bind(this.binder);
-    this.option_list        = option_list;
+    this._label = label;  // Unused
+    this.callback = callback.bind(binder);
+    this.binder = binder;
+    this.option_list = option_list;
     this.selected_option_id = selected_option_id;
-    this.color              = color || Dash.Color.Light;
-    this.color_set          = null;
-    this.initialized        = false;
-    this.options            = options;
-    this.style              = this.options["style"] || "default";
-    this.additional_data    = this.options["additional_data"] || {};
-    this.bool               = bool;
+    this.color = color || Dash.Color.Light;
+    this.options = options;
+    this.bool = bool;
+    this.color_set = null;
+    this.row_buttons = [];
     this.click_skirt = null;
     this.searchable_min = 20;
+    this.initialized = false;
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
+    this.multi_select = false;
     this.is_searchable = false;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
-    this.button_is_highlighted = false;
+    this.highlighted_button = null;
     this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
+    this.style = this.options["style"] || "default";
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
     // This is managed in this.handle_arrow_input(), but should ideally also
     // be set back to false in whatever code is referencing this attribute
@@ -26754,6 +26766,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
     this.initialize_rows = function () {
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+            return;
+        }
         var selected_obj = null;
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
@@ -26774,22 +26790,22 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
     this.setup_load_dots = function () {
-        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight - Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
         this.html.append(this.load_dots.html);
         if (this.text_alignment.toString() === "right") {
             this.load_dots.html.css({
                 "position": "absolute",
-                "top": Dash.Size.Padding*0.5,
-                "right": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "top": Dash.Size.Padding * 0.5,
+                "right": -(Dash.Size.ButtonHeight - Dash.Size.Padding * 1.5),
             });
         }
         else {
             this.load_dots.html.css({
                 "position": "absolute",
-                "top": Dash.Size.Padding*0.5,
-                "left": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "top": Dash.Size.Padding * 0.5,
+                "left": -(Dash.Size.ButtonHeight - Dash.Size.Padding * 1.5),
             });
         }
     };
@@ -26800,7 +26816,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "opacity": 1,
             "left": 0,
             "top": 0,
-            "width": "auto", // This is important so it can auto-size
+            "width": "auto"  // This is important so it can auto-size
         });
         // TODO: Make this.rows grab focus while active?
         this.rows.empty();
@@ -26811,7 +26827,14 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.row_buttons.push(button);
         }
     };
-    this.on_click = function () {
+    this.on_click = function (skirt_clicked=false) {
+        if (!skirt_clicked && this.initialized && this.multi_select) {
+            if (!this.expanded) {
+                this.show();
+            }
+            // The user may still be making selections, let them click out when done (or hit the escape key)
+            return;
+        }
         if (this.flash_enabled) {
             this.flash();
         }
@@ -26831,12 +26854,21 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+        }
+        else {
+            this._on_selection(selected_option, ignore_callback, search_text);
+        }
+        this.initialized = true;
+        Dash.Temp.SetLastComboChanged(this);
+    };
+    this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
             this.label.text("ERROR");
             return;
         }
-
         this.hide();
         this.label.text(label_text);
         this.previous_selected_option = this.selected_option;
@@ -26845,8 +26877,27 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.initialized && !ignore_callback && this.callback) {
             this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
         }
-        this.initialized = true;
-        Dash.Temp.SetLastComboChanged(this);
+    };
+    this.update_label_for_multi_select = function (selections=null) {
+        if (!this.multi_select) {
+            return;
+        }
+        if (!this.row_buttons.length) {
+            this.label.text("Multiple Options");
+            return;
+        }
+        if (selections === null) {
+            selections = this.GetMultiSelections();
+        }
+        if (selections.length === 1) {
+            this.label.text(selections[0]["label_text"] || selections[0]["display_name"] || "Nothing Selected");
+        }
+        else if (selections.length > 1) {
+            this.label.text("Multiple Selections");
+        }
+        else {
+            this.label.text("Nothing Selected");
+        }
     };
     // Prior to showing, set the width of rows (this is all important, so it can auto-size)
     this.pre_show_size_set = function () {
@@ -26964,7 +27015,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     this.hide = function () {
         this.expanded = false;
-        this.button_is_highlighted = false;
+        this.highlighted_button = null;
         this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
@@ -26973,6 +27024,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
         if (!this.is_searchable) {
             $(window).off("keydown." + this.random_id);
+        }
+        if (this.initialized && this.multi_select && this.callback) {
+            var selections = this.GetMultiSelections();
+            this.update_label_for_multi_select(selections);
+            this.callback(selections, this.additional_data);
+            Dash.Temp.SetLastComboChanged(this);
         }
     };
     this.setup_connections = function () {
@@ -27007,7 +27064,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return false;
                 }
                 if ($(e.target).hasClass("ComboClickSkirt")) {
-                    self.on_click();
+                    self.on_click(true);
                     e.preventDefault();
                     return false;
                 }
@@ -27016,7 +27073,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             setTimeout(
                 function () {
                     if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                      self.EnableSearchSelection();
+                        self.EnableSearchSelection();
                     }
                 },
                 300
@@ -27067,13 +27124,19 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             self.hide();
             return;
         }
-        else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+        else if (event.key === "Enter" && self.highlighted_button) {
             self.enter_key_event_fired = true;
-            for (i in self.option_list) {
-                var option = self.option_list[i];
-                if (parseInt(i) === self.combo_option_index) {
-                    self.on_selection(option);
-                    break;
+            if (self.multi_select && self.highlighted_button.checkbox) {
+                self.highlighted_button.checkbox.Toggle();
+                self.update_label_for_multi_select();
+            }
+            else if (!this.is_searchable) {
+                for (i in self.option_list) {
+                    var option = self.option_list[i];
+                    if (parseInt(i) === self.combo_option_index) {
+                        self.on_selection(option);
+                        break;
+                    }
                 }
             }
         }
@@ -27084,7 +27147,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             for (i in buttons) {
                 var button = buttons[i];
                 if (parseInt(i) === parseInt(self.combo_option_index.toString())) {
-                    self.button_is_highlighted = true;
+                    self.highlighted_button = button;
                     button.SetSearchResultActive(true);
                 }
                 else {
@@ -27228,6 +27291,9 @@ function DashGuiComboSearch () {
     };
     this.on_search_text_submitted = function () {
         var search = this.search_input.Text();
+        if (this.multi_select) {
+            return;
+        }
         if (search.length < 1) {
             this.on_click();
             return;
@@ -27286,60 +27352,106 @@ function DashGuiComboSearch () {
 function DashGuiComboRow (combo, option) {
     this.combo = combo;
     this.option = option;
+    this.checkbox = null;
+    this.id = this.option["id"];
+    this.color = this.combo.color;
     this.color_set = this.combo.color_set;
-    this.label_text = this.option["label_text"] || this.option["display_name"];
+    this.multi_select = this.combo.multi_select;
     this.height = this.combo.height || Dash.Size.ButtonHeight;
+    this.label_text = this.option["label_text"] || this.option["display_name"];
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
     this.setup_styles = function () {
-        this.html.append(this.highlight);
-        this.html.append(this.label);
         this.html.css({
-            "height": this.height,
+            "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            "height": this.height
         });
         this.highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": "rgba(255, 255, 255, 0.2)",
-            "opacity": 0,
+            "opacity": 0
         });
         this.label.css({
+            "border-bottom": this.multi_select ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
             "text-align": this.combo.text_alignment,
             "height": this.height,
             "line-height": this.height + "px",
             "white-space": "nowrap",
-            "border-bottom": "1px solid rgba(255, 255, 255, 0.1)",
-            "color": this.color_set.Text.Base,
+            "color": this.color_set.Text.Base
         });
+        this.html.append(this.highlight);
+        this.html.append(this.label);
+        this.add_checkbox();
+        this.setup_connections();
+    };
+    this.IsMultiSelected = function () {
+        if (!this.multi_select || !this.checkbox) {
+            return false;
+        }
+        return this.checkbox.IsChecked();
     };
     // Prior to showing, set the width of rows to fit the content
     this.SetWidthToFit = function (label_width=null) {
         if (!label_width) {
             label_width = "fit-content";
         }
+        else if (!isNaN(parseInt(label_width)) && this.multi_select) {
+            label_width -= this.height;
+        }
         this.html.css({
-            "width": "fit-content",
+            "width": "fit-content"
         });
         this.label.css({
             "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.6,
+            "padding-right": Dash.Size.Padding * 0.6
         });
     };
     // Prior to showing, set the width of rows
     this.SetWidth = function (width) {
         this.html.css({
-            "width": width,
+            "width": width
         });
         this.label.css({
-            "width": width-Dash.Size.Padding,
-            "padding-left": Dash.Size.Padding*0.5,
-            "padding-right": Dash.Size.Padding*0.5,
+            "width": width - Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
         });
     };
     this.SetSearchResultActive = function (is_active) {
         this.set_highlight_active(is_active);
+    };
+    this.add_checkbox = function () {
+        if (!this.multi_select) {
+            return;
+        }
+        this.html.css({
+            "padding-right": this.height
+        });
+        this.checkbox = new Dash.Gui.Checkbox(
+            "dash_gui_combo_row_" + this.id + "_" + this.label_text + "_checkbox",
+            false,
+            this.color
+        );
+        // Make sure the tray doesn't close when selecting a checkbox
+        this.checkbox.html.on("click", function (event) {
+            event.stopPropagation();
+        });
+        (function (self) {
+            self.checkbox.html.on("mouseenter", function () {
+                self.set_highlight_active(true);
+            });
+        })(this);
+        this.checkbox.html.css({
+            "position": "absolute",
+            "top": this.height * 0.2,
+            "right": this.height * 0.2,
+            "z-index": this.combo.rows.css("z-index") + 1
+        });
+        this.checkbox.SetIconColor(this.color_set.Text.Base);
+        this.html.append(this.checkbox.html);
     };
     this.set_highlight_active = function (is_active) {
         if (is_active) {
@@ -27358,20 +27470,43 @@ function DashGuiComboRow (combo, option) {
                 self.set_highlight_active(false);
             });
             self.label.on("click", function (e) {
-                self.combo.on_selection(self.option);
+                if (self.multi_select) {
+                    self.checkbox.Toggle();
+                }
+                else {
+                    self.combo.on_selection(self.option);
+                }
                 e.preventDefault();
                 return false;
             });
         })(this);
     };
     this.setup_styles();
-    this.setup_connections();
 }
 
 /**@member DashGuiCombo*/
 function DashGuiComboInterface () {
     this.SetHoverHint = function (hint) {
         this.label_container.attr("title", hint);
+    };
+    this.EnableMultiSelect = function () {
+        this.multi_select = true;
+    };
+    this.DisableMultiSelect = function () {
+        this.multi_select = false;
+    };
+    this.GetMultiSelections = function () {
+        if (!this.multi_select) {
+            console.warn("Multi-select is not enabled on this combo.");
+            return;
+        }
+        var selections = [];  // Selected option(s)
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                selections.push(row.option);
+            }
+        }
+        return selections;
     };
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
@@ -27476,8 +27611,13 @@ function DashGuiComboInterface () {
             );
         })(this, endpoint, params);
     };
+    // If the same item is selected, don't fire the callback on updating the list
     this.Update = function (combo_list, selected, ignore_callback=false) {
-        // If the same item is selected, don't fire the callback on updating the list
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+            // Do we need to do more here?
+            return;
+        }
         if (typeof(selected) == "string") {
             console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
             console.log("combo_list", combo_list);
@@ -27521,7 +27661,7 @@ function DashGuiComboStyleRow () {
         this.label_container.append(this.label);
         this.add_dropdown_icon(0.5);
         this.html.css({
-            "margin-right": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",

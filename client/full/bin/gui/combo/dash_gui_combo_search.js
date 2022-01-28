@@ -51,6 +51,7 @@ function DashGuiComboSearch () {
 
     this.hide_searchable = function () {
         this.hide_skirt();
+
         this.search_active = false;
 
         if (this.search_container) {
@@ -165,6 +166,10 @@ function DashGuiComboSearch () {
 
     this.on_search_text_submitted = function () {
         var search = this.search_input.Text();
+
+        if (this.multi_select) {
+            return;
+        }
 
         if (search.length < 1) {
             this.on_click();
