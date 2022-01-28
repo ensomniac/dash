@@ -18011,34 +18011,9 @@ $(document).on("ready", function () {
 });
 
 function DashDateTime () {
-    this.server_offset_hours = 5;
     this.Readable = function (iso_string, include_tz_label=true) {
-        var tz_label = "UTC";
-        var is_static_date = false;
-        var dt_obj = new Date(Date.parse(iso_string));
-        if (Dash.Context["timezone"]) {
-            tz_label = Dash.Context["timezone"];
-
-            if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
-                // The time information is 00:00:00
-                //
-                // This could be an ISO stamp from the server that just so happened to land on 00:00:00 (extremely uncommon, but certainly possible)
-                // - OR -
-                // It could be a static date only, which was parsed into an ISO stamp, which would default its time info to 00:00:00
-                //
-                // There doesn't appear to be a way to programmatically tell the difference
-                // between the two, but they each need to be handled differently...
-                //
-                // For now, we won't alter the date object, until we can find a way to differentiate the two
-                is_static_date = true;
-            }
-            else if (this.DSTInEffect(dt_obj)) {
-                dt_obj.setHours(dt_obj.getHours() - (this.server_offset_hours - 1));  // Spring/Summer
-            }
-            else {
-                dt_obj.setHours(dt_obj.getHours() - this.server_offset_hours);  // Fall/Winter
-            }
-        }
+        var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
+        var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
         var date = dt_obj.toLocaleDateString();
         if (is_static_date) {
             return date;
@@ -18060,9 +18035,43 @@ function DashDateTime () {
         // Return readable without second
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
         if (include_tz_label) {
-            return readable + " " + tz_label;
+            return readable + " " + timezone;
         }
         return readable;
+    };
+    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false) {
+        var is_static_date = false;
+        var dt_obj = new Date(Date.parse(iso_string));
+        if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
+            // The time information is 00:00:00
+            //
+            // This could be an ISO stamp from the server that just so happened to land on 00:00:00 (extremely uncommon, but certainly possible)
+            // - OR -
+            // It could be a static date only, which was parsed into an ISO stamp, which would default its time info to 00:00:00
+            //
+            // There doesn't appear to be a way to programmatically tell the difference
+            // between the two, but they each need to be handled differently...
+            //
+            // For now, we won't alter the date object, until we can find a way to differentiate the two
+            is_static_date = true;
+        }
+        else {
+            dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone));
+        }
+        if (check_static) {
+            return [dt_obj, is_static_date];
+        }
+        return dt_obj;
+    };
+    this.GetISOAgeMs = function (iso_string, timezone="EST") {
+        var now = this.GetNewRelativeDateObject(timezone);
+        var dt_obj = this.GetDateObjectFromISO(iso_string, timezone);
+        return now - dt_obj;
+    };
+    this.GetNewRelativeDateObject = function (timezone="EST") {
+        var now = new Date();
+        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone)));
+        return now;
     };
     this.IsIsoFormat = function (value) {
         if (!value) {
@@ -18091,11 +18100,35 @@ function DashDateTime () {
         var jul = new Date(dt_obj.getFullYear(), 6, 1).getTimezoneOffset();
         return Math.max(jan, jul) !== dt_obj.getTimezoneOffset();
     };
-    this.FormatTime = function (server_iso_string) {
-        var date = new Date(Date.parse(server_iso_string));
-        date = date.setHours(date.getHours() - this.server_offset_hours);
-        // TODO: What is timeago meant to be? It's undefined
-        return timeago.format(date);
+    this.FormatTime = function (iso_string) {
+        // Timeago library: /bin/src/timeago.js
+        return timeago.format(this.GetDateObjectFromISO(iso_string));
+    };
+    this.get_server_offset_hours = function (dt_obj=null, timezone="EST") {
+        timezone = timezone.toLowerCase();
+        if (timezone === "utc" || timezone === "gmt") {
+            return 0;
+        }
+        // Baseline (only worrying about US timezones)
+        var est_to_utc_offset_hours = dt_obj && this.DSTInEffect(dt_obj) ? 4 : 5;
+        // Eastern time
+        if (timezone === "est" || timezone === "edt") {
+            return est_to_utc_offset_hours;
+        }
+        // Central time
+        if (timezone === "cst" || timezone === "cdt") {
+            return est_to_utc_offset_hours + 1;
+        }
+        // Mountain time (not accounting for about AZ's exclusion)
+        if (timezone === "mst" || timezone === "mdt") {
+            return est_to_utc_offset_hours + 2;
+        }
+        // Pacific time
+        if (timezone === "pst" || timezone === "pdt") {
+            return est_to_utc_offset_hours + 3;
+        }
+        console.warn("Unhandled timezone, server offset hours not calculated:", timezone);
+        return 0;
     };
 }
 
