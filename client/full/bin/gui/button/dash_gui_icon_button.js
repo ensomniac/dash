@@ -23,8 +23,21 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.AddShadow(value);
     };
 
+    this.MirrorIcon = function () {
+        this.icon.Mirror();
+    };
+
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
+    };
+
+    this.AddHighlight = function () {
+        this.highlight.css({
+            "background": this.color.AccentGood,
+            "top": "auto",
+            "height": 3,
+            "bottom": -3
+        });
     };
 
     this.setup_icon = function () {
@@ -73,12 +86,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.setup_toolbar_icon = function () {
         this.icon = this.get_icon();
 
-        this.highlight.css({
-            "background": this.color.AccentGood,
-            "top": "auto",
-            "height": 3,
-            "bottom": -3,
-        });
+        // Should this just be the default regardless of style?
+        this.AddHighlight();
 
         this.html.css({
             "background": "rgba(0, 0, 0, 0)",

@@ -75,6 +75,12 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
         });
     };
 
+    this.Mirror = function () {
+        this.icon_html.css({
+            "transform": "scale(-1, 1)"
+        });
+    };
+
     this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon_html.css({
             "text-shadow": value,

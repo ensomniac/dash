@@ -17,10 +17,14 @@ function DashGuiCheckbox (
     this.can_click = true;
     this._hover_hint = "";
     this.icon_color = null;
+    this.true_color = null;
+    this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
+    this.static_icon_name = null;
     this.able_to_toggle_cb = null;
+    this.include_highlight = false;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
     this.true_icon_name = "checked_box";
@@ -182,12 +186,31 @@ function DashGuiCheckbox (
         this.restyle_icon_button();
     };
 
+    // Should this just be the default?
+    this.AddHighlight = function () {
+        this.include_highlight = true;
+
+        this.icon_button.AddHighlight();
+
+        this.icon_button.highlight.css({
+            "bottom": -(Dash.Size.Padding * 0.5)
+        });
+    };
+
+    this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
+        this.static_icon_name = static_icon_name;
+        this.true_color = true_color;
+        this.false_color = false_color;
+
+        this.redraw();
+    };
+
     this.redraw = function () {
         this.html.empty();
 
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -199,12 +222,20 @@ function DashGuiCheckbox (
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
-        if (this.icon_color) {
+        if (this.static_icon_name) {
+            this.icon_button.SetIconColor(this.checked ? this.true_color : this.false_color);
+        }
+
+        else if (this.icon_color) {
             this.icon_button.SetIconColor(this.icon_color);
         }
 
         if (this.icon_shadow) {
             this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+
+        if (this.include_highlight) {
+            this.AddHighlight();
         }
 
         if (this.label_first) {

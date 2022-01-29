@@ -55,6 +55,11 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
             "color": color
         });
     };
+    this.Mirror = function () {
+        this.icon_html.css({
+            "transform": "scale(-1, 1)"
+        });
+    };
     this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon_html.css({
             "text-shadow": value,
@@ -139,6 +144,7 @@ function GuiIcons (icon) {
         "cube":                  new GuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
         "database":              new GuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
         "delete":                new GuiIconDefinition(this.icon, "Delete", this.weight["regular"], "times", 1.2, 0.25, 0.25),
+        "delete_thin":           new GuiIconDefinition(this.icon, "Delete (thin_", this.weight["light"], "times", 1.2, 0.25, 0.25),
         "dot":                   new GuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle", 0.66),
         "dots_horizontal":       new GuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new GuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
@@ -20786,8 +20792,19 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
     };
+    this.MirrorIcon = function () {
+        this.icon.Mirror();
+    };
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
+    };
+    this.AddHighlight = function () {
+        this.highlight.css({
+            "background": this.color.AccentGood,
+            "top": "auto",
+            "height": 3,
+            "bottom": -3
+        });
     };
     this.setup_icon = function () {
         if (this.style === "toolbar") {
@@ -20823,12 +20840,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     };
     this.setup_toolbar_icon = function () {
         this.icon = this.get_icon();
-        this.highlight.css({
-            "background": this.color.AccentGood,
-            "top": "auto",
-            "height": 3,
-            "bottom": -3,
-        });
+        // Should this just be the default regardless of style?
+        this.AddHighlight();
         this.html.css({
             "background": "rgba(0, 0, 0, 0)",
         });
@@ -22153,10 +22166,14 @@ function DashGuiCheckbox (
     this.can_click = true;
     this._hover_hint = "";
     this.icon_color = null;
+    this.true_color = null;
+    this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
+    this.static_icon_name = null;
     this.able_to_toggle_cb = null;
+    this.include_highlight = false;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
     this.true_icon_name = "checked_box";
@@ -22275,11 +22292,25 @@ function DashGuiCheckbox (
         }
         this.restyle_icon_button();
     };
+    // Should this just be the default?
+    this.AddHighlight = function () {
+        this.include_highlight = true;
+        this.icon_button.AddHighlight();
+        this.icon_button.highlight.css({
+            "bottom": -(Dash.Size.Padding * 0.5)
+        });
+    };
+    this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
+        this.static_icon_name = static_icon_name;
+        this.true_color = true_color;
+        this.false_color = false_color;
+        this.redraw();
+    };
     this.redraw = function () {
         this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -22289,11 +22320,17 @@ function DashGuiCheckbox (
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
-        if (this.icon_color) {
+        if (this.static_icon_name) {
+            this.icon_button.SetIconColor(this.checked ? this.true_color : this.false_color);
+        }
+        else if (this.icon_color) {
             this.icon_button.SetIconColor(this.icon_color);
         }
         if (this.icon_shadow) {
             this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+        if (this.include_highlight) {
+            this.AddHighlight();
         }
         if (this.label_first) {
             if (this.label) {

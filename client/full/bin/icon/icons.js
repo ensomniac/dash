@@ -70,6 +70,7 @@ function GuiIcons (icon) {
         "cube":                  new GuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
         "database":              new GuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
         "delete":                new GuiIconDefinition(this.icon, "Delete", this.weight["regular"], "times", 1.2, 0.25, 0.25),
+        "delete_thin":           new GuiIconDefinition(this.icon, "Delete (thin_", this.weight["light"], "times", 1.2, 0.25, 0.25),
         "dot":                   new GuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle", 0.66),
         "dots_horizontal":       new GuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new GuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
