@@ -26705,7 +26705,7 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this._label = label;  // Unused
+    this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
     this.callback = callback.bind(binder);
     this.binder = binder;
     this.option_list = option_list;
@@ -26721,13 +26721,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
-    this.multi_select = false;
     this.is_searchable = false;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.highlighted_button = null;
+    this.init_labels_drawn = false;
     this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
@@ -26736,6 +26736,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.style = this.options["style"] || "default";
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
     // This is managed in this.handle_arrow_input(), but should ideally also
@@ -26841,6 +26842,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.initialize_rows = function () {
         if (this.multi_select) {
             this.update_label_for_multi_select();
+            this.initialized = true;
             return;
         }
         var selected_obj = null;
@@ -26859,6 +26861,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.on_selection(selected_obj);
         }
         else {
+            // It appears that, in this case, this.initialized doesn't get set to true - is that deliberate?
             this.label.text("No Options");
         }
     };
@@ -26899,6 +26902,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.rows.append(button.html);
             this.row_buttons.push(button);
         }
+        this.init_labels_drawn = true;
     };
     this.on_click = function (skirt_clicked=false) {
         if (!skirt_clicked && this.initialized && this.multi_select) {
@@ -26951,26 +26955,27 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
         }
     };
-    this.update_label_for_multi_select = function (selections=null) {
+    this.update_label_for_multi_select = function () {
         if (!this.multi_select) {
             return;
         }
+        this.label.text(this.get_multi_select_label());
+    };
+    this.get_multi_select_label = function () {
+        if (!this.multi_select) {
+            return "";
+        }
         if (!this.row_buttons.length) {
-            this.label.text("Multiple Options");
-            return;
+            return (this.name || "Multiple Options");
         }
-        if (selections === null) {
-            selections = this.GetMultiSelections();
-        }
+        var selections = this.GetMultiSelections(false);
         if (selections.length === 1) {
-            this.label.text(selections[0]["label_text"] || selections[0]["display_name"] || "Nothing Selected");
+            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "Nothing Selected");
         }
-        else if (selections.length > 1) {
-            this.label.text("Multiple Selections");
+        if (selections.length > 1) {
+            return "Multiple Selections";
         }
-        else {
-            this.label.text("Nothing Selected");
-        }
+        return (this.name || "Nothing Selected");
     };
     // Prior to showing, set the width of rows (this is all important, so it can auto-size)
     this.pre_show_size_set = function () {
@@ -27100,7 +27105,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
         if (this.initialized && this.multi_select && this.callback) {
             var selections = this.GetMultiSelections();
-            this.update_label_for_multi_select(selections);
+            this.update_label_for_multi_select();
             this.callback(selections, this.additional_data);
             Dash.Temp.SetLastComboChanged(this);
         }
@@ -27306,7 +27311,7 @@ function DashGuiComboSearch () {
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.selected_option["label_text"]);
+        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : this.selected_option["label_text"]);
         this.search_input.SetOnChange(this.on_search_text_changed, this);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
@@ -27363,10 +27368,10 @@ function DashGuiComboSearch () {
         this.manage_search_list();
     };
     this.on_search_text_submitted = function () {
-        var search = this.search_input.Text();
         if (this.multi_select) {
             return;
         }
+        var search = this.search_input.Text();
         if (search.length < 1) {
             this.on_click();
             return;
@@ -27508,6 +27513,10 @@ function DashGuiComboRow (combo, option) {
             false,
             this.color
         );
+        // Always start unchecked
+        if (!this.combo.init_labels_drawn) {
+            this.checkbox.SetChecked(false);
+        }
         // Make sure the tray doesn't close when selecting a checkbox
         this.checkbox.html.on("click", function (event) {
             event.stopPropagation();
@@ -27562,24 +27571,28 @@ function DashGuiComboInterface () {
     this.SetHoverHint = function (hint) {
         this.label_container.attr("title", hint);
     };
-    this.EnableMultiSelect = function () {
-        this.multi_select = true;
-    };
-    this.DisableMultiSelect = function () {
-        this.multi_select = false;
-    };
-    this.GetMultiSelections = function () {
+    this.GetMultiSelections = function (ids_only=true) {
         if (!this.multi_select) {
-            console.warn("Multi-select is not enabled on this combo.");
             return;
         }
         var selections = [];  // Selected option(s)
         for (var row of this.row_buttons) {
             if (row.IsMultiSelected()) {
-                selections.push(row.option);
+                selections.push(ids_only ? row.option["id"] : row.option);
             }
         }
         return selections;
+    };
+    this.ClearAllMultiSelections = function () {
+        if (!this.multi_select) {
+            return;
+        }
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                row.checkbox.Toggle(true);
+            }
+        }
+        this.update_label_for_multi_select();
     };
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,

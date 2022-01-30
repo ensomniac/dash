@@ -1,5 +1,5 @@
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this._label = label;  // Unused
+    this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
     this.callback = callback.bind(binder);
     this.binder = binder;
     this.option_list = option_list;
@@ -16,13 +16,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
-    this.multi_select = false;
     this.is_searchable = false;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
     this.highlighted_button = null;
+    this.init_labels_drawn = false;
     this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
@@ -31,6 +31,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlight = $("<div class='Combo'></div>");
     this.style = this.options["style"] || "default";
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
 
@@ -168,6 +169,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.multi_select) {
             this.update_label_for_multi_select();
 
+            this.initialized = true;
+
             return;
         }
 
@@ -192,6 +195,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         else {
+            // It appears that, in this case, this.initialized doesn't get set to true - is that deliberate?
             this.label.text("No Options");
         }
     };
@@ -244,6 +248,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
             this.row_buttons.push(button);
         }
+
+        this.init_labels_drawn = true;
     };
 
     this.on_click = function (skirt_clicked=false) {
@@ -315,32 +321,34 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.update_label_for_multi_select = function (selections=null) {
+    this.update_label_for_multi_select = function () {
         if (!this.multi_select) {
             return;
         }
 
+        this.label.text(this.get_multi_select_label());
+    };
+
+    this.get_multi_select_label = function () {
+        if (!this.multi_select) {
+            return "";
+        }
+
         if (!this.row_buttons.length) {
-            this.label.text("Multiple Options");
-
-            return;
+            return (this.name || "Multiple Options");
         }
 
-        if (selections === null) {
-            selections = this.GetMultiSelections();
-        }
+        var selections = this.GetMultiSelections(false);
 
         if (selections.length === 1) {
-            this.label.text(selections[0]["label_text"] || selections[0]["display_name"] || "Nothing Selected");
+            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "Nothing Selected");
         }
 
-        else if (selections.length > 1) {
-            this.label.text("Multiple Selections");
+        if (selections.length > 1) {
+            return "Multiple Selections";
         }
 
-        else {
-            this.label.text("Nothing Selected");
-        }
+        return (this.name || "Nothing Selected");
     };
 
     // Prior to showing, set the width of rows (this is all important, so it can auto-size)
@@ -517,7 +525,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.initialized && this.multi_select && this.callback) {
             var selections = this.GetMultiSelections();
 
-            this.update_label_for_multi_select(selections);
+            this.update_label_for_multi_select();
 
             this.callback(selections, this.additional_data);
 

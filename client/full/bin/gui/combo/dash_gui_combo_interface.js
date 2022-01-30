@@ -5,18 +5,8 @@ function DashGuiComboInterface () {
         this.label_container.attr("title", hint);
     };
 
-    this.EnableMultiSelect = function () {
-        this.multi_select = true;
-    };
-
-    this.DisableMultiSelect = function () {
-        this.multi_select = false;
-    };
-
-    this.GetMultiSelections = function () {
+    this.GetMultiSelections = function (ids_only=true) {
         if (!this.multi_select) {
-            console.warn("Multi-select is not enabled on this combo.");
-
             return;
         }
 
@@ -24,11 +14,25 @@ function DashGuiComboInterface () {
 
         for (var row of this.row_buttons) {
             if (row.IsMultiSelected()) {
-                selections.push(row.option);
+                selections.push(ids_only ? row.option["id"] : row.option);
             }
         }
 
         return selections;
+    };
+
+    this.ClearAllMultiSelections = function () {
+        if (!this.multi_select) {
+            return;
+        }
+
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                row.checkbox.Toggle(true);
+            }
+        }
+
+        this.update_label_for_multi_select();
     };
 
     this.SetDefaultSearchSubmitCombo = function (combo_option) {

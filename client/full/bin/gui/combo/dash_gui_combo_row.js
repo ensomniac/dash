@@ -104,6 +104,11 @@ function DashGuiComboRow (combo, option) {
             this.color
         );
 
+        // Always start unchecked
+        if (!this.combo.init_labels_drawn) {
+            this.checkbox.SetChecked(false);
+        }
+
         // Make sure the tray doesn't close when selecting a checkbox
         this.checkbox.html.on("click", function (event) {
             event.stopPropagation();
