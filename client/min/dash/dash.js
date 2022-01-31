@@ -105,6 +105,7 @@ function GuiIcons (icon) {
         "arrow_up":              new GuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up", 1.5),
         "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
+        "aws_logo":              new GuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
         "baseball":              new GuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "basketball":            new GuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
@@ -29653,6 +29654,9 @@ function DashGuiListRow (list, row_id) {
         row.SetExpandedSubListParentHeight(height_change);
     };
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
+        if (this.is_header) {
+            return;
+        }
         if (this.is_expanded) {
             this.Collapse();
             return;
@@ -29704,7 +29708,7 @@ function DashGuiListRow (list, row_id) {
         return target_size;
     };
     this.Collapse = function () {
-        if (!this.is_expanded) {
+        if (!this.is_expanded || this.is_header) {
             return;
         }
         if (Dash.Validate.Object(this.tmp_css_cache)) {
@@ -29854,6 +29858,9 @@ function DashGuiListRow (list, row_id) {
             self.column_box.on("click", function (e) {
                 if (e.target && e.target.className.includes(" fa-")) {
                     // Don't set selection if it was an icon button that was clicked
+                    return;
+                }
+                if (self.is_header) {
                     return;
                 }
                 self.list.SetSelection(self);

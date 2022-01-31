@@ -31,6 +31,7 @@ function GuiIcons (icon) {
         "arrow_up":              new GuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up", 1.5),
         "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
+        "aws_logo":              new GuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
         "baseball":              new GuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "basketball":            new GuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
