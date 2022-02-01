@@ -85,8 +85,6 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
 
     this.update_headers = function () {
-        console.debug("TEST update headers", this.header_update_objects, this.get_data_cb);
-
         if (!this.get_data_cb) {
             return;
         }
