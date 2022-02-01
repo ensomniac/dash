@@ -79,13 +79,23 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddHeader = function (label_text, update_key=null) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
-        var header = header_obj.html;
 
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding * 0.5);
+            // header.css("margin-top", Dash.Size.Padding * 0.5);
+
+            header_obj.html.css({
+                "margin-top": Dash.Size.Padding * 1.5
+            });
         }
 
-        this.html.append(header);
+        // Ryan, I made these margin changes on 2/1/22 because I do it with every property box,
+        // so it felt right to adjust the default - please let me know if you feel otherwise!
+
+        header_obj.html.css({
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+
+        this.html.append(header_obj.html);
 
         this.num_headers += 1;
 

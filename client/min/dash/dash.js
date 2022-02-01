@@ -174,6 +174,7 @@ function GuiIcons (icon) {
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
         "gem":                   new GuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
         "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
+        "dropbox_logo":          new GuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
         "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
@@ -223,6 +224,7 @@ function GuiIcons (icon) {
         "soccer_ball":           new GuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "spinner":               new GuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stop":                  new GuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "swords":                new GuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new GuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
         "tasks":                 new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
@@ -22126,6 +22128,9 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         this.label.text(label_text);
     };
     this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
+        if (!icon_name) {
+            return;
+        }
         this.html.empty();
         this.html.css({
             "display": "flex",
@@ -25044,7 +25049,8 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%"
+            "font-size": "80%",
+            "flex": "none"
         });
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
@@ -26195,13 +26201,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.update_inputs = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
+    this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.header_update_objects = [];
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         // DashGlobalImpactChange | 12/21/21 | Ryan
@@ -26251,8 +26257,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row_input.SetText(this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key]);
             }
         }
-        // Update headers
-        for (var i = 0; i < this.header_update_objects.length; i++) {
+        this.update_headers();
+    };
+    this.update_headers = function () {
+        console.debug("TEST update headers", this.header_update_objects, this.get_data_cb);
+        if (!this.get_data_cb) {
+            return;
+        }
+        for (var i in this.header_update_objects) {
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]
             );
@@ -26377,8 +26389,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
         if (this.get_data_cb) {
             var old_value = this.get_data_cb()[row_details["key"]];
-            if (old_value == new_value) {
-                // Values are unchanged!
+            if (old_value === new_value) {
                 return;
             }
         }
@@ -26498,11 +26509,18 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddHeader = function (label_text, update_key=null) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
-        var header = header_obj.html;
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding * 0.5);
+            // header.css("margin-top", Dash.Size.Padding * 0.5);
+            header_obj.html.css({
+                "margin-top": Dash.Size.Padding * 1.5
+            });
         }
-        this.html.append(header);
+        // Ryan, I made these margin changes on 2/1/22 because I do it with every property box,
+        // so it felt right to adjust the default - please let me know if you feel otherwise!
+        header_obj.html.css({
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+        this.html.append(header_obj.html);
         this.num_headers += 1;
         if (update_key != null && this.get_data_cb) {
             this.header_update_objects.push({
