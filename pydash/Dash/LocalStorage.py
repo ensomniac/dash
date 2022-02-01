@@ -178,17 +178,21 @@ class DashLocalStorage:
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
 
+        data = self.GetData(obj_id, create=create)
+
         response = {
             "key": key,
             "value": value,
             "obj_id": obj_id,
+            "previous_value": data.get(key),
             "record_path": self.GetRecordPath(obj_id)
         }
 
-        data = self.GetData(obj_id, create=create)
-        data[key] = value
-        data["modified_by"] = Memory.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
+        data.update({
+            key: value,
+            "modified_by": Memory.Global.RequestUser["email"],
+            "modified_on": datetime.now().isoformat()
+        })
 
         self.WriteData(obj_id, data)
 
