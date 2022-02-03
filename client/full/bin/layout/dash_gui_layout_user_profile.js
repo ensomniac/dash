@@ -4,11 +4,16 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.options = options;  // TODO: convert to proper interface
     this.view_mode = view_mode;
 
+    this.callbacks = {};
     this.modal_box = null;
     this.property_box = null;
     this.modal_background = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
+    this.color = this.options["color"] || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
+    this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
 
     // True by default, but ideally, options["is_admin"] should be provided for added
     // security between non-admins. This is referenced by this.has_privileges when this element
@@ -20,11 +25,6 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     //     - the "Update Password" field is visible
     //     - the user image can be updated
     this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
-
-    this.color = this.options["color"] || Dash.Color.Light;
-    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
-    this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
 
     this.setup_styles = function () {
         if (!["settings", "preview"].includes(this.view_mode)) {
@@ -218,12 +218,17 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
                     null,
                     this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges
                 );
+
+                // Extra callback if something else needs to happen in addition to the standard/basic set_data behavior
+                if (property_details["callback"]) {
+                    this.callbacks[property_details["key"]] = property_details["callback"];
+                }
             }
         }
     };
 
     this.add_user_image_box = function () {
-        var img_url = "dash/fonts/user_default.jpg";
+        var img_url = "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg";
 
         if (this.user_data["img"]) {
             img_url = this.user_data["img"]["thumb_url"];
@@ -330,8 +335,13 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
         return this.user_data;
     };
 
-    this.set_data = function () {
-        // Setting data is taken care of in DashGuiPropertyBox
+    this.set_data = function (updated_data) {
+        // Basic/standard setting of data is taken care of in DashGuiPropertyBox
+
+        // This is an extra, optional follow-up to that
+        if (updated_data["key"] in this.callbacks) {
+            this.callbacks[updated_data["key"]](updated_data);
+        }
     };
 
     this.log_out = function () {

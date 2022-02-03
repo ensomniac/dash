@@ -51,6 +51,7 @@ function DashGuiComboSearch () {
 
     this.hide_searchable = function () {
         this.hide_skirt();
+
         this.search_active = false;
 
         if (this.search_container) {
@@ -88,7 +89,7 @@ function DashGuiComboSearch () {
         });
 
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.selected_option["label_text"]);
+        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : this.selected_option["label_text"]);
 
         this.search_input.SetOnChange(this.on_search_text_changed, this);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
@@ -164,6 +165,10 @@ function DashGuiComboSearch () {
     };
 
     this.on_search_text_submitted = function () {
+        if (this.multi_select) {
+            return;
+        }
+
         var search = this.search_input.Text();
 
         if (search.length < 1) {

@@ -100,7 +100,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this,
             this.at_combo_options,
             null,
-            this.color
+            this.color,
+            {"is_user_list": true}
         );
 
         this.at_button.UseAsIconButtonCombo("at_sign", 1);

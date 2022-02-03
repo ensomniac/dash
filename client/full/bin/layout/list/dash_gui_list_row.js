@@ -224,6 +224,10 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
+        if (this.is_header) {
+            return;
+        }
+
         if (this.is_expanded) {
             this.Collapse();
 
@@ -292,7 +296,7 @@ function DashGuiListRow (list, row_id) {
     };
 
     this.Collapse = function () {
-        if (!this.is_expanded) {
+        if (!this.is_expanded || this.is_header) {
             return;
         }
 
@@ -486,6 +490,10 @@ function DashGuiListRow (list, row_id) {
             self.column_box.on("click", function (e) {
                 if (e.target && e.target.className.includes(" fa-")) {
                     // Don't set selection if it was an icon button that was clicked
+                    return;
+                }
+
+                if (self.is_header) {
                     return;
                 }
 

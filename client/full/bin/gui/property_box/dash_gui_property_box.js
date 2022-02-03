@@ -11,13 +11,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.update_inputs = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
+    this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.header_update_objects = [];
 
     DashGuiPropertyBoxInterface.call(this);
 
@@ -81,8 +81,15 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
         }
 
-        // Update headers
-        for (var i = 0; i < this.header_update_objects.length; i++) {
+        this.update_headers();
+    };
+
+    this.update_headers = function () {
+        if (!this.get_data_cb) {
+            return;
+        }
+
+        for (var i in this.header_update_objects) {
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]
             );
@@ -241,8 +248,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         if (this.get_data_cb) {
             var old_value = this.get_data_cb()[row_details["key"]];
 
-            if (old_value == new_value) {
-                // Values are unchanged!
+            if (old_value === new_value) {
                 return;
             }
         }

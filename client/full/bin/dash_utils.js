@@ -36,6 +36,8 @@ function DashUtils () {
         })(this, timer);
 
         this.manage_timer(timer);
+
+        return timer["timer_id"];
     };
 
     // Very similar to OnFrame, except we capture the size of binder.html and only fire the callback if the size changes

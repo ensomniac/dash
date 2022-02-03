@@ -79,13 +79,23 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddHeader = function (label_text, update_key=null) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
-        var header = header_obj.html;
 
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding * 0.5);
+            // header.css("margin-top", Dash.Size.Padding * 0.5);
+
+            header_obj.html.css({
+                "margin-top": Dash.Size.Padding * 1.5
+            });
         }
 
-        this.html.append(header);
+        // Ryan, I made these margin changes on 2/1/22 because I do it with every property box,
+        // so it felt right to adjust the default - please let me know if you feel otherwise!
+
+        header_obj.html.css({
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+
+        this.html.append(header_obj.html);
 
         this.num_headers += 1;
 
@@ -170,11 +180,8 @@ function DashGuiPropertyBoxInterface () {
         return button;
     };
 
-    // this.AddDate = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
-            // Stub for a future situation where we have a data object
-    // };
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
 
-    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
 
@@ -215,7 +222,10 @@ function DashGuiPropertyBoxInterface () {
                 combo_options,    // Option List
                 selected_key,     // Selected
                 self.color,       // Color set
-                {"style": "row"}, // Options
+                {
+                    "style": "row",
+                    ...options
+                },
                 bool              // Bool (Toggle)
             );
 

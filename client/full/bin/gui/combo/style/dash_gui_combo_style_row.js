@@ -23,7 +23,7 @@ function DashGuiComboStyleRow () {
         this.add_dropdown_icon(0.5);
 
         this.html.css({
-            "margin-right": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",

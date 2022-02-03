@@ -194,6 +194,10 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     };
 
     this.get_loading_label_text = function (progress) {
+        if (progress === "none") {  // Special case
+            return this.label_prefix;
+        }
+
         if (isNaN(progress)) {
             return;
         }

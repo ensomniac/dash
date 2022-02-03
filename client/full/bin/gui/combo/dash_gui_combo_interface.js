@@ -5,6 +5,36 @@ function DashGuiComboInterface () {
         this.label_container.attr("title", hint);
     };
 
+    this.GetMultiSelections = function (ids_only=true) {
+        if (!this.multi_select) {
+            return;
+        }
+
+        var selections = [];  // Selected option(s)
+
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                selections.push(ids_only ? row.option["id"] : row.option);
+            }
+        }
+
+        return selections;
+    };
+
+    this.ClearAllMultiSelections = function () {
+        if (!this.multi_select) {
+            return;
+        }
+
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                row.checkbox.Toggle(true);
+            }
+        }
+
+        this.update_label_for_multi_select();
+    };
+
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result
@@ -143,14 +173,23 @@ function DashGuiComboInterface () {
         })(this, endpoint, params);
     };
 
+    // If the same item is selected, don't fire the callback on updating the list
     this.Update = function (combo_list, selected, ignore_callback=false) {
-        // If the same item is selected, don't fire the callback on updating the list
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+
+            // Do we need to do more here?
+
+            return;
+        }
 
         if (typeof(selected) == "string") {
             console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+
             console.log("combo_list", combo_list);
             console.log("selected", selected);
             console.log("ignore_callback", ignore_callback);
+
             return;
         }
 

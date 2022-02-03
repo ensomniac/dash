@@ -107,10 +107,12 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
 
 
 def GetAssetPath(string):
+    from unidecode import unidecode
+
     cleaned = []
     asset_path = ""
     cleaned_split = []
-    string = string.strip().lower()
+    string = unidecode(string.strip().lower())
 
     # Replace slashes with spaces if they're between words
     if "/" in string:

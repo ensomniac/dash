@@ -56,32 +56,36 @@ function DashUser () {
     };
 
     this.GetImageByEmail = function (user_email) {
-        var img = null;
-
-        if (Dash.User.Init["team"][user_email]) {
-            if (Dash.User.Init["team"][user_email]["img"]) {
-                img = Dash.User.Init["team"][user_email]["img"];
-            }
+        if (!user_email) {
+            return this.get_default_image_data();
         }
 
-        if (!img) {
-            // TODO: Allow dash to always return a stub for a user
-            //  image along with the init data on the auth call
-
-            img = {
-                "default": true,
-                "aspect": 1,
-                "height": 512,
-                "width": 512,
-                "thumb_url": "dash/fonts/user_default.jpg",
-            };
+        if (user_email === Dash.User.Data["email"] && Dash.User.Data["img"]) {
+            return Dash.User.Data["img"];
         }
 
-        return img;
+        if (Dash.User.Init["team"][user_email] && Dash.User.Init["team"][user_email]["img"]) {
+            return Dash.User.Init["team"][user_email]["img"];
+        }
+
+        // TODO: Allow dash to always return a stub for a user
+        //  image along with the init data on the auth call
+
+        return this.get_default_image_data();
     };
 
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
+    };
+
+    this.get_default_image_data = function () {
+        return {
+            "default": true,
+            "aspect": 1,
+            "height": 512,
+            "width": 512,
+            "thumb_url": "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg"
+        };
     };
 
     this.build_init_team_combo = function () {

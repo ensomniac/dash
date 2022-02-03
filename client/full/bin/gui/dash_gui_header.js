@@ -46,6 +46,10 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     };
 
     this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
+        if (!icon_name) {
+            return;
+        }
+
         this.html.empty();
 
         this.html.css({

@@ -55,6 +55,11 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
             "color": color
         });
     };
+    this.Mirror = function () {
+        this.icon_html.css({
+            "transform": "scale(-1, 1)"
+        });
+    };
     this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon_html.css({
             "text-shadow": value,
@@ -100,6 +105,7 @@ function GuiIcons (icon) {
         "arrow_up":              new GuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up", 1.5),
         "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
+        "aws_logo":              new GuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
         "baseball":              new GuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "basketball":            new GuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
@@ -139,6 +145,7 @@ function GuiIcons (icon) {
         "cube":                  new GuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
         "database":              new GuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
         "delete":                new GuiIconDefinition(this.icon, "Delete", this.weight["regular"], "times", 1.2, 0.25, 0.25),
+        "delete_thin":           new GuiIconDefinition(this.icon, "Delete (thin_", this.weight["light"], "times", 1.2, 0.25, 0.25),
         "dot":                   new GuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle", 0.66),
         "dots_horizontal":       new GuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new GuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
@@ -167,6 +174,7 @@ function GuiIcons (icon) {
         "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
         "gem":                   new GuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
         "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
+        "dropbox_logo":          new GuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
         "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
@@ -216,6 +224,7 @@ function GuiIcons (icon) {
         "soccer_ball":           new GuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "spinner":               new GuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stop":                  new GuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "swords":                new GuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new GuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
         "tasks":                 new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
@@ -18011,34 +18020,9 @@ $(document).on("ready", function () {
 });
 
 function DashDateTime () {
-    this.server_offset_hours = 5;
     this.Readable = function (iso_string, include_tz_label=true) {
-        var tz_label = "UTC";
-        var is_static_date = false;
-        var dt_obj = new Date(Date.parse(iso_string));
-        if (Dash.Context["timezone"]) {
-            tz_label = Dash.Context["timezone"];
-
-            if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
-                // The time information is 00:00:00
-                //
-                // This could be an ISO stamp from the server that just so happened to land on 00:00:00 (extremely uncommon, but certainly possible)
-                // - OR -
-                // It could be a static date only, which was parsed into an ISO stamp, which would default its time info to 00:00:00
-                //
-                // There doesn't appear to be a way to programmatically tell the difference
-                // between the two, but they each need to be handled differently...
-                //
-                // For now, we won't alter the date object, until we can find a way to differentiate the two
-                is_static_date = true;
-            }
-            else if (this.DSTInEffect(dt_obj)) {
-                dt_obj.setHours(dt_obj.getHours() - (this.server_offset_hours - 1));  // Spring/Summer
-            }
-            else {
-                dt_obj.setHours(dt_obj.getHours() - this.server_offset_hours);  // Fall/Winter
-            }
-        }
+        var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
+        var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
         var date = dt_obj.toLocaleDateString();
         if (is_static_date) {
             return date;
@@ -18060,9 +18044,43 @@ function DashDateTime () {
         // Return readable without second
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
         if (include_tz_label) {
-            return readable + " " + tz_label;
+            return readable + " " + timezone;
         }
         return readable;
+    };
+    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false) {
+        var is_static_date = false;
+        var dt_obj = new Date(Date.parse(iso_string));
+        if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
+            // The time information is 00:00:00
+            //
+            // This could be an ISO stamp from the server that just so happened to land on 00:00:00 (extremely uncommon, but certainly possible)
+            // - OR -
+            // It could be a static date only, which was parsed into an ISO stamp, which would default its time info to 00:00:00
+            //
+            // There doesn't appear to be a way to programmatically tell the difference
+            // between the two, but they each need to be handled differently...
+            //
+            // For now, we won't alter the date object, until we can find a way to differentiate the two
+            is_static_date = true;
+        }
+        else {
+            dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone));
+        }
+        if (check_static) {
+            return [dt_obj, is_static_date];
+        }
+        return dt_obj;
+    };
+    this.GetISOAgeMs = function (iso_string, timezone="EST") {
+        var now = this.GetNewRelativeDateObject(timezone);
+        var dt_obj = this.GetDateObjectFromISO(iso_string, timezone);
+        return now - dt_obj;
+    };
+    this.GetNewRelativeDateObject = function (timezone="EST") {
+        var now = new Date();
+        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone)));
+        return now;
     };
     this.IsIsoFormat = function (value) {
         if (!value) {
@@ -18091,11 +18109,35 @@ function DashDateTime () {
         var jul = new Date(dt_obj.getFullYear(), 6, 1).getTimezoneOffset();
         return Math.max(jan, jul) !== dt_obj.getTimezoneOffset();
     };
-    this.FormatTime = function (server_iso_string) {
-        var date = new Date(Date.parse(server_iso_string));
-        date = date.setHours(date.getHours() - this.server_offset_hours);
-        // TODO: What is timeago meant to be? It's undefined
-        return timeago.format(date);
+    this.FormatTime = function (iso_string) {
+        // Timeago library: /bin/src/timeago.js
+        return timeago.format(this.GetDateObjectFromISO(iso_string));
+    };
+    this.get_server_offset_hours = function (dt_obj=null, timezone="EST") {
+        timezone = timezone.toLowerCase();
+        if (timezone === "utc" || timezone === "gmt") {
+            return 0;
+        }
+        // Baseline (only worrying about US timezones)
+        var est_to_utc_offset_hours = dt_obj && this.DSTInEffect(dt_obj) ? 4 : 5;
+        // Eastern time
+        if (timezone === "est" || timezone === "edt") {
+            return est_to_utc_offset_hours;
+        }
+        // Central time
+        if (timezone === "cst" || timezone === "cdt") {
+            return est_to_utc_offset_hours + 1;
+        }
+        // Mountain time (not accounting for about AZ's exclusion)
+        if (timezone === "mst" || timezone === "mdt") {
+            return est_to_utc_offset_hours + 2;
+        }
+        // Pacific time
+        if (timezone === "pst" || timezone === "pdt") {
+            return est_to_utc_offset_hours + 3;
+        }
+        console.warn("Unhandled timezone, server offset hours not calculated:", timezone);
+        return 0;
     };
 }
 
@@ -18615,27 +18657,30 @@ function DashUser () {
         this.build_init_team_combo();
     };
     this.GetImageByEmail = function (user_email) {
-        var img = null;
-        if (Dash.User.Init["team"][user_email]) {
-            if (Dash.User.Init["team"][user_email]["img"]) {
-                img = Dash.User.Init["team"][user_email]["img"];
-            }
+        if (!user_email) {
+            return this.get_default_image_data();
         }
-        if (!img) {
-            // TODO: Allow dash to always return a stub for a user
-            //  image along with the init data on the auth call
-            img = {
-                "default": true,
-                "aspect": 1,
-                "height": 512,
-                "width": 512,
-                "thumb_url": "dash/fonts/user_default.jpg",
-            };
+        if (user_email === Dash.User.Data["email"] && Dash.User.Data["img"]) {
+            return Dash.User.Data["img"];
         }
-        return img;
+        if (Dash.User.Init["team"][user_email] && Dash.User.Init["team"][user_email]["img"]) {
+            return Dash.User.Init["team"][user_email]["img"];
+        }
+        // TODO: Allow dash to always return a stub for a user
+        //  image along with the init data on the auth call
+        return this.get_default_image_data();
     };
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
+    };
+    this.get_default_image_data = function () {
+        return {
+            "default": true,
+            "aspect": 1,
+            "height": 512,
+            "width": 512,
+            "thumb_url": "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg"
+        };
     };
     this.build_init_team_combo = function () {
         this.Init["team_combo"] = [];
@@ -19901,6 +19946,7 @@ function DashUtils () {
             );
         })(this, timer);
         this.manage_timer(timer);
+        return timer["timer_id"];
     };
     // Very similar to OnFrame, except we capture the size of binder.html and only fire the callback if the size changes
     this.OnHTMLResized = function (binder, callback) {
@@ -20749,8 +20795,19 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
     };
+    this.MirrorIcon = function () {
+        this.icon.Mirror();
+    };
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
+    };
+    this.AddHighlight = function () {
+        this.highlight.css({
+            "background": this.color.AccentGood,
+            "top": "auto",
+            "height": 3,
+            "bottom": -3
+        });
     };
     this.setup_icon = function () {
         if (this.style === "toolbar") {
@@ -20786,12 +20843,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     };
     this.setup_toolbar_icon = function () {
         this.icon = this.get_icon();
-        this.highlight.css({
-            "background": this.color.AccentGood,
-            "top": "auto",
-            "height": 3,
-            "bottom": -3,
-        });
+        // Should this just be the default regardless of style?
+        this.AddHighlight();
         this.html.css({
             "background": "rgba(0, 0, 0, 0)",
         });
@@ -22075,6 +22128,9 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         this.label.text(label_text);
     };
     this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
+        if (!icon_name) {
+            return;
+        }
         this.html.empty();
         this.html.css({
             "display": "flex",
@@ -22098,7 +22154,10 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.setup_styles();
 }
 
-function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
+function DashGuiCheckbox (
+    local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
+    callback=null, label_text="", label_first=true, include_border=false
+) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
     this.color = color || Dash.Color.Light;
@@ -22113,10 +22172,14 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.can_click = true;
     this._hover_hint = "";
     this.icon_color = null;
+    this.true_color = null;
+    this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
+    this.static_icon_name = null;
     this.able_to_toggle_cb = null;
+    this.include_highlight = false;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
     this.true_icon_name = "checked_box";
@@ -22135,6 +22198,9 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.IsChecked = function () {
         return this.checked;
     };
+    this.LocalStorageKey = function () {
+        return this.local_storage_key;
+    };
     this.SetIconColor = function (color) {
         this.icon_color = color;
         this.icon_button.SetIconColor(color);
@@ -22142,6 +22208,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
         this.icon_button.AddIconShadow(shadow);
+    };
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ?
+            callback_with_bool_return.bind(binder ? binder : this.binder) :
+            callback_with_bool_return;
     };
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
         if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
@@ -22151,14 +22222,8 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             this.Toggle(skip_callback);
         }
     };
-    this.LocalStorageKey = function () {
-        return this.local_storage_key;
-    };
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
-    };
-    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
-        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
     };
     // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
     this.SetTrueIconName = function (icon_name) {
@@ -22173,11 +22238,6 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         if (!this.checked) {
             this.redraw();
         }
-    };
-    this.DisableClick = function () {
-        this.can_click = false;
-        this.html.off("click");
-        this.icon_button.html.off("click");
     };
     this.SetReadOnly = function (is_read_only=true) {
         var pointer_events;
@@ -22197,6 +22257,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         });
         this.DisableClick();
         this.is_read_only = is_read_only;
+    };
+    this.DisableClick = function () {
+        this.can_click = false;
+        this.html.off("click");
+        this.icon_button.html.off("click");
     };
     this.Toggle = function (skip_callback=false) {
         if (this.toggle_confirmation_msg) {
@@ -22233,11 +22298,25 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         }
         this.restyle_icon_button();
     };
+    // Should this just be the default?
+    this.AddHighlight = function () {
+        this.include_highlight = true;
+        this.icon_button.AddHighlight();
+        this.icon_button.highlight.css({
+            "bottom": -(Dash.Size.Padding * 0.5)
+        });
+    };
+    this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
+        this.static_icon_name = static_icon_name;
+        this.true_color = true_color;
+        this.false_color = false_color;
+        this.redraw();
+    };
     this.redraw = function () {
         this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -22247,11 +22326,17 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
-        if (this.icon_color) {
+        if (this.static_icon_name) {
+            this.icon_button.SetIconColor(this.checked ? this.true_color : this.false_color);
+        }
+        else if (this.icon_color) {
             this.icon_button.SetIconColor(this.icon_color);
         }
         if (this.icon_shadow) {
             this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+        if (this.include_highlight) {
+            this.AddHighlight();
         }
         if (this.label_first) {
             if (this.label) {
@@ -22266,7 +22351,10 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
             }
         }
         this.restyle_icon_button();
-        if (!this.can_click) {
+        if (this.is_read_only) {
+            this.SetReadOnly();
+        }
+        else if (!this.can_click) {
             this.DisableClick();
         }
     };
@@ -22744,28 +22832,30 @@ function LoadDot (dots) {
     this.setup_styles();
 }
 
-function DashGuiLoadingLabel (binder, label_text) {
-    this.binder       = binder;
-    this.label_text   = label_text;
-    this.height       = Dash.Size.ButtonHeight;
-    this.color        = this.binder.color || Dash.Color.Light;
-    this.label        = $("<div>" + this.label_text + "</div>");
-    this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
-    this.html         = this.loading_dots.html;
+function DashGuiLoadingLabel (binder, label_text, height=null) {
+    this.binder = binder;
+    this.label_text = label_text;
+    this.height = height || Dash.Size.ButtonHeight;
+    this.html = null;
+    this.loading_dots = null;
+    this.color = this.binder.color || Dash.Color.Light;
+    this.label = $("<div>" + this.label_text + "</div>");
+
     this.setup_styles = function () {
+        this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
+        this.html = this.loading_dots.html;
         this.html.append(this.label);
         this.html.css({
             "margin-left": "auto",
             "margin-right": "auto",
-            "margin-bottom": this.height,
-            // "background": "black"
+            "margin-bottom": this.height
         });
         this.label.css({
             "position": "absolute",
             "left": -100,
             "right": -100,
-            "top": this.height-Dash.Size.Padding,
-            "bottom": -(this.height-Dash.Size.Padding),
+            "top": this.height - Dash.Size.Padding,
+            "bottom": -(this.height - Dash.Size.Padding),
             "height": this.height,
             "line-height": this.height + "px",
             "text-align": "center",
@@ -22952,6 +23042,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.bubble.append(this.bubble_label.html);
     };
     this.get_loading_label_text = function (progress) {
+        if (progress === "none") {  // Special case
+            return this.label_prefix;
+        }
         if (isNaN(progress)) {
             return;
         }
@@ -24956,7 +25049,8 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%"
+            "font-size": "80%",
+            "flex": "none"
         });
         if (Array.isArray(this.button_text)) {
             this.SetupCombo(this.button_text);
@@ -25795,7 +25889,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this,
             this.at_combo_options,
             null,
-            this.color
+            this.color,
+            {"is_user_list": true}
         );
         this.at_button.UseAsIconButtonCombo("at_sign", 1);
         this.at_button.DisableFlash();
@@ -26107,13 +26202,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.update_inputs = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
+    this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.header_update_objects = [];
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         // DashGlobalImpactChange | 12/21/21 | Ryan
@@ -26163,8 +26258,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 row_input.SetText(this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key]);
             }
         }
-        // Update headers
-        for (var i = 0; i < this.header_update_objects.length; i++) {
+        this.update_headers();
+    };
+    this.update_headers = function () {
+        if (!this.get_data_cb) {
+            return;
+        }
+        for (var i in this.header_update_objects) {
             this.header_update_objects[i]["obj"].SetText(
                 this.get_data_cb()[this.header_update_objects[i]["update_key"]]
             );
@@ -26289,8 +26389,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
         if (this.get_data_cb) {
             var old_value = this.get_data_cb()[row_details["key"]];
-            if (old_value == new_value) {
-                // Values are unchanged!
+            if (old_value === new_value) {
                 return;
             }
         }
@@ -26410,11 +26509,18 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddHeader = function (label_text, update_key=null) {
         var header_obj = new Dash.Gui.Header(label_text, this.color);
-        var header = header_obj.html;
         if (this.num_headers > 0) {
-            header.css("margin-top", Dash.Size.Padding * 0.5);
+            // header.css("margin-top", Dash.Size.Padding * 0.5);
+            header_obj.html.css({
+                "margin-top": Dash.Size.Padding * 1.5
+            });
         }
-        this.html.append(header);
+        // Ryan, I made these margin changes on 2/1/22 because I do it with every property box,
+        // so it felt right to adjust the default - please let me know if you feel otherwise!
+        header_obj.html.css({
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+        this.html.append(header_obj.html);
         this.num_headers += 1;
         if (update_key != null && this.get_data_cb) {
             this.header_update_objects.push({
@@ -26476,7 +26582,14 @@ function DashGuiPropertyBoxInterface () {
         });
         return button;
     };
+<<<<<<< HEAD
+    // this.AddDate = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
+            // Stub for a future situation where we have a data object
+    // };
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
+=======
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
+>>>>>>> 71005a939260d5389a21e5e2ae10258f98599d09
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
         if (this.num_headers > 0) {
@@ -26509,7 +26622,10 @@ function DashGuiPropertyBoxInterface () {
                 combo_options,    // Option List
                 selected_key,     // Selected
                 self.color,       // Color set
-                {"style": "row"}, // Options
+                {
+                    "style": "row",
+                    ...options
+                },
                 bool              // Bool (Toggle)
             );
             row.input.html.append(combo.html);
@@ -26618,20 +26734,19 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
-    this._label             = label;  // Unused
-    this.binder             = binder;
-    this.callback           = callback.bind(this.binder);
-    this.option_list        = option_list;
+    this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
+    this.callback = callback.bind(binder);
+    this.binder = binder;
+    this.option_list = option_list;
     this.selected_option_id = selected_option_id;
-    this.color              = color || Dash.Color.Light;
-    this.color_set          = null;
-    this.initialized        = false;
-    this.options            = options;
-    this.style              = this.options["style"] || "default";
-    this.additional_data    = this.options["additional_data"] || {};
-    this.bool               = bool;
+    this.color = color || Dash.Color.Light;
+    this.options = options;
+    this.bool = bool;
+    this.color_set = null;
+    this.row_buttons = [];
     this.click_skirt = null;
     this.searchable_min = 20;
+    this.initialized = false;
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
@@ -26640,15 +26755,22 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.list_offset_vertical = 0;
-    this.button_is_highlighted = false;
+    this.highlighted_button = null;
+    this.init_labels_drawn = false;
     this.previous_selected_option = null;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
+    this.style = this.options["style"] || "default";
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.multi_select = this.options["multi_select"] || false;
+    this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
+    // Originally wrote this to check programmatically for every combo, but
+    // got concerned that it was inefficient to check any and every combo
+    this.is_user_list = this.options["is_user_list"] || false;
     // This is managed in this.handle_arrow_input(), but should ideally also
     // be set back to false in whatever code is referencing this attribute
     this.enter_key_event_fired = false;
@@ -26750,14 +26872,19 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
     this.initialize_rows = function () {
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+            this.initialized = true;
+            return;
+        }
         var selected_obj = null;
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
         }
         if (this.selected_option_id) {
-            for (var x in this.option_list) {
-                if (this.option_list[x]["id"].toString() === this.selected_option_id.toString()) {
-                    selected_obj = this.option_list[x];
+            for (var option of this.option_list) {
+                if (option["id"].toString() === this.selected_option_id.toString()) {
+                    selected_obj = option;
                     break;
                 }
             }
@@ -26766,26 +26893,27 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.on_selection(selected_obj);
         }
         else {
+            // It appears that, in this case, this.initialized doesn't get set to true - is that deliberate?
             this.label.text("No Options");
         }
     };
     this.setup_load_dots = function () {
-        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight-Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight - Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
         this.html.append(this.load_dots.html);
         if (this.text_alignment.toString() === "right") {
             this.load_dots.html.css({
                 "position": "absolute",
-                "top": Dash.Size.Padding*0.5,
-                "right": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "top": Dash.Size.Padding * 0.5,
+                "right": -(Dash.Size.ButtonHeight - Dash.Size.Padding * 1.5),
             });
         }
         else {
             this.load_dots.html.css({
                 "position": "absolute",
-                "top": Dash.Size.Padding*0.5,
-                "left": -(Dash.Size.ButtonHeight-Dash.Size.Padding*1.5),
+                "top": Dash.Size.Padding * 0.5,
+                "left": -(Dash.Size.ButtonHeight - Dash.Size.Padding * 1.5),
             });
         }
     };
@@ -26796,7 +26924,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             "opacity": 1,
             "left": 0,
             "top": 0,
-            "width": "auto", // This is important so it can auto-size
+            "width": "auto"  // This is important so it can auto-size
         });
         // TODO: Make this.rows grab focus while active?
         this.rows.empty();
@@ -26806,8 +26934,16 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.rows.append(button.html);
             this.row_buttons.push(button);
         }
+        this.init_labels_drawn = true;
     };
-    this.on_click = function () {
+    this.on_click = function (skirt_clicked=false) {
+        if (!skirt_clicked && this.initialized && this.multi_select) {
+            if (!this.expanded) {
+                this.show();
+            }
+            // The user may still be making selections, let them click out when done (or hit the escape key)
+            return;
+        }
         if (this.flash_enabled) {
             this.flash();
         }
@@ -26827,12 +26963,21 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+        }
+        else {
+            this._on_selection(selected_option, ignore_callback, search_text);
+        }
+        this.initialized = true;
+        Dash.Temp.SetLastComboChanged(this);
+    };
+    this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         var label_text = selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
             this.label.text("ERROR");
             return;
         }
-
         this.hide();
         this.label.text(label_text);
         this.previous_selected_option = this.selected_option;
@@ -26841,8 +26986,28 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.initialized && !ignore_callback && this.callback) {
             this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
         }
-        this.initialized = true;
-        Dash.Temp.SetLastComboChanged(this);
+    };
+    this.update_label_for_multi_select = function () {
+        if (!this.multi_select) {
+            return;
+        }
+        this.label.text(this.get_multi_select_label());
+    };
+    this.get_multi_select_label = function () {
+        if (!this.multi_select) {
+            return "";
+        }
+        if (!this.row_buttons.length) {
+            return (this.name || "Multiple Options");
+        }
+        var selections = this.GetMultiSelections(false);
+        if (selections.length === 1) {
+            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "Nothing Selected");
+        }
+        if (selections.length > 1) {
+            return "Multiple Selections";
+        }
+        return (this.name || "Nothing Selected");
     };
     // Prior to showing, set the width of rows (this is all important, so it can auto-size)
     this.pre_show_size_set = function () {
@@ -26960,7 +27125,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
     this.hide = function () {
         this.expanded = false;
-        this.button_is_highlighted = false;
+        this.highlighted_button = null;
         this.hide_skirt();
         this.rows.stop();
         this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
@@ -26969,6 +27134,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
         if (!this.is_searchable) {
             $(window).off("keydown." + this.random_id);
+        }
+        if (this.initialized && this.multi_select && this.callback) {
+            var selections = this.GetMultiSelections();
+            this.update_label_for_multi_select();
+            this.callback(selections, this.additional_data);
+            Dash.Temp.SetLastComboChanged(this);
         }
     };
     this.setup_connections = function () {
@@ -27003,7 +27174,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return false;
                 }
                 if ($(e.target).hasClass("ComboClickSkirt")) {
-                    self.on_click();
+                    self.on_click(true);
                     e.preventDefault();
                     return false;
                 }
@@ -27012,7 +27183,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             setTimeout(
                 function () {
                     if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                      self.EnableSearchSelection();
+                        self.EnableSearchSelection();
                     }
                 },
                 300
@@ -27063,13 +27234,19 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             self.hide();
             return;
         }
-        else if (event.key === "Enter" && self.button_is_highlighted && !self.is_searchable) {
+        else if (event.key === "Enter" && self.highlighted_button) {
             self.enter_key_event_fired = true;
-            for (i in self.option_list) {
-                var option = self.option_list[i];
-                if (parseInt(i) === self.combo_option_index) {
-                    self.on_selection(option);
-                    break;
+            if (self.multi_select && self.highlighted_button.checkbox) {
+                self.highlighted_button.checkbox.Toggle();
+                self.update_label_for_multi_select();
+            }
+            else if (!this.is_searchable) {
+                for (i in self.option_list) {
+                    var option = self.option_list[i];
+                    if (parseInt(i) === self.combo_option_index) {
+                        self.on_selection(option);
+                        break;
+                    }
                 }
             }
         }
@@ -27080,7 +27257,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             for (i in buttons) {
                 var button = buttons[i];
                 if (parseInt(i) === parseInt(self.combo_option_index.toString())) {
-                    self.button_is_highlighted = true;
+                    self.highlighted_button = button;
                     button.SetSearchResultActive(true);
                 }
                 else {
@@ -27166,7 +27343,7 @@ function DashGuiComboSearch () {
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.selected_option["label_text"]);
+        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : this.selected_option["label_text"]);
         this.search_input.SetOnChange(this.on_search_text_changed, this);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
@@ -27223,6 +27400,9 @@ function DashGuiComboSearch () {
         this.manage_search_list();
     };
     this.on_search_text_submitted = function () {
+        if (this.multi_select) {
+            return;
+        }
         var search = this.search_input.Text();
         if (search.length < 1) {
             this.on_click();
@@ -27282,60 +27462,147 @@ function DashGuiComboSearch () {
 function DashGuiComboRow (combo, option) {
     this.combo = combo;
     this.option = option;
+    this.checkbox = null;
+    this.user_icon = null;
+    this.id = this.option["id"];
+    this.color = this.combo.color;
     this.color_set = this.combo.color_set;
-    this.label_text = this.option["label_text"] || this.option["display_name"];
+    this.is_user_list = this.combo.is_user_list;
+    this.multi_select = this.combo.multi_select;
     this.height = this.combo.height || Dash.Size.ButtonHeight;
+    this.label_text = this.option["label_text"] || this.option["display_name"];
     this.html = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.label = $("<div class='Combo'>" + this.label_text + "</div>");
     this.setup_styles = function () {
-        this.html.append(this.highlight);
-        this.html.append(this.label);
         this.html.css({
-            "height": this.height,
+            "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            "height": this.height
         });
         this.highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": "rgba(255, 255, 255, 0.2)",
-            "opacity": 0,
+            "opacity": 0
         });
         this.label.css({
+            "border-bottom": this.multi_select ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
             "text-align": this.combo.text_alignment,
             "height": this.height,
             "line-height": this.height + "px",
             "white-space": "nowrap",
-            "border-bottom": "1px solid rgba(255, 255, 255, 0.1)",
-            "color": this.color_set.Text.Base,
+            "color": this.color_set.Text.Base
         });
+        this.html.append(this.highlight);
+        this.html.append(this.label);
+        this.add_user_icon();
+        this.add_checkbox();
+        this.setup_connections();
+    };
+    this.IsMultiSelected = function () {
+        if (!this.multi_select || !this.checkbox) {
+            return false;
+        }
+        return this.checkbox.IsChecked();
     };
     // Prior to showing, set the width of rows to fit the content
     this.SetWidthToFit = function (label_width=null) {
         if (!label_width) {
             label_width = "fit-content";
         }
+        else if (!isNaN(parseInt(label_width))) {
+            if (this.multi_select) {
+                label_width -= this.height;
+            }
+            if (this.is_user_list) {
+                label_width -= this.height;
+            }
+        }
         this.html.css({
-            "width": "fit-content",
+            "width": "fit-content"
         });
         this.label.css({
             "width": label_width,
             "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.6,
+            "padding-right": Dash.Size.Padding * 0.6
         });
     };
     // Prior to showing, set the width of rows
     this.SetWidth = function (width) {
         this.html.css({
-            "width": width,
+            "width": width
         });
         this.label.css({
-            "width": width-Dash.Size.Padding,
-            "padding-left": Dash.Size.Padding*0.5,
-            "padding-right": Dash.Size.Padding*0.5,
+            "width": width - Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
         });
     };
     this.SetSearchResultActive = function (is_active) {
         this.set_highlight_active(is_active);
+    };
+    this.add_user_icon = function () {
+        if (!this.is_user_list) {
+            return;
+        }
+        this.html.css({
+            "padding-left": this.height
+        });
+        this.label.css({
+            "text-align": "left"
+        });
+        if (this.option["id"] === "none") {
+            return;
+        }
+        this.user_icon = $("<div></div>");
+        var icon_size = (this.height * 0.9) - (Dash.Size.Stroke * 1.5);
+        var img = Dash.User.GetImageByEmail(this.option["id"]);
+        this.user_icon.css({
+            "position": "absolute",
+            "top": this.height * 0.1,
+            "left": this.height * 0.1,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size * 0.75,
+            "border": (Dash.Size.Stroke * 0.25) + "px solid " + this.color.AccentGood,
+            "background-image": "url(" + img["thumb_url"] + ")",
+            "background-size": "cover"
+        });
+        this.html.append(this.user_icon);
+    };
+    this.add_checkbox = function () {
+        if (!this.multi_select) {
+            return;
+        }
+        this.html.css({
+            "padding-right": this.height
+        });
+        this.checkbox = new Dash.Gui.Checkbox(
+            "dash_gui_combo_row_" + this.id + "_" + this.label_text + "_checkbox",
+            false,
+            this.color
+        );
+        // Always start unchecked
+        if (!this.combo.init_labels_drawn) {
+            this.checkbox.SetChecked(false);
+        }
+        // Make sure the tray doesn't close when selecting a checkbox
+        this.checkbox.html.on("click", function (event) {
+            event.stopPropagation();
+        });
+        (function (self) {
+            self.checkbox.html.on("mouseenter", function () {
+                self.set_highlight_active(true);
+            });
+        })(this);
+        this.checkbox.html.css({
+            "position": "absolute",
+            "top": this.height * 0.2,
+            "right": this.height * 0.2,
+            "z-index": this.combo.rows.css("z-index") + 1
+        });
+        this.checkbox.SetIconColor(this.color_set.Text.Base);
+        this.html.append(this.checkbox.html);
     };
     this.set_highlight_active = function (is_active) {
         if (is_active) {
@@ -27354,20 +27621,47 @@ function DashGuiComboRow (combo, option) {
                 self.set_highlight_active(false);
             });
             self.label.on("click", function (e) {
-                self.combo.on_selection(self.option);
+                if (self.multi_select) {
+                    self.checkbox.Toggle();
+                }
+                else {
+                    self.combo.on_selection(self.option);
+                }
                 e.preventDefault();
                 return false;
             });
         })(this);
     };
     this.setup_styles();
-    this.setup_connections();
 }
 
 /**@member DashGuiCombo*/
 function DashGuiComboInterface () {
     this.SetHoverHint = function (hint) {
         this.label_container.attr("title", hint);
+    };
+    this.GetMultiSelections = function (ids_only=true) {
+        if (!this.multi_select) {
+            return;
+        }
+        var selections = [];  // Selected option(s)
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                selections.push(ids_only ? row.option["id"] : row.option);
+            }
+        }
+        return selections;
+    };
+    this.ClearAllMultiSelections = function () {
+        if (!this.multi_select) {
+            return;
+        }
+        for (var row of this.row_buttons) {
+            if (row.IsMultiSelected()) {
+                row.checkbox.Toggle(true);
+            }
+        }
+        this.update_label_for_multi_select();
     };
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
@@ -27472,8 +27766,13 @@ function DashGuiComboInterface () {
             );
         })(this, endpoint, params);
     };
+    // If the same item is selected, don't fire the callback on updating the list
     this.Update = function (combo_list, selected, ignore_callback=false) {
-        // If the same item is selected, don't fire the callback on updating the list
+        if (this.multi_select) {
+            this.update_label_for_multi_select();
+            // Do we need to do more here?
+            return;
+        }
         if (typeof(selected) == "string") {
             console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
             console.log("combo_list", combo_list);
@@ -27517,7 +27816,7 @@ function DashGuiComboStyleRow () {
         this.label_container.append(this.label);
         this.add_dropdown_icon(0.5);
         this.html.css({
-            "margin-right": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
@@ -27900,11 +28199,16 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.user_data = user_data || Dash.User.Data || {};
     this.options = options;  // TODO: convert to proper interface
     this.view_mode = view_mode;
+    this.callbacks = {};
     this.modal_box = null;
     this.property_box = null;
     this.modal_background = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
+    this.color = this.options["color"] || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
+    this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
     // True by default, but ideally, options["is_admin"] should be provided for added
     // security between non-admins. This is referenced by this.has_privileges when this element
     // is pertaining to the current user, so that users (and admins) can only change their own data.
@@ -27914,10 +28218,6 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     //     - the "Update Password" field is visible
     //     - the user image can be updated
     this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
-    this.color = this.options["color"] || Dash.Color.Light;
-    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
-    this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
     this.setup_styles = function () {
         if (!["settings", "preview"].includes(this.view_mode)) {
             console.error("Error: View mode is invalid");
@@ -28071,11 +28371,15 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
                     null,
                     this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges
                 );
+                // Extra callback if something else needs to happen in addition to the standard/basic set_data behavior
+                if (property_details["callback"]) {
+                    this.callbacks[property_details["key"]] = property_details["callback"];
+                }
             }
         }
     };
     this.add_user_image_box = function () {
-        var img_url = "dash/fonts/user_default.jpg";
+        var img_url = "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg";
         if (this.user_data["img"]) {
             img_url = this.user_data["img"]["thumb_url"];
         }
@@ -28158,8 +28462,12 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.get_data = function () {
         return this.user_data;
     };
-    this.set_data = function () {
-        // Setting data is taken care of in DashGuiPropertyBox
+    this.set_data = function (updated_data) {
+        // Basic/standard setting of data is taken care of in DashGuiPropertyBox
+        // This is an extra, optional follow-up to that
+        if (updated_data["key"] in this.callbacks) {
+            this.callbacks[updated_data["key"]](updated_data);
+        }
     };
     this.log_out = function () {
         Dash.Logout();
@@ -29423,6 +29731,9 @@ function DashGuiListRow (list, row_id) {
         row.SetExpandedSubListParentHeight(height_change);
     };
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
+        if (this.is_header) {
+            return;
+        }
         if (this.is_expanded) {
             this.Collapse();
             return;
@@ -29474,7 +29785,7 @@ function DashGuiListRow (list, row_id) {
         return target_size;
     };
     this.Collapse = function () {
-        if (!this.is_expanded) {
+        if (!this.is_expanded || this.is_header) {
             return;
         }
         if (Dash.Validate.Object(this.tmp_css_cache)) {
@@ -29624,6 +29935,9 @@ function DashGuiListRow (list, row_id) {
             self.column_box.on("click", function (e) {
                 if (e.target && e.target.className.includes(" fa-")) {
                     // Don't set selection if it was an icon button that was clicked
+                    return;
+                }
+                if (self.is_header) {
                     return;
                 }
                 self.list.SetSelection(self);

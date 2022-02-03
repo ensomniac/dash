@@ -1,4 +1,7 @@
-function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null, label_text="", label_first=true, include_border=false) {
+function DashGuiCheckbox (
+    local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
+    callback=null, label_text="", label_first=true, include_border=false
+) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
     this.color = color || Dash.Color.Light;
@@ -14,10 +17,14 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
     this.can_click = true;
     this._hover_hint = "";
     this.icon_color = null;
+    this.true_color = null;
+    this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
     this.is_read_only = false;
+    this.static_icon_name = null;
     this.able_to_toggle_cb = null;
+    this.include_highlight = false;
     this.checked = this.default_state;
     this.toggle_confirmation_msg = null;
     this.true_icon_name = "checked_box";
@@ -42,6 +49,10 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         return this.checked;
     };
 
+    this.LocalStorageKey = function () {
+        return this.local_storage_key;
+    };
+
     this.SetIconColor = function (color) {
         this.icon_color = color;
 
@@ -54,6 +65,12 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.icon_button.AddIconShadow(shadow);
     };
 
+    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = binder || this.binder ?
+            callback_with_bool_return.bind(binder ? binder : this.binder) :
+            callback_with_bool_return;
+    };
+
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
         if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
             if (hover_hint) {
@@ -64,16 +81,8 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         }
     };
 
-    this.LocalStorageKey = function () {
-        return this.local_storage_key;
-    };
-
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
-    };
-
-    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
-        this.able_to_toggle_cb = binder || this.binder ? callback_with_bool_return.bind(binder ? binder : this.binder) : callback_with_bool_return;
     };
 
     // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
@@ -92,13 +101,6 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         if (!this.checked) {
             this.redraw();
         }
-    };
-
-    this.DisableClick = function () {
-        this.can_click = false;
-
-        this.html.off("click");
-        this.icon_button.html.off("click");
     };
 
     this.SetReadOnly = function (is_read_only=true) {
@@ -127,6 +129,13 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.DisableClick();
 
         this.is_read_only = is_read_only;
+    };
+
+    this.DisableClick = function () {
+        this.can_click = false;
+
+        this.html.off("click");
+        this.icon_button.html.off("click");
     };
 
     this.Toggle = function (skip_callback=false) {
@@ -177,12 +186,31 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
         this.restyle_icon_button();
     };
 
+    // Should this just be the default?
+    this.AddHighlight = function () {
+        this.include_highlight = true;
+
+        this.icon_button.AddHighlight();
+
+        this.icon_button.highlight.css({
+            "bottom": -(Dash.Size.Padding * 0.5)
+        });
+    };
+
+    this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
+        this.static_icon_name = static_icon_name;
+        this.true_color = true_color;
+        this.false_color = false_color;
+
+        this.redraw();
+    };
+
     this.redraw = function () {
         this.html.empty();
 
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -194,12 +222,20 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
-        if (this.icon_color) {
+        if (this.static_icon_name) {
+            this.icon_button.SetIconColor(this.checked ? this.true_color : this.false_color);
+        }
+
+        else if (this.icon_color) {
             this.icon_button.SetIconColor(this.icon_color);
         }
 
         if (this.icon_shadow) {
             this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+
+        if (this.include_highlight) {
+            this.AddHighlight();
         }
 
         if (this.label_first) {
@@ -220,7 +256,11 @@ function DashGuiCheckbox (local_storage_key, default_state=true, color=null, hov
 
         this.restyle_icon_button();
 
-        if (!this.can_click) {
+        if (this.is_read_only) {
+            this.SetReadOnly();
+        }
+
+        else if (!this.can_click) {
             this.DisableClick();
         }
     };
