@@ -35,6 +35,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
 
+    // Originally wrote this to check programmatically for every combo, but
+    // got concerned that it was inefficient to check any and every combo
+    this.is_user_list = this.options["is_user_list"] || false;
+
     // This is managed in this.handle_arrow_input(), but should ideally also
     // be set back to false in whatever code is referencing this attribute
     this.enter_key_event_fired = false;
@@ -181,9 +185,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         if (this.selected_option_id) {
-            for (var x in this.option_list) {
-                if (this.option_list[x]["id"].toString() === this.selected_option_id.toString()) {
-                    selected_obj = this.option_list[x];
+            for (var option of this.option_list) {
+                if (option["id"].toString() === this.selected_option_id.toString()) {
+                    selected_obj = option;
 
                     break;
                 }

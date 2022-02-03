@@ -25889,7 +25889,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this,
             this.at_combo_options,
             null,
-            this.color
+            this.color,
+            {"is_user_list": true}
         );
         this.at_button.UseAsIconButtonCombo("at_sign", 1);
         this.at_button.DisableFlash();
@@ -26581,7 +26582,7 @@ function DashGuiPropertyBoxInterface () {
         });
         return button;
     };
-    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
         if (this.num_headers > 0) {
@@ -26614,7 +26615,10 @@ function DashGuiPropertyBoxInterface () {
                 combo_options,    // Option List
                 selected_key,     // Selected
                 self.color,       // Color set
-                {"style": "row"}, // Options
+                {
+                    "style": "row",
+                    ...options
+                },
                 bool              // Bool (Toggle)
             );
             row.input.html.append(combo.html);
@@ -26757,6 +26761,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
     this.label_container = $("<div class='ComboLabel Combo'></div>");
+    // Originally wrote this to check programmatically for every combo, but
+    // got concerned that it was inefficient to check any and every combo
+    this.is_user_list = this.options["is_user_list"] || false;
     // This is managed in this.handle_arrow_input(), but should ideally also
     // be set back to false in whatever code is referencing this attribute
     this.enter_key_event_fired = false;
@@ -26868,9 +26875,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             selected_obj = this.option_list[0];
         }
         if (this.selected_option_id) {
-            for (var x in this.option_list) {
-                if (this.option_list[x]["id"].toString() === this.selected_option_id.toString()) {
-                    selected_obj = this.option_list[x];
+            for (var option of this.option_list) {
+                if (option["id"].toString() === this.selected_option_id.toString()) {
+                    selected_obj = option;
                     break;
                 }
             }
@@ -27449,9 +27456,11 @@ function DashGuiComboRow (combo, option) {
     this.combo = combo;
     this.option = option;
     this.checkbox = null;
+    this.user_icon = null;
     this.id = this.option["id"];
     this.color = this.combo.color;
     this.color_set = this.combo.color_set;
+    this.is_user_list = this.combo.is_user_list;
     this.multi_select = this.combo.multi_select;
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.label_text = this.option["label_text"] || this.option["display_name"];
@@ -27479,6 +27488,7 @@ function DashGuiComboRow (combo, option) {
         });
         this.html.append(this.highlight);
         this.html.append(this.label);
+        this.add_user_icon();
         this.add_checkbox();
         this.setup_connections();
     };
@@ -27493,8 +27503,13 @@ function DashGuiComboRow (combo, option) {
         if (!label_width) {
             label_width = "fit-content";
         }
-        else if (!isNaN(parseInt(label_width)) && this.multi_select) {
-            label_width -= this.height;
+        else if (!isNaN(parseInt(label_width))) {
+            if (this.multi_select) {
+                label_width -= this.height;
+            }
+            if (this.is_user_list) {
+                label_width -= this.height;
+            }
         }
         this.html.css({
             "width": "fit-content"
@@ -27518,6 +27533,35 @@ function DashGuiComboRow (combo, option) {
     };
     this.SetSearchResultActive = function (is_active) {
         this.set_highlight_active(is_active);
+    };
+    this.add_user_icon = function () {
+        if (!this.is_user_list) {
+            return;
+        }
+        this.html.css({
+            "padding-left": this.height
+        });
+        this.label.css({
+            "text-align": "left"
+        });
+        if (this.option["id"] === "none") {
+            return;
+        }
+        this.user_icon = $("<div></div>");
+        var icon_size = (this.height * 0.9) - (Dash.Size.Stroke * 1.5);
+        var img = Dash.User.GetImageByEmail(this.option["id"]);
+        this.user_icon.css({
+            "position": "absolute",
+            "top": this.height * 0.1,
+            "left": this.height * 0.1,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size * 0.75,
+            "border": (Dash.Size.Stroke * 0.25) + "px solid " + this.color.AccentGood,
+            "background-image": "url(" + img["thumb_url"] + ")",
+            "background-size": "cover"
+        });
+        this.html.append(this.user_icon);
     };
     this.add_checkbox = function () {
         if (!this.multi_select) {

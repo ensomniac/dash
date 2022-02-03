@@ -180,7 +180,7 @@ function DashGuiPropertyBoxInterface () {
         return button;
     };
 
-    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
+    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;
 
@@ -221,7 +221,10 @@ function DashGuiPropertyBoxInterface () {
                 combo_options,    // Option List
                 selected_key,     // Selected
                 self.color,       // Color set
-                {"style": "row"}, // Options
+                {
+                    "style": "row",
+                    ...options
+                },
                 bool              // Bool (Toggle)
             );
 

@@ -3,9 +3,11 @@ function DashGuiComboRow (combo, option) {
     this.option = option;
 
     this.checkbox = null;
+    this.user_icon = null;
     this.id = this.option["id"];
     this.color = this.combo.color;
     this.color_set = this.combo.color_set;
+    this.is_user_list = this.combo.is_user_list;
     this.multi_select = this.combo.multi_select;
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.label_text = this.option["label_text"] || this.option["display_name"];
@@ -39,6 +41,7 @@ function DashGuiComboRow (combo, option) {
         this.html.append(this.highlight);
         this.html.append(this.label);
 
+        this.add_user_icon();
         this.add_checkbox();
         this.setup_connections();
     };
@@ -57,8 +60,14 @@ function DashGuiComboRow (combo, option) {
             label_width = "fit-content";
         }
 
-        else if (!isNaN(parseInt(label_width)) && this.multi_select) {
-            label_width -= this.height;
+        else if (!isNaN(parseInt(label_width))) {
+            if (this.multi_select) {
+                label_width -= this.height;
+            }
+
+            if (this.is_user_list) {
+                label_width -= this.height;
+            }
         }
 
         this.html.css({
@@ -87,6 +96,43 @@ function DashGuiComboRow (combo, option) {
 
     this.SetSearchResultActive = function (is_active) {
         this.set_highlight_active(is_active);
+    };
+
+    this.add_user_icon = function () {
+        if (!this.is_user_list) {
+            return;
+        }
+
+        this.html.css({
+            "padding-left": this.height
+        });
+
+        this.label.css({
+            "text-align": "left"
+        });
+
+        if (this.option["id"] === "none") {
+            return;
+        }
+
+        this.user_icon = $("<div></div>");
+
+        var icon_size = (this.height * 0.9) - (Dash.Size.Stroke * 1.5);
+        var img = Dash.User.GetImageByEmail(this.option["id"]);
+
+        this.user_icon.css({
+            "position": "absolute",
+            "top": this.height * 0.1,
+            "left": this.height * 0.1,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size * 0.75,
+            "border": (Dash.Size.Stroke * 0.25) + "px solid " + this.color.AccentGood,
+            "background-image": "url(" + img["thumb_url"] + ")",
+            "background-size": "cover"
+        });
+
+        this.html.append(this.user_icon);
     };
 
     this.add_checkbox = function () {
