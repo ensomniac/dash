@@ -170,6 +170,10 @@ function DashGuiPropertyBoxInterface () {
         return button;
     };
 
+    // this.AddDate = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
+            // Stub for a future situation where we have a data object
+    // };
+
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false) {
         var indent_px = Dash.Size.Padding*2;
         var indent_row = false;

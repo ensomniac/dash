@@ -73,7 +73,7 @@ class Collection:
     @property
     def AllIDs(self):
         if not hasattr(self, "_all_ids"):
-            self.GetAllIDs()
+            self._all_ids = self.GetAllIDs()
 
         return self._all_ids
 
