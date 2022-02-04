@@ -265,6 +265,9 @@ class ApiCore:
         return self._response
 
     def SendEmail(self, subject="", msg="", error="", notify_email_list=[]):
+        if not self.Params.get("f"):  # No need to send an email, safe to ignore
+            return
+
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
@@ -297,8 +300,8 @@ class ApiCore:
         if not error and self._response.get("error"):
             error = self._response["error"]
 
-            # Special case (there's not really a better place to handle this without breaking other functionality)
-            if error == "Incorrect login information":
+            # For special cases
+            if self.ignore_error_email(error):
                 return
 
             if self._response.get("_error"):
@@ -318,6 +321,16 @@ class ApiCore:
             return
 
         self.set_dash_globals()
+
+    # Special cases that are safe to ignore but don't have a better place to be handled without breaking other functionality
+    def ignore_error_email(self, error):
+        if error == "Incorrect login information":
+            return True
+
+        if self.__class__.__name__ == "Users" and self.Params.get("f") == "r" and "Invalid request token" in error:
+            return True
+
+        return False
 
     def set_dash_globals(self):
         """
