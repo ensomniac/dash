@@ -196,10 +196,10 @@ class Users:
                 "_error": f"user: {user}"
             }
 
-        new_password = self.request_params.get("p").strip()
+        new_password = (self.request_params.get("p") or "").strip()
 
         # If updating someone else's password from the client, there will be an 'email' param, otherwise, update the requesting user's password
-        email = self.request_params.get("email").lower().strip() or user["email"].lower().strip()
+        email = (self.request_params.get("email") or "").lower().strip() or user["email"].lower().strip()
 
         if not new_password or len(new_password) < 5:
             return {"error": "Select a password with at least 6 characters - x72378"}
