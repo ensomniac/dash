@@ -28099,1066 +28099,889 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.setup_styles();
 }
 
-function DashLayoutToolbar (binder, color) {
-    this.binder        = binder;
-    this.color         = color || this.binder.color || Dash.Color.Dark;
-    this.objects       = [];
-    this.html          = Dash.Gui.GetHTMLContext();
-    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
-    this.stroke_height = 1;
-    this.height        = Dash.Size.ButtonHeight + this.stroke_height;
-    this.refactor_itom_padding_requested = false;
-    DashLayoutToolbarInterface.call(this);
+function DashLayoutDashboard (binder, color=null) {
+    this.binder = binder;
+    this.color  = color || this.binder.color || Dash.Color.Dark;
+    this.modules = [];
+    this.canvas_containers = [];
+    this.margin = 1;
+    this.padding = 0.4;
+    this.rect_aspect_ratio = "2 / 1";
+    this.square_aspect_ratio = "1 / 1";
+    this.html = Dash.Gui.GetHTMLAbsContext();
+    this.VerticalSpaceTakenPercent = null;
+    this.VerticalSpaceAvailablePercent = null;
+    this.AddSquareTagModule = function () {
+        return this.add_module("square", "tag");
+    };
+    this.AddSquareRadialModule = function () {
+        return this.add_module("square", "radial");
+    };
+    this.AddRectListModule = function () {
+        return this.add_module("rect", "list");
+    };
+    this.AddFlexBarModule = function () {
+        return this.add_module("flex", "bar");
+    };
+    this.SetVerticalSpacePercent = function (num) {
+        num = parseInt(num);
+        if (isNaN(num)) {
+            console.error("Error: Invalid number passed to SetVerticalSpacePercent()");
+            return;
+        }
+        this.VerticalSpaceTakenPercent = num.toString() + "%";
+        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+    };
     this.setup_styles = function () {
+        this.SetVerticalSpacePercent(15);
         this.html.css({
-            "background": Dash.Color.Lighten(this.color.Background, 7),
-            "height": this.height, // +1 for the bottom stroke
-            "padding-right": Dash.Size.Padding * 0.5,
-            "display": "flex",
-            "padding-left": Dash.Size.Padding * 0.5
+            "background": this.color.Background,
+            "display": "flex"
         });
-        this.stroke_sep.css({
-            "background": this.color.Pinstripe,
-            "top": "auto",
-            "height": this.stroke_height
+    };
+    this.add_module = function (style, sub_style) {
+        var index = this.modules.length;
+        var module = new DashLayoutDashboardModule(this, style, sub_style);
+        this.html.append(module.html);
+        this.modules.push({
+            "module": module,
+            "style": style,
+            "sub_style": sub_style,
+            "index": index
         });
-        this.html.append(this.stroke_sep);
+        this.update_canvas_containers();
+        return module;
     };
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
+    this.get_available_vertical_space_percent = function () {
+        return (100 - parseInt(this.VerticalSpaceTakenPercent)).toString() + "%";
+    };
+    // Document scope
+    this.update_canvas_containers = function () {
+        var i;
+        var styles = [];
+        for (i in this.modules) {
+            styles.push(this.modules[i]["style"]);
         }
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
-    };
-    this.on_input_changed = function (obj_index) {
-        var obj = this.objects[obj_index];
-        obj["callback"](obj["html"].Text(), obj["html"]);
-    };
-    this.on_input_submitted = function (obj_index) {
-        var obj = this.objects[obj_index];
-        obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
-    };
-    this.on_button_clicked = function (obj_index, data=null) {
-        var obj = this.objects[obj_index];
-        obj["callback"](obj["html"], data, this);
-    };
-    this.refactor_item_padding = function () {
-        // refactor padding, but do it on the next frame since
-        // the most likely time to do this happens after packing
-        // a bunch of elements in the initialization of the Toolbar
-        if (this.refactor_itom_padding_requested) {
-            return;
-        }
-        this.refactor_itom_padding_requested = true;
-        (function (self) {
-            requestAnimationFrame(function () {
-                self._refactor_item_padding();
-            });
-        })(this);
-    };
-    // Note: Never call this directly. Instead, use this.refactor_item_padding()
-    this._refactor_item_padding = function () {
-        if (!this.refactor_itom_padding_requested) {
-            return;
-        }
-        this.refactor_itom_padding_requested = false;
-        for (var i = 0; i < this.objects.length; i++) {
-            var html = this.objects[i]["html_elem"];
-            if (i === (this.objects.length - 1)) {
-                // This is the last element, and it gets no right-margin
-                //since the toolbar itself has a margin built in to the left and right
-                html.css({"margin-right": 0, "margin-left": 0});
+        for (i in this.canvas_containers) {
+            try {
+                document.body.removeChild(this.canvas_containers[i]["container"]);
+                document.body.removeChild(this.canvas_containers[i]["script"]);
             }
+            catch {
+                // Not a child, continue/pass
+            }
+            if (window[this.canvas_containers[i]["id"]]) {
+                delete window[this.canvas_containers[i]["id"]];
+            }
+        }
+        
+        this.canvas_containers = [];
+        for (i in this.modules) {
+            var canvas = this.modules[i]["module"].canvas;
+            if (!canvas) {
+                continue;
+            }
+            this.add_canvas(canvas, styles, this.modules[i]["index"]);
+            if (!this.modules[i]["module"].canvas["gui"]) {
+                var gui = window[this.modules[i]["module"].canvas["id"]];
+                if (gui) {
+                    this.modules[i]["module"].canvas["gui"] = gui;
+                }
+            }
+        }
+    };
+    // Document scope
+    this.add_canvas = function (canvas, styles, index) {
+        var canvas_container = canvas["container"];
+        var canvas_script = canvas["script"];
+        if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
+            console.error("Error: Something went wrong when updating canvas containers x0741");
+            return;
+        }
+        var top_container = document.createElement("div");
+        top_container.style.display = "flex";
+        top_container.style.position = "absolute";
+        top_container.style.width = "100%";
+        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
+        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
+        for (var i in styles) {
+            if (parseInt(i) === index) {
+                top_container.appendChild(canvas_container);
+            }
+            
             else {
-                html.css({"margin-right": Dash.Size.Padding * 0.5, "margin-left": 0});
+                top_container.appendChild(this.get_placeholder_container(styles[i], i));
             }
         }
+        // IMPORTANT: Must be at document level (added dynamically) for Chart script objects to properly display
+        document.body.appendChild(top_container);
+        document.body.appendChild(canvas_script);
+        var new_container_data = {...canvas};
+        new_container_data["container"] = top_container;
+        this.canvas_containers.push(new_container_data);
+    };
+    // Document scope
+    this.get_placeholder_container = function (type, index) {
+        var container = document.createElement("div");
+        container.style.padding = this.padding.toString() + "vh";  // TEMP
+        container.style.margin = this.margin.toString() + "vh";  // TEMP
+        if (type === "square") {
+            container.style.aspectRatio = this.square_aspect_ratio;
+        }
+        else if (type === "rect") {
+            container.style.aspectRatio = this.rect_aspect_ratio;
+        }
+        else if (type === "flex") {
+            container.style.flex = "1";
+        }
+        if (parseInt(index) > 0) {
+            container.style.marginLeft = "0px";
+        }
+        return container;
     };
     this.setup_styles();
 }
 
-/**@member DashLayoutToolbar */
-function DashLayoutToolbarInterface () {
-    this.AddExpander = function () {
-        var expander = $("<div></div>");
-        expander.css({
-            "flex-grow": 2,
-        });
-        this.html.append(expander);
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html_elem": expander,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        return expander;
+function DashLayoutDashboardModule (dashboard, style, sub_style) {
+    this.dashboard = dashboard;
+    this.style = style;
+    this.sub_style = sub_style;
+    this.color = this.dashboard.color || Dash.Color.Dark;
+    this.modules = this.dashboard.modules;
+    this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
+    this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
+    this.html = null;
+    this.styles = [];
+    this.header = $("<div>SetHeaderText()</div>");
+    this.header_text = null;
+    this.bold_font = "sans_serif_bold";
+    this.primary_color = this.color.AccentGood;
+    this.margin = this.dashboard.margin;
+    this.padding = this.dashboard.padding;
+    this.canvas = null;
+    this.secondary_color = this.color.Stroke;
+    this.text_css = {
+        "font-family": this.bold_font,
+        "overflow": "hidden",
+        "text-overflow": "ellipsis",
+        "white-space": "nowrap"
     };
-    this.GetHeight = function () {
-        return this.height;
+    this.centered_text_css = {
+        ...this.text_css,
+        "text-align": "center",
+        "margin-left": "auto",
+        "margin-right": "auto"
     };
-    this.AddSpace = function (width) {
-        var space = $("<div></div>");
-        space.css({
-            "width": width,
-        });
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html_elem": space,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        this.html.append(space);
+    // Applies to all module styles
+    this.SetHeaderText = function (text) {
+        text = text.toString().toUpperCase();
+        this.header_text = text;
+        this.header.text(text);
     };
-    this.AddIconButton = function (icon_name, callback, width=null, data=null) {
-        var obj_index = this.objects.length;
-        var button = null;
-        (function (self, obj_index, data) {
-            button = new Dash.Gui.IconButton(
-                icon_name,
-                function () {
-                    self.on_button_clicked(obj_index, data);
-                },
-                self,
-                null,
-                {"style": "toolbar"}
-            );
-            self.html.append(button.html);
-            self.objects.push({
-                "html": button,
-                "html_elem": button.html,
-                "callback": callback.bind(self.binder),
-                "index": obj_index
-            });
-        })(this, obj_index, data);
-        if (width) {
-            button.SetIconSize(width);
+    this.initialize_style = function () {
+        if (this.style === "flex") {
+            DashLayoutDashboardModuleFlex.call(this);
         }
-        this.refactor_item_padding();
-        return button;
-    };
-    this.AddButton = function (label_text, callback, width=null, data=null) {
-        var obj_index = this.objects.length;
-        var button = null;
-        (function (self, obj_index, data) {
-            button = new Dash.Gui.Button(
-                label_text,
-                function () {
-                    self.on_button_clicked(obj_index, data);
-                },
-                self,
-                null,
-                {"style": "toolbar"}
-            );
-            self.html.append(button.html);
-            self.objects.push({
-                "html": button,
-                "html_elem": button.html,
-                "callback": callback.bind(self.binder),
-                "index": obj_index
-            });
-        })(this, obj_index, data);
-        this.refactor_item_padding();
-        return button;
-    };
-    this.AddHTML = function (html) {
-        this.html.append(html);
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html_elem": html,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-    };
-    this.AddUploadButton = function (label_text, callback, bind, api, params) {
-        var button = new Dash.Gui.Button(
-            label_text,
-            callback,
-            bind,
-            null,
-            {"style": "toolbar"}
-        );
-        button.SetFileUploader(api, params);
-        this.html.append(button.html);
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html": button,
-            "html_elem": button.html,
-            "callback": callback,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        return button;
-    };
-    this.AddDivider = function () {
-        var divider_line = this.AddLabel("", false);
-        divider_line.html.css({
-            "padding-left": 0,
-            "margin-left": Dash.Size.Padding * 0.7,
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding * 0.2,
-        });
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html": divider_line,
-            "html_elem": divider_line.html,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        return divider_line;
-    };
-    // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color);
-        header.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding,
-        });
-        this.html.append(header.html);
-        if (!add_end_border) {
-            return header;
+        else if (this.style === "square") {
+            DashLayoutDashboardModuleSquare.call(this);
         }
-        var end_border = $("<div></div>");
-        end_border.css({
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-bottom": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding,
-            "margin-left": Dash.Size.Padding * 0.5,
-            "left": -Dash.Size.Padding*0.25,
-            "top": 0,
-            "bottom": 0,
-            "width": Dash.Size.Padding*0.5,
-            "background": this.color.AccentGood,
-        });
-        this.html.append(end_border);
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html_elem": end_border,
-            "callback": null,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        return header;
-    };
-    this.AddText = function (text, color=null) {
-        var label = this.AddLabel(text, false, color);
-        label.border.remove();
-        label.html.css({
-            "padding-left": 0,
-            "margin-top": 0
-        });
-        label.label.css({
-            "font-family": "sans_serif_normal",
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "padding-left": 0
-        });
-        this.html.append(label.html);
-        var obj_index = this.objects.length;
-        this.objects.push({
-            "html": label,
-            "html_elem": label.html,
-            "callback": null,
-            "index": obj_index
-        });
-        this.refactor_item_padding();
-        return label;
-    };
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
-        var input = this.AddInput(placeholder_label, callback, options, additional_data);
-        input.EnableAutosave();
-        var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
-        var width = options["width"] || Dash.Size.ColumnWidth;
-        var text_align = "left";
-        if (options["center"]) {
-            text_align = "center";
+        else if (this.style === "rect") {
+            DashLayoutDashboardModuleRect.call(this);
         }
-        input.Flatten();
-        input.html.css({
-            "padding": 0,
-            "margin": 0,
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding * 0.5,
-            "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
-            "height": height,
-            "width": width
-        });
-        input.input.css({
-            "color": "rgb(20, 20, 20)",
-            "height": height,
-            "margin": 0,
-            "padding": 0,
-            "line-height": height + "px",
-            "top": -Dash.Size.Padding * 0.5,
-            "width": width,
-            "text-align": text_align
-        });
-        this.objects.push({
-            "html": input,
-            "html_elem": input.html,
-            "callback": null,
-            "index": this.objects.length
-        });
-        this.refactor_item_padding();
-        return input;
+        else {
+            console.error("Error: Invalid Module Style:", this.style);
+            return;
+        }
+        if (!this.styles.includes(this.sub_style)) {
+            console.error("Error: Invalid Module Sub-Style:", this.sub_style);
+            return;
+        }
+        this.html = Dash.Gui.GetHTMLBoxContext();
+        this.add_header();
+        this.setup_styles();
+        this.modify_styles();
     };
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
-        var obj_index = this.objects.length;
-        var input = new Dash.Gui.Input(placeholder_label, this.color);
-        input.html.css({
+    this.modify_styles = function () {
+        this.html.css({
             "background": this.color.BackgroundRaised,
-            "padding-left": Dash.Size.Padding * 0.5,
-            "margin-top": Dash.Size.Padding * 0.5
+            "margin": this.margin.toString() + "vh",  // TEMP
+            "padding": this.padding.toString() + "vh"  // TEMP
         });
-        input.input.css({
-            "padding-left": 0,
-            "color": this.color.Input.Text.Base
-        });
-        var obj = {
-            "html": input,
-            "html_elem": input.html,
-            "callback": callback.bind(this.binder),
-            "index": obj_index,
-            "additional_data": additional_data
-        };
-        if (options["on_enter"]) {
-            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
-        }
-        this.objects.push(obj);
-        (function (self, input, obj_index, obj) {
-            input.SetOnChange(
-                function () {
-                    self.on_input_changed(obj_index);
-                },
-                self
-            );
-            if (obj["on_enter_callback"]) {
-                input.SetOnSubmit(
-                    function () {
-                        self.on_input_submitted(obj_index);
-                    },
-                    self
-                );
-            }
-            input.input.on("dblclick", function () {
-                input.SetText("");
-                self.on_input_changed(obj_index);
+        if (this.modules && this.modules.length > 0) {
+            this.html.css({
+                "margin-left": 0
             });
-        })(this, input, obj_index, obj);
-        this.html.append(input.html);
-        this.refactor_item_padding();
-        return input;
+        }
     };
-    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
-        var obj_index = this.objects.length;
-        if (callback) {
-            callback = callback.bind(this.binder);
+    this.add_header = function () {
+        this.header.css({
+            ...this.centered_text_css,
+            "color": this.secondary_color,
+            "width": "95%",
+            "font-size": "1vh",  // TEMP
+            "height": "1vh",  // TEMP
+        });
+        if (this.header_text) {
+            this.SetHeaderText(this.header_text);
         }
-        (function (self, selected_id, combo_options, callback, return_full_option, additional_data) {
-            var _callback = function (selected_option, previous_selected_option, additional_data) {
-                self.on_combo_updated(
-                    callback,
-                    return_full_option ? selected_option : selected_option["id"],
-                    return_full_option ? previous_selected_option : previous_selected_option["id"],
-                    additional_data
-                );
-            };
-            var combo = new Dash.Gui.Combo (
-                selected_id,      // Label
-                _callback,        // Callback
-                self,             // Binder
-                combo_options,    // Option List
-                selected_id,      // Selected
-                self.color,             // Color set
-                {"style": "row", "additional_data": additional_data}
+        this.html.append(this.header);
+    };
+    this.initialize_style();
+}
+
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleFlex () {
+    this.styles = ["bar"];
+    this.bar_data = {};
+    this.SetBarData = function (data) {
+        if (this.sub_style !== "bar") {
+            console.error("Error: SetBarData() only applies to Flex-Bar Modules");
+            return;
+        }
+        if (!Dash.Validate.Object(data)) {
+            console.error("Error: SetBarData() requires a dictionary to be passed in");
+            return;
+        }
+        if (!data["data"] || !data["order"]) {
+            console.error("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
+            return;
+        }
+        this.bar_data = data;
+        this.update_bar_data(data);
+    };
+    this.setup_styles = function () {
+        this.html.css({
+            "flex": 1
+        });
+        if (this.sub_style === "bar") {
+            this.setup_bar_style();
+        }
+    };
+    this.setup_bar_style = function () {
+        this.setup_bar_gui();
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!Dash.Validate.Object(self.bar_data)) {
+                        self.update_bar_data({"-": 1, "--": 2, "---": 3});
+                    }
+                },
+                1000
             );
-            self.html.append(combo.html);
-            combo.html.css({
-                "margin-top": Dash.Size.Padding*0.5,
-                "margin-right": Dash.Size.Padding*0.5,
-                "height": Dash.Size.RowHeight,
-            });
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px",
-            });
-            self.objects.push({
-                "html": combo,
-                "html_elem": combo.html,
-                "callback": callback.bind(self.binder),
-                "index": obj_index
-            });
-        })(this, selected_id, combo_options, callback, return_full_option, additional_data);
-        var obj = this.objects[obj_index];
-        this.refactor_item_padding();
-        return obj["html"];
+        })(this);
+    };
+    this.setup_bar_gui = function () {
+        var config = this.get_bar_config();
+        var canvas = document.createElement("canvas");
+        var script = document.createElement("script");
+        var canvas_container = document.createElement("div");
+        var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+        var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
+        var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
+        var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
+        canvas_container.style.height = "11.25vh";  // TEMP
+        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
+        canvas_container.style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
+        canvas_container.style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
+        canvas_container.style.overflow = "hidden";
+        canvas_container.style.opacity = "0";
+        canvas_container.style.flex = "1";
+        canvas.id = canvas_id;
+        script.type = "text/javascript";
+        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+        canvas_container.appendChild(canvas);
+        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+    };
+    this.update_bar_data = function (data) {
+        if (!this.canvas) {
+            return;
+        }
+        var bar_gui = this.canvas["gui"] || window[this.canvas["id"]];
+        // Try again if gui hasn't loaded yet (should only happen when initializing)
+        if (!bar_gui.data) {
+            (function (self, data) {
+                setTimeout(
+                    function () {
+                        self.SetBarData(data);
+                    },
+                    250
+                );
+            })(this, data);
+            return;
+        }
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = bar_gui;
+        }
+        if (this.canvas["container"].style.opacity !== "1") {
+            this.canvas["container"].animate({"opacity": 1}, 1000);
+            this.canvas["container"].style.opacity = "1";
+        }
+        [bar_gui.data.labels, bar_gui.data.datasets[0].data] = this.get_bar_data_sets(data);
+        bar_gui.update();
+    };
+    this.get_bar_data_sets = function (data) {
+        if (!Dash.Validate.Object(data)) {
+            data = this.bar_data;
+        }
+        var labels = data["order"];
+        var values = [];
+        for (var i in data["order"]) {
+            var key = data["order"][i];
+            var value = parseInt(data["data"][key]);
+            if (isNaN(value)) {
+                console.error("Error: Bar data object values must be numbers");
+                return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
+            }
+            values.push(value);
+        }
+        return [labels, values];
+    };
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
+    this.get_bar_config = function () {
+        var [labels, values] = this.get_bar_data_sets();
+        return {
+            "type": "bar",
+            "data": {
+                "labels": labels,
+                "datasets": [{
+                    "label": "My First Dataset",
+                    "data": values,
+                    "backgroundColor": this.primary_color,
+                    "barPercentage": 1.15
+                }]
+            },
+            "options": {
+                "responsive": true,
+                "maintainAspectRatio": false,
+                "scales": {
+                    "y": {
+                        "beginAtZero": true,
+                        "grid": {
+                            "color": this.secondary_color,
+                            "borderColor": this.secondary_color,
+                            "tickLength": 4
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": 4,
+                            "font": {
+                                "family": this.bold_font
+                            }
+                        }
+                    },
+                    "x": {
+                        "grid": {
+                            "display": false
+                        },
+                        "ticks": {
+                            "color": this.secondary_color,
+                            "padding": -5,
+                            "font": {
+                                "family": this.bold_font,
+                                "size": 16
+                            }
+                        }
+                    },
+                },
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
+        };
     };
 }
 
-function DashLayoutTabs (binder, side_tabs) {
-    this.binder = binder;
-    this.side_tabs = side_tabs;
-    this.all_content = [];
-    this.selected_index = -1;
-    this.current_index = null;
-    this.html = $("<div></div>");
-    this.tab_top = $("<div></div>");
-    this.tab_bottom = $("<div></div>");
-    this.content_area = $("<div></div>");
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
-    if (this.side_tabs) {
-        this.color = Dash.Color.Dark;
-        this.tab_area = $("<div></div>");
-        this.tab_middle = $("<div></div>");
-        this.tab_area_size = Dash.Size.ColumnWidth;
-    }
-    else {  // TODO: This should probably also be converted to a better div grouping
-        this.color = Dash.Color.Light;
-        this.list_backing = $("<div></div>");
-        this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
-    }
-    this.setup_styles = function () {
-        if (this.side_tabs) {
-            this.set_styles_for_side_tabs();
-        }
-        else {
-            this.set_styles_for_top_tabs();
-        }
-        (function (self) {
-            requestAnimationFrame(function () {
-                self.load_last_selection();
-            });
-        })(this);
-    };
-    this.OnTabChanged = function (callback) {
-        this.on_tab_changed_cb = callback.bind(this.binder);
-    };
-    this.GetCurrentIndex = function () {
-        return this.current_index;
-    };
-    this.LoadIndex = function (index) {
-        if (index > this.all_content.length - 1) {
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleRect () {
+    this.styles = ["list"];
+    this.list_rows = [];
+    this.list_data = [];
+    // Expects list of dicts with a single key/value pair (value should be a string), where
+    // the key displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data_list) {
+        if (this.sub_style !== "list") {
+            console.error("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
-        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
-        this.current_index = index;
-        var button = null;
-        for (var i in this.all_content) {
-            var content_data = this.all_content[i];
-            if (parseInt(i) === parseInt(index)) {
-                content_data["button"].SetSelected(true);
-                button = content_data["button"];
-            }
-            else {
-                content_data["button"].SetSelected(false);
-            }
+        if (!Array.isArray(data_list)) {
+            console.error("Error: SetListData() requires a list of dicts to be passed in");
+            return;
         }
-        this.content_area.empty();
-        var inst_class;
-        var content_html;
-        if (typeof this.all_content[index]["content_div_html_class"] === "object") {
-            content_html = this.all_content[index]["content_div_html_class"];
+        this.list_data = data_list;
+        this.redraw_list_rows();
+    };
+    this.setup_styles = function () {
+        this.html.css({
+            "aspect-ratio": this.rect_aspect_ratio
+        });
+        if (this.sub_style === "list") {
+            this.setup_list_style();
         }
-        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
-            // DashGlobalImpactChange | 12/21/21 | Ryan
-            // Updating this function to pass optional_args to callback while also
-            // binding the callback correctly to the parent class
-            // This is likely a very low impact change that *shouldn't* affect anything
-            var html_class = this.all_content[index]["content_div_html_class"];
-            var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
-            var optional_args = this.all_content[index]["optional_args"];
-            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_args) && Array.isArray(optional_args);
-            if (this.is_class(html_class)) {
-                if (unpack) {
-                    inst_class = new callback(...optional_args);
-                }
-                else {
-                    if (optional_args) {
-                        inst_class = new callback(optional_args);
+    };
+    this.setup_list_style = function () {
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.list_rows.length < 1) {
+                        self.redraw_list_rows();
                     }
-                    else {
-                        inst_class = new callback();
-                    }
-                }
-                content_html = inst_class.html;
-            }
-            else {  // Calling a function with 'new' will result in an incorrect binding
-                if (unpack) {
-                    inst_class = callback(...optional_args);
-                }
-                else {
-                    if (optional_args) {
-                        inst_class = callback(optional_args);
-                    }
-                    else {
-                        inst_class = callback();
-                    }
-                }
-                content_html = inst_class.html;
-            }
+                },
+                1000
+            );
+        })(this);
+    };
+    this.get_list_rows = function () {
+        this.list_rows = [];
+        if (this.list_data.length < 1) {
+            this.list_data = [
+                {"-": "--"},
+                {"--": "--"},
+                {"---": "--"},
+            ];
         }
-        else {
-            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
-        }
-        if (!content_html) {
-            if (parseInt(index) === 0) {
-                console.error("Error: Unknown content!");
-                content_html = $("<div>Error Loading Content</div>");
+        for (var i in this.list_data) {
+            if (this.list_rows.length >= 3) {
+                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                break;
             }
-            else {
-                console.error("Error: Invalid index", index, ", reloading index 0");
-                this.LoadIndex(0);
+            var data = this.list_data[i];
+            if (!Dash.Validate.Object(data)) {
+                console.error("Error: Rect List Module data expects a list of dicts");
                 return;
             }
-        }
-        this.content_area.append(content_html);
-        if (this.on_tab_changed_cb) {
-            this.on_tab_changed_cb(this.all_content[index], inst_class);
-        }
-        if (this.all_content[index]["url_hash_text"]) {
-            Dash.History.TabAdd(
-                this.all_content[index]["url_hash_text"],
-                this,
-                index
-            );
+            var key = Object.keys(data)[0];
+            this.list_rows.push(this.get_list_row(key, data[key]));
         }
     };
-    this.AppendHTML = function (html) {
-        html.css({
-            "margin-bottom": 1
+    this.redraw_list_rows = function () {
+        this.get_list_rows();
+        this.html.empty();
+        this.add_header();
+        for (var i in this.list_rows) {
+            this.html.append(this.list_rows[i]);
+            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
+        }
+    };
+    this.get_list_row = function (key, value) {
+        var list_row = $("<div></div>");
+        var content = $("<div></div>");
+        var key_text = $("<div>" + key + "</div>");
+        var value_text = $("<div>" + value + "</div>");
+        list_row.css({
+            "width": "98%",
+            "margin-top": "3%",
+            "margin-bottom": "3%",
+            "opacity": 0,  // For animation
+            "height": "2.75vh"  // TEMP
         });
-        this.tab_top.append(html);
+        content.css({
+            "display": "flex",
+            "height": "2.75vh"  // TEMP
+        });
+        key_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            "font-size": "1.5vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "17vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        value_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            "text-align": "right",
+            "font-size": "2.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "4vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        content.append(this.get_dot_icon().html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+        list_row.append(content);
+        list_row.append(this.get_divider_line());
+        return list_row;
     };
-    this.MidpendHTML = function (html) {
-        if (!this.side_tabs) {
-            console.log("MidpendHTML only works for side tabs right now");
+    this.get_dot_icon = function () {
+        var dot_icon = new Dash.Gui.Icon(
+            this.color,
+            "circle_dot",
+            Dash.Size.ButtonHeight
+        );
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        return dot_icon;
+    };
+    this.get_divider_line = function () {
+        var line = $("<div></div>");
+        line.css({
+            "background": this.secondary_color,
+            "height": "0.1vh"  // TEMP
+        });
+        return line;
+    };
+}
+
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleRect () {
+    this.styles = ["list"];
+    this.list_rows = [];
+    this.list_data = [];
+    // Expects list of dicts with a single key/value pair (value should be a string), where
+    // the key displays on the left side of the list, and value displays on the right side
+    this.SetListData = function (data_list) {
+        if (this.sub_style !== "list") {
+            console.error("Error: SetListData() only applies to Rect-List Modules");
             return;
         }
-        html.css({
-            "margin-top": 1,
-            "margin-bottom": 1
-        });
-        this.tab_middle.append(html);
-    };
-    this.PrependHTML = function (html) {
-        html.css({
-            "margin-top": 1
-        });
-        this.tab_bottom.append(html);
-    };
-    this.AppendImage = function (img_url, height=null) {
-        // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
-        // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
-        //  container so they derive from some abstraction to simplify append/prepend
-        var image = $("<div></div>");
-        image.css({
-            "height": height || Dash.Size.RowHeight * 2,
-            "background-image": "url(" + img_url + ")",
-            "background-repeat": "no-repeat",
-            "background-size": "contain",
-            "background-position": "center"
-        });
-        this.tab_top.append(image);
-        return image;
-    };
-    this.Append = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
-        return this._add(label_text, content_div_html_class, this.tab_top, optional_args, additional_content_data);
-    };
-    this.Midpend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
-        if (!this.side_tabs) {
-            console.error("Error: Midpend only works for side tabs for now");
+        if (!Array.isArray(data_list)) {
+            console.error("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
-        return this._add(label_text, content_div_html_class, this.tab_middle, optional_args, additional_content_data);
+        this.list_data = data_list;
+        this.redraw_list_rows();
     };
-    this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
-        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
-    };
-    this.is_class = function (func) {
-        var dummy = Function.prototype.toString.call(func);
-        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
-    };
-    this.set_styles_for_side_tabs = function () {
+    this.setup_styles = function () {
         this.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "background": this.color.Tab.AreaBackground,
+            "aspect-ratio": this.rect_aspect_ratio
         });
-        this.content_area.css({
-            "position": "absolute",
-            "top": 0,
-            "left": this.tab_area_size,
-            "bottom": 0,
-            "right": 0,
-            "background": Dash.Color.GetOpposite(this.color).Background,
-        });
-        this.tab_area.css({
-            "display": "flex",
-            "flex-direction": "column",
-            "position": "absolute",
-            "top": 0,
-            "left": 0,
-            "bottom": 0,
-            "width": this.tab_area_size
-        });
-        this.tab_top.css({
-            "width": this.tab_area_size
-        });
-        this.tab_middle.css({
-            "margin-top": Dash.Size.Padding * 0.2,
-            "margin-bottom": Dash.Size.Padding * 0.2,
-            "flex-grow": 2,
-            "overflow-y": "auto",
-            "width": this.tab_area_size
-        });
-        this.tab_bottom.css({
-            "width": this.tab_area_size
-        });
-        this.tab_area.append(this.tab_top);
-        this.tab_area.append(this.tab_middle);
-        this.tab_area.append(this.tab_bottom);
-        this.html.append(this.content_area);
-        this.html.append(this.tab_area);
-    };
-    this.set_styles_for_top_tabs = function () {
-        this.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "background": this.color.Tab.AreaBackground,
-        });
-        this.list_backing.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": this.tab_area_size
-        });
-        this.tab_top.css({
-            "position": "absolute",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "display": "flex",
-            "height": this.tab_area_size
-        });
-        this.tab_bottom.css({
-            "position": "absolute",
-            "right": 0,
-            "top": 0,
-            "display": "flex",
-            "height": this.tab_area_size
-        });
-        // The right side / non-tab area / content
-        this.content_area.css({
-            "position": "absolute",
-            "inset": 0,
-            "overflow-y": "auto",
-            // "background": Dash.Color.GetOpposite(this.color).Background,
-            "background": this.color.Background,
-            "top": this.tab_area_size
-        });
-        this.html.append(this.list_backing);
-        this.html.append(this.tab_top);
-        this.html.append(this.tab_bottom);
-        this.html.append(this.content_area);
-    };
-    this.load_last_selection = function () {
-        if (parseInt(this.selected_index) !== -1) {
-            // A selection was already made externally
-            return;
+        if (this.sub_style === "list") {
+            this.setup_list_style();
         }
-        if (this.all_content.length === 0) {
-            return;
-        }
-        var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
-        if (last_index > this.all_content.length - 1) {
-            last_index = 0;
-        }
-        this.LoadIndex(last_index);
     };
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_args=null, additional_content_data={}) {
-        var content_data = {
-            "label_text": label_text,
-            "content_div_html_class": content_div_html_class,
-            "button": null,
-            // Any extra arg to pass to the class (if it's an array, it can be unpacked by passing "unpack_params": true (in additional_content_data))
-            "optional_args": optional_args,
-            // Extra data that doesn't belong in optional_args (since optional_args gets sent to the callback)
-            ...additional_content_data
-        };
-        (function (self, index) {
-            var style = self.side_tabs ? "tab_side" : "tab_top";
-            content_data["button"] = new Dash.Gui.Button(
-                label_text,                         // Label
-                function () {                       // Callback
-                    self.LoadIndex(index);
+    this.setup_list_style = function () {
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.list_rows.length < 1) {
+                        self.redraw_list_rows();
+                    }
                 },
-                self,                               // Binder
-                self.color,                         // Dash Color Set
-                {"style": style}                    // Options
+                1000
             );
-        })(this, this.all_content.length);
-        anchor_div = anchor_div || this.tab_top;
-        anchor_div.append(content_data["button"].html);
-        this.all_content.push(content_data);
-        return content_data["button"];
-    };
-    this.setup_styles();
-}
-
-class DashLayoutTabsTop extends DashLayoutTabs {
-    constructor(Binder) {
-        super(Binder, false);
-    };
-}
-
-class DashLayoutTabsSide extends DashLayoutTabs {
-    constructor(Binder) {
-        super(Binder, true);
-    };
-}
-
-function DashLayoutSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback=null) {
-    this.binder = binder;
-    this.on_selection_callback = on_selection_callback.bind(this.binder);
-    this.get_data_callback = get_data_callback.bind(this.binder);
-    this.on_row_draw_callback = on_row_draw_callback ? on_row_draw_callback.bind(this.binder) : null;
-    this.rows = {};
-    this.id_list = [];
-    this.RowContent = {};
-    this.filter_text = "";
-    this.search_terms = [];
-    this.html = $("<div></div>");
-    this.row_content_classes = {};
-    this.auto_select_disabled = false;
-    this.current_selected_row_id = null;
-    this.list_container = $("<div></div>");
-    this.row_height = Dash.Size.ButtonHeight;
-    this.color = this.binder.color || Dash.Color.Light;
-    this.input = new DashLayoutSearchableListSearchInput(this);
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
-    this.setup_styles = function () {
-        this.html.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "background": Dash.Color.Lighten(this.color.Background, 5)
-        });
-        this.list_container.css({
-            "position": "absolute",
-            "left": 0,
-            "top": this.row_height + 1, // Include search pinstripe
-            "right": 0,
-            "bottom": 0,
-            "overflow-y": "auto"
-        });
-        this.html.append(this.list_container);
-        this.html.append(this.input.html);
-    };
-    this.DisableAutomaticSelection = function () {
-        this.auto_select_disabled = true;
-    };
-    this.SetRowContent = function (row_id, html, class_with_update_function=null) {
-        if (class_with_update_function && class_with_update_function.hasOwnProperty("Update")) {
-            this.row_content_classes[row_id] = class_with_update_function;
-        }
-        this.RowContent[row_id] = html;
-        this.rows[row_id].SetContent(html);
-    };
-    // Use this to set a unique ID that allows the last loaded selection to be applied
-    this.SetRecallID = function (recall_id) {
-        this.recall_id = recall_id;
-    };
-    this.SetSearchTerm = function (search_term) {
-        search_term = search_term.trim().toLowerCase();
-        if (search_term == this.filter_text) {
-            return;
-        }
-        this.filter_text = search_term;
-        this.filter_rows();
-    };
-    this.UpdateRows = function (order, data) {
-        // order = a list of IDs
-        // data  = a dict of data that corresponds to each ID in order
-        this.id_list = order;
-        var id;
-        for (id in this.rows) {
-            this.rows[id].html.detach();
-        }
-        for (var i = 0; i < order.length; i++) {
-            var row_id = order[i];
-            var row_data = data[row_id];
-            if (!this.rows[row_id]) {
-                this.rows[row_id] = new DashLayoutSearchableListRow(this, row_id, row_data);
-            }
-
-            if (this.row_content_classes[row_id]) {
-                this.row_content_classes[row_id].Update(row_data);
-            }
-            var search_text = this.rows[row_id].Update(row_data);
-            if (search_text) {
-                search_text = search_text.trim().toLowerCase();
-            }
-            else {
-                console.log("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row");
-            }
-            this.search_terms.push(search_text);
-            this.list_container.append(this.rows[row_id].html);
-        }
-        for (id in this.rows) {
-            if (!order.includes(id)) {
-                this.rows[id].html.remove();
-                delete this.rows[id];
-            }
-        }
-        if (this.filter_text.length > 0) {
-            this.filter_rows();
-        }
-        if (!this.auto_select_disabled) {
-            var last_loaded = Dash.Local.Get(this.recall_id);
-            if (last_loaded && order.includes(last_loaded)) {
-                this.SetActiveRowID(last_loaded);
-            }
-        }
-    };
-    this.filter_rows = function () {
-        for (var id in this.rows) {
-            this.rows[id].html.detach();
-        }
-        for (var i = 0; i < this.id_list.length; i++) {
-            var row_id = this.id_list[i];
-            var search_text = this.search_terms[i];
-            if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
-                this.list_container.append(this.rows[row_id].html);
-            }
-        }
-    };
-    this.GetSelectedID = function () {
-        var selected = this.current_selected_row_id || Dash.Local.Get(this.recall_id);
-        if (this.id_list.includes(selected)) {
-            return selected;
-        }
-        else {
-            return null;
-        }
-    };
-    this.SetActiveRowID = function (row_id) {
-        if (this.current_selected_row_id == row_id) {
-            return;
-        }
-        this.current_selected_row_id = row_id;
-        Dash.Local.Set(this.recall_id, row_id);
-        for (var id in this.rows) {
-            if (id == row_id) {
-                this.rows[id].SetActive(true);
-            }
-            else {
-                this.rows[id].SetActive(false);
-            }
-        }
-        this.on_selection_callback(this.current_selected_row_id);
-    };
-    this.setup_styles();
-}
-
-function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
-    this.slist      = slist;
-    this.color      = this.slist.color;
-    this.row_height = this.slist.row_height;
-    this.row_id     = row_id;
-    this.on_row_draw_callback = this.slist.on_row_draw_callback;
-    this.get_data_callback = this.slist.get_data_callback;
-    this.html          = $("<div></div>");
-    this.content_layer = $("<div></div>");
-    this.hover         = $("<div></div>");
-    this.display_name_label = null;
-    this.setup_styles = function () {
-        this.html.append(this.hover);
-        this.html.append(this.content_layer);
-        this.html.css({
-            "height": this.row_height,
-            "line-height": Dash.Size.ButtonHeight + "px",
-            "border-bottom": "1px solid " + this.color.Pinstripe,
-            "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
-            "cursor": "pointer",
-            "user-select": "none",
-        });
-        this.hover.css({
-            "position": "absolute",
-            "background": "rgba(255, 255, 255, 0.5)",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "pointer-events": "none",
-            "user-select": "none",
-            "opacity": 0,
-        });
-        this.setup_connections();
-    };
-    this.SetContent = function (html) {
-        this.content_layer.empty().append(html);
-    };
-    // Call to redraw / on new data
-    this.Update = function () {
-        if (this.on_row_draw_callback) {
-            // Ryan, the rows were not previously updating in this case, so I updated this
-            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
-            return this.on_row_draw_callback(this.row_id);
-        }
-        else {
-            return this.update_display_name_label();
-        }
-    };
-    this.setup_display_name_label = function(){
-        // The display name label is used if there is no callback to draw the
-        // row. This can be useful for simply populating a list of elements
-        this.display_name_label = $("<div></div>");
-        this.display_name_label.css({
-            "height": Dash.Size.ButtonHeight,
-            "line-height": Dash.Size.ButtonHeight + "px",
-            "padding-left": Dash.Size.Padding*0.5,
-            "color": this.color.Text,
-            // "color": "red",
-        });
-        this.content_layer.empty().append(this.display_name_label);
-    };
-    this.update_display_name_label = function(text=""){
-        if (!this.display_name_label) {
-            this.setup_display_name_label();
-        }
-        if (!text) {
-            text = this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
-        }
-        this.display_name_label.text(text);
-        return text;
-    };
-    this.SetActive = function(is_active){
-        if (is_active) {
-            this.html.css({
-                "background": "rgba(255, 255, 255, 0.5)",
-                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
-            });
-            this.content_layer.css({
-                "opacity": 1.0,
-            });
-        }
-        else {
-            this.html.css({
-                "background": "none",
-                "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
-            });
-            this.content_layer.css({
-                "opacity": 0.75,
-            });
-        };
-    };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.click(function(){
-                self.slist.SetActiveRowID(self.row_id);
-            });
-            self.html.mouseenter(function(){
-                self.hover.stop().animate({"opacity": 1}, 50);
-            });
-            self.html.mouseleave(function(){
-                self.hover.stop().animate({"opacity": 0}, 100);
-            });
         })(this);
     };
-    this.setup_styles();
-};
+    this.get_list_rows = function () {
+        this.list_rows = [];
+        if (this.list_data.length < 1) {
+            this.list_data = [
+                {"-": "--"},
+                {"--": "--"},
+                {"---": "--"},
+            ];
+        }
+        for (var i in this.list_data) {
+            if (this.list_rows.length >= 3) {
+                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                break;
+            }
+            var data = this.list_data[i];
+            if (!Dash.Validate.Object(data)) {
+                console.error("Error: Rect List Module data expects a list of dicts");
+                return;
+            }
+            var key = Object.keys(data)[0];
+            this.list_rows.push(this.get_list_row(key, data[key]));
+        }
+    };
+    this.redraw_list_rows = function () {
+        this.get_list_rows();
+        this.html.empty();
+        this.add_header();
+        for (var i in this.list_rows) {
+            this.html.append(this.list_rows[i]);
+            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
+        }
+    };
+    this.get_list_row = function (key, value) {
+        var list_row = $("<div></div>");
+        var content = $("<div></div>");
+        var key_text = $("<div>" + key + "</div>");
+        var value_text = $("<div>" + value + "</div>");
+        list_row.css({
+            "width": "98%",
+            "margin-top": "3%",
+            "margin-bottom": "3%",
+            "opacity": 0,  // For animation
+            "height": "2.75vh"  // TEMP
+        });
+        content.css({
+            "display": "flex",
+            "height": "2.75vh"  // TEMP
+        });
+        key_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            "font-size": "1.5vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "17vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        value_text.css({
+            ...this.text_css,
+            "color": this.primary_color,
+            "text-align": "right",
+            "font-size": "2.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "width": "4vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        content.append(this.get_dot_icon().html);
+        content.append(key_text);
+        content.append(Dash.Gui.GetFlexSpacer());
+        content.append(value_text);
+        list_row.append(content);
+        list_row.append(this.get_divider_line());
+        return list_row;
+    };
+    this.get_dot_icon = function () {
+        var dot_icon = new Dash.Gui.Icon(
+            this.color,
+            "circle_dot",
+            Dash.Size.ButtonHeight
+        );
+        dot_icon.icon_html.css({
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap",
+            "color": this.primary_color,
+            "font-size": "1.25vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "2.75vh"  // TEMP
+        });
+        return dot_icon;
+    };
+    this.get_divider_line = function () {
+        var line = $("<div></div>");
+        line.css({
+            "background": this.secondary_color,
+            "height": "0.1vh"  // TEMP
+        });
+        return line;
+    };
+}
 
-function DashLayoutSearchableListSearchInput (slist) {
-    this.slist      = slist;
-    this.color      = this.slist.color;
-    this.row_height = this.slist.row_height;
-    this.icon_size    = this.row_height-(Dash.Size.Padding*1.5);
-    this.input        = new Dash.Gui.Input("Search...", this.color);
-    this.icon_search  = new Dash.Gui.Icon(this.color, "search", this.icon_size);
-    this.icon_clear   = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
-    this.html         = this.input.html;
-    this.current_search_term = "";
-    this.clear_icon_visible  = false;
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleSquare () {
+    this.styles = ["tag", "radial"];
+    this.label_text = "";
+    this.label_header_text = "";
+    this.label = $("<div></div>");
+    this.label_header = $("<div></div>");
+    this.radial_fill_percent = 0;
+    // Works for both "tag" and "radial" sub-styles
+    this.SetLabelHeaderText = function (text) {
+        (function (self, text) {
+            self.label_header.fadeOut(500);
+            self.label_header_text = text.toString().toUpperCase();
+            self.label_header.text(self.label_header_text);
+            self.label_header.fadeIn(500);
+        })(this, text);
+    };
+    // Works for both "tag" and "radial" sub-styles
+    this.SetLabelText = function (text) {
+        (function (self, text) {
+            self.label.fadeOut(500);
+            self.label_text = text.toString().toUpperCase();
+            if (self.label_text.length > 4) {
+                console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+            }
+            if (self.sub_style === "tag" && self.label_text.length <= 3) {
+                self.label.css({
+                    "font-size": "5.5vh",  // TEMP
+                    "height": "5.5vh",  // TEMP
+                    "line-height": "6vh",  // TEMP
+                });
+            }
+            self.label.text(self.label_text);
+            self.label.fadeIn(500);
+        })(this, text);
+    };
+    this.SetRadialFillPercent = function (percent) {
+        if (this.sub_style !== "radial") {
+            console.error("Error: SetRadialFillPercent() only works for Square Radial Modules");
+            return;
+        }
+        percent = parseInt(percent);
+        if (isNaN(percent)) {
+            console.error("Error: SetRadialFillPercent requires a number!");
+        }
+        if (percent > 100) {
+            percent = 100;
+        }
+        if (percent < 0) {
+            percent = 0;
+        }
+        this.radial_fill_percent = percent;
+        this.SetLabelText(this.radial_fill_percent.toString() + "%");
+        this.update_radial_fill_percent(percent);
+    };
     this.setup_styles = function () {
-        this.input.OnChange(this.on_search, this);
-        this.html.append(this.icon_search.html);
-        this.html.append(this.icon_clear.html);
         this.html.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
-            "right": 0,
-            "height": this.row_height,
-            "border-bottom": "1px solid " + this.color.Pinstripe,
-            "background": Dash.Color.Lighten(this.color.Background, 10),
-            "box-shadow": "none",
-            "margin-right": 0,
-            "padding-right": this.row_height + Dash.Size.Padding*0.5,
+            "aspect-ratio": this.square_aspect_ratio
         });
-        this.icon_search.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding*0.66,
-            "top": Dash.Size.Padding*0.66,
-            "pointer-events": "none",
-            "user-select":    "none",
+        if (this.sub_style === "tag") {
+            this.setup_tag_style();
+        }
+        else if (this.sub_style === "radial") {
+            this.setup_radial_style();
+        }
+        this.html.append(this.label_header);
+        this.html.append(this.label);
+    };
+    this.setup_tag_style = function () {
+        this.label_header.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "95%",
+            "margin-top": "18%",
+            "font-size": "1.5vh",  // TEMP
+            "height": "1.5vh",  // TEMP
         });
-        this.icon_clear.html.css({
-            "position": "absolute",
-            "right": Dash.Size.Padding*0.66,
-            "top": Dash.Size.Padding*0.66,
-            "user-select":    "none",
-            "cursor": "pointer",
-            "opacity": 0,
+        this.label.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "95%",
+            "font-size": "4.5vh",  // TEMP
+            "height": "4.5vh",  // TEMP
+            "line-height": "5vh",  // TEMP
         });
-        (function(self){
-            self.icon_clear.html.click(function(){
-                self.clear_search();
-            });
+        // Only draw the default placeholder view if it hasn't been set after the first second
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (self.label_text.length < 1) {
+                        self.SetLabelText("--");
+                    }
+                },
+                1000
+            );
         })(this);
     };
-    this.clear_search = function () {
-        this.input.SetText("");
-        this.hide_clear_icon();
-        this.on_search();
+    this.setup_radial_style = function () {
+        this.label_header.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "50%",
+            "margin-top": "32%",
+            "font-size": "1vh",  // TEMP
+            "height": "1vh",  // TEMP
+        });
+        this.label.css({
+            ...this.centered_text_css,
+            "color": this.primary_color,
+            "width": "50%",
+            "font-size": "2.75vh",  // TEMP
+            "height": "2.75vh",  // TEMP
+            "line-height": "3.25vh",  // TEMP
+        });
+        this.setup_radial_gui();
     };
-    this.on_search = function () {
-        var _current_search_term = this.input.Text();
-        if (_current_search_term == this.current_search_term) {
+    this.setup_radial_gui = function () {
+        var config = this.get_radial_config();
+        var canvas = document.createElement("canvas");
+        var script = document.createElement("script");
+        var canvas_container = document.createElement("div");
+        var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
+        canvas_container.style.overflow = "hidden";
+        canvas_container.style.width = "10.5vh";  // TEMP
+        canvas_container.style.height = "10.5vh";  // TEMP
+        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        canvas_container.style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
+        canvas_container.style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
+        canvas_container.style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
+        canvas.id = canvas_id;
+        script.type = "text/javascript";
+        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+        canvas_container.appendChild(canvas);
+        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+    };
+    this.get_radial_fill_data = function () {
+        return [this.radial_fill_percent, 100 - this.radial_fill_percent];
+    };
+    this.update_radial_fill_percent = function (percent) {
+        if (!this.canvas) {
             return;
-        };
-        this.current_search_term = _current_search_term;
-        if (this.current_search_term.length > 0) {
-            this.show_clear_icon();
         }
-        else {
-            this.hide_clear_icon();
-        };
-        this.slist.SetSearchTerm(this.current_search_term);
-    };
-    this.show_clear_icon = function () {
-        if (this.clear_icon_visible) {
+        var radial_gui = this.canvas["gui"] || window[this.canvas["id"]];
+        // Try again if gui hasn't loaded yet (should only happen when initializing)
+        if (!radial_gui.data) {
+            (function (self, percent) {
+                setTimeout(
+                    function () {
+                        self.SetRadialFillPercent(percent);
+                    },
+                    250
+                );
+            })(this, percent);
             return;
-        };
-        this.clear_icon_visible = true;
-        this.icon_search.html.stop().animate({"opacity": 0}, 250);
-        this.icon_clear.html.stop().animate( {"opacity": 1}, 250);
+        }
+        if (!this.canvas["gui"]) {
+            this.canvas["gui"] = radial_gui;
+        }
+        radial_gui.data.datasets[0].data = this.get_radial_fill_data();
+        radial_gui.update();
     };
-    this.hide_clear_icon = function () {
-        if (!this.clear_icon_visible) {
-            return;
+    // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
+    this.get_radial_config = function () {
+        return {
+            "type": "doughnut",
+            "data": {
+                "datasets": [{
+                    "data": this.get_radial_fill_data(),
+                    "backgroundColor": [
+                        this.primary_color,  // Filled
+                        this.secondary_color  // Unfilled
+                    ],
+                    "borderWidth": [
+                        5,  // Filled
+                        0,  // Unfilled
+                    ],
+                    "borderColor": [
+                        this.primary_color  // Filled
+                    ]
+                }]
+            },
+            "options": {
+                "cutout": "80%",
+                "responsive": true,
+                "aspectRatio": 1,
+                "maintainAspectRatio": true,
+                "plugins": {
+                    "legend": {
+                        "display": false
+                    },
+                    "tooltip": {
+                        "enabled": false
+                    },
+                    "title": {
+                        "display": false
+                    }
+                }
+            }
         };
-        this.clear_icon_visible = false;
-        this.icon_search.html.stop().animate({"opacity": 1}, 250);
-        this.icon_clear.html.stop().animate( {"opacity": 0}, 250);
     };
-    this.setup_styles();
-};
+}
 
 function DashLayoutList (binder, selected_callback, column_config, color=null) {
     this.binder = binder;
@@ -29829,6 +29652,39 @@ function DashLayoutListRow (list, row_id) {
     this.setup_styles();
 }
 
+function DashLayoutListColumnConfig () {
+    this.columns = [];
+    this.AddColumn = function (display_name, data_key, can_edit, width, options) {
+        if (typeof can_edit !== "boolean") {
+            can_edit = true;
+        }
+        var column_details = {
+            "width": width,
+            "data_key": data_key,
+            "can_edit": can_edit,
+            "display_name": display_name,
+            "type": options && options["type"] ? options["type"] : "",
+            "css": options && options["css"] ? options["css"] : null,
+            "header_css": options && options["header_css"] ? options["header_css"] : null,
+            "options": options && options["options"] ? options["options"] : {},
+            "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
+        };
+        this.columns.push(column_details);
+    };
+    this.AddSpacer = function (header_only=false) {
+        this.columns.push({
+            "type": "spacer",
+            "header_only": header_only
+        });
+    };
+    this.AddDivider = function (css=null) {
+        this.columns.push({
+            "type": "divider",
+            "css": css
+        });
+    };
+}
+
 function DashLayoutListRowColumn (list_row, column_config_data, index, color=null) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
@@ -30153,39 +30009,6 @@ function DashLayoutListRowElements () {
             "pointer-events": "none"
         });
         html.off("click");
-    };
-}
-
-function DashLayoutListColumnConfig () {
-    this.columns = [];
-    this.AddColumn = function (display_name, data_key, can_edit, width, options) {
-        if (typeof can_edit !== "boolean") {
-            can_edit = true;
-        }
-        var column_details = {
-            "width": width,
-            "data_key": data_key,
-            "can_edit": can_edit,
-            "display_name": display_name,
-            "type": options && options["type"] ? options["type"] : "",
-            "css": options && options["css"] ? options["css"] : null,
-            "header_css": options && options["header_css"] ? options["header_css"] : null,
-            "options": options && options["options"] ? options["options"] : {},
-            "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
-        };
-        this.columns.push(column_details);
-    };
-    this.AddSpacer = function (header_only=false) {
-        this.columns.push({
-            "type": "spacer",
-            "header_only": header_only
-        });
-    };
-    this.AddDivider = function (css=null) {
-        this.columns.push({
-            "type": "divider",
-            "css": css
-        });
     };
 }
 
@@ -30660,1252 +30483,1065 @@ function DashLayoutRevolvingListScrolling () {
     };
 }
 
-function DashLayoutDashboard (binder, color=null) {
+function DashLayoutSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback=null) {
     this.binder = binder;
-    this.color  = color || this.binder.color || Dash.Color.Dark;
-    this.modules = [];
-    this.canvas_containers = [];
-    this.margin = 1;
-    this.padding = 0.4;
-    this.rect_aspect_ratio = "2 / 1";
-    this.square_aspect_ratio = "1 / 1";
-    this.html = Dash.Gui.GetHTMLAbsContext();
-    this.VerticalSpaceTakenPercent = null;
-    this.VerticalSpaceAvailablePercent = null;
-    this.AddSquareTagModule = function () {
-        return this.add_module("square", "tag");
-    };
-    this.AddSquareRadialModule = function () {
-        return this.add_module("square", "radial");
-    };
-    this.AddRectListModule = function () {
-        return this.add_module("rect", "list");
-    };
-    this.AddFlexBarModule = function () {
-        return this.add_module("flex", "bar");
-    };
-    this.SetVerticalSpacePercent = function (num) {
-        num = parseInt(num);
-        if (isNaN(num)) {
-            console.error("Error: Invalid number passed to SetVerticalSpacePercent()");
-            return;
-        }
-        this.VerticalSpaceTakenPercent = num.toString() + "%";
-        this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
-    };
+    this.on_selection_callback = on_selection_callback.bind(this.binder);
+    this.get_data_callback = get_data_callback.bind(this.binder);
+    this.on_row_draw_callback = on_row_draw_callback ? on_row_draw_callback.bind(this.binder) : null;
+    this.rows = {};
+    this.id_list = [];
+    this.RowContent = {};
+    this.filter_text = "";
+    this.search_terms = [];
+    this.html = $("<div></div>");
+    this.row_content_classes = {};
+    this.auto_select_disabled = false;
+    this.current_selected_row_id = null;
+    this.list_container = $("<div></div>");
+    this.row_height = Dash.Size.ButtonHeight;
+    this.color = this.binder.color || Dash.Color.Light;
+    this.input = new DashLayoutSearchableListSearchInput(this);
+    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.setup_styles = function () {
-        this.SetVerticalSpacePercent(15);
         this.html.css({
-            "background": this.color.Background,
-            "display": "flex"
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "background": Dash.Color.Lighten(this.color.Background, 5)
         });
-    };
-    this.add_module = function (style, sub_style) {
-        var index = this.modules.length;
-        var module = new DashLayoutDashboardModule(this, style, sub_style);
-        this.html.append(module.html);
-        this.modules.push({
-            "module": module,
-            "style": style,
-            "sub_style": sub_style,
-            "index": index
+        this.list_container.css({
+            "position": "absolute",
+            "left": 0,
+            "top": this.row_height + 1, // Include search pinstripe
+            "right": 0,
+            "bottom": 0,
+            "overflow-y": "auto"
         });
-        this.update_canvas_containers();
-        return module;
+        this.html.append(this.list_container);
+        this.html.append(this.input.html);
     };
-    this.get_available_vertical_space_percent = function () {
-        return (100 - parseInt(this.VerticalSpaceTakenPercent)).toString() + "%";
+    this.DisableAutomaticSelection = function () {
+        this.auto_select_disabled = true;
     };
-    // Document scope
-    this.update_canvas_containers = function () {
-        var i;
-        var styles = [];
-        for (i in this.modules) {
-            styles.push(this.modules[i]["style"]);
+    this.SetRowContent = function (row_id, html, class_with_update_function=null) {
+        if (class_with_update_function && class_with_update_function.hasOwnProperty("Update")) {
+            this.row_content_classes[row_id] = class_with_update_function;
         }
-        for (i in this.canvas_containers) {
-            try {
-                document.body.removeChild(this.canvas_containers[i]["container"]);
-                document.body.removeChild(this.canvas_containers[i]["script"]);
-            }
-            catch {
-                // Not a child, continue/pass
-            }
-            if (window[this.canvas_containers[i]["id"]]) {
-                delete window[this.canvas_containers[i]["id"]];
-            }
-        }
-        
-        this.canvas_containers = [];
-        for (i in this.modules) {
-            var canvas = this.modules[i]["module"].canvas;
-            if (!canvas) {
-                continue;
-            }
-            this.add_canvas(canvas, styles, this.modules[i]["index"]);
-            if (!this.modules[i]["module"].canvas["gui"]) {
-                var gui = window[this.modules[i]["module"].canvas["id"]];
-                if (gui) {
-                    this.modules[i]["module"].canvas["gui"] = gui;
-                }
-            }
-        }
+        this.RowContent[row_id] = html;
+        this.rows[row_id].SetContent(html);
     };
-    // Document scope
-    this.add_canvas = function (canvas, styles, index) {
-        var canvas_container = canvas["container"];
-        var canvas_script = canvas["script"];
-        if (!canvas_container || !canvas_script || !styles || styles.length < 1) {
-            console.error("Error: Something went wrong when updating canvas containers x0741");
+    // Use this to set a unique ID that allows the last loaded selection to be applied
+    this.SetRecallID = function (recall_id) {
+        this.recall_id = recall_id;
+    };
+    this.SetSearchTerm = function (search_term) {
+        search_term = search_term.trim().toLowerCase();
+        if (search_term == this.filter_text) {
             return;
         }
-        var top_container = document.createElement("div");
-        top_container.style.display = "flex";
-        top_container.style.position = "absolute";
-        top_container.style.width = "100%";
-        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
-        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
-        for (var i in styles) {
-            if (parseInt(i) === index) {
-                top_container.appendChild(canvas_container);
-            }
-            
-            else {
-                top_container.appendChild(this.get_placeholder_container(styles[i], i));
-            }
-        }
-        // IMPORTANT: Must be at document level (added dynamically) for Chart script objects to properly display
-        document.body.appendChild(top_container);
-        document.body.appendChild(canvas_script);
-        var new_container_data = {...canvas};
-        new_container_data["container"] = top_container;
-        this.canvas_containers.push(new_container_data);
+        this.filter_text = search_term;
+        this.filter_rows();
     };
-    // Document scope
-    this.get_placeholder_container = function (type, index) {
-        var container = document.createElement("div");
-        container.style.padding = this.padding.toString() + "vh";  // TEMP
-        container.style.margin = this.margin.toString() + "vh";  // TEMP
-        if (type === "square") {
-            container.style.aspectRatio = this.square_aspect_ratio;
+    this.UpdateRows = function (order, data) {
+        // order = a list of IDs
+        // data  = a dict of data that corresponds to each ID in order
+        this.id_list = order;
+        var id;
+        for (id in this.rows) {
+            this.rows[id].html.detach();
         }
-        else if (type === "rect") {
-            container.style.aspectRatio = this.rect_aspect_ratio;
+        for (var i = 0; i < order.length; i++) {
+            var row_id = order[i];
+            var row_data = data[row_id];
+            if (!this.rows[row_id]) {
+                this.rows[row_id] = new DashLayoutSearchableListRow(this, row_id, row_data);
+            }
+
+            if (this.row_content_classes[row_id]) {
+                this.row_content_classes[row_id].Update(row_data);
+            }
+            var search_text = this.rows[row_id].Update(row_data);
+            if (search_text) {
+                search_text = search_text.trim().toLowerCase();
+            }
+            else {
+                console.log("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row");
+            }
+            this.search_terms.push(search_text);
+            this.list_container.append(this.rows[row_id].html);
         }
-        else if (type === "flex") {
-            container.style.flex = "1";
+        for (id in this.rows) {
+            if (!order.includes(id)) {
+                this.rows[id].html.remove();
+                delete this.rows[id];
+            }
         }
-        if (parseInt(index) > 0) {
-            container.style.marginLeft = "0px";
+        if (this.filter_text.length > 0) {
+            this.filter_rows();
         }
-        return container;
+        if (!this.auto_select_disabled) {
+            var last_loaded = Dash.Local.Get(this.recall_id);
+            if (last_loaded && order.includes(last_loaded)) {
+                this.SetActiveRowID(last_loaded);
+            }
+        }
+    };
+    this.filter_rows = function () {
+        for (var id in this.rows) {
+            this.rows[id].html.detach();
+        }
+        for (var i = 0; i < this.id_list.length; i++) {
+            var row_id = this.id_list[i];
+            var search_text = this.search_terms[i];
+            if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
+                this.list_container.append(this.rows[row_id].html);
+            }
+        }
+    };
+    this.GetSelectedID = function () {
+        var selected = this.current_selected_row_id || Dash.Local.Get(this.recall_id);
+        if (this.id_list.includes(selected)) {
+            return selected;
+        }
+        else {
+            return null;
+        }
+    };
+    this.SetActiveRowID = function (row_id) {
+        if (this.current_selected_row_id == row_id) {
+            return;
+        }
+        this.current_selected_row_id = row_id;
+        Dash.Local.Set(this.recall_id, row_id);
+        for (var id in this.rows) {
+            if (id == row_id) {
+                this.rows[id].SetActive(true);
+            }
+            else {
+                this.rows[id].SetActive(false);
+            }
+        }
+        this.on_selection_callback(this.current_selected_row_id);
     };
     this.setup_styles();
 }
 
-function DashLayoutDashboardModule (dashboard, style, sub_style) {
-    this.dashboard = dashboard;
-    this.style = style;
-    this.sub_style = sub_style;
-    this.color = this.dashboard.color || Dash.Color.Dark;
-    this.modules = this.dashboard.modules;
-    this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
-    this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
-    this.html = null;
-    this.styles = [];
-    this.header = $("<div>SetHeaderText()</div>");
-    this.header_text = null;
-    this.bold_font = "sans_serif_bold";
-    this.primary_color = this.color.AccentGood;
-    this.margin = this.dashboard.margin;
-    this.padding = this.dashboard.padding;
-    this.canvas = null;
-    this.secondary_color = this.color.Stroke;
-    this.text_css = {
-        "font-family": this.bold_font,
-        "overflow": "hidden",
-        "text-overflow": "ellipsis",
-        "white-space": "nowrap"
+function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
+    this.slist      = slist;
+    this.color      = this.slist.color;
+    this.row_height = this.slist.row_height;
+    this.row_id     = row_id;
+    this.on_row_draw_callback = this.slist.on_row_draw_callback;
+    this.get_data_callback = this.slist.get_data_callback;
+    this.html          = $("<div></div>");
+    this.content_layer = $("<div></div>");
+    this.hover         = $("<div></div>");
+    this.display_name_label = null;
+    this.setup_styles = function () {
+        this.html.append(this.hover);
+        this.html.append(this.content_layer);
+        this.html.css({
+            "height": this.row_height,
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "border-bottom": "1px solid " + this.color.Pinstripe,
+            "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
+            "cursor": "pointer",
+            "user-select": "none",
+        });
+        this.hover.css({
+            "position": "absolute",
+            "background": "rgba(255, 255, 255, 0.5)",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "pointer-events": "none",
+            "user-select": "none",
+            "opacity": 0,
+        });
+        this.setup_connections();
     };
-    this.centered_text_css = {
-        ...this.text_css,
-        "text-align": "center",
-        "margin-left": "auto",
-        "margin-right": "auto"
+    this.SetContent = function (html) {
+        this.content_layer.empty().append(html);
     };
-    // Applies to all module styles
-    this.SetHeaderText = function (text) {
-        text = text.toString().toUpperCase();
-        this.header_text = text;
-        this.header.text(text);
-    };
-    this.initialize_style = function () {
-        if (this.style === "flex") {
-            DashLayoutDashboardModuleFlex.call(this);
-        }
-        else if (this.style === "square") {
-            DashLayoutDashboardModuleSquare.call(this);
-        }
-        else if (this.style === "rect") {
-            DashLayoutDashboardModuleRect.call(this);
+    // Call to redraw / on new data
+    this.Update = function () {
+        if (this.on_row_draw_callback) {
+            // Ryan, the rows were not previously updating in this case, so I updated this
+            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
+            return this.on_row_draw_callback(this.row_id);
         }
         else {
-            console.error("Error: Invalid Module Style:", this.style);
-            return;
+            return this.update_display_name_label();
         }
-        if (!this.styles.includes(this.sub_style)) {
-            console.error("Error: Invalid Module Sub-Style:", this.sub_style);
-            return;
-        }
-        this.html = Dash.Gui.GetHTMLBoxContext();
-        this.add_header();
-        this.setup_styles();
-        this.modify_styles();
     };
-    this.modify_styles = function () {
-        this.html.css({
-            "background": this.color.BackgroundRaised,
-            "margin": this.margin.toString() + "vh",  // TEMP
-            "padding": this.padding.toString() + "vh"  // TEMP
+    this.setup_display_name_label = function(){
+        // The display name label is used if there is no callback to draw the
+        // row. This can be useful for simply populating a list of elements
+        this.display_name_label = $("<div></div>");
+        this.display_name_label.css({
+            "height": Dash.Size.ButtonHeight,
+            "line-height": Dash.Size.ButtonHeight + "px",
+            "padding-left": Dash.Size.Padding*0.5,
+            "color": this.color.Text,
+            // "color": "red",
         });
-        if (this.modules && this.modules.length > 0) {
+        this.content_layer.empty().append(this.display_name_label);
+    };
+    this.update_display_name_label = function(text=""){
+        if (!this.display_name_label) {
+            this.setup_display_name_label();
+        }
+        if (!text) {
+            text = this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+        }
+        this.display_name_label.text(text);
+        return text;
+    };
+    this.SetActive = function(is_active){
+        if (is_active) {
             this.html.css({
-                "margin-left": 0
+                "background": "rgba(255, 255, 255, 0.5)",
+                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
+            });
+            this.content_layer.css({
+                "opacity": 1.0,
             });
         }
-    };
-    this.add_header = function () {
-        this.header.css({
-            ...this.centered_text_css,
-            "color": this.secondary_color,
-            "width": "95%",
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
-        });
-        if (this.header_text) {
-            this.SetHeaderText(this.header_text);
-        }
-        this.html.append(this.header);
-    };
-    this.initialize_style();
-}
-
-/**@member DashLayoutDashboardModule*/
-function DashLayoutDashboardModuleFlex () {
-    this.styles = ["bar"];
-    this.bar_data = {};
-    this.SetBarData = function (data) {
-        if (this.sub_style !== "bar") {
-            console.error("Error: SetBarData() only applies to Flex-Bar Modules");
-            return;
-        }
-        if (!Dash.Validate.Object(data)) {
-            console.error("Error: SetBarData() requires a dictionary to be passed in");
-            return;
-        }
-        if (!data["data"] || !data["order"]) {
-            console.error("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
-            return;
-        }
-        this.bar_data = data;
-        this.update_bar_data(data);
-    };
-    this.setup_styles = function () {
-        this.html.css({
-            "flex": 1
-        });
-        if (this.sub_style === "bar") {
-            this.setup_bar_style();
-        }
-    };
-    this.setup_bar_style = function () {
-        this.setup_bar_gui();
-        // Only draw the default placeholder view if it hasn't been set after the first second
-        (function (self) {
-            setTimeout(
-                function () {
-                    if (!Dash.Validate.Object(self.bar_data)) {
-                        self.update_bar_data({"-": 1, "--": 2, "---": 3});
-                    }
-                },
-                1000
-            );
-        })(this);
-    };
-    this.setup_bar_gui = function () {
-        var config = this.get_bar_config();
-        var canvas = document.createElement("canvas");
-        var script = document.createElement("script");
-        var canvas_container = document.createElement("div");
-        var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
-        var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
-        var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
-        var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
-        canvas_container.style.height = "11.25vh";  // TEMP
-        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
-        canvas_container.style.overflow = "hidden";
-        canvas_container.style.opacity = "0";
-        canvas_container.style.flex = "1";
-        canvas.id = canvas_id;
-        script.type = "text/javascript";
-        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
-        canvas_container.appendChild(canvas);
-        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
-    };
-    this.update_bar_data = function (data) {
-        if (!this.canvas) {
-            return;
-        }
-        var bar_gui = this.canvas["gui"] || window[this.canvas["id"]];
-        // Try again if gui hasn't loaded yet (should only happen when initializing)
-        if (!bar_gui.data) {
-            (function (self, data) {
-                setTimeout(
-                    function () {
-                        self.SetBarData(data);
-                    },
-                    250
-                );
-            })(this, data);
-            return;
-        }
-        if (!this.canvas["gui"]) {
-            this.canvas["gui"] = bar_gui;
-        }
-        if (this.canvas["container"].style.opacity !== "1") {
-            this.canvas["container"].animate({"opacity": 1}, 1000);
-            this.canvas["container"].style.opacity = "1";
-        }
-        [bar_gui.data.labels, bar_gui.data.datasets[0].data] = this.get_bar_data_sets(data);
-        bar_gui.update();
-    };
-    this.get_bar_data_sets = function (data) {
-        if (!Dash.Validate.Object(data)) {
-            data = this.bar_data;
-        }
-        var labels = data["order"];
-        var values = [];
-        for (var i in data["order"]) {
-            var key = data["order"][i];
-            var value = parseInt(data["data"][key]);
-            if (isNaN(value)) {
-                console.error("Error: Bar data object values must be numbers");
-                return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
-            }
-            values.push(value);
-        }
-        return [labels, values];
-    };
-    // Config Documentation: https://www.chartjs.org/docs/latest/charts/bar.html
-    this.get_bar_config = function () {
-        var [labels, values] = this.get_bar_data_sets();
-        return {
-            "type": "bar",
-            "data": {
-                "labels": labels,
-                "datasets": [{
-                    "label": "My First Dataset",
-                    "data": values,
-                    "backgroundColor": this.primary_color,
-                    "barPercentage": 1.15
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "maintainAspectRatio": false,
-                "scales": {
-                    "y": {
-                        "beginAtZero": true,
-                        "grid": {
-                            "color": this.secondary_color,
-                            "borderColor": this.secondary_color,
-                            "tickLength": 4
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": 4,
-                            "font": {
-                                "family": this.bold_font
-                            }
-                        }
-                    },
-                    "x": {
-                        "grid": {
-                            "display": false
-                        },
-                        "ticks": {
-                            "color": this.secondary_color,
-                            "padding": -5,
-                            "font": {
-                                "family": this.bold_font,
-                                "size": 16
-                            }
-                        }
-                    },
-                },
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
+        else {
+            this.html.css({
+                "background": "none",
+                "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
+            });
+            this.content_layer.css({
+                "opacity": 0.75,
+            });
         };
     };
-}
-
-/**@member DashLayoutDashboardModule*/
-function DashLayoutDashboardModuleRect () {
-    this.styles = ["list"];
-    this.list_rows = [];
-    this.list_data = [];
-    // Expects list of dicts with a single key/value pair (value should be a string), where
-    // the key displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data_list) {
-        if (this.sub_style !== "list") {
-            console.error("Error: SetListData() only applies to Rect-List Modules");
-            return;
-        }
-        if (!Array.isArray(data_list)) {
-            console.error("Error: SetListData() requires a list of dicts to be passed in");
-            return;
-        }
-        this.list_data = data_list;
-        this.redraw_list_rows();
-    };
-    this.setup_styles = function () {
-        this.html.css({
-            "aspect-ratio": this.rect_aspect_ratio
-        });
-        if (this.sub_style === "list") {
-            this.setup_list_style();
-        }
-    };
-    this.setup_list_style = function () {
-        // Only draw the default placeholder view if it hasn't been set after the first second
-        (function (self) {
-            setTimeout(
-                function () {
-                    if (self.list_rows.length < 1) {
-                        self.redraw_list_rows();
-                    }
-                },
-                1000
-            );
+    this.setup_connections = function(){
+        (function(self){
+            self.html.click(function(){
+                self.slist.SetActiveRowID(self.row_id);
+            });
+            self.html.mouseenter(function(){
+                self.hover.stop().animate({"opacity": 1}, 50);
+            });
+            self.html.mouseleave(function(){
+                self.hover.stop().animate({"opacity": 0}, 100);
+            });
         })(this);
     };
-    this.get_list_rows = function () {
-        this.list_rows = [];
-        if (this.list_data.length < 1) {
-            this.list_data = [
-                {"-": "--"},
-                {"--": "--"},
-                {"---": "--"},
-            ];
-        }
-        for (var i in this.list_data) {
-            if (this.list_rows.length >= 3) {
-                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
-                break;
-            }
-            var data = this.list_data[i];
-            if (!Dash.Validate.Object(data)) {
-                console.error("Error: Rect List Module data expects a list of dicts");
-                return;
-            }
-            var key = Object.keys(data)[0];
-            this.list_rows.push(this.get_list_row(key, data[key]));
-        }
-    };
-    this.redraw_list_rows = function () {
-        this.get_list_rows();
-        this.html.empty();
-        this.add_header();
-        for (var i in this.list_rows) {
-            this.html.append(this.list_rows[i]);
-            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
-        }
-    };
-    this.get_list_row = function (key, value) {
-        var list_row = $("<div></div>");
-        var content = $("<div></div>");
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
-        list_row.css({
-            "width": "98%",
-            "margin-top": "3%",
-            "margin-bottom": "3%",
-            "opacity": 0,  // For animation
-            "height": "2.75vh"  // TEMP
-        });
-        content.css({
-            "display": "flex",
-            "height": "2.75vh"  // TEMP
-        });
-        key_text.css({
-            ...this.text_css,
-            "color": this.primary_color,
-            "font-size": "1.5vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "17vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        value_text.css({
-            ...this.text_css,
-            "color": this.primary_color,
-            "text-align": "right",
-            "font-size": "2.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "4vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        content.append(this.get_dot_icon().html);
-        content.append(key_text);
-        content.append(Dash.Gui.GetFlexSpacer());
-        content.append(value_text);
-        list_row.append(content);
-        list_row.append(this.get_divider_line());
-        return list_row;
-    };
-    this.get_dot_icon = function () {
-        var dot_icon = new Dash.Gui.Icon(
-            this.color,
-            "circle_dot",
-            Dash.Size.ButtonHeight
-        );
-        dot_icon.icon_html.css({
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "color": this.primary_color,
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        return dot_icon;
-    };
-    this.get_divider_line = function () {
-        var line = $("<div></div>");
-        line.css({
-            "background": this.secondary_color,
-            "height": "0.1vh"  // TEMP
-        });
-        return line;
-    };
-}
+    this.setup_styles();
+};
 
-/**@member DashLayoutDashboardModule*/
-function DashLayoutDashboardModuleSquare () {
-    this.styles = ["tag", "radial"];
-    this.label_text = "";
-    this.label_header_text = "";
-    this.label = $("<div></div>");
-    this.label_header = $("<div></div>");
-    this.radial_fill_percent = 0;
-    // Works for both "tag" and "radial" sub-styles
-    this.SetLabelHeaderText = function (text) {
-        (function (self, text) {
-            self.label_header.fadeOut(500);
-            self.label_header_text = text.toString().toUpperCase();
-            self.label_header.text(self.label_header_text);
-            self.label_header.fadeIn(500);
-        })(this, text);
-    };
-    // Works for both "tag" and "radial" sub-styles
-    this.SetLabelText = function (text) {
-        (function (self, text) {
-            self.label.fadeOut(500);
-            self.label_text = text.toString().toUpperCase();
-            if (self.label_text.length > 4) {
-                console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
-            }
-            if (self.sub_style === "tag" && self.label_text.length <= 3) {
-                self.label.css({
-                    "font-size": "5.5vh",  // TEMP
-                    "height": "5.5vh",  // TEMP
-                    "line-height": "6vh",  // TEMP
-                });
-            }
-            self.label.text(self.label_text);
-            self.label.fadeIn(500);
-        })(this, text);
-    };
-    this.SetRadialFillPercent = function (percent) {
-        if (this.sub_style !== "radial") {
-            console.error("Error: SetRadialFillPercent() only works for Square Radial Modules");
-            return;
-        }
-        percent = parseInt(percent);
-        if (isNaN(percent)) {
-            console.error("Error: SetRadialFillPercent requires a number!");
-        }
-        if (percent > 100) {
-            percent = 100;
-        }
-        if (percent < 0) {
-            percent = 0;
-        }
-        this.radial_fill_percent = percent;
-        this.SetLabelText(this.radial_fill_percent.toString() + "%");
-        this.update_radial_fill_percent(percent);
-    };
+function DashLayoutSearchableListSearchInput (slist) {
+    this.slist      = slist;
+    this.color      = this.slist.color;
+    this.row_height = this.slist.row_height;
+    this.icon_size    = this.row_height-(Dash.Size.Padding*1.5);
+    this.input        = new Dash.Gui.Input("Search...", this.color);
+    this.icon_search  = new Dash.Gui.Icon(this.color, "search", this.icon_size);
+    this.icon_clear   = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
+    this.html         = this.input.html;
+    this.current_search_term = "";
+    this.clear_icon_visible  = false;
     this.setup_styles = function () {
+        this.input.OnChange(this.on_search, this);
+        this.html.append(this.icon_search.html);
+        this.html.append(this.icon_clear.html);
         this.html.css({
-            "aspect-ratio": this.square_aspect_ratio
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "height": this.row_height,
+            "border-bottom": "1px solid " + this.color.Pinstripe,
+            "background": Dash.Color.Lighten(this.color.Background, 10),
+            "box-shadow": "none",
+            "margin-right": 0,
+            "padding-right": this.row_height + Dash.Size.Padding*0.5,
         });
-        if (this.sub_style === "tag") {
-            this.setup_tag_style();
-        }
-        else if (this.sub_style === "radial") {
-            this.setup_radial_style();
-        }
-        this.html.append(this.label_header);
-        this.html.append(this.label);
-    };
-    this.setup_tag_style = function () {
-        this.label_header.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "95%",
-            "margin-top": "18%",
-            "font-size": "1.5vh",  // TEMP
-            "height": "1.5vh",  // TEMP
+        this.icon_search.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding*0.66,
+            "top": Dash.Size.Padding*0.66,
+            "pointer-events": "none",
+            "user-select":    "none",
         });
-        this.label.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "95%",
-            "font-size": "4.5vh",  // TEMP
-            "height": "4.5vh",  // TEMP
-            "line-height": "5vh",  // TEMP
+        this.icon_clear.html.css({
+            "position": "absolute",
+            "right": Dash.Size.Padding*0.66,
+            "top": Dash.Size.Padding*0.66,
+            "user-select":    "none",
+            "cursor": "pointer",
+            "opacity": 0,
         });
-        // Only draw the default placeholder view if it hasn't been set after the first second
-        (function (self) {
-            setTimeout(
-                function () {
-                    if (self.label_text.length < 1) {
-                        self.SetLabelText("--");
-                    }
-                },
-                1000
-            );
+        (function(self){
+            self.icon_clear.html.click(function(){
+                self.clear_search();
+            });
         })(this);
     };
-    this.setup_radial_style = function () {
-        this.label_header.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "50%",
-            "margin-top": "32%",
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
-        });
-        this.label.css({
-            ...this.centered_text_css,
-            "color": this.primary_color,
-            "width": "50%",
-            "font-size": "2.75vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "3.25vh",  // TEMP
-        });
-        this.setup_radial_gui();
+    this.clear_search = function () {
+        this.input.SetText("");
+        this.hide_clear_icon();
+        this.on_search();
     };
-    this.setup_radial_gui = function () {
-        var config = this.get_radial_config();
-        var canvas = document.createElement("canvas");
-        var script = document.createElement("script");
-        var canvas_container = document.createElement("div");
-        var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
-        canvas_container.style.overflow = "hidden";
-        canvas_container.style.width = "10.5vh";  // TEMP
-        canvas_container.style.height = "10.5vh";  // TEMP
-        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        canvas_container.style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
-        canvas_container.style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
-        canvas_container.style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
-        canvas.id = canvas_id;
-        script.type = "text/javascript";
-        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
-        canvas_container.appendChild(canvas);
-        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
-    };
-    this.get_radial_fill_data = function () {
-        return [this.radial_fill_percent, 100 - this.radial_fill_percent];
-    };
-    this.update_radial_fill_percent = function (percent) {
-        if (!this.canvas) {
+    this.on_search = function () {
+        var _current_search_term = this.input.Text();
+        if (_current_search_term == this.current_search_term) {
             return;
-        }
-        var radial_gui = this.canvas["gui"] || window[this.canvas["id"]];
-        // Try again if gui hasn't loaded yet (should only happen when initializing)
-        if (!radial_gui.data) {
-            (function (self, percent) {
-                setTimeout(
-                    function () {
-                        self.SetRadialFillPercent(percent);
-                    },
-                    250
-                );
-            })(this, percent);
-            return;
-        }
-        if (!this.canvas["gui"]) {
-            this.canvas["gui"] = radial_gui;
-        }
-        radial_gui.data.datasets[0].data = this.get_radial_fill_data();
-        radial_gui.update();
-    };
-    // Config Documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
-    this.get_radial_config = function () {
-        return {
-            "type": "doughnut",
-            "data": {
-                "datasets": [{
-                    "data": this.get_radial_fill_data(),
-                    "backgroundColor": [
-                        this.primary_color,  // Filled
-                        this.secondary_color  // Unfilled
-                    ],
-                    "borderWidth": [
-                        5,  // Filled
-                        0,  // Unfilled
-                    ],
-                    "borderColor": [
-                        this.primary_color  // Filled
-                    ]
-                }]
-            },
-            "options": {
-                "cutout": "80%",
-                "responsive": true,
-                "aspectRatio": 1,
-                "maintainAspectRatio": true,
-                "plugins": {
-                    "legend": {
-                        "display": false
-                    },
-                    "tooltip": {
-                        "enabled": false
-                    },
-                    "title": {
-                        "display": false
-                    }
-                }
-            }
         };
-    };
-}
-
-/**@member DashLayoutDashboardModule*/
-function DashLayoutDashboardModuleRect () {
-    this.styles = ["list"];
-    this.list_rows = [];
-    this.list_data = [];
-    // Expects list of dicts with a single key/value pair (value should be a string), where
-    // the key displays on the left side of the list, and value displays on the right side
-    this.SetListData = function (data_list) {
-        if (this.sub_style !== "list") {
-            console.error("Error: SetListData() only applies to Rect-List Modules");
-            return;
-        }
-        if (!Array.isArray(data_list)) {
-            console.error("Error: SetListData() requires a list of dicts to be passed in");
-            return;
-        }
-        this.list_data = data_list;
-        this.redraw_list_rows();
-    };
-    this.setup_styles = function () {
-        this.html.css({
-            "aspect-ratio": this.rect_aspect_ratio
-        });
-        if (this.sub_style === "list") {
-            this.setup_list_style();
-        }
-    };
-    this.setup_list_style = function () {
-        // Only draw the default placeholder view if it hasn't been set after the first second
-        (function (self) {
-            setTimeout(
-                function () {
-                    if (self.list_rows.length < 1) {
-                        self.redraw_list_rows();
-                    }
-                },
-                1000
-            );
-        })(this);
-    };
-    this.get_list_rows = function () {
-        this.list_rows = [];
-        if (this.list_data.length < 1) {
-            this.list_data = [
-                {"-": "--"},
-                {"--": "--"},
-                {"---": "--"},
-            ];
-        }
-        for (var i in this.list_data) {
-            if (this.list_rows.length >= 3) {
-                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
-                break;
-            }
-            var data = this.list_data[i];
-            if (!Dash.Validate.Object(data)) {
-                console.error("Error: Rect List Module data expects a list of dicts");
-                return;
-            }
-            var key = Object.keys(data)[0];
-            this.list_rows.push(this.get_list_row(key, data[key]));
-        }
-    };
-    this.redraw_list_rows = function () {
-        this.get_list_rows();
-        this.html.empty();
-        this.add_header();
-        for (var i in this.list_rows) {
-            this.html.append(this.list_rows[i]);
-            this.list_rows[i].stop().animate({"opacity": 1}, 1000);
-        }
-    };
-    this.get_list_row = function (key, value) {
-        var list_row = $("<div></div>");
-        var content = $("<div></div>");
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
-        list_row.css({
-            "width": "98%",
-            "margin-top": "3%",
-            "margin-bottom": "3%",
-            "opacity": 0,  // For animation
-            "height": "2.75vh"  // TEMP
-        });
-        content.css({
-            "display": "flex",
-            "height": "2.75vh"  // TEMP
-        });
-        key_text.css({
-            ...this.text_css,
-            "color": this.primary_color,
-            "font-size": "1.5vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "17vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        value_text.css({
-            ...this.text_css,
-            "color": this.primary_color,
-            "text-align": "right",
-            "font-size": "2.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "4vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        content.append(this.get_dot_icon().html);
-        content.append(key_text);
-        content.append(Dash.Gui.GetFlexSpacer());
-        content.append(value_text);
-        list_row.append(content);
-        list_row.append(this.get_divider_line());
-        return list_row;
-    };
-    this.get_dot_icon = function () {
-        var dot_icon = new Dash.Gui.Icon(
-            this.color,
-            "circle_dot",
-            Dash.Size.ButtonHeight
-        );
-        dot_icon.icon_html.css({
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "white-space": "nowrap",
-            "color": this.primary_color,
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
-        });
-        return dot_icon;
-    };
-    this.get_divider_line = function () {
-        var line = $("<div></div>");
-        line.css({
-            "background": this.secondary_color,
-            "height": "0.1vh"  // TEMP
-        });
-        return line;
-    };
-}
-
-function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="") {
-    this.binder = binder;
-    this.on_exit_callback = on_exit_callback.bind(binder);
-    this.user_data = user_data || Dash.User.Data;
-    this.context_logo_img_url = context_logo_img_url;
-    this.color = this.binder.color || Dash.Color.Dark;
-    this.stack = new Dash.Mobile.CardStack(this);
-    this.html = this.stack.html;
-    this.profile_button = null;
-    this.user_image_upload_button = null;
-    this.setup_styles = function () {
-        this.setup_banner();
-        this.setup_property_box();
-        this.add_user_image_upload_button();
-        if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
-            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
+        this.current_search_term = _current_search_term;
+        if (this.current_search_term.length > 0) {
+            this.show_clear_icon();
         }
         else {
-            this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+            this.hide_clear_icon();
+        };
+        this.slist.SetSearchTerm(this.current_search_term);
+    };
+    this.show_clear_icon = function () {
+        if (this.clear_icon_visible) {
+            return;
+        };
+        this.clear_icon_visible = true;
+        this.icon_search.html.stop().animate({"opacity": 0}, 250);
+        this.icon_clear.html.stop().animate( {"opacity": 1}, 250);
+    };
+    this.hide_clear_icon = function () {
+        if (!this.clear_icon_visible) {
+            return;
+        };
+        this.clear_icon_visible = false;
+        this.icon_search.html.stop().animate({"opacity": 1}, 250);
+        this.icon_clear.html.stop().animate( {"opacity": 0}, 250);
+    };
+    this.setup_styles();
+};
+
+function DashLayoutTabs (binder, side_tabs) {
+    this.binder = binder;
+    this.side_tabs = side_tabs;
+    this.all_content = [];
+    this.selected_index = -1;
+    this.current_index = null;
+    this.html = $("<div></div>");
+    this.tab_top = $("<div></div>");
+    this.tab_bottom = $("<div></div>");
+    this.content_area = $("<div></div>");
+    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+    if (this.side_tabs) {
+        this.color = Dash.Color.Dark;
+        this.tab_area = $("<div></div>");
+        this.tab_middle = $("<div></div>");
+        this.tab_area_size = Dash.Size.ColumnWidth;
+    }
+    else {  // TODO: This should probably also be converted to a better div grouping
+        this.color = Dash.Color.Light;
+        this.list_backing = $("<div></div>");
+        this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
+    }
+    this.setup_styles = function () {
+        if (this.side_tabs) {
+            this.set_styles_for_side_tabs();
         }
-        this.add_context_logo_img();
+        else {
+            this.set_styles_for_top_tabs();
+        }
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.load_last_selection();
+            });
+        })(this);
     };
-    this.setup_banner = function () {
-        this.user_banner = this.stack.AddBanner();
-        this.user_banner.SetHeadlineText(Dash.User.GetDisplayName(), "User Settings");
-        this.user_banner.headline.label_top.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
-        this.user_banner.headline.label_bottom.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
-        this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
-        this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
-        this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
-        this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
+    this.OnTabChanged = function (callback) {
+        this.on_tab_changed_cb = callback.bind(this.binder);
     };
-    this.add_context_logo_img = function () {
-        if (!this.context_logo_img_url) {
+    this.GetCurrentIndex = function () {
+        return this.current_index;
+    };
+    this.LoadIndex = function (index) {
+        if (index > this.all_content.length - 1) {
             return;
         }
+        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        this.current_index = index;
+        var button = null;
+        for (var i in this.all_content) {
+            var content_data = this.all_content[i];
+            if (parseInt(i) === parseInt(index)) {
+                content_data["button"].SetSelected(true);
+                button = content_data["button"];
+            }
+            else {
+                content_data["button"].SetSelected(false);
+            }
+        }
+        this.content_area.empty();
+        var inst_class;
+        var content_html;
+        if (typeof this.all_content[index]["content_div_html_class"] === "object") {
+            content_html = this.all_content[index]["content_div_html_class"];
+        }
+        else if (typeof this.all_content[index]["content_div_html_class"] === "function") {
+            // DashGlobalImpactChange | 12/21/21 | Ryan
+            // Updating this function to pass optional_args to callback while also
+            // binding the callback correctly to the parent class
+            // This is likely a very low impact change that *shouldn't* affect anything
+            var html_class = this.all_content[index]["content_div_html_class"];
+            var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
+            var optional_args = this.all_content[index]["optional_args"];
+            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_args) && Array.isArray(optional_args);
+            if (this.is_class(html_class)) {
+                if (unpack) {
+                    inst_class = new callback(...optional_args);
+                }
+                else {
+                    if (optional_args) {
+                        inst_class = new callback(optional_args);
+                    }
+                    else {
+                        inst_class = new callback();
+                    }
+                }
+                content_html = inst_class.html;
+            }
+            else {  // Calling a function with 'new' will result in an incorrect binding
+                if (unpack) {
+                    inst_class = callback(...optional_args);
+                }
+                else {
+                    if (optional_args) {
+                        inst_class = callback(optional_args);
+                    }
+                    else {
+                        inst_class = callback();
+                    }
+                }
+                content_html = inst_class.html;
+            }
+        }
+        else {
+            content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+        }
+        if (!content_html) {
+            if (parseInt(index) === 0) {
+                console.error("Error: Unknown content!");
+                content_html = $("<div>Error Loading Content</div>");
+            }
+            else {
+                console.error("Error: Invalid index", index, ", reloading index 0");
+                this.LoadIndex(0);
+                return;
+            }
+        }
+        this.content_area.append(content_html);
+        if (this.on_tab_changed_cb) {
+            this.on_tab_changed_cb(this.all_content[index], inst_class);
+        }
+        if (this.all_content[index]["url_hash_text"]) {
+            Dash.History.TabAdd(
+                this.all_content[index]["url_hash_text"],
+                this,
+                index
+            );
+        }
+    };
+    this.AppendHTML = function (html) {
+        html.css({
+            "margin-bottom": 1
+        });
+        this.tab_top.append(html);
+    };
+    this.MidpendHTML = function (html) {
+        if (!this.side_tabs) {
+            console.log("MidpendHTML only works for side tabs right now");
+            return;
+        }
+        html.css({
+            "margin-top": 1,
+            "margin-bottom": 1
+        });
+        this.tab_middle.append(html);
+    };
+    this.PrependHTML = function (html) {
+        html.css({
+            "margin-top": 1
+        });
+        this.tab_bottom.append(html);
+    };
+    this.AppendImage = function (img_url, height=null) {
+        // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
+        // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
+        //  container so they derive from some abstraction to simplify append/prepend
         var image = $("<div></div>");
         image.css({
-            "height": Dash.Size.RowHeight * 2,
-            "margin-top": Dash.Size.Padding,
-            "background-image": "url(" + this.context_logo_img_url + ")",
+            "height": height || Dash.Size.RowHeight * 2,
+            "background-image": "url(" + img_url + ")",
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "background-position": "center"
         });
-        this.stack.AppendHTML(image);
+        this.tab_top.append(image);
+        return image;
     };
-    this.reload = function () {
-        location.reload();
+    this.Append = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_top, optional_args, additional_content_data);
     };
-    this.exit_stack = function () {
-        if (this.on_exit_callback) {
-            this.on_exit_callback();
-        }
-    };
-    this.add_user_image_upload_button = function () {
-        this.user_image_upload_button = new Dash.Gui.Button(
-            "Upload Image",
-            this.on_user_img_uploaded,
-            this,
-            this.color
-        );
-        this.profile_button.icon_circle.append(this.user_image_upload_button.html);
-        this.user_image_upload_button.SetFileUploader(
-            "https://" + Dash.Context.domain + "/Users",
-            {
-                "f": "upload_image",
-                "user_data": JSON.stringify(this.user_data)
-            }
-        );
-        this.user_image_upload_button.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto",
-            "background": "rgba(0, 0, 0, 0)"
-        });
-        this.user_image_upload_button.highlight.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto"
-        });
-        this.user_image_upload_button.label.css({
-            "opacity": 0
-        });
-    };
-    this.on_user_img_uploaded = function (response) {
-        if (response.timeStamp) {
+    this.Midpend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
+        if (!this.side_tabs) {
+            console.error("Error: Midpend only works for side tabs for now");
             return;
         }
-        console.log("User image uploaded:", response);
-        if (response["img"]) {
-            this.user_data["img"] = response["img"];
-            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
-        }
+        return this._add(label_text, content_div_html_class, this.tab_middle, optional_args, additional_content_data);
     };
-    this.setup_property_box = function () {
-        this.property_box = new Dash.Gui.PropertyBox(
-            this,
-            this.get_data,
-            this.set_data,
-            "Users",
-            this.user_data["email"]
-        );
-        this.property_box.AddInput("first_name", "First Name", "", null, true);
-        this.property_box.AddInput("last_name", "Last Name", "", null, true);
-        this.property_box.AddInput("email", "E-mail Address", "", null, false);
-        this.property_box.AddInput("password", "Update Password", "", null, true);
-        this.stack.AppendHTML(this.property_box.html);
+    this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
+        return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
-    this.log_user_out = function () {
-        Dash.Logout();
+    this.is_class = function (func) {
+        var dummy = Function.prototype.toString.call(func);
+        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
     };
-    this.get_data = function () {
-        return this.user_data;
-    };
-    this.set_data = function () {
-        console.log("(set data)");
-    };
-    this.on_profile_changed = function () {
-        // Dummy/placeholder function
-    };
-    this.setup_styles();
-}
-
-function DashMobileCardStackBanner (stack) {
-    this.stack = stack;
-    this.color = this.stack.color;
-    this.html = Dash.Gui.GetHTMLContext();
-    this.header_row = null;
-    this.headline = new DashMobileCardStackBannerHeadline(this);
-    this.background_skirt = $("<div></div>");
-    this.content = $("<div></div>");
-    this.last_sizing_mode = -1;
-    // Garbage hardcode:
-    this.DefaultColorA = "#ffae4c";
-    this.DefaultColorB = "#ff684c";
-    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient(this.DefaultColorA, this.DefaultColorB);
-    this.row_height = Dash.Size.ButtonHeight;
-    this.footer_height = Dash.Size.ButtonHeight*2;
-    this.footer_button_width = Dash.Size.ButtonHeight + Dash.Size.Padding;
-    this.HeaderHeight = this.row_height;
-    this.FooterHeight = this.footer_height;
-    this.FooterButtonWidth = this.footer_button_width;
-    this.skirt_bottom_rest = 0;
-    this.setup_styles = function () {
-        this.html.append(this.background_skirt);
-        this.html.append(this.content);
-        this.content.append(this.headline.html);
+    this.set_styles_for_side_tabs = function () {
         this.html.css({
-            "background": "none",
-            // "background": "black",
-            "pointer-events": "none",
+            "position": "absolute",
+            "inset": 0,
+            "background": this.color.Tab.AreaBackground,
         });
-        this.content.css({
-            // "background": "purple",
+        this.content_area.css({
+            "position": "absolute",
+            "top": 0,
+            "left": this.tab_area_size,
+            "bottom": 0,
+            "right": 0,
+            "background": Dash.Color.GetOpposite(this.color).Background,
         });
-        this.background_skirt.css({
-            "background": "orange",
+        this.tab_area.css({
+            "display": "flex",
+            "flex-direction": "column",
+            "position": "absolute",
+            "top": 0,
+            "left": 0,
+            "bottom": 0,
+            "width": this.tab_area_size
+        });
+        this.tab_top.css({
+            "width": this.tab_area_size
+        });
+        this.tab_middle.css({
+            "margin-top": Dash.Size.Padding * 0.2,
+            "margin-bottom": Dash.Size.Padding * 0.2,
+            "flex-grow": 2,
+            "overflow-y": "auto",
+            "width": this.tab_area_size
+        });
+        this.tab_bottom.css({
+            "width": this.tab_area_size
+        });
+        this.tab_area.append(this.tab_top);
+        this.tab_area.append(this.tab_middle);
+        this.tab_area.append(this.tab_bottom);
+        this.html.append(this.content_area);
+        this.html.append(this.tab_area);
+    };
+    this.set_styles_for_top_tabs = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "background": this.color.Tab.AreaBackground,
+        });
+        this.list_backing.css({
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "height": this.tab_area_size
+        });
+        this.tab_top.css({
             "position": "absolute",
             "left": 0,
             "right": 0,
             "top": 0,
-            "pointer-events": "none",
-            "display": "none",
+            "display": "flex",
+            "height": this.tab_area_size
         });
-    };
-    this.SetBackground = function (html_color_or_url) {
-        if (!html_color_or_url || html_color_or_url == "none") {
-            this.background_skirt.css({
-                "display": "none",
-                "background": "none",
-            });
-            return;
-        }
-        if (html_color_or_url.includes("http")) {
-            this.background_skirt.css({
-                "display": "block",
-                "background": "#000",
-                "background-image": "url(" + html_color_or_url + ")",
-                "background-size": "cover",
-                "background-position": "center",
-            });
-        }
-        else {
-            this.background_skirt.css({
-                "display": "block",
-                "background": html_color_or_url,
-            });
-        }
-    };
-    // text_secondary = optional
-    this.SetHeadlineText = function (text_primary, text_secondary) {
-        this.headline.SetHeadlineText(text_primary, text_secondary);
-        this.adjust_margins();
-    };
-    this.SetLeftIcon = function (icon_name, callback) {
-        this.assert_header_row();
-        this.header_row.SetLeftIcon(icon_name, callback);
-    };
-    this.SetRightIcon = function (icon_name, callback) {
-        this.assert_header_row();
-        this.header_row.SetRightIcon(icon_name, callback);
-    };
-    this.SetFixed = function (is_fixed) {
-        // When is_fixed is true, the banner does not scroll
-        // with the rest of the content on the page
-        this.stack.SetFixedBanner(is_fixed);
-    };
-    this.AddFooterIcon = function (icon_name, label_text, callback) {
-        this.assert_footer_row();
-        return this.footer_row.AddIcon(icon_name, label_text, callback);
-    };
-    this.OnScroll = function (scroll_top) {
-        var current_height = this.html.height();
-        var scroll_max = this.html.height()*0.5;
-        var footer_row_height = 0;
-        var scroll_norm = 1; // Scrolled past the banner
-        if (scroll_top <= scroll_max) {
-            scroll_norm = scroll_top / scroll_max;
-        }
-        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
-        if (this.footer_row) {
-            footer_row_height = this.footer_row.row_height;
-        }
-        // var scroll_norm = scroll_top / current_height;
-        var max_offset = current_height + footer_row_height;
-        var headline_offset = 0;
-        if (this.headline) {
-            headline_offset = this.headline.GetHeight();
-            this.headline.OnScroll(scroll_norm);
-        }
-        if (this.footer_row) {
-            this.footer_row.OnScroll(scroll_norm, headline_offset);
-        }
-        if (this.background_skirt) {
-            var shadow_opacity = 0.7*scroll_norm;
-            this.background_skirt.css({
-                "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
-                "box-shadow": "0px 0px 40px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
-            });
-        }
-    };
-    this.assert_header_row = function () {
-        // Create the button row if it doesn't exist yet
-        if (this.header_row) {
-            // Header already exists
-            return;
-        }
-        this.header_row = new DashMobileCardStackBannerTopButtonRow(this);
-        this.content.prepend(this.header_row.html);
-        this.adjust_margins();
-    };
-    this.assert_footer_row = function () {
-        // Create the button row if it doesn't exist yet
-        if (this.footer_row) {
-            // Footer already exists
-            return;
-        }
-        this.footer_row = new DashMobileCardStackBannerFooterButtonRow(this);
-        this.content.append(this.footer_row.html);
-        this.adjust_margins();
-    };
-    this.adjust_margins = function () {
-        // Whenever core content is added or removed, we need to adjust some values
-        // + If headline only (no header, no footer)
-        //   - MODE: 0
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
-        //   -
-        // + If headline & top row
-        //   - MODE: 1
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
-        // + If headline & bottom row
-        //   - MODE: 2
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
-        var mode = 0;
-        var headline_top_margin = Dash.Size.Padding*2;
-        var headline_bottom_margin = 0;
-        var bottom_margin = 0;
-        this.skirt_bottom_rest = Dash.Size.ButtonHeight;
-        if (this.header_row && !this.footer_row) {
-            mode = 1;
-            headline_top_margin = Dash.Size.Padding*0.25;
-            headline_bottom_margin = Dash.Size.Padding*0.25;
-            // To account for the balance offset of the
-            // top button row when there is no footer
-            bottom_margin = Dash.Size.ButtonHeight;
-            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
-        }
-        if (this.header_row && this.footer_row) {
-            mode = 2;
-            headline_top_margin = Dash.Size.Padding*0.25;
-            headline_bottom_margin = (Dash.Size.Padding*0.25);
-            headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
-            // To account for the balance offset of the
-            // top button row when there is no footer
-            // bottom_margin = Dash.Size.ButtonHeight;
-            bottom_margin = Dash.Size.Padding;
-            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
-            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
-        }
-        if (!this.header_row && this.footer_row) {
-            console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
-            mode = 3;
-            headline_top_margin = Dash.Size.Padding*1;
-            // headline_top_margin = 100;
-            headline_bottom_margin = Dash.Size.Padding*1;
-            // headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
-            // To account for the balance offset of the
-            // top button row when there is no footer
-            // bottom_margin = Dash.Size.ButtonHeight;
-            bottom_margin = Dash.Size.Padding;
-            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
-            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
-        }
-        if (mode == this.last_sizing_mode) {
-            // Correct properties are already set
-            return;
-        }
-        this.headline.SetTopBottomMargins(
-            headline_top_margin,
-            headline_bottom_margin
-        );
-        this.html.css({
-            "margin-bottom": bottom_margin,
+        this.tab_bottom.css({
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+            "display": "flex",
+            "height": this.tab_area_size
         });
-        this.background_skirt.css({
-            "bottom": -this.skirt_bottom_rest,
+        // The right side / non-tab area / content
+        this.content_area.css({
+            "position": "absolute",
+            "inset": 0,
+            "overflow-y": "auto",
+            // "background": Dash.Color.GetOpposite(this.color).Background,
+            "background": this.color.Background,
+            "top": this.tab_area_size
         });
-        this.last_sizing_mode = mode;
+        this.html.append(this.list_backing);
+        this.html.append(this.tab_top);
+        this.html.append(this.tab_bottom);
+        this.html.append(this.content_area);
+    };
+    this.load_last_selection = function () {
+        if (parseInt(this.selected_index) !== -1) {
+            // A selection was already made externally
+            return;
+        }
+        if (this.all_content.length === 0) {
+            return;
+        }
+        var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
+        if (last_index > this.all_content.length - 1) {
+            last_index = 0;
+        }
+        this.LoadIndex(last_index);
+    };
+    this._add = function (label_text, content_div_html_class, anchor_div, optional_args=null, additional_content_data={}) {
+        var content_data = {
+            "label_text": label_text,
+            "content_div_html_class": content_div_html_class,
+            "button": null,
+            // Any extra arg to pass to the class (if it's an array, it can be unpacked by passing "unpack_params": true (in additional_content_data))
+            "optional_args": optional_args,
+            // Extra data that doesn't belong in optional_args (since optional_args gets sent to the callback)
+            ...additional_content_data
+        };
+        (function (self, index) {
+            var style = self.side_tabs ? "tab_side" : "tab_top";
+            content_data["button"] = new Dash.Gui.Button(
+                label_text,                         // Label
+                function () {                       // Callback
+                    self.LoadIndex(index);
+                },
+                self,                               // Binder
+                self.color,                         // Dash Color Set
+                {"style": style}                    // Options
+            );
+        })(this, this.all_content.length);
+        anchor_div = anchor_div || this.tab_top;
+        anchor_div.append(content_data["button"].html);
+        this.all_content.push(content_data);
+        return content_data["button"];
     };
     this.setup_styles();
 }
 
-function DashMobileCardStackUserBanner (stack) {
-    this.user_modal = null;
-    this.color = stack.color;
-    this.context_logo_img_url = "";
-    DashMobileCardStackBanner.call(this, this);
+class DashLayoutTabsTop extends DashLayoutTabs {
+    constructor(Binder) {
+        super(Binder, false);
+    };
+}
+
+class DashLayoutTabsSide extends DashLayoutTabs {
+    constructor(Binder) {
+        super(Binder, true);
+    };
+}
+
+function DashLayoutToolbar (binder, color) {
+    this.binder        = binder;
+    this.color         = color || this.binder.color || Dash.Color.Dark;
+    this.objects       = [];
+    this.html          = Dash.Gui.GetHTMLContext();
+    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
+    this.stroke_height = 1;
+    this.height        = Dash.Size.ButtonHeight + this.stroke_height;
+    this.refactor_itom_padding_requested = false;
+    DashLayoutToolbarInterface.call(this);
     this.setup_styles = function () {
-        this.SetBackground(this.DefaultBackgroundGradient);
-        this.SetLeftIcon("user", this.on_user_clicked);
+        this.html.css({
+            "background": Dash.Color.Lighten(this.color.Background, 7),
+            "height": this.height, // +1 for the bottom stroke
+            "padding-right": Dash.Size.Padding * 0.5,
+            "display": "flex",
+            "padding-left": Dash.Size.Padding * 0.5
+        });
+        this.stroke_sep.css({
+            "background": this.color.Pinstripe,
+            "top": "auto",
+            "height": this.stroke_height
+        });
+        this.html.append(this.stroke_sep);
     };
-    this.SetContextLogoImg = function (url) {
-        this.context_logo_img_url = url;
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
+        if (callback) {
+            callback(selected_id, previous_selected_option, this, additional_data);
+        }
+        else {
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+        }
     };
-    this.on_user_clicked = function () {
-        this.user_modal = new Dash.Mobile.UserProfile(this, this.on_show_main, null, this.context_logo_img_url);
-        stack.AddLeftContent(this.user_modal.html);
+    this.on_input_changed = function (obj_index) {
+        var obj = this.objects[obj_index];
+        obj["callback"](obj["html"].Text(), obj["html"]);
     };
-    this.on_show_main = function () {
-        stack.ShowCenterContent();
+    this.on_input_submitted = function (obj_index) {
+        var obj = this.objects[obj_index];
+        obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+    };
+    this.on_button_clicked = function (obj_index, data=null) {
+        var obj = this.objects[obj_index];
+        obj["callback"](obj["html"], data, this);
+    };
+    this.refactor_item_padding = function () {
+        // refactor padding, but do it on the next frame since
+        // the most likely time to do this happens after packing
+        // a bunch of elements in the initialization of the Toolbar
+        if (this.refactor_itom_padding_requested) {
+            return;
+        }
+        this.refactor_itom_padding_requested = true;
+        (function (self) {
+            requestAnimationFrame(function () {
+                self._refactor_item_padding();
+            });
+        })(this);
+    };
+    // Note: Never call this directly. Instead, use this.refactor_item_padding()
+    this._refactor_item_padding = function () {
+        if (!this.refactor_itom_padding_requested) {
+            return;
+        }
+        this.refactor_itom_padding_requested = false;
+        for (var i = 0; i < this.objects.length; i++) {
+            var html = this.objects[i]["html_elem"];
+            if (i === (this.objects.length - 1)) {
+                // This is the last element, and it gets no right-margin
+                //since the toolbar itself has a margin built in to the left and right
+                html.css({"margin-right": 0, "margin-left": 0});
+            }
+            else {
+                html.css({"margin-right": Dash.Size.Padding * 0.5, "margin-left": 0});
+            }
+        }
     };
     this.setup_styles();
+}
+
+/**@member DashLayoutToolbar */
+function DashLayoutToolbarInterface () {
+    this.AddExpander = function () {
+        var expander = $("<div></div>");
+        expander.css({
+            "flex-grow": 2,
+        });
+        this.html.append(expander);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": expander,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        return expander;
+    };
+    this.GetHeight = function () {
+        return this.height;
+    };
+    this.AddSpace = function (width) {
+        var space = $("<div></div>");
+        space.css({
+            "width": width,
+        });
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": space,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        this.html.append(space);
+    };
+    this.AddIconButton = function (icon_name, callback, width=null, data=null) {
+        var obj_index = this.objects.length;
+        var button = null;
+        (function (self, obj_index, data) {
+            button = new Dash.Gui.IconButton(
+                icon_name,
+                function () {
+                    self.on_button_clicked(obj_index, data);
+                },
+                self,
+                null,
+                {"style": "toolbar"}
+            );
+            self.html.append(button.html);
+            self.objects.push({
+                "html": button,
+                "html_elem": button.html,
+                "callback": callback.bind(self.binder),
+                "index": obj_index
+            });
+        })(this, obj_index, data);
+        if (width) {
+            button.SetIconSize(width);
+        }
+        this.refactor_item_padding();
+        return button;
+    };
+    this.AddButton = function (label_text, callback, width=null, data=null) {
+        var obj_index = this.objects.length;
+        var button = null;
+        (function (self, obj_index, data) {
+            button = new Dash.Gui.Button(
+                label_text,
+                function () {
+                    self.on_button_clicked(obj_index, data);
+                },
+                self,
+                null,
+                {"style": "toolbar"}
+            );
+            self.html.append(button.html);
+            self.objects.push({
+                "html": button,
+                "html_elem": button.html,
+                "callback": callback.bind(self.binder),
+                "index": obj_index
+            });
+        })(this, obj_index, data);
+        this.refactor_item_padding();
+        return button;
+    };
+    this.AddHTML = function (html) {
+        this.html.append(html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": html,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+    };
+    this.AddUploadButton = function (label_text, callback, bind, api, params) {
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
+            bind,
+            null,
+            {"style": "toolbar"}
+        );
+        button.SetFileUploader(api, params);
+        this.html.append(button.html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": button,
+            "html_elem": button.html,
+            "callback": callback,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        return button;
+    };
+    this.AddDivider = function () {
+        var divider_line = this.AddLabel("", false);
+        divider_line.html.css({
+            "padding-left": 0,
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.2,
+        });
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": divider_line,
+            "html_elem": divider_line.html,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        return divider_line;
+    };
+    // Intended to be the first item, if you want a header-style label starting the toolbar
+    this.AddLabel = function (text, add_end_border=true, color=null) {
+        var header = new Dash.Gui.Header(text, color);
+        header.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+        });
+        this.html.append(header.html);
+        if (!add_end_border) {
+            return header;
+        }
+        var end_border = $("<div></div>");
+        end_border.css({
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-bottom": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding * 0.5,
+            "left": -Dash.Size.Padding*0.25,
+            "top": 0,
+            "bottom": 0,
+            "width": Dash.Size.Padding*0.5,
+            "background": this.color.AccentGood,
+        });
+        this.html.append(end_border);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html_elem": end_border,
+            "callback": null,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        return header;
+    };
+    this.AddText = function (text, color=null) {
+        var label = this.AddLabel(text, false, color);
+        label.border.remove();
+        label.html.css({
+            "padding-left": 0,
+            "margin-top": 0
+        });
+        label.label.css({
+            "font-family": "sans_serif_normal",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "padding-left": 0
+        });
+        this.html.append(label.html);
+        var obj_index = this.objects.length;
+        this.objects.push({
+            "html": label,
+            "html_elem": label.html,
+            "callback": null,
+            "index": obj_index
+        });
+        this.refactor_item_padding();
+        return label;
+    };
+    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
+        var input = this.AddInput(placeholder_label, callback, options, additional_data);
+        input.EnableAutosave();
+        var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
+        var width = options["width"] || Dash.Size.ColumnWidth;
+        var text_align = "left";
+        if (options["center"]) {
+            text_align = "center";
+        }
+        input.Flatten();
+        input.html.css({
+            "padding": 0,
+            "margin": 0,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid rgba(0, 0, 0, 0.2)",
+            "height": height,
+            "width": width
+        });
+        input.input.css({
+            "color": "rgb(20, 20, 20)",
+            "height": height,
+            "margin": 0,
+            "padding": 0,
+            "line-height": height + "px",
+            "top": -Dash.Size.Padding * 0.5,
+            "width": width,
+            "text-align": text_align
+        });
+        this.objects.push({
+            "html": input,
+            "html_elem": input.html,
+            "callback": null,
+            "index": this.objects.length
+        });
+        this.refactor_item_padding();
+        return input;
+    };
+    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
+        var obj_index = this.objects.length;
+        var input = new Dash.Gui.Input(placeholder_label, this.color);
+        input.html.css({
+            "background": this.color.BackgroundRaised,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+        input.input.css({
+            "padding-left": 0,
+            "color": this.color.Input.Text.Base
+        });
+        var obj = {
+            "html": input,
+            "html_elem": input.html,
+            "callback": callback.bind(this.binder),
+            "index": obj_index,
+            "additional_data": additional_data
+        };
+        if (options["on_enter"]) {
+            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
+        }
+        this.objects.push(obj);
+        (function (self, input, obj_index, obj) {
+            input.SetOnChange(
+                function () {
+                    self.on_input_changed(obj_index);
+                },
+                self
+            );
+            if (obj["on_enter_callback"]) {
+                input.SetOnSubmit(
+                    function () {
+                        self.on_input_submitted(obj_index);
+                    },
+                    self
+                );
+            }
+            input.input.on("dblclick", function () {
+                input.SetText("");
+                self.on_input_changed(obj_index);
+            });
+        })(this, input, obj_index, obj);
+        this.html.append(input.html);
+        this.refactor_item_padding();
+        return input;
+    };
+    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
+        var obj_index = this.objects.length;
+        if (callback) {
+            callback = callback.bind(this.binder);
+        }
+        (function (self, selected_id, combo_options, callback, return_full_option, additional_data) {
+            var _callback = function (selected_option, previous_selected_option, additional_data) {
+                self.on_combo_updated(
+                    callback,
+                    return_full_option ? selected_option : selected_option["id"],
+                    return_full_option ? previous_selected_option : previous_selected_option["id"],
+                    additional_data
+                );
+            };
+            var combo = new Dash.Gui.Combo (
+                selected_id,      // Label
+                _callback,        // Callback
+                self,             // Binder
+                combo_options,    // Option List
+                selected_id,      // Selected
+                self.color,             // Color set
+                {"style": "row", "additional_data": additional_data}
+            );
+            self.html.append(combo.html);
+            combo.html.css({
+                "margin-top": Dash.Size.Padding*0.5,
+                "margin-right": Dash.Size.Padding*0.5,
+                "height": Dash.Size.RowHeight,
+            });
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px",
+            });
+            self.objects.push({
+                "html": combo,
+                "html_elem": combo.html,
+                "callback": callback.bind(self.binder),
+                "index": obj_index
+            });
+        })(this, selected_id, combo_options, callback, return_full_option, additional_data);
+        var obj = this.objects[obj_index];
+        this.refactor_item_padding();
+        return obj["html"];
+    };
 }
 
 function DashMobileCard (stack) {
@@ -32221,175 +31857,186 @@ function DashMobileCard (stack) {
     this.setup_styles();
 }
 
-function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null) {
-    this.stack = stack;
-    this.color = this.stack.color;
-    this.icon_name = icon_name;
-    this.label_text = label_text;
-    this.callback = callback;
-    this.height = Dash.Size.ButtonHeight-Dash.Size.Padding;
-    this.click_active = false;
-    this.html = Dash.Gui.GetHTMLContext();
-    this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height-(Dash.Size.Padding*0.5), 0.75, "#ff684d");
-    this.label = Dash.Gui.GetHTMLAbsContext();
+function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="") {
+    this.binder = binder;
+    this.on_exit_callback = on_exit_callback.bind(binder);
+    this.user_data = user_data || Dash.User.Data;
+    this.context_logo_img_url = context_logo_img_url;
+    this.color = this.binder.color || Dash.Color.Dark;
+    this.stack = new Dash.Mobile.CardStack(this);
+    this.html = this.stack.html;
+    this.profile_button = null;
+    this.user_image_upload_button = null;
     this.setup_styles = function () {
-        this.html.append(this.icon_circle);
-        this.html.append(this.label);
-        this.icon_circle.append(this.icon.html);
-        this.icon.icon_html.css({
-            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
-        });
-        this.label.text(this.label_text);
-        this.html.css({
-            "height": this.height,
-            "width": "auto",
-            "flex-grow": 1,
-            "background": "#ff6a4b",
-            "margin-top": Dash.Size.Padding*0.5,
-            "margin-bottom": Dash.Size.Padding*0.5,
-            "margin-right": Dash.Size.Padding*0.5,
-            "line-height": this.height + "px",
-            "border-radius": this.height,
-        });
-        this.icon_circle.css({
-            "position": "absolute",
-            "left": "auto",
-            "top": Dash.Size.Padding*0.25,
-            "right": Dash.Size.Padding*0.25,
-            "bottom": "auto",
-            "background": "rgb(250, 250, 250)",
-            "height": this.height-(Dash.Size.Padding*0.5),
-            "width": this.height-(Dash.Size.Padding*0.5),
-            "border-radius": (this.height-(Dash.Size.Padding*0.5))*0.5,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)",
-        });
-        this.label.css({
-            "height": this.height,
-            "line-height": this.height + "px",
-            "background": "none",
-            // "background": "orange",
-            "margin-right": this.height*0.5,
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis",
-            "color": "white",
-        });
-        this.setup_connections();
-    };
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.mousedown(function (event) {
-                self.on_button_clicked();
-                event.preventDefault();
-                return false;
-            });
-        })(this);
-    };
-    this.on_button_clicked = function () {
-        // Button presses have a short timeout to prevent accidental multiple taps
-        if (this.click_active) {
-            return;
-        }
-        if (this.callback) {
-            this.callback();
+        this.setup_banner();
+        this.setup_property_box();
+        this.add_user_image_upload_button();
+        if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
+            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
         else {
-            console.error("Error: No callback associated with button!");
+            this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
         }
-        this.click_active = true;
-        (function (self) {
-            setTimeout(function () {
-                self.click_active = false;
-            }, 750);
-        })(this);
+        this.add_context_logo_img();
     };
-    this.SetNotificationActive = function (is_active) {
-        if (is_active && !this.notification_icon) {
-            this.create_notification_icon();
-        }
-        if (!is_active && this.notification_icon) {
-            this.notification_icon.remove();
-            this.notification_icon = null;
-        }
-    };
-    this.create_notification_icon = function () {
-        var icon_size = this.height*0.25;
-        this.notification_icon = $("<div></div>");
-        this.html.append(this.notification_icon);
-        this.notification_icon.css({
-            "background": "red",
-            "position": "absolute",
-            "top": 0,
-            "right": 0,
-            "width": icon_size,
-            "height": icon_size,
-            "border-radius": icon_size,
-            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
-            "border": "2px solid white",
+    this.setup_banner = function () {
+        this.user_banner = this.stack.AddBanner();
+        this.user_banner.SetHeadlineText(Dash.User.GetDisplayName(), "User Settings");
+        this.user_banner.headline.label_top.css({
+            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
         });
-
+        this.user_banner.headline.label_bottom.css({
+            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
+        });
+        this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
+        this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
+        this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
+        this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
+    };
+    this.add_context_logo_img = function () {
+        if (!this.context_logo_img_url) {
+            return;
+        }
+        var image = $("<div></div>");
+        image.css({
+            "height": Dash.Size.RowHeight * 2,
+            "margin-top": Dash.Size.Padding,
+            "background-image": "url(" + this.context_logo_img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center"
+        });
+        this.stack.AppendHTML(image);
+    };
+    this.reload = function () {
+        location.reload();
+    };
+    this.exit_stack = function () {
+        if (this.on_exit_callback) {
+            this.on_exit_callback();
+        }
+    };
+    this.add_user_image_upload_button = function () {
+        this.user_image_upload_button = new Dash.Gui.Button(
+            "Upload Image",
+            this.on_user_img_uploaded,
+            this,
+            this.color
+        );
+        this.profile_button.icon_circle.append(this.user_image_upload_button.html);
+        this.user_image_upload_button.SetFileUploader(
+            "https://" + Dash.Context.domain + "/Users",
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.user_data)
+            }
+        );
+        this.user_image_upload_button.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "width": "auto",
+            "height": "auto",
+            "background": "rgba(0, 0, 0, 0)"
+        });
+        this.user_image_upload_button.highlight.css({
+            "position": "absolute",
+            "inset": 0,
+            "width": "auto",
+            "height": "auto"
+        });
+        this.user_image_upload_button.label.css({
+            "opacity": 0
+        });
+    };
+    this.on_user_img_uploaded = function (response) {
+        if (response.timeStamp) {
+            return;
+        }
+        console.log("User image uploaded:", response);
+        if (response["img"]) {
+            this.user_data["img"] = response["img"];
+            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
+        }
+    };
+    this.setup_property_box = function () {
+        this.property_box = new Dash.Gui.PropertyBox(
+            this,
+            this.get_data,
+            this.set_data,
+            "Users",
+            this.user_data["email"]
+        );
+        this.property_box.AddInput("first_name", "First Name", "", null, true);
+        this.property_box.AddInput("last_name", "Last Name", "", null, true);
+        this.property_box.AddInput("email", "E-mail Address", "", null, false);
+        this.property_box.AddInput("password", "Update Password", "", null, true);
+        this.stack.AppendHTML(this.property_box.html);
+    };
+    this.log_user_out = function () {
+        Dash.Logout();
+    };
+    this.get_data = function () {
+        return this.user_data;
+    };
+    this.set_data = function () {
+        console.log("(set data)");
+    };
+    this.on_profile_changed = function () {
+        // Dummy/placeholder function
     };
     this.setup_styles();
 }
 
-function DashMobileCardStackBannerHeadline (banner) {
-    this.banner = banner;
-    this.stack = this.banner.stack;
+function DashMobileCardPullIcon (card, icon_name) {
+    this.card = card;
+    this.stack = this.card.stack;
     this.color = this.stack.color;
-    this.html = Dash.Gui.GetHTMLContext();
-    this.label_top = Dash.Gui.GetHTMLContext();
-    this.label_bottom = Dash.Gui.GetHTMLContext();
+    this.icon = null;
+    this.icon_name = icon_name;
+    this.html = Dash.Gui.GetHTMLAbsContext();
+    this.size = Dash.Size.ButtonHeight;
+    this.Size = this.size;
+    this.IsTriggered = false;
     this.setup_styles = function () {
-        this.html.append(this.label_top);
-        this.html.append(this.label_bottom);
-        this.label_top.text("Top");
-        this.label_bottom.text("Bottom");
         this.html.css({
             "background": "none",
-            // "background": "green",
-            "padding-top": Dash.Size.Padding*2,
-            "padding-bottom": Dash.Size.Padding*2,
+            "background": "green",
+            "width": this.size,
+            "height": this.size,
+            "left": 0,
+            "top": 0,
+            "right": "auto",
+            "bottom": "auto",
+            "opacity": 0,
+            "pointer-events": "none",
+            "border-radius": this.size*0.5,
         });
-        this.label_top.css({
-            "background": "none",
-            "color": "white",
-            "font-size": "175%",
-        });
-        this.label_bottom.css({
-            "background": "none",
-            "color": "white",
-            "font-family": "sans_serif_bold",
-            "font-size": "175%",
-        });
-    };
-    this.GetHeight = function () {
-        return this.html.height() + (Dash.Size.Padding*6);
-    };
-    this.OnScroll = function (scroll_norm) {
-        var opac_norm = 1;
-        if (scroll_norm > 0.1 && scroll_norm  < 0.3) {
-            opac_norm = Dash.Math.InverseLerp(0.3, 0.1, scroll_norm);
+        if (this.icon_name) {
+            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+            this.html.append(this.icon.html);
         }
-        else if (scroll_norm >= 0.3) {
-            opac_norm = 0;
+    };
+    this.OnDrag = function (norm_t) {
+        var color = "rgb(130, 130, 130)";
+        if (this.IsTriggered && norm_t < 0.4) {
+            this.IsTriggered = false;
+        }
+        if (!this.icon) {
+            return;
+        }
+        var px_pulled = Dash.Math.Lerp(0, $(window).width(), norm_t);
+        var px_max = this.size + (Dash.Size.Padding*0.5);
+        if (px_pulled > px_max) {
+            norm_t = 1.0;
+            color = "#ff6a4c";
+            this.IsTriggered = true;
         }
         else {
-            opac_norm = 1;
-            // this.html.css("height", 10);
+            norm_t = Dash.Math.InverseLerp(0.0, px_max, px_pulled);
         }
-        this.label_top.css("opacity", opac_norm);
-        this.label_bottom.css("opacity", opac_norm);
-
-    };
-    this.SetHeadlineText = function (text_primary, text_secondary) {
-        this.label_top.text(text_primary);
-        this.label_bottom.text(text_secondary);
-    };
-    this.SetTopBottomMargins = function (margin_top, margin_bottom) {
         this.html.css({
-            "padding-top": margin_top,
-            "padding-bottom": margin_bottom,
+            "opacity": norm_t,
+            "background": color,
         });
     };
     this.setup_styles();
@@ -32817,6 +32464,414 @@ function DashMobileCardStack (binder, color=null) {
     this.setup_styles();
 }
 
+function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null) {
+    this.stack = stack;
+    this.color = this.stack.color;
+    this.icon_name = icon_name;
+    this.label_text = label_text;
+    this.callback = callback;
+    this.height = Dash.Size.ButtonHeight-Dash.Size.Padding;
+    this.click_active = false;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.icon_circle = Dash.Gui.GetHTMLAbsContext();
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height-(Dash.Size.Padding*0.5), 0.75, "#ff684d");
+    this.label = Dash.Gui.GetHTMLAbsContext();
+    this.setup_styles = function () {
+        this.html.append(this.icon_circle);
+        this.html.append(this.label);
+        this.icon_circle.append(this.icon.html);
+        this.icon.icon_html.css({
+            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
+        });
+        this.label.text(this.label_text);
+        this.html.css({
+            "height": this.height,
+            "width": "auto",
+            "flex-grow": 1,
+            "background": "#ff6a4b",
+            "margin-top": Dash.Size.Padding*0.5,
+            "margin-bottom": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding*0.5,
+            "line-height": this.height + "px",
+            "border-radius": this.height,
+        });
+        this.icon_circle.css({
+            "position": "absolute",
+            "left": "auto",
+            "top": Dash.Size.Padding*0.25,
+            "right": Dash.Size.Padding*0.25,
+            "bottom": "auto",
+            "background": "rgb(250, 250, 250)",
+            "height": this.height-(Dash.Size.Padding*0.5),
+            "width": this.height-(Dash.Size.Padding*0.5),
+            "border-radius": (this.height-(Dash.Size.Padding*0.5))*0.5,
+            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)",
+        });
+        this.label.css({
+            "height": this.height,
+            "line-height": this.height + "px",
+            "background": "none",
+            // "background": "orange",
+            "margin-right": this.height*0.5,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "color": "white",
+        });
+        this.setup_connections();
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.mousedown(function (event) {
+                self.on_button_clicked();
+                event.preventDefault();
+                return false;
+            });
+        })(this);
+    };
+    this.on_button_clicked = function () {
+        // Button presses have a short timeout to prevent accidental multiple taps
+        if (this.click_active) {
+            return;
+        }
+        if (this.callback) {
+            this.callback();
+        }
+        else {
+            console.error("Error: No callback associated with button!");
+        }
+        this.click_active = true;
+        (function (self) {
+            setTimeout(function () {
+                self.click_active = false;
+            }, 750);
+        })(this);
+    };
+    this.SetNotificationActive = function (is_active) {
+        if (is_active && !this.notification_icon) {
+            this.create_notification_icon();
+        }
+        if (!is_active && this.notification_icon) {
+            this.notification_icon.remove();
+            this.notification_icon = null;
+        }
+    };
+    this.create_notification_icon = function () {
+        var icon_size = this.height*0.25;
+        this.notification_icon = $("<div></div>");
+        this.html.append(this.notification_icon);
+        this.notification_icon.css({
+            "background": "red",
+            "position": "absolute",
+            "top": 0,
+            "right": 0,
+            "width": icon_size,
+            "height": icon_size,
+            "border-radius": icon_size,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+            "border": "2px solid white",
+        });
+
+    };
+    this.setup_styles();
+}
+
+function DashMobileCardStackBanner (stack) {
+    this.stack = stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.header_row = null;
+    this.headline = new DashMobileCardStackBannerHeadline(this);
+    this.background_skirt = $("<div></div>");
+    this.content = $("<div></div>");
+    this.last_sizing_mode = -1;
+    // Garbage hardcode:
+    this.DefaultColorA = "#ffae4c";
+    this.DefaultColorB = "#ff684c";
+    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient(this.DefaultColorA, this.DefaultColorB);
+    this.row_height = Dash.Size.ButtonHeight;
+    this.footer_height = Dash.Size.ButtonHeight*2;
+    this.footer_button_width = Dash.Size.ButtonHeight + Dash.Size.Padding;
+    this.HeaderHeight = this.row_height;
+    this.FooterHeight = this.footer_height;
+    this.FooterButtonWidth = this.footer_button_width;
+    this.skirt_bottom_rest = 0;
+    this.setup_styles = function () {
+        this.html.append(this.background_skirt);
+        this.html.append(this.content);
+        this.content.append(this.headline.html);
+        this.html.css({
+            "background": "none",
+            // "background": "black",
+            "pointer-events": "none",
+        });
+        this.content.css({
+            // "background": "purple",
+        });
+        this.background_skirt.css({
+            "background": "orange",
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "pointer-events": "none",
+            "display": "none",
+        });
+    };
+    this.SetBackground = function (html_color_or_url) {
+        if (!html_color_or_url || html_color_or_url == "none") {
+            this.background_skirt.css({
+                "display": "none",
+                "background": "none",
+            });
+            return;
+        }
+        if (html_color_or_url.includes("http")) {
+            this.background_skirt.css({
+                "display": "block",
+                "background": "#000",
+                "background-image": "url(" + html_color_or_url + ")",
+                "background-size": "cover",
+                "background-position": "center",
+            });
+        }
+        else {
+            this.background_skirt.css({
+                "display": "block",
+                "background": html_color_or_url,
+            });
+        }
+    };
+    // text_secondary = optional
+    this.SetHeadlineText = function (text_primary, text_secondary) {
+        this.headline.SetHeadlineText(text_primary, text_secondary);
+        this.adjust_margins();
+    };
+    this.SetLeftIcon = function (icon_name, callback) {
+        this.assert_header_row();
+        this.header_row.SetLeftIcon(icon_name, callback);
+    };
+    this.SetRightIcon = function (icon_name, callback) {
+        this.assert_header_row();
+        this.header_row.SetRightIcon(icon_name, callback);
+    };
+    this.SetFixed = function (is_fixed) {
+        // When is_fixed is true, the banner does not scroll
+        // with the rest of the content on the page
+        this.stack.SetFixedBanner(is_fixed);
+    };
+    this.AddFooterIcon = function (icon_name, label_text, callback) {
+        this.assert_footer_row();
+        return this.footer_row.AddIcon(icon_name, label_text, callback);
+    };
+    this.OnScroll = function (scroll_top) {
+        var current_height = this.html.height();
+        var scroll_max = this.html.height()*0.5;
+        var footer_row_height = 0;
+        var scroll_norm = 1; // Scrolled past the banner
+        if (scroll_top <= scroll_max) {
+            scroll_norm = scroll_top / scroll_max;
+        }
+        scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
+        if (this.footer_row) {
+            footer_row_height = this.footer_row.row_height;
+        }
+        // var scroll_norm = scroll_top / current_height;
+        var max_offset = current_height + footer_row_height;
+        var headline_offset = 0;
+        if (this.headline) {
+            headline_offset = this.headline.GetHeight();
+            this.headline.OnScroll(scroll_norm);
+        }
+        if (this.footer_row) {
+            this.footer_row.OnScroll(scroll_norm, headline_offset);
+        }
+        if (this.background_skirt) {
+            var shadow_opacity = 0.7*scroll_norm;
+            this.background_skirt.css({
+                "bottom": Dash.Math.Lerp(-this.skirt_bottom_rest, headline_offset, scroll_norm),
+                "box-shadow": "0px 0px 40px 1px rgba(0, 0, 0, " + shadow_opacity + ")",
+            });
+        }
+    };
+    this.assert_header_row = function () {
+        // Create the button row if it doesn't exist yet
+        if (this.header_row) {
+            // Header already exists
+            return;
+        }
+        this.header_row = new DashMobileCardStackBannerTopButtonRow(this);
+        this.content.prepend(this.header_row.html);
+        this.adjust_margins();
+    };
+    this.assert_footer_row = function () {
+        // Create the button row if it doesn't exist yet
+        if (this.footer_row) {
+            // Footer already exists
+            return;
+        }
+        this.footer_row = new DashMobileCardStackBannerFooterButtonRow(this);
+        this.content.append(this.footer_row.html);
+        this.adjust_margins();
+    };
+    this.adjust_margins = function () {
+        // Whenever core content is added or removed, we need to adjust some values
+        // + If headline only (no header, no footer)
+        //   - MODE: 0
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        //   -
+        // + If headline & top row
+        //   - MODE: 1
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        // + If headline & bottom row
+        //   - MODE: 2
+        //   - HEADLINE: Full headline margins on top and bottom
+        //   - SKIRT:
+        var mode = 0;
+        var headline_top_margin = Dash.Size.Padding*2;
+        var headline_bottom_margin = 0;
+        var bottom_margin = 0;
+        this.skirt_bottom_rest = Dash.Size.ButtonHeight;
+        if (this.header_row && !this.footer_row) {
+            mode = 1;
+            headline_top_margin = Dash.Size.Padding*0.25;
+            headline_bottom_margin = Dash.Size.Padding*0.25;
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            bottom_margin = Dash.Size.ButtonHeight;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+        }
+        if (this.header_row && this.footer_row) {
+            mode = 2;
+            headline_top_margin = Dash.Size.Padding*0.25;
+            headline_bottom_margin = (Dash.Size.Padding*0.25);
+            headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            // bottom_margin = Dash.Size.ButtonHeight;
+            bottom_margin = Dash.Size.Padding;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
+        }
+        if (!this.header_row && this.footer_row) {
+            console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
+            mode = 3;
+            headline_top_margin = Dash.Size.Padding*1;
+            // headline_top_margin = 100;
+            headline_bottom_margin = Dash.Size.Padding*1;
+            // headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
+            // To account for the balance offset of the
+            // top button row when there is no footer
+            // bottom_margin = Dash.Size.ButtonHeight;
+            bottom_margin = Dash.Size.Padding;
+            this.skirt_bottom_rest = Dash.Size.ButtonHeight*2;
+            this.skirt_bottom_rest = -(this.footer_height-(this.footer_button_width*0.5));
+        }
+        if (mode == this.last_sizing_mode) {
+            // Correct properties are already set
+            return;
+        }
+        this.headline.SetTopBottomMargins(
+            headline_top_margin,
+            headline_bottom_margin
+        );
+        this.html.css({
+            "margin-bottom": bottom_margin,
+        });
+        this.background_skirt.css({
+            "bottom": -this.skirt_bottom_rest,
+        });
+        this.last_sizing_mode = mode;
+    };
+    this.setup_styles();
+}
+
+function DashMobileCardStackUserBanner (stack) {
+    this.user_modal = null;
+    this.color = stack.color;
+    this.context_logo_img_url = "";
+    DashMobileCardStackBanner.call(this, this);
+    this.setup_styles = function () {
+        this.SetBackground(this.DefaultBackgroundGradient);
+        this.SetLeftIcon("user", this.on_user_clicked);
+    };
+    this.SetContextLogoImg = function (url) {
+        this.context_logo_img_url = url;
+    };
+    this.on_user_clicked = function () {
+        this.user_modal = new Dash.Mobile.UserProfile(this, this.on_show_main, null, this.context_logo_img_url);
+        stack.AddLeftContent(this.user_modal.html);
+    };
+    this.on_show_main = function () {
+        stack.ShowCenterContent();
+    };
+    this.setup_styles();
+}
+
+function DashMobileCardStackBannerHeadline (banner) {
+    this.banner = banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.label_top = Dash.Gui.GetHTMLContext();
+    this.label_bottom = Dash.Gui.GetHTMLContext();
+    this.setup_styles = function () {
+        this.html.append(this.label_top);
+        this.html.append(this.label_bottom);
+        this.label_top.text("Top");
+        this.label_bottom.text("Bottom");
+        this.html.css({
+            "background": "none",
+            // "background": "green",
+            "padding-top": Dash.Size.Padding*2,
+            "padding-bottom": Dash.Size.Padding*2,
+        });
+        this.label_top.css({
+            "background": "none",
+            "color": "white",
+            "font-size": "175%",
+        });
+        this.label_bottom.css({
+            "background": "none",
+            "color": "white",
+            "font-family": "sans_serif_bold",
+            "font-size": "175%",
+        });
+    };
+    this.GetHeight = function () {
+        return this.html.height() + (Dash.Size.Padding*6);
+    };
+    this.OnScroll = function (scroll_norm) {
+        var opac_norm = 1;
+        if (scroll_norm > 0.1 && scroll_norm  < 0.3) {
+            opac_norm = Dash.Math.InverseLerp(0.3, 0.1, scroll_norm);
+        }
+        else if (scroll_norm >= 0.3) {
+            opac_norm = 0;
+        }
+        else {
+            opac_norm = 1;
+            // this.html.css("height", 10);
+        }
+        this.label_top.css("opacity", opac_norm);
+        this.label_bottom.css("opacity", opac_norm);
+
+    };
+    this.SetHeadlineText = function (text_primary, text_secondary) {
+        this.label_top.text(text_primary);
+        this.label_bottom.text(text_secondary);
+    };
+    this.SetTopBottomMargins = function (margin_top, margin_bottom) {
+        this.html.css({
+            "padding-top": margin_top,
+            "padding-bottom": margin_bottom,
+        });
+    };
+    this.setup_styles();
+}
+
 function DashMobileCardStackBannerTopButtonRow (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
@@ -32929,61 +32984,6 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
     };
     this.set_icon = function (container, icon, icon_name) {
         icon.SetIcon(icon_name);
-    };
-    this.setup_styles();
-}
-
-function DashMobileCardPullIcon (card, icon_name) {
-    this.card = card;
-    this.stack = this.card.stack;
-    this.color = this.stack.color;
-    this.icon = null;
-    this.icon_name = icon_name;
-    this.html = Dash.Gui.GetHTMLAbsContext();
-    this.size = Dash.Size.ButtonHeight;
-    this.Size = this.size;
-    this.IsTriggered = false;
-    this.setup_styles = function () {
-        this.html.css({
-            "background": "none",
-            "background": "green",
-            "width": this.size,
-            "height": this.size,
-            "left": 0,
-            "top": 0,
-            "right": "auto",
-            "bottom": "auto",
-            "opacity": 0,
-            "pointer-events": "none",
-            "border-radius": this.size*0.5,
-        });
-        if (this.icon_name) {
-            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
-            this.html.append(this.icon.html);
-        }
-    };
-    this.OnDrag = function (norm_t) {
-        var color = "rgb(130, 130, 130)";
-        if (this.IsTriggered && norm_t < 0.4) {
-            this.IsTriggered = false;
-        }
-        if (!this.icon) {
-            return;
-        }
-        var px_pulled = Dash.Math.Lerp(0, $(window).width(), norm_t);
-        var px_max = this.size + (Dash.Size.Padding*0.5);
-        if (px_pulled > px_max) {
-            norm_t = 1.0;
-            color = "#ff6a4c";
-            this.IsTriggered = true;
-        }
-        else {
-            norm_t = Dash.Math.InverseLerp(0.0, px_max, px_pulled);
-        }
-        this.html.css({
-            "opacity": norm_t,
-            "background": color,
-        });
     };
     this.setup_styles();
 }
