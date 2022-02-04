@@ -1,4 +1,4 @@
-function DashGuiSearchableListRow (slist, row_id, optional_row_data) {
+function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
 
     this.slist      = slist;
     this.color      = this.slist.color;

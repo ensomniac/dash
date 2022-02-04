@@ -4,6 +4,7 @@ function DashLayout () {
     this.List.ColumnConfig = DashLayoutListColumnConfig;
     this.PaneSlider        = DashLayoutPaneSlider;
     this.RevolvingList     = DashLayoutRevolvingList;
+    this.SearchableList    = DashLayoutSearchableList;
     this.Toolbar           = DashLayoutToolbar;
     this.UserProfile       = DashLayoutUserProfile;
 

@@ -1,4 +1,4 @@
-function DashGuiSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback=null) {
+function DashLayoutSearchableList (binder, on_selection_callback, get_data_callback, on_row_draw_callback=null) {
     this.binder = binder;
     this.on_selection_callback = on_selection_callback.bind(this.binder);
     this.get_data_callback = get_data_callback.bind(this.binder);
@@ -16,7 +16,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
     this.list_container = $("<div></div>");
     this.row_height = Dash.Size.ButtonHeight;
     this.color = this.binder.color || Dash.Color.Light;
-    this.input = new DashGuiSearchableListSearchInput(this);
+    this.input = new DashLayoutSearchableListSearchInput(this);
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
     this.setup_styles = function () {
@@ -90,7 +90,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
             var row_data = data[row_id];
 
             if (!this.rows[row_id]) {
-                this.rows[row_id] = new DashGuiSearchableListRow(this, row_id, row_data);
+                this.rows[row_id] = new DashLayoutSearchableListRow(this, row_id, row_data);
             }
 
 
@@ -105,7 +105,7 @@ function DashGuiSearchableList (binder, on_selection_callback, get_data_callback
             }
 
             else {
-                console.log("Warning: Dash.Gui.SearchableList > row update callback must return a search term. Ignoring row");
+                console.log("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row");
             }
 
             this.search_terms.push(search_text);

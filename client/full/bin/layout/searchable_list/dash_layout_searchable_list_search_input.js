@@ -1,4 +1,4 @@
-function DashGuiSearchableListSearchInput (slist) {
+function DashLayoutSearchableListSearchInput (slist) {
 
     this.slist      = slist;
     this.color      = this.slist.color;

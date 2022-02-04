@@ -42,17 +42,18 @@ function Dash () {
     // |-------------------------------------------------------------------------------------------------------------|
     // | Left side is the deprecated, backwards-compatible pointer, right side is the proper/new pointer             |
     // |-------------------------------------------------------------------------------------------------------------|
-    this.RandomID         = this.Math.RandomID.bind(this.Math);
-    this.ReadableDateTime = this.DateTime.Readable.bind(this.DateTime);
-    this.IsServerIsoDate  = this.DateTime.IsIsoFormat.bind(this.DateTime);
-    this.FormatTime       = this.DateTime.FormatTime.bind(this.DateTime);
-    this.GetFormContainer = this.Gui.GetFormContainer.bind(this.Gui);
-    this.IsValidEmail     = this.Validate.Email.bind(this.Validate);
-    this.IsValidObject    = this.Validate.Object.bind(this.Validate);
-    this.ValidateResponse = this.Validate.Response.bind(this.Validate);
-    this.Gui.Layout       = this.Layout;
-    this.Gui.PaneSlider   = this.Layout.PaneSlider;
-    this.Layout.ButtonBar = this.Gui.ButtonBar;
+    this.FormatTime         = this.DateTime.FormatTime.bind(this.DateTime);
+    this.IsServerIsoDate    = this.DateTime.IsIsoFormat.bind(this.DateTime);
+    this.ReadableDateTime   = this.DateTime.Readable.bind(this.DateTime);
+    this.GetFormContainer   = this.Gui.GetFormContainer.bind(this.Gui);
+    this.RandomID           = this.Math.RandomID.bind(this.Math);
+    this.IsValidEmail       = this.Validate.Email.bind(this.Validate);
+    this.IsValidObject      = this.Validate.Object.bind(this.Validate);
+    this.ValidateResponse   = this.Validate.Response.bind(this.Validate);
+    this.Gui.Layout         = this.Layout;
+    this.Gui.PaneSlider     = this.Layout.PaneSlider;
+    this.Gui.SearchableList = this.Layout.SearchableList;
+    this.Layout.ButtonBar   = this.Gui.ButtonBar;
 
     this.setup_styles = function () {
         $("body").css({

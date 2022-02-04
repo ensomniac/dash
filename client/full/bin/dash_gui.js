@@ -16,7 +16,6 @@ function DashGui() {
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
     this.PropertyBox               = DashGuiPropertyBox;
-    this.SearchableList            = DashGuiSearchableList;
     this.Slider                    = DashGuiSlider;
     this.ToolRow                   = DashGuiToolRow;
 
