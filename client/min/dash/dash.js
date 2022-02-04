@@ -18197,11 +18197,14 @@ function DashUser () {
     this.__auth_not_authenticated_cb = null;
     this.Data = null;
     this.Init = null;
-    this.GetDisplayName = function () {
-        return this.Data["display_name"] ? this.Data["display_name"] :
-            this.Data["first_name"] ? this.Data["first_name"] +
-                (this.Data["last_name"] ? " " + this.Data["last_name"] : "") :
-                this.Data["email"];
+    this.GetDisplayName = function (user_data=null) {
+        if (!user_data) {
+            user_data = this.Data;
+        }
+        return user_data["display_name"] ? user_data["display_name"] :
+            user_data["first_name"] ? user_data["first_name"] +
+            (user_data["last_name"] ? " " + user_data["last_name"] : "") :
+            user_data["email"];
     };
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
