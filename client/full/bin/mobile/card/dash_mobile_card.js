@@ -27,11 +27,7 @@ function DashMobileCard (stack) {
         this.html.css({
             "background": "none",
             "margin-bottom": Dash.Size.Padding,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "overflow": "visible",
         });
 
@@ -85,11 +81,7 @@ function DashMobileCard (stack) {
             "left": 0,
             "top": 0,
             "position": "absolute",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "margin-left": Dash.Size.Padding,
         });
 

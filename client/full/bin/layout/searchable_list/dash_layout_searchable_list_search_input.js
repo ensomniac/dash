@@ -50,8 +50,8 @@ function DashLayoutSearchableListSearchInput (slist) {
             "opacity": 0,
         });
 
-        (function(self){
-            self.icon_clear.html.click(function(){
+        (function (self) {
+            self.icon_clear.html.click(function () {
                 self.clear_search();
             });
         })(this);

@@ -354,7 +354,6 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     //     var api = "https://altona.io/Users";
     //     var server_data = {};
     //     server_data["f"] = "update_group_information";
-    //     server_data["token"] = localStorage.getItem("login_token");
     //     server_data["as_user"] = this.user_data["email"];
     //     server_data["group_name"] = group_name;
     //     server_data["group_option"] = group_option;

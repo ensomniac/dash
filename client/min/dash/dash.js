@@ -17521,6 +17521,14 @@ function Dash () {
     this.Gui.PaneSlider     = this.Layout.PaneSlider;
     this.Gui.SearchableList = this.Layout.SearchableList;
     this.Layout.ButtonBar   = this.Gui.ButtonBar;
+    // |-------------------------------------------------------------------------------------------------------------|
+    this.HardwareAccelerationCSS = {
+        "-webkit-transform": "translateZ(0)",
+        "-moz-transform":    "translateZ(0)",
+        "-ms-transform":     "translateZ(0)",
+        "-o-transform":      "translateZ(0)",
+        "transform":         "translateZ(0)"
+    };
     this.setup_styles = function () {
         $("body").css({
             "overflow": "hidden"
@@ -28043,7 +28051,6 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     //     var api = "https://altona.io/Users";
     //     var server_data = {};
     //     server_data["f"] = "update_group_information";
-    //     server_data["token"] = localStorage.getItem("login_token");
     //     server_data["as_user"] = this.user_data["email"];
     //     server_data["group_name"] = group_name;
     //     server_data["group_option"] = group_option;
@@ -30677,7 +30684,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             return this.update_display_name_label();
         }
     };
-    this.setup_display_name_label = function(){
+    this.setup_display_name_label = function () {
         // The display name label is used if there is no callback to draw the
         // row. This can be useful for simply populating a list of elements
         this.display_name_label = $("<div></div>");
@@ -30690,7 +30697,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         });
         this.content_layer.empty().append(this.display_name_label);
     };
-    this.update_display_name_label = function(text=""){
+    this.update_display_name_label = function (text="") {
         if (!this.display_name_label) {
             this.setup_display_name_label();
         }
@@ -30700,7 +30707,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         this.display_name_label.text(text);
         return text;
     };
-    this.SetActive = function(is_active){
+    this.SetActive = function (is_active) {
         if (is_active) {
             this.html.css({
                 "background": "rgba(255, 255, 255, 0.5)",
@@ -30720,15 +30727,15 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             });
         };
     };
-    this.setup_connections = function(){
-        (function(self){
-            self.html.click(function(){
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.click(function () {
                 self.slist.SetActiveRowID(self.row_id);
             });
-            self.html.mouseenter(function(){
+            self.html.mouseenter(function () {
                 self.hover.stop().animate({"opacity": 1}, 50);
             });
-            self.html.mouseleave(function(){
+            self.html.mouseleave(function () {
                 self.hover.stop().animate({"opacity": 0}, 100);
             });
         })(this);
@@ -30778,8 +30785,8 @@ function DashLayoutSearchableListSearchInput (slist) {
             "cursor": "pointer",
             "opacity": 0,
         });
-        (function(self){
-            self.icon_clear.html.click(function(){
+        (function (self) {
+            self.icon_clear.html.click(function () {
                 self.clear_search();
             });
         })(this);
@@ -31565,11 +31572,7 @@ function DashMobileCard (stack) {
         this.html.css({
             "background": "none",
             "margin-bottom": Dash.Size.Padding,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "overflow": "visible",
         });
         this.content.css({
@@ -31608,11 +31611,7 @@ function DashMobileCard (stack) {
             "left": 0,
             "top": 0,
             "position": "absolute",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "margin-left": Dash.Size.Padding,
         });
         this.content.css({
@@ -32074,11 +32073,7 @@ function DashMobileCardStack (binder, color=null) {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
         this.left_content = this.make_content_panel("yellow");
         this.center_content = this.make_content_panel("red");
@@ -32092,11 +32087,7 @@ function DashMobileCardStack (binder, color=null) {
             "overflow-y": "auto",
             "background": "none",
             "background": this.color.Background,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
         this.setup_connections();
         this.html.append(this.slider);
@@ -32209,11 +32200,7 @@ function DashMobileCardStack (binder, color=null) {
             "text-align": "center",
             "color": this.color.Text,
             "overflow-y": "auto",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "background": "none",
             "display": "none",
             // "margin-left": Dash.Size.Padding*4,
@@ -32271,11 +32258,7 @@ function DashMobileCardStack (binder, color=null) {
     this.AppendHTML = function (html) {
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
         this.center_content.append(html);
         if (this.footer_spacer) {
@@ -32291,11 +32274,7 @@ function DashMobileCardStack (binder, color=null) {
         }
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
         this.left_content.empty();
         this.left_content.append(html);
@@ -32317,11 +32296,7 @@ function DashMobileCardStack (binder, color=null) {
         }
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
         this.right_content.empty();
         this.right_content.append(html);
@@ -32990,16 +32965,16 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
 
 function DashMobileCardStackBannerFooterButtonRow (banner) {
     this.banner = banner;
+    this.buttons = [];
     this.stack = this.banner.stack;
-    this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
-    this.vertical_offset_slider = $("<div></div>");
-    this.left_spacer = Dash.Gui.GetHTMLContext();
-    this.right_spacer = Dash.Gui.GetHTMLContext();
-    this.center_content = Dash.Gui.GetHTMLContext();
     this.row_height = this.banner.FooterHeight;
     this.button_size = this.banner.FooterHeight;
-    this.buttons = [];
+    this.left_spacer = Dash.Gui.GetHTMLContext();
+    this.right_spacer = Dash.Gui.GetHTMLContext();
+    this.vertical_offset_slider = $("<div></div>");
+    this.center_content = Dash.Gui.GetHTMLContext();
+    this.color = this.stack.color || Dash.Color.Light;
     this.setup_styles = function () {
         this.html.append(this.vertical_offset_slider);
         this.vertical_offset_slider.append(this.left_spacer);
@@ -33009,11 +32984,7 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
             "background": "none",
             "height": this.row_height,
             "pointer-events": "none",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS
         });
         this.vertical_offset_slider.css({
             "position": "absolute",
@@ -33022,22 +32993,15 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
             "top": 0,
             "height": this.row_height,
             "display": "flex",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS
         });
-        this.left_spacer.css({
+        var spacer_css = {
             "height": this.row_height,
             "background": "none",
-            "flex-grow": 2,
-        });
-        this.right_spacer.css({
-            "height": this.row_height,
-            "background": "none",
-            "flex-grow": 2,
-        });
+            "flex-grow": 2
+        };
+        this.left_spacer.css(spacer_css);
+        this.right_spacer.css(spacer_css);
         this.center_content.css({
             "display": "flex",
             "background": "none",
@@ -33057,34 +33021,6 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
         scroll_norm = Dash.Animation.Curves.EaseOut(scroll_norm);
         this.vertical_offset_slider.css("top", Dash.Math.Lerp(0, -headline_offset, scroll_norm));
     };
-    this.setup_connections = function () {
-        (function (self) {
-            // self.left_button_content.click(function () {
-            //     self.on_left_button_clicked();
-            // });
-            //
-            // self.right_button_content.click(function () {
-            //     self.on_right_button_clicked();
-            // });
-        })(this);
-    };
-    this.on_button_clicked = function () {
-        // Button presses have a short timeout to prevent accidental multiple taps
-        // if (this.left_icon_callback && !this.left_icon_click_active) {
-        //     this.left_icon_click_active = true;
-        //     this.left_button_content.css("opacity", 0.75);
-        //
-        //     (function (self) {
-        //         setTimeout(function () {
-        //             self.left_icon_click_active = false;
-        //             self.left_button_content.stop().animate({"opacity": 1.0}, 400);
-        //         }, 750);
-        //     })(this);
-        //
-        //     this.left_icon_callback();
-        //
-        // };
-    };
     this.AddIcon = function (icon_name="gear", label_text="--", callback=null) {
         var button = new DashMobileCardStackBannerFooterButtonRowButton(
             this,
@@ -33094,27 +33030,35 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
         );
         if (this.buttons.length > 0) {
             this.buttons.Last().html.css({
-                "margin-right": Dash.Size.Padding*2,
+                "margin-right": Dash.Size.Padding * 2
             });
         }
         this.center_content.append(button.html);
         this.buttons.push(button);
         return button;
     };
-    this.set_icon = function (container, icon, icon_name) {
-        icon.SetIcon(icon_name);
+    this.setup_connections = function () {
+        // (function (self) {  // TODO: not needed?
+        //     self.left_button_content.click(function () {
+        //         self.on_left_button_clicked();
+        //     });
+        //
+        //     self.right_button_content.click(function () {
+        //         self.on_right_button_clicked();
+        //     });
+        // })(this);
     };
     this.setup_styles();
 }
 
 function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
     this.footer = footer;
-    this.banner = this.footer.banner;
-    this.stack = this.banner.stack;
-    this.color = this.stack.color;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
+    this.banner = this.footer.banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.label_height = Dash.Size.RowHeight;
@@ -33140,11 +33084,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "width": this.width,
             "background": "none",
             "pointer-events": "auto",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS
         });
         this.icon_circle.css({
             "position": "absolute",
@@ -33254,7 +33194,6 @@ function DashPDFView (options) {
         this.params = {};
         this.params["f"] = "upload_pdf";
         this.params["content_key"] = this.content_key;
-        this.params["token"] = Dash.Local.Get("token");
         this.upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Api",
             this.params

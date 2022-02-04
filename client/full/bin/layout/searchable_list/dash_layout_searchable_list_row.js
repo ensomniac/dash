@@ -60,7 +60,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         }
     };
 
-    this.setup_display_name_label = function(){
+    this.setup_display_name_label = function () {
         // The display name label is used if there is no callback to draw the
         // row. This can be useful for simply populating a list of elements
 
@@ -78,7 +78,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
 
     };
 
-    this.update_display_name_label = function(text=""){
+    this.update_display_name_label = function (text="") {
         if (!this.display_name_label) {
             this.setup_display_name_label();
         }
@@ -92,7 +92,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         return text;
     };
 
-    this.SetActive = function(is_active){
+    this.SetActive = function (is_active) {
 
         if (is_active) {
 
@@ -121,19 +121,19 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
 
     };
 
-    this.setup_connections = function(){
+    this.setup_connections = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.html.click(function(){
+            self.html.click(function () {
                 self.slist.SetActiveRowID(self.row_id);
             });
 
-            self.html.mouseenter(function(){
+            self.html.mouseenter(function () {
                 self.hover.stop().animate({"opacity": 1}, 50);
             });
 
-            self.html.mouseleave(function(){
+            self.html.mouseleave(function () {
                 self.hover.stop().animate({"opacity": 0}, 100);
             });
 

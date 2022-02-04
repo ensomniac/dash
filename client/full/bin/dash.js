@@ -54,6 +54,15 @@ function Dash () {
     this.Gui.PaneSlider     = this.Layout.PaneSlider;
     this.Gui.SearchableList = this.Layout.SearchableList;
     this.Layout.ButtonBar   = this.Gui.ButtonBar;
+    // |-------------------------------------------------------------------------------------------------------------|
+
+    this.HardwareAccelerationCSS = {
+        "-webkit-transform": "translateZ(0)",
+        "-moz-transform":    "translateZ(0)",
+        "-ms-transform":     "translateZ(0)",
+        "-o-transform":      "translateZ(0)",
+        "transform":         "translateZ(0)"
+    };
 
     this.setup_styles = function () {
         $("body").css({

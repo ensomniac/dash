@@ -1,15 +1,13 @@
 function DashMobileCardStackBannerHeadline (banner) {
-
     this.banner = banner;
+
     this.stack = this.banner.stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
-
     this.label_top = Dash.Gui.GetHTMLContext();
     this.label_bottom = Dash.Gui.GetHTMLContext();
 
     this.setup_styles = function () {
-
         this.html.append(this.label_top);
         this.html.append(this.label_bottom);
 
@@ -35,7 +33,6 @@ function DashMobileCardStackBannerHeadline (banner) {
             "font-family": "sans_serif_bold",
             "font-size": "175%",
         });
-
     };
 
     this.GetHeight = function () {

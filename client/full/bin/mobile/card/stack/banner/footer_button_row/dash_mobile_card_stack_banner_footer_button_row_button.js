@@ -1,18 +1,16 @@
 function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
-
     this.footer = footer;
-    this.banner = this.footer.banner;
-    this.stack = this.banner.stack;
-    this.color = this.stack.color;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
 
+    this.banner = this.footer.banner;
+    this.stack = this.banner.stack;
+    this.color = this.stack.color;
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.label_height = Dash.Size.RowHeight;
     this.click_active = false;
-
     this.html = Dash.Gui.GetHTMLContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
@@ -40,11 +38,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "width": this.width,
             "background": "none",
             "pointer-events": "auto",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS
         });
 
         this.icon_circle.css({

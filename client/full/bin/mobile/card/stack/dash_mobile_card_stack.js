@@ -40,11 +40,7 @@ function DashMobileCardStack (binder, color=null) {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
 
         this.left_content = this.make_content_panel("yellow");
@@ -61,11 +57,7 @@ function DashMobileCardStack (binder, color=null) {
             "overflow-y": "auto",
             "background": "none",
             "background": this.color.Background,
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
 
         this.setup_connections();
@@ -224,11 +216,7 @@ function DashMobileCardStack (binder, color=null) {
             "text-align": "center",
             "color": this.color.Text,
             "overflow-y": "auto",
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
             "background": "none",
             "display": "none",
             // "margin-left": Dash.Size.Padding*4,
@@ -308,11 +296,7 @@ function DashMobileCardStack (binder, color=null) {
 
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
 
         this.center_content.append(html);
@@ -335,11 +319,7 @@ function DashMobileCardStack (binder, color=null) {
 
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
 
         this.left_content.empty();
@@ -371,11 +351,7 @@ function DashMobileCardStack (binder, color=null) {
 
         // Force hardware acceleration
         html.css({
-            "-webkit-transform": "translateZ(0)",
-            "-moz-transform": "translateZ(0)",
-            "-ms-transform": "translateZ(0)",
-            "-o-transform": "translateZ(0)",
-            "transform": "translateZ(0)",
+            ...Dash.HardwareAccelerationCSS,
         });
 
         this.right_content.empty();
