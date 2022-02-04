@@ -25858,6 +25858,7 @@ function DashGuiIcons (icon) {
         "google_drive":          new DashGuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
         "dropbox_logo":          new DashGuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
         "info":                  new DashGuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
+        "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "goal_reply":            new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new DashGuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
