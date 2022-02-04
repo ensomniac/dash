@@ -24,7 +24,7 @@ function DashHistory () {
         };
     };
 
-    // Use for any GUI element managed by DashGuiLayoutTabs
+    // Use for any GUI element managed by DashLayoutTabs
     // (This is uniquely required so that the proper tab button gets selected when navigating)
     this.TabAdd = function (hash_text, layout_tabs_instance, tab_index) {
         if (!hash_text || !layout_tabs_instance) {
@@ -37,8 +37,8 @@ function DashHistory () {
             return;
         }
 
-        if (!layout_tabs_instance instanceof DashGuiLayoutTabs) {
-            console.error("Error: TabAdd is only for GUI elements managed by DashGuiLayoutTabs");
+        if (!layout_tabs_instance instanceof DashLayoutTabs) {
+            console.error("Error: TabAdd is only for GUI elements managed by DashLayoutTabs");
 
             return;
         }
@@ -51,7 +51,7 @@ function DashHistory () {
         };
     };
 
-    // Use for any GUI element not managed by DashGuiLayoutTabs and not explicitly loaded/instantiated
+    // Use for any GUI element not managed by DashLayoutTabs and not explicitly loaded/instantiated
     // (It's likely that LoaderAdd will be the better choice over this one that majority of the time)
     this.ClassAdd = function (hash_text, view_parent_html, view_class, ...view_instantiation_params) {
         if (!hash_text || !view_parent_html || !view_class) {

@@ -174,7 +174,7 @@ function DashGuiFileExplorerGUI () {
             return this.column_config;
         }
 
-        var column_config = new Dash.Gui.Layout.List.ColumnConfig();
+        var column_config = new Dash.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
 
         column_config.AddColumn(
@@ -270,7 +270,7 @@ function DashGuiFileExplorerGUI () {
     };
 
     this.add_list = function () {
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
+        this.list = new Dash.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
 
         this.list.DisableDividerColorChangeOnHover();
 

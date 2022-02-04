@@ -80,7 +80,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
 
         this.preview_box.empty();
 
-        this.content_preview = new Dash.Gui.FileExplorer.ContentPreview(this);
+        this.content_preview = new DashGuiFileExplorerContentPreview(this);
 
         this.preview_box.append(this.content_preview.html);
     };

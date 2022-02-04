@@ -110,7 +110,7 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddButtonBar = function (label_text) {
-        var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
+        var bar = new Dash.Gui.ButtonBar(this.binder, this.color);
 
         bar.html.css({
             "margin-top": Dash.Size.Padding,

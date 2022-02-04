@@ -103,7 +103,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             user_email = Dash.User.Data["email"];
         }
 
-        var message = new Dash.Gui.ChatBox.Message(
+        var message = new DashGuiChatBoxMessage(
             this,
             this.bold_mentions(text, track_mentions),
             user_email,
@@ -452,7 +452,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
 
-        this.message_input = new Dash.Gui.ChatBox.Input(
+        this.message_input = new DashGuiChatBoxInput(
             this,
             this.add_message_from_input,
             this.at_combo_options,

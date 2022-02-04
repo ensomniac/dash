@@ -1,4 +1,4 @@
-function DashIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
+function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
     this.color = color || Dash.Color.Light;
     this.name = icon_name;
     this.size = container_size || Dash.Size.RowHeight;
@@ -6,10 +6,10 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
     this.icon_color = icon_color || this.color.Button.Background.Base;
     this.theme = "light";
     this.icon_html = null;
-    this.icon_definition = new GuiIcons(this);
+    this.icon_definition = new DashGuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
     if (!this.color.Text) {
-        console.error("Error: Incorrect color object passed to DashIcon:", this.color);
+        console.error("Error: Incorrect color object passed to DashGuiIcon:", this.color);
         console.trace();
         debugger;
     }
@@ -31,7 +31,7 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
             return;
         }
         this.name = icon_name || "unknown";
-        this.icon_definition = new GuiIcons(this);
+        this.icon_definition = new DashGuiIcons(this);
         var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         icon_html.css(this.icon_definition.get_css());
         this.html.append(icon_html);
@@ -43,7 +43,7 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
     this.SetSize = function (percentage_number) {
         percentage_number = parseInt(percentage_number);
         if (isNaN(percentage_number)) {
-            console.error("Error: DashIcon SetSize requires a number (that represents a percentage)");
+            console.error("Error: DashGuiIcon SetSize requires a number (that represents a percentage)");
             return;
         }
         this.icon_html.css({
@@ -73,7 +73,7 @@ function DashIcon (color=null, icon_name="unknown", container_size=null, icon_si
     this.setup_styles();
 }
 
-function GuiIcons (icon) {
+function DashGuiIcons (icon) {
     this.icon = icon;
     this.weight = {
         "solid":   "s",
@@ -83,174 +83,175 @@ function GuiIcons (icon) {
     };
     
     this.icon_map = {
-        "add":                   new GuiIconDefinition(this.icon, "Add", this.weight["regular"], "plus", 1.3, 0.15, 0.15),
-        "add_layer":             new GuiIconDefinition(this.icon, "Add Layer", this.weight["regular"], "layer-plus", 1.3, 0.15, 0.15),
-        "add_person":            new GuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus", 1.3, 0.15, 0.15),
-        "add_phone":             new GuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus", 1.3, 0.15, 0.15),
-        "admin_tools":           new GuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
-        "alert":                 new GuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation", 0.9),
-        "alert_triangle":        new GuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle", 0.9),
-        "apple_logo":            new GuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
-        "archive":               new GuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
-        "archive_light":         new GuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
-        "arrow_down":            new GuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down", 1.5),
-        "arrow_left":            new GuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left", 1.5),
-        "arrow_left_alt":        new GuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
-        "arrow_left_long":       new GuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
-        "arrow_left_circled":    new GuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
-        "arrow_left_from_right": new GuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
-        "arrow_right":           new GuiIconDefinition(this.icon, "Arrow Right", this.weight["regular"], "angle-right", 1.5),
-        "arrow_right_to_right":  new GuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-to-right"),
-        "arrow_to_left":         new GuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
-        "arrow_up":              new GuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up", 1.5),
-        "at_sign":               new GuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
-        "award":                 new GuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
-        "aws_logo":              new GuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
-        "baseball":              new GuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
-        "basketball":            new GuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
-        "browser_window":        new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
-        "building":              new GuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
-        "cancel":                new GuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
-        "car":                   new GuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
-        "cdn_tool_accordion":    new GuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
-        "cdn_tool_block_layout": new GuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
-        "cdn_tool_career_path":  new GuiIconDefinition(this.icon, "Career Path Tool", this.weight["regular"], "shoe-prints"),
-        "cdn_tool_embed":        new GuiIconDefinition(this.icon, "Embed Tool", this.weight["regular"], "expand-arrows"),
-        "cdn_tool_file":         new GuiIconDefinition(this.icon, "File Tool", this.weight["light"], "file"),
-        "cdn_tool_gallery":      new GuiIconDefinition(this.icon, "Gallery Tool", this.weight["regular"], "images"),
-        "cdn_tool_header":       new GuiIconDefinition(this.icon, "Header Tool", this.weight["regular"], "heading"),
-        "cdn_tool_hrule":        new GuiIconDefinition(this.icon, "Hrule Tool", this.weight["regular"], "ruler-horizontal"),
-        "cdn_tool_image":        new GuiIconDefinition(this.icon, "Image Tool", this.weight["regular"], "image", 0.9),
-        "cdn_tool_layout":       new GuiIconDefinition(this.icon, "Layout Tool", this.weight["regular"], "columns"),
-        "cdn_tool_lightbox":     new GuiIconDefinition(this.icon, "Lightbox Tool", this.weight["regular"], "expand-wide"),
-        "cdn_tool_link":         new GuiIconDefinition(this.icon, "Link Tool", this.weight["light"], "external-link"),
-        "cdn_tool_link_bank":    new GuiIconDefinition(this.icon, "Link Bank Tool", this.weight["regular"], "link"),
-        "cdn_tool_subheader":    new GuiIconDefinition(this.icon, "Sub Header Tool", this.weight["light"], "heading"),
-        "cdn_tool_text":         new GuiIconDefinition(this.icon, "Text Tool", this.weight["regular"], "font", 0.9),
-        "cdn_tool_video":        new GuiIconDefinition(this.icon, "Text Tool", this.weight["regular"], "video", 0.85),
-        "cell":                  new GuiIconDefinition(this.icon, "Cell Phone", this.weight["regular"], "mobile-alt"),
-        "checked_box":           new GuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
-        "circle_dot":            new GuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
-        "clipboard":             new GuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
-        "clone":                 new GuiIconDefinition(this.icon, "Clone", this.weight["regular"], "clone"),
-        "close":                 new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times", 1.2, 0.25, 0.25),
-        "close_thin":            new GuiIconDefinition(this.icon, "Close", this.weight["light"], "times", 1.2, 0.25, 0.25),
-        "close_square":          new GuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square", 1.2, 0.25, 0.25),
-        "color_palette":         new GuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
-        "comment":               new GuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
-        "comments":              new GuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight["solid"], "comments"),
-        "comments_square":       new GuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
-        "complete":              new GuiIconDefinition(this.icon, "Complete", this.weight["regular"], "check"),
-        "copy":                  new GuiIconDefinition(this.icon, "Copy", this.weight["regular"], "copy"),
-        "cube":                  new GuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
-        "database":              new GuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
-        "delete":                new GuiIconDefinition(this.icon, "Delete", this.weight["regular"], "times", 1.2, 0.25, 0.25),
-        "delete_thin":           new GuiIconDefinition(this.icon, "Delete (thin_", this.weight["light"], "times", 1.2, 0.25, 0.25),
-        "dot":                   new GuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle", 0.66),
-        "dots_horizontal":       new GuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
-        "dots_vertical":         new GuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
-        "download":              new GuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
-        "download_file":         new GuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
-        "edit":                  new GuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
-        "edit_square":           new GuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
-        "email":                 new GuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
-        "empty":                 new GuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
-        "empty_folder":          new GuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
-        "envelope":              new GuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
-        "exec":                  new GuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
-        "expand":                new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
-        "expand_square":         new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
-        "expand_square_arrows":  new GuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
-        "file":                  new GuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
-        "file_lined":            new GuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
-        "file_image":            new GuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),
-        "file_pdf":              new GuiIconDefinition(this.icon, "PDF File", this.weight["regular"], "file-pdf"),
-        "file_csv":              new GuiIconDefinition(this.icon, "CSV File", this.weight["regular"], "file-csv"),
-        "file_video":            new GuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
-        "file_word":             new GuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
-        "filter":                new GuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
-        "folder_tree":           new GuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
-        "football":              new GuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
-        "flag":                  new GuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
-        "gem":                   new GuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
-        "google_drive":          new GuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
-        "dropbox_logo":          new GuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
-        "info":                  new GuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
-        "gear":                  new GuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
-        "goal_reply":            new GuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
-        "group":                 new GuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
-        "history":               new GuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
-        "hockey_puck":           new GuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
-        "hr":                    new GuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
-        "image":                 new GuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
-        "images":                new GuiIconDefinition(this.icon, "Images", this.weight["regular"], "images"),
-        "import_file":           new GuiIconDefinition(this.icon, "Import File", this.weight["regular"], "file-import"),
-        "invoice":               new GuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
-        "invoice_alt":           new GuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
-        "link":                  new GuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
-        "linked":                new GuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
-        "list":                  new GuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
-        "list_offset":           new GuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
-        "lock":                  new GuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
-        "log_out":               new GuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
-        "minimize":              new GuiIconDefinition(this.icon, "Minimize", this.weight["regular"], "compress-alt"),
-        "minus_circle":          new GuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
-        "minus_sign":            new GuiIconDefinition(this.icon, "Minus Sign", this.weight["regular"], "minus"),
-        "minus_square":          new GuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
-        "more":                  new GuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
-        "navigation":            new GuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
-        "newsfeed":              new GuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
-        "note":                  new GuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note", 1.05),
-        "notify":                new GuiIconDefinition(this.icon, "Notify", this.weight["regular"], "bell"),
-        "open_folder":           new GuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
-        "paperclip":             new GuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
-        "pen":                   new GuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
-        "pencil_ruler":          new GuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
-        "phone":                 new GuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
-        "play":                  new GuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),
-        "portal_editor":         new GuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
-        "read":                  new GuiIconDefinition(this.icon, "Read", this.weight["regular"], "book-reader"),
-        "refresh":               new GuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
-        "remove_person":         new GuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash", 1.2, 0.55, 0.15),
-        "remove_notification":   new GuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash", 0.9, 0.55, 0.15),
-        "search":                new GuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
-        "send":                  new GuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
-        "server":                new GuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),
-        "share":                 new GuiIconDefinition(this.icon, "Share", this.weight["regular"],"share"),
-        "signal_full":           new GuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
-        "signal_none":           new GuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
-        "signal_some":           new GuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
-        "slash":                 new GuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
-        "soccer_ball":           new GuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
-        "spinner":               new GuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
-        "stop":                  new GuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
-        "swords":                new GuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
-        "sync":                  new GuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
-        "tasks":                 new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
-        "tasks_alt":             new GuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
-        "text":                  new GuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
-        "toggle_off":            new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
-        "toggle_on":             new GuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
-        "tools":                 new GuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
-        "transferring":          new GuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
-        "trash":                 new GuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
-        "trash_alt":             new GuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
-        "trash_restore":         new GuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
-        "trash_solid":           new GuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
-        "unchecked_box":         new GuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
-        "undo":                  new GuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
-        "unknown":               new GuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
-        "unlink":                new GuiIconDefinition(this.icon, "Unlink", this.weight["regular"], "unlink"),
-        "unlock":                new GuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "unlock"),
-        "unlock_alt":            new GuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "lock-open"),
-        "upload":                new GuiIconDefinition(this.icon, "Upload", this.weight["light"], "upload"),
-        "upload_file":           new GuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
-        "user":                  new GuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
-        "video":                 new GuiIconDefinition(this.icon, "Video", this.weight["regular"], "video", 0.85),
-        "view":                  new GuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
-        "web":                   new GuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
-        "windows_logo":          new GuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
-        "worker":                new GuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
+        "add":                   new DashGuiIconDefinition(this.icon, "Add", this.weight["regular"], "plus"),
+        "add_light":             new DashGuiIconDefinition(this.icon, "Add (Light)", this.weight["light"], "plus"),
+        "add_layer":             new DashGuiIconDefinition(this.icon, "Add Layer", this.weight["regular"], "layer-plus"),
+        "add_person":            new DashGuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus"),
+        "add_phone":             new DashGuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus"),
+        "admin_tools":           new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
+        "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
+        "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),
+        "apple_logo":            new DashGuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
+        "archive":               new DashGuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
+        "archive_light":         new DashGuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
+        "arrow_down":            new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down"),
+        "arrow_left":            new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),
+        "arrow_left_alt":        new DashGuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
+        "arrow_left_long":       new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
+        "arrow_left_circled":    new DashGuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
+        "arrow_left_from_right": new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
+        "arrow_right":           new DashGuiIconDefinition(this.icon, "Arrow Right", this.weight["regular"], "angle-right"),
+        "arrow_right_to_right":  new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-to-right"),
+        "arrow_to_left":         new DashGuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
+        "arrow_up":              new DashGuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up"),
+        "at_sign":               new DashGuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
+        "award":                 new DashGuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
+        "aws_logo":              new DashGuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
+        "baseball":              new DashGuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
+        "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
+        "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
+        "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
+        "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
+        "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
+        "cdn_tool_accordion":    new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
+        "cdn_tool_block_layout": new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
+        "cdn_tool_career_path":  new DashGuiIconDefinition(this.icon, "Career Path Tool", this.weight["regular"], "shoe-prints"),
+        "cdn_tool_embed":        new DashGuiIconDefinition(this.icon, "Embed Tool", this.weight["regular"], "expand-arrows"),
+        "cdn_tool_file":         new DashGuiIconDefinition(this.icon, "File Tool", this.weight["light"], "file"),
+        "cdn_tool_gallery":      new DashGuiIconDefinition(this.icon, "Gallery Tool", this.weight["regular"], "images"),
+        "cdn_tool_header":       new DashGuiIconDefinition(this.icon, "Header Tool", this.weight["regular"], "heading"),
+        "cdn_tool_hrule":        new DashGuiIconDefinition(this.icon, "Hrule Tool", this.weight["regular"], "ruler-horizontal"),
+        "cdn_tool_image":        new DashGuiIconDefinition(this.icon, "Image Tool", this.weight["regular"], "image"),
+        "cdn_tool_layout":       new DashGuiIconDefinition(this.icon, "Layout Tool", this.weight["regular"], "columns"),
+        "cdn_tool_lightbox":     new DashGuiIconDefinition(this.icon, "Lightbox Tool", this.weight["regular"], "expand-wide"),
+        "cdn_tool_link":         new DashGuiIconDefinition(this.icon, "Link Tool", this.weight["light"], "external-link"),
+        "cdn_tool_link_bank":    new DashGuiIconDefinition(this.icon, "Link Bank Tool", this.weight["regular"], "link"),
+        "cdn_tool_subheader":    new DashGuiIconDefinition(this.icon, "Sub Header Tool", this.weight["light"], "heading"),
+        "cdn_tool_text":         new DashGuiIconDefinition(this.icon, "Text Tool", this.weight["regular"], "font"),
+        "cdn_tool_video":        new DashGuiIconDefinition(this.icon, "Text Tool", this.weight["regular"], "video"),
+        "cell":                  new DashGuiIconDefinition(this.icon, "Cell Phone", this.weight["regular"], "mobile-alt"),
+        "checked_box":           new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
+        "circle_dot":            new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
+        "clipboard":             new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
+        "clone":                 new DashGuiIconDefinition(this.icon, "Clone", this.weight["regular"], "clone"),
+        "close":                 new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times"),
+        "close_thin":            new DashGuiIconDefinition(this.icon, "Close", this.weight["light"], "times"),
+        "close_square":          new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square"),
+        "color_palette":         new DashGuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
+        "comment":               new DashGuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
+        "comments":              new DashGuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight["solid"], "comments"),
+        "comments_square":       new DashGuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
+        "complete":              new DashGuiIconDefinition(this.icon, "Complete", this.weight["regular"], "check"),
+        "copy":                  new DashGuiIconDefinition(this.icon, "Copy", this.weight["regular"], "copy"),
+        "cube":                  new DashGuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
+        "database":              new DashGuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
+        "delete":                new DashGuiIconDefinition(this.icon, "Delete", this.weight["regular"], "times"),
+        "delete_thin":           new DashGuiIconDefinition(this.icon, "Delete (thin_", this.weight["light"], "times"),
+        "dot":                   new DashGuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle"),
+        "dots_horizontal":       new DashGuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
+        "dots_vertical":         new DashGuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
+        "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
+        "download_file":         new DashGuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
+        "edit":                  new DashGuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
+        "edit_square":           new DashGuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
+        "email":                 new DashGuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
+        "empty":                 new DashGuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
+        "empty_folder":          new DashGuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
+        "envelope":              new DashGuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
+        "exec":                  new DashGuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
+        "expand":                new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
+        "expand_square":         new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
+        "expand_square_arrows":  new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
+        "file":                  new DashGuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
+        "file_lined":            new DashGuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
+        "file_image":            new DashGuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),
+        "file_pdf":              new DashGuiIconDefinition(this.icon, "PDF File", this.weight["regular"], "file-pdf"),
+        "file_csv":              new DashGuiIconDefinition(this.icon, "CSV File", this.weight["regular"], "file-csv"),
+        "file_video":            new DashGuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
+        "file_word":             new DashGuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
+        "filter":                new DashGuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
+        "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
+        "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
+        "flag":                  new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
+        "gem":                   new DashGuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
+        "google_drive":          new DashGuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
+        "dropbox_logo":          new DashGuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
+        "info":                  new DashGuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
+        "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
+        "goal_reply":            new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
+        "group":                 new DashGuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
+        "history":               new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
+        "hockey_puck":           new DashGuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
+        "hr":                    new DashGuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
+        "image":                 new DashGuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
+        "images":                new DashGuiIconDefinition(this.icon, "Images", this.weight["regular"], "images"),
+        "import_file":           new DashGuiIconDefinition(this.icon, "Import File", this.weight["regular"], "file-import"),
+        "invoice":               new DashGuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
+        "invoice_alt":           new DashGuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
+        "link":                  new DashGuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
+        "linked":                new DashGuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
+        "list":                  new DashGuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
+        "list_offset":           new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
+        "lock":                  new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
+        "log_out":               new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
+        "minimize":              new DashGuiIconDefinition(this.icon, "Minimize", this.weight["regular"], "compress-alt"),
+        "minus_circle":          new DashGuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
+        "minus_sign":            new DashGuiIconDefinition(this.icon, "Minus Sign", this.weight["regular"], "minus"),
+        "minus_square":          new DashGuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
+        "more":                  new DashGuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
+        "navigation":            new DashGuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
+        "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
+        "note":                  new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),
+        "notify":                new DashGuiIconDefinition(this.icon, "Notify", this.weight["regular"], "bell"),
+        "open_folder":           new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
+        "paperclip":             new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
+        "pen":                   new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
+        "pencil_ruler":          new DashGuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
+        "phone":                 new DashGuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
+        "play":                  new DashGuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),
+        "portal_editor":         new DashGuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
+        "read":                  new DashGuiIconDefinition(this.icon, "Read", this.weight["regular"], "book-reader"),
+        "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
+        "remove_person":         new DashGuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash"),
+        "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
+        "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
+        "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
+        "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),
+        "share":                 new DashGuiIconDefinition(this.icon, "Share", this.weight["regular"],"share"),
+        "signal_full":           new DashGuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
+        "signal_none":           new DashGuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
+        "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
+        "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
+        "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
+        "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
+        "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
+        "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
+        "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
+        "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
+        "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
+        "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
+        "toggle_on":             new DashGuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
+        "tools":                 new DashGuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
+        "transferring":          new DashGuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
+        "trash":                 new DashGuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
+        "trash_alt":             new DashGuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
+        "trash_restore":         new DashGuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
+        "trash_solid":           new DashGuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
+        "unchecked_box":         new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
+        "undo":                  new DashGuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
+        "unknown":               new DashGuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
+        "unlink":                new DashGuiIconDefinition(this.icon, "Unlink", this.weight["regular"], "unlink"),
+        "unlock":                new DashGuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "unlock"),
+        "unlock_alt":            new DashGuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "lock-open"),
+        "upload":                new DashGuiIconDefinition(this.icon, "Upload", this.weight["light"], "upload"),
+        "upload_file":           new DashGuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
+        "user":                  new DashGuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
+        "video":                 new DashGuiIconDefinition(this.icon, "Video", this.weight["regular"], "video"),
+        "view":                  new DashGuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
+        "web":                   new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
+        "windows_logo":          new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
+        "worker":                new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
     };
     // Return icon map for use in portal editor > font icons
     if (this.icon.name === "icon_map") {
@@ -272,18 +273,16 @@ function GuiIcons (icon) {
     }
 }
 
-function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset_mult, top_offset_mult) {
+function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
+    this.icon = icon;
+    this.label = label || "";
+    this.fa_style = fa_style;
+    this.fa_id = fa_id;
     // FA Styles:
     //     r = regular
     //     s = solid
     //     l = light
     //     b = brands
-    this.icon = icon;
-    this.label = label || "";
-    this.fa_style = fa_style;
-    this.fa_id = fa_id;
-    this.left_offset_mult = left_offset_mult || 0;
-    this.top_offset_mult = top_offset_mult || 0;
     this.get_class = function () {
         return "fa" + this.fa_style + " fa-" + this.fa_id + "";
     };
@@ -297,11 +296,13 @@ function GuiIconDefinition (icon, label, fa_style, fa_id, size_mult, left_offset
             "font-size": icon_fnt_size + "px",
             "line-height": this.icon.size + "px",
             "text-align": "center",
-            "color": this.icon.icon_color,
+            "color": this.icon.icon_color
         };
         if (!this.icon.icon_color) {
-            console.error("Error: Incorrect color object passed to DashIcon:", this.icon.icon_color);
+            console.error("Error: Incorrect color object passed to DashGuiIcon:", this.icon.icon_color);
+            
             console.trace();
+            
             debugger;
         }
         return icon_css;
@@ -17784,35 +17785,41 @@ function Dash () {
     this.width = 0;
     this.height = 0;
     this.html = $("<div></div>");
-    this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
+    this.Context  = DASH_CONTEXT;
+    this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    this.Local            = new DashLocal();
-    this.Math             = new DashMath();
-    this.Temp             = new DashTemp();
-    this.Validate         = new DashValidate();
-    this.DateTime         = new DashDateTime();
-    this.Color            = new DashColor();
-    this.Color.Set        = DashColorSet;
-    this.Color.ButtonSet  = DashColorButtonSet;
-    this.Color.StateSet   = DashColorStateSet;
-    this.Size             = new DashSize(this.IsMobile);
-    this.User             = new DashUser();
-    this.Gui              = new DashGui();
-    this.View             = new DashView();
-    this.History          = new DashHistory();
-    this.Animation        = new DashAnimation();
-    this.Requests         = new DashRequest();
-    this.Request          = this.Requests.Request.bind(this.Requests);
-    this.Logout           = this.User.Logout;
-    this.Utils            = new DashUtils();
-    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
-    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
-    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
-    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
-    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
+    this.Animation = new DashAnimation();
+    this.Color     = new DashColor();
+    this.DateTime  = new DashDateTime();
+    this.Gui       = new DashGui();
+    this.History   = new DashHistory();
+    this.Layout    = new DashLayout();
+    this.Local     = new DashLocal();
+    this.Math      = new DashMath();
+    this.Requests  = new DashRequest();
+    this.Size      = new DashSize(this.IsMobile);
+    this.Temp      = new DashTemp();
+    this.User      = new DashUser();
+    this.Utils     = new DashUtils();
+    this.Validate  = new DashValidate();
+    this.View      = new DashView();
+    this.Mobile = {
+        CardStack:   DashMobileCardStack,
+        UserProfile: DashMobileUserProfile
+    };
     this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
-    // Prevent older projects from not breaking due to these having been moved
+    this.Logout           = this.User.Logout;
+    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
+    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
+    this.Request          = this.Requests.Request.bind(this.Requests);
+    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
+    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
+    // |-------------------------------------------------------------------------------------------------------------|
+    // | DEPRECATED: These exist to prevent older projects from breaking due to these having been moved/restructured |
+    // |-------------------------------------------------------------------------------------------------------------|
+    // | Left side is the deprecated, backwards-compatible pointer, right side is the proper/new pointer             |
+    // |-------------------------------------------------------------------------------------------------------------|
     this.RandomID         = this.Math.RandomID.bind(this.Math);
     this.ReadableDateTime = this.DateTime.Readable.bind(this.DateTime);
     this.IsServerIsoDate  = this.DateTime.IsIsoFormat.bind(this.DateTime);
@@ -17821,6 +17828,9 @@ function Dash () {
     this.IsValidEmail     = this.Validate.Email.bind(this.Validate);
     this.IsValidObject    = this.Validate.Object.bind(this.Validate);
     this.ValidateResponse = this.Validate.Response.bind(this.Validate);
+    this.Gui.Layout       = this.Layout;
+    this.Gui.PaneSlider   = this.Layout.PaneSlider;
+    this.Layout.ButtonBar = this.Gui.ButtonBar;
     this.setup_styles = function () {
         $("body").css({
             "overflow": "hidden"
@@ -18142,31 +18152,26 @@ function DashDateTime () {
 }
 
 function DashGui() {
-    this.Button                      = DashGuiButton;
-    this.ChatBox                     = DashGuiChatBox;
-    this.ChatBox.Message             = DashGuiChatBoxMessage;
-    this.ChatBox.Input               = DashGuiChatBoxInput;
-    this.Checkbox                    = DashGuiCheckbox;
-    this.Combo                       = DashGuiCombo;
-    this.FileExplorer                = DashGuiFileExplorer;
-    this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
-    this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
-    this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
-    this.SearchableList              = DashGuiSearchableList;
-    this.Header                      = DashGuiHeader;
-    this.Icon                        = DashIcon;
-    this.IconButton                  = DashGuiIconButton;
-    this.Input                       = DashGuiInput;
-    this.InputRow                    = DashGuiInputRow;
-    this.Layout                      = new DashGuiLayout();
-    this.LoadDots                    = DashGuiLoadDots;
-    this.LoadingOverlay              = DashGuiLoadingOverlay;
-    this.Login                       = DashGuiLogin;
-    this.PaneSlider                  = this.Layout.PaneSlider; // This is redundant, but unsure if it's referenced in other projects
-    this.PropertyBox                 = DashGuiPropertyBox;
-    this.Slider                      = DashGuiSlider;
-    this.ToolRow                     = DashGuiToolRow;
-    this.LoadingLabel                = DashGuiLoadingLabel;
+    this.Button                    = DashGuiButton;
+    this.ButtonBar                 = DashGuiButtonBar;
+    this.ChatBox                   = DashGuiChatBox;
+    this.Checkbox                  = DashGuiCheckbox;
+    this.Combo                     = DashGuiCombo;
+    this.FileExplorer              = DashGuiFileExplorer;
+    this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
+    this.Header                    = DashGuiHeader;
+    this.Icon                      = DashGuiIcon;
+    this.IconButton                = DashGuiIconButton;
+    this.Input                     = DashGuiInput;
+    this.InputRow                  = DashGuiInputRow;
+    this.LoadDots                  = DashGuiLoadDots;
+    this.LoadingLabel              = DashGuiLoadingLabel;
+    this.LoadingOverlay            = DashGuiLoadingOverlay;
+    this.Login                     = DashGuiLogin;
+    this.PropertyBox               = DashGuiPropertyBox;
+    this.SearchableList            = DashGuiSearchableList;
+    this.Slider                    = DashGuiSlider;
+    this.ToolRow                   = DashGuiToolRow;
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {
             color = Dash.Color.Light;
@@ -18563,7 +18568,7 @@ function DashGui() {
         if (override_element) {
             // Override element is intended to NOT show the tooltip under the below defined
             // circumstances. These will be unique depending on the element - expand as needed.
-            if (override_element instanceof DashGuiListRow) {
+            if (override_element instanceof DashLayoutListRow) {
                 if (override_element.IsExpanded()) {
                     return;
                 }
@@ -18601,7 +18606,7 @@ function DashGui() {
         if (override_element && !tooltip.is(":visible")) {
             // Override element is intended to NOT show the tooltip under the below defined
             // circumstances. These will be unique depending on the element - expand as needed.
-            if (override_element instanceof DashGuiListRow) {
+            if (override_element instanceof DashLayoutListRow) {
                 if (override_element.IsExpanded()) {
                     return;
                 }
@@ -18617,6 +18622,29 @@ function DashUser () {
     this.__auth_not_authenticated_cb = null;
     this.Data = null;
     this.Init = null;
+    this.GetDisplayName = function () {
+        return this.Data["display_name"] ? this.Data["display_name"] :
+            this.Data["first_name"] ? this.Data["first_name"] +
+                (this.Data["last_name"] ? " " + this.Data["last_name"] : "") :
+                this.Data["email"];
+    };
+    this.GetByEmail = function (user_email) {
+        return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
+    };
+    this.GetImageByEmail = function (user_email) {
+        if (!user_email) {
+            return this.get_default_image_data();
+        }
+        if (user_email === Dash.User.Data["email"] && Dash.User.Data["img"]) {
+            return Dash.User.Data["img"];
+        }
+        if (Dash.User.Init["team"][user_email] && Dash.User.Init["team"][user_email]["img"]) {
+            return Dash.User.Init["team"][user_email]["img"];
+        }
+        // TODO: Allow dash to always return a stub for a user
+        //  image along with the init data on the auth call
+        return this.get_default_image_data();
+    };
     this.Authenticate = function (bind, on_user_authenticated, on_user_not_authenticated, optional_params={}) {
         this.__auth_authenticated_cb = on_user_authenticated.bind(bind);
         this.__auth_not_authenticated_cb = on_user_not_authenticated.bind(bind);
@@ -18655,23 +18683,6 @@ function DashUser () {
             Dash.Local.Set("user_json", "");
         }
         this.build_init_team_combo();
-    };
-    this.GetImageByEmail = function (user_email) {
-        if (!user_email) {
-            return this.get_default_image_data();
-        }
-        if (user_email === Dash.User.Data["email"] && Dash.User.Data["img"]) {
-            return Dash.User.Data["img"];
-        }
-        if (Dash.User.Init["team"][user_email] && Dash.User.Init["team"][user_email]["img"]) {
-            return Dash.User.Init["team"][user_email]["img"];
-        }
-        // TODO: Allow dash to always return a stub for a user
-        //  image along with the init data on the auth call
-        return this.get_default_image_data();
-    };
-    this.GetByEmail = function (user_email) {
-        return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
     };
     this.get_default_image_data = function () {
         return {
@@ -18738,12 +18749,12 @@ function DashSize (is_mobile) {
 }
 
 function DashView () {
-    this.User = DashUserView;
-    this.Style = DashStyleView;
-    this.SiteSettings = DashAdminView;
+    this.Admin            = DashAdminView;
+    this.PDF              = DashPDFView;
+    this.SiteSettings     = DashAdminView;
     this.SiteSettingsTabs = new DashAdminTabs();
-    this.Admin = DashAdminView;
-    this.PDF = DashPDFView;
+    this.Style            = DashStyleView;
+    this.User             = DashUserView;
 }
 
 function DashMath () {
@@ -18861,7 +18872,7 @@ function DashHistory () {
             "loader_params": [...loader_params]
         };
     };
-    // Use for any GUI element managed by DashGuiLayoutTabs
+    // Use for any GUI element managed by DashLayoutTabs
     // (This is uniquely required so that the proper tab button gets selected when navigating)
     this.TabAdd = function (hash_text, layout_tabs_instance, tab_index) {
         if (!hash_text || !layout_tabs_instance) {
@@ -18871,8 +18882,8 @@ function DashHistory () {
         if (isNaN(tab_index)) {
             return;
         }
-        if (!layout_tabs_instance instanceof DashGuiLayoutTabs) {
-            console.error("Error: TabAdd is only for GUI elements managed by DashGuiLayoutTabs");
+        if (!layout_tabs_instance instanceof DashLayoutTabs) {
+            console.error("Error: TabAdd is only for GUI elements managed by DashLayoutTabs");
             return;
         }
         this.set_hash_text(hash_text);
@@ -18881,7 +18892,7 @@ function DashHistory () {
             "tab_index": tab_index
         };
     };
-    // Use for any GUI element not managed by DashGuiLayoutTabs and not explicitly loaded/instantiated
+    // Use for any GUI element not managed by DashLayoutTabs and not explicitly loaded/instantiated
     // (It's likely that LoaderAdd will be the better choice over this one that majority of the time)
     this.ClassAdd = function (hash_text, view_parent_html, view_class, ...view_instantiation_params) {
         if (!hash_text || !view_parent_html || !view_class) {
@@ -19180,11 +19191,11 @@ function DashAnimationCurves() {
 }
 
 function DashColor () {
+    this.parsed_color_data = {};
     this.Dark = null;
     this.Light = null;
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
-    this.parsed_color_data = {};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     this.setup_color_sets = function () {
         var dark_bg_text = "rgb(245, 245, 245)";
@@ -20387,14 +20398,14 @@ function DashPDFView (options) {
 // Profile page layout for the currently logged-in user
 function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
-    this.user_profile = new Dash.Gui.Layout.UserProfile(user_data, options, view_mode);
+    this.user_profile = new Dash.Layout.UserProfile(user_data, options, view_mode);
     this.html.append(this.user_profile.html);
 }
 
 // Profile page layout for the currently logged-in user
 function DashStyleView () {
     this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
-    this.html.append(new Dash.Gui.Layout.UserProfile().html);
+    this.html.append(new Dash.Layout.UserProfile().html);
     console.log("in");
 }
 
@@ -20402,16 +20413,16 @@ function DashAdminTabs () {
     // This tiny class allows us to add overrides to the tabs in the Dash Admin page
     this.user_tabs = [];
     this.Add = function (label_text, html_obj) {
-        var tab_details = {};
-        tab_details["label_text"] = label_text;
-        tab_details["html_obj"] = html_obj;
-        this.user_tabs.push(tab_details);
+        this.user_tabs.push({
+            "label_text": label_text,
+            "html_obj": html_obj
+        });
     };
 }
 
 function DashAdminView (users_class_override=null) {
     this.users_class_override = users_class_override;
-    this.layout = new Dash.Gui.Layout.Tabs.Top(this);
+    this.layout = new Dash.Layout.Tabs.Top(this);
     this.html = this.layout.html;
     this.setup_styles = function () {
         this.layout.Append("Users", this.users_class_override ? this.users_class_override : DashAdminSettings);
@@ -20563,7 +20574,7 @@ function DashAdminSettings () {
         for (var i in this.data["users"]["order"]) {
             var email = this.data["users"]["order"][i];
             var user_data = this.data["users"]["data"][email];
-            var user_box = new Dash.Gui.Layout.UserProfile(user_data);
+            var user_box = new Dash.Layout.UserProfile(user_data);
             this.users_box.append(user_box.html);
             // user_box.html.css({
             //     "margin": Dash.Size.Padding*2,
@@ -22425,7 +22436,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.height = Dash.Size.RowHeight;
     this.get_formatted_data_cb = null;
     this.setup_styles = function () {
-        this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
+        this.toolbar = new Dash.Layout.Toolbar(this, this.color);
         this.toolbar.stroke_sep.remove();
         this.toolbar.html.css({
             "background": "none",
@@ -23381,7 +23392,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             row.Collapse();
             return;
         }
-        var preview = new Dash.Gui.FileExplorer.PreviewStrip(this, file_id);
+        var preview = new DashGuiFileExplorerPreviewStrip(this, file_id);
         row.Expand(preview.html);
     };
     this.redraw_rows = function () {
@@ -23584,7 +23595,7 @@ function DashGuiFileExplorerGUI () {
         if (!force && this.column_config) {
             return this.column_config;
         }
-        var column_config = new Dash.Gui.Layout.List.ColumnConfig();
+        var column_config = new Dash.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
         column_config.AddColumn(
             "Filename",
@@ -23665,7 +23676,7 @@ function DashGuiFileExplorerGUI () {
         return column_config;
     };
     this.add_list = function () {
-        this.list = new Dash.Gui.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
+        this.list = new Dash.Layout.List(this, this.on_row_selected, this.get_column_config(), this.color);
         this.list.DisableDividerColorChangeOnHover();
         if (this.include_list_header_row) {
             this.list.AddHeaderRow(
@@ -23983,7 +23994,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             return;
         }
         this.preview_box.empty();
-        this.content_preview = new Dash.Gui.FileExplorer.ContentPreview(this);
+        this.content_preview = new DashGuiFileExplorerContentPreview(this);
         this.preview_box.append(this.content_preview.html);
     };
     this.ReloadFileDetailsPropertyBox = function () {
@@ -25523,7 +25534,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         if (!user_email && fire_callback) {
             user_email = Dash.User.Data["email"];
         }
-        var message = new Dash.Gui.ChatBox.Message(
+        var message = new DashGuiChatBoxMessage(
             this,
             this.bold_mentions(text, track_mentions),
             user_email,
@@ -25795,7 +25806,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         if (this.read_only) {
             return;
         }
-        this.message_input = new Dash.Gui.ChatBox.Input(
+        this.message_input = new DashGuiChatBoxInput(
             this,
             this.add_message_from_input,
             this.at_combo_options,
@@ -26531,7 +26542,7 @@ function DashGuiPropertyBoxInterface () {
         return header_obj;
     };
     this.AddButtonBar = function (label_text) {
-        var bar = new Dash.Gui.Layout.ButtonBar(this.binder, this.color);
+        var bar = new Dash.Gui.ButtonBar(this.binder, this.color);
         bar.html.css({
             "margin-top": Dash.Size.Padding,
         });
@@ -27928,25 +27939,21 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-function DashGuiLayout () {
-    this.UserProfile = DashGuiLayoutUserProfile;
-    this.List = DashGuiList;
-    this.List.ColumnConfig = DashGuiListColumnConfig;
-    this.PaneSlider = DashGuiPaneSlider;
-    this.RevolvingList = DashGuiRevolvingList;
-    this.Tabs = {};
-    this.Tabs.Top = DashGuiLayoutTabsTop;
-    this.Tabs.Side = DashGuiLayoutTabsSide;
-    this.Toolbar = DashGuiLayoutToolbar;
-    this.Dashboard = DashGuiLayoutDashboard;
-    this.Dashboard.Module = DashGuiLayoutDashboardModule;
-    this.ButtonBar = DashGuiButtonBar;
-    this.Mobile = {};
-    this.Mobile.CardStack = DashMobileLayoutCardStack;
-    this.Mobile.UserProfile = DashMobileLayoutUserProfile;
+function DashLayout () {
+    this.Dashboard         = DashLayoutDashboard;
+    this.List              = DashLayoutList;
+    this.List.ColumnConfig = DashLayoutListColumnConfig;
+    this.PaneSlider        = DashLayoutPaneSlider;
+    this.RevolvingList     = DashLayoutRevolvingList;
+    this.Toolbar           = DashLayoutToolbar;
+    this.UserProfile       = DashLayoutUserProfile;
+    this.Tabs = {
+        Side: DashLayoutTabsSide,
+        Top:  DashLayoutTabsTop
+    };
 }
 
-function DashGuiPaneSlider (binder, is_vertical, default_size) {
+function DashLayoutPaneSlider (binder, is_vertical, default_size) {
     this.binder = binder;
     this.is_vertical = is_vertical || false;
     this.default_size = default_size || Dash.Size.ColumnWidth;
@@ -28188,7 +28195,7 @@ function DashGuiPaneSlider (binder, is_vertical, default_size) {
 }
 
 // Profile page layout for the currently logged-in user
-function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settings") {
+function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings") {
     this.user_data = user_data || Dash.User.Data || {};
     this.options = options;  // TODO: convert to proper interface
     this.view_mode = view_mode;
@@ -28266,7 +28273,7 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
             this.html.parent().append(this.modal_background);
         }
         if (!this.modal_box) {
-            this.modal_box = new Dash.Gui.Layout.UserProfile(
+            this.modal_box = new Dash.Layout.UserProfile(
                 this.user_data,
                 {
                     ...this.options,
@@ -28527,7 +28534,7 @@ function DashGuiLayoutUserProfile (user_data=null, options={}, view_mode="settin
     this.setup_styles();
 }
 
-function DashGuiLayoutToolbar (binder, color) {
+function DashLayoutToolbar (binder, color) {
     this.binder        = binder;
     this.color         = color || this.binder.color || Dash.Color.Dark;
     this.objects       = [];
@@ -28536,7 +28543,7 @@ function DashGuiLayoutToolbar (binder, color) {
     this.stroke_height = 1;
     this.height        = Dash.Size.ButtonHeight + this.stroke_height;
     this.refactor_itom_padding_requested = false;
-    DashGuiLayoutToolbarInterface.call(this);
+    DashLayoutToolbarInterface.call(this);
     this.setup_styles = function () {
         this.html.css({
             "background": Dash.Color.Lighten(this.color.Background, 7),
@@ -28607,8 +28614,8 @@ function DashGuiLayoutToolbar (binder, color) {
     this.setup_styles();
 }
 
-/**@member DashGuiLayoutToolbar */
-function DashGuiLayoutToolbarInterface () {
+/**@member DashLayoutToolbar */
+function DashLayoutToolbarInterface () {
     this.AddExpander = function () {
         var expander = $("<div></div>");
         expander.css({
@@ -28926,7 +28933,7 @@ function DashGuiLayoutToolbarInterface () {
     };
 }
 
-function DashGuiLayoutTabs (binder, side_tabs) {
+function DashLayoutTabs (binder, side_tabs) {
     this.binder = binder;
     this.side_tabs = side_tabs;
     this.all_content = [];
@@ -29237,13 +29244,13 @@ function DashGuiLayoutTabs (binder, side_tabs) {
     this.setup_styles();
 }
 
-class DashGuiLayoutTabsTop extends DashGuiLayoutTabs {
+class DashLayoutTabsTop extends DashLayoutTabs {
     constructor(Binder) {
         super(Binder, false);
     };
 }
 
-class DashGuiLayoutTabsSide extends DashGuiLayoutTabs {
+class DashLayoutTabsSide extends DashLayoutTabs {
     constructor(Binder) {
         super(Binder, true);
     };
@@ -29306,13 +29313,13 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.setup_styles();
 }
 
-function DashGuiList (binder, selected_callback, column_config, color=null) {
+function DashLayoutList (binder, selected_callback, column_config, color=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
-    if (!(column_config instanceof DashGuiListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+    if (!(column_config instanceof DashLayoutListColumnConfig)) {
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
         return;
     }
     if (!this.binder.GetDataForKey) {
@@ -29334,7 +29341,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         // Placeholder
     };
     this.AddRow = function (row_id) {
-        var row = new DashGuiListRow(this, row_id);
+        var row = new DashLayoutListRow(this, row_id);
         this.rows.push(row);
         this.html.append(row.html);
         return row;
@@ -29410,8 +29417,8 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         this.rows = [];
     };
     this.SetColumnConfig = function (column_config, clear=true) {
-        if (!(column_config instanceof DashGuiListColumnConfig)) {
-            console.error("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+        if (!(column_config instanceof DashLayoutListColumnConfig)) {
+            console.error("Error: New 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
             return;
         }
         this.column_config = column_config;
@@ -29467,7 +29474,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         this.allow_row_divider_color_change_on_hover = false;
     };
     this.add_header_row = function () {
-        this.header_row = new DashGuiListRow(this, this.header_row_tag);
+        this.header_row = new DashLayoutListRow(this, this.header_row_tag);
         if (this.header_row_css) {
             if (this.header_row_css["html"]) {
                 this.header_row.html.css(this.header_row_css["html"]);
@@ -29481,7 +29488,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         this.header_row.Update();
     };
     this.get_sublist = function () {
-        var sublist = new Dash.Gui.Layout.List(this.binder, this.selected_callback, this.column_config);
+        var sublist = new Dash.Layout.List(this.binder, this.selected_callback, this.column_config);
         // Any changes to the list like this one should be re-applied to the sublist here
         if (!this.allow_row_divider_color_change_on_hover) {
             sublist.DisableDividerColorChangeOnHover();
@@ -29496,7 +29503,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
         // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
-        if (!(preview instanceof DashGuiList)) {
+        if (!(preview instanceof DashLayoutList)) {
             preview = row.SetCachedPreview(this.get_sublist());
             refresh_connections = false;
         }
@@ -29543,7 +29550,7 @@ function DashGuiList (binder, selected_callback, column_config, color=null) {
     this.setup_styles();
 }
 
-function DashGuiListRow (list, row_id) {
+function DashLayoutListRow (list, row_id) {
     this.list = list;
     this.id = row_id;
     this.is_shown = true;
@@ -29573,7 +29580,7 @@ function DashGuiListRow (list, row_id) {
         "expanded_content": 180,
         "expanded_highlight": 270
     };
-    DashGuiListRowElements.call(this);
+    DashLayoutListRowElements.call(this);
     this.setup_styles = function () {
         if (this.is_header) {
             this.column_box.css({
@@ -29975,7 +29982,7 @@ function DashGuiListRow (list, row_id) {
     this.setup_styles();
 }
 
-function DashGuiListRowColumn (list_row, column_config_data, index, color=null) {
+function DashLayoutListRowColumn (list_row, column_config_data, index, color=null) {
     this.list_row = list_row;
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
@@ -30109,11 +30116,11 @@ function DashGuiListRowColumn (list_row, column_config_data, index, color=null) 
     this.setup_styles();
 }
 
-/**@member DashGuiListRow*/
-function DashGuiListRowElements () {
+/**@member DashLayoutListRow*/
+function DashLayoutListRowElements () {
     this.add_default_column = function (column_config_data, index) {
         column_config_data["left_aligned"] = true;
-        var column = new DashGuiListRowColumn(this, column_config_data, index, this.color);
+        var column = new DashLayoutListRowColumn(this, column_config_data, index, this.color);
         this.column_box.append(column.html);
         this.columns["default"].push({
             "obj": column,
@@ -30302,7 +30309,7 @@ function DashGuiListRowElements () {
     };
 }
 
-function DashGuiListColumnConfig () {
+function DashLayoutListColumnConfig () {
     this.columns = [];
     this.AddColumn = function (display_name, data_key, can_edit, width, options) {
         if (typeof can_edit !== "boolean") {
@@ -30335,14 +30342,14 @@ function DashGuiListColumnConfig () {
     };
 }
 
-// This is an alternate to DashGuiList that is ideal for lists with high row counts
-function DashGuiRevolvingList (binder, column_config, color=null, include_header_row=false) {
+// This is an alternate to DashLayoutList that is ideal for lists with high row counts
+function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
     this.include_header_row = include_header_row;
-    if (!(column_config instanceof DashGuiListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+    if (!(column_config instanceof DashLayoutListColumnConfig)) {
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
         return;
     }
     if (!this.binder.GetDataForKey) {
@@ -30365,7 +30372,7 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
     this.header_row_tag = "_top_header_row";
     // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.row_height = Dash.Size.RowHeight + 1;
-    DashGuiRevolvingListScrolling.call(this);
+    DashLayoutRevolvingListScrolling.call(this);
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -30394,8 +30401,8 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
         this.get_expand_preview = binder ? getter.bind(binder) : getter;
     };
     this.SetColumnConfig = function (column_config, row_ids_to_include=[]) {
-        if (!(column_config instanceof DashGuiListColumnConfig)) {
-            console.error("Error: New 'column_config' is not of the correct class, DashGuiListColumnConfig!");
+        if (!(column_config instanceof DashLayoutListColumnConfig)) {
+            console.error("Error: New 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
             return;
         }
         this.last_column_config = this.column_config;
@@ -30526,7 +30533,7 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
             row.css(css);
         }
         else {
-            row = new DashGuiListRow(this, header ? this.header_row_tag : "");
+            row = new DashLayoutListRow(this, header ? this.header_row_tag : "");
             row.html.css(css);
             // The on-scroll revolving row system used in this style doesn't work when the rows
             // are animated to expand/collapse. That anim delay breaks the revolving system when a
@@ -30632,7 +30639,7 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
             });
         })(this);
     };
-    // Replace the DashGuiList-driven click behavior
+    // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
         row.column_box.off("click");
         (function (self) {
@@ -30653,8 +30660,8 @@ function DashGuiRevolvingList (binder, column_config, color=null, include_header
     this.setup_styles();
 }
 
-/**@member DashGuiRevolvingList*/
-function DashGuiRevolvingListScrolling () {
+/**@member DashLayoutRevolvingList*/
+function DashLayoutRevolvingListScrolling () {
     this.on_view_scrolled = function () {
         if (!this.parent) {
             return;
@@ -30806,7 +30813,7 @@ function DashGuiRevolvingListScrolling () {
     };
 }
 
-function DashGuiLayoutDashboard (binder, color=null) {
+function DashLayoutDashboard (binder, color=null) {
     this.binder = binder;
     this.color  = color || this.binder.color || Dash.Color.Dark;
     this.modules = [];
@@ -30848,7 +30855,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     };
     this.add_module = function (style, sub_style) {
         var index = this.modules.length;
-        var module = new Dash.Gui.Layout.Dashboard.Module(this, style, sub_style);
+        var module = new DashLayoutDashboardModule(this, style, sub_style);
         this.html.append(module.html);
         this.modules.push({
             "module": module,
@@ -30949,7 +30956,7 @@ function DashGuiLayoutDashboard (binder, color=null) {
     this.setup_styles();
 }
 
-function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
+function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.dashboard = dashboard;
     this.style = style;
     this.sub_style = sub_style;
@@ -30987,13 +30994,13 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     };
     this.initialize_style = function () {
         if (this.style === "flex") {
-            DashGuiLayoutDashboardModuleFlex.call(this);
+            DashLayoutDashboardModuleFlex.call(this);
         }
         else if (this.style === "square") {
-            DashGuiLayoutDashboardModuleSquare.call(this);
+            DashLayoutDashboardModuleSquare.call(this);
         }
         else if (this.style === "rect") {
-            DashGuiLayoutDashboardModuleRect.call(this);
+            DashLayoutDashboardModuleRect.call(this);
         }
         else {
             console.error("Error: Invalid Module Style:", this.style);
@@ -31036,8 +31043,8 @@ function DashGuiLayoutDashboardModule (dashboard, style, sub_style) {
     this.initialize_style();
 }
 
-/**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleFlex () {
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
     this.SetBarData = function (data) {
@@ -31208,8 +31215,8 @@ function DashGuiLayoutDashboardModuleFlex () {
     };
 }
 
-/**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleRect () {
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
     this.list_data = [];
@@ -31348,8 +31355,8 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 }
 
-/**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleSquare () {
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleSquare () {
     this.styles = ["tag", "radial"];
     this.label_text = "";
     this.label_header_text = "";
@@ -31550,8 +31557,8 @@ function DashGuiLayoutDashboardModuleSquare () {
     };
 }
 
-/**@member DashGuiLayoutDashboardModule*/
-function DashGuiLayoutDashboardModuleRect () {
+/**@member DashLayoutDashboardModule*/
+function DashLayoutDashboardModuleRect () {
     this.styles = ["list"];
     this.list_rows = [];
     this.list_data = [];
@@ -31690,23 +31697,18 @@ function DashGuiLayoutDashboardModuleRect () {
     };
 }
 
-function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) {
+function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="") {
     this.binder = binder;
-    this.on_exit_callback = on_exit_callback.bind(this.binder);
-    this.color = this.binder.color || Dash.Color.Dark;
-    this.stack = new Dash.Gui.Layout.Mobile.CardStack(this);
-    this.html = this.stack.html;
+    this.on_exit_callback = on_exit_callback.bind(binder);
     this.user_data = user_data || Dash.User.Data;
+    this.context_logo_img_url = context_logo_img_url;
+    this.color = this.binder.color || Dash.Color.Dark;
+    this.stack = new Dash.Mobile.CardStack(this);
+    this.html = this.stack.html;
     this.profile_button = null;
     this.user_image_upload_button = null;
     this.setup_styles = function () {
-        var name = this.user_data["first_name"] + " " + this.user_data["last_name"];
-        this.user_banner = this.stack.AddBanner();
-        this.user_banner.SetHeadlineText("User Settings", name);
-        this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
-        this.user_banner.AddFooterIcon("log_out", "Log Out",        this.log_user_out.bind(this));
-        this.user_banner.AddFooterIcon("refresh", "Update App",     this.reload.bind(this));
-        this.profile_button = this.user_banner.AddFooterIcon("image",   "Change Profile", this.test_footer_callback.bind(this));
+        this.setup_banner();
         this.setup_property_box();
         this.add_user_image_upload_button();
         if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
@@ -31715,6 +31717,36 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
         else {
             this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
         }
+        this.add_context_logo_img();
+    };
+    this.setup_banner = function () {
+        this.user_banner = this.stack.AddBanner();
+        this.user_banner.SetHeadlineText(Dash.User.GetDisplayName(), "User Settings");
+        this.user_banner.headline.label_top.css({
+            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
+        });
+        this.user_banner.headline.label_bottom.css({
+            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
+        });
+        this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
+        this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
+        this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
+        this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
+    };
+    this.add_context_logo_img = function () {
+        if (!this.context_logo_img_url) {
+            return;
+        }
+        var image = $("<div></div>");
+        image.css({
+            "height": Dash.Size.RowHeight * 2,
+            "margin-top": Dash.Size.Padding,
+            "background-image": "url(" + this.context_logo_img_url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center"
+        });
+        this.stack.AppendHTML(image);
     };
     this.reload = function () {
         location.reload();
@@ -31732,77 +31764,75 @@ function DashMobileLayoutUserProfile (binder, on_exit_callback, user_data=null) 
             this.color
         );
         this.profile_button.icon_circle.append(this.user_image_upload_button.html);
-        this.params = {};
-        this.params["f"] = "upload_image";
-        this.params["token"] = Dash.Local.Get("token");
-        this.params["user_data"] = JSON.stringify(this.user_data);
         this.user_image_upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Users",
-            this.params
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.user_data)
+            }
         );
         this.user_image_upload_button.html.css({
             "position": "absolute",
             "inset": 0,
             "width": "auto",
             "height": "auto",
-            "background": "rgba(0, 0, 0, 0)",
+            "background": "rgba(0, 0, 0, 0)"
         });
         this.user_image_upload_button.highlight.css({
             "position": "absolute",
             "inset": 0,
             "width": "auto",
-            "height": "auto",
+            "height": "auto"
         });
         this.user_image_upload_button.label.css({
-            "opacity": 0,
+            "opacity": 0
         });
     };
     this.on_user_img_uploaded = function (response) {
         if (response.timeStamp) {
             return;
         }
-        console.log("<< on_user_img_uploaded >>");
-        console.log(response);
+        console.log("User image uploaded:", response);
         if (response["img"]) {
             this.user_data["img"] = response["img"];
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
     };
-    this.test_footer_callback = function () {
-        // slug function
-    };
     this.setup_property_box = function () {
         this.property_box = new Dash.Gui.PropertyBox(
-            this,           // For binding
-            this.get_data,  // Function to return live data
-            this.set_data,  // Function to set saved data locally
-            "Users",        // Endpoint
-            this.user_data["email"], // Dash obj_id (unique for users)
+            this,
+            this.get_data,
+            this.set_data,
+            "Users",
+            this.user_data["email"]
         );
+        this.property_box.AddInput("first_name", "First Name", "", null, true);
+        this.property_box.AddInput("last_name", "Last Name", "", null, true);
+        this.property_box.AddInput("email", "E-mail Address", "", null, false);
+        this.property_box.AddInput("password", "Update Password", "", null, true);
         this.stack.AppendHTML(this.property_box.html);
-        this.property_box.AddInput("email",       "E-mail Address",  "", null, false);
-        this.property_box.AddInput("first_name",  "First Name",      "", null, true);
-        this.property_box.AddInput("last_name",   "Last Name",       "", null, true);
-        this.property_box.AddInput("password",    "Update Password", "", null, true);
+    };
+    this.log_user_out = function () {
+        Dash.Logout();
     };
     this.get_data = function () {
         return this.user_data;
     };
     this.set_data = function () {
-        console.log("set data");
+        console.log("(set data)");
     };
-    this.log_user_out = function () {
-        Dash.Logout();
+    this.on_profile_changed = function () {
+        // Dummy/placeholder function
     };
     this.setup_styles();
 }
 
-function DashCardStackBanner (stack) {
+function DashMobileCardStackBanner (stack) {
     this.stack = stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
     this.header_row = null;
-    this.headline = new DashCardStackBannerHeadline(this);
+    this.headline = new DashMobileCardStackBannerHeadline(this);
     this.background_skirt = $("<div></div>");
     this.content = $("<div></div>");
     this.last_sizing_mode = -1;
@@ -31921,7 +31951,7 @@ function DashCardStackBanner (stack) {
             // Header already exists
             return;
         }
-        this.header_row = new DashCardStackBannerTopButtonRow(this);
+        this.header_row = new DashMobileCardStackBannerTopButtonRow(this);
         this.content.prepend(this.header_row.html);
         this.adjust_margins();
     };
@@ -31931,7 +31961,7 @@ function DashCardStackBanner (stack) {
             // Footer already exists
             return;
         }
-        this.footer_row = new DashCardStackBannerFooterButtonRow(this);
+        this.footer_row = new DashMobileCardStackBannerFooterButtonRow(this);
         this.content.append(this.footer_row.html);
         this.adjust_margins();
     };
@@ -32009,16 +32039,21 @@ function DashCardStackBanner (stack) {
     this.setup_styles();
 }
 
-function DashCardStackUserBanner (stack) {
+function DashMobileCardStackUserBanner (stack) {
+    this.user_modal = null;
     this.color = stack.color;
-    DashCardStackBanner.call(this, this);
+    this.context_logo_img_url = "";
+    DashMobileCardStackBanner.call(this, this);
     this.setup_styles = function () {
         this.SetBackground(this.DefaultBackgroundGradient);
         this.SetLeftIcon("user", this.on_user_clicked);
     };
+    this.SetContextLogoImg = function (url) {
+        this.context_logo_img_url = url;
+    };
     this.on_user_clicked = function () {
-        var user_modal = new Dash.Gui.Layout.Mobile.UserProfile(this, this.on_show_main);
-        stack.AddLeftContent(user_modal.html);
+        this.user_modal = new Dash.Mobile.UserProfile(this, this.on_show_main, null, this.context_logo_img_url);
+        stack.AddLeftContent(this.user_modal.html);
     };
     this.on_show_main = function () {
         stack.ShowCenterContent();
@@ -32026,7 +32061,7 @@ function DashCardStackUserBanner (stack) {
     this.setup_styles();
 }
 
-function DashMobileLayoutCard (stack) {
+function DashMobileCard (stack) {
     this.stack = stack;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
@@ -32109,8 +32144,8 @@ function DashMobileLayoutCard (stack) {
         if (this.left_pull_area) {
             return;
         }
-        this.left_pull_area = new DashMobileLayoutCardPullIcon(this, this.left_pull_icon);
-        this.right_pull_area = new DashMobileLayoutCardPullIcon(this, this.right_pull_icon);
+        this.left_pull_area = new DashMobileCardPullIcon(this, this.left_pull_icon);
+        this.right_pull_area = new DashMobileCardPullIcon(this, this.right_pull_icon);
         this.html.append(this.left_pull_area.html);
         this.html.append(this.right_pull_area.html);
     };
@@ -32451,7 +32486,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     this.setup_styles();
 }
 
-function DashCardStackBannerHeadline (banner) {
+function DashMobileCardStackBannerHeadline (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
     this.color = this.stack.color;
@@ -32513,7 +32548,7 @@ function DashCardStackBannerHeadline (banner) {
     this.setup_styles();
 }
 
-function DashMobileLayoutCardStack (binder, color=null) {
+function DashMobileCardStack (binder, color=null) {
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.html = Dash.Gui.GetHTMLAbsContext();
@@ -32698,7 +32733,7 @@ function DashMobileLayoutCardStack (binder, color=null) {
             console.error("Error: Stack.AddBanner() >> A banner already exists!");
             return this.banner;
         }
-        this.banner = new DashCardStackBanner(this);
+        this.banner = new DashMobileCardStackBanner(this);
         this.AppendHTML(this.banner.html);
         return this.banner;
     };
@@ -32735,7 +32770,7 @@ function DashMobileLayoutCardStack (binder, color=null) {
         })(this);
     };
     this.AddUserBanner = function () {
-        var banner = new DashCardStackUserBanner(this);
+        var banner = new DashMobileCardStackUserBanner(this);
         this.AppendHTML(banner.html);
         return banner;
     };
@@ -32854,7 +32889,7 @@ function DashMobileLayoutCardStack (binder, color=null) {
         });
     };
     this.AddCard = function () {
-        var card = new DashMobileLayoutCard(this);
+        var card = new DashMobileCard(this);
         this.AppendHTML(card.html);
         return card;
     };
@@ -32935,7 +32970,7 @@ function DashMobileLayoutCardStack (binder, color=null) {
     this.setup_styles();
 }
 
-function DashCardStackBannerTopButtonRow (banner) {
+function DashMobileCardStackBannerTopButtonRow (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
     this.color = this.stack.color;
@@ -33051,7 +33086,7 @@ function DashCardStackBannerTopButtonRow (banner) {
     this.setup_styles();
 }
 
-function DashMobileLayoutCardPullIcon (card, icon_name) {
+function DashMobileCardPullIcon (card, icon_name) {
     this.card = card;
     this.stack = this.card.stack;
     this.color = this.stack.color;
@@ -33106,7 +33141,7 @@ function DashMobileLayoutCardPullIcon (card, icon_name) {
     this.setup_styles();
 }
 
-function DashCardStackBannerFooterButtonRow (banner) {
+function DashMobileCardStackBannerFooterButtonRow (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
     this.color = this.stack.color;
@@ -33204,7 +33239,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
         // };
     };
     this.AddIcon = function (icon_name="gear", label_text="--", callback=null) {
-        var button = new DashCardStackBannerFooterButtonRowButton(
+        var button = new DashMobileCardStackBannerFooterButtonRowButton(
             this,
             icon_name,
             label_text,
@@ -33225,7 +33260,7 @@ function DashCardStackBannerFooterButtonRow (banner) {
     this.setup_styles();
 }
 
-function DashCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
+function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear", label_text="--", callback=null) {
     this.footer = footer;
     this.banner = this.footer.banner;
     this.stack = this.banner.stack;
