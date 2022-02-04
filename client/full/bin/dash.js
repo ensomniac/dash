@@ -3,45 +3,66 @@ function Dash () {
     this.height = 0;
     this.html = $("<div></div>");
 
-    this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
+    this.Context  = DASH_CONTEXT;
+    this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    this.Local            = new DashLocal();
-    this.Math             = new DashMath();
-    this.Temp             = new DashTemp();
-    this.Validate         = new DashValidate();
-    this.DateTime         = new DashDateTime();
-    this.Color            = new DashColor();
-    this.Color.Set        = DashColorSet;
-    this.Color.ButtonSet  = DashColorButtonSet;
-    this.Color.StateSet   = DashColorStateSet;
-    this.Size             = new DashSize(this.IsMobile);
-    this.User             = new DashUser();
-    this.Gui              = new DashGui();
-    this.View             = new DashView();
-    this.History          = new DashHistory();
-    this.Animation        = new DashAnimation();
-    this.Requests         = new DashRequest();
-    this.Request          = this.Requests.Request.bind(this.Requests);
-    this.Logout           = this.User.Logout;
-    this.Utils            = new DashUtils();
-    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
-    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
-    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
-    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
-    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
-    this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
+    this.Animation = new DashAnimation();
+    this.Color     = new DashColor();
+    this.DateTime  = new DashDateTime();
+    this.Gui       = new DashGui();
+    this.History   = new DashHistory();
+    this.Layout    = new DashLayout();
+    this.Local     = new DashLocal();
+    this.Math      = new DashMath();
+    this.Requests  = new DashRequest();
+    this.Size      = new DashSize(this.IsMobile);
+    this.Temp      = new DashTemp();
+    this.User      = new DashUser();
+    this.Utils     = new DashUtils();
+    this.Validate  = new DashValidate();
+    this.View      = new DashView();
 
-    // Prevent older projects from not breaking due to these having been moved
-    this.RandomID         = this.Math.RandomID.bind(this.Math);
-    this.ReadableDateTime = this.DateTime.Readable.bind(this.DateTime);
-    this.IsServerIsoDate  = this.DateTime.IsIsoFormat.bind(this.DateTime);
-    this.FormatTime       = this.DateTime.FormatTime.bind(this.DateTime);
-    this.GetFormContainer = this.Gui.GetFormContainer.bind(this.Gui);
-    this.IsValidEmail     = this.Validate.Email.bind(this.Validate);
-    this.IsValidObject    = this.Validate.Object.bind(this.Validate);
-    this.ValidateResponse = this.Validate.Response.bind(this.Validate);
+    this.Mobile = {
+        CardStack:   DashMobileCardStack,
+        UserProfile: DashMobileUserProfile
+    };
+
+    this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
+    this.Logout           = this.User.Logout;
+    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
+    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
+    this.Request          = this.Requests.Request.bind(this.Requests);
+    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
+    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
+
+    // |-------------------------------------------------------------------------------------------------------------|
+    // | DEPRECATED: These exist to prevent older projects from breaking due to these having been moved/restructured |
+    // |-------------------------------------------------------------------------------------------------------------|
+    // | Left side is the deprecated, backwards-compatible pointer, right side is the proper/new pointer             |
+    // |-------------------------------------------------------------------------------------------------------------|
+    this.FormatTime         = this.DateTime.FormatTime.bind(this.DateTime);
+    this.IsServerIsoDate    = this.DateTime.IsIsoFormat.bind(this.DateTime);
+    this.ReadableDateTime   = this.DateTime.Readable.bind(this.DateTime);
+    this.GetFormContainer   = this.Gui.GetFormContainer.bind(this.Gui);
+    this.RandomID           = this.Math.RandomID.bind(this.Math);
+    this.IsValidEmail       = this.Validate.Email.bind(this.Validate);
+    this.IsValidObject      = this.Validate.Object.bind(this.Validate);
+    this.ValidateResponse   = this.Validate.Response.bind(this.Validate);
+    this.Gui.Layout         = this.Layout;
+    this.Gui.PaneSlider     = this.Layout.PaneSlider;
+    this.Gui.SearchableList = this.Layout.SearchableList;
+    this.Layout.ButtonBar   = this.Gui.ButtonBar;
+    // |-------------------------------------------------------------------------------------------------------------|
+
+    this.HardwareAccelerationCSS = {
+        "-webkit-transform": "translateZ(0)",
+        "-moz-transform":    "translateZ(0)",
+        "-ms-transform":     "translateZ(0)",
+        "-o-transform":      "translateZ(0)",
+        "transform":         "translateZ(0)"
+    };
 
     this.setup_styles = function () {
         $("body").css({

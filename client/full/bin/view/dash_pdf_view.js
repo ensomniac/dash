@@ -31,7 +31,6 @@ function DashPDFView (options) {
         this.params = {};
         this.params["f"] = "upload_pdf";
         this.params["content_key"] = this.content_key;
-        this.params["token"] = Dash.Local.Get("token");
 
         this.upload_button.SetFileUploader(
             "https://" + Dash.Context.domain + "/Api",

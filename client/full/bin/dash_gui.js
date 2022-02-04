@@ -1,29 +1,23 @@
 function DashGui() {
-    this.Button                      = DashGuiButton;
-    this.ChatBox                     = DashGuiChatBox;
-    this.ChatBox.Message             = DashGuiChatBoxMessage;
-    this.ChatBox.Input               = DashGuiChatBoxInput;
-    this.Checkbox                    = DashGuiCheckbox;
-    this.Combo                       = DashGuiCombo;
-    this.FileExplorer                = DashGuiFileExplorer;
-    this.FileExplorer.PreviewStrip   = DashGuiFileExplorerPreviewStrip;
-    this.FileExplorer.ContentPreview = DashGuiFileExplorerContentPreview;
-    this.FileExplorerDesktopLoader   = DashGuiFileExplorerDesktopLoader;
-    this.SearchableList              = DashGuiSearchableList;
-    this.Header                      = DashGuiHeader;
-    this.Icon                        = DashIcon;
-    this.IconButton                  = DashGuiIconButton;
-    this.Input                       = DashGuiInput;
-    this.InputRow                    = DashGuiInputRow;
-    this.Layout                      = new DashGuiLayout();
-    this.LoadDots                    = DashGuiLoadDots;
-    this.LoadingOverlay              = DashGuiLoadingOverlay;
-    this.Login                       = DashGuiLogin;
-    this.PaneSlider                  = this.Layout.PaneSlider; // This is redundant, but unsure if it's referenced in other projects
-    this.PropertyBox                 = DashGuiPropertyBox;
-    this.Slider                      = DashGuiSlider;
-    this.ToolRow                     = DashGuiToolRow;
-    this.LoadingLabel                = DashGuiLoadingLabel;
+    this.Button                    = DashGuiButton;
+    this.ButtonBar                 = DashGuiButtonBar;
+    this.ChatBox                   = DashGuiChatBox;
+    this.Checkbox                  = DashGuiCheckbox;
+    this.Combo                     = DashGuiCombo;
+    this.FileExplorer              = DashGuiFileExplorer;
+    this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
+    this.Header                    = DashGuiHeader;
+    this.Icon                      = DashGuiIcon;
+    this.IconButton                = DashGuiIconButton;
+    this.Input                     = DashGuiInput;
+    this.InputRow                  = DashGuiInputRow;
+    this.LoadDots                  = DashGuiLoadDots;
+    this.LoadingLabel              = DashGuiLoadingLabel;
+    this.LoadingOverlay            = DashGuiLoadingOverlay;
+    this.Login                     = DashGuiLogin;
+    this.PropertyBox               = DashGuiPropertyBox;
+    this.Slider                    = DashGuiSlider;
+    this.ToolRow                   = DashGuiToolRow;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {
@@ -525,7 +519,7 @@ function DashGui() {
             // Override element is intended to NOT show the tooltip under the below defined
             // circumstances. These will be unique depending on the element - expand as needed.
 
-            if (override_element instanceof DashGuiListRow) {
+            if (override_element instanceof DashLayoutListRow) {
                 if (override_element.IsExpanded()) {
                     return;
                 }
@@ -572,7 +566,7 @@ function DashGui() {
             // Override element is intended to NOT show the tooltip under the below defined
             // circumstances. These will be unique depending on the element - expand as needed.
 
-            if (override_element instanceof DashGuiListRow) {
+            if (override_element instanceof DashLayoutListRow) {
                 if (override_element.IsExpanded()) {
                     return;
                 }

@@ -1,9 +1,10 @@
 function DashColor () {
+    this.parsed_color_data = {};
+
     this.Dark = null;
     this.Light = null;
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
-    this.parsed_color_data = {};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
 
     this.setup_color_sets = function () {

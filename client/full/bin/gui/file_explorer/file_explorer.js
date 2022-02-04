@@ -402,7 +402,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             return;
         }
 
-        var preview = new Dash.Gui.FileExplorer.PreviewStrip(this, file_id);
+        var preview = new DashGuiFileExplorerPreviewStrip(this, file_id);
 
         row.Expand(preview.html);
     };

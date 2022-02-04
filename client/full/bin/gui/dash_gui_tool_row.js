@@ -11,7 +11,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.get_formatted_data_cb = null;
 
     this.setup_styles = function () {
-        this.toolbar = new Dash.Gui.Layout.Toolbar(this, this.color);
+        this.toolbar = new Dash.Layout.Toolbar(this, this.color);
 
         this.toolbar.stroke_sep.remove();
 
