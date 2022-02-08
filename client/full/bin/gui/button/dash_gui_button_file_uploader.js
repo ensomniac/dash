@@ -103,7 +103,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
             "height": Dash.Size.ButtonHeight,
             "width": dropzone_box_width,
             "text-align": "center",
-            "top": (dropzone_box_height*0.5)-(Dash.Size.ButtonHeight*0.5),
+            "top": (dropzone_box_height * 0.5)-(Dash.Size.ButtonHeight * 0.5),
         });
 
         this.upload_backing_bar.css(this.upload_bar_css);
@@ -127,7 +127,7 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
     };
 
     this.upload_progress = function (file, progress) {
-        var progress_t = parseInt(progress)*0.01;
+        var progress_t = parseInt(progress) * 0.01;
         this.button.SetLoadBar(progress_t);
         this.upload_backing_bar.css({"background": "rgba(255, 255, 255, 0.2)", "opacity": 1});
         this.upload_progress_bar.css({"width": this.width*progress_t, "opacity": 1});

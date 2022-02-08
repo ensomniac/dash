@@ -36,7 +36,7 @@ function DashAdminSettings () {
             var user_box = new Dash.Layout.UserProfile(user_data);
             this.users_box.append(user_box.html);
             // user_box.html.css({
-            //     "margin": Dash.Size.Padding*2,
+            //     "margin": Dash.Size.Padding * 2,
             // });
         }
     };

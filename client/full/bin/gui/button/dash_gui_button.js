@@ -170,14 +170,14 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
 
         this.right_label.css({
             "position": "absolute",
-            "right": Dash.Size.Padding*0.5,
-            "top": Dash.Size.Padding*0.5,
+            "right": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5,
             "width": size,
             "height": size,
             "line-height": size + "px",
             "background": Dash.Color.Dark,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            "font-size": (size*0.5) + "px",
+            "font-size": (size * 0.5) + "px",
             "text-align": "center",
             "opacity": 0,
         });

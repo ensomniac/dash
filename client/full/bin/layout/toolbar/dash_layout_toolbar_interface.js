@@ -191,10 +191,10 @@ function DashLayoutToolbarInterface () {
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding * 0.5,
-            "left": -Dash.Size.Padding*0.25,
+            "left": -Dash.Size.Padding * 0.25,
             "top": 0,
             "bottom": 0,
-            "width": Dash.Size.Padding*0.5,
+            "width": Dash.Size.Padding * 0.5,
             "background": this.color.AccentGood,
         });
 
@@ -383,8 +383,8 @@ function DashLayoutToolbarInterface () {
             self.html.append(combo.html);
 
             combo.html.css({
-                "margin-top": Dash.Size.Padding*0.5,
-                "margin-right": Dash.Size.Padding*0.5,
+                "margin-top": Dash.Size.Padding * 0.5,
+                "margin-right": Dash.Size.Padding * 0.5,
                 "height": Dash.Size.RowHeight,
             });
 

@@ -250,41 +250,41 @@ function DashLayoutPaneSlider (binder, is_vertical, default_size) {
 
     this.draw_vertical = function () {
         this.content_a.css({
-            "bottom": this.locked_width+(this.divider_size*0.5),
+            "bottom": this.locked_width+(this.divider_size * 0.5),
         });
 
         this.content_b.css({
-            "height": this.locked_width-(this.divider_size*0.5),
+            "height": this.locked_width-(this.divider_size * 0.5),
         });
 
         this.divider.css({
-            "bottom": this.locked_width-(this.divider_size*0.5),
+            "bottom": this.locked_width-(this.divider_size * 0.5),
             "top": "auto",
         });
 
         this.divider_hover.css({
-            "bottom": this.locked_width-(this.divider_hover_size*0.5),
+            "bottom": this.locked_width-(this.divider_hover_size * 0.5),
             "top": "auto",
         });
     };
 
     this.draw_horizontal = function () {
         this.content_a.css({
-            "right": this.locked_width+(this.divider_size*0.5),
+            "right": this.locked_width+(this.divider_size * 0.5),
         });
 
         this.content_b.css({
-            "width": this.locked_width-(this.divider_size*0.5),
+            "width": this.locked_width-(this.divider_size * 0.5),
             "left": "auto",
         });
 
         this.divider.css({
-            "right": this.locked_width-(this.divider_size*0.5),
+            "right": this.locked_width-(this.divider_size * 0.5),
             "left": "auto",
         });
 
         this.divider_hover.css({
-            "right": this.locked_width-(this.divider_hover_size*0.5),
+            "right": this.locked_width-(this.divider_hover_size * 0.5),
             "left": "auto",
         });
     };

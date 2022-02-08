@@ -6,7 +6,7 @@
 # SETUP_PYDASH
 
 __version__ = "1.4"
-__copyright__ = "Copyright (c) 2021 Ensomniac"
+__copyright__ = "Copyright (c) 2022 Ensomniac"
 
 AdminEmails = [
     "ryan@ensomniac.com",

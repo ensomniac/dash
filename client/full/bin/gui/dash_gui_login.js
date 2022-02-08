@@ -191,7 +191,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
     };
 
     this.setup_mobile_sizing = function () {
-        var login_box_width = window.outerWidth - (Dash.Size.Padding*2);
+        var login_box_width = window.outerWidth - (Dash.Size.Padding * 2);
 
         this.html.css({
             "inset": 0,
@@ -205,7 +205,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
             "margin-left": "auto",
             "margin-right": "auto",
             "margin-top": Dash.Size.Padding,
-            "padding-bottom": Dash.Size.Padding*2,
+            "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
             "border-radius": Dash.Size.BorderRadius,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
