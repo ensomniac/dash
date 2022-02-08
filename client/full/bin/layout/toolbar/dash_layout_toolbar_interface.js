@@ -107,7 +107,7 @@ function DashLayoutToolbarInterface () {
         return button;
     };
 
-    this.AddHTML = function (html) {
+    this.AddHTML = function (html, refactor_padding=true) {
         this.html.append(html);
 
         var obj_index = this.objects.length;
@@ -116,7 +116,9 @@ function DashLayoutToolbarInterface () {
             "index": obj_index
         });
 
-        this.refactor_item_padding();
+        if (refactor_padding) {
+            this.refactor_item_padding();
+        }
     };
 
     this.AddUploadButton = function (label_text, callback, bind, api, params) {

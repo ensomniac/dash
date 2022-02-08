@@ -21317,7 +21317,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return checkbox;
     };
     this.AddHTML = function (html) {
-        this.toolbar.AddHTML(html);
+        this.toolbar.AddHTML(html, false);
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -25700,7 +25700,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "height": this.size,
             "margin": 0,
             "padding": 0,
-            "cursor": "pointer",
+            "cursor": "pointer",  // TODO: why is this the default?
             "-webkit-user-select": "none"
         });
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
@@ -31319,14 +31319,16 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return button;
     };
-    this.AddHTML = function (html) {
+    this.AddHTML = function (html, refactor_padding=true) {
         this.html.append(html);
         var obj_index = this.objects.length;
         this.objects.push({
             "html_elem": html,
             "index": obj_index
         });
-        this.refactor_item_padding();
+        if (refactor_padding) {
+            this.refactor_item_padding();
+        }
     };
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
         var button = new Dash.Gui.Button(

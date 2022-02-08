@@ -272,7 +272,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     this.AddHTML = function (html) {
-        this.toolbar.AddHTML(html);
+        this.toolbar.AddHTML(html, false);
     };
 
     this.on_input_keystroke = function () {
