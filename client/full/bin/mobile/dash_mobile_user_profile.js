@@ -89,7 +89,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.profile_button.icon_circle.append(this.user_image_upload_button.html);
 
         this.user_image_upload_button.SetFileUploader(
-            "https://" + Dash.Context.domain + "/Users",
+            "Users",
             {
                 "f": "upload_image",
                 "user_data": JSON.stringify(this.user_data)

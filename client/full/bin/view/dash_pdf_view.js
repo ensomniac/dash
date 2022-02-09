@@ -33,7 +33,7 @@ function DashPDFView (options) {
         this.params["content_key"] = this.content_key;
 
         this.upload_button.SetFileUploader(
-            "https://" + Dash.Context.domain + "/Api",
+            "Api",
             this.params
         );
 
