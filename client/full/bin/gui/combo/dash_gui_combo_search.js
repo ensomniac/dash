@@ -89,7 +89,7 @@ function DashGuiComboSearch () {
         });
 
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : this.selected_option["label_text"]);
+        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : (this.selected_option["label_text"] || this.selected_option["display_name"]));
 
         this.search_input.SetOnChange(this.on_search_text_changed, this);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
@@ -141,7 +141,8 @@ function DashGuiComboSearch () {
         this.search_results = [];
 
         for (var i in this.option_list) {
-            var opt = this.option_list[i]["label_text"].toLocaleLowerCase();
+            var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
+            var opt = label.toLocaleLowerCase();
 
             if (search.length < 3) {
                 // For a short search, only match the beginning

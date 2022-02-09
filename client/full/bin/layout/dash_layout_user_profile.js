@@ -213,7 +213,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             for (var property_details of additional_props) {
                 this.property_box.AddInput(
                     property_details["key"],
-                    property_details["label_text"],
+                    property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
                     this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges

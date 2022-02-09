@@ -19157,7 +19157,7 @@ function DashAdminView (users_class_override=null) {
         this.layout.Append("Users", this.users_class_override ? this.users_class_override : DashAdminSettings);
         // this.layout.Append("Color", DashAdminColor);
         for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {
-            this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
+            this.layout.Append(tab_settings["label_text"] || tab_settings["display_name"], tab_settings["html_obj"]);
         }
     };
     this.AddTab = function () {
@@ -22624,7 +22624,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         var ids = [];
         for (var mention of this.callback_mentions) {
             for (var combo_option of this.at_combo_options) {
-                var name = combo_option["label_text"];
+                var name = combo_option["label_text"] || combo_option["display_name"];
                 if (name === mention) {
                     ids.push(combo_option["id"]);
                     break;
@@ -22684,7 +22684,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
         this.valid_mentions = [];
         for (var combo_option of this.at_combo_options) {
-            this.valid_mentions.push(combo_option["label_text"]);
+            this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
         }
     };
     this.on_checkbox_toggled = function () {
@@ -22893,7 +22893,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.add_at_button = function () {
         var labels = [];
         for (var i in this.at_combo_options) {
-            var label_text = this.at_combo_options[i]["label_text"];
+            var label_text = this.at_combo_options[i]["label_text"] || this.at_combo_options[i]["display_name"];
             if (labels.includes(label_text)) {
                 console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
                 return;
@@ -22925,7 +22925,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         if (old_text && old_text.length > 0 && !old_text.endsWith(" ")) {
             new_text += " ";
         }
-        new_text += "@" + selected_combo["label_text"] + " ";
+        new_text += "@" + (selected_combo["label_text"] || selected_combo["display_name"]) + " ";
         this.SetText(new_text);
         this.Focus();
     };
@@ -23817,7 +23817,7 @@ function DashGuiComboSearch () {
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : this.selected_option["label_text"]);
+        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : (this.selected_option["label_text"] || this.selected_option["display_name"]));
         this.search_input.SetOnChange(this.on_search_text_changed, this);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
@@ -23855,7 +23855,8 @@ function DashGuiComboSearch () {
         }
         this.search_results = [];
         for (var i in this.option_list) {
-            var opt = this.option_list[i]["label_text"].toLocaleLowerCase();
+            var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
+            var opt = label.toLocaleLowerCase();
             if (search.length < 3) {
                 // For a short search, only match the beginning
                 if (opt.startsWith(search)) {
@@ -24140,7 +24141,7 @@ function DashGuiComboInterface () {
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result
-        if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !combo_option["label_text"]) {
+        if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !(combo_option["label_text"] || combo_option["display_name"])) {
             console.log("Invalid combo option, cannot set default search submit combo:", combo_option);
             return;
         }
@@ -27457,10 +27458,11 @@ function DashGuiPropertyBoxInterface () {
                     self.on_row_updated(row_input, row_details);
                 };
             }
+            var label = row_details["label_text"] || row_details["display_name"];
             var row = new Dash.Gui.InputRow(
-                row_details["label_text"],
+                label,
                 row_details["value"],
-                row_details["default_value"] || row_details["label_text"],
+                row_details["default_value"] || label,
                 combo_options || "Save",
                 _callback,
                 self,
@@ -27952,7 +27954,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             for (var property_details of additional_props) {
                 this.property_box.AddInput(
                     property_details["key"],
-                    property_details["label_text"],
+                    property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
                     this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges
@@ -29922,7 +29924,7 @@ function DashLayoutListRowElements () {
     };
     this.get_combo = function (column_config_data) {
         var combo = new Dash.Gui.Combo (
-            column_config_data["options"]["label_text"] || "",
+            column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "",
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
             column_config_data["options"]["binder"] || null,
             column_config_data["options"]["combo_options"] || null,

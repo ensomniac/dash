@@ -277,10 +277,12 @@ function DashGuiPropertyBoxInterface () {
                 };
             }
 
+            var label = row_details["label_text"] || row_details["display_name"];
+
             var row = new Dash.Gui.InputRow(
-                row_details["label_text"],
+                label,
                 row_details["value"],
-                row_details["default_value"] || row_details["label_text"],
+                row_details["default_value"] || label,
                 combo_options || "Save",
                 _callback,
                 self,

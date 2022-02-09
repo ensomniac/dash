@@ -210,7 +210,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
         for (var mention of this.callback_mentions) {
             for (var combo_option of this.at_combo_options) {
-                var name = combo_option["label_text"];
+                var name = combo_option["label_text"] || combo_option["display_name"];
 
                 if (name === mention) {
                     ids.push(combo_option["id"]);
@@ -290,7 +290,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.valid_mentions = [];
 
         for (var combo_option of this.at_combo_options) {
-            this.valid_mentions.push(combo_option["label_text"]);
+            this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
         }
     };
 

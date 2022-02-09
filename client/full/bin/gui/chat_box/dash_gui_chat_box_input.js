@@ -83,7 +83,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         var labels = [];
 
         for (var i in this.at_combo_options) {
-            var label_text = this.at_combo_options[i]["label_text"];
+            var label_text = this.at_combo_options[i]["label_text"] || this.at_combo_options[i]["display_name"];
 
             if (labels.includes(label_text)) {
                 console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
@@ -127,7 +127,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             new_text += " ";
         }
 
-        new_text += "@" + selected_combo["label_text"] + " ";
+        new_text += "@" + (selected_combo["label_text"] || selected_combo["display_name"]) + " ";
 
         this.SetText(new_text);
         this.Focus();
