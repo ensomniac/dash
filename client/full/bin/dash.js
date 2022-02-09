@@ -11,7 +11,7 @@ function Dash () {
     this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
     this.Gui       = new DashGui();
-    this.History   = new DashHistory();
+    this.History   = new DashHistory(this.IsMobile);
     this.Layout    = new DashLayout();
     this.Local     = new DashLocal();
     this.Math      = new DashMath();

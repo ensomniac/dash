@@ -17481,7 +17481,7 @@ function Dash () {
     this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
     this.Gui       = new DashGui();
-    this.History   = new DashHistory();
+    this.History   = new DashHistory(this.IsMobile);
     this.Layout    = new DashLayout();
     this.Local     = new DashLocal();
     this.Math      = new DashMath();
@@ -18756,7 +18756,8 @@ function DashRequest () {
     };
 }
 
-function DashHistory () {
+function DashHistory (is_mobile) {
+    this.is_mobile = is_mobile;
     this.url_hashes = {};
     this.listening = false;
     this.last_old_url = null;
@@ -18768,7 +18769,7 @@ function DashHistory () {
     // (This is also useful when you have a tab layout within a tab layout, like a top tab in the content
     // area of a side tab, and you need to first load the side tab index before loading the top tab index)
     this.LoaderAdd = function (hash_text, loader_cb, binder=null, ...loader_params) {
-        if (!hash_text || !loader_cb) {
+        if (this.is_mobile || !hash_text || !loader_cb) {
             return;
         }
         this.set_hash_text(hash_text);
@@ -18780,7 +18781,7 @@ function DashHistory () {
     // Use for any GUI element managed by DashLayoutTabs
     // (This is uniquely required so that the proper tab button gets selected when navigating)
     this.TabAdd = function (hash_text, layout_tabs_instance, tab_index) {
-        if (!hash_text || !layout_tabs_instance) {
+        if (this.is_mobile || !hash_text || !layout_tabs_instance) {
             return;
         }
         tab_index = parseInt(tab_index);
@@ -18800,7 +18801,7 @@ function DashHistory () {
     // Use for any GUI element not managed by DashLayoutTabs and not explicitly loaded/instantiated
     // (It's likely that LoaderAdd will be the better choice over this one that majority of the time)
     this.ClassAdd = function (hash_text, view_parent_html, view_class, ...view_instantiation_params) {
-        if (!hash_text || !view_parent_html || !view_class) {
+        if (this.is_mobile || !hash_text || !view_parent_html || !view_class) {
             return;
         }
         this.set_hash_text(hash_text);
