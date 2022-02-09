@@ -1,6 +1,10 @@
 /**@member DashLayoutToolbar */
 
 function DashLayoutToolbarInterface () {
+    this.DisablePaddingRefactoring = function () {
+        this.allow_padding_refactoring = false;
+    };
+
     this.AddExpander = function () {
         var expander = $("<div></div>");
 
@@ -107,18 +111,17 @@ function DashLayoutToolbarInterface () {
         return button;
     };
 
-    this.AddHTML = function (html, refactor_padding=true) {
+    this.AddHTML = function (html) {
         this.html.append(html);
 
         var obj_index = this.objects.length;
+
         this.objects.push({
             "html_elem": html,
             "index": obj_index
         });
 
-        if (refactor_padding) {
-            this.refactor_item_padding();
-        }
+        this.refactor_item_padding();
     };
 
     this.AddUploadButton = function (label_text, callback, bind, api, params) {

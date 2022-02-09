@@ -21112,10 +21112,11 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.get_formatted_data_cb = null;
     this.setup_styles = function () {
         this.toolbar = new Dash.Layout.Toolbar(this, this.color);
+        this.toolbar.DisablePaddingRefactoring();
         this.toolbar.stroke_sep.remove();
         this.toolbar.html.css({
             "background": "none",
-            "padding-left": Dash.Size.Padding * 0.1,
+            "padding-left": 0,
             "padding-right": 0,
             "height": this.height,
             "margin-left": Dash.Size.Padding * 2,
@@ -21188,6 +21189,11 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                     "background": this.color.Button.Background.Base,
                     "height": this.height * 0.9,
                     "margin-top": Dash.Size.Padding * 0.1
+                });
+            }
+            if (this.elements.length < 1) {
+                this.html.css({
+                    "padding-left": Dash.Size.Padding * 0.1
                 });
             }
         }
@@ -21295,20 +21301,22 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
         }
         // TODO: The margins applied here need to be re-evaluated, but it may break the look of a few things
-        checkbox.label.html.css({
-            "margin-left": Dash.Size.Padding * 0.1
-        });
-        checkbox.label.label.css({
-            "margin-left": Dash.Size.Padding * 1.5,
-            "font-size": "80%",
-            "font-family": "sans_serif_bold"
-        });
-        if (label_border) {
-            checkbox.label.border.css({
-                "background": this.color.Button.Background.Base,
-                "height": this.height * 0.9,
-                "margin-top": Dash.Size.Padding * 0.1
+        if (checkbox.label) {
+            checkbox.label.html.css({
+                "margin-left": Dash.Size.Padding * 0.1
             });
+            checkbox.label.label.css({
+                "margin-left": Dash.Size.Padding * 1.5,
+                "font-size": "80%",
+                "font-family": "sans_serif_bold"
+            });
+            if (label_border) {
+                checkbox.label.border.css({
+                    "background": this.color.Button.Background.Base,
+                    "height": this.height * 0.9,
+                    "margin-top": Dash.Size.Padding * 0.1
+                });
+            }
         }
         if (checkbox_redraw_styling) {
             checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);
@@ -21317,7 +21325,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return checkbox;
     };
     this.AddHTML = function (html) {
-        this.toolbar.AddHTML(html, false);
+        this.toolbar.AddHTML(html);
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -31157,14 +31165,15 @@ class DashLayoutTabsSide extends DashLayoutTabs {
 }
 
 function DashLayoutToolbar (binder, color) {
-    this.binder        = binder;
-    this.color         = color || this.binder.color || Dash.Color.Dark;
-    this.objects       = [];
-    this.html          = Dash.Gui.GetHTMLContext();
-    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
+    this.binder = binder;
+    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.objects = [];
     this.stroke_height = 1;
-    this.height        = Dash.Size.ButtonHeight + this.stroke_height;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.allow_padding_refactoring = true;
     this.refactor_itom_padding_requested = false;
+    this.stroke_sep = Dash.Gui.GetHTMLAbsContext();
+    this.height = Dash.Size.ButtonHeight + this.stroke_height;
     DashLayoutToolbarInterface.call(this);
     this.setup_styles = function () {
         this.html.css({
@@ -31205,7 +31214,7 @@ function DashLayoutToolbar (binder, color) {
         // refactor padding, but do it on the next frame since
         // the most likely time to do this happens after packing
         // a bunch of elements in the initialization of the Toolbar
-        if (this.refactor_itom_padding_requested) {
+        if (!this.allow_padding_refactoring || this.refactor_itom_padding_requested) {
             return;
         }
         this.refactor_itom_padding_requested = true;
@@ -31238,6 +31247,9 @@ function DashLayoutToolbar (binder, color) {
 
 /**@member DashLayoutToolbar */
 function DashLayoutToolbarInterface () {
+    this.DisablePaddingRefactoring = function () {
+        this.allow_padding_refactoring = false;
+    };
     this.AddExpander = function () {
         var expander = $("<div></div>");
         expander.css({
@@ -31319,16 +31331,14 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return button;
     };
-    this.AddHTML = function (html, refactor_padding=true) {
+    this.AddHTML = function (html) {
         this.html.append(html);
         var obj_index = this.objects.length;
         this.objects.push({
             "html_elem": html,
             "index": obj_index
         });
-        if (refactor_padding) {
-            this.refactor_item_padding();
-        }
+        this.refactor_item_padding();
     };
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
         var button = new Dash.Gui.Button(

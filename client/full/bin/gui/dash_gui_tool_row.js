@@ -13,11 +13,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.setup_styles = function () {
         this.toolbar = new Dash.Layout.Toolbar(this, this.color);
 
+        this.toolbar.DisablePaddingRefactoring();
+
         this.toolbar.stroke_sep.remove();
 
         this.toolbar.html.css({
             "background": "none",
-            "padding-left": Dash.Size.Padding * 0.1,
+            "padding-left": 0,
             "padding-right": 0,
             "height": this.height,
             "margin-left": Dash.Size.Padding * 2,
@@ -107,6 +109,12 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                     "background": this.color.Button.Background.Base,
                     "height": this.height * 0.9,
                     "margin-top": Dash.Size.Padding * 0.1
+                });
+            }
+
+            if (this.elements.length < 1) {
+                this.html.css({
+                    "padding-left": Dash.Size.Padding * 0.1
                 });
             }
         }
@@ -243,23 +251,24 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         }
 
         // TODO: The margins applied here need to be re-evaluated, but it may break the look of a few things
-
-        checkbox.label.html.css({
-            "margin-left": Dash.Size.Padding * 0.1
-        });
-
-        checkbox.label.label.css({
-            "margin-left": Dash.Size.Padding * 1.5,
-            "font-size": "80%",
-            "font-family": "sans_serif_bold"
-        });
-
-        if (label_border) {
-            checkbox.label.border.css({
-                "background": this.color.Button.Background.Base,
-                "height": this.height * 0.9,
-                "margin-top": Dash.Size.Padding * 0.1
+        if (checkbox.label) {
+            checkbox.label.html.css({
+                "margin-left": Dash.Size.Padding * 0.1
             });
+
+            checkbox.label.label.css({
+                "margin-left": Dash.Size.Padding * 1.5,
+                "font-size": "80%",
+                "font-family": "sans_serif_bold"
+            });
+
+            if (label_border) {
+                checkbox.label.border.css({
+                    "background": this.color.Button.Background.Base,
+                    "height": this.height * 0.9,
+                    "margin-top": Dash.Size.Padding * 0.1
+                });
+            }
         }
 
         if (checkbox_redraw_styling) {
@@ -272,7 +281,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     this.AddHTML = function (html) {
-        this.toolbar.AddHTML(html, false);
+        this.toolbar.AddHTML(html);
     };
 
     this.on_input_keystroke = function () {
