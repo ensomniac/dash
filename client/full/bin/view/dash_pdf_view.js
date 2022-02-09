@@ -33,7 +33,7 @@ function DashPDFView (options) {
         this.params["content_key"] = this.content_key;
 
         this.upload_button.SetFileUploader(
-            "https://" + Dash.Context.domain + "/Api",
+            "Api",
             this.params
         );
 
@@ -156,9 +156,9 @@ function DashPDFView (options) {
             var image = $("<img src='" + page_data["url"] + "' alt=''>");
 
             image.css({
-                "width": this.content_width-(Dash.Size.Padding*2),
+                "width": this.content_width-(Dash.Size.Padding * 2),
                 "margin-bottom": Dash.Size.Padding,
-                "border-radius": Dash.Size.Padding*0.5,
+                "border-radius": Dash.Size.Padding * 0.5,
                 "box-shadow": "0px 0px 10px 0px rgba(0, 0, 0, 0.2)",
                 "opacity": 0.01,
                 "cursor": "pointer",

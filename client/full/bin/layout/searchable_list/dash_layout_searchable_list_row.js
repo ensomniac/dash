@@ -69,7 +69,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         this.display_name_label.css({
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
-            "padding-left": Dash.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
             "color": this.color.Text,
             // "color": "red",
         });

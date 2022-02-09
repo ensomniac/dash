@@ -1,17 +1,18 @@
 function DashLayoutToolbar (binder, color) {
-    this.binder        = binder;
-    this.color         = color || this.binder.color || Dash.Color.Dark;
-    this.objects       = [];
-    this.html          = Dash.Gui.GetHTMLContext();
-    this.stroke_sep    = Dash.Gui.GetHTMLAbsContext();
+    this.binder = binder;
+    this.color = color || this.binder.color || Dash.Color.Dark;
+
+    this.objects = [];
     this.stroke_height = 1;
-    this.height        = Dash.Size.ButtonHeight + this.stroke_height;
+    this.html = Dash.Gui.GetHTMLContext();
+    this.allow_padding_refactoring = true;
     this.refactor_itom_padding_requested = false;
+    this.stroke_sep = Dash.Gui.GetHTMLAbsContext();
+    this.height = Dash.Size.ButtonHeight + this.stroke_height;
 
     DashLayoutToolbarInterface.call(this);
 
     this.setup_styles = function () {
-
         this.html.css({
             "background": Dash.Color.Lighten(this.color.Background, 7),
             "height": this.height, // +1 for the bottom stroke
@@ -62,7 +63,7 @@ function DashLayoutToolbar (binder, color) {
         // the most likely time to do this happens after packing
         // a bunch of elements in the initialization of the Toolbar
 
-        if (this.refactor_itom_padding_requested) {
+        if (!this.allow_padding_refactoring || this.refactor_itom_padding_requested) {
             return;
         }
 

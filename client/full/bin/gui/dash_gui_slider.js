@@ -63,8 +63,8 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "font-size": "90%",
-            "padding-left": Dash.Size.Padding*0.5,
-            "padding-right": Dash.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
         });
 
         this.value_label.css({
@@ -75,8 +75,8 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
-            "padding-left": Dash.Size.Padding*0.5,
-            "padding-right": Dash.Size.Padding*0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
             "font-size": "90%",
         });
 
@@ -125,7 +125,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         this.track_width = true;
         this.height = Dash.Size.RowHeight;
-        this.label_width = Dash.Size.ColumnWidth*0.75;
+        this.label_width = Dash.Size.ColumnWidth * 0.75;
         this.width = (Dash.Size.ColumnWidth*2);
 
         this.slider_width = this.width;
@@ -143,11 +143,11 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.thumb_outer_size = this.thumb_size - (this.border_size*2);
         this.thumb_inner_size = this.thumb_outer_size - (this.border_size*2);
         this.bar_width = this.slider_width;
-        this.bar_height = this.slider_height*0.5;
-        this.bar_fill_height = (this.bar_height*0.4) - (this.outline_size*2);
-        this.bar_fill_width = (this.bar_width - (this.thumb_size*0.5)) - (this.outline_size*2);
-        this.mark_height = this.slider_height*0.9;
-        this.mark_width = this.mark_height*0.08;
+        this.bar_height = this.slider_height * 0.5;
+        this.bar_fill_height = (this.bar_height * 0.4) - (this.outline_size*2);
+        this.bar_fill_width = (this.bar_width - (this.thumb_size * 0.5)) - (this.outline_size*2);
+        this.mark_height = this.slider_height * 0.9;
+        this.mark_width = this.mark_height * 0.08;
 
         this.initial_value_px = Dash.Math.Lerp(0, this.slider_width, this.initial_value);
         this.set_thumb(this.initial_value_px, this.animate_initial_value);
@@ -195,7 +195,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         this.value_label.css({
             // "background": "pink",
-            "width": (this.label_width*0.5)-Dash.Size.Padding,
+            "width": (this.label_width * 0.5)-Dash.Size.Padding,
             "height": this.height,
             "line-height": this.height + "px",
             "color": this.color.Text,
@@ -216,7 +216,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.bar.css({
             "height": this.bar_height,
             "width": this.bar_width,
-            "top": (this.slider_height*0.5)-(this.bar_height*0.5),
+            "top": (this.slider_height * 0.5)-(this.bar_height * 0.5),
             "border-radius": this.bar_height,
         });
 
@@ -225,8 +225,8 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "width": this.bar_fill_width,
             "height": this.bar_fill_height,
             "position": "absolute",
-            "top": (this.bar_height*0.5) - (this.bar_fill_height*0.5) - this.outline_size,
-            "left": (this.bar_width*0.5) - (this.bar_fill_width*0.5) - this.outline_size,
+            "top": (this.bar_height * 0.5) - (this.bar_fill_height * 0.5) - this.outline_size,
+            "left": (this.bar_width * 0.5) - (this.bar_fill_width * 0.5) - this.outline_size,
             "border-radius": this.bar_fill_height,
             "border": this.outline_size + "px solid rgba(0, 0, 0, 0.5)",
         });
@@ -251,8 +251,8 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "background": "rgba(255,255,255,1)",
             "width": this.bar_height,
             "height": this.bar_height,
-            "top": (this.thumb_outer_size - this.bar_height)*0.5,
-            "left": (this.thumb_outer_size - this.bar_height)*0.5,
+            "top": (this.thumb_outer_size - this.bar_height) * 0.5,
+            "left": (this.thumb_outer_size - this.bar_height) * 0.5,
             "border-radius": this.bar_height,
         });
 
@@ -260,7 +260,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "height": this.mark_height,
             "width": this.mark_width,
             "background": "rgba(255,255,255,0.8)",
-            "top": (this.container_height*0.5)-(this.mark_height*0.5),
+            "top": (this.container_height * 0.5)-(this.mark_height * 0.5),
         });
 
     };
@@ -347,7 +347,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
     this.on_mouse_move = function (event) {
         if (!this.is_active) {return;}
-        var now_pos = this.get_touch_w_offset(event) + (this.height*0.5);
+        var now_pos = this.get_touch_w_offset(event) + (this.height * 0.5);
         this.slider_pos = this.set_thumb(this.slider_pos_touch_start + (now_pos-this.touch_start));
         this.update_value_label();
         this.callback(this.GetValue());
@@ -357,7 +357,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         // Safely set the position of the slider. Returns a clamped value if provided value extends slider bounds
         animate = false;
 
-        xPosPx = xPosPx-(this.slider_height*0.5);
+        xPosPx = xPosPx-(this.slider_height * 0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
         }
@@ -368,11 +368,11 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         if (animate) {
             this.thumb.stop().animate({"left": xPosPx}, 500);
-            this.bar_fill.stop().animate({"width": xPosPx + (this.thumb_size*0.5)}, 500);
+            this.bar_fill.stop().animate({"width": xPosPx + (this.thumb_size * 0.5)}, 500);
         }
         else {
             this.thumb.css({"left": xPosPx});
-            this.bar_fill.css({"width": xPosPx + (this.thumb_size*0.5)});
+            this.bar_fill.css({"width": xPosPx + (this.thumb_size * 0.5)});
         }
 
         if (this.setup_complete) {
@@ -395,7 +395,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     };
 
     this.set_mark = function (xPosPx, animate) {
-        xPosPx = xPosPx-(this.slider_height*0.5);
+        xPosPx = xPosPx-(this.slider_height * 0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
         }
@@ -406,10 +406,10 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         animate = false;
         if (animate) {
-            this.mark.stop().animate({"left": xPosPx + (this.thumb_size*0.5)}, 500);
+            this.mark.stop().animate({"left": xPosPx + (this.thumb_size * 0.5)}, 500);
         }
         else {
-            this.mark.css({"left": xPosPx + (this.thumb_size*0.5)});
+            this.mark.css({"left": xPosPx + (this.thumb_size * 0.5)});
 
         }
     };

@@ -4,13 +4,16 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.user_data = user_data || Dash.User.Data;
     this.context_logo_img_url = context_logo_img_url;
 
-    this.color = this.binder.color || Dash.Color.Dark;
-    this.stack = new Dash.Mobile.CardStack(this);
-    this.html = this.stack.html;
+    this.html = null;
+    this.stack = null;
     this.profile_button = null;
     this.user_image_upload_button = null;
+    this.color = this.binder.color || Dash.Color.Dark;
 
     this.setup_styles = function () {
+        this.stack = new Dash.Mobile.CardStack(this);
+        this.html = this.stack.html;
+
         this.setup_banner();
         this.setup_property_box();
         this.add_user_image_upload_button();
@@ -86,7 +89,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.profile_button.icon_circle.append(this.user_image_upload_button.html);
 
         this.user_image_upload_button.SetFileUploader(
-            "https://" + Dash.Context.domain + "/Users",
+            "Users",
             {
                 "f": "upload_image",
                 "user_data": JSON.stringify(this.user_data)
@@ -120,11 +123,13 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
 
         console.log("User image uploaded:", response);
 
-        if (response["img"]) {
-            this.user_data["img"] = response["img"];
-
-            this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
+        if (!response["img"]) {
+            return;
         }
+
+        this.user_data["img"] = response["img"];
+
+        this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
     };
 
     this.setup_property_box = function () {

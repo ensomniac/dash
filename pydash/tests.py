@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# 2021 Ensomniac, Ryan Martin ryan@ensomniac.com
+# 2022 Ensomniac, Ryan Martin ryan@ensomniac.com
 
 # import os
 # import sys

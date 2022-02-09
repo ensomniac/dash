@@ -23,7 +23,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "height": this.size,
             "margin": 0,
             "padding": 0,
-            "cursor": "pointer",
+            "cursor": "pointer",  // TODO: why is this the default?
             "-webkit-user-select": "none"
         });
 

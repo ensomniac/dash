@@ -70,7 +70,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "left": -Dash.Size.Padding,
             "top": 0,
             "bottom": 0,
-            "width": Dash.Size.Padding*0.5,
+            "width": Dash.Size.Padding * 0.5,
             "background": this.color.AccentBad,
             "opacity": 0
         });

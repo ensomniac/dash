@@ -182,7 +182,7 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
 
-        var indent_px = Dash.Size.Padding*2;
+        var indent_px = Dash.Size.Padding * 2;
         var indent_row = false;
 
         if (this.num_headers > 0) {
@@ -233,7 +233,7 @@ function DashGuiPropertyBoxInterface () {
 
             combo.html.css({
                 "position": "absolute",
-                "left": Dash.Size.Padding*0.5,
+                "left": Dash.Size.Padding * 0.5,
                 "top": 0,
                 "height": Dash.Size.RowHeight,
             });
@@ -291,7 +291,7 @@ function DashGuiPropertyBoxInterface () {
 
             self.update_inputs[row_details["key"]] = row;
 
-            var indent_px = Dash.Size.Padding*2;
+            var indent_px = Dash.Size.Padding * 2;
             var indent_row = false;
 
             if (self.num_headers > 0) {

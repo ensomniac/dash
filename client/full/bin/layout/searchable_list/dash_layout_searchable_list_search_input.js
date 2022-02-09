@@ -4,7 +4,7 @@ function DashLayoutSearchableListSearchInput (slist) {
     this.color      = this.slist.color;
     this.row_height = this.slist.row_height;
 
-    this.icon_size    = this.row_height-(Dash.Size.Padding*1.5);
+    this.icon_size    = this.row_height-(Dash.Size.Padding * 1.5);
     this.input        = new Dash.Gui.Input("Search...", this.color);
     this.icon_search  = new Dash.Gui.Icon(this.color, "search", this.icon_size);
     this.icon_clear   = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
@@ -30,21 +30,21 @@ function DashLayoutSearchableListSearchInput (slist) {
             "background": Dash.Color.Lighten(this.color.Background, 10),
             "box-shadow": "none",
             "margin-right": 0,
-            "padding-right": this.row_height + Dash.Size.Padding*0.5,
+            "padding-right": this.row_height + Dash.Size.Padding * 0.5,
         });
 
         this.icon_search.html.css({
             "position": "absolute",
-            "right": Dash.Size.Padding*0.66,
-            "top": Dash.Size.Padding*0.66,
+            "right": Dash.Size.Padding * 0.66,
+            "top": Dash.Size.Padding * 0.66,
             "pointer-events": "none",
             "user-select":    "none",
         });
 
         this.icon_clear.html.css({
             "position": "absolute",
-            "right": Dash.Size.Padding*0.66,
-            "top": Dash.Size.Padding*0.66,
+            "right": Dash.Size.Padding * 0.66,
+            "top": Dash.Size.Padding * 0.66,
             "user-select":    "none",
             "cursor": "pointer",
             "opacity": 0,

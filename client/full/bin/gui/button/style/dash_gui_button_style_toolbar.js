@@ -20,9 +20,9 @@ function DashGuiButtonStyleToolbar () {
             "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
-            "margin-top": Dash.Size.Padding*0.5,
+            "margin-top": Dash.Size.Padding * 0.5,
             "height": Dash.Size.RowHeight,
-            "margin-right": Dash.Size.Padding*0.5,
+            "margin-right": Dash.Size.Padding * 0.5,
             // "width": Dash.Size.ColumnWidth,
         });
 

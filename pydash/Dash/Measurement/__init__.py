@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# 2021 Ryan Martin, ryan@ensomniac.com
+# 2022 Ryan Martin, ryan@ensomniac.com
 #      Andrew Stet, stetandrew@gmail.com
 
 from .Metric import Metric

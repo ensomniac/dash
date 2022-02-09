@@ -13,12 +13,6 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
     this.color = this.stack.color || Dash.Color.Light;
 
     this.setup_styles = function () {
-        this.html.append(this.vertical_offset_slider);
-
-        this.vertical_offset_slider.append(this.left_spacer);
-        this.vertical_offset_slider.append(this.center_content);
-        this.vertical_offset_slider.append(this.right_spacer);
-
         this.html.css({
             "background": "none",
             "height": this.row_height,
@@ -50,6 +44,12 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
             "background": "none",
             "height": this.row_height,
         });
+
+        this.vertical_offset_slider.append(this.left_spacer);
+        this.vertical_offset_slider.append(this.center_content);
+        this.vertical_offset_slider.append(this.right_spacer);
+
+        this.html.append(this.vertical_offset_slider);
 
         this.setup_connections();
     };
@@ -91,8 +91,9 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
         return button;
     };
 
+    // TODO: not needed?
     this.setup_connections = function () {
-        // (function (self) {  // TODO: not needed?
+        // (function (self) {
         //     self.left_button_content.click(function () {
         //         self.on_left_button_clicked();
         //     });
