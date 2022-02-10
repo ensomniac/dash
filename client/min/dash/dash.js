@@ -23232,6 +23232,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.previous_selected_option = null;
+    this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
@@ -23843,17 +23844,17 @@ function DashGuiComboSearch () {
         (function (self) {
             requestAnimationFrame(function () {
                 self.search_input.input.select();
-                self.manage_search_list(true);
+                self.manage_search_list(this.show_rows_on_empty_search);
             });
         })(this);
     };
     this.on_search_text_changed = function () {
+        this.search_results = [];
         var search = this.search_input.Text().toLocaleLowerCase();
         if (search.length === 0) {
-            this.manage_search_list(true);
+            this.manage_search_list(this.show_rows_on_empty_search);
             return;
         }
-        this.search_results = [];
         for (var i in this.option_list) {
             var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
             var opt = label.toLocaleLowerCase();
@@ -24112,6 +24113,13 @@ function DashGuiComboRow (combo, option) {
 
 /**@member DashGuiCombo*/
 function DashGuiComboInterface () {
+    this.DisableShowRowsOnEmptySearch = function () {
+        // This is for ludicrously long lists, but really
+        // should display a certain max of rows, or recent
+        // rows, etc - but this is needed for a quick thing,
+        // no time right now to fully work out a better version.
+        this.show_rows_on_empty_search = false;
+    };
     this.SetHoverHint = function (hint) {
         this.label_container.attr("title", hint);
     };

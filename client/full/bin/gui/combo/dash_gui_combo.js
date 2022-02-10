@@ -24,6 +24,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.previous_selected_option = null;
+    this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");

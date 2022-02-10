@@ -124,21 +124,21 @@ function DashGuiComboSearch () {
             requestAnimationFrame(function () {
                 self.search_input.input.select();
 
-                self.manage_search_list(true);
+                self.manage_search_list(this.show_rows_on_empty_search);
             });
         })(this);
     };
 
     this.on_search_text_changed = function () {
+        this.search_results = [];
+
         var search = this.search_input.Text().toLocaleLowerCase();
 
         if (search.length === 0) {
-            this.manage_search_list(true);
+            this.manage_search_list(this.show_rows_on_empty_search);
 
             return;
         }
-
-        this.search_results = [];
 
         for (var i in this.option_list) {
             var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
