@@ -68,9 +68,6 @@ function DashUser () {
     };
 
     this.SetUserAuthentication = function (email, server_response) {
-        console.log("SetUserAuthentication");
-        console.log(email);
-        console.log(server_response);
 
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
@@ -104,8 +101,6 @@ function DashUser () {
     };
 
     this.build_init_team_combo = function () {
-
-        console.log("**", this.Init);
 
         this.Init["team_combo"] = [];
 
