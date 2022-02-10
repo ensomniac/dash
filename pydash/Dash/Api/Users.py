@@ -47,7 +47,7 @@ class ApiUsers:
 
         response = self.SetResponse(DashUsers(self.Params, self.DashContext).Login())
 
-        return self.merge_addl_into_init(response)
+        return self.SetResponse(self.merge_addl_into_init(response))
 
     def OnInit(self, callback):
         # When passed a callback, this function will be called whenever portal
@@ -62,6 +62,7 @@ class ApiUsers:
         return self.SetResponse(self.merge_addl_into_init(response))
 
     def merge_addl_into_init(self, response):
+
         if "init" not in response:
             return response
 
