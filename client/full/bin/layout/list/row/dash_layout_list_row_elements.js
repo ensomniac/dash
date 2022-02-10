@@ -110,7 +110,7 @@ function DashLayoutListRowElements () {
 
     this.get_combo = function (column_config_data) {
         var combo = new Dash.Gui.Combo (
-            column_config_data["options"]["label_text"] || "",
+            column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "",
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
             column_config_data["options"]["binder"] || null,
             column_config_data["options"]["combo_options"] || null,

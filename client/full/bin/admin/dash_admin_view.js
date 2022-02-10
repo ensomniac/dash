@@ -9,7 +9,7 @@ function DashAdminView (users_class_override=null) {
         // this.layout.Append("Color", DashAdminColor);
 
         for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {
-            this.layout.Append(tab_settings["label_text"], tab_settings["html_obj"]);
+            this.layout.Append(tab_settings["label_text"] || tab_settings["display_name"], tab_settings["html_obj"]);
         }
     };
 
