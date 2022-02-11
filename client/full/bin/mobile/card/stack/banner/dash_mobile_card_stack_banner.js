@@ -14,11 +14,6 @@ function DashMobileCardStackBanner (stack) {
     this.FooterHeight = Dash.Size.ButtonHeight * 2;
     this.FooterButtonWidth = Dash.Size.ButtonHeight + Dash.Size.Padding;
 
-    // TODO: Update this in some way that's not hard-coded?
-    this.DefaultColorA = "#ffae4c";
-    this.DefaultColorB = "#ff684c";
-    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient(this.DefaultColorA, this.DefaultColorB);
-
     this.setup_styles = function () {
         this.headline = new DashMobileCardStackBannerHeadline(this);
 

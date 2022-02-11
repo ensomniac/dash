@@ -10,7 +10,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     this.label = Dash.Gui.GetHTMLAbsContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.height = Dash.Size.ButtonHeight - Dash.Size.Padding;
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, "#ff684d");
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, this.stack.AccentOrange);
 
     this.setup_styles = function () {    
         this.icon.icon_html.css({
@@ -23,7 +23,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": "#ff6a4b",
+            "background": this.stack.AccentOrange,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.5,

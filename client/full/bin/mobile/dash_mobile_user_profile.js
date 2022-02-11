@@ -23,7 +23,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         }
 
         else {
-            this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+            this.user_banner.SetBackground(this.stack.BackgroundGradient);
         }
 
         this.add_context_logo_img();

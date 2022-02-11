@@ -25,6 +25,11 @@ function DashMobileCardStack (binder, color=null) {
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
 
+    // Should we update these in some way that's not hard-coded?
+    this.AccentYellow = "#ffae4c";
+    this.AccentOrange = "#ff684c";
+    this.BackgroundGradient = Dash.Color.GetVerticalGradient(this.AccentYellow, this.AccentOrange);
+
     this.setup_styles = function () {
         this.slider = $("<div></div>");
 

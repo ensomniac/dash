@@ -17493,6 +17493,8 @@ function Dash () {
     this.Validate  = new DashValidate();
     this.View      = new DashView();
     this.Mobile = {
+        Combo:       DashMobileCombo,
+        TextBox:     DashMobileTextBox,
         CardStack:   DashMobileCardStack,
         UserProfile: DashMobileUserProfile
     };
@@ -31578,6 +31580,114 @@ function DashLayoutToolbarInterface () {
     };
 }
 
+function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null) {
+    this.color = color || Dash.Color.Light;
+    this.options = options;
+    this.binder = binder;
+    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
+    this.html = $("<select></select>");
+    this.setup_styles = function () {
+        this.html.css({
+            "color": this.color.Text
+        });
+        this.add_options();
+        this.setup_connections();
+    };
+    this.GetID = function () {
+        return this.html.val();
+    };
+    this.GetLabel = function () {
+        return this.options[this.GetID()];
+    };
+    this.GetOptions = function () {
+        return this.options;
+    };
+    this.SetOptions = function (options={}) {
+        this.html.empty();
+        this.options = options;
+        this.add_options();
+    };
+    this.AddOption = function (id, label) {
+        this.options[id] = label;
+        this.html.append($(
+            "<option></option>",
+            {
+                "value": id,
+                "text": label
+            }
+        ));
+    };
+    this.add_options = function () {
+        for (var id in this.options) {
+            this.AddOption(id, this.options[id]);
+        }
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("change", function () {
+                if (self.on_change_cb) {
+                    self.on_change_cb(self.GetID());
+                }
+            });
+        })(this);
+    };
+    this.setup_styles();
+}
+
+function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
+    this.color = color || Dash.Color.Light;
+    this.placeholder_text = placeholder_text;
+    this.binder = binder;
+    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
+    this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
+    this.html = $("<textarea class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder_text + "'>");
+    this.setup_styles = function () {
+        this.html.css({
+            "color": this.color.Text,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "width": "100%",
+            "min-width": "100%",
+            "max-width": "100%",
+            "height": Dash.Size.RowHeight * 4,
+            "min-height": Dash.Size.RowHeight * 1.6,  // Just before a scrollbar appears when it's empty
+            "border-radius": Dash.Size.BorderRadius * 0.5,
+            "border": "1px solid " + this.color.Stroke
+        });
+        this.setup_connections();
+    };
+    this.Text = function () {
+        return this.html.val();
+    };
+    this.SetText = function (text) {
+        return this.html.val(text);
+    };
+    this.setup_connections = function () {
+        // Important note:
+        // When testing on a desktop's mobile view, you can't select the text with the
+        // mouse in the traditional way, since it's simulating a mobile device. To select
+        // the text, click and hold, to simulate a long press like you would on mobile.
+        (function (self) {
+            self.html.on("change", function () {
+                if (self.on_change_cb) {
+                    self.on_change_cb(self.Text());
+                }
+            });
+            self.html.on("paste", function () {
+                if (self.on_change_cb) {
+                    self.on_change_cb(self.Text());
+                }
+            });
+            self.html.on("keydown",function (e) {
+                if (e.key === "Enter" && self.on_submit_cb) {
+                    self.on_submit_cb(self.Text());
+                }
+            });
+        })(this);
+    };
+    this.setup_styles();
+}
+
 function DashMobileCard (stack) {
     this.stack = stack;
     this.slider = null;
@@ -31613,6 +31723,19 @@ function DashMobileCard (stack) {
         });
         this.html.append(this.content);
     };
+    this.AddHTML = function (html) {
+        this.content.append(html);
+    };
+    this.AddLabel = function (text) {
+        var label = $("<div>" + text + "</div>");
+        label.css({
+            "color": this.stack.AccentOrange,
+            "font-family": "sans_serif_bold",
+            "font-size": "120%"
+        });
+        this.AddHTML(label);
+        return label;
+    };
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
@@ -31622,6 +31745,9 @@ function DashMobileCard (stack) {
             this.setup_pull_mechanic();
         }
         this.left_pull_icon = icon;
+    };
+    this.SetText = function (text) {
+        this.content.text(text);
     };
     // Animate the hiding of this card
     this.Clear = function () {
@@ -31879,9 +32005,6 @@ function DashMobileCard (stack) {
             });
         })(this);
     };
-    this.SetText = function (text) {
-        this.content.text(text);
-    };
     this.setup_styles();
 }
 
@@ -31905,7 +32028,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
         else {
-            this.user_banner.SetBackground(this.user_banner.DefaultBackgroundGradient);
+            this.user_banner.SetBackground(this.stack.BackgroundGradient);
         }
         this.add_context_logo_img();
     };
@@ -32057,7 +32180,7 @@ function DashMobileCardPullIcon (card, icon_name) {
         var px_max = this.Size + (Dash.Size.Padding * 0.5);
         if (px_pulled > px_max) {
             norm_t = 1.0;
-            color = "#ff6a4c";
+            color = this.stack.AccentOrange;
             this.IsTriggered = true;
         }
         else {
@@ -32096,6 +32219,10 @@ function DashMobileCardStack (binder, color=null) {
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
+    // Should we update these in some way that's not hard-coded?
+    this.AccentYellow = "#ffae4c";
+    this.AccentOrange = "#ff684c";
+    this.BackgroundGradient = Dash.Color.GetVerticalGradient(this.AccentYellow, this.AccentOrange);
     this.setup_styles = function () {
         this.slider = $("<div></div>");
         this.slider.css({
@@ -32469,7 +32596,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     this.label = Dash.Gui.GetHTMLAbsContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.height = Dash.Size.ButtonHeight - Dash.Size.Padding;
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, "#ff684d");
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, this.stack.AccentOrange);
     this.setup_styles = function () {    
         this.icon.icon_html.css({
             "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)"
@@ -32479,7 +32606,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": "#ff6a4b",
+            "background": this.stack.AccentOrange,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.5,
@@ -32585,10 +32712,6 @@ function DashMobileCardStackBanner (stack) {
     this.HeaderHeight = Dash.Size.ButtonHeight;
     this.FooterHeight = Dash.Size.ButtonHeight * 2;
     this.FooterButtonWidth = Dash.Size.ButtonHeight + Dash.Size.Padding;
-    // TODO: Update this in some way that's not hard-coded?
-    this.DefaultColorA = "#ffae4c";
-    this.DefaultColorB = "#ff684c";
-    this.DefaultBackgroundGradient = Dash.Color.GetVerticalGradient(this.DefaultColorA, this.DefaultColorB);
     this.setup_styles = function () {
         this.headline = new DashMobileCardStackBannerHeadline(this);
         this.html.css({
@@ -32780,7 +32903,7 @@ function DashMobileCardStackUserBanner (stack) {
     this.context_logo_img_url = "";
     DashMobileCardStackBanner.call(this, this);
     this.setup_styles = function () {
-        this.SetBackground(this.DefaultBackgroundGradient);
+        this.SetBackground(this._stack.BackgroundGradient);
         this.SetLeftIcon("user", this.on_user_clicked);
     };
     this.SetContextLogoImg = function (url) {
@@ -33071,8 +33194,15 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
+    this.icon = new Dash.Gui.Icon(
+        this.color,
+        icon_name,
+        this.width,
+        0.5,
+        this.stack.AccentOrange ? this.stack.AccentOrange : this.stack._stack.AccentOrange  // Hacky
+    );
+    console.debug("TEST", this.stack, this.stack.AccentOrange);
     this.setup_styles = function () {
         this.label.text(this.label_text);
         this.icon.icon_html.css({

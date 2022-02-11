@@ -38,6 +38,24 @@ function DashMobileCard (stack) {
         this.html.append(this.content);
     };
 
+    this.AddHTML = function (html) {
+        this.content.append(html);
+    };
+
+    this.AddLabel = function (text) {
+        var label = $("<div>" + text + "</div>");
+
+        label.css({
+            "color": this.stack.AccentOrange,
+            "font-family": "sans_serif_bold",
+            "font-size": "120%"
+        });
+
+        this.AddHTML(label);
+
+        return label;
+    };
+
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
@@ -50,6 +68,10 @@ function DashMobileCard (stack) {
         }
 
         this.left_pull_icon = icon;
+    };
+
+    this.SetText = function (text) {
+        this.content.text(text);
     };
 
     // Animate the hiding of this card
@@ -375,10 +397,6 @@ function DashMobileCard (stack) {
                 }
             });
         })(this);
-    };
-
-    this.SetText = function (text) {
-        this.content.text(text);
     };
 
     this.setup_styles();

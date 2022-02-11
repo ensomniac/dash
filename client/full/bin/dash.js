@@ -24,6 +24,8 @@ function Dash () {
     this.View      = new DashView();
 
     this.Mobile = {
+        Combo:       DashMobileCombo,
+        TextBox:     DashMobileTextBox,
         CardStack:   DashMobileCardStack,
         UserProfile: DashMobileUserProfile
     };

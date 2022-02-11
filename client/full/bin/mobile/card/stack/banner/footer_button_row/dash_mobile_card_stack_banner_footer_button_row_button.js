@@ -14,8 +14,17 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.width, 0.5, this.banner.DefaultColorB);
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
+
+    this.icon = new Dash.Gui.Icon(
+        this.color,
+        icon_name,
+        this.width,
+        0.5,
+        this.stack.AccentOrange ? this.stack.AccentOrange : this.stack._stack.AccentOrange  // Hacky
+    );
+
+    console.debug("TEST", this.stack, this.stack.AccentOrange);
 
     this.setup_styles = function () {
         this.label.text(this.label_text);
