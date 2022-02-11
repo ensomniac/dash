@@ -124,7 +124,7 @@ function DashGuiComboSearch () {
             requestAnimationFrame(function () {
                 self.search_input.input.select();
 
-                self.manage_search_list(this.show_rows_on_empty_search);
+                self.manage_search_list(self.show_rows_on_empty_search);
             });
         })(this);
     };
