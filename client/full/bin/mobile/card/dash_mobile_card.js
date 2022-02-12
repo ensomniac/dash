@@ -46,7 +46,7 @@ function DashMobileCard (stack) {
         var label = $("<div>" + text + "</div>");
 
         label.css({
-            "color": this.stack.AccentOrange,
+            "color": Dash.Color.Mobile.AccentPrimary,
             "font-family": "sans_serif_bold",
             "font-size": "120%"
         });

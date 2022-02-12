@@ -21,10 +21,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         icon_name,
         this.width,
         0.5,
-        this.stack.AccentOrange ? this.stack.AccentOrange : this.stack._stack.AccentOrange  // Hacky
+        Dash.Color.Mobile.AccentPrimary
     );
-
-    console.debug("TEST", this.stack, this.stack.AccentOrange);
 
     this.setup_styles = function () {
         this.label.text(this.label_text);

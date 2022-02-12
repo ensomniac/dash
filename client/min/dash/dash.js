@@ -17493,10 +17493,11 @@ function Dash () {
     this.Validate  = new DashValidate();
     this.View      = new DashView();
     this.Mobile = {
-        Combo:       DashMobileCombo,
-        TextBox:     DashMobileTextBox,
-        CardStack:   DashMobileCardStack,
-        UserProfile: DashMobileUserProfile
+        Combo:           DashMobileCombo,
+        TextBox:         DashMobileTextBox,
+        CardStack:       DashMobileCardStack,
+        UserProfile:     DashMobileUserProfile,
+        SearchableCombo: DashMobileSearchableCombo
     };
     this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
     this.Logout           = this.User.Logout;
@@ -19459,7 +19460,16 @@ function DashColor () {
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
+    
+    // This is a temporary way to centralize the orange palette
+    // that was originally defined and used throughout the mobile code
+    this.Mobile = {
+        AccentPrimary: "#ff684c",
+        AccentSecondary: "#ffae4c"
+    };
     this.setup_color_sets = function () {
+        this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
+        
         var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";
@@ -31591,13 +31601,25 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.html = $("<select></select>");
     this.setup_styles = function () {
         this.html.css({
-            "color": this.color.Text
+            "color": this.color.Text,
+            "height": Dash.Size.RowHeight,
+            "box-sizing": "border-box",
+            "width": "100%",
+            "min-width": "100%",
+            "max-width": "100%",
+            "border-radius": Dash.Size.BorderRadius * 0.5,
+            "border": "1px solid " + this.color.Stroke,
+            "padding-left": Dash.Size.Padding * 0.25
         });
         this.add_options();
         this.setup_connections();
     };
-    this.GetID = function () {
-        return this.html.val();
+    this.GetID = function (allow_none=true) {
+        var id = this.html.val();
+        if (id === "none" && !allow_none) {
+            return null;
+        }
+        return id;
     };
     this.GetLabel = function () {
         return this.options[this.GetID()];
@@ -31610,19 +31632,26 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.options = options;
         this.add_options();
     };
-    this.AddOption = function (id, label) {
+    this.AddOption = function (id, label, _check=true) {
+        if (_check && this.options[id]) {
+            return;
+        }
         this.options[id] = label;
-        this.html.append($(
+        var row = $(
             "<option></option>",
             {
                 "value": id,
                 "text": label
             }
-        ));
+        );
+        row.css({
+            "height": Dash.Size.RowHeight
+        });
+        this.html.append(row);
     };
     this.add_options = function () {
         for (var id in this.options) {
-            this.AddOption(id, this.options[id]);
+            this.AddOption(id, this.options[id], false);
         }
     };
     this.setup_connections = function () {
@@ -31637,17 +31666,22 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.setup_styles();
 }
 
-function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
+function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
-    this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
-    this.html = $("<textarea class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder_text + "'>");
+    this.html = $(
+        "<textarea></textarea>",
+        {
+            "class": this.color.PlaceholderClass,
+            "placeholder": this.placeholder_text
+        }
+    );
     this.setup_styles = function () {
         this.html.css({
             "color": this.color.Text,
-            "padding": Dash.Size.Padding,
+            "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "width": "100%",
             "min-width": "100%",
@@ -31659,8 +31693,13 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
         this.setup_connections();
     };
-    this.Text = function () {
-        return this.html.val();
+    // Deliberately setting null as the default so that an empty string can be supplied
+    this.GetText = function (line_break_replacement=null) {
+        var val = this.html.val();
+        if (typeof line_break_replacement === "string") {
+            return val.replaceAll("\n", line_break_replacement);
+        }
+        return val;
     };
     this.SetText = function (text) {
         return this.html.val(text);
@@ -31679,11 +31718,6 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             self.html.on("paste", function () {
                 if (self.on_change_cb) {
                     self.on_change_cb(self.Text());
-                }
-            });
-            self.html.on("keydown",function (e) {
-                if (e.key === "Enter" && self.on_submit_cb) {
-                    self.on_submit_cb(self.Text());
                 }
             });
         })(this);
@@ -31732,7 +31766,7 @@ function DashMobileCard (stack) {
     this.AddLabel = function (text) {
         var label = $("<div>" + text + "</div>");
         label.css({
-            "color": this.stack.AccentOrange,
+            "color": Dash.Color.Mobile.AccentPrimary,
             "font-family": "sans_serif_bold",
             "font-size": "120%"
         });
@@ -32031,7 +32065,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
         else {
-            this.user_banner.SetBackground(this.stack.BackgroundGradient);
+            this.user_banner.SetBackground(Dash.Color.Mobile.BackgroundGradient);
         }
         this.add_context_logo_img();
     };
@@ -32144,6 +32178,113 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.setup_styles();
 }
 
+function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_change_cb=null) {
+    this.color = color || Dash.Color.Light;
+    this.options = options;
+    this.placeholder_text = placeholder_text;
+    this.binder = binder;
+    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
+    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
+    this.html = $("<div></div>");
+    this.datalist = $("<datalist></datalist", {"id": this.id});
+    this.input = $(
+        "<input/>",
+        {
+            "list": this.id,
+            "class": this.color.PlaceholderClass,
+            "placeholder": this.placeholder_text
+        }
+    );
+    this.setup_styles = function () {
+        var shared_css = {
+            "box-sizing": "border-box",
+            "width": "100%",
+            "min-width": "100%",
+            "max-width": "100%",
+            "border-radius": Dash.Size.BorderRadius * 0.5
+        };
+        this.html.css({
+            "color": this.color.Text,
+            "height": Dash.Size.RowHeight,
+            "border": "1px solid " + this.color.Stroke,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            ...shared_css
+        });
+        this.input.css({
+            "height": Dash.Size.RowHeight - 2,  // Account for border
+            ...shared_css
+        });
+        this.add_options();
+        this.html.append(this.datalist);
+        this.html.append(this.input);
+        this.setup_connections();
+    };
+    this.GetID = function (allow_none=true) {
+        var label = this.GetLabel();
+        for (var id in this.options) {
+            if (this.options[id] === label) {
+                if (id === "none" && !allow_none) {
+                    return null;
+                }
+                return id;
+            }
+        }
+        return null;
+    };
+    this.GetLabel = function () {
+        return this.input.val();
+    };
+    this.GetOptions = function () {
+        return this.options;
+    };
+    this.SetOptions = function (options={}) {
+        // this.html.empty();
+        this.datalist.empty();
+        this.options = options;
+        this.add_options();
+    };
+    this.AddOption = function (id, label, _check=true) {
+        if (_check && this.options[id]) {
+            return;
+        }
+        this.options[id] = label;
+        // Unlike the select element, the datalist does not allow option elements
+        // to contain both a value and a label, so for us to get the ID after a
+        // selection is made, we loop through the options and match the current value (label)
+        var row = $("<option></option>",{"value": label});
+        row.css({
+            "height": Dash.Size.RowHeight
+        });
+        // this.html.append(row);
+        this.datalist.append(row);
+    };
+    this.add_options = function () {
+        for (var id in this.options) {
+            this.AddOption(id, this.options[id], false);
+        }
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.input.on("change", function () {
+                // Since this is linked to the datalist, the change event only triggers
+                // when a selection is made, whether that's by clicking an option or
+                // typing an option and selecting it using the arrow keys and enter key
+                var id = self.GetID();
+                if (self.on_change_cb && id) {
+                    self.on_change_cb(id);
+                }
+            });
+            self.input.on("blur", function () {
+                if (!self.GetID()) {
+                    self.input.text("");
+                }
+            });
+        })(this);
+    };
+    this.setup_styles();
+}
+
 function DashMobileCardPullIcon (card, icon_name) {
     this.card = card;
     this.icon_name = icon_name;
@@ -32183,7 +32324,7 @@ function DashMobileCardPullIcon (card, icon_name) {
         var px_max = this.Size + (Dash.Size.Padding * 0.5);
         if (px_pulled > px_max) {
             norm_t = 1.0;
-            color = this.stack.AccentOrange;
+            color = Dash.Color.Mobile.AccentPrimary;
             this.IsTriggered = true;
         }
         else {
@@ -32222,10 +32363,6 @@ function DashMobileCardStack (binder, color=null) {
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
-    // Should we update these in some way that's not hard-coded?
-    this.AccentYellow = "#ffae4c";
-    this.AccentOrange = "#ff684c";
-    this.BackgroundGradient = Dash.Color.GetVerticalGradient(this.AccentYellow, this.AccentOrange);
     this.setup_styles = function () {
         this.slider = $("<div></div>");
         this.slider.css({
@@ -32599,7 +32736,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     this.label = Dash.Gui.GetHTMLAbsContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.height = Dash.Size.ButtonHeight - Dash.Size.Padding;
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, this.stack.AccentOrange);
+    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, Dash.Color.Mobile.AccentPrimary);
     this.setup_styles = function () {    
         this.icon.icon_html.css({
             "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)"
@@ -32609,7 +32746,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": this.stack.AccentOrange,
+            "background": Dash.Color.Mobile.AccentPrimary,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.5,
@@ -32906,7 +33043,7 @@ function DashMobileCardStackUserBanner (stack) {
     this.context_logo_img_url = "";
     DashMobileCardStackBanner.call(this, this);
     this.setup_styles = function () {
-        this.SetBackground(this._stack.BackgroundGradient);
+        this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
         this.SetLeftIcon("user", this.on_user_clicked);
     };
     this.SetContextLogoImg = function (url) {
@@ -33203,9 +33340,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         icon_name,
         this.width,
         0.5,
-        this.stack.AccentOrange ? this.stack.AccentOrange : this.stack._stack.AccentOrange  // Hacky
+        Dash.Color.Mobile.AccentPrimary
     );
-    console.debug("TEST", this.stack, this.stack.AccentOrange);
     this.setup_styles = function () {
         this.label.text(this.label_text);
         this.icon.icon_html.css({

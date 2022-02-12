@@ -6,8 +6,17 @@ function DashColor () {
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
+    
+    // This is a temporary way to centralize the orange palette
+    // that was originally defined and used throughout the mobile code
+    this.Mobile = {
+        AccentPrimary: "#ff684c",
+        AccentSecondary: "#ffae4c"
+    };
 
     this.setup_color_sets = function () {
+        this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
+        
         var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";

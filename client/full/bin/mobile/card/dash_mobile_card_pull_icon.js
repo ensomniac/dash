@@ -47,7 +47,7 @@ function DashMobileCardPullIcon (card, icon_name) {
         if (px_pulled > px_max) {
             norm_t = 1.0;
 
-            color = this.stack.AccentOrange;
+            color = Dash.Color.Mobile.AccentPrimary;
 
             this.IsTriggered = true;
         }

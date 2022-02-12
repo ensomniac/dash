@@ -8,7 +8,7 @@ function DashMobileCardStackUserBanner (stack) {
     DashMobileCardStackBanner.call(this, this);
 
     this.setup_styles = function () {
-        this.SetBackground(this._stack.BackgroundGradient);
+        this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
 
         this.SetLeftIcon("user", this.on_user_clicked);
     };

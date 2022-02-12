@@ -1,16 +1,21 @@
-function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
+function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
-    this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
 
-    this.html = $("<textarea class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder_text + "'>");
+    this.html = $(
+        "<textarea></textarea>",
+        {
+            "class": this.color.PlaceholderClass,
+            "placeholder": this.placeholder_text
+        }
+    );
 
     this.setup_styles = function () {
         this.html.css({
             "color": this.color.Text,
-            "padding": Dash.Size.Padding,
+            "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "width": "100%",
             "min-width": "100%",
@@ -24,8 +29,15 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.setup_connections();
     };
 
-    this.Text = function () {
-        return this.html.val();
+    // Deliberately setting null as the default so that an empty string can be supplied
+    this.GetText = function (line_break_replacement=null) {
+        var val = this.html.val();
+
+        if (typeof line_break_replacement === "string") {
+            return val.replaceAll("\n", line_break_replacement);
+        }
+
+        return val;
     };
 
     this.SetText = function (text) {
@@ -48,12 +60,6 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             self.html.on("paste", function () {
                 if (self.on_change_cb) {
                     self.on_change_cb(self.Text());
-                }
-            });
-
-            self.html.on("keydown",function (e) {
-                if (e.key === "Enter" && self.on_submit_cb) {
-                    self.on_submit_cb(self.Text());
                 }
             });
         })(this);

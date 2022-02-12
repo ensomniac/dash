@@ -8,15 +8,29 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
 
     this.setup_styles = function () {
         this.html.css({
-            "color": this.color.Text
+            "color": this.color.Text,
+            "height": Dash.Size.RowHeight,
+            "box-sizing": "border-box",
+            "width": "100%",
+            "min-width": "100%",
+            "max-width": "100%",
+            "border-radius": Dash.Size.BorderRadius * 0.5,
+            "border": "1px solid " + this.color.Stroke,
+            "padding-left": Dash.Size.Padding * 0.25
         });
 
         this.add_options();
         this.setup_connections();
     };
 
-    this.GetID = function () {
-        return this.html.val();
+    this.GetID = function (allow_none=true) {
+        var id = this.html.val();
+
+        if (id === "none" && !allow_none) {
+            return null;
+        }
+
+        return id;
     };
 
     this.GetLabel = function () {
@@ -35,21 +49,31 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.add_options();
     };
 
-    this.AddOption = function (id, label) {
+    this.AddOption = function (id, label, _check=true) {
+        if (_check && this.options[id]) {
+            return;
+        }
+
         this.options[id] = label;
 
-        this.html.append($(
+        var row = $(
             "<option></option>",
             {
                 "value": id,
                 "text": label
             }
-        ));
+        );
+
+        row.css({
+            "height": Dash.Size.RowHeight
+        });
+
+        this.html.append(row);
     };
 
     this.add_options = function () {
         for (var id in this.options) {
-            this.AddOption(id, this.options[id]);
+            this.AddOption(id, this.options[id], false);
         }
     };
 
