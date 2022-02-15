@@ -8,9 +8,6 @@ function DashMobileCardStackBannerHeadline (banner) {
     this.label_bottom = Dash.Gui.GetHTMLContext();
 
     this.setup_styles = function () {
-        this.label_top.text("Top");
-        this.label_bottom.text("Bottom");
-
         this.html.css({
             "background": "none",
             "padding-top": Dash.Size.Padding * 2,

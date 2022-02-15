@@ -10,8 +10,8 @@ function DashColor () {
     // This is a temporary way to centralize the orange palette
     // that was originally defined and used throughout the mobile code
     this.Mobile = {
-        AccentPrimary: "#ff684c",
-        AccentSecondary: "#ffae4c"
+        AccentPrimary: "#ff684c",   // Orange
+        AccentSecondary: "#ffae4c"  // Yellow
     };
 
     this.setup_color_sets = function () {

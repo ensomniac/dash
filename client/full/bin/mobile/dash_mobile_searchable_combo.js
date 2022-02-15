@@ -1,9 +1,10 @@
-function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_change_cb=null) {
+function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
     this.color = color || Dash.Color.Light;
     this.options = options;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
+    this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
 
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
@@ -69,12 +70,15 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         return this.input.val();
     };
 
+    this.SetLabel = function (text) {
+        this.input.val(text);
+    };
+
     this.GetOptions = function () {
         return this.options;
     };
 
     this.SetOptions = function (options={}) {
-        // this.html.empty();
         this.datalist.empty();
 
         this.options = options;
@@ -102,6 +106,16 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.datalist.append(row);
     };
 
+    this.EnableResetInvalidOnBlur = function () {
+        (function (self) {
+            self.input.on("blur", function () {
+                if (!self.GetID()) {
+                    self.input.val("");
+                }
+            });
+        })(this);
+    };
+
     this.add_options = function () {
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false);
@@ -116,14 +130,14 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 // typing an option and selecting it using the arrow keys and enter key
                 var id = self.GetID();
 
-                if (self.on_change_cb && id) {
-                    self.on_change_cb(id);
+                if (self.on_submit_cb && id) {
+                    self.on_submit_cb(id);
                 }
             });
 
-            self.input.on("blur", function () {
-                if (!self.GetID()) {
-                    self.input.text("");
+            self.input.on("input", function () {
+                if (self.on_change_cb) {
+                    self.on_change_cb(self.GetLabel());
                 }
             });
         })(this);

@@ -4,15 +4,23 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     this.label_text = label_text;
     this.callback = callback;
 
+    this.icon = null;
     this.click_active = false;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
     this.label = Dash.Gui.GetHTMLAbsContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
     this.height = Dash.Size.ButtonHeight - Dash.Size.Padding;
-    this.icon = new Dash.Gui.Icon(this.color, icon_name, this.height - (Dash.Size.Padding * 0.5), 0.75, Dash.Color.Mobile.AccentPrimary);
 
-    this.setup_styles = function () {    
+    this.setup_styles = function () {
+        this.icon = new Dash.Gui.Icon(
+            this.color,
+            icon_name,
+            this.height - (Dash.Size.Padding * 0.5),
+            0.75,
+            Dash.Color.Mobile.AccentPrimary
+        );
+
         this.icon.icon_html.css({
             "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)"
         });
