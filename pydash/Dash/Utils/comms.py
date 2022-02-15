@@ -61,7 +61,18 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     
     # Attempt to decode Google's "unprintable" error
     except HttpError as http_error:
-        raise Exception(str(http_error))
+        try:
+            raise Exception(
+                f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
+                f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'
+            )
+        except:
+            try:
+                raise Exception(
+                    f'<HttpError {http_error.resp.status} when requesting {http_error.uri}. Details: "{http_error.error_details}">'
+                )
+            except:
+                raise Exception(str(http_error))
         
     except Exception as e:
         raise Exception(e)
