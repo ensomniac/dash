@@ -48,7 +48,8 @@ function DashMobileCard (stack) {
         label.css({
             "color": Dash.Color.Mobile.AccentPrimary,
             "font-family": "sans_serif_bold",
-            "font-size": "120%"
+            "font-size": "120%",
+            "margin-bottom": Dash.Size.Padding
         });
 
         this.AddHTML(label);

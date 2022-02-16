@@ -15,7 +15,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             "min-width": "100%",
             "max-width": "100%",
             "border-radius": Dash.Size.BorderRadius * 0.5,
-            "border": "1px solid " + this.color.Stroke,
+            "border": "1px solid " + this.color.StrokeLight,
             "padding-left": Dash.Size.Padding * 0.25
         });
 
@@ -69,6 +69,16 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         });
 
         this.html.append(row);
+    };
+
+    this.SetSelection = function (option_id) {
+        if (!this.options[option_id]) {
+            console.warn("Option ID (" + option_id + ") not in options:", this.options);
+
+            return;
+        }
+
+        this.html.val(option_id);
     };
 
     this.add_options = function () {

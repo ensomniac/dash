@@ -20058,6 +20058,17 @@ class DashColorSet {
         }
         return this._stroke;
     };
+    get StrokeLight () {
+        if (this._stroke == null) {
+            this._stroke = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.4
+            ]);
+        }
+        return this._stroke;
+    };
     // Use to draw very fine lines to suggest depth / shadow
     get Pinstripe () {
         if (this._pinstripe == null) {
@@ -31608,7 +31619,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             "min-width": "100%",
             "max-width": "100%",
             "border-radius": Dash.Size.BorderRadius * 0.5,
-            "border": "1px solid " + this.color.Stroke,
+            "border": "1px solid " + this.color.StrokeLight,
             "padding-left": Dash.Size.Padding * 0.25
         });
         this.add_options();
@@ -31649,6 +31660,13 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         });
         this.html.append(row);
     };
+    this.SetSelection = function (option_id) {
+        if (!this.options[option_id]) {
+            console.warn("Option ID (" + option_id + ") not in options:", this.options);
+            return;
+        }
+        this.html.val(option_id);
+    };
     this.add_options = function () {
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false);
@@ -31666,12 +31684,23 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.setup_styles();
 }
 
-function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null) {
+function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
     this.color = color || Dash.Color.Light;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
-    this.html = $(
+    this.delay_change_cb = delay_change_cb;
+    this.border_size = 1;
+    this.last_change_ts = null;
+    this.change_timeout = null;
+    this.flash_highlight = null;
+    this.change_delay_ms = 1500;  // Same as DashGuiInput's autosave delay
+    this.html = $("<div></div>");
+    this.last_change_value = null;
+    this.line_break_replacement = null;
+    this.last_arrow_navigation_ts = null;
+    this.border_radius = Dash.Size.BorderRadius * 0.5;
+    this.textarea = $(
         "<textarea></textarea>",
         {
             "class": this.color.PlaceholderClass,
@@ -31679,7 +31708,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         }
     );
     this.setup_styles = function () {
-        this.html.css({
+        this.textarea.css({
             "color": this.color.Text,
             "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
@@ -31688,38 +31717,118 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
             "min-height": Dash.Size.RowHeight * 1.6,  // Just before a scrollbar appears when it's empty
-            "border-radius": Dash.Size.BorderRadius * 0.5,
-            "border": "1px solid " + this.color.Stroke
+            "border-radius": this.border_radius,
+            "border": this.border_size.toString() + "px solid " + this.color.Stroke
         });
+        this.html.append(this.textarea);
         this.setup_connections();
     };
     // Deliberately setting null as the default so that an empty string can be supplied
     this.GetText = function (line_break_replacement=null) {
-        var val = this.html.val();
+        if (line_break_replacement === null && this.line_break_replacement !== null) {
+            line_break_replacement = this.line_break_replacement;
+        }
+        var val = this.textarea.val();
         if (typeof line_break_replacement === "string") {
             return val.replaceAll("\n", line_break_replacement);
         }
         return val;
     };
     this.SetText = function (text) {
-        return this.html.val(text);
+        return this.textarea.val(text);
+    };
+    this.SetLineBreakReplacement = function (value="") {
+        this.line_break_replacement = value;
     };
     this.setup_connections = function () {
         // Important note:
         // When testing on a desktop's mobile view, you can't select the text with the
         // mouse in the traditional way, since it's simulating a mobile device. To select
-        // the text, click and hold, to simulate a long press like you would on mobile.
+        // the text, click and hold to simulate a long press like you would on mobile.
         (function (self) {
-            self.html.on("change", function () {
-                if (self.on_change_cb) {
-                    self.on_change_cb(self.Text());
+            self.textarea.on("change", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("input", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("paste", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("keydown",function (e) {
+                if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                    self.last_arrow_navigation_ts = new Date();
                 }
             });
-            self.html.on("paste", function () {
-                if (self.on_change_cb) {
-                    self.on_change_cb(self.Text());
+        })(this);
+    };
+    this.fire_change_cb = function () {
+        if (!this.on_change_cb) {
+            return;
+        }
+        var value = this.GetText();
+        if (this.last_change_value === value) {
+            return;
+        }
+        this.last_change_value = value;
+        this.last_change_ts = new Date();
+        if (this.change_timeout) {
+            clearTimeout(this.change_timeout);
+            this.change_timeout = null;
+        }
+        (function (self) {
+            self.change_timeout = setTimeout(
+                function () {
+                    self._fire_change_cb();
+                },
+                self.change_delay_ms
+            );
+        })(this);
+    };
+    this._fire_change_cb = function () {
+        var now = new Date();
+        // Reset attempt if, after a change, the user navigated using the arrow keys during the time window
+        if (this.last_arrow_navigation_ts !== null) {
+            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
+                if (now - this.last_arrow_navigation_ts < this.change_delay_ms) {
+                    this.fire_change_cb();
+                    return;
                 }
+            }
+        }
+        // This won't be null at this point, but just in case
+        if (this.on_change_cb) {
+            this.flash();
+            this.on_change_cb(this.GetText());
+        }
+    };
+    this.flash = function () {
+        if (!this.flash_highlight) {
+            this.flash_highlight = $("<div></div>");
+            this.flash_highlight.css({
+                "border": (this.border_size * 2).toString() + "px solid " + Dash.Color.Mobile.AccentSecondary,
+                "position": "absolute",
+                "inset": 0,
+                "opacity": 0,
+                "pointer-events": "none",
+                "border-radius": this.border_radius
             });
+            this.html.append(this.flash_highlight);
+        }
+        this.flash_highlight.css({
+            "height": (this.textarea.outerHeight() || this.textarea.innerHeight() || this.textarea.height()) - (this.border_size * 4)
+        });
+        (function (self) {
+            self.flash_highlight.stop().animate(
+                {"opacity": 1},
+                100,
+                function () {
+                    self.flash_highlight.stop().animate(
+                        {"opacity": 0},
+                        1000
+                    );
+                }
+            );
         })(this);
     };
     this.setup_styles();
@@ -31768,7 +31877,8 @@ function DashMobileCard (stack) {
         label.css({
             "color": Dash.Color.Mobile.AccentPrimary,
             "font-family": "sans_serif_bold",
-            "font-size": "120%"
+            "font-size": "120%",
+            "margin-bottom": Dash.Size.Padding
         });
         this.AddHTML(label);
         return label;
@@ -32178,13 +32288,13 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.setup_styles();
 }
 
-function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
+function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
     this.options = options;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
-    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
+    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
     this.datalist = $("<datalist></datalist", {"id": this.id});
@@ -32202,12 +32312,12 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "width": "100%",
             "min-width": "100%",
             "max-width": "100%",
+            "color": this.color.Text,
             "border-radius": Dash.Size.BorderRadius * 0.5
         };
         this.html.css({
-            "color": this.color.Text,
             "height": Dash.Size.RowHeight,
-            "border": "1px solid " + this.color.Stroke,
+            "border": "1px solid " + this.color.StrokeLight,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
             ...shared_css
@@ -32282,9 +32392,11 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 // Since this is linked to the datalist, the change event only triggers
                 // when a selection is made, whether that's by clicking an option or
                 // typing an option and selecting it using the arrow keys and enter key
-                var id = self.GetID();
-                if (self.on_submit_cb && id) {
-                    self.on_submit_cb(id);
+                if (self.on_submit_cb) {
+                    var id = self.GetID();
+                    if (id) {
+                        self.on_submit_cb(id);
+                    }
                 }
             });
             self.input.on("input", function () {

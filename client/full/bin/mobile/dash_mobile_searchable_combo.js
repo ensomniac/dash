@@ -1,10 +1,10 @@
-function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_change_cb=null, on_submit_cb=null) {
+function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
     this.options = options;
     this.placeholder_text = placeholder_text;
     this.binder = binder;
-    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
+    this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
 
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
@@ -25,13 +25,13 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "width": "100%",
             "min-width": "100%",
             "max-width": "100%",
+            "color": this.color.Text,
             "border-radius": Dash.Size.BorderRadius * 0.5
         };
 
         this.html.css({
-            "color": this.color.Text,
             "height": Dash.Size.RowHeight,
-            "border": "1px solid " + this.color.Stroke,
+            "border": "1px solid " + this.color.StrokeLight,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
             ...shared_css
@@ -128,10 +128,12 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 // Since this is linked to the datalist, the change event only triggers
                 // when a selection is made, whether that's by clicking an option or
                 // typing an option and selecting it using the arrow keys and enter key
-                var id = self.GetID();
+                if (self.on_submit_cb) {
+                    var id = self.GetID();
 
-                if (self.on_submit_cb && id) {
-                    self.on_submit_cb(id);
+                    if (id) {
+                        self.on_submit_cb(id);
+                    }
                 }
             });
 
