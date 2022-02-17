@@ -105,6 +105,16 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         }
 
         this.last_change_value = value;
+
+        if (!this.delay_change_cb) {
+            // This won't be null at this point, but just in case
+            if (this.on_change_cb) {
+                this.on_change_cb(value);
+            }
+
+            return;
+        }
+
         this.last_change_ts = new Date();
 
         if (this.change_timeout) {

@@ -25978,6 +25978,7 @@ function DashGuiIcons (icon) {
         "web":                   new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
         "windows_logo":          new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
+        "wrestling_mask":        new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
     };
     // Return icon map for use in portal editor > font icons
     if (this.icon.name === "icon_map") {
@@ -31771,6 +31772,13 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             return;
         }
         this.last_change_value = value;
+        if (!this.delay_change_cb) {
+            // This won't be null at this point, but just in case
+            if (this.on_change_cb) {
+                this.on_change_cb(value);
+            }
+            return;
+        }
         this.last_change_ts = new Date();
         if (this.change_timeout) {
             clearTimeout(this.change_timeout);

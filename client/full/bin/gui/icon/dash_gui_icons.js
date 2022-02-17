@@ -182,6 +182,7 @@ function DashGuiIcons (icon) {
         "web":                   new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
         "windows_logo":          new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
+        "wrestling_mask":        new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
     };
 
     // Return icon map for use in portal editor > font icons
