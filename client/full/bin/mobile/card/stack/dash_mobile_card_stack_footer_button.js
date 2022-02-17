@@ -1,8 +1,9 @@
-function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null) {
+function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null, left_side_icon=false) {
     this.stack = stack;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
+    this.left_side_icon = left_side_icon;
 
     this.icon = null;
     this.click_active = false;
@@ -40,28 +41,30 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
         });
 
         this.icon_circle.css({
-            "position": "absolute",
-            "left": "auto",
+            "left": this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto",
             "top": Dash.Size.Padding * 0.25,
-            "right": Dash.Size.Padding * 0.25,
+            "right": this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25,
             "bottom": "auto",
             "background": "rgb(250, 250, 250)",
-            "height": this.height-(Dash.Size.Padding * 0.5),
-            "width": this.height-(Dash.Size.Padding * 0.5),
+            "height": this.height - (Dash.Size.Padding * 0.5),
+            "width": this.height - (Dash.Size.Padding * 0.5),
             "border-radius": (this.height-(Dash.Size.Padding * 0.5)) * 0.5,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         });
 
-        this.label.css({
+        var label_css = {
             "height": this.height,
             "line-height": this.height + "px",
             "background": "none",
-            "margin-right": this.height * 0.5,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "color": "white"
-        });
+        };
+
+        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height * 0.5;
+
+        this.label.css(label_css);
 
         this.icon_circle.append(this.icon.html);
 

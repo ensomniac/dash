@@ -36,6 +36,9 @@ function DashMobileCardStackBanner (stack) {
 
         this.html.append(this.background_skirt);
         this.html.append(this.content);
+
+        // Default
+        this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
     };
 
     this.SetBackground = function (html_color_or_url) {
@@ -215,8 +218,6 @@ function DashMobileCardStackBanner (stack) {
 
         else {
             if (this.footer_row) {
-                console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
-
                 mode = 3;
                 headline_top_margin = Dash.Size.Padding;
                 // headline_top_margin = 100;

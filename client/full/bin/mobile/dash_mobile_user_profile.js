@@ -22,10 +22,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
 
-        else {
-            this.user_banner.SetBackground(Dash.Color.Mobile.BackgroundGradient);
-        }
-
         this.add_context_logo_img();
     };
 

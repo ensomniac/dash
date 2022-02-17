@@ -32182,9 +32182,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
-        else {
-            this.user_banner.SetBackground(Dash.Color.Mobile.BackgroundGradient);
-        }
         this.add_context_logo_img();
     };
     this.setup_banner = function () {
@@ -32476,6 +32473,7 @@ function DashMobileCardStack (binder, color=null) {
     this.width = 0;
     this.frame = 0;
     this.height = 0;
+    this.cards = [];
     this.slider = null;
     this.banner = null;
     this.anim_duration = 250;
@@ -32492,9 +32490,9 @@ function DashMobileCardStack (binder, color=null) {
     this.backing_gradient = null;
     this.panel_offsets = [0, 0, 0];
     this.footer_button_overlay = null;
-    this.html = Dash.Gui.GetHTMLAbsContext();
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
+    this.html = Dash.Gui.GetHTMLAbsContext();
     this.setup_styles = function () {
         this.slider = $("<div></div>");
         this.slider.css({
@@ -32572,7 +32570,15 @@ function DashMobileCardStack (binder, color=null) {
     };
     this.AddCard = function () {
         var card = new DashMobileCard(this);
+        if (!this.cards.length && this.banner) {
+            if (!this.banner.header_row && !this.banner.footer_row) {
+                card.html.css({
+                    "margin-top": Dash.Size.Padding
+                });
+            }
+        }
         this.AppendHTML(card.html);
+        this.cards.push(card);
         return card;
     };
     this.AddUserBanner = function () {
@@ -32625,11 +32631,11 @@ function DashMobileCardStack (binder, color=null) {
         this.right_content.append(html);
         this.slide_to_index(2);
     };
-    this.AddFooterButton = function (icon_name, label_text, callback) {
+    this.AddFooterButton = function (icon_name, label_text, callback, left_side_icon=false) {
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
         }
-        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback);
+        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback, left_side_icon);
         this.footer_buttons.push(button);
         this.footer_button_overlay.append(button.html);
         return button;
@@ -32857,11 +32863,12 @@ function DashMobileCardStack (binder, color=null) {
     this.setup_styles();
 }
 
-function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null) {
+function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null, left_side_icon=false) {
     this.stack = stack;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
+    this.left_side_icon = left_side_icon;
     this.icon = null;
     this.click_active = false;
     this.color = this.stack.color;
@@ -32893,27 +32900,27 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "border-radius": this.height
         });
         this.icon_circle.css({
-            "position": "absolute",
-            "left": "auto",
+            "left": this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto",
             "top": Dash.Size.Padding * 0.25,
-            "right": Dash.Size.Padding * 0.25,
+            "right": this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25,
             "bottom": "auto",
             "background": "rgb(250, 250, 250)",
-            "height": this.height-(Dash.Size.Padding * 0.5),
-            "width": this.height-(Dash.Size.Padding * 0.5),
+            "height": this.height - (Dash.Size.Padding * 0.5),
+            "width": this.height - (Dash.Size.Padding * 0.5),
             "border-radius": (this.height-(Dash.Size.Padding * 0.5)) * 0.5,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         });
-        this.label.css({
+        var label_css = {
             "height": this.height,
             "line-height": this.height + "px",
             "background": "none",
-            "margin-right": this.height * 0.5,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "color": "white"
-        });
+        };
+        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height * 0.5;
+        this.label.css(label_css);
         this.icon_circle.append(this.icon.html);
         this.html.append(this.icon_circle);
         this.html.append(this.label);
@@ -33009,6 +33016,8 @@ function DashMobileCardStackBanner (stack) {
         this.content.append(this.headline.html);
         this.html.append(this.background_skirt);
         this.html.append(this.content);
+        // Default
+        this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
     };
     this.SetBackground = function (html_color_or_url) {
         if (!html_color_or_url || html_color_or_url === "none") {
@@ -33147,7 +33156,6 @@ function DashMobileCardStackBanner (stack) {
         }
         else {
             if (this.footer_row) {
-                console.log("NO HEADER ROW, BUT FOOTER ROW EXISTS");
                 mode = 3;
                 headline_top_margin = Dash.Size.Padding;
                 // headline_top_margin = 100;
