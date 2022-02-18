@@ -39,6 +39,9 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     if "\t" in msg:
         msg = msg.replace("\t", "&nbsp;" * 4)
 
+    if "    " in msg:
+        msg = msg.replace("    ", "&nbsp;" * 4)
+
     message = Mail.create(sender_email)
     message.set_sender_name(f"{sender_name} <{sender_email}>")
 
