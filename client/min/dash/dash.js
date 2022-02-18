@@ -19072,6 +19072,10 @@ function DashDateTime () {
         }
         return dt_obj;
     };
+    // Why does JS make this so unnecessarily complicated?
+    this.GetUTCDateObject = function () {
+        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString().replace("Z", ""), "UTC");
+    };
     this.GetISOAgeMs = function (iso_string, timezone="EST") {
         var now = this.GetNewRelativeDateObject(timezone);
         var dt_obj = this.GetDateObjectFromISO(iso_string, timezone);
