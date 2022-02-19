@@ -31611,7 +31611,7 @@ function DashLayoutToolbarInterface () {
 
 function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
-    this.options = options;
+    this.options = options;  // Format: {id: label}
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.html = $("<select></select>");
@@ -31721,7 +31721,8 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "min-width": "100%",
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
-            "min-height": Dash.Size.RowHeight * 1.6,  // Just before a scrollbar appears when it's empty
+            "line-height": (Dash.Size.RowHeight * 0.5) + "px",
+            "min-height": Dash.Size.RowHeight * 1.1,
             "border-radius": this.border_radius,
             "border": this.border_size.toString() + "px solid " + this.color.Stroke
         });
@@ -31744,6 +31745,33 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     };
     this.SetLineBreakReplacement = function (value="") {
         this.line_break_replacement = value;
+    };
+    this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
+        var css = {
+            "height": Dash.Size.RowHeight,
+            "min-height": Dash.Size.RowHeight,
+            "max-height": Dash.Size.RowHeight,
+            "overflow-y": "hidden"
+        };
+        if (bottom_border_only) {
+            css["border-top"] = "none";
+            css["border-left"] = "none";
+            css["border-right"] = "none";
+            css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+        }
+        this.textarea.css(css);
+        this.textarea.on("keydown",function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+        // This shouldn't be necessary since we block the enter key, but just in case
+        this.SetLineBreakReplacement(_backup_line_break_replacement);
+    };
+    this.SetHeight = function (height) {
+        this.textarea.css({
+            "height": height
+        });
     };
     this.setup_connections = function () {
         // Important note:
@@ -32299,7 +32327,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
 
 function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
-    this.options = options;
+    this.options = options;  // Format: {id: label}
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
@@ -33063,7 +33091,7 @@ function DashMobileCardStackBanner (stack) {
     this.SetFixed = function (is_fixed) {
         this.stack.SetFixedBanner(is_fixed);
     };
-    this.AddFooterIcon = function (icon_name, label_text, callback) {
+    this.AddFooterIcon = function (icon_name, label_text, callback=null) {
         this.assert_footer_row();
         return this.footer_row.AddIcon(icon_name, label_text, callback);
     };
@@ -33474,6 +33502,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.label_text = label_text;
     this.callback = callback;
     this.click_active = false;
+    this.upload_button = null;
     this.notification_icon = null;
     this.banner = this.footer.banner;
     this.stack = this.banner.stack;
@@ -33530,6 +33559,40 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.html.append(this.label);
         this.setup_connections();
     };
+    this.AddUploader = function (binder, callback, endpoint, params) {
+        if (this.upload_button) {
+            return;
+        }
+        this.upload_button = new Dash.Gui.Button(
+            "",
+            callback,
+            binder,
+            this.color
+        );
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0,
+            "width": "auto",
+            "height": "auto"
+        };
+        this.upload_button.html.css({
+            ...abs_css,
+            "background": "rgba(0, 0, 0, 0)"
+        });
+        this.upload_button.highlight.css(abs_css);
+        this.upload_button.label.css({
+            "opacity": 0
+        });
+        this.UpdateUploaderParams(endpoint, params);
+        this.icon_circle.append(this.upload_button.html);
+    };
+    this.UpdateUploaderParams = function (endpoint, params) {
+        this.upload_button.SetFileUploader(endpoint, params);
+        this.upload_button.file_uploader.html.css({
+            "width": "auto",
+            "height": "auto"
+        });
+    };
     this.setup_connections = function () {
         (function (self) {
             self.html.mousedown(function (event) {
@@ -33547,7 +33610,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         if (this.callback) {
             this.callback();
         }
-        else {
+        else if (!this.upload_button) {
             console.error("Error: No callback associated with button!");
         }
         this.click_active = true;

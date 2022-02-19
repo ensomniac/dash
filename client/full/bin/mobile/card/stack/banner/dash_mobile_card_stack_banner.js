@@ -92,7 +92,7 @@ function DashMobileCardStackBanner (stack) {
         this.stack.SetFixedBanner(is_fixed);
     };
 
-    this.AddFooterIcon = function (icon_name, label_text, callback) {
+    this.AddFooterIcon = function (icon_name, label_text, callback=null) {
         this.assert_footer_row();
 
         return this.footer_row.AddIcon(icon_name, label_text, callback);

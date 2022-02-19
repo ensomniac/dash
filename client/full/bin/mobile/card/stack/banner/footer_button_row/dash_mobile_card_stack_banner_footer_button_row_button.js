@@ -5,6 +5,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.callback = callback;
 
     this.click_active = false;
+    this.upload_button = null;
     this.notification_icon = null;
     this.banner = this.footer.banner;
     this.stack = this.banner.stack;
@@ -71,6 +72,50 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.setup_connections();
     };
 
+    this.AddUploader = function (binder, callback, endpoint, params) {
+        if (this.upload_button) {
+            return;
+        }
+
+        this.upload_button = new Dash.Gui.Button(
+            "",
+            callback,
+            binder,
+            this.color
+        );
+
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0,
+            "width": "auto",
+            "height": "auto"
+        };
+
+        this.upload_button.html.css({
+            ...abs_css,
+            "background": "rgba(0, 0, 0, 0)"
+        });
+
+        this.upload_button.highlight.css(abs_css);
+
+        this.upload_button.label.css({
+            "opacity": 0
+        });
+
+        this.UpdateUploaderParams(endpoint, params);
+
+        this.icon_circle.append(this.upload_button.html);
+    };
+
+    this.UpdateUploaderParams = function (endpoint, params) {
+        this.upload_button.SetFileUploader(endpoint, params);
+
+        this.upload_button.file_uploader.html.css({
+            "width": "auto",
+            "height": "auto"
+        });
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.mousedown(function (event) {
@@ -93,7 +138,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             this.callback();
         }
 
-        else {
+        else if (!this.upload_button) {
             console.error("Error: No callback associated with button!");
         }
 

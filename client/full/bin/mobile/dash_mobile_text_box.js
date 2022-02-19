@@ -33,7 +33,8 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "min-width": "100%",
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
-            "min-height": Dash.Size.RowHeight * 1.6,  // Just before a scrollbar appears when it's empty
+            "line-height": (Dash.Size.RowHeight * 0.5) + "px",
+            "min-height": Dash.Size.RowHeight * 1.1,
             "border-radius": this.border_radius,
             "border": this.border_size.toString() + "px solid " + this.color.Stroke
         });
@@ -64,6 +65,39 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
     this.SetLineBreakReplacement = function (value="") {
         this.line_break_replacement = value;
+    };
+
+    this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
+        var css = {
+            "height": Dash.Size.RowHeight,
+            "min-height": Dash.Size.RowHeight,
+            "max-height": Dash.Size.RowHeight,
+            "overflow-y": "hidden"
+        };
+
+        if (bottom_border_only) {
+            css["border-top"] = "none";
+            css["border-left"] = "none";
+            css["border-right"] = "none";
+            css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+        }
+
+        this.textarea.css(css);
+
+        this.textarea.on("keydown",function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+
+        // This shouldn't be necessary since we block the enter key, but just in case
+        this.SetLineBreakReplacement(_backup_line_break_replacement);
+    };
+
+    this.SetHeight = function (height) {
+        this.textarea.css({
+            "height": height
+        });
     };
 
     this.setup_connections = function () {

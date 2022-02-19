@@ -1,6 +1,6 @@
 function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
     this.color = color || Dash.Color.Light;
-    this.options = options;
+    this.options = options;  // Format: {id: label}
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
