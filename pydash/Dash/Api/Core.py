@@ -32,9 +32,17 @@ class ApiCore:
             self._fs = cgi.FieldStorage()
         except:
             error = format_exc()
-            msg = "Failed to process Python's native cgi.FieldStorage() "
-            msg += "with given request! Full Traceback: " + error
-            raise Exception(msg)
+
+            if "write() argument must be str, not bytes" in error:
+                try:
+                    # Ref: https://bugs.python.org/issue32029
+                    self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
+                except:
+                    # Ref: https://bugs.python.org/issue27777
+                    raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
+            else:
+                # Ref: https://bugs.python.org/issue27777
+                raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
 
         self._response = {"error": "Unauthorized"}
 
