@@ -61,7 +61,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             "background-position": "center"
         });
 
-        this.stack.AppendHTML(image);
+        this.stack.AddHTML(image);
     };
 
     this.reload = function () {
@@ -142,7 +142,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.property_box.AddInput("email", "E-mail Address", "", null, false);
         this.property_box.AddInput("password", "Update Password", "", null, true);
 
-        this.stack.AppendHTML(this.property_box.html);
+        this.stack.AddHTML(this.property_box.html);
     };
 
     this.log_user_out = function () {

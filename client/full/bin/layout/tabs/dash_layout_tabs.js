@@ -165,12 +165,17 @@ function DashLayoutTabs (binder, side_tabs) {
         }
     };
 
-    this.AppendHTML = function (html) {
+    this.AddHTML = function (html) {
         html.css({
             "margin-bottom": 1
         });
 
         this.tab_top.append(html);
+    };
+
+    // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
+    this.AppendHTML = function (html) {
+        this.AddHTML(html);
     };
 
     this.MidpendHTML = function (html) {

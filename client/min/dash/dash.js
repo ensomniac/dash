@@ -22544,6 +22544,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         if (!icon_name) {
             return;
         }
+        if (!this.header) {
+            this.add_header_area();
+        }
         this.header.ReplaceBorderWithIcon(icon_name);
     };
     this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
@@ -22642,6 +22645,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.toggle_hide_button.label.label.css({
             "font-family": "sans_serif_bold"
         });
+        if (!this.header_area) {
+            this.add_header_area();
+        }
         this.header_area.append(this.toggle_hide_button.html);
     };
     this.handle_mentions = function (text, message_obj) {
@@ -22746,6 +22752,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         return false;
     };
     this.add_header_area = function () {
+        if (this.header_text === "none") {
+            return;
+        }
         this.header_area = Dash.Gui.GetHTMLContext(
             "",
             {
@@ -22874,6 +22883,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             },
             this.color
         );
+        // Unsure if I like this
+        // if (Dash.IsMobile) {
+        //     this.html.css({
+        //         "border-top": "1px solid " + this.color.Pinstripe,
+        //         "padding-top": Dash.Size.Padding * 0.5
+        //     });
+        // }
         this.add_pen_icon();
         this.add_input();
         if (this.at_combo_options) {
@@ -22898,11 +22914,16 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "flex-grow": 2,
             "background": "none"
         });
+        var padding = Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 0.5);
         this.input.input.css({
-            "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element, and it was bleeding outside its html container
+            "width": "calc(100% - " + (Dash.Size.Padding + (Dash.IsMobile ? padding : 0)) + "px)",
+            "padding-left": padding,
+            "padding-right": padding
         });
         this.input.DisableBlurSubmit();
-        this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+        if (!Dash.IsMobile) {
+            this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+        }
         this.input.SetOnChange(this.on_input, this);
         this.html.append(this.input.html);
     };
@@ -22919,8 +22940,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     };
     this.add_at_button = function () {
         var labels = [];
-        for (var i in this.at_combo_options) {
-            var label_text = this.at_combo_options[i]["label_text"] || this.at_combo_options[i]["display_name"];
+        for (var option of this.at_combo_options) {
+            var label_text = option["label_text"] || option["display_name"];
             if (labels.includes(label_text)) {
                 console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
                 return;
@@ -22936,10 +22957,15 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.color,
             {"is_user_list": true}
         );
-        this.at_button.UseAsIconButtonCombo("at_sign", 1);
+        this.at_button.UseAsIconButtonCombo("at_sign", Dash.IsMobile ? 0.75 : 1);
         this.at_button.DisableFlash();
         this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
         this.at_button.html.attr("title", "Mention");
+        if (Dash.IsMobile) {
+            this.at_button.html.css({
+                "margin-left": -(Dash.Size.Padding * 0.5)
+            });
+        }
         this.html.append(this.at_button.html);
     };
     this.on_combo_changed = function (selected_combo) {
@@ -22961,11 +22987,12 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "share",
             this.msg_submit_callback,
             this,
-            this.color
+            this.color,
+            {"size_mult": Dash.IsMobile ? 0.75 : 1}
         );
         this.submit_button.html.css({
             "height": Dash.Size.RowHeight,
-            "margin-left": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 1),
             "margin-right": Dash.Size.Padding * 0.3
         });
         this.submit_button.SetHoverHint("Submit");
@@ -22976,13 +23003,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.color,
             "pen",
             null,
-            0.9,
+            Dash.IsMobile ? 0.7 : 0.9,
             this.secondary_css_color
         );
         this.pen_icon.html.css({
             "height": Dash.Size.RowHeight,
             "margin-left": Dash.Size.Padding * 0.25,
-            "margin-right": 0,
+            "margin-right": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 0),
             "pointer-events": "none",
             "transform": "scale(-1, 1)"  // Flip the icon horizontally
         });
@@ -31011,11 +31038,15 @@ function DashLayoutTabs (binder, side_tabs) {
             );
         }
     };
-    this.AppendHTML = function (html) {
+    this.AddHTML = function (html) {
         html.css({
             "margin-bottom": 1
         });
         this.tab_top.append(html);
+    };
+    // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
+    this.AppendHTML = function (html) {
+        this.AddHTML(html);
     };
     this.MidpendHTML = function (html) {
         if (!this.side_tabs) {
@@ -32243,7 +32274,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             "background-size": "contain",
             "background-position": "center"
         });
-        this.stack.AppendHTML(image);
+        this.stack.AddHTML(image);
     };
     this.reload = function () {
         location.reload();
@@ -32308,7 +32339,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.property_box.AddInput("last_name", "Last Name", "", null, true);
         this.property_box.AddInput("email", "E-mail Address", "", null, false);
         this.property_box.AddInput("password", "Update Password", "", null, true);
-        this.stack.AppendHTML(this.property_box.html);
+        this.stack.AddHTML(this.property_box.html);
     };
     this.log_user_out = function () {
         Dash.Logout();
@@ -32588,7 +32619,7 @@ function DashMobileCardStack (binder, color=null) {
             return this.banner;
         }
         this.banner = new DashMobileCardStackBanner(this);
-        this.AppendHTML(this.banner.html);
+        this.AddHTML(this.banner.html);
         return this.banner;
     };
     // When is_fixed is true, the banner does not scroll with the rest of the content on the page
@@ -32609,16 +32640,16 @@ function DashMobileCardStack (binder, color=null) {
                 });
             }
         }
-        this.AppendHTML(card.html);
+        this.AddHTML(card.html);
         this.cards.push(card);
         return card;
     };
     this.AddUserBanner = function () {
         var banner = new DashMobileCardStackUserBanner(this);
-        this.AppendHTML(banner.html);
+        this.AddHTML(banner.html);
         return banner;
     };
-    this.AppendHTML = function (html) {
+    this.AddHTML = function (html) {
         html.css({
             ...Dash.HardwareAccelerationCSS
         });
@@ -32626,6 +32657,10 @@ function DashMobileCardStack (binder, color=null) {
         if (this.footer_spacer) {
             this.center_content.append(this.footer_spacer);
         }
+    };
+    // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
+    this.AppendHTML = function (html) {
+        this.AddHTML(html);
     };
     this.AddLeftContent = function (html) {
         // if (this.banner_fixed) {

@@ -110,7 +110,7 @@ function DashMobileCardStack (binder, color=null) {
 
         this.banner = new DashMobileCardStackBanner(this);
 
-        this.AppendHTML(this.banner.html);
+        this.AddHTML(this.banner.html);
 
         return this.banner;
     };
@@ -137,7 +137,7 @@ function DashMobileCardStack (binder, color=null) {
             }
         }
 
-        this.AppendHTML(card.html);
+        this.AddHTML(card.html);
 
         this.cards.push(card);
 
@@ -147,12 +147,12 @@ function DashMobileCardStack (binder, color=null) {
     this.AddUserBanner = function () {
         var banner = new DashMobileCardStackUserBanner(this);
 
-        this.AppendHTML(banner.html);
+        this.AddHTML(banner.html);
 
         return banner;
     };
 
-    this.AppendHTML = function (html) {
+    this.AddHTML = function (html) {
         html.css({
             ...Dash.HardwareAccelerationCSS
         });
@@ -162,6 +162,11 @@ function DashMobileCardStack (binder, color=null) {
         if (this.footer_spacer) {
             this.center_content.append(this.footer_spacer);
         }
+    };
+
+    // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
+    this.AppendHTML = function (html) {
+        this.AddHTML(html);
     };
 
     this.AddLeftContent = function (html) {

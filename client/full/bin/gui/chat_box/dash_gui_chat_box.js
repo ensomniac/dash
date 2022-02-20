@@ -72,6 +72,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
 
+        if (!this.header) {
+            this.add_header_area();
+        }
+
         this.header.ReplaceBorderWithIcon(icon_name);
     };
 
@@ -197,6 +201,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.toggle_hide_button.label.label.css({
             "font-family": "sans_serif_bold"
         });
+
+        if (!this.header_area) {
+            this.add_header_area();
+        }
 
         this.header_area.append(this.toggle_hide_button.html);
     };
@@ -337,6 +345,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.add_header_area = function () {
+        if (this.header_text === "none") {
+            return;
+        }
+
         this.header_area = Dash.Gui.GetHTMLContext(
             "",
             {

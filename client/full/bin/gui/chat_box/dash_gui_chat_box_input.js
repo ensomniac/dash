@@ -24,6 +24,14 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.color
         );
 
+        // Unsure if I like this
+        // if (Dash.IsMobile) {
+        //     this.html.css({
+        //         "border-top": "1px solid " + this.color.Pinstripe,
+        //         "padding-top": Dash.Size.Padding * 0.5
+        //     });
+        // }
+
         this.add_pen_icon();
         this.add_input();
 
@@ -55,12 +63,20 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "background": "none"
         });
 
+        var padding = Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 0.5);
+
         this.input.input.css({
-            "width": "95%"  // This is kind of hacky, but margin and padding weren't affect this element, and it was bleeding outside its html container
+            "width": "calc(100% - " + (Dash.Size.Padding + (Dash.IsMobile ? padding : 0)) + "px)",
+            "padding-left": padding,
+            "padding-right": padding
         });
 
         this.input.DisableBlurSubmit();
-        this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+
+        if (!Dash.IsMobile) {
+            this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+        }
+
         this.input.SetOnChange(this.on_input, this);
 
         this.html.append(this.input.html);
@@ -82,8 +98,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.add_at_button = function () {
         var labels = [];
 
-        for (var i in this.at_combo_options) {
-            var label_text = this.at_combo_options[i]["label_text"] || this.at_combo_options[i]["display_name"];
+        for (var option of this.at_combo_options) {
+            var label_text = option["label_text"] || option["display_name"];
 
             if (labels.includes(label_text)) {
                 console.error("Error: ChatBox 'at_combo_options' cannot have items with identical 'label_text' values");
@@ -104,11 +120,17 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             {"is_user_list": true}
         );
 
-        this.at_button.UseAsIconButtonCombo("at_sign", 1);
+        this.at_button.UseAsIconButtonCombo("at_sign", Dash.IsMobile ? 0.75 : 1);
         this.at_button.DisableFlash();
         this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
 
         this.at_button.html.attr("title", "Mention");
+
+        if (Dash.IsMobile) {
+            this.at_button.html.css({
+                "margin-left": -(Dash.Size.Padding * 0.5)
+            });
+        }
 
         this.html.append(this.at_button.html);
     };
@@ -138,12 +160,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "share",
             this.msg_submit_callback,
             this,
-            this.color
+            this.color,
+            {"size_mult": Dash.IsMobile ? 0.75 : 1}
         );
 
         this.submit_button.html.css({
             "height": Dash.Size.RowHeight,
-            "margin-left": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 1),
             "margin-right": Dash.Size.Padding * 0.3
         });
 
@@ -157,14 +180,14 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.color,
             "pen",
             null,
-            0.9,
+            Dash.IsMobile ? 0.7 : 0.9,
             this.secondary_css_color
         );
 
         this.pen_icon.html.css({
             "height": Dash.Size.RowHeight,
             "margin-left": Dash.Size.Padding * 0.25,
-            "margin-right": 0,
+            "margin-right": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 0),
             "pointer-events": "none",
             "transform": "scale(-1, 1)"  // Flip the icon horizontally
         });

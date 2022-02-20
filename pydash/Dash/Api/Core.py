@@ -27,6 +27,7 @@ class ApiCore:
         self._public = {}
         self._private = {}  # Requires an authenticated user
         self._render_html = None
+        self._proceeding_with_empty_fs = False
 
         try:
             self._fs = cgi.FieldStorage()
@@ -36,7 +37,12 @@ class ApiCore:
             if "write() argument must be str, not bytes" in error:
                 try:
                     # Ref: https://bugs.python.org/issue32029
+                    # There's a long-running bug in cgi (see ref) that means we can't properly
+                    # handle certain requests that come through. This is a work-around that
+                    # allows the request to continue without failing, though with no params.
+                    # As of writing, this is useful to allow certain webhooks to hit the server.
                     self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
+                    self._proceeding_with_empty_fs = True
                 except:
                     # Ref: https://bugs.python.org/issue27777
                     raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
@@ -345,6 +351,9 @@ class ApiCore:
         This allows us to inject content from this class in all instances of this module running in this shell.
         """
 
+        if self._proceeding_with_empty_fs:
+            return  # See notes in init
+
         if not hasattr(self, "dash_global"):
             self.dash_global = sys.modules[DashName]
 
@@ -354,6 +363,9 @@ class ApiCore:
 
     def get_data(self):
         data = {}
+
+        if self._proceeding_with_empty_fs:
+            return data  # See notes in init
 
         for key in self._fs.keys():
             if key in data:
