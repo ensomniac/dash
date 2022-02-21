@@ -37,8 +37,8 @@ class GUtils:
     def GSpreadCreds(self):
         return self._sheets_utils.GSpreadCreds
 
-    def GetSheetData(self, sheet_id):
-        return self._sheets_utils.GetData(sheet_id)
+    def GetSheetData(self, sheet_id, row_data_only=True):
+        return self._sheets_utils.GetData(sheet_id, row_data_only)
 
     def GetNewSheet(self, sheet_name):
         return self._sheets_utils.GetNew(sheet_name)
@@ -383,11 +383,16 @@ class _SheetsUtils:
 
         return self._gspread_creds
 
-    def GetData(self, sheet_id):
-        return self.Client.spreadsheets().get(
+    def GetData(self, sheet_id, row_data_only=True):
+        data = self.Client.spreadsheets().get(
             spreadsheetId=sheet_id,
             includeGridData=True
         ).execute()["sheets"][0]
+
+        if row_data_only and data.get("data"):
+            return data["data"][0]["rowData"]
+
+        return data
 
     def GetNew(self, sheet_name):
         return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
