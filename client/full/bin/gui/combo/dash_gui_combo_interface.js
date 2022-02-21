@@ -77,7 +77,7 @@ function DashGuiComboInterface () {
     };
 
     // Only tested using the Default style
-    this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null) {
+    this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {
             this.dropdown_icon.html.remove();
 
@@ -100,7 +100,7 @@ function DashGuiComboInterface () {
         this.label.remove();
         this.highlight.remove();
 
-        this.dropdown_icon.SetColor(this.color_set.Background.Base);
+        this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
     };
 
     this.DisableFlash = function () {

@@ -17,14 +17,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.delete_button = null;
     this.text_bubble_container = null;
     this.dark_mode = this.chat_box.dark_mode;
-    this.iso_label_height = Dash.Size.RowHeight * 0.7;
     this.secondary_css_color = this.chat_box.secondary_css_color;
+    this.iso_label_height = Dash.Size.RowHeight * (Dash.IsMobile ? 0.35 : 0.7);
 
     this.setup_styles = function () {
         this.html = Dash.Gui.GetHTMLContext(
             "",
             {
-                "margin-top": Dash.Size.Padding,
+                "margin-top": Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1),
                 "padding": 0,
                 "display": "flex",
                 "background": "none"
@@ -97,19 +97,20 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
     this.add_user_icon = function () {
         this.user_icon = $("<div></div>");
-        
-        var icon_size = Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.25);
+
+        var border_color = Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.Button.Background.Base;
+        var icon_size = Dash.IsMobile ? (Dash.Size.RowHeight - (Dash.Size.Stroke * 0.5)) : (Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.25));
         var img = Dash.User.GetImageByEmail(user_email);
 
         this.user_icon.css({
             "position": "absolute",
-            "top": Dash.Size.RowHeight * 0.65,
+            "top": Dash.Size.RowHeight * (Dash.IsMobile ? 0.33 : 0.65),
             "width": icon_size,
             "height": icon_size,
             "margin": Dash.Size.Padding * 0.25,
             "padding": 0,
             "border-radius": icon_size * 0.75,
-            "border": (Dash.Size.Stroke * 0.75) + "px solid " + this.color.Button.Background.Base,
+            "border": (Dash.Size.Stroke * (Dash.IsMobile ? 0.4 : 0.75)) + "px solid " + border_color,
             "background-image": "url(" + img["thumb_url"] + ")",
             "background-size": "cover"
         });
@@ -131,7 +132,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
 
     this.add_text_bubble_container = function () {
         var corner_radius = Dash.Size.Padding * 0.05;
-        var side_margin = Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5);
+        var side_margin = (Dash.Size.ButtonHeight + (Dash.Size.Padding * 1.5)) * (Dash.IsMobile ? 0.67 : 1);
 
         this.text_bubble_container = Dash.Gui.GetHTMLContext(
             "",
@@ -148,11 +149,15 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
         this.text_bubble = Dash.Gui.GetHTMLBoxContext(
             {
                 "margin": Dash.Size.Padding * 0.2,
-                "padding": Dash.Size.Padding,
+                "padding": Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 1),
                 "border-radius": Dash.Size.Padding,
-                "box-shadow": "0px 4px 10px 1px rgba(0, 0, 0, 0.1)",
-                "background": this.color.BackgroundRaisedTop || this.color.BackgroundRaised,
-                "display": "flex"
+                "box-shadow": "none",
+                "display": "flex",
+
+                // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
+                // which can't simply be fixed by making it different, because too many things would break.
+                // It would be a big re-work of a bunch of code. Remove this Darken call if/when that is resolved.
+                "background": this.color === Dash.Color.Light ? Dash.Color.Darken(this.color.Background, 20) : this.color.BackgroundRaised
             },
             this.color
         );
@@ -161,7 +166,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             this.text,
             {
                 "background": "none",
-                "word-break": "break-word"
+                "word-break": "break-word",
+                "text-align": "left"
             },
             this.color
         );
@@ -194,7 +200,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     };
 
     this.add_iso_ts_label = function () {
-        var side_padding = Dash.Size.Padding * 4.9;
+        var side_padding = Dash.Size.Padding * (Dash.IsMobile ? 3.25 : 4.9);
         var user = Dash.User.GetByEmail(this.user_email);
         var name = user ? user["first_name"] : (this.user_email && !(this.user_email.includes("@"))) ? this.user_email.Title() : "Unknown";
 
@@ -204,8 +210,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             "background": "none",
             "position": "absolute",
             "top": 0,
-            "height": this.iso_label_height,
-            "font-size": (Dash.Size.Padding * 1.2) + "px"
+            // "height": this.iso_label_height,
+            "font-size": "85%"
         };
 
         var timestamp = this.iso_ts;
@@ -242,14 +248,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     };
 
     this.add_delete_button = function () {
-        var side_padding = Dash.Size.Padding * 3.2;
+        var side_padding = Dash.Size.Padding * (Dash.IsMobile ? 2.25 : 3.2);
 
         this.delete_button = new Dash.Gui.IconButton(
             this.dark_mode ? "trash_solid" : "trash",
             this.delete,
             this,
             this.color,
-            {"container_size": this.iso_label_height, "size_mult": 0.75}
+            {"container_size": this.iso_label_height, "size_mult": Dash.IsMobile ? 0.95 : 0.75}
         );
 
         this.delete_button.html.css({

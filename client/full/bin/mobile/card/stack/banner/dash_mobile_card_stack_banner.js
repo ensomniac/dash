@@ -7,6 +7,7 @@ function DashMobileCardStackBanner (stack) {
     this.last_sizing_mode = -1;
     this.skirt_bottom_rest = 0;
     this.color = this.stack.color;
+    this.margin_mode_override = null;
     this.content = $("<div></div>");
     this.html = Dash.Gui.GetHTMLContext();
     this.background_skirt = $("<div></div>");
@@ -138,6 +139,14 @@ function DashMobileCardStackBanner (stack) {
         }
     };
 
+    this.SetMarginMode = function (mode, save=true) {
+        if (save) {
+            this.margin_mode_override = mode;
+        }
+
+        this.set_margins(mode);
+    };
+
     // Create the header row if it doesn't exist yet
     this.assert_header_row = function () {
         if (this.header_row) {
@@ -165,82 +174,58 @@ function DashMobileCardStackBanner (stack) {
     };
 
     this.adjust_margins = function () {
-        // Whenever core content is added or removed, we need to adjust some values
-        //
-        // + If headline only (no header, no footer)
-        //   - MODE: 0
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
-        //
-        // + If headline & top row
-        //   - MODE: 1
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
-        //
-        // + If headline & bottom row
-        //   - MODE: 2
-        //   - HEADLINE: Full headline margins on top and bottom
-        //   - SKIRT:
+        if (this.margin_mode_override !== null) {
+            this.SetMarginMode(this.margin_mode_override);
 
-        var mode = 0;
-        var bottom_margin = 0;
-        var headline_bottom_margin = 0;
-        var headline_top_margin = Dash.Size.Padding * 2;
-
-        this.skirt_bottom_rest = Dash.Size.ButtonHeight;
+            return;
+        }
 
         if (this.header_row) {
             if (this.footer_row) {
-                mode = 2;
-                headline_top_margin = Dash.Size.Padding * 0.25;
-                headline_bottom_margin = (Dash.Size.Padding * 0.25);
-                headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
-
-                // To account for the balance offset of the top button row when there is no footer
-                // bottom_margin = Dash.Size.ButtonHeight;
-                bottom_margin = Dash.Size.Padding;
-
-                // this.skirt_bottom_rest = Dash.Size.ButtonHeight * 2;
-                this.skirt_bottom_rest = -(this.FooterHeight - (this.FooterButtonWidth * 0.5));
+                this.SetMarginMode(2, false);
             }
 
             else {
-                mode = 1;
-                headline_top_margin = Dash.Size.Padding * 0.25;
-                headline_bottom_margin = Dash.Size.Padding * 0.25;
-
-                // To account for the balance offset of the top button row when there is no footer
-                bottom_margin = Dash.Size.ButtonHeight;
-
-                this.skirt_bottom_rest = Dash.Size.ButtonHeight * 2;
+                this.SetMarginMode(1, false);
             }
+        }
+
+        else if (this.footer_row) {
+            this.SetMarginMode(3, false);
         }
 
         else {
-            if (this.footer_row) {
-                mode = 3;
-                headline_top_margin = Dash.Size.Padding;
-                // headline_top_margin = 100;
-                headline_bottom_margin = Dash.Size.Padding;
-                // headline_bottom_margin += Dash.Size.ButtonHeight; // To account for the weight of the header
-
-                // To account for the balance offset of the top button row when there is no footer
-                // bottom_margin = Dash.Size.ButtonHeight;
-                bottom_margin = Dash.Size.Padding;
-
-                // this.skirt_bottom_rest = Dash.Size.ButtonHeight * 2;
-                this.skirt_bottom_rest = -(this.FooterHeight - (this.FooterButtonWidth * 0.5));
-            }
+            this.SetMarginMode(0, false);
         }
+    };
 
+    this.set_margins = function (mode) {
         if (mode === this.last_sizing_mode) {
-            return;  // Correct properties are already set
+            return;
         }
 
-        this.headline.SetTopBottomMargins(headline_top_margin, headline_bottom_margin);
+        // Default/auto modes:
+        //  0: No header or footer
+        //  1: Header only
+        //  2: Header and footer
+        //  3: Footer only
+
+        // No-overlap/manual modes (useful when abs-filling the content area)
+        //  4: Slim version of mode 0
+        //  5: Slimmer version of mode 0
+        //  6: Slimmest version of mode 0
+
+        this.skirt_bottom_rest = (mode === 2 || mode === 3) ? -(this.FooterHeight - (this.FooterButtonWidth * 0.5)) :
+                                 Dash.Size.ButtonHeight * (mode === 1 ? 2 : mode === 4 ? 0.65 : mode === 5 ? 0.35 : mode === 6 ? 0.2 : 1);
+
+        this.headline.SetTopBottomMargins(
+            Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : (mode === 3 || mode === 5) ? 1 : mode === 6 ? 0.65 : 2),
+            (Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : mode === 3 ? 1 : 0)) +
+                (mode === 2 ? Dash.Size.ButtonHeight : 0)  // To account for the weight of the header
+        );
 
         this.html.css({
-            "margin-bottom": bottom_margin
+            "margin-bottom": mode === 1 ? Dash.Size.ButtonHeight : (mode === 2 || mode === 3) ? Dash.Size.Padding : 0
         });
 
         this.background_skirt.css({

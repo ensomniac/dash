@@ -18,22 +18,23 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.callback_mentions = [];
     this.toggle_hide_side = null;
     this.toggle_hide_button = null;
+    this.secondary_css_color = null;
     this.toggle_local_storage_key = null;
     this.dark_mode = this.color === Dash.Color.Dark;
     this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
-
-    if (this.color === Dash.Color.Light) {
-        this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
-    }
-
-    else if (this.dark_mode) {
-        this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
-    }
 
     // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
 
     this.setup_styles = function () {
+        if (this.color === Dash.Color.Light) {
+            this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
+        }
+
+        else if (this.dark_mode) {
+            this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
+        }
+
         this.html = Dash.Gui.GetHTMLBoxContext(
             {
                 "background": this.color.Background,
@@ -247,6 +248,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
     this.process_mention = function (label_text, text, track=false) {
         var label_text_lower = label_text.toLowerCase();
+        var color = Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color.AccentGood;
 
         if (!text.includes("@" + label_text) && !text.includes("@" + label_text_lower)) {
             if (!label_text.includes(" ")) {
@@ -280,7 +282,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
         text = text.replaceAll(
             text.includes("@" + label_text) ? "@" + label_text : "@" + label_text_lower,
-            "<b style='color: " + this.color.AccentGood + "'>@" + label_text + "</b>"
+            "<b style='color: " + color + "'>@" + label_text + "</b>"
         );
 
         if (track && !this.callback_mentions.includes(label_text)) {
@@ -382,20 +384,27 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.add_message_area = function () {
-        this.message_area = Dash.Gui.GetHTMLBoxContext(
-            {
-                "padding": 0,
-                "padding-right": Dash.Size.Padding * 0.5,  // Room for scroll bar
-                "box-shadow": "none",
-                "background": "none",
-                "flex-grow": 2,
-                "flex-shrink": 2,
-                "margin-top": Dash.Size.Padding,
-                "margin-bottom": this.read_only ? 0 : Dash.Size.Padding * 2,
-                "overflow-y": "auto"
-            },
-            this.color
-        );
+        var css = {
+            "padding": 0,
+            "padding-right": Dash.Size.Padding * (Dash.IsMobile ? 0.6 : 0.5),  // Room for scroll bar
+            "box-shadow": "none",
+            "background": "none",
+            "flex-grow": 2,
+            "flex-shrink": 2,
+            "margin-top": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 1),
+            "margin-bottom": (this.read_only || Dash.IsMobile) ? 0 : Dash.Size.Padding * 2,
+            "overflow-y": "auto"
+        };
+
+        if (Dash.IsMobile) {
+            css["border-radius"] = 0;
+            css["padding-left"] = Dash.Size.Padding * 0.6;
+            css["margin-left"] = -(Dash.Size.Padding * 0.5);
+            css["margin-right"] = -(Dash.Size.Padding * 0.5);
+            css["padding-bottom"] = Dash.Size.Padding * 0.5;
+        }
+
+        this.message_area = Dash.Gui.GetHTMLBoxContext(css, this.color);
 
         this.html.append(this.message_area);
     };
