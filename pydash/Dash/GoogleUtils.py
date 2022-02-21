@@ -40,6 +40,9 @@ class GUtils:
     def GetSheetData(self, sheet_id, row_data_only=True):
         return self._sheets_utils.GetData(sheet_id, row_data_only)
 
+    def GetParsedSheetData(self, sheet_id, header_row_index=None):
+        return self._sheets_utils.GetParsedData(sheet_id, header_row_index)
+
     def GetNewSheet(self, sheet_name):
         return self._sheets_utils.GetNew(sheet_name)
 
@@ -384,6 +387,10 @@ class _SheetsUtils:
         return self._gspread_creds
 
     def GetData(self, sheet_id, row_data_only=True):
+        """
+        Note: This doesn't currently account for extra, empty rows at the bottom.
+        """
+
         data = self.Client.spreadsheets().get(
             spreadsheetId=sheet_id,
             includeGridData=True
@@ -393,6 +400,34 @@ class _SheetsUtils:
             return data["data"][0]["rowData"]
 
         return data
+
+    def GetParsedData(self, sheet_id, header_row_index=None):
+        parsed = []
+        headers = []
+        rows = self.GetData(sheet_id)
+
+        if header_row_index is not None:
+            header_row = rows.pop(header_row_index)["values"]
+
+            for col in header_row:
+                headers.append(col.get("formattedValue"))
+
+        for row in rows:
+            row_data = {}
+            row = row["values"]
+
+            for index, col in enumerate(row):
+                if headers:
+                    try:
+                        row_data[headers[index]] = col.get("formattedValue")
+                    except IndexError:
+                        row_data[f"col_{index}"] = col.get("formattedValue")
+                else:
+                    row_data[f"col_{index}"] = col.get("formattedValue")
+
+            parsed.append(row_data)
+
+        return parsed
 
     def GetNew(self, sheet_name):
         return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
