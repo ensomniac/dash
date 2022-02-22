@@ -4,7 +4,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.add_msg_callback = binder && add_msg_cb ? add_msg_cb.bind(binder) : add_msg_cb;
     this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
     this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
-    this.at_combo_options = at_combo_options;
+    this.at_combo_options = at_combo_options;  // When mobile, this expects the mobile combo options structure
     this.color = color || Dash.Color.Dark;
     this.dual_sided = dual_sided;
 
@@ -215,16 +215,31 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
 
+        var option;
         var ids = [];
 
         for (var mention of this.callback_mentions) {
-            for (var combo_option of this.at_combo_options) {
-                var name = combo_option["label_text"] || combo_option["display_name"];
+            if (Dash.IsMobile) {
+                for (option in this.at_combo_options) {
+                    if (this.at_combo_options[option] === mention) {
+                        if (!(ids.includes(option))) {
+                            ids.push(option);
+                        }
 
-                if (name === mention) {
-                    ids.push(combo_option["id"]);
+                        break;
+                    }
+                }
+            }
 
-                    break;
+            else {
+                for (option of this.at_combo_options) {
+                    if ((option["label_text"] || option["display_name"]) === mention) {
+                        if (!(ids.includes(option["id"]))) {
+                            ids.push(option["id"]);
+                        }
+
+                        break;
+                    }
                 }
             }
         }
@@ -299,8 +314,16 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
         this.valid_mentions = [];
 
-        for (var combo_option of this.at_combo_options) {
-            this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
+        if (Dash.IsMobile) {
+            for (var option in this.at_combo_options) {
+                this.valid_mentions.push(this.at_combo_options[option]);
+            }
+        }
+
+        else {
+            for (var combo_option of this.at_combo_options) {
+                this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
+            }
         }
     };
 
@@ -447,7 +470,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
 
-        if (this.message_input.at_button.enter_key_event_fired) {
+        if (!Dash.IsMobile && this.message_input.at_button.enter_key_event_fired) {
             this.message_input.at_button.enter_key_event_fired = false;
 
             return;
@@ -457,7 +480,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             text,
             null,
             null,
-            false,
+            Dash.IsMobile,  // Align right on mobile, left on desktop
             true,
             true,
             null,

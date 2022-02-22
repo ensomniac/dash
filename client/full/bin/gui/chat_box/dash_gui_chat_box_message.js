@@ -151,13 +151,15 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "margin": Dash.Size.Padding * 0.2,
                 "padding": Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 1),
                 "border-radius": Dash.Size.Padding,
-                "box-shadow": "none",
+                "box-shadow": Dash.IsMobile ? "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)" : "none",
                 "display": "flex",
 
                 // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
                 // which can't simply be fixed by making it different, because too many things would break.
-                // It would be a big re-work of a bunch of code. Remove this Darken call if/when that is resolved.
-                "background": this.color === Dash.Color.Light ? Dash.Color.Darken(this.color.Background, 20) : this.color.BackgroundRaised
+                // It would be a big re-work of a bunch of code. Remove this call if/when that is resolved.
+                "background": this.color === Dash.Color.Light ?
+                    (Dash.IsMobile ? "white" : Dash.Color.Darken(this.color.Background, 20)) :
+                    this.color.BackgroundRaised
             },
             this.color
         );

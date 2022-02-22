@@ -22488,7 +22488,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.add_msg_callback = binder && add_msg_cb ? add_msg_cb.bind(binder) : add_msg_cb;
     this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
     this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
-    this.at_combo_options = at_combo_options;
+    this.at_combo_options = at_combo_options;  // When mobile, this expects the mobile combo options structure
     this.color = color || Dash.Color.Dark;
     this.dual_sided = dual_sided;
     this.html = null;
@@ -22655,13 +22655,27 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         if (this.callback_mentions.length < 1) {
             return;
         }
+        var option;
         var ids = [];
         for (var mention of this.callback_mentions) {
-            for (var combo_option of this.at_combo_options) {
-                var name = combo_option["label_text"] || combo_option["display_name"];
-                if (name === mention) {
-                    ids.push(combo_option["id"]);
-                    break;
+            if (Dash.IsMobile) {
+                for (option in this.at_combo_options) {
+                    if (this.at_combo_options[option] === mention) {
+                        if (!(ids.includes(option))) {
+                            ids.push(option);
+                        }
+                        break;
+                    }
+                }
+            }
+            else {
+                for (option of this.at_combo_options) {
+                    if ((option["label_text"] || option["display_name"]) === mention) {
+                        if (!(ids.includes(option["id"]))) {
+                            ids.push(option["id"]);
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -22718,8 +22732,15 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
         this.valid_mentions = [];
-        for (var combo_option of this.at_combo_options) {
-            this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
+        if (Dash.IsMobile) {
+            for (var option in this.at_combo_options) {
+                this.valid_mentions.push(this.at_combo_options[option]);
+            }
+        }
+        else {
+            for (var combo_option of this.at_combo_options) {
+                this.valid_mentions.push(combo_option["label_text"] || combo_option["display_name"]);
+            }
         }
     };
     this.on_checkbox_toggled = function () {
@@ -22834,7 +22855,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             })(this);
             return;
         }
-        if (this.message_input.at_button.enter_key_event_fired) {
+        if (!Dash.IsMobile && this.message_input.at_button.enter_key_event_fired) {
             this.message_input.at_button.enter_key_event_fired = false;
             return;
         }
@@ -22842,7 +22863,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             text,
             null,
             null,
-            false,
+            Dash.IsMobile,  // Align right on mobile, left on desktop
             true,
             true,
             null,
@@ -22883,18 +22904,26 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         var css = {
             "display": "flex",
             "height": Dash.Size.RowHeight,
-            "background": "none",
+            "background": Dash.IsMobile ? Dash.Color.GetVerticalGradient("white", this.color.Background) : "none",
             "flex": "none"  // Don't allow this.html to flex in its parent container
         };
         if (Dash.IsMobile) {
-            css["border-top"] = "1px solid " + this.color.Pinstripe;
             css["padding-top"] = Dash.Size.Padding * 0.5;
+            css["margin-left"] = -Dash.Size.Padding * 0.5;
+            css["margin-right"] = -Dash.Size.Padding * 0.5;
+            css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
         }
         this.html = Dash.Gui.GetHTMLContext("", css, this.color);
         this.add_pen_icon();
         this.add_input();
         if (this.at_combo_options) {
-            this.add_at_button();
+            if (Dash.IsMobile) {
+                this.add_mobile_at_icon();
+                this.add_mobile_at_combo();
+            }
+            else {
+                this.add_desktop_at_button();
+            }
         }
         this.add_submit_button();
     };
@@ -22930,12 +22959,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.input.DisableBlurSubmit();
         if (!Dash.IsMobile) {
             this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+            this.input.SetOnChange(this.on_input, this);
         }
-        this.input.SetOnChange(this.on_input, this);
+
         this.html.append(this.input.html);
     };
+    // Expand the combo if user typed "@", but hide it if they keep typing or backspace
     this.on_input = function () {
-        // Expand the combo if user typed "@", but hide it if they keep typing or backspace
         if (this.Text().endsWith("@")) {
             this.at_button.ShowTray();
         }
@@ -22945,7 +22975,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             }
         }
     };
-    this.add_at_button = function () {
+    this.add_desktop_at_button = function () {
         var labels = [];
         for (var option of this.at_combo_options) {
             var label_text = option["label_text"] || option["display_name"];
@@ -22972,17 +23002,55 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.at_button.DisableFlash();
         this.at_button.SetListVerticalOffset(-(this.at_button.html.height() + Dash.Size.Padding));
         this.at_button.html.attr("title", "Mention");
-        if (Dash.IsMobile) {
-            this.at_button.html.css({
-                "margin-left": -(Dash.Size.Padding * 0.5),
-                "margin-top": -(Dash.Size.Padding * 0.2)
-            });
-        }
         this.html.append(this.at_button.html);
     };
-    this.on_combo_changed = function (selected_combo) {
+    this.add_mobile_at_icon = function () {
+        var icon = new Dash.Gui.Icon(this.color, "at_sign", Dash.Size.RowHeight * 0.68, 1, Dash.Color.Mobile.AccentPrimary);
+        icon.html.css({
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.6,
+            "right": Dash.Size.Padding * 3.25
+        });
+        this.html.append(icon.html);
+    };
+    this.add_mobile_at_combo = function () {
+        this.mobile_at_combo = new Dash.Mobile.Combo(
+            this.color,
+            {"none": " ", ...this.at_combo_options},
+            this,
+            this.on_combo_changed
+        );
+        var size = Dash.Size.RowHeight;
+        this.mobile_at_combo.html.css({
+            "width": size,
+            "height": size,
+            "line-height": size + "px",
+            "min-width": size,
+            "max-width": size,
+            "appearance": "none",
+            "outline": "none",
+            "margin-top": -(Dash.Size.Padding * 0.3),
+            "margin-left": -(Dash.Size.Padding * 0.3),
+            "border": "none"
+        });
+        this.html.append(this.mobile_at_combo.html);
+    };
+    this.on_combo_changed = function (selection) {
+        if (Dash.IsMobile) {
+            if (selection === "none") {
+                return;
+            }
+            this.mobile_at_combo.SetSelection("none");
+        }
+        var label;
         var new_text = "";
         var old_text = this.Text();
+        if (Dash.IsMobile) {
+            label = this.at_combo_options[selection];
+        }
+        else {
+            label = selection["label_text"] || selection["display_name"];
+        }
         if (old_text.endsWith("@")) {
             old_text = old_text.substring(0, old_text.length - 1);
         }
@@ -22990,7 +23058,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         if (old_text && old_text.length > 0 && !old_text.endsWith(" ")) {
             new_text += " ";
         }
-        new_text += "@" + (selected_combo["label_text"] || selected_combo["display_name"]) + " ";
+        new_text += "@" + (label) + " ";
         this.SetText(new_text);
         this.Focus();
     };
@@ -23005,7 +23073,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         var css = {
             "height": Dash.Size.RowHeight,
             "margin-left": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 1),
-            "margin-right": Dash.Size.Padding * 0.3
+            "margin-right": Dash.Size.Padding * (Dash.IsMobile ? 0.8 : 0.3)
         };
         if (Dash.IsMobile) {
             css["margin-top"] = -(Dash.Size.Padding * 0.15);
@@ -23025,7 +23093,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         );
         var css = {
             "height": Dash.Size.RowHeight,
-            "margin-left": Dash.IsMobile ? 0 : Dash.Size.Padding * 0.25,
+            "margin-left": Dash.IsMobile ? Dash.Size.Padding * 0.5 : Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 0),
             "pointer-events": "none",
             "transform": "scale(-1, 1)"  // Flip the icon horizontally
@@ -23167,12 +23235,14 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "margin": Dash.Size.Padding * 0.2,
                 "padding": Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 1),
                 "border-radius": Dash.Size.Padding,
-                "box-shadow": "none",
+                "box-shadow": Dash.IsMobile ? "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)" : "none",
                 "display": "flex",
                 // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
                 // which can't simply be fixed by making it different, because too many things would break.
-                // It would be a big re-work of a bunch of code. Remove this Darken call if/when that is resolved.
-                "background": this.color === Dash.Color.Light ? Dash.Color.Darken(this.color.Background, 20) : this.color.BackgroundRaised
+                // It would be a big re-work of a bunch of code. Remove this call if/when that is resolved.
+                "background": this.color === Dash.Color.Light ?
+                    (Dash.IsMobile ? "white" : Dash.Color.Darken(this.color.Background, 20)) :
+                    this.color.BackgroundRaised
             },
             this.color
         );
