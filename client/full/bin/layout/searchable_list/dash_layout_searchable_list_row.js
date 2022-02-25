@@ -97,8 +97,8 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         if (is_active) {
 
             this.html.css({
-                "background": "rgba(255, 255, 255, 0.5)",
                 "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
+                "background": Dash.Color.Light.AccentGood,
             });
 
             this.content_layer.css({
@@ -114,7 +114,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             });
 
             this.content_layer.css({
-                "opacity": 0.75,
+                "opacity": 0.6,
             });
 
         };

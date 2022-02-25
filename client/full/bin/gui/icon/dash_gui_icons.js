@@ -143,6 +143,7 @@ function DashGuiIcons (icon) {
         "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
         "remove_person":         new DashGuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash"),
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
+        "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"floppy-o"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),

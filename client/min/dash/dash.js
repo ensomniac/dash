@@ -26065,6 +26065,7 @@ function DashGuiIcons (icon) {
         "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
         "remove_person":         new DashGuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash"),
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
+        "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"floppy-o"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),
@@ -30886,8 +30887,8 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
     this.SetActive = function (is_active) {
         if (is_active) {
             this.html.css({
-                "background": "rgba(255, 255, 255, 0.5)",
                 "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
+                "background": Dash.Color.Light.AccentGood,
             });
             this.content_layer.css({
                 "opacity": 1.0,
@@ -30899,7 +30900,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
                 "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
             });
             this.content_layer.css({
-                "opacity": 0.75,
+                "opacity": 0.6,
             });
         };
     };
