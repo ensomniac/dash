@@ -24938,7 +24938,8 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
     };
     this.GetDataForKey = function (file_id, key) {
         if (key === "filename") {
-            return this.get_filename(this.get_file_data(file_id));
+            var file_data = this.get_file_data(file_id);
+            return this.get_filename(file_data) || file_data["id"];
         }
         var value = this.get_file_data(file_id)[key];
         if (key === "uploaded_on" || key === "modified_on") {
