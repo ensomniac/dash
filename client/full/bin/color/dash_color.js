@@ -16,7 +16,8 @@ function DashColor () {
 
     this.setup_color_sets = function () {
         this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
-        
+        this.Mobile.ButtonGradient = this.GetHorizontalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
+
         var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";

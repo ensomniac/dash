@@ -196,7 +196,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "border-radius": 0
         });
 
-        // TODO: This should also be editable (with this.has_privileges), but I don't think
+        // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
         //  the right things are in place on the back-end, like renaming the user's folder etc
         this.property_box.AddInput("email", "E-mail Address", "", null, false);
         
@@ -204,7 +204,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
 
         if (this.has_privileges) {
-            this.property_box.AddInput("password",    "Update Password", "", null, !this.modal_of);
+            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
         }
 
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
