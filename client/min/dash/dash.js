@@ -30824,6 +30824,11 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
     this.content_layer = $("<div></div>");
     this.hover         = $("<div></div>");
     this.display_name_label = null;
+    this.pending_update = null;
+    this.observer = null;
+    this.is_visible = false;
+    this.cached_draw_response = null;
+    this.pending_drawable = null;
     this.setup_styles = function () {
         this.html.append(this.hover);
         this.html.append(this.content_layer);
@@ -30847,20 +30852,52 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "opacity": 0,
         });
         this.setup_connections();
+        (function(self){
+            // This has to process on the next frame since
+            // the dom elements aren't attached this frame
+            requestAnimationFrame(function(){
+                self.initialize_visibility();
+            });
+        })(this);
+    };
+    this.initialize_visibility = function(){
+        if (this.observer) {
+            return;
+        };
+        this.observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting){
+                this.on_visible();
+            } else {
+                this.on_hidden();
+            }
+        });
+        this.observer.observe(this.html[0]);
+    };
+    this.on_visible = function () {
+        this.is_visible = true;
+        if (this.pending_update) {
+            this.pending_update = false;
+            this.cached_draw_response = this.pending_drawable(this.row_id);
+        };
+    };
+    this.on_hidden = function () {
+        this.is_visible = false;
     };
     this.SetContent = function (html) {
         this.content_layer.empty().append(html);
     };
     // Call to redraw / on new data
     this.Update = function () {
-        if (this.on_row_draw_callback) {
-            // Ryan, the rows were not previously updating in this case, so I updated this
-            // return this.update_display_name_label(this.on_row_draw_callback(this.row_id));
-            return this.on_row_draw_callback(this.row_id);
+        var search_term = null;
+        this.pending_drawable = this.on_row_draw_callback || this.update_display_name_label.bind(this);
+        if (this.visible) {
+            this.cached_draw_response = this.pending_drawable(this.row_id);
+            return this.cached_draw_response;
         }
         else {
-            return this.update_display_name_label();
-        }
+            this.pending_update = true;
+            return this.cached_draw_response || this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+        };
     };
     this.setup_display_name_label = function () {
         // The display name label is used if there is no callback to draw the
@@ -30871,11 +30908,10 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "line-height": Dash.Size.ButtonHeight + "px",
             "padding-left": Dash.Size.Padding * 0.5,
             "color": this.color.Text,
-            // "color": "red",
         });
         this.content_layer.empty().append(this.display_name_label);
     };
-    this.update_display_name_label = function (text="") {
+    this.update_display_name_label = function (row_id, text="") {
         if (!this.display_name_label) {
             this.setup_display_name_label();
         }
