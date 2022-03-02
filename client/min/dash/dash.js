@@ -17505,6 +17505,7 @@ function Dash () {
     this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
     this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
     this.Request          = this.Requests.Request.bind(this.Requests);
+    this.SendEmail        = this.Requests.SendEmail.bind(this.Requests);
     this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
     this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
     // |-------------------------------------------------------------------------------------------------------------|
@@ -18047,6 +18048,25 @@ function DashGui() {
             "box-shadow": "none",
             "background": "none",
         });
+    };
+    this.GetMobileNotificationIcon = function (size=null, parent_is_circle=true, color="red") {
+        if (!size) {
+            size = (Dash.Size.ButtonHeight - Dash.Size.Padding) * 0.25;  // Default for CardStackFooterButton
+        }
+        var icon = $("<div></div>");
+        var pos = parent_is_circle ? 0 : -(Dash.Size.Padding * 0.5);
+        icon.css({
+            "background": color,
+            "width": size,
+            "height": size,
+            "border-radius": size,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+            "border": "2px solid white",
+            "position": "absolute",
+            "top": pos,
+            "right": pos
+        });
+        return icon;
     };
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
@@ -18668,6 +18688,29 @@ function DashRequest () {
         };
         this.post();
     }
+    // This sends to Andrew/Ryan by default
+    this.SendEmail = function (message, subject="", endpoint="Api", f="send_email", binder=null, callback=null) {
+        if (!message) {
+            return;
+        }
+        var tag = Dash.Context["display_name"] + " Front-End Alert";
+        if (subject) {
+            subject = "(" + tag + ") " + subject;
+        }
+        else {
+            subject = tag;
+        }
+        this.Request(
+            binder || this,
+            callback || function () {},
+            endpoint,
+            {
+                "f": f,
+                "message": message,
+                "subject": subject
+            }
+        );
+    };
     this.TrackRequestFailureForID = function (req_id, max_allowed) {
         /**
          * This system (not in use by default) is a basic tracker for interval request failures, but it doesn't fully solve
@@ -19473,7 +19516,7 @@ function DashColor () {
     };
     this.setup_color_sets = function () {
         this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
-        
+        this.Mobile.ButtonGradient = this.GetHorizontalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
         var dark_bg_text = "rgb(245, 245, 245)";
         var light_bg_text = "rgb(30, 30, 30)";
         var button_color = "#4d505f";
@@ -28103,14 +28146,14 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "padding-left": this.img_box_size + Dash.Size.Padding,
             "border-radius": 0
         });
-        // TODO: This should also be editable (with this.has_privileges), but I don't think
+        // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
         //  the right things are in place on the back-end, like renaming the user's folder etc
         this.property_box.AddInput("email", "E-mail Address", "", null, false);
         
         this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
         this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
         if (this.has_privileges) {
-            this.property_box.AddInput("password",    "Update Password", "", null, !this.modal_of);
+            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
         }
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
@@ -31866,6 +31909,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.change_delay_ms = 1500;  // Same as DashGuiInput's autosave delay
     this.html = $("<div></div>");
     this.last_change_value = null;
+    this.submit_override_only = false;
     this.line_break_replacement = null;
     this.last_arrow_navigation_ts = null;
     this.border_radius = Dash.Size.BorderRadius * 0.5;
@@ -31910,6 +31954,15 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.SetLineBreakReplacement = function (value="") {
         this.line_break_replacement = value;
     };
+    this.Lock = function () {
+        this.textarea.css({
+            "color": this.color.StrokeLight,
+            "border": this.border_size.toString() + "px solid " + this.color.StrokeLight
+        });
+        this.textarea.prop("readOnly", true);
+        // Prevent navigating to locked box via tab
+        this.textarea[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
+    };
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
         var css = {
             "height": Dash.Size.RowHeight,
@@ -31924,11 +31977,14 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
         }
         this.textarea.css(css);
-        this.textarea.on("keydown",function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-            }
-        });
+        (function (self) {
+            self.textarea.on("keydown",function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    self.fire_change_cb(true);
+                }
+            });
+        })(this);
         // This shouldn't be necessary since we block the enter key, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
@@ -31937,76 +31993,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "height": height
         });
     };
-    this.setup_connections = function () {
-        // Important note:
-        // When testing on a desktop's mobile view, you can't select the text with the
-        // mouse in the traditional way, since it's simulating a mobile device. To select
-        // the text, click and hold to simulate a long press like you would on mobile.
-        (function (self) {
-            self.textarea.on("change", function () {
-                self.fire_change_cb();
-            });
-            self.textarea.on("input", function () {
-                self.fire_change_cb();
-            });
-            self.textarea.on("paste", function () {
-                self.fire_change_cb();
-            });
-            self.textarea.on("keydown",function (e) {
-                if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-                    self.last_arrow_navigation_ts = new Date();
-                }
-            });
-        })(this);
+    this.DisableAutoSubmit = function () {
+        this.submit_override_only = true;
     };
-    this.fire_change_cb = function () {
-        if (!this.on_change_cb) {
-            return;
-        }
-        var value = this.GetText();
-        if (this.last_change_value === value) {
-            return;
-        }
-        this.last_change_value = value;
-        if (!this.delay_change_cb) {
-            // This won't be null at this point, but just in case
-            if (this.on_change_cb) {
-                this.on_change_cb(value);
-            }
-            return;
-        }
-        this.last_change_ts = new Date();
-        if (this.change_timeout) {
-            clearTimeout(this.change_timeout);
-            this.change_timeout = null;
-        }
-        (function (self) {
-            self.change_timeout = setTimeout(
-                function () {
-                    self._fire_change_cb();
-                },
-                self.change_delay_ms
-            );
-        })(this);
-    };
-    this._fire_change_cb = function () {
-        var now = new Date();
-        // Reset attempt if, after a change, the user navigated using the arrow keys during the time window
-        if (this.last_arrow_navigation_ts !== null) {
-            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
-                if (now - this.last_arrow_navigation_ts < this.change_delay_ms) {
-                    this.fire_change_cb();
-                    return;
-                }
-            }
-        }
-        // This won't be null at this point, but just in case
-        if (this.on_change_cb) {
-            this.flash();
-            this.on_change_cb(this.GetText());
-        }
-    };
-    this.flash = function () {
+    this.Flash = function () {
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
             this.flash_highlight.css({
@@ -32034,6 +32024,86 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 }
             );
         })(this);
+    };
+    this.setup_connections = function () {
+        // Important note:
+        // When testing on a desktop's mobile view, you can't select the text with the
+        // mouse in the traditional way, since it's simulating a mobile device. To select
+        // the text, click and hold to simulate a long press like you would on mobile.
+        (function (self) {
+            self.textarea.on("change", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("input", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("paste", function () {
+                self.fire_change_cb();
+            });
+            self.textarea.on("keydown",function (e) {
+                if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                    self.last_arrow_navigation_ts = new Date();
+                }
+            });
+        })(this);
+    };
+    this.fire_change_cb = function (submit_override=false) {
+        if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
+            return;
+        }
+        var value = this.GetText();
+        if (!submit_override && this.last_change_value === value) {
+            return;
+        }
+        this.last_change_value = value;
+        if (submit_override || !this.delay_change_cb) {
+            if (submit_override) {
+                this.clear_change_timeout();
+            }
+            this.fire_on_change_cb(submit_override, value);
+            return;
+        }
+        this.last_change_ts = new Date();
+        this.clear_change_timeout();
+        (function (self) {
+            self.change_timeout = setTimeout(
+                function () {
+                    self._fire_change_cb();
+                },
+                self.change_delay_ms
+            );
+        })(this);
+    };
+    this.clear_change_timeout = function () {
+        if (this.change_timeout) {
+            clearTimeout(this.change_timeout);
+            this.change_timeout = null;
+        }
+    };
+    this._fire_change_cb = function () {
+        var now = new Date();
+        // Reset attempt if, after a change, the user navigated using the arrow keys during the time window
+        if (this.last_arrow_navigation_ts !== null) {
+            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
+                if (now - this.last_arrow_navigation_ts < this.change_delay_ms) {
+                    this.fire_change_cb();
+                    return;
+                }
+            }
+        }
+        this.fire_on_change_cb(true);
+    };
+    this.fire_on_change_cb = function (flash=false, text="") {
+        if (!this.on_change_cb) {
+            return;
+        }
+        if (!text) {
+            text = this.GetText();
+        }
+        if (flash) {
+            this.Flash();
+        }
+        this.on_change_cb(text, this);
     };
     this.setup_styles();
 }
@@ -32090,12 +32160,22 @@ function DashMobileCard (stack) {
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
-    this.SetLeftPullCallback = function (callback, icon) {
+    this.SetLeftPullCallback = function (callback, icon_name) {
         this.left_pull_callback = callback;
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
         }
-        this.left_pull_icon = icon;
+        this.left_pull_icon = icon_name;
+    };
+    this.SetRightPullCallback = function (callback, icon_name) {
+        this.right_pull_callback = callback;
+        if (!this.pull_mechanic_ready) {
+            this.setup_pull_mechanic();
+        }
+        this.right_pull_icon = icon_name;
+        if (this.right_pull_area) {
+            this.right_pull_area.UpdateIcon(icon_name);
+        }
     };
     this.SetText = function (text) {
         this.content.text(text);
@@ -32367,14 +32447,12 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.html = null;
     this.stack = null;
     this.profile_button = null;
-    this.user_image_upload_button = null;
     this.color = this.binder.color || Dash.Color.Dark;
     this.setup_styles = function () {
         this.stack = new Dash.Mobile.CardStack(this);
         this.html = this.stack.html;
         this.setup_banner();
-        this.setup_property_box();
-        this.add_user_image_upload_button();
+        this.add_user_settings_card();
         if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
@@ -32382,17 +32460,21 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     };
     this.setup_banner = function () {
         this.user_banner = this.stack.AddBanner();
-        this.user_banner.SetHeadlineText(Dash.User.GetDisplayName(), "User Settings");
-        this.user_banner.headline.label_top.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
-        this.user_banner.headline.label_bottom.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
+        this.user_banner.SetMarginMode(7);
         this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
         this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
         this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
+        this.user_banner.header_row.right_icon.AddShadow("1px 1px 3px rgba(0, 0, 0, 1)");
         this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
+        this.profile_button.AddUploader(
+            this,
+            this.on_user_img_uploaded,
+            "Users",
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.get_data())
+            }
+        );
     };
     this.add_context_logo_img = function () {
         if (!this.context_logo_img_url) {
@@ -32409,46 +32491,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         });
         this.stack.AddHTML(image);
     };
-    this.reload = function () {
-        location.reload();
-    };
-    this.exit_stack = function () {
-        if (this.on_exit_callback) {
-            this.on_exit_callback();
-        }
-    };
-    this.add_user_image_upload_button = function () {
-        this.user_image_upload_button = new Dash.Gui.Button(
-            "Upload Image",
-            this.on_user_img_uploaded,
-            this,
-            this.color
-        );
-        this.profile_button.icon_circle.append(this.user_image_upload_button.html);
-        this.user_image_upload_button.SetFileUploader(
-            "Users",
-            {
-                "f": "upload_image",
-                "user_data": JSON.stringify(this.user_data)
-            }
-        );
-        this.user_image_upload_button.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto",
-            "background": "rgba(0, 0, 0, 0)"
-        });
-        this.user_image_upload_button.highlight.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto"
-        });
-        this.user_image_upload_button.label.css({
-            "opacity": 0
-        });
-    };
     this.on_user_img_uploaded = function (response) {
         if (response.timeStamp) {
             return;
@@ -32460,28 +32502,77 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.user_data["img"] = response["img"];
         this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
     };
-    this.setup_property_box = function () {
-        this.property_box = new Dash.Gui.PropertyBox(
-            this,
-            this.get_data,
-            this.set_data,
-            "Users",
-            this.user_data["email"]
-        );
-        this.property_box.AddInput("first_name", "First Name", "", null, true);
-        this.property_box.AddInput("last_name", "Last Name", "", null, true);
-        this.property_box.AddInput("email", "E-mail Address", "", null, false);
-        this.property_box.AddInput("password", "Update Password", "", null, true);
-        this.stack.AddHTML(this.property_box.html);
+    this.add_user_settings_card = function () {
+        var card = this.stack.AddCard();
+        card.AddLabel("User Settings");
+        this.add_input(card, "first_name");
+        this.add_input(card, "last_name");
+        this.add_input(card, "email", false);
+        this.add_input(card, "password");
+    };
+    this.add_input = function (card, key, can_edit=true) {
+        var text_box = (function (self) {
+            return new Dash.Mobile.TextBox(
+                self.color,
+                key === "password" ? "Update Password" : key.Title(),
+                this,
+                function (value, text_box) {
+                    self.set_data(key, value, text_box);
+                },
+                true
+            );
+        })(this);
+        text_box.SetText(this.get_data()[key]);
+        text_box.StyleAsRow();
+        if (key.includes("password")) {
+            text_box.DisableAutoSubmit();
+        }
+        if (!can_edit) {
+            text_box.Lock();
+        }
+        card.AddHTML(text_box.html);
     };
     this.log_user_out = function () {
         Dash.Logout();
     };
+    this.reload = function () {
+        location.reload();
+    };
+    this.exit_stack = function () {
+        if (this.on_exit_callback) {
+            this.on_exit_callback();
+        }
+    };
     this.get_data = function () {
         return this.user_data;
     };
-    this.set_data = function () {
-        console.log("(set data)");
+    this.set_data = function (key, value, text_box) {
+        var email = this.get_data()["email"];
+        var params = {
+            "f": "set_property",
+            "key": key,
+            "value": value,
+            "obj_id": email
+        };
+        if (key.includes("password")) {
+            params["f"] = "update_password";
+            params["p"] = value;
+            params["email"] = email;
+        }
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    Dash.Validate.Response(response);
+                    console.log("User settings updated:", response);
+                    if (params["f"] === "update_password") {
+                        text_box.SetText("");
+                    }
+                },
+                "Users",
+                params
+            );
+        })(this);
     };
     this.on_profile_changed = function () {
         // Dummy/placeholder function
@@ -32632,9 +32723,21 @@ function DashMobileCardPullIcon (card, icon_name) {
             "pointer-events": "none",
             "border-radius": this.Size * 0.5
         });
-        if (this.icon_name) {
-            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
-            this.html.append(this.icon.html);
+        this.add_icon();
+    };
+    this.UpdateIcon = function (icon_name="") {
+        if (icon_name) {
+            this.icon_name = icon_name;
+            if (this.icon) {
+                this.icon.SetIcon(this.icon_name);
+            }
+            else {
+                this.add_icon();
+            }
+        }
+        else {
+            this.icon.html.remove();
+            this.icon = null;
         }
     };
     this.OnDrag = function (norm_t) {
@@ -32659,6 +32762,13 @@ function DashMobileCardPullIcon (card, icon_name) {
             "opacity": norm_t,
             "background": color
         });
+    };
+    this.add_icon = function () {
+        if (!this.icon_name || this.icon) {
+            return;
+        }
+        this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+        this.html.append(this.icon.html);
     };
     this.setup_styles();
 }
@@ -33092,7 +33202,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": Dash.Color.Mobile.AccentPrimary,
+            "background": Dash.Color.Mobile.ButtonGradient,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.5,
@@ -33166,19 +33276,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
         }
     };
     this.create_notification_icon = function () {
-        var icon_size = this.height * 0.25;
-        this.notification_icon = $("<div></div>");
-        this.notification_icon.css({
-            "background": "red",
-            "position": "absolute",
-            "top": 0,
-            "right": 0,
-            "width": icon_size,
-            "height": icon_size,
-            "border-radius": icon_size,
-            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
-            "border": "2px solid white"
-        });
+        this.notification_icon = Dash.Gui.GetMobileNotificationIcon(this.height * 0.25);
         this.html.append(this.notification_icon);
     };
     this.setup_styles();
@@ -33351,15 +33449,17 @@ function DashMobileCardStackBanner (stack) {
         //  4: Slim version of mode 0
         //  5: Slimmer version of mode 0
         //  6: Slimmest version of mode 0
+        // Alternate default/auto modes:
+        // 7: Header and footer version for when not using a double-lined headline that size banner is desired
         this.skirt_bottom_rest = (mode === 2 || mode === 3) ? -(this.FooterHeight - (this.FooterButtonWidth * 0.5)) :
-                                 Dash.Size.ButtonHeight * (mode === 1 ? 2 : mode === 4 ? 0.65 : mode === 5 ? 0.35 : mode === 6 ? 0.2 : 1);
+                                 Dash.Size.ButtonHeight * (mode === 1 ? 2 : mode === 4 ? 0.65 : mode === 5 ? 0.35 : mode === 6 ? 0.2 : mode === 7 ? -1.35 : 1);
         this.headline.SetTopBottomMargins(
-            Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : (mode === 3 || mode === 5) ? 1 : mode === 6 ? 0.65 : 2),
-            (Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : mode === 3 ? 1 : 0)) +
+            Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : (mode === 3 || mode === 5) ? 1 : mode === 6 ? 0.65 : mode === 7 ? 5 : 2),
+            (Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : mode === 3 ? 1 : mode === 7 ? 2 : 0)) +
                 (mode === 2 ? Dash.Size.ButtonHeight : 0)  // To account for the weight of the header
         );
         this.html.css({
-            "margin-bottom": mode === 1 ? Dash.Size.ButtonHeight : (mode === 2 || mode === 3) ? Dash.Size.Padding : 0
+            "margin-bottom": mode === 1 ? Dash.Size.ButtonHeight : (mode === 2 || mode === 3 || mode === 7) ? Dash.Size.Padding : 0
         });
         this.background_skirt.css({
             "bottom": -this.skirt_bottom_rest
@@ -33749,7 +33849,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     };
     this.setup_connections = function () {
         (function (self) {
-            self.html.mousedown(function (event) {
+            self.icon_circle.mousedown(function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;

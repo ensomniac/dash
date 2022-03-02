@@ -215,17 +215,20 @@ function DashMobileCardStackBanner (stack) {
         //  5: Slimmer version of mode 0
         //  6: Slimmest version of mode 0
 
+        // Alternate default/auto modes:
+        // 7: Header and footer version for when not using a double-lined headline that size banner is desired
+
         this.skirt_bottom_rest = (mode === 2 || mode === 3) ? -(this.FooterHeight - (this.FooterButtonWidth * 0.5)) :
-                                 Dash.Size.ButtonHeight * (mode === 1 ? 2 : mode === 4 ? 0.65 : mode === 5 ? 0.35 : mode === 6 ? 0.2 : 1);
+                                 Dash.Size.ButtonHeight * (mode === 1 ? 2 : mode === 4 ? 0.65 : mode === 5 ? 0.35 : mode === 6 ? 0.2 : mode === 7 ? -1.35 : 1);
 
         this.headline.SetTopBottomMargins(
-            Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : (mode === 3 || mode === 5) ? 1 : mode === 6 ? 0.65 : 2),
-            (Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : mode === 3 ? 1 : 0)) +
+            Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : (mode === 3 || mode === 5) ? 1 : mode === 6 ? 0.65 : mode === 7 ? 5 : 2),
+            (Dash.Size.Padding * ((mode === 1 || mode === 2) ? 0.25 : mode === 3 ? 1 : mode === 7 ? 2 : 0)) +
                 (mode === 2 ? Dash.Size.ButtonHeight : 0)  // To account for the weight of the header
         );
 
         this.html.css({
-            "margin-bottom": mode === 1 ? Dash.Size.ButtonHeight : (mode === 2 || mode === 3) ? Dash.Size.Padding : 0
+            "margin-bottom": mode === 1 ? Dash.Size.ButtonHeight : (mode === 2 || mode === 3 || mode === 7) ? Dash.Size.Padding : 0
         });
 
         this.background_skirt.css({

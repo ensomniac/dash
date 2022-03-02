@@ -32,7 +32,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "height": this.height,
             "width": "auto",
             "flex-grow": 1,
-            "background": Dash.Color.Mobile.AccentPrimary,
+            "background": Dash.Color.Mobile.ButtonGradient,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.5,
@@ -125,21 +125,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     };
 
     this.create_notification_icon = function () {
-        var icon_size = this.height * 0.25;
-
-        this.notification_icon = $("<div></div>");
-
-        this.notification_icon.css({
-            "background": "red",
-            "position": "absolute",
-            "top": 0,
-            "right": 0,
-            "width": icon_size,
-            "height": icon_size,
-            "border-radius": icon_size,
-            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
-            "border": "2px solid white"
-        });
+        this.notification_icon = Dash.Gui.GetMobileNotificationIcon(this.height * 0.25);
 
         this.html.append(this.notification_icon);
     };

@@ -61,14 +61,28 @@ function DashMobileCard (stack) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
 
-    this.SetLeftPullCallback = function (callback, icon) {
+    this.SetLeftPullCallback = function (callback, icon_name) {
         this.left_pull_callback = callback;
 
         if (!this.pull_mechanic_ready) {
             this.setup_pull_mechanic();
         }
 
-        this.left_pull_icon = icon;
+        this.left_pull_icon = icon_name;
+    };
+
+    this.SetRightPullCallback = function (callback, icon_name) {
+        this.right_pull_callback = callback;
+
+        if (!this.pull_mechanic_ready) {
+            this.setup_pull_mechanic();
+        }
+
+        this.right_pull_icon = icon_name;
+
+        if (this.right_pull_area) {
+            this.right_pull_area.UpdateIcon(icon_name);
+        }
     };
 
     this.SetText = function (text) {

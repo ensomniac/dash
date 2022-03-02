@@ -135,6 +135,17 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     return SendEmail(subject, notify_email_list, msg, error, sender_email, sender_name, strict_notify)
 
 
+def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
+    from .comms import SendEmail
+
+    return SendEmail(
+        subject="Debug/Test",
+        notify_email_list=[recipient],
+        strict_notify=True,
+        msg=msg
+    )
+
+
 # ------------------------------------------------- MEMORY --------------------------------------------------
 class _Memory:
     _usr_token: str

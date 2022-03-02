@@ -7,7 +7,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.html = null;
     this.stack = null;
     this.profile_button = null;
-    this.user_image_upload_button = null;
     this.color = this.binder.color || Dash.Color.Dark;
 
     this.setup_styles = function () {
@@ -15,8 +14,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.html = this.stack.html;
 
         this.setup_banner();
-        this.setup_property_box();
-        this.add_user_image_upload_button();
+        this.add_user_settings_card();
 
         if (this.user_data["img"] && this.user_data["img"]["thumb_url"]) {
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
@@ -28,21 +26,24 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.setup_banner = function () {
         this.user_banner = this.stack.AddBanner();
 
-        this.user_banner.SetHeadlineText(Dash.User.GetDisplayName(), "User Settings");
-
-        this.user_banner.headline.label_top.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
-
-        this.user_banner.headline.label_bottom.css({
-            "text-shadow": "1px 1px 2px rgba(0, 0, 0, 1)"
-        });
-
+        this.user_banner.SetMarginMode(7);
         this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
         this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
         this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
 
+        this.user_banner.header_row.right_icon.AddShadow("1px 1px 3px rgba(0, 0, 0, 1)");
+
         this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
+
+        this.profile_button.AddUploader(
+            this,
+            this.on_user_img_uploaded,
+            "Users",
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.get_data())
+            }
+        );
     };
 
     this.add_context_logo_img = function () {
@@ -64,54 +65,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.stack.AddHTML(image);
     };
 
-    this.reload = function () {
-        location.reload();
-    };
-
-    this.exit_stack = function () {
-        if (this.on_exit_callback) {
-            this.on_exit_callback();
-        }
-    };
-
-    this.add_user_image_upload_button = function () {
-        this.user_image_upload_button = new Dash.Gui.Button(
-            "Upload Image",
-            this.on_user_img_uploaded,
-            this,
-            this.color
-        );
-
-        this.profile_button.icon_circle.append(this.user_image_upload_button.html);
-
-        this.user_image_upload_button.SetFileUploader(
-            "Users",
-            {
-                "f": "upload_image",
-                "user_data": JSON.stringify(this.user_data)
-            }
-        );
-
-        this.user_image_upload_button.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto",
-            "background": "rgba(0, 0, 0, 0)"
-        });
-
-        this.user_image_upload_button.highlight.css({
-            "position": "absolute",
-            "inset": 0,
-            "width": "auto",
-            "height": "auto"
-        });
-
-        this.user_image_upload_button.label.css({
-            "opacity": 0
-        });
-    };
-
     this.on_user_img_uploaded = function (response) {
         if (response.timeStamp) {
             return;
@@ -128,33 +81,94 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
     };
 
-    this.setup_property_box = function () {
-        this.property_box = new Dash.Gui.PropertyBox(
-            this,
-            this.get_data,
-            this.set_data,
-            "Users",
-            this.user_data["email"]
-        );
+    this.add_user_settings_card = function () {
+        var card = this.stack.AddCard();
 
-        this.property_box.AddInput("first_name", "First Name", "", null, true);
-        this.property_box.AddInput("last_name", "Last Name", "", null, true);
-        this.property_box.AddInput("email", "E-mail Address", "", null, false);
-        this.property_box.AddInput("password", "Update Password", "", null, true);
+        card.AddLabel("User Settings");
 
-        this.stack.AddHTML(this.property_box.html);
+        this.add_input(card, "first_name");
+        this.add_input(card, "last_name");
+        this.add_input(card, "email", false);
+        this.add_input(card, "password");
+    };
+
+    this.add_input = function (card, key, can_edit=true) {
+        var text_box = (function (self) {
+            return new Dash.Mobile.TextBox(
+                self.color,
+                key === "password" ? "Update Password" : key.Title(),
+                this,
+                function (value, text_box) {
+                    self.set_data(key, value, text_box);
+                },
+                true
+            );
+        })(this);
+
+        text_box.SetText(this.get_data()[key]);
+        text_box.StyleAsRow();
+
+        if (key.includes("password")) {
+            text_box.DisableAutoSubmit();
+        }
+
+        if (!can_edit) {
+            text_box.Lock();
+        }
+
+        card.AddHTML(text_box.html);
     };
 
     this.log_user_out = function () {
         Dash.Logout();
     };
 
+    this.reload = function () {
+        location.reload();
+    };
+
+    this.exit_stack = function () {
+        if (this.on_exit_callback) {
+            this.on_exit_callback();
+        }
+    };
+
     this.get_data = function () {
         return this.user_data;
     };
 
-    this.set_data = function () {
-        console.log("(set data)");
+    this.set_data = function (key, value, text_box) {
+        var email = this.get_data()["email"];
+
+        var params = {
+            "f": "set_property",
+            "key": key,
+            "value": value,
+            "obj_id": email
+        };
+
+        if (key.includes("password")) {
+            params["f"] = "update_password";
+            params["p"] = value;
+            params["email"] = email;
+        }
+
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    Dash.Validate.Response(response);
+
+                    console.log("User settings updated:", response);
+
+                    if (params["f"] === "update_password") {
+                        text_box.SetText("");
+                    }
+                },
+                "Users",
+                params
+            );
+        })(this);
     };
 
     this.on_profile_changed = function () {

@@ -51,6 +51,34 @@ function DashRequest () {
         this.post();
     }
 
+    // This sends to Andrew/Ryan by default
+    this.SendEmail = function (message, subject="", endpoint="Api", f="send_email", binder=null, callback=null) {
+        if (!message) {
+            return;
+        }
+
+        var tag = Dash.Context["display_name"] + " Front-End Alert";
+
+        if (subject) {
+            subject = "(" + tag + ") " + subject;
+        }
+
+        else {
+            subject = tag;
+        }
+
+        this.Request(
+            binder || this,
+            callback || function () {},
+            endpoint,
+            {
+                "f": f,
+                "message": message,
+                "subject": subject
+            }
+        );
+    };
+
     this.TrackRequestFailureForID = function (req_id, max_allowed) {
         /**
          * This system (not in use by default) is a basic tracker for interval request failures, but it doesn't fully solve

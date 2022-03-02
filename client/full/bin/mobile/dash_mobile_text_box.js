@@ -12,6 +12,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.change_delay_ms = 1500;  // Same as DashGuiInput's autosave delay
     this.html = $("<div></div>");
     this.last_change_value = null;
+    this.submit_override_only = false;
     this.line_break_replacement = null;
     this.last_arrow_navigation_ts = null;
     this.border_radius = Dash.Size.BorderRadius * 0.5;
@@ -67,6 +68,18 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.line_break_replacement = value;
     };
 
+    this.Lock = function () {
+        this.textarea.css({
+            "color": this.color.StrokeLight,
+            "border": this.border_size.toString() + "px solid " + this.color.StrokeLight
+        });
+
+        this.textarea.prop("readOnly", true);
+
+        // Prevent navigating to locked box via tab
+        this.textarea[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
+    };
+
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
         var css = {
             "height": Dash.Size.RowHeight,
@@ -84,11 +97,15 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
         this.textarea.css(css);
 
-        this.textarea.on("keydown",function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-            }
-        });
+        (function (self) {
+            self.textarea.on("keydown",function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+
+                    self.fire_change_cb(true);
+                }
+            });
+        })(this);
 
         // This shouldn't be necessary since we block the enter key, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
@@ -100,95 +117,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
     };
 
-    this.setup_connections = function () {
-        // Important note:
-        // When testing on a desktop's mobile view, you can't select the text with the
-        // mouse in the traditional way, since it's simulating a mobile device. To select
-        // the text, click and hold to simulate a long press like you would on mobile.
-
-        (function (self) {
-            self.textarea.on("change", function () {
-                self.fire_change_cb();
-            });
-
-            self.textarea.on("input", function () {
-                self.fire_change_cb();
-            });
-
-            self.textarea.on("paste", function () {
-                self.fire_change_cb();
-            });
-
-            self.textarea.on("keydown",function (e) {
-                if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-                    self.last_arrow_navigation_ts = new Date();
-                }
-            });
-        })(this);
+    this.DisableAutoSubmit = function () {
+        this.submit_override_only = true;
     };
 
-    this.fire_change_cb = function () {
-        if (!this.on_change_cb) {
-            return;
-        }
-
-        var value = this.GetText();
-
-        if (this.last_change_value === value) {
-            return;
-        }
-
-        this.last_change_value = value;
-
-        if (!this.delay_change_cb) {
-            // This won't be null at this point, but just in case
-            if (this.on_change_cb) {
-                this.on_change_cb(value);
-            }
-
-            return;
-        }
-
-        this.last_change_ts = new Date();
-
-        if (this.change_timeout) {
-            clearTimeout(this.change_timeout);
-
-            this.change_timeout = null;
-        }
-
-        (function (self) {
-            self.change_timeout = setTimeout(
-                function () {
-                    self._fire_change_cb();
-                },
-                self.change_delay_ms
-            );
-        })(this);
-    };
-
-    this._fire_change_cb = function () {
-        var now = new Date();
-
-        // Reset attempt if, after a change, the user navigated using the arrow keys during the time window
-        if (this.last_arrow_navigation_ts !== null) {
-            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
-                if (now - this.last_arrow_navigation_ts < this.change_delay_ms) {
-                    this.fire_change_cb();
-
-                    return;
-                }
-            }
-        }
-
-        // This won't be null at this point, but just in case
-        if (this.on_change_cb) {
-            this.flash();
-            this.on_change_cb(this.GetText());
-        }
-    };
-
-    this.flash = function () {
+    this.Flash = function () {
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
 
@@ -220,6 +153,111 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 }
             );
         })(this);
+    };
+
+    this.setup_connections = function () {
+        // Important note:
+        // When testing on a desktop's mobile view, you can't select the text with the
+        // mouse in the traditional way, since it's simulating a mobile device. To select
+        // the text, click and hold to simulate a long press like you would on mobile.
+
+        (function (self) {
+            self.textarea.on("change", function () {
+                self.fire_change_cb();
+            });
+
+            self.textarea.on("input", function () {
+                self.fire_change_cb();
+            });
+
+            self.textarea.on("paste", function () {
+                self.fire_change_cb();
+            });
+
+            self.textarea.on("keydown",function (e) {
+                if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                    self.last_arrow_navigation_ts = new Date();
+                }
+            });
+        })(this);
+    };
+
+    this.fire_change_cb = function (submit_override=false) {
+        if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
+            return;
+        }
+
+        var value = this.GetText();
+
+        if (!submit_override && this.last_change_value === value) {
+            return;
+        }
+
+        this.last_change_value = value;
+
+        if (submit_override || !this.delay_change_cb) {
+            if (submit_override) {
+                this.clear_change_timeout();
+            }
+
+            this.fire_on_change_cb(submit_override, value);
+
+            return;
+        }
+
+        this.last_change_ts = new Date();
+
+        this.clear_change_timeout();
+
+        (function (self) {
+            self.change_timeout = setTimeout(
+                function () {
+                    self._fire_change_cb();
+                },
+                self.change_delay_ms
+            );
+        })(this);
+    };
+
+    this.clear_change_timeout = function () {
+        if (this.change_timeout) {
+            clearTimeout(this.change_timeout);
+
+            this.change_timeout = null;
+        }
+    };
+
+    this._fire_change_cb = function () {
+        var now = new Date();
+
+        // Reset attempt if, after a change, the user navigated using the arrow keys during the time window
+        if (this.last_arrow_navigation_ts !== null) {
+            if (this.last_change_ts < this.last_arrow_navigation_ts < now) {
+                if (now - this.last_arrow_navigation_ts < this.change_delay_ms) {
+                    this.fire_change_cb();
+
+                    return;
+                }
+            }
+        }
+
+        this.fire_on_change_cb(true);
+    };
+
+    this.fire_on_change_cb = function (flash=false, text="") {
+        if (!this.on_change_cb) {
+            return;
+        }
+
+        if (!text) {
+            text = this.GetText();
+        }
+
+        if (flash) {
+            this.Flash();
+        }
+
+        this.on_change_cb(text, this);
     };
 
     this.setup_styles();
