@@ -18049,6 +18049,25 @@ function DashGui() {
             "background": "none",
         });
     };
+    this.GetMobileNotificationIcon = function (size=null, parent_is_circle=true, color="red") {
+        if (!size) {
+            size = (Dash.Size.ButtonHeight - Dash.Size.Padding) * 0.25;  // Default for CardStackFooterButton
+        }
+        var icon = $("<div></div>");
+        var pos = parent_is_circle ? 0 : -(Dash.Size.Padding * 0.5);
+        icon.css({
+            "background": color,
+            "width": size,
+            "height": size,
+            "border-radius": size,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+            "border": "2px solid white",
+            "position": "absolute",
+            "top": pos,
+            "right": pos
+        });
+        return icon;
+    };
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;
@@ -32102,8 +32121,8 @@ function DashMobileCard (stack) {
         this.AddHTML(label);
         return label;
     };
-    this.PullToDelete = function (callback, icon_name="trash_solid") {
-        this.SetLeftPullCallback(callback, icon_name);
+    this.PullToDelete = function (callback) {
+        this.SetLeftPullCallback(callback, "trash_solid");
     };
     this.SetLeftPullCallback = function (callback, icon_name) {
         this.left_pull_callback = callback;
@@ -32111,6 +32130,16 @@ function DashMobileCard (stack) {
             this.setup_pull_mechanic();
         }
         this.left_pull_icon = icon_name;
+    };
+    this.SetRightPullCallback = function (callback, icon_name) {
+        this.right_pull_callback = callback;
+        if (!this.pull_mechanic_ready) {
+            this.setup_pull_mechanic();
+        }
+        this.right_pull_icon = icon_name;
+        if (this.right_pull_area) {
+            this.right_pull_area.UpdateIcon(icon_name);
+        }
     };
     this.SetText = function (text) {
         this.content.text(text);
@@ -32658,9 +32687,21 @@ function DashMobileCardPullIcon (card, icon_name) {
             "pointer-events": "none",
             "border-radius": this.Size * 0.5
         });
-        if (this.icon_name) {
-            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
-            this.html.append(this.icon.html);
+        this.add_icon();
+    };
+    this.UpdateIcon = function (icon_name="") {
+        if (icon_name) {
+            this.icon_name = icon_name;
+            if (this.icon) {
+                this.icon.SetIcon(this.icon_name);
+            }
+            else {
+                this.add_icon();
+            }
+        }
+        else {
+            this.icon.html.remove();
+            this.icon = null;
         }
     };
     this.OnDrag = function (norm_t) {
@@ -32685,6 +32726,13 @@ function DashMobileCardPullIcon (card, icon_name) {
             "opacity": norm_t,
             "background": color
         });
+    };
+    this.add_icon = function () {
+        if (!this.icon_name || this.icon) {
+            return;
+        }
+        this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+        this.html.append(this.icon.html);
     };
     this.setup_styles();
 }
@@ -33192,19 +33240,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
         }
     };
     this.create_notification_icon = function () {
-        var icon_size = this.height * 0.25;
-        this.notification_icon = $("<div></div>");
-        this.notification_icon.css({
-            "background": "red",
-            "position": "absolute",
-            "top": 0,
-            "right": 0,
-            "width": icon_size,
-            "height": icon_size,
-            "border-radius": icon_size,
-            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
-            "border": "2px solid white"
-        });
+        this.notification_icon = Dash.Gui.GetMobileNotificationIcon(this.height * 0.25);
         this.html.append(this.notification_icon);
     };
     this.setup_styles();
@@ -33777,7 +33813,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     };
     this.setup_connections = function () {
         (function (self) {
-            self.html.mousedown(function (event) {
+            self.icon_circle.mousedown(function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;

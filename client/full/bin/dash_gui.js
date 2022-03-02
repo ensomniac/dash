@@ -404,6 +404,29 @@ function DashGui() {
         });
     };
 
+    this.GetMobileNotificationIcon = function (size=null, parent_is_circle=true, color="red") {
+        if (!size) {
+            size = (Dash.Size.ButtonHeight - Dash.Size.Padding) * 0.25;  // Default for CardStackFooterButton
+        }
+
+        var icon = $("<div></div>");
+        var pos = parent_is_circle ? 0 : -(Dash.Size.Padding * 0.5);
+
+        icon.css({
+            "background": color,
+            "width": size,
+            "height": size,
+            "border-radius": size,
+            "box-shadow": "0px 3px 5px 1px rgba(0, 0, 0, 0.2)",
+            "border": "2px solid white",
+            "position": "absolute",
+            "top": pos,
+            "right": pos
+        });
+
+        return icon;
+    };
+
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;

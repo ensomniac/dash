@@ -23,10 +23,26 @@ function DashMobileCardPullIcon (card, icon_name) {
             "border-radius": this.Size * 0.5
         });
 
-        if (this.icon_name) {
-            this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+        this.add_icon();
+    };
 
-            this.html.append(this.icon.html);
+    this.UpdateIcon = function (icon_name="") {
+        if (icon_name) {
+            this.icon_name = icon_name;
+
+            if (this.icon) {
+                this.icon.SetIcon(this.icon_name);
+            }
+
+            else {
+                this.add_icon();
+            }
+        }
+
+        else {
+            this.icon.html.remove();
+
+            this.icon = null;
         }
     };
 
@@ -60,6 +76,16 @@ function DashMobileCardPullIcon (card, icon_name) {
             "opacity": norm_t,
             "background": color
         });
+    };
+
+    this.add_icon = function () {
+        if (!this.icon_name || this.icon) {
+            return;
+        }
+
+        this.icon = new Dash.Gui.Icon(this.color, this.icon_name, this.Size, 0.5, "white");
+
+        this.html.append(this.icon.html);
     };
 
     this.setup_styles();
