@@ -69,10 +69,13 @@ function DashGui() {
         html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "background": color.BackgroundRaised,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+
+            // Temp workaround until Dash.Color.Light.BackgroundRaised issue is resolved
+            "background": color === Dash.Color.Light ? "white" : color.BackgroundRaised,
+
             ...optional_style_css
         });
 

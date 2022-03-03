@@ -17789,10 +17789,11 @@ function DashGui() {
         html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "background": color.BackgroundRaised,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            // Temp workaround until Dash.Color.Light.BackgroundRaised issue is resolved
+            "background": color === Dash.Color.Light ? "white" : color.BackgroundRaised,
             ...optional_style_css
         });
         return html;
@@ -26042,7 +26043,7 @@ function DashGuiIcons (icon) {
         "dot":                   new DashGuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle"),
         "dots_horizontal":       new DashGuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new DashGuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
-        "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
+        "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["regular"], "download"),
         "download_file":         new DashGuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
         "edit":                  new DashGuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new DashGuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
@@ -26141,12 +26142,12 @@ function DashGuiIcons (icon) {
         "unlink":                new DashGuiIconDefinition(this.icon, "Unlink", this.weight["regular"], "unlink"),
         "unlock":                new DashGuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "unlock"),
         "unlock_alt":            new DashGuiIconDefinition(this.icon, "Unlocked", this.weight["regular"], "lock-open"),
-        "upload":                new DashGuiIconDefinition(this.icon, "Upload", this.weight["light"], "upload"),
+        "upload":                new DashGuiIconDefinition(this.icon, "Upload", this.weight["regular"], "upload"),
         "upload_file":           new DashGuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
         "user":                  new DashGuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
         "video":                 new DashGuiIconDefinition(this.icon, "Video", this.weight["regular"], "video"),
         "view":                  new DashGuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
-        "web":                   new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "spider-web"),
+        "web":                   new DashGuiIconDefinition(this.icon, "Web", this.weight["solid"], "spider-web"),
         "windows_logo":          new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
         "wrestling_mask":        new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
@@ -31529,7 +31530,7 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         this.html.append(space);
     };
-    this.AddIconButton = function (icon_name, callback, width=null, data=null) {
+    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null) {
         var obj_index = this.objects.length;
         var button = null;
         (function (self, obj_index, data) {
@@ -31550,8 +31551,8 @@ function DashLayoutToolbarInterface () {
                 "index": obj_index
             });
         })(this, obj_index, data);
-        if (width) {
-            button.SetIconSize(width);
+        if (size_percent_num) {
+            button.SetIconSize(size_percent_num);
         }
         this.refactor_item_padding();
         return button;

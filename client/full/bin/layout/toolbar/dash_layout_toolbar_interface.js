@@ -47,7 +47,7 @@ function DashLayoutToolbarInterface () {
         this.html.append(space);
     };
 
-    this.AddIconButton = function (icon_name, callback, width=null, data=null) {
+    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null) {
         var obj_index = this.objects.length;
         var button = null;
 
@@ -72,8 +72,8 @@ function DashLayoutToolbarInterface () {
             });
         })(this, obj_index, data);
 
-        if (width) {
-            button.SetIconSize(width);
+        if (size_percent_num) {
+            button.SetIconSize(size_percent_num);
         }
 
         this.refactor_item_padding();
