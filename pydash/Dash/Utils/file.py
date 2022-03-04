@@ -18,8 +18,8 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
-        enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[]
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path=""
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -81,7 +81,8 @@ def Upload(
             file_ext,
             file_bytes_or_existing_path,
             dash_context,
-            replace_existing=bool(existing_data_for_update)
+            replace_existing=bool(existing_data_for_update),
+            related_file_path=related_file_path
         )
 
     if enforce_unique_filename_key and not existing_data_for_update:
@@ -298,7 +299,7 @@ def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_cont
     return file_data
 
 
-def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_existing_path, dash_context, replace_existing=False):
+def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_existing_path, dash_context, replace_existing=False, related_file_path=""):
     file_path = os.path.join(file_root, f"{file_data['id']}.{file_ext}")
 
     if replace_existing and os.path.exists(file_path):
@@ -315,7 +316,12 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
     file_data["url"] = GetURLFromPath(dash_context, file_path)
 
     if file_ext in ModelExtensions:
-        glb_path = convert_model_to_glb(file_ext, file_path, replace_existing=replace_existing)
+        glb_path = convert_model_to_glb(
+            file_ext,
+            file_path,
+            replace_existing=replace_existing,
+            related_file_path=related_file_path
+        )
 
         if os.path.exists(glb_path):
             file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
@@ -387,7 +393,7 @@ def check_filename_key_match(filename, key, parent_folders, other_file_data_path
     return None
 
 
-def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_existing=False):
+def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_existing=False, related_file_path=""):
     glb_path = f"{source_model_file_path.strip().rstrip(source_model_file_ext)}glb"
 
     if replace_existing and os.path.exists(glb_path):
@@ -397,7 +403,7 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
         from .model import ConvertFBXToGLB
 
         # ConvertFBXToGLB supports the inclusion of a texture file during the conversion, but we won't use that in this context
-        ConvertFBXToGLB(source_model_file_path, glb_path)
+        ConvertFBXToGLB(source_model_file_path, glb_path, related_file_path)
 
     elif source_model_file_ext == "obj":
         from .model import ConvertOBJToGLB
