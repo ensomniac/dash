@@ -62,7 +62,7 @@ function DashLayoutListRow (list, row_id) {
                 "top": 0,
                 "right": 0,
                 "height": Dash.Size.RowHeight,
-                "background": this.color.AccentGood, // Not correct
+                "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
                 "pointer-events": "none",
                 "opacity": 0
             });

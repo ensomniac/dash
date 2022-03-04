@@ -29,6 +29,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_backing = null;
     this.container = $("<div></div>");
     this.last_column_config = null;
+    this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
 
@@ -57,7 +58,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.setup_scroll_connections();
     };
 
-    this.SetHoverPreviewGetter = function (binder, getter) {
+    this.SetHoverPreviewGetter = function (getter, binder=null) {
         if (!getter) {
             return;
         }
@@ -65,12 +66,20 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.get_hover_preview_content = binder ? getter.bind(binder) : getter;
     };
 
-    this.SetExpandPreviewGetter = function (binder, getter) {
+    this.SetExpandPreviewGetter = function (getter, binder=null) {
         if (!getter) {
             return;
         }
 
         this.get_expand_preview = binder ? getter.bind(binder) : getter;
+    };
+
+    this.SetNonExpandingClickCallback = function (callback, binder=null) {
+        if (!callback) {
+            return;
+        }
+
+        this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
     };
 
     this.SetColumnConfig = function (column_config, row_ids_to_include=[]) {
@@ -312,7 +321,17 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
 
     this.on_row_selected = function (row, preview_content=null, force_expand=false) {
-        if (!row || (!preview_content && !this.get_expand_preview)) {
+        if (!row) {
+            return;
+        }
+
+        if (this.non_expanding_click_cb) {
+            this.non_expanding_click_cb(row, this);
+
+            return;
+        }
+
+        if (!preview_content && !this.get_expand_preview) {
             return;
         }
 

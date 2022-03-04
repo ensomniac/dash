@@ -17756,15 +17756,12 @@ function DashGui() {
             color = Dash.Color.Light;
         }
         var html = $("<div>" + optional_label_text + "</div>");
-        var css = {
+        html.css({
             "color": color.Text,
             "font-family": "sans_serif_normal",
             "background": color.Background,
-        };
-        for (var key in optional_style_css) {
-            css[key] = optional_style_css[key];
-        }
-        html.css(css);
+            ...optional_style_css
+        });
         return html;
     };
     this.GetHTMLAbsContext = function (optional_label_text="", color=null) {
@@ -17792,8 +17789,7 @@ function DashGui() {
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
-            // Temp workaround until Dash.Color.Light.BackgroundRaised issue is resolved
-            "background": color === Dash.Color.Light ? "white" : color.BackgroundRaised,
+            "background": color.BackgroundRaised,
             ...optional_style_css
         });
         return html;
@@ -19529,28 +19525,35 @@ function DashColor () {
         var light_input_background = "rgba(0, 0, 0, 0)";
         var dark_input_text = "rgba(255, 255, 255, 0.8)";
         var light_input_text = "rgba(0, 0, 0, 0.8)";
-        var light = new DashSiteColors({
-            // TODO: "background" and "background_raised" need to be different ("background" should be something like "#d7dcde")
-            //  (changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead)
-            "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",
-            "button": "#659cba",
-            "button_text": "rgb(234, 239, 255)",
-            "accent_good": "#f2c96c",
-            "accent_bad": "#f9663c",
-            "text_header": "#2b323c",
-            "tab_area_background": "#333",
-        });
-        var dark = new DashSiteColors({
-            "background": "#23262b",
-            "background_raised": "#444b54",
-            "button": "#5c9fb7",
-            "button_text": "rgb(234, 239, 255)",
-            "accent_good": "#ffc74d",
-            "accent_bad": "#ff624c",
-            "text_header": "#c4d4dd",
-            "tab_area_background": "#333",
-        });
+        var light = new DashSiteColors(
+            {
+                // TODO: "background" and "background_raised" need to be different
+                //  - "background" should be something like "#d7dcde", or "background_raised" should be "white"
+                //  - changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead
+                "background": "#e3e8ea",
+                "background_raised": "#e3e8ea",
+                "button": "#659cba",
+                "button_text": "rgb(234, 239, 255)",
+                "accent_good": "#f2c96c",
+                "accent_bad": "#f9663c",
+                "text_header": "#2b323c",
+                "tab_area_background": "#333",
+            },
+            this
+        );
+        var dark = new DashSiteColors(
+            {
+                "background": "#23262b",
+                "background_raised": "#444b54",
+                "button": "#5c9fb7",
+                "button_text": "rgb(234, 239, 255)",
+                "accent_good": "#ffc74d",
+                "accent_bad": "#ff624c",
+                "text_header": "#c4d4dd",
+                "tab_area_background": "#333",
+            },
+            this
+        );
         this.Light = new DashColorSet(
             light.Background,       // Background color
             light.BackgroundRaised, // Background color for raised boxes
@@ -20161,14 +20164,15 @@ class DashColorSet {
 }
 
 class DashSiteColors {
-    constructor(color_obj) {
+    constructor(color_obj, dash_color) {
         this._col  = color_obj;
+        this._dash_color = dash_color;
     };
     get Background() {
         return this._col["background"] || "orange";
     };
     get BackgroundRaised() {
-        return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
+        return this._col["background_raised"] || this._dash_color.Lighten(this._col["background"], 50);
     };
     get Button() {
         return this._col["button"] || "orange";
@@ -21587,7 +21591,7 @@ function LoadDot (dots) {
             "position": "absolute",
             "left": this.left,
             "top": this.top,
-            "background": this.color.Text,
+            "background": Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color.Text,
             "width": this.size,
             "height": this.size,
             "border-radius": this.size * 0.5,
@@ -29505,7 +29509,7 @@ function DashLayoutListRow (list, row_id) {
                 "top": 0,
                 "right": 0,
                 "height": Dash.Size.RowHeight,
-                "background": this.color.AccentGood, // Not correct
+                "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
                 "pointer-events": "none",
                 "opacity": 0
             });
@@ -30021,7 +30025,8 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         else {
             column_value = this.list.binder.GetDataForKey(
                 this.list_row.id,
-                this.column_config_data["data_key"]
+                this.column_config_data["data_key"],
+                this
             );
         }
         if (this.list_row.is_header) {
@@ -30267,6 +30272,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_backing = null;
     this.container = $("<div></div>");
     this.last_column_config = null;
+    this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
     // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
@@ -30287,17 +30293,23 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.html.append(this.container);
         this.setup_scroll_connections();
     };
-    this.SetHoverPreviewGetter = function (binder, getter) {
+    this.SetHoverPreviewGetter = function (getter, binder=null) {
         if (!getter) {
             return;
         }
         this.get_hover_preview_content = binder ? getter.bind(binder) : getter;
     };
-    this.SetExpandPreviewGetter = function (binder, getter) {
+    this.SetExpandPreviewGetter = function (getter, binder=null) {
         if (!getter) {
             return;
         }
         this.get_expand_preview = binder ? getter.bind(binder) : getter;
+    };
+    this.SetNonExpandingClickCallback = function (callback, binder=null) {
+        if (!callback) {
+            return;
+        }
+        this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
     };
     this.SetColumnConfig = function (column_config, row_ids_to_include=[]) {
         if (!(column_config instanceof DashLayoutListColumnConfig)) {
@@ -30470,7 +30482,14 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.setup_row_connections(row);
     };
     this.on_row_selected = function (row, preview_content=null, force_expand=false) {
-        if (!row || (!preview_content && !this.get_expand_preview)) {
+        if (!row) {
+            return;
+        }
+        if (this.non_expanding_click_cb) {
+            this.non_expanding_click_cb(row, this);
+            return;
+        }
+        if (!preview_content && !this.get_expand_preview) {
             return;
         }
         if (!force_expand && row.IsExpanded()) {
@@ -32925,6 +32944,9 @@ function DashMobileCardStack (binder, color=null) {
         //     console.log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
         // };
         this.slide_to_index(1);
+    };
+    this.AddFooterOverlay = function () {
+        this.create_footer_overlay();
     };
     this.AddRightContent = function (html) {
         // if (this.banner_fixed) {

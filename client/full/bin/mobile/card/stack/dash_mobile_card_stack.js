@@ -196,6 +196,10 @@ function DashMobileCardStack (binder, color=null) {
         this.slide_to_index(1);
     };
 
+    this.AddFooterOverlay = function () {
+        this.create_footer_overlay();
+    };
+
     this.AddRightContent = function (html) {
         // if (this.banner_fixed) {
         //     console.log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");

@@ -1,7 +1,8 @@
 class DashSiteColors {
 
-    constructor(color_obj) {
+    constructor(color_obj, dash_color) {
         this._col  = color_obj;
+        this._dash_color = dash_color;
     };
 
     get Background() {
@@ -9,7 +10,7 @@ class DashSiteColors {
     };
 
     get BackgroundRaised() {
-        return this._col["background_raised"] || Dash.Color.Lighten(this._col["background"], 50);
+        return this._col["background_raised"] || this._dash_color.Lighten(this._col["background"], 50);
     };
 
     get Button() {

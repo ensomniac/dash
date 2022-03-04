@@ -30,29 +30,36 @@ function DashColor () {
         var dark_input_text = "rgba(255, 255, 255, 0.8)";
         var light_input_text = "rgba(0, 0, 0, 0.8)";
 
-        var light = new DashSiteColors({
-            // TODO: "background" and "background_raised" need to be different ("background" should be something like "#d7dcde")
-            //  (changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead)
-            "background": "#e3e8ea",
-            "background_raised": "#e3e8ea",
-            "button": "#659cba",
-            "button_text": "rgb(234, 239, 255)",
-            "accent_good": "#f2c96c",
-            "accent_bad": "#f9663c",
-            "text_header": "#2b323c",
-            "tab_area_background": "#333",
-        });
+        var light = new DashSiteColors(
+            {
+                // TODO: "background" and "background_raised" need to be different
+                //  - "background" should be something like "#d7dcde", or "background_raised" should be "white"
+                //  - changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead
+                "background": "#e3e8ea",
+                "background_raised": "#e3e8ea",
+                "button": "#659cba",
+                "button_text": "rgb(234, 239, 255)",
+                "accent_good": "#f2c96c",
+                "accent_bad": "#f9663c",
+                "text_header": "#2b323c",
+                "tab_area_background": "#333",
+            },
+            this
+        );
 
-        var dark = new DashSiteColors({
-            "background": "#23262b",
-            "background_raised": "#444b54",
-            "button": "#5c9fb7",
-            "button_text": "rgb(234, 239, 255)",
-            "accent_good": "#ffc74d",
-            "accent_bad": "#ff624c",
-            "text_header": "#c4d4dd",
-            "tab_area_background": "#333",
-        });
+        var dark = new DashSiteColors(
+            {
+                "background": "#23262b",
+                "background_raised": "#444b54",
+                "button": "#5c9fb7",
+                "button_text": "rgb(234, 239, 255)",
+                "accent_good": "#ffc74d",
+                "accent_bad": "#ff624c",
+                "text_header": "#c4d4dd",
+                "tab_area_background": "#333",
+            },
+            this
+        );
 
         this.Light = new DashColorSet(
             light.Background,       // Background color

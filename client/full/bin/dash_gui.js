@@ -26,17 +26,12 @@ function DashGui() {
 
         var html = $("<div>" + optional_label_text + "</div>");
 
-        var css = {
+        html.css({
             "color": color.Text,
             "font-family": "sans_serif_normal",
             "background": color.Background,
-        };
-
-        for (var key in optional_style_css) {
-            css[key] = optional_style_css[key];
-        }
-
-        html.css(css);
+            ...optional_style_css
+        });
 
         return html;
     };
@@ -72,10 +67,7 @@ function DashGui() {
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
-
-            // Temp workaround until Dash.Color.Light.BackgroundRaised issue is resolved
-            "background": color === Dash.Color.Light ? "white" : color.BackgroundRaised,
-
+            "background": color.BackgroundRaised,
             ...optional_style_css
         });
 

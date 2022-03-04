@@ -219,7 +219,7 @@ function LoadDot (dots) {
             "position": "absolute",
             "left": this.left,
             "top": this.top,
-            "background": this.color.Text,
+            "background": Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color.Text,
             "width": this.size,
             "height": this.size,
             "border-radius": this.size * 0.5,

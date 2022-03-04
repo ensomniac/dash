@@ -138,7 +138,8 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         else {
             column_value = this.list.binder.GetDataForKey(
                 this.list_row.id,
-                this.column_config_data["data_key"]
+                this.column_config_data["data_key"],
+                this
             );
         }
 
