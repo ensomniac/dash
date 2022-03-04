@@ -203,7 +203,10 @@ class ApiCore:
                     raise Exception(f"Missing param '{param}'")
             else:
                 if not self.Params.get(param):
-                    raise Exception(f"Missing param '{param}'")
+                    if param == "file":
+                        raise ClientAlert("File failed to properly upload, please try again.")
+                    else:
+                        raise Exception(f"Missing param '{param}'")
 
     def SetParam(self, key, value):
         self._params[key] = value
