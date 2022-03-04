@@ -164,14 +164,11 @@ class _FBXConverter:
     def create_glb(self):
         self.add_to_log("Creating glb")
 
+        # Default to PBR since that makes the model easier to read in the viewer
+        shader = "--pbr-metallic-roughness"
+        # shader = "--khr-materials-unlit"
+
         found_glb = None
-        shader = "--khr-materials-unlit"
-
-        # For now, only default to PBR if we're not supplying textures, since that makes the model easier to read in the viewer.
-        # In the future, we could add a bool param to this class for PBR, but it may not be beneficial if we're only uploading a color map.
-        if not self.txt_path:
-            shader = "--pbr-metallic-roughness"
-
         cmd = "cd " + self.conversion_path + "; /usr/local/bin/FBX2glTF " + self.local_fbx_converted_path + " --binary " + shader
 
         if not self.can_print:
@@ -250,7 +247,10 @@ class _FBXConverter:
 
             texture.SetFileName(local_txt_path)
 
-            set_successfully = new_material.TransparentColor.ConnectSrcObject(texture)
+            # This was applicable for AIF because we only used PNGs with transparent backgrounds -
+            # however, the majority of single-texture color map uploads will/should have infinite diffusion
+            # set_successfully = new_material.TransparentColor.ConnectSrcObject(texture)
+            set_successfully = new_material.Diffuse.ConnectSrcObject(texture)
 
             node_with_material.AddMaterial(new_material)
 
