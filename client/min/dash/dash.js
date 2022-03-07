@@ -20933,6 +20933,7 @@ function DashGuiCheckbox (
     this.label = null;
     this.can_click = true;
     this._hover_hint = "";
+    this.icon_size = null;
     this.icon_color = null;
     this.true_color = null;
     this.false_color = null;
@@ -20970,6 +20971,10 @@ function DashGuiCheckbox (
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
         this.icon_button.AddIconShadow(shadow);
+    };
+    this.SetIconSize = function (percentage_number) {
+        this.icon_size = percentage_number;
+        this.icon_button.SetIconSize(percentage_number);
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
         this.able_to_toggle_cb = binder || this.binder ?
@@ -21096,6 +21101,9 @@ function DashGuiCheckbox (
         }
         if (this.icon_shadow) {
             this.icon_button.SetIconShadow(this.icon_shadow);
+        }
+        if (this.icon_size) {
+            this.icon_button.SetIconSize(this.icon_size);
         }
         if (this.include_highlight) {
             this.AddHighlight();
