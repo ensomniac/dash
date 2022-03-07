@@ -642,7 +642,7 @@ function DashColor () {
         "yellowgreen": [154, 205, 50]
     };
 
-    this._get_background_raised = function () {
+    this._get_background_raised = function (color) {
         return this.Lighten(color, Dash.Color.IsLightColor(color) ? 10: 40);
     };
 
