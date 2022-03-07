@@ -19728,6 +19728,24 @@ function DashColor () {
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
+    this.IsLightColor = function (color) {
+        var r;
+        var g;
+        var b;
+        if (color.match(/^rgb/)) {
+            color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
+            r = color[1];
+            g = color[2];
+            b = color[3];
+        }
+        else {
+            color = +("0x" + color.slice(1).replace(color.length < 5 && /./g, '$&$&'));
+            r = color >> 16;
+            g = color >> 8 & 255;
+            b = color & 255;
+        }
+        return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 127.5;
+    };
     this.ParseToRGBA = function (cstr) {
         return this.to_rgba(this.Parse(cstr));
     };
@@ -20042,6 +20060,9 @@ function DashColor () {
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
     };
+    this._get_background_raised = function () {
+        return this.Lighten(color, Dash.Color.IsLightColor(color) ? 10: 40);
+    };
     this.setup_color_sets();
 }
 
@@ -20136,6 +20157,11 @@ class DashColorSet {
     /////////////////////////
     set Background (color) {
         this._background = color;
+        // Since we don't allow BackgroundRaised to be set anymore, but it
+        // is still referenced in the code, auto-update BackgroundRaised when
+        // Background is updated - otherwise, the new Background will not work
+        // well with the default, hard-coded BackgroundRaised.
+        this._background_raised = Dash.Color._get_background_raised(color);
     };
     set Text (color) {
         this._text = color;
@@ -20172,7 +20198,7 @@ class DashSiteColors {
         return this._col["background"] || "orange";
     };
     get BackgroundRaised() {
-        return this._col["background_raised"] || this._dash_color.Lighten(this._col["background"], 50);
+        return this._col["background_raised"] || this._dash_color._get_background_raised(this._col["background"]);
     };
     get Button() {
         return this._col["button"] || "orange";

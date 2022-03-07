@@ -10,7 +10,7 @@ class DashSiteColors {
     };
 
     get BackgroundRaised() {
-        return this._col["background_raised"] || this._dash_color.Lighten(this._col["background"], 50);
+        return this._col["background_raised"] || this._dash_color._get_background_raised(this._col["background"]);
     };
 
     get Button() {

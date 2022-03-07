@@ -112,6 +112,12 @@ class DashColorSet {
 
     set Background (color) {
         this._background = color;
+
+        // Since we don't allow BackgroundRaised to be set anymore, but it
+        // is still referenced in the code, auto-update BackgroundRaised when
+        // Background is updated - otherwise, the new Background will not work
+        // well with the default, hard-coded BackgroundRaised.
+        this._background_raised = Dash.Color._get_background_raised(color);
     };
 
     set Text (color) {
