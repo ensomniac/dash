@@ -38,6 +38,8 @@ function DashDateTime () {
     };
 
     this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false) {
+        iso_string = iso_string.replace("Z", "");
+
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
 
@@ -66,9 +68,8 @@ function DashDateTime () {
         return dt_obj;
     };
 
-    // Why does JS make this so unnecessarily complicated?
     this.GetUTCDateObject = function () {
-        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString().replace("Z", ""), "UTC");
+        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
 
     this.GetISOAgeMs = function (iso_string, timezone="EST") {

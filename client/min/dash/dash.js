@@ -19089,6 +19089,7 @@ function DashDateTime () {
         return readable;
     };
     this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false) {
+        iso_string = iso_string.replace("Z", "");
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
         if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
@@ -19112,9 +19113,8 @@ function DashDateTime () {
         }
         return dt_obj;
     };
-    // Why does JS make this so unnecessarily complicated?
     this.GetUTCDateObject = function () {
-        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString().replace("Z", ""), "UTC");
+        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
     this.GetISOAgeMs = function (iso_string, timezone="EST") {
         var now = this.GetNewRelativeDateObject(timezone);
@@ -32928,7 +32928,8 @@ function DashMobileCardStack (binder, color=null) {
             console.warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         }
     };
-    this.AddCard = function () {
+    this.AddCard = function (prepend=false) {
+        var existing_card;
         var card = new DashMobileCard(this);
         if (!this.cards.length && this.banner) {
             if (!this.banner.header_row && !this.banner.footer_row) {
@@ -32937,9 +32938,24 @@ function DashMobileCardStack (binder, color=null) {
                 });
             }
         }
+        if (prepend && Dash.Validate.Object(this.cards)) {
+            for (existing_card of this.cards) {
+                existing_card.html.detach();
+            }
+        }
         this.AddHTML(card.html);
+        if (prepend && Dash.Validate.Object(this.cards)) {
+            for (existing_card of this.cards) {
+                this.center_content.append(existing_card.html);
+            }
+        }
         this.cards.push(card);
         return card;
+    };
+    this.RemoveCard = function (card) {
+        this.cards.splice(this.cards.indexOf(card), 1);
+        card.html.remove();
+        return null;
     };
     this.AddUserBanner = function () {
         var banner = new DashMobileCardStackUserBanner(this);

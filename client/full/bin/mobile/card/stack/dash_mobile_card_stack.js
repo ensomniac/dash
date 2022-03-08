@@ -126,7 +126,8 @@ function DashMobileCardStack (binder, color=null) {
         }
     };
 
-    this.AddCard = function () {
+    this.AddCard = function (prepend=false) {
+        var existing_card;
         var card = new DashMobileCard(this);
 
         if (!this.cards.length && this.banner) {
@@ -137,11 +138,31 @@ function DashMobileCardStack (binder, color=null) {
             }
         }
 
+        if (prepend && Dash.Validate.Object(this.cards)) {
+            for (existing_card of this.cards) {
+                existing_card.html.detach();
+            }
+        }
+
         this.AddHTML(card.html);
+
+        if (prepend && Dash.Validate.Object(this.cards)) {
+            for (existing_card of this.cards) {
+                this.center_content.append(existing_card.html);
+            }
+        }
 
         this.cards.push(card);
 
         return card;
+    };
+
+    this.RemoveCard = function (card) {
+        this.cards.splice(this.cards.indexOf(card), 1);
+
+        card.html.remove();
+
+        return null;
     };
 
     this.AddUserBanner = function () {
