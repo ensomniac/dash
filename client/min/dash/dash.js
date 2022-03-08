@@ -17476,7 +17476,9 @@ function Dash () {
     this.html = $("<div></div>");
     this.Context  = DASH_CONTEXT;
     this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
-    this.IsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this
+    //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
+    this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     this.Animation = new DashAnimation();
     this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
@@ -17764,7 +17766,7 @@ function DashGui() {
         });
         return html;
     };
-    this.GetHTMLAbsContext = function (optional_label_text="", color=null) {
+    this.GetHTMLAbsContext = function (optional_label_text="", color=null, optional_style_css={}) {
         if (!color) {
             color = Dash.Color.Light;
         }
@@ -17775,6 +17777,7 @@ function DashGui() {
             "overflow-y": "auto",
             "color": "black",
             "background": color.Background,
+            ...optional_style_css
         });
         return html;
     };
@@ -32853,6 +32856,7 @@ function DashMobileCardStack (binder, color=null) {
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
     this.html = Dash.Gui.GetHTMLAbsContext();
+    this.footer_height = Dash.Size.ButtonHeight;
     this.setup_styles = function () {
         this.slider = $("<div></div>");
         this.slider.css({
@@ -33133,36 +33137,32 @@ function DashMobileCardStack (binder, color=null) {
         })(this);
     };
     this.create_footer_overlay = function () {
-        this.footer_button_overlay = Dash.Gui.GetHTMLAbsContext();
-        this.footer_button_overlay.css({
-            "position": "fixed",
-            "display": "flex",
-            "background": this.color.Background,
-            "height": Dash.Size.ButtonHeight,
-            "top": "auto",
-            "line-height": Dash.Size.ButtonHeight + "px",
-            "color": "white",
-            "bottom": 0,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
-            "padding-left": Dash.Size.Padding * 0.5,
-            // "padding-right": Dash.Size.Padding * 0.5
-        });
-        this.slider.append(this.footer_button_overlay);
-        // this.html.append(this.footer_button_overlay);
+        this.footer_button_overlay = Dash.Gui.GetHTMLAbsContext(
+            "",
+            this.color,
+            {
+                "display": "flex",
+                "top": "auto",
+                "color": "white",
+                "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+                "padding-left": Dash.Size.Padding * 0.5
+            }
+        );
         this.set_footer_overlay_size();
+        this.slider.append(this.footer_button_overlay);
         // You should never see this, but it allows the window to scroll correctly
         // without having to add padding/margin for the lower button content
         this.footer_spacer = $("<div></div>");
         this.footer_spacer.css({
-            "height": Dash.Size.ButtonHeight
+            "height": this.footer_height
         });
         this.center_content.append(this.footer_spacer);
     };
     this.set_footer_overlay_size = function () {
         this.footer_button_overlay.css({
             "position": "fixed",
-            "height": Dash.Size.ButtonHeight,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "height": this.footer_height,
+            "line-height": this.footer_height + "px",
             "bottom": 0,
             "left": this.width,
             "width": this.width - (Dash.Size.Padding * 0.5),

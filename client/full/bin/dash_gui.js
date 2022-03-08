@@ -36,7 +36,7 @@ function DashGui() {
         return html;
     };
 
-    this.GetHTMLAbsContext = function (optional_label_text="", color=null) {
+    this.GetHTMLAbsContext = function (optional_label_text="", color=null, optional_style_css={}) {
         if (!color) {
             color = Dash.Color.Light;
         }
@@ -49,6 +49,7 @@ function DashGui() {
             "overflow-y": "auto",
             "color": "black",
             "background": color.Background,
+            ...optional_style_css
         });
 
         return html;
