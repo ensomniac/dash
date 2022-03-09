@@ -1,6 +1,4 @@
-function DashHistory (is_mobile) {
-    this.is_mobile = is_mobile;
-
+function DashHistory () {
     this.url_hashes = {};
     this.listening = false;
     this.last_old_url = null;
@@ -14,7 +12,7 @@ function DashHistory (is_mobile) {
     // (This is also useful when you have a tab layout within a tab layout, like a top tab in the content
     // area of a side tab, and you need to first load the side tab index before loading the top tab index)
     this.LoaderAdd = function (hash_text, loader_cb, binder=null, ...loader_params) {
-        if (this.is_mobile || !hash_text || !loader_cb) {
+        if (!hash_text || !loader_cb) {
             return;
         }
 
@@ -29,7 +27,7 @@ function DashHistory (is_mobile) {
     // Use for any GUI element managed by DashLayoutTabs
     // (This is uniquely required so that the proper tab button gets selected when navigating)
     this.TabAdd = function (hash_text, layout_tabs_instance, tab_index) {
-        if (this.is_mobile || !hash_text || !layout_tabs_instance) {
+        if (!hash_text || !layout_tabs_instance) {
             return;
         }
 
@@ -55,8 +53,8 @@ function DashHistory (is_mobile) {
 
     // Use for any GUI element not managed by DashLayoutTabs and not explicitly loaded/instantiated
     // (It's likely that LoaderAdd will be the better choice over this one that majority of the time)
-    this.ClassAdd = function (hash_text, view_parent_html, view_class, ...view_instantiation_params) {
-        if (this.is_mobile || !hash_text || !view_parent_html || !view_class) {
+    this.ClassAdd = function (hash_text, view_parent_html, view_class, empty_parent=false, ...view_instantiation_params) {
+        if (!hash_text || !view_parent_html || !view_class) {
             return;
         }
 
@@ -64,6 +62,7 @@ function DashHistory (is_mobile) {
 
         this.url_hashes[hash_text] = {
             "view_class": view_class,
+            "empty_parent": empty_parent,
             "view_parent_html": view_parent_html,
             "view_instantiation_params": [...view_instantiation_params]
         };
@@ -241,6 +240,10 @@ function DashHistory (is_mobile) {
         }
 
         try {
+            if (data["empty_parent"]) {
+                data["view_parent_html"].empty();
+            }
+
             data["view_parent_html"].append(instantiated_class.html);
         }
 

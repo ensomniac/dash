@@ -197,7 +197,7 @@ function DashMobileCardStack (binder, color=null) {
         // };
 
         if (this.active_panel_index === 0) {
-            console.error("The left panel is already loaded");
+            console.warn("The left panel is already loaded");
         }
 
         html.css({
@@ -230,7 +230,7 @@ function DashMobileCardStack (binder, color=null) {
         // };
 
         if (this.active_panel_index === 2) {
-            console.error("The right panel is already loaded");
+            console.warn("The right panel is already loaded");
         }
 
         html.css({
