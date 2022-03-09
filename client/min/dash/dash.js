@@ -26189,6 +26189,7 @@ function DashGuiIcons (icon) {
         "upload":                new DashGuiIconDefinition(this.icon, "Upload", this.weight["regular"], "upload"),
         "upload_file":           new DashGuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
         "user":                  new DashGuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
+        "user_settings":         new DashGuiIconDefinition(this.icon, "User Settings", this.weight["regular"], "user-cog"),
         "video":                 new DashGuiIconDefinition(this.icon, "Video", this.weight["regular"], "video"),
         "view":                  new DashGuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
         "web":                   new DashGuiIconDefinition(this.icon, "Web", this.weight["solid"], "spider-web"),
@@ -33553,7 +33554,7 @@ function DashMobileCardStackUserBanner (stack) {
     DashMobileCardStackBanner.call(this, this);
     this.setup_styles = function () {
         this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
-        this.SetLeftIcon("user", this.on_user_clicked);
+        this.SetLeftIcon("user_settings", this.on_user_clicked);
     };
     this.SetContextLogoImg = function (url) {
         this.context_logo_img_url = url;

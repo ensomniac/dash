@@ -10,7 +10,7 @@ function DashMobileCardStackUserBanner (stack) {
     this.setup_styles = function () {
         this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
 
-        this.SetLeftIcon("user", this.on_user_clicked);
+        this.SetLeftIcon("user_settings", this.on_user_clicked);
     };
 
     this.SetContextLogoImg = function (url) {
