@@ -6,20 +6,20 @@
 import os
 import sys
 
-from csv import writer
 from Dash.Users import Users
 from datetime import datetime
+from csv import writer, reader
 from collections import OrderedDict
 from Dash.Utils import GetRandomID, FormatTime
 
 
 # This is old and was never fully written out, but Altona uses it to a minor capacity
 class CSV:
-    def __init__(self, csv_root, dash_context={}, all_data={}, exclude_keys=[], file=None):
+    def __init__(self, csv_root="", dash_context={}, all_data={}, exclude_keys=[], file=None):
         """
         Handle all non-gsheet CSV-related actions, such as exporting and importing.
 
-        :param str csv_root: Root where csv file will be stored or retrieved from
+        :param str csv_root: Root where csv file will be stored or retrieved from (default="")
         :param dict dash_context: Dash Context object (default={})
         :param dict all_data: (When exporting) Data object matching the structure of Collection.GetAll()["data"] (default={})
         :param list exclude_keys: Data keys to exclude when translating data to/from CSV (default=[])
@@ -47,7 +47,24 @@ class CSV:
         else:
             self.all_data = all_data
 
-        os.makedirs(self.csv_root, exist_ok=True)
+        if self.csv_root:
+            os.makedirs(self.csv_root, exist_ok=True)
+
+    def GetRowData(self, csv_path, has_header=True):
+        rows = []
+        header = None
+        csv_reader = reader(open(csv_path, "r"))
+
+        if has_header:
+            header = next(csv_reader)
+
+        for row in csv_reader:
+            if header:
+                rows.append({header[index]: value for (index, value) in enumerate(row)})
+            else:
+                rows.append(row)
+
+        return rows
 
     def ExtractCSVsFromExcel(self, excel_file_path, csv_filename="", filename_getter=None, sheet_name_filters={}, local=False):
         from openpyxl import load_workbook
@@ -300,3 +317,7 @@ class CSV:
                 keys[index] = key.replace("_", " ").title()
 
         return keys
+
+
+def GetRowData(csv_path, has_header=True):
+    return CSV().GetRowData(csv_path, has_header)
