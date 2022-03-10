@@ -25,7 +25,7 @@ class _Yard:
 
     @property
     def BaseConversionMultiplier(self):
-        return 36
+        return 1 / 36
 
     def ToDict(self):
         from .. import UnitToDict

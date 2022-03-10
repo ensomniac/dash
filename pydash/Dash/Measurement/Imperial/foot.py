@@ -25,11 +25,11 @@ class _Foot:
 
     @property
     def Symbol(self):
-        return "'"
+        return "′"
 
     @property
     def BaseConversionMultiplier(self):
-        return 12
+        return 1 / 12
 
     def ToDict(self):
         from .. import UnitToDict

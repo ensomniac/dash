@@ -25,7 +25,7 @@ class _Inch:
 
     @property
     def Symbol(self):
-        return '"'
+        return "″"
 
     @property
     def BaseConversionMultiplier(self):

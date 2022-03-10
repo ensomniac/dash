@@ -341,7 +341,7 @@ class ApiCore:
 
     # Special cases that are safe to ignore but don't have a better place to be handled without breaking other functionality
     def ignore_error_email(self, error):
-        if error == "Incorrect login information" or error == "Account does not exist x7832":
+        if error == "Incorrect login information" or error == "Account does not exist x7832" or error == "Invalid Login x7283":
             return True
 
         if self.__class__.__name__ == "Users" and self.Params.get("f") == "r" and "Invalid request token" in error:

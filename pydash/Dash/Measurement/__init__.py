@@ -3,9 +3,6 @@
 # 2022 Ryan Martin, ryan@ensomniac.com
 #      Andrew Stet, stetandrew@gmail.com
 
-from .Metric import Metric
-from .Imperial import Imperial
-
 
 class Measurement:
     _value: float
@@ -54,6 +51,28 @@ class Measurement:
 
         return self.Value * self.Unit.BaseConversionMultiplier
 
+    def ConvertTo(self, target_unit, readable=False):
+        """
+        :param str target_unit: inch, meter, etc.
+        :param bool readable: Return a readable string with relevant symbols instead of number
+        """
+
+        target_unit = self.validate_unit(target_unit)
+        value = self.Value * target_unit.BaseConversionMultiplier
+
+        if readable and type(value) is float and self.Unit.Symbol and target_unit.Symbol:
+            split = str(value).split(".")
+            whole = int(split[0])
+            partial = int(float(f".{split[1]}") / target_unit.BaseConversionMultiplier)
+
+            if self.System.AssetPath == "imperial":
+                return f"{whole}{target_unit.Symbol} {partial}{self.Unit.Symbol}"
+
+            elif self.System.AssetPath == "metric":
+                pass  # TODO?
+
+        return value
+
     def ToDict(self):
         return {
             "system": self.System.ToDict(),
@@ -67,9 +86,13 @@ class Measurement:
         system = system.lower().strip()
 
         if system == "metric":
+            from .Metric import Metric
+
             return Metric
 
         if system == "imperial":
+            from .Imperial import Imperial
+
             return Imperial
 
         raise Exception("Invalid measurement system, must be either 'metric' or 'imperial'")
@@ -91,6 +114,10 @@ class Measurement:
             return float(value)
         except:
             raise Exception("Invalid measurement value type, must be float or int")
+
+
+def Convert(system, source_unit, source_unit_value, target_unit, readable=False):
+    return Measurement(system, source_unit, source_unit_value).ConvertTo(target_unit, readable)
 
 
 def SystemToDict(system_module):
