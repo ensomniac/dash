@@ -203,10 +203,10 @@ class ApiCore:
                     raise Exception(f"Missing param '{param}'")
             else:
                 if not self.Params.get(param):
-                    if param == "file":
-                        raise ClientAlert("File failed to properly upload, please try again.")
-                    else:
-                        raise Exception(f"Missing param '{param}'")
+                    # if param == "file":
+                    #     raise ClientAlert("File failed to properly upload, please try again.")
+                    # else:
+                    raise Exception(f"Missing param '{param}'")
 
     def SetParam(self, key, value):
         self._params[key] = value
@@ -341,7 +341,14 @@ class ApiCore:
 
     # Special cases that are safe to ignore but don't have a better place to be handled without breaking other functionality
     def ignore_error_email(self, error):
-        if error == "Incorrect login information" or error == "Account does not exist x7832" or error == "Invalid Login x7283":
+        ignore = [
+            "Incorrect login information",
+            "Account does not exist x7832",
+            "Invalid Login x7283",
+            "Select a password with at least 6 characters - x72378"
+        ]
+
+        if error in ignore:
             return True
 
         if self.__class__.__name__ == "Users" and self.Params.get("f") == "r" and "Invalid request token" in error:
