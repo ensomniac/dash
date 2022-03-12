@@ -150,30 +150,34 @@ def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
 # ------------------------------------------------- MEMORY --------------------------------------------------
 class _Memory:
     _usr_token: str
-    _global: object
+    _global_memory: object
 
     def __init__(self):
         pass
 
     @property
+    def global_memory(self):
+        if not hasattr(self, "_global_memory"):
+            from Dash import __name__ as DashName
+
+            self._global_memory = sys.modules[DashName]
+
+        return self._global_memory
+
+    @property
     def Global(self):
         # This function is meant to return meaningful shared data in the context of a single request
 
-        if not hasattr(self, "_global"):
-            from Dash import __name__ as DashName
+        if not hasattr(self.global_memory, "RequestData"):
+            self.global_memory.RequestData = {}
 
-            self._global = sys.modules[DashName]
+        if not hasattr(self.global_memory, "RequestUser"):
+            self.global_memory.RequestUser = None
 
-        if not hasattr(self._global, "RequestData"):
-            self._global.RequestData = {}
+        if not hasattr(self.global_memory, "Context"):
+            self.global_memory.Context = None
 
-        if not hasattr(self._global, "RequestUser"):
-            self._global.RequestUser = None
-
-        if not hasattr(self._global, "Context"):
-            self._global.Context = None
-
-        return self._global
+        return self.global_memory
 
     @property
     def UserToken(self):
@@ -190,6 +194,16 @@ class _Memory:
                 return None
 
         return self._usr_token
+
+    def SetUser(self, email):
+        from Dash.Users import Get as GetUser
+
+        self.global_memory.RequestUser = GetUser(email)
+
+    def SetContext(self, asset_path):
+        from Dash.PackageContext import Get as GetContext
+
+        self.global_memory.Context = GetContext(asset_path)
 
 
 Memory = _Memory()
