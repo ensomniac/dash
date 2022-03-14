@@ -72,9 +72,9 @@ function DashDateTime () {
         return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
 
-    this.GetISOAgeMs = function (iso_string, timezone="EST") {
-        var now = this.GetNewRelativeDateObject(timezone);
-        var dt_obj = this.GetDateObjectFromISO(iso_string, timezone, false, false);
+    this.GetISOAgeMs = function (iso_string) {
+        var now = this.GetNewRelativeDateObject("UTC");
+        var dt_obj = this.GetDateObjectFromISO(iso_string, "UTC", false, false);
 
         return now - dt_obj;
     };

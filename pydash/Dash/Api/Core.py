@@ -326,6 +326,14 @@ class ApiCore:
 
                 error += f"<br><br>Private error:<br>{private_error}"
 
+        try:
+            tb = format_exc()
+
+            if tb and str(tb).strip() != "NoneType: None":
+                error += f"<br><br>Full traceback:<br>{tb}"
+        except:
+            pass
+
         SendEmail(
             subject=subject,
             notify_email_list=notify_email_list,
