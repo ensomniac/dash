@@ -75,10 +75,6 @@ function DashDateTime () {
     this.GetISOAgeMs = function (iso_string, timezone="EST", debug=false) {
         var now = this.GetNewRelativeDateObject(timezone);
         var dt_obj = this.GetDateObjectFromISO(iso_string, timezone, false, false);
-        console.debug("TEST", iso_string);
-        console.debug("TEST", now);
-        console.debug("TEST", dt_obj);
-        console.debug("TEST", now - dt_obj);
 
         if (debug) {
             return [iso_string, now, dt_obj, now - dt_obj];
