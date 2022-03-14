@@ -18463,10 +18463,10 @@ function DashUtils () {
         }
         return JSON.parse(JSON.stringify(obj));
     };
-    this.SetTimer = function (binder, callback, ms) {
+    this.SetTimer = function (binder, callback, ms, source=null) {
         var timer = {
             "callback": callback.bind(binder),
-            "source": binder,
+            "source": source || binder,
             "iterations": 0
         };
         (function (self, timer) {
@@ -18557,12 +18557,11 @@ function DashUtils () {
     this.manage_timer = function (timer) {
         var still_active = true;
         if (timer.iterations && timer.iterations >= 1) {
-            if (timer.source.html && !timer.source.html.is(":visible")) {
+            if (timer.source && timer.source.html && !timer.source.html.is(":visible")) {
                 still_active = false;
             }
         }
         if (!still_active) {
-            console.debug("TEST dash clear timer", timer.source.html);
             clearInterval(timer["timer_id"]);
             return;
         }
