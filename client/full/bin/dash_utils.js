@@ -137,6 +137,7 @@ function DashUtils () {
         }
 
         if (!still_active) {
+            console.debug("TEST dash clear timer", timer.source.html);
             clearInterval(timer["timer_id"]);
 
             return;
