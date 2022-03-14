@@ -19094,7 +19094,7 @@ function DashDateTime () {
         }
         return readable;
     };
-    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false) {
+    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true) {
         iso_string = iso_string.replace("Z", "");
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
@@ -19112,7 +19112,7 @@ function DashDateTime () {
             is_static_date = true;
         }
         else {
-            dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone));
+            dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone, account_for_dst));
         }
         if (check_static) {
             return [dt_obj, is_static_date];
@@ -19124,12 +19124,16 @@ function DashDateTime () {
     };
     this.GetISOAgeMs = function (iso_string, timezone="EST") {
         var now = this.GetNewRelativeDateObject(timezone);
-        var dt_obj = this.GetDateObjectFromISO(iso_string, timezone);
+        var dt_obj = this.GetDateObjectFromISO(iso_string, timezone, false, false);
+        console.debug("TEST", iso_string);
+        console.debug("TEST", now);
+        console.debug("TEST", dt_obj);
+        console.debug("TEST", now - dt_obj);
         return now - dt_obj;
     };
-    this.GetNewRelativeDateObject = function (timezone="EST") {
+    this.GetNewRelativeDateObject = function (timezone="EST", account_for_dst=true) {
         var now = new Date();
-        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone)));
+        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone, account_for_dst)));
         return now;
     };
     this.IsIsoFormat = function (value) {
@@ -19163,13 +19167,13 @@ function DashDateTime () {
         // Timeago library: /bin/src/timeago.js
         return timeago.format(this.GetDateObjectFromISO(iso_string));
     };
-    this.get_server_offset_hours = function (dt_obj=null, timezone="EST") {
+    this.get_server_offset_hours = function (dt_obj=null, timezone="EST", account_for_dst=true) {
         timezone = timezone.toLowerCase();
         if (timezone === "utc" || timezone === "gmt") {
             return 0;
         }
         // Baseline (only worrying about US timezones)
-        var est_to_utc_offset_hours = dt_obj && this.DSTInEffect(dt_obj) ? 4 : 5;
+        var est_to_utc_offset_hours = dt_obj && (account_for_dst && this.DSTInEffect(dt_obj)) ? 4 : 5;
         // Eastern time
         if (timezone === "est" || timezone === "edt") {
             return est_to_utc_offset_hours;
