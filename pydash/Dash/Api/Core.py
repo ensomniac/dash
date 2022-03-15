@@ -362,6 +362,9 @@ class ApiCore:
         if self.__class__.__name__ == "Users" and self.Params.get("f") == "r" and "Invalid request token" in error:
             return True
 
+        if "Missing param 'file'" in error:
+            return True
+
         return False
 
     def set_dash_globals(self):
