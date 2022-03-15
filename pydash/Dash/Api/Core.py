@@ -300,8 +300,9 @@ class ApiCore:
             # Make a copy of self.Params so we don't modify the original, in case the script is continuing
             params = {k: v for (k, v) in self.Params.items()}
 
-            if params.get("file"):
-                params["file"] = "truncated..."
+            for key in ["file", "image"]:
+                if params.get(key) and type(params[key]) is bytes:
+                    params[key] = "truncated..."
 
             # Keep this private
             if "pass" in params:
