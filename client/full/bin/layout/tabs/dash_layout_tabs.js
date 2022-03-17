@@ -48,6 +48,7 @@ function DashLayoutTabs (binder, side_tabs) {
         return this.current_index;
     };
 
+    // TODO: Break this function up
     this.LoadIndex = function (index) {
         if (index > this.all_content.length - 1) {
             return;
@@ -238,6 +239,48 @@ function DashLayoutTabs (binder, side_tabs) {
 
     this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
+    };
+
+    this.SetTabAreaSize = function (size) {
+        if (this.side_tabs) {
+            this.content_area.css({
+                "left": this.tab_area_size
+            });
+
+            this.tab_area.css({
+                "width": this.tab_area_size
+            });
+
+            this.tab_top.css({
+                "width": this.tab_area_size
+            });
+
+            this.tab_middle.css({
+                "width": this.tab_area_size
+            });
+
+            this.tab_bottom.css({
+                "width": this.tab_area_size
+            });
+        }
+
+        else {
+            this.list_backing.css({
+                "height": this.tab_area_size
+            });
+
+            this.tab_top.css({
+                "height": this.tab_area_size
+            });
+
+            this.tab_bottom.css({
+                "height": this.tab_area_size
+            });
+
+            this.content_area.css({
+                "top": this.tab_area_size
+            });
+        }
     };
 
     this.is_class = function (func) {
