@@ -91,10 +91,10 @@ def ConvertOBJToGLB(existing_obj_path, output_glb_path):
 
 
 # ------------------------------------------------- NUMBER --------------------------------------------------
-def GetRandomID():
+def GetRandomID(date_based=True):
     from .number import GetRandomID
 
-    return GetRandomID()
+    return GetRandomID(date_based)
 
 
 def Lerp(val_a, val_b, t):

@@ -126,22 +126,23 @@ class Collection:
             filter_out_keys=filter_out_keys
         )
 
-    def New(self, additional_data={}, return_all_data=True):
+    def New(self, additional_data={}, return_all_data=True, obj_id=""):
         new_obj = LocalStorage.New(
             self.DashContext,
             self.store_path,
             additional_data=additional_data,
             nested=self.nested,
+            obj_id=obj_id
         )
 
         if return_all_data:
             data = self.GetAll()
+
             data["new_object"] = new_obj["id"]
 
             return data
 
-        else:
-            return new_obj
+        return new_obj
 
     def Delete(self, obj_id, return_all_data=True):
         LocalStorage.Delete(
@@ -166,8 +167,8 @@ class Collection:
 
         if return_all_data:
             return self.GetAll()
-        else:
-            return updated_data
+
+        return updated_data
 
     def SetProperties(self, obj_id, properties, return_all_data=True):
         updated_data = LocalStorage.SetProperties(
@@ -180,8 +181,8 @@ class Collection:
 
         if return_all_data:
             return self.GetAll()
-        else:
-            return updated_data
+
+        return updated_data
 
     def Clear(self):
         rmtree(self.Root, True)

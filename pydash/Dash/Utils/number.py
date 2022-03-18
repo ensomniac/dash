@@ -7,8 +7,12 @@ import os
 import sys
 
 
-def GetRandomID():
+def GetRandomID(date_based=True):
     from random import randint
+
+    if not date_based:
+        return randint(1000000000000000000, 9999999999999999999)
+
     from datetime import datetime
 
     now = str(datetime.today())
