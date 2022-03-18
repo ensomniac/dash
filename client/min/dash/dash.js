@@ -19259,9 +19259,15 @@ function DashValidate () {
 
 function DashDateTime () {
     this.Readable = function (iso_string, include_tz_label=true) {
+        var date;
         var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
         var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
-        var date = dt_obj.toLocaleDateString();
+        if (Dash.Context["ignore_locale_for_readable_dates"]) {
+            date = [dt_obj.getMonth(), dt_obj.getDay(), dt_obj.getFullYear()].join("/");
+        }
+        else {
+            date = dt_obj.toLocaleDateString();
+        }
         if (is_static_date) {
             return date;
         }
