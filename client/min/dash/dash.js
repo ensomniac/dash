@@ -19262,12 +19262,12 @@ function DashDateTime () {
         var date;
         var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
         var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
-        // if (Dash.Context["ignore_locale_for_readable_dates"]) {
-        //     date = [dt_obj.getMonth(), dt_obj.getDay(), dt_obj.getFullYear()].join("/");
-        // }
-        // else {
-        date = dt_obj.toLocaleDateString();
-        // }
+        if (Dash.Context["ignore_locale_for_readable_dates"]) {
+            date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
+        }
+        else {
+            date = dt_obj.toLocaleDateString();
+        }
         if (is_static_date) {
             return date;
         }
