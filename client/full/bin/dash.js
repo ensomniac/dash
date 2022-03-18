@@ -10,9 +10,15 @@ function Dash () {
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+    this.IsMobileFromHomeScreen = (
+        window.navigator.standalone === true  // iOS
+        || window.matchMedia("(display-mode: standalone)").matches  // Android
+    );
+
     this.Animation = new DashAnimation();
     this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
+    this.File      = new DashFile();
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();

@@ -25,7 +25,8 @@ function DashMobileCardStack (binder, color=null) {
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
     this.html = Dash.Gui.GetHTMLAbsContext();
-    this.footer_height = Dash.Size.ButtonHeight;
+    this.iphone_standalone = /iPhone/i.test(navigator.userAgent) && Dash.IsMobileFromHomeScreen;
+    this.footer_height = Dash.Size.ButtonHeight + (this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0);
 
     this.setup_styles = function () {
         this.slider = $("<div></div>");
@@ -408,7 +409,10 @@ function DashMobileCardStack (binder, color=null) {
                 "top": "auto",
                 "color": "white",
                 "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
-                "padding-left": Dash.Size.Padding * 0.5
+                "padding-left": Dash.Size.Padding * 0.5,
+
+                // This prevents cut-off from the rounded corners of the modern iPhone screen, which are only problematic on the bottom
+                "padding-bottom": this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0
             }
         );
 

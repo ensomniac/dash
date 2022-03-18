@@ -17479,9 +17479,14 @@ function Dash () {
     // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    this.IsMobileFromHomeScreen = (
+        window.navigator.standalone === true  // iOS
+        || window.matchMedia("(display-mode: standalone)").matches  // Android
+    );
     this.Animation = new DashAnimation();
     this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
+    this.File      = new DashFile();
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
@@ -18449,6 +18454,193 @@ function DashTemp () {
         if (JSON.stringify(previous) !== JSON.stringify(temp_last_combo.selected_option)) {
             temp_last_combo.Update(null, previous, true);
         }
+    };
+}
+
+function DashFile () {
+    // These have not all been tested for the ability to display a preview
+    this.Extensions = {
+        "image": [
+            "gif",
+            "jpeg",
+            "jpg",
+            "png",
+            "svg",
+            "webp"
+        ],
+        "model_viewer": [
+            "gltf",
+            "glb"
+        ],
+        // Add to these categories as we become aware of more extensions that are commonly being uploaded
+        "video": [
+            "mp4",
+            "mov"
+        ],
+        "audio": [
+            "mp3",
+            "wav"
+        ],
+        "model": [
+            "fbx",
+            "obj"
+        ],
+        "drafting": [
+            "cad",
+            "pdg",
+            "3d"
+        ]
+    };
+    this.abs_center_css = {
+        "position": "absolute",
+        "top": "50%",
+        "left": "50%",
+        "transform": "translate(-50%, -50%)"
+    };
+    this.GetPreview = function (color, file_data, height) {
+        var file_url = file_data["url"] || file_data["orig_url"] || "";
+        var filename = file_data["filename"] || file_data["orig_filename"];
+        if (!file_url) {
+            return this.GetPlaceholderPreview(color, filename);
+        }
+        var file_ext = file_url.split(".").Last();
+        if (file_ext === "txt") {
+            return this.GetPlainTextPreview(file_url);
+        }
+        if (this.Extensions["video"].includes(file_ext)) {
+            return this.GetVideoPreview(file_url, height);
+        }
+        if (this.Extensions["audio"].includes(file_ext)) {
+            return this.GetAudioPreview(file_url, height);
+        }
+        if (file_ext === "pdf") {
+            return this.GetPDFPreview(file_url, height);
+        }
+        if (this.Extensions["image"].includes(file_ext) || "aspect" in file_data) {
+            return this.GetImagePreview(file_url, height);
+        }
+        if (this.Extensions["model_viewer"].includes(file_ext)) {
+            return this.GetModelPreview(file_data["glb_url"], height);
+        }
+        if (this.Extensions["model"].includes(file_ext) && "glb_url" in file_data) {
+            return this.GetModelPreview(file_data["glb_url"], height);
+        }
+        if (file_ext === "csv") {
+            return this.GetCSVPreview(color, file_url, height);
+        }
+        if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "one"].includes(file_ext)) {
+            return this.GetMicrosoftPreview(file_url, height);
+        }
+        return this.GetPlaceholderPreview(color, filename);
+    };
+    // Dash.Size.RowHeight * 15
+    this.set_preview_size = function (html, width, height=null) {
+        var css = {"width": width};
+        if (height) {
+            css["height"] = height;
+        }
+        html.css(css);
+        return html;
+    };
+    this.GetPDFPreview = function (url, height) {
+        return this.set_preview_size(
+            $("<iframe src='" + url + "'></iframe>"),
+            height,
+            "100%"
+        );
+    };
+    this.GetPlainTextPreview = function (url, formatted=true) {
+        var preview = $("<iframe src='" + url + "'></iframe>");
+        if (!formatted) {
+            return preview;
+        }
+        var html = $("<div></div>");
+        html.css({
+            "position": "absolute",
+            "top": "50%",
+            "left": "50%",
+            "overflow": "auto",
+            "transform": "translate(-50%, -50%)",
+            "background": Dash.Color.Light.Background  // This is deliberate
+        });
+        html.append(preview);
+        return this.set_preview_size(html, "77%", "100%");
+    };
+    this.GetModelPreview = function (glb_url, height) {
+        // As we become aware of more model file types that are commonly uploaded, we need to write
+        // ways in the back-end to convert them to GLB format - FBX is the only one supported for now
+        return this.set_preview_size(
+            $("<model-viewer src='" + glb_url + "' alt='' camera-controls></model-viewer>"),
+            height,
+            "100%"
+        );
+    };
+    this.GetVideoPreview = function (url, height) {
+        var html = $("<video src='" + url + "' controls></video>");
+        html.css(this.abs_center_css);
+        return this.set_preview_size(html, height, null);
+    };
+    this.GetAudioPreview = function (url, height) {
+        var html = $("<audio src='" + url + "' controls></audio>");
+        html.css(this.abs_center_css);
+        return this.set_preview_size(html, height - (Dash.Size.Padding * 2), null);
+    };
+    this.GetMicrosoftPreview = function (url, height) {
+        return this.set_preview_size(
+            $("<iframe src='https://view.officeapps.live.com/op/embed.aspx?src=" + url + "' ></iframe>"),
+            height,
+            "100%"
+        );
+    };
+    this.GetCSVPreview = function (color, url, height) {
+        var html = $("<div></div>");
+        html.css({
+            "padding": Dash.Size.Padding,
+            "background": color.Background,
+            "color": color.Text
+        });
+        (function (self) {
+            $.get(
+                url,
+                function (data) {
+                    var table = "<table>";
+                    var rows = data.split("\n");
+                    // This row-by-row display is fairly quick/rough, should be improved once it's more important
+                    rows.forEach(function (row) {
+                        table += "<tr>";
+                        var columns = row.split(",");
+                        table += "<td>" + columns[0] + "</td>";
+                        table += "<td>" + columns[1] + "</td>";
+                        table += "<td>" + columns[2] + "</td>";
+                        table += "</tr>";
+                    });
+                    table += "</table>";
+                    html.append(table);
+                }
+            );
+        })(this);
+        return this.set_preview_size(html, height, "100%");
+    };
+    // Basic version
+    this.GetImagePreview = function (url, height) {
+        var html = $("<div></div>");
+        html.css({
+            "background-image": "url(" + url + ")",
+            "background-repeat": "no-repeat",
+            "background-size": "contain",
+            "background-position": "center center"
+        });
+        return this.set_preview_size(html, height, "100%");
+    };
+    this.GetPlaceholderPreview = function (color, filename="File Preview") {
+        var html = $("<div></div>");
+        html.text(filename);
+        html.css({
+            ...this.abs_center_css,
+            "font-family": "sans_serif_bold",
+            "color": Dash.Color.GetOpposite(color).Text,
+        });
+        return html;
     };
 }
 
@@ -25512,7 +25704,6 @@ function DashGuiFileExplorerData () {
 function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.file_explorer = file_explorer;
     this.file_id = file_id;
-    this.content_preview = null;
     this.html = $("<div></div>");
     this.details_property_box = null;
     this.detail_box = $("<div></div>");
@@ -25521,39 +25712,6 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.height = Dash.Size.RowHeight * 15;
     this.read_only = this.file_explorer.read_only;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
-    // These have not all been tested for the ability to display a preview
-    this.extensions = {
-        "image": [
-            "gif",
-            "jpeg",
-            "jpg",
-            "png",
-            "svg",
-            "webp"
-        ],
-        "model_viewer": [
-            "gltf",
-            "glb"
-        ],
-        // Add to these categories as we become aware of more extensions that are commonly being uploaded
-        "video": [
-            "mp4",
-            "mov"
-        ],
-        "audio": [
-            "mp3",
-            "wav"
-        ],
-        "model": [
-            "fbx",
-            "obj"
-        ],
-        "drafting": [
-            "cad",
-            "pdg",
-            "3d"
-        ]
-    };
     this.setup_styles = function () {
         this.html.css({
             "height": this.height
@@ -25580,8 +25738,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             return;
         }
         this.preview_box.empty();
-        this.content_preview = new DashGuiFileExplorerContentPreview(this);
-        this.preview_box.append(this.content_preview.html);
+        this.preview_box.append(Dash.File.GetPreview(this.color, this.get_data(), this.height));
     };
     this.ReloadFileDetailsPropertyBox = function () {
         if (!Dash.Validate.Object(this.get_data())) {
@@ -25648,13 +25805,13 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         var header = this.details_property_box.AddHeader("File Details");
         header.ReplaceBorderWithIcon(
             is_image                                             ? "file_image"   :
-            file_ext === "txt"                              ? "file_lined"   :
-            file_ext === "pdf"                              ? "file_pdf"     :
-            file_ext === "csv"                              ? "file_csv"     :
-            file_ext === "doc" || file_ext === "docx"       ? "file_word"    :
-            this.extensions["model"].includes(file_ext)     ? "cube"         :
-            this.extensions["video"].includes(file_ext)     ? "file_video"   :
-            this.extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
+            file_ext === "txt"                                   ? "file_lined"   :
+            file_ext === "pdf"                                   ? "file_pdf"     :
+            file_ext === "csv"                                   ? "file_csv"     :
+            file_ext === "doc" || file_ext === "docx"            ? "file_word"    :
+            Dash.File.Extensions["model"].includes(file_ext)     ? "cube"         :
+            Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
+            Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
             "file"
         );
         header.icon.AddShadow();
@@ -25788,160 +25945,13 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     };
 }
 
-function DashGuiFileExplorerContentPreview (preview_strip) {
-    this.preview_strip = preview_strip;
-    this.html = null;
-    this.color = this.preview_strip.color;
-    this.height = this.preview_strip.height;
-    this.file_data = this.preview_strip.get_data();
-    this.extensions = this.preview_strip.extensions;
-    this.file_explorer = this.preview_strip.file_explorer;
-    this.opposite_color = this.preview_strip.opposite_color;
-    this.file_url = this.file_explorer.get_file_url(this.file_data);
-    this.file_ext = this.preview_strip.get_file_ext(this.file_url) || this.file_url.split(".").Last();
-    this.abs_center_css = {
-        "position": "absolute",
-        "top": "50%",
-        "left": "50%",
-        "transform": "translate(-50%, -50%)"
-    };
-    this.setup_styles = function () {
-        var height = "100%";
-        var width = this.height;
-        if (this.file_ext === "pdf") {
-            this.set_pdf_preview();
-        }
-        else if (this.file_ext === "txt") {
-            this.set_plain_text_preview();
-            width = "77%";
-        }
-        else if (this.extensions["image"].includes(this.file_ext) || "aspect" in this.file_data) {
-            this.set_image_preview();
-        }
-        else if (this.extensions["model_viewer"].includes(this.file_ext)) {
-            this.set_model_preview();
-        }
-        else if (this.extensions["model"].includes(this.file_ext) && "glb_url" in this.file_data) {
-            this.set_model_preview();
-        }
-        else if (this.extensions["video"].includes(this.file_ext)) {
-            this.set_video_preview();
-            height = null;
-        }
-        else if (this.extensions["audio"].includes(this.file_ext)) {
-            this.set_audio_preview();
-            width = this.height - (Dash.Size.Padding * 2);
-            height = null;
-        }
-        else if (this.file_ext === "csv") {
-            this.set_csv_preview();
-        }
-        else if (this.file_ext === "doc" || this.file_ext === "docx") {
-            this.set_word_doc_preview();
-        }
-        // Final formatting
-        if (this.html) {
-            this.set_preview_size(width, height);
-        }
-        else {
-            this.set_default_preview();
-        }
-    };
-    this.set_pdf_preview = function () {
-        this.html = $("<iframe src='" + this.file_url + "'></iframe>");
-    };
-    this.set_plain_text_preview = function () {
-        this.html = $("<div></div>");
-        this.html.css({
-            "position": "absolute",
-            "top": "50%",
-            "left": "50%",
-            "overflow": "auto",
-            "transform": "translate(-50%, -50%)",
-            "background": Dash.Color.Light.Background  // This is deliberate
-        });
-        this.html.append($("<iframe src='" + this.file_url + "'></iframe>"));
-    };
-    this.set_image_preview = function () {
-        this.html = $("<div></div>");
-        this.html.css({
-            "background-image": "url(" + this.file_url + ")",
-            "background-repeat": "no-repeat",
-            "background-size": "contain",
-            "background-position": "center center"
-        });
-    };
-    this.set_model_preview = function () {
-        // As we become aware of more model file types that are commonly uploaded, we need to write
-        // ways in the back-end to convert them to GLB format - FBX is the only one supported for now
-        this.html = $("<model-viewer src='" + this.file_data["glb_url"] + "' alt='' camera-controls></model-viewer>");
-    };
-    this.set_video_preview = function () {
-        this.html = $("<video src='" + this.file_url + "' controls></video>");
-        this.html.css(this.abs_center_css);
-    };
-    this.set_audio_preview = function () {
-        this.html = $("<audio src='" + this.file_url + "' controls></audio>");
-        this.html.css(this.abs_center_css);
-    };
-    this.set_csv_preview = function () {
-        this.html = $("<div></div>");
-        this.html.css({
-            "padding": Dash.Size.Padding
-        });
-        (function (self) {
-            $.get(
-                self.file_url,
-                function (data) {
-                    var html = "<table>";
-                    var rows = data.split("\n");
-                    // This row-by-row display is fairly quick/rough, should be improved once it's more important
-                    rows.forEach(function (row) {
-                        html += "<tr>";
-                        var columns = row.split(",");
-                        html += "<td>" + columns[0] + "</td>";
-                        html += "<td>" + columns[1] + "</td>";
-                        html += "<td>" + columns[2] + "</td>";
-                        html += "</tr>";
-                    });
-                    html += "</table>";
-                    self.html.append(html);
-                }
-            );
-        })(this);
-    };
-    this.set_word_doc_preview = function () {
-        this.html = $("<iframe src='https://view.officeapps.live.com/op/embed.aspx?src=" + this.file_url + "' ></iframe>");
-    };
-    this.set_default_preview = function () {
-        this.html = $("<div></div>");
-        this.html.text(this.file_data["filename"] || this.file_data["orig_filename"] || "File Preview");
-        this.html.css({
-            ...this.abs_center_css,
-            "font-family": "sans_serif_bold",
-            "color": this.opposite_color.Text,
-        });
-    };
-    this.set_preview_size = function (width, height=null) {
-        this.html.css({
-            "width": width
-        });
-        if (height) {
-            this.html.css({
-                "height": height
-            });
-        }
-    };
-    this.setup_styles();
-}
-
 function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
     this.color = color || Dash.Color.Light;
     this.name = icon_name;
     this.size = container_size || Dash.Size.RowHeight;
     this.size_mult = icon_size_mult;
     this.icon_color = icon_color || this.color.Button.Background.Base;
-    this.theme = "light";
+    // this.theme = "light";
     this.icon_html = null;
     this.icon_definition = new DashGuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
@@ -32895,7 +32905,8 @@ function DashMobileCardStack (binder, color=null) {
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
     this.html = Dash.Gui.GetHTMLAbsContext();
-    this.footer_height = Dash.Size.ButtonHeight;
+    this.iphone_standalone = /iPhone/i.test(navigator.userAgent) && Dash.IsMobileFromHomeScreen;
+    this.footer_height = Dash.Size.ButtonHeight + (this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0);
     this.setup_styles = function () {
         this.slider = $("<div></div>");
         this.slider.css({
@@ -33184,7 +33195,9 @@ function DashMobileCardStack (binder, color=null) {
                 "top": "auto",
                 "color": "white",
                 "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
-                "padding-left": Dash.Size.Padding * 0.5
+                "padding-left": Dash.Size.Padding * 0.5,
+                // This prevents cut-off from the rounded corners of the modern iPhone screen, which are only problematic on the bottom
+                "padding-bottom": this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0
             }
         );
         this.set_footer_overlay_size();
@@ -33306,9 +33319,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             0.75,
             Dash.Color.Mobile.AccentPrimary
         );
-        this.icon.icon_html.css({
-            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)"
-        });
+        this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
         this.label.text(this.label_text);
         this.html.css({
             "height": this.height,
@@ -33329,7 +33340,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "background": "rgb(250, 250, 250)",
             "height": this.height - (Dash.Size.Padding * 0.5),
             "width": this.height - (Dash.Size.Padding * 0.5),
-            "border-radius": (this.height-(Dash.Size.Padding * 0.5)) * 0.5,
+            "border-radius": (this.height - (Dash.Size.Padding * 0.5)) * 0.5,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         });
         var label_css = {

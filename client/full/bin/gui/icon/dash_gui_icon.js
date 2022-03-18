@@ -5,7 +5,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
     this.size_mult = icon_size_mult;
     this.icon_color = icon_color || this.color.Button.Background.Base;
 
-    this.theme = "light";
+    // this.theme = "light";
     this.icon_html = null;
     this.icon_definition = new DashGuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");

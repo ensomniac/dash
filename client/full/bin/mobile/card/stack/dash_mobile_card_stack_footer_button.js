@@ -22,9 +22,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             Dash.Color.Mobile.AccentPrimary
         );
 
-        this.icon.icon_html.css({
-            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)"
-        });
+        this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
 
         this.label.text(this.label_text);
 
@@ -48,7 +46,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
             "background": "rgb(250, 250, 250)",
             "height": this.height - (Dash.Size.Padding * 0.5),
             "width": this.height - (Dash.Size.Padding * 0.5),
-            "border-radius": (this.height-(Dash.Size.Padding * 0.5)) * 0.5,
+            "border-radius": (this.height - (Dash.Size.Padding * 0.5)) * 0.5,
             "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         });
 

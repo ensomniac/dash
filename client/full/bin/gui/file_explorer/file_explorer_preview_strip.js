@@ -2,7 +2,6 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.file_explorer = file_explorer;
     this.file_id = file_id;
 
-    this.content_preview = null;
     this.html = $("<div></div>");
     this.details_property_box = null;
     this.detail_box = $("<div></div>");
@@ -11,41 +10,6 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.height = Dash.Size.RowHeight * 15;
     this.read_only = this.file_explorer.read_only;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
-
-    // These have not all been tested for the ability to display a preview
-    this.extensions = {
-        "image": [
-            "gif",
-            "jpeg",
-            "jpg",
-            "png",
-            "svg",
-            "webp"
-        ],
-        "model_viewer": [
-            "gltf",
-            "glb"
-        ],
-
-        // Add to these categories as we become aware of more extensions that are commonly being uploaded
-        "video": [
-            "mp4",
-            "mov"
-        ],
-        "audio": [
-            "mp3",
-            "wav"
-        ],
-        "model": [
-            "fbx",
-            "obj"
-        ],
-        "drafting": [
-            "cad",
-            "pdg",
-            "3d"
-        ]
-    };
 
     this.setup_styles = function () {
         this.html.css({
@@ -80,9 +44,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
 
         this.preview_box.empty();
 
-        this.content_preview = new DashGuiFileExplorerContentPreview(this);
-
-        this.preview_box.append(this.content_preview.html);
+        this.preview_box.append(Dash.File.GetPreview(this.color, this.get_data(), this.height));
     };
 
     this.ReloadFileDetailsPropertyBox = function () {
@@ -174,13 +136,13 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
 
         header.ReplaceBorderWithIcon(
             is_image                                             ? "file_image"   :
-            file_ext === "txt"                              ? "file_lined"   :
-            file_ext === "pdf"                              ? "file_pdf"     :
-            file_ext === "csv"                              ? "file_csv"     :
-            file_ext === "doc" || file_ext === "docx"       ? "file_word"    :
-            this.extensions["model"].includes(file_ext)     ? "cube"         :
-            this.extensions["video"].includes(file_ext)     ? "file_video"   :
-            this.extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
+            file_ext === "txt"                                   ? "file_lined"   :
+            file_ext === "pdf"                                   ? "file_pdf"     :
+            file_ext === "csv"                                   ? "file_csv"     :
+            file_ext === "doc" || file_ext === "docx"            ? "file_word"    :
+            Dash.File.Extensions["model"].includes(file_ext)     ? "cube"         :
+            Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
+            Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
             "file"
         );
 
