@@ -167,8 +167,8 @@ function DashMobileCardStack (binder, color=null) {
         return null;
     };
 
-    this.AddUserBanner = function () {
-        var banner = new DashMobileCardStackUserBanner(this);
+    this.AddUserBanner = function (include_refresh_button=true) {
+        var banner = new DashMobileCardStackUserBanner(this, include_refresh_button);
 
         this.AddHTML(banner.html);
 

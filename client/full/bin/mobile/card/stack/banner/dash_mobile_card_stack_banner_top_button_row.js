@@ -13,8 +13,8 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
     this.left_button_content = Dash.Gui.GetHTMLContext();
     this.right_button_content = Dash.Gui.GetHTMLContext();
     this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
-    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
-    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, Dash.Color.Mobile.BannerButton);
+    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, Dash.Color.Mobile.BannerButton);
 
     this.setup_styles = function () {
         this.html.css({

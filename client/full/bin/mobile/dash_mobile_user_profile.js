@@ -1,8 +1,9 @@
-function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="") {
+function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true) {
     this.binder = binder;
     this.on_exit_callback = on_exit_callback.bind(binder);
     this.user_data = user_data || Dash.User.Data;
     this.context_logo_img_url = context_logo_img_url;
+    this.include_refresh_button = include_refresh_button;
 
     this.html = null;
     this.stack = null;
@@ -29,7 +30,16 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.user_banner.SetMarginMode(7);
         this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
         this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
-        this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
+
+        if (this.include_refresh_button) {
+            this.user_banner.AddFooterIcon(
+                "refresh",
+                "Refresh App",
+                function () {
+                    location.reload();
+                }
+            );
+        }
 
         this.user_banner.header_row.right_icon.AddShadow("1px 1px 3px rgba(0, 0, 0, 1)");
 
@@ -121,10 +131,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
 
     this.log_user_out = function () {
         Dash.Logout();
-    };
-
-    this.reload = function () {
-        location.reload();
     };
 
     this.exit_stack = function () {

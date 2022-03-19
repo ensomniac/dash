@@ -1,5 +1,6 @@
-function DashMobileCardStackUserBanner (stack) {
+function DashMobileCardStackUserBanner (stack, include_refresh_button=true) {
     this._stack = stack;  // The below .call() function includes a this.stack already
+    this.include_refresh_button = include_refresh_button;
 
     this.user_modal = null;
     this.color = this._stack.color;
@@ -18,7 +19,13 @@ function DashMobileCardStackUserBanner (stack) {
     };
 
     this.on_user_clicked = function () {
-        this.user_modal = new Dash.Mobile.UserProfile(this, this.on_show_main, null, this.context_logo_img_url);
+        this.user_modal = new Dash.Mobile.UserProfile(
+            this,
+            this.on_show_main,
+            null,
+            this.context_logo_img_url,
+            this.include_refresh_button
+        );
 
         this._stack.AddLeftContent(this.user_modal.html);
     };

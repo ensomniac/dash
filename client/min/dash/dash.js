@@ -19718,8 +19718,9 @@ function DashColor () {
     // This is a temporary way to centralize the orange palette
     // that was originally defined and used throughout the mobile code
     this.Mobile = {
-        AccentPrimary: "#ff684c",   // Orange
-        AccentSecondary: "#ffae4c"  // Yellow
+        AccentPrimary: "#ff684c",    // Orange
+        AccentSecondary: "#ffae4c",  // Yellow
+        BannerButton: "white"
     };
     this.setup_color_sets = function () {
         this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
@@ -32580,11 +32581,12 @@ function DashMobileCard (stack) {
     this.setup_styles();
 }
 
-function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="") {
+function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true) {
     this.binder = binder;
     this.on_exit_callback = on_exit_callback.bind(binder);
     this.user_data = user_data || Dash.User.Data;
     this.context_logo_img_url = context_logo_img_url;
+    this.include_refresh_button = include_refresh_button;
     this.html = null;
     this.stack = null;
     this.profile_button = null;
@@ -32604,7 +32606,15 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.user_banner.SetMarginMode(7);
         this.user_banner.SetRightIcon("close", this.exit_stack.bind(this));
         this.user_banner.AddFooterIcon("log_out", "Log Out", this.log_user_out.bind(this));
-        this.user_banner.AddFooterIcon("refresh", "Refresh App", this.reload.bind(this));
+        if (this.include_refresh_button) {
+            this.user_banner.AddFooterIcon(
+                "refresh",
+                "Refresh App",
+                function () {
+                    location.reload();
+                }
+            );
+        }
         this.user_banner.header_row.right_icon.AddShadow("1px 1px 3px rgba(0, 0, 0, 1)");
         this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
         this.profile_button.AddUploader(
@@ -32675,9 +32685,6 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     };
     this.log_user_out = function () {
         Dash.Logout();
-    };
-    this.reload = function () {
-        location.reload();
     };
     this.exit_stack = function () {
         if (this.on_exit_callback) {
@@ -33046,8 +33053,8 @@ function DashMobileCardStack (binder, color=null) {
         card.html.remove();
         return null;
     };
-    this.AddUserBanner = function () {
-        var banner = new DashMobileCardStackUserBanner(this);
+    this.AddUserBanner = function (include_refresh_button=true) {
+        var banner = new DashMobileCardStackUserBanner(this, include_refresh_button);
         this.AddHTML(banner.html);
         return banner;
     };
@@ -33627,8 +33634,9 @@ function DashMobileCardStackBanner (stack) {
     this.setup_styles();
 }
 
-function DashMobileCardStackUserBanner (stack) {
+function DashMobileCardStackUserBanner (stack, include_refresh_button=true) {
     this._stack = stack;  // The below .call() function includes a this.stack already
+    this.include_refresh_button = include_refresh_button;
     this.user_modal = null;
     this.color = this._stack.color;
     this.context_logo_img_url = "";
@@ -33641,7 +33649,13 @@ function DashMobileCardStackUserBanner (stack) {
         this.context_logo_img_url = url;
     };
     this.on_user_clicked = function () {
-        this.user_modal = new Dash.Mobile.UserProfile(this, this.on_show_main, null, this.context_logo_img_url);
+        this.user_modal = new Dash.Mobile.UserProfile(
+            this,
+            this.on_show_main,
+            null,
+            this.context_logo_img_url,
+            this.include_refresh_button
+        );
         this._stack.AddLeftContent(this.user_modal.html);
     };
     this.on_show_main = function () {
@@ -33712,8 +33726,8 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
     this.left_button_content = Dash.Gui.GetHTMLContext();
     this.right_button_content = Dash.Gui.GetHTMLContext();
     this.button_size = Dash.Size.ButtonHeight-Dash.Size.Padding;
-    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
-    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, "white");
+    this.left_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, Dash.Color.Mobile.BannerButton);
+    this.right_icon = new Dash.Gui.Icon(this.color, "gear", this.button_size, 0.75, Dash.Color.Mobile.BannerButton);
     this.setup_styles = function () {
         this.html.css({
             "background": "none",
