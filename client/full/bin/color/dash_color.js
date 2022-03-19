@@ -189,6 +189,14 @@ function DashColor (dark_mode_active=false) {
         this.Dark = light;
     };
 
+    this.IsDark = function (color) {
+        if (this.dark_mode_active) {
+            return color === this.Light;
+        }
+
+        return color === this.Dark;
+    };
+
     this.GetOpposite = function (dash_color_instance) {
         if (!dash_color_instance instanceof DashColorSet) {
             return dash_color_instance;

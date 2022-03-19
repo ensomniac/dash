@@ -20,19 +20,19 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.toggle_hide_button = null;
     this.secondary_css_color = null;
     this.toggle_local_storage_key = null;
-    this.dark_mode = this.color === Dash.Color.Dark;
+    this.dark_mode = Dash.Color.IsDark(this.color);
     this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
 
     // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
 
     this.setup_styles = function () {
-        if (this.color === Dash.Color.Light) {
-            this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
+        if (this.dark_mode) {
+            this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
         }
 
-        else if (this.dark_mode) {
-            this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
+        else {
+            this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
         }
 
         this.html = Dash.Gui.GetHTMLBoxContext(

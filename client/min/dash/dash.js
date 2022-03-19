@@ -19934,6 +19934,12 @@ function DashColor (dark_mode_active=false) {
         this.Light = this.Dark;
         this.Dark = light;
     };
+    this.IsDark = function (color) {
+        if (this.dark_mode_active) {
+            return color === this.Light;
+        }
+        return color === this.Dark;
+    };
     this.GetOpposite = function (dash_color_instance) {
         if (!dash_color_instance instanceof DashColorSet) {
             return dash_color_instance;
@@ -22874,16 +22880,16 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.toggle_hide_button = null;
     this.secondary_css_color = null;
     this.toggle_local_storage_key = null;
-    this.dark_mode = this.color === Dash.Color.Dark;
+    this.dark_mode = Dash.Color.IsDark(this.color);
     this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
     // This element is set up to work as a vertical, column-style box. It may not work in a
     //  horizontal, row-style placement and may need alternate styling options for that type of use.
     this.setup_styles = function () {
-        if (this.color === Dash.Color.Light) {
-            this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
-        }
-        else if (this.dark_mode) {
+        if (this.dark_mode) {
             this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
+        }
+        else {
+            this.secondary_css_color = Dash.Color.Lighten(this.color.Text, 90);
         }
         this.html = Dash.Gui.GetHTMLBoxContext(
             {
@@ -23611,7 +23617,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
                 // which can't simply be fixed by making it different, because too many things would break.
                 // It would be a big re-work of a bunch of code. Remove this call if/when that is resolved.
-                "background": this.color === Dash.Color.Light ?
+                "background": !Dash.Color.IsDark(this.color) ?
                     (Dash.IsMobile ? "white" : Dash.Color.Darken(this.color.Background, 20)) :
                     this.color.BackgroundRaised
             },

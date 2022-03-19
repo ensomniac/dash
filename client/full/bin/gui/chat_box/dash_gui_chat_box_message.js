@@ -157,7 +157,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
                 // which can't simply be fixed by making it different, because too many things would break.
                 // It would be a big re-work of a bunch of code. Remove this call if/when that is resolved.
-                "background": this.color === Dash.Color.Light ?
+                "background": !Dash.Color.IsDark(this.color) ?
                     (Dash.IsMobile ? "white" : Dash.Color.Darken(this.color.Background, 20)) :
                     this.color.BackgroundRaised
             },
