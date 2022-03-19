@@ -17483,14 +17483,22 @@ function Dash () {
         window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
+    this.Local = new DashLocal(this.Context);
+    this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
+    this.Color = new DashColor(this.DarkModeActive);
+    if (this.DarkModeActive) {
+        console.warn(
+            "*** Dark mode active ***\n\n" +
+            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
+            "after custom colors are set in color spec file."
+        );
+    }
     this.Animation = new DashAnimation();
-    this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
     this.File      = new DashFile();
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
-    this.Local     = new DashLocal();
     this.Math      = new DashMath();
     this.Requests  = new DashRequest();
     this.Size      = new DashSize(this.IsMobile);
@@ -18053,6 +18061,46 @@ function DashGui() {
             "box-shadow": "none",
             "background": "none",
         });
+    };
+    this.GetDarkModeToggle = function (color) {
+        var container = $("<div></div>");
+        container.css({
+            "display": "flex",
+            "width": "fit-content",
+            "height": "fit-content"
+        });
+        var toggle = new Dash.Gui.Checkbox(
+            "dark_mode_active",
+            false,
+            color,
+            "Toggle",
+            this,
+            function () {
+                location.reload();  // Necessary unless we somehow redraw everything relative to the current context
+            }
+        );
+        toggle.html.css({
+            "margin-left": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 1.6
+        });
+        toggle.SetIconSize(190);
+        toggle.SetTrueIconName("toggle_on_light");
+        toggle.SetFalseIconName("toggle_off_light");
+        if (toggle.IsChecked()) {
+            toggle.SetIconColor(color.AccentGood);
+        }
+        var sun_icon = new Dash.Gui.Icon(color, "sun");
+        var moon_icon = new Dash.Gui.Icon(color, "moon");
+        sun_icon.html.css({
+            "pointer-events": "none"
+        });
+        moon_icon.html.css({
+            "pointer-events": "none"
+        });
+        container.append(sun_icon.html);
+        container.append(toggle.html);
+        container.append(moon_icon.html);
+        return container;
     };
     this.GetMobileNotificationIcon = function (size=null, parent_is_circle=true, color="red") {
         if (!size) {
@@ -18823,16 +18871,17 @@ function DashUtils () {
     })(this);
 }
 
-function DashLocal () {
+function DashLocal (context) {
+    this.context = context;
     this.Set = function (key, value) {
-        if (key.indexOf(Dash.Context["asset_path"] + "_") !== 0) {
-            key = Dash.Context["asset_path"] + "_" + key;
+        if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
+            key = this.context["asset_path"] + "_" + key;
         }
         return localStorage.setItem(key, value);
     };
     this.Get = function (key) {
-        if (key.indexOf(Dash.Context["asset_path"] + "_") !== 0) {
-            key = Dash.Context["asset_path"] + "_" + key;
+        if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
+            key = this.context["asset_path"] + "_" + key;
         }
         return localStorage.getItem(key);
     };
@@ -19707,12 +19756,13 @@ function DashAnimationCurves() {
     };
 }
 
-function DashColor () {
-    this.parsed_color_data = {};
+function DashColor (dark_mode_active=false) {
+    this.dark_mode_active = dark_mode_active;
     this.Dark = null;
     this.Light = null;
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
+    this.parsed_color_data = {};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     
     // This is a temporary way to centralize the orange palette
@@ -19874,6 +19924,15 @@ function DashColor () {
         );
         this.Light.SetPlaceholderClass("placeholder_light");
         this.Dark.SetPlaceholderClass("placeholder_dark");
+    };
+    this.SwapIfDarkModeActive = function () {
+        if (!this.dark_mode_active) {
+            return;
+        }
+        console.debug("TEST set dark");
+        var light = this.Light;
+        this.Light = this.Dark;
+        this.Dark = light;
     };
     this.GetOpposite = function (dash_color_instance) {
         if (!dash_color_instance instanceof DashColorSet) {
@@ -21407,13 +21466,11 @@ function DashGuiCheckbox (
         if (!this.local_storage_key) {
             return false;
         }
-        else {
-            var local = Dash.Local.Get(this.local_storage_key);
-        }
-        if (local === "true") {
+        var local = Dash.Local.Get(this.local_storage_key);
+        if (["true", true].includes(local)) {
             return true;
         }
-        if (local === "false") {
+        if (["false", false].includes(local)) {
             return false;
         }
         return this.default_state;
@@ -26183,6 +26240,7 @@ function DashGuiIcons (icon) {
         "minus_circle":          new DashGuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
         "minus_sign":            new DashGuiIconDefinition(this.icon, "Minus Sign", this.weight["regular"], "minus"),
         "minus_square":          new DashGuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
+        "moon":                  new DashGuiIconDefinition(this.icon, "Moon", this.weight["regular"], "moon"),
         "more":                  new DashGuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
         "navigation":            new DashGuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
         "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
@@ -26211,14 +26269,19 @@ function DashGuiIcons (icon) {
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
         "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
-        "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-off"),
-        "toggle_on":             new DashGuiIconDefinition(this.icon, "Toggle", this.weight["regular"], "toggle-on"),
+        "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle Off", this.weight["regular"], "toggle-off"),
+        "toggle_off_light":      new DashGuiIconDefinition(this.icon, "Toggle Off (Light)", this.weight["light"], "toggle-off"),
+        "toggle_off_solid":      new DashGuiIconDefinition(this.icon, "Toggle Off (Solid)", this.weight["solid"], "toggle-off"),
+        "toggle_on":             new DashGuiIconDefinition(this.icon, "Toggle On", this.weight["regular"], "toggle-on"),
+        "toggle_on_light":       new DashGuiIconDefinition(this.icon, "Toggle On (Light)", this.weight["light"], "toggle-on"),
+        "toggle_on_solid":       new DashGuiIconDefinition(this.icon, "Toggle On (Solid)", this.weight["solid"], "toggle-on"),
         "tools":                 new DashGuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
         "transferring":          new DashGuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new DashGuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
@@ -28141,6 +28204,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 this.view_mode === "preview" ? "expand" :
                 "alert_triangle"
         );
+        button.html.css({
+            "margin-top": Dash.Size.Padding * 0.25,
+            "margin-right": Dash.Size.Padding * 0.8
+        });
+        button.SetIconSize(190);
         button.SetHoverHint(
             this.modal_of ? "Close" :
                 this.view_mode === "settings" ? "Log Out" :

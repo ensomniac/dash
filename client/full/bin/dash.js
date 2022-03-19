@@ -15,14 +15,24 @@ function Dash () {
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
 
+    this.Local = new DashLocal(this.Context);
+    this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
+    this.Color = new DashColor(this.DarkModeActive);
+
+    if (this.DarkModeActive) {
+        console.warn(
+            "*** Dark mode active ***\n\n" +
+            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
+            "after custom colors are set in color spec file."
+        );
+    }
+
     this.Animation = new DashAnimation();
-    this.Color     = new DashColor();
     this.DateTime  = new DashDateTime();
     this.File      = new DashFile();
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
-    this.Local     = new DashLocal();
     this.Math      = new DashMath();
     this.Requests  = new DashRequest();
     this.Size      = new DashSize(this.IsMobile);

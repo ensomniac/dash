@@ -73,6 +73,13 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "alert_triangle"
         );
 
+        button.html.css({
+            "margin-top": Dash.Size.Padding * 0.25,
+            "margin-right": Dash.Size.Padding * 0.8
+        });
+
+        button.SetIconSize(190);
+
         button.SetHoverHint(
             this.modal_of ? "Close" :
                 this.view_mode === "settings" ? "Log Out" :

@@ -400,6 +400,57 @@ function DashGui() {
         });
     };
 
+    this.GetDarkModeToggle = function (color) {
+        var container = $("<div></div>");
+
+        container.css({
+            "display": "flex",
+            "width": "fit-content",
+            "height": "fit-content"
+        });
+
+        var toggle = new Dash.Gui.Checkbox(
+            "dark_mode_active",
+            false,
+            color,
+            "Toggle",
+            this,
+            function () {
+                location.reload();  // Necessary unless we somehow redraw everything relative to the current context
+            }
+        );
+
+        toggle.html.css({
+            "margin-left": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * 1.6
+        });
+
+        toggle.SetIconSize(190);
+        toggle.SetTrueIconName("toggle_on_light");
+        toggle.SetFalseIconName("toggle_off_light");
+
+        if (toggle.IsChecked()) {
+            toggle.SetIconColor(color.AccentGood);
+        }
+
+        var sun_icon = new Dash.Gui.Icon(color, "sun");
+        var moon_icon = new Dash.Gui.Icon(color, "moon");
+
+        sun_icon.html.css({
+            "pointer-events": "none"
+        });
+
+        moon_icon.html.css({
+            "pointer-events": "none"
+        });
+
+        container.append(sun_icon.html);
+        container.append(toggle.html);
+        container.append(moon_icon.html);
+
+        return container;
+    };
+
     this.GetMobileNotificationIcon = function (size=null, parent_is_circle=true, color="red") {
         if (!size) {
             size = (Dash.Size.ButtonHeight - Dash.Size.Padding) * 0.25;  // Default for CardStackFooterButton

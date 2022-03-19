@@ -1,10 +1,11 @@
-function DashColor () {
-    this.parsed_color_data = {};
+function DashColor (dark_mode_active=false) {
+    this.dark_mode_active = dark_mode_active;
 
     this.Dark = null;
     this.Light = null;
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
+    this.parsed_color_data = {};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
     
     // This is a temporary way to centralize the orange palette
@@ -173,6 +174,19 @@ function DashColor () {
 
         this.Light.SetPlaceholderClass("placeholder_light");
         this.Dark.SetPlaceholderClass("placeholder_dark");
+    };
+
+    this.SwapIfDarkModeActive = function () {
+        if (!this.dark_mode_active) {
+            return;
+        }
+
+        console.debug("TEST set dark");
+
+        var light = this.Light;
+
+        this.Light = this.Dark;
+        this.Dark = light;
     };
 
     this.GetOpposite = function (dash_color_instance) {

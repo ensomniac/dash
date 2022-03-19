@@ -329,15 +329,13 @@ function DashGuiCheckbox (
             return false;
         }
 
-        else {
-            var local = Dash.Local.Get(this.local_storage_key);
-        }
+        var local = Dash.Local.Get(this.local_storage_key);
 
-        if (local === "true") {
+        if (["true", true].includes(local)) {
             return true;
         }
 
-        if (local === "false") {
+        if (["false", false].includes(local)) {
             return false;
         }
 
