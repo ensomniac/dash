@@ -276,15 +276,8 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         var label = "Update Image";
 
         this.user_image_upload_button = new Dash.Gui.Button(label, this.on_user_img_uploaded, this, this.color);
-        this.img_box.append(this.user_image_upload_button.html);
 
-        this.user_image_upload_button.SetFileUploader(
-            "Users",
-            {
-                "f": "upload_image",
-                "user_data": JSON.stringify(this.user_data)
-            }
-        );
+        this.img_box.append(this.user_image_upload_button.html);
 
         var button_css = {
             "position": "absolute",
@@ -293,6 +286,16 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         };
 
         var hidden_css = {...button_css, "opacity": 0};
+
+        this.user_image_upload_button.SetFileUploader(
+            "Users",
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.user_data)
+            },
+            null,
+            hidden_css
+        );
 
         this.user_image_upload_button.html.css({
             ...button_css,
@@ -307,7 +310,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "text-shadow": "1px 1px 1px rgba(0, 0, 0, 1)"
         });
 
-        this.user_image_upload_button.file_uploader.html.css(hidden_css);
+        // this.user_image_upload_button.file_uploader.html.css(hidden_css);
 
         this.user_image_upload_button.html.attr("title", label);
 

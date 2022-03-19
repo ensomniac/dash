@@ -5,7 +5,13 @@ function DashAdminView (users_class_override=null) {
     this.html = this.layout.html;
 
     this.setup_styles = function () {
-        this.layout.Append("Users", this.users_class_override ? this.users_class_override : DashAdminSettings);
+        this.layout.Append(
+            "Users",
+            this.users_class_override ? this.users_class_override : DashAdminSettings,
+            [this],
+            {"unpack_params": true}
+        );
+
         // this.layout.Append("Color", DashAdminColor);
 
         for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {

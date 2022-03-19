@@ -19405,7 +19405,12 @@ function DashAdminView (users_class_override=null) {
     this.layout = new Dash.Layout.Tabs.Top(this);
     this.html = this.layout.html;
     this.setup_styles = function () {
-        this.layout.Append("Users", this.users_class_override ? this.users_class_override : DashAdminSettings);
+        this.layout.Append(
+            "Users",
+            this.users_class_override ? this.users_class_override : DashAdminSettings,
+            [this],
+            {"unpack_params": true}
+        );
         // this.layout.Append("Color", DashAdminColor);
         for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {
             this.layout.Append(tab_settings["label_text"] || tab_settings["display_name"], tab_settings["html_obj"]);
@@ -19527,7 +19532,8 @@ function DashAdminColor () {
     this.setup_styles();
 }
 
-function DashAdminSettings () {
+function DashAdminSettings (admin_view) {
+    this.admin_view = admin_view;
     this.data = null;
     this.property_box = null;
     this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
@@ -22279,7 +22285,7 @@ function DashGuiButtonInterface () {
         });
         this.load_dots.Start();
     };
-    this.SetFileUploader = function (api, params, optional_on_start_callback) {
+    this.SetFileUploader = function (api, params, optional_on_start_callback, optional_css={}) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
             if (token) {
@@ -22314,11 +22320,32 @@ function DashGuiButtonInterface () {
                 }
             );
         })(this);
-        this.file_uploader.html.css({
-            "height": this.html.height(),
-            "width": this.html.width()
-        });
+        if (Dash.Validate.Object(optional_css)) {
+            this.file_uploader.html.css(optional_css);
+        }
+        else {
+            this.set_file_uploader_size();
+        }
         this.html.append(this.file_uploader.html);
+    };
+    this.set_file_uploader_size = function () {
+        var width = this.html.width();
+        var height = this.html.height();
+        if (!height || !width) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.set_file_uploader_size();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.file_uploader.html.css({
+            "height": height,
+            "width": width
+        });
     };
     this.Request = function (endpoint, params, callback, binder=null) {
         if (this.load_dots) {
@@ -28274,19 +28301,21 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         var label = "Update Image";
         this.user_image_upload_button = new Dash.Gui.Button(label, this.on_user_img_uploaded, this, this.color);
         this.img_box.append(this.user_image_upload_button.html);
-        this.user_image_upload_button.SetFileUploader(
-            "Users",
-            {
-                "f": "upload_image",
-                "user_data": JSON.stringify(this.user_data)
-            }
-        );
         var button_css = {
             "position": "absolute",
             "width": this.img_box_size,
             "height": this.img_box_size
         };
         var hidden_css = {...button_css, "opacity": 0};
+        this.user_image_upload_button.SetFileUploader(
+            "Users",
+            {
+                "f": "upload_image",
+                "user_data": JSON.stringify(this.user_data)
+            },
+            null,
+            hidden_css
+        );
         this.user_image_upload_button.html.css({
             ...button_css,
             "background": "none",
@@ -28298,7 +28327,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "line-height": this.img_box_size + "px",
             "text-shadow": "1px 1px 1px rgba(0, 0, 0, 1)"
         });
-        this.user_image_upload_button.file_uploader.html.css(hidden_css);
+        // this.user_image_upload_button.file_uploader.html.css(hidden_css);
         this.user_image_upload_button.html.attr("title", label);
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {

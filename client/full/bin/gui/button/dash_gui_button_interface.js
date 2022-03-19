@@ -173,7 +173,7 @@ function DashGuiButtonInterface () {
         this.load_dots.Start();
     };
 
-    this.SetFileUploader = function (api, params, optional_on_start_callback) {
+    this.SetFileUploader = function (api, params, optional_on_start_callback, optional_css={}) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
 
@@ -216,12 +216,38 @@ function DashGuiButtonInterface () {
             );
         })(this);
 
-        this.file_uploader.html.css({
-            "height": this.html.height(),
-            "width": this.html.width()
-        });
+        if (Dash.Validate.Object(optional_css)) {
+            this.file_uploader.html.css(optional_css);
+        }
+
+        else {
+            this.set_file_uploader_size();
+        }
 
         this.html.append(this.file_uploader.html);
+    };
+
+    this.set_file_uploader_size = function () {
+        var width = this.html.width();
+        var height = this.html.height();
+
+        if (!height || !width) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.set_file_uploader_size();
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.file_uploader.html.css({
+            "height": height,
+            "width": width
+        });
     };
 
     this.Request = function (endpoint, params, callback, binder=null) {
