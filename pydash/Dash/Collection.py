@@ -135,6 +135,9 @@ class Collection:
             obj_id=obj_id
         )
 
+        if hasattr(self, "_all") and type(self._all) is dict and "data" in self._all:
+            self._all["data"][new_obj["id"]] = new_obj
+
         if return_all_data:
             data = self.GetAll()
 
@@ -165,6 +168,9 @@ class Collection:
             nested=self.nested,
         )["updated_data"]
 
+        if hasattr(self, "_all") and type(self._all) is dict and "data" in self._all:
+            self._all["data"][obj_id] = updated_data
+
         if return_all_data:
             return self.GetAll()
 
@@ -179,10 +185,28 @@ class Collection:
             nested=self.nested,
         )
 
+        if hasattr(self, "_all") and type(self._all) is dict and "data" in self._all:
+            self._all["data"][obj_id] = updated_data
+
         if return_all_data:
             return self.GetAll()
 
         return updated_data
 
-    def Clear(self):
-        rmtree(self.Root, True)
+    def Clear(self, contents_only=False):
+        if not contents_only:
+            rmtree(self.Root, True)
+
+            return
+
+        for filename in os.listdir(self.Root):
+            path = os.path.join(self.Root, filename)
+
+            try:
+                rmtree(path)
+
+            except OSError:
+                os.remove(path)
+
+            except:
+                pass
