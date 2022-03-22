@@ -1,8 +1,19 @@
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false) {
         var date;
-        var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
-        var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+        var dt_obj;
+        var timezone;
+        var is_static_date = false;
+
+        if (raw) {
+            dt_obj = new Date(Date.parse(iso_string));
+        }
+
+        else {
+            timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
+
+            [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+        }
 
         if (Dash.Context["ignore_locale_for_readable_dates"]) {
             date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
@@ -38,7 +49,7 @@ function DashDateTime () {
         // Return readable without second
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
 
-        if (include_tz_label) {
+        if (include_tz_label && timezone) {
             return readable + " " + timezone;
         }
 
@@ -77,7 +88,7 @@ function DashDateTime () {
     };
 
     this.GetUTCDateObject = function () {
-        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString(), "UTC");
+        return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
 
     this.GetISOAgeMs = function (iso_string) {

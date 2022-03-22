@@ -46,6 +46,9 @@ function DashGuiInput (placeholder_text, color) {
             "height": "100%",
             "padding-left": Dash.Size.Padding,
             "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
     };
 

@@ -164,6 +164,7 @@ function DashGuiIcons (icon) {
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
         "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
+        "ticket":                new DashGuiIconDefinition(this.icon, "Ticket", this.weight["regular"], "ticket-alt"),
         "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle Off", this.weight["regular"], "toggle-off"),
         "toggle_off_light":      new DashGuiIconDefinition(this.icon, "Toggle Off (Light)", this.weight["light"], "toggle-off"),
         "toggle_off_solid":      new DashGuiIconDefinition(this.icon, "Toggle Off (Solid)", this.weight["solid"], "toggle-off"),

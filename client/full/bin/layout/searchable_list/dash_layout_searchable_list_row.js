@@ -120,6 +120,9 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "line-height": Dash.Size.ButtonHeight + "px",
             "padding-left": Dash.Size.Padding * 0.5,
             "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
 
         this.content_layer.empty().append(this.display_name_label);

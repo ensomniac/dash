@@ -21,6 +21,9 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
 
         this.html.append(this.label);

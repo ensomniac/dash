@@ -181,8 +181,6 @@ function DashColor (dark_mode_active=false) {
             return;
         }
 
-        console.debug("TEST set dark");
-
         var light = this.Light;
 
         this.Light = this.Dark;

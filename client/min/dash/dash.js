@@ -19307,10 +19307,18 @@ function DashValidate () {
 }
 
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false) {
         var date;
-        var timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
-        var [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+        var dt_obj;
+        var timezone;
+        var is_static_date = false;
+        if (raw) {
+            dt_obj = new Date(Date.parse(iso_string));
+        }
+        else {
+            timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
+            [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+        }
         if (Dash.Context["ignore_locale_for_readable_dates"]) {
             date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
         }
@@ -19336,7 +19344,7 @@ function DashDateTime () {
         }
         // Return readable without second
         readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
-        if (include_tz_label) {
+        if (include_tz_label && timezone) {
             return readable + " " + timezone;
         }
         return readable;
@@ -19367,7 +19375,7 @@ function DashDateTime () {
         return dt_obj;
     };
     this.GetUTCDateObject = function () {
-        return Dash.DateTime.GetDateObjectFromISO(new Date().toISOString(), "UTC");
+        return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
     this.GetISOAgeMs = function (iso_string) {
         var now = this.GetNewRelativeDateObject("UTC");
@@ -19929,7 +19937,6 @@ function DashColor (dark_mode_active=false) {
         if (!this.dark_mode_active) {
             return;
         }
-        console.debug("TEST set dark");
         var light = this.Light;
         this.Light = this.Dark;
         this.Dark = light;
@@ -21173,6 +21180,9 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "padding-left": Dash.Size.Padding,
             "line-height": Dash.Size.RowHeight + "px",
             "font-family": "sans_serif_bold",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
         this.html.append(this.label);
         if (this.include_border) {
@@ -26282,6 +26292,7 @@ function DashGuiIcons (icon) {
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
         "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
+        "ticket":                new DashGuiIconDefinition(this.icon, "Ticket", this.weight["regular"], "ticket-alt"),
         "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle Off", this.weight["regular"], "toggle-off"),
         "toggle_off_light":      new DashGuiIconDefinition(this.icon, "Toggle Off (Light)", this.weight["light"], "toggle-off"),
         "toggle_off_solid":      new DashGuiIconDefinition(this.icon, "Toggle Off (Solid)", this.weight["solid"], "toggle-off"),
@@ -26409,6 +26420,9 @@ function DashGuiInput (placeholder_text, color) {
             "height": "100%",
             "padding-left": Dash.Size.Padding,
             "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
     };
     this.Flatten = function () {
@@ -31133,6 +31147,9 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "line-height": Dash.Size.ButtonHeight + "px",
             "padding-left": Dash.Size.Padding * 0.5,
             "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
         this.content_layer.empty().append(this.display_name_label);
     };
