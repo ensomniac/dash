@@ -28228,7 +28228,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "margin-top": Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * 0.8
         });
-        button.SetIconSize(190);
+        button.SetIconSize(180);
         button.SetHoverHint(
             this.modal_of ? "Close" :
                 this.view_mode === "settings" ? "Log Out" :
@@ -28302,9 +28302,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.header.ReplaceBorderWithIcon("user");
         this.header.icon.AddShadow();
         this.header.label.css({
+            "flex": 1,
             "overflow": "hidden",
             "white-space": "nowrap",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "margin-right": Dash.Size.Padding * 3
         });
         this.html.append(this.header.html);
     };
