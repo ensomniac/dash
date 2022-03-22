@@ -31,7 +31,7 @@ from Dash import LocalStorage
 class Collection:
     _all: dict
     _root: dict
-    _all_ids = list
+    _all_ids: list
 
     def __init__(self, store_path, nested=False, dash_context=None, sort_by_key=""):
         self.store_path = store_path

@@ -54,7 +54,7 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     elif time_format == 3:
         return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
 
-    # Format: 12:15pm
+    # Format: 12:15 PM
     elif time_format == 4:
         formatted_time = datetime_object.strftime("%I:%M %p")
 
@@ -67,9 +67,9 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     elif time_format == 5:
         return datetime_object.strftime("%I:%M:%S %p")
 
-    # Format: July 17th 2011
+    # Format: July 17th, 2011
     elif time_format == 6:
-        return datetime_object.strftime(f"%B {day}{suffix} %Y")
+        return datetime_object.strftime(f"%B {day}{suffix}, %Y")
 
     # Format: 4_24_11
     elif time_format == 7:
@@ -100,6 +100,10 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     # Format: 4/24
     elif time_format == 10:
         return f"{datetime_object.month}/{datetime_object.day}"
+
+    # Format: 02/04/2022
+    elif time_format == 11:
+        return datetime_object.strftime("%m/%d/%Y")
 
     # Format date and time in a human-readable format
     else:
