@@ -116,7 +116,11 @@ def GetAssetPath(string):
     cleaned = []
     asset_path = ""
     cleaned_split = []
-    string = unidecode(string.strip().lower())
+
+    # Replacing the hyphen here is okay at the top-level, but everything else should be handled below
+    string = unidecode(string.strip().lower().replace("-", "_"))
+
+    # TODO: This function should account for camelCase, and convert it to camel_case
 
     # Replace slashes with spaces if they're between words
     if "/" in string:
@@ -160,6 +164,7 @@ def GetAssetPath(string):
                 pass
 
             cleaned.append("_")
+
             continue
 
         cleaned.append(word)
