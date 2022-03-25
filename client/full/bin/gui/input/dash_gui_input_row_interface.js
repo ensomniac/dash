@@ -68,6 +68,7 @@ function DashGuiInputRowInterface () {
         text = this.parse_value(text);
 
         this.input.SetText(text);
+
         this.input_changed(true);
 
         if (this.input.autosave_timeout) {

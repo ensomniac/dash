@@ -27445,7 +27445,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.Update = function () {
         for (var data_key in this.update_inputs) {
             var row_input = this.update_inputs[data_key];
-            if (!row_input.CanAutoUpdate()) {
+            if (!row_input.CanAutoUpdate() || (row_input.input && row_input.input.InFocus())) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
