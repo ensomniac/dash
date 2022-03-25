@@ -34,6 +34,7 @@ function DashGuiIcons (icon) {
         "award":                 new DashGuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "aws_logo":              new DashGuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
         "baseball":              new DashGuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
+        "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
