@@ -91,9 +91,13 @@ function DashDateTime () {
         return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
 
-    this.GetISOAgeMs = function (iso_string) {
+    this.GetISOAgeMs = function (iso_string, return_objects=false) {
         var now = this.GetNewRelativeDateObject("UTC");
         var dt_obj = this.GetDateObjectFromISO(iso_string, "UTC", false, false);
+
+        if (return_objects) {
+            return [now - dt_obj, now, dt_obj];
+        }
 
         return now - dt_obj;
     };
