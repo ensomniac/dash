@@ -31361,7 +31361,23 @@ function DashLayoutTabs (binder, side_tabs) {
         }
         (function (self) {
             requestAnimationFrame(function () {
-                self.load_last_selection();
+                if (!Dash.User.Data || Dash.User.Data["first_name"]) {
+                    self.load_last_selection();
+                    return;
+                }
+                // If the user is new and hasn't yet at least entered their first name, gently
+                // nudge them to do so every time they load the main view by loading their user view
+                for (var i in self.all_content) {
+                    if (self.all_content[i]["content_div_html_class"] !== DashUserView) {
+                        continue;
+                    }
+                    try {
+                        self.LoadIndex(i);
+                    }
+                    catch {
+                        self.load_last_selection();
+                    }
+                }
             });
         })(this);
     };
