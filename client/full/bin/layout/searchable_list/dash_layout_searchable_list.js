@@ -102,6 +102,9 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
 
             if (search_text) {
                 search_text = search_text.trim().toLowerCase();
+
+                // Unidecode
+                search_text = search_text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             }
 
             else {
@@ -143,7 +146,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             var row_id = this.id_list[i];
             var search_text = this.search_terms[i];
 
-            if (!search_text || !this.filter_text || search_text.includes(this.filter_text)) {
+            if (!search_text || !this.filter_text || search_text.includes(this.filter_text) || this.filter_text === row_id) {
                 this.list_container.append(this.rows[row_id].html);
             }
         }
