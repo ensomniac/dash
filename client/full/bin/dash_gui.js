@@ -75,18 +75,37 @@ function DashGui() {
         return html;
     };
 
-    this.GetModalBackground = function (color=null) {
+    this.GetModalBackground = function (color=null, parent=null) {
         if (!color) {
             color = Dash.Color.Light;
         }
 
-        var background = this.GetHTMLAbsContext();
+        var height = "100%";
 
-        background.css({
-            "z-index": 100000,  // Set Modal element to this +1
-            "background": color.BackgroundRaised,
-            "opacity": 0.6
-        });
+        if (parent) {
+            try {
+                var h = parent.scrollHeight || parent.prop("scrollHeight");
+
+                if (h) {
+                    height = h;
+                }
+            }
+
+            catch {
+                // Do nothing
+            }
+        }
+
+        var background = this.GetHTMLAbsContext(
+            "",
+            color,
+            {
+                "z-index": 100000,  // Set Modal element to this +1
+                "background": color.BackgroundRaised,
+                "opacity": 0.6,
+                "height": height
+            }
+        );
 
         // Block any elements from being clicked until app is done loading/processing/etc
         background.on("click", function (event) {

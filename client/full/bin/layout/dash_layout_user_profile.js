@@ -73,6 +73,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "alert_triangle"
         );
 
+        if (this.modal_of) {
+            this.add_esc_shortcut();
+        }
+
         button.html.css({
             "margin-top": Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * 0.8
@@ -90,13 +94,29 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.html.append(button.html);
     };
 
+    this.add_esc_shortcut = function () {
+        var identifier = "dash_layout_user_profile_close_modal";
+
+        (function (self) {
+            $(document).on("keydown." + identifier, function (e) {
+                if (self.html && !self.html.is(":visible")) {
+                    $(document).off("keydown." + identifier);
+
+                    return;
+                }
+
+                if (e.key === "Escape") {
+                    console.log("(Escape key pressed) Close user modal");
+
+                    self.close_modal();
+                }
+            });
+        })(this);
+    };
+
     this.show_modal = function () {
         if (!this.modal_background) {
-            this.modal_background = Dash.Gui.GetModalBackground(this.color);
-
-            this.modal_background.css({
-                "display": "none"
-            });
+            this.modal_background = Dash.Gui.GetModalBackground(this.color, this.html.parent());
 
             this.html.parent().append(this.modal_background);
         }
@@ -111,10 +131,24 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "settings"
             );
 
+            var left_margin = 0;
+
+            try {
+                var lm = this.html.parent().offsetLeft || this.html.parent().offset().left;
+
+                if (lm && lm > 0) {
+                    left_margin = lm / 2;
+                }
+            }
+
+            catch {
+                // Do nothing
+            }
+
             this.modal_box.html.css({
                 "z-index": this.modal_background.css("z-index") + 1,
-                "display": "none",
-                "position": "absolute",
+                "position": "fixed",
+                "margin-left": left_margin,
                 "top": "50%",
                 "left": "50%",
                 "transform": "translate(-50%, -50%)"

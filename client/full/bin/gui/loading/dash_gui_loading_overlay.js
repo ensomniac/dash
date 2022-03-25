@@ -23,7 +23,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     this.bubble_label = null;
 
     this.setup_styles = function () {
-        this.background = Dash.Gui.GetModalBackground(this.color);
+        this.background = Dash.Gui.GetModalBackground(this.color, this.html_to_append_to);
 
         this.setup_bubble();
 
