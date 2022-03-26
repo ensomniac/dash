@@ -81,6 +81,12 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         });
     };
 
+    this.AddStroke = function (color="black") {
+        this.AddShadow(
+            "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
+        );
+    };
+
     this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon_html.css({
             "text-shadow": value,

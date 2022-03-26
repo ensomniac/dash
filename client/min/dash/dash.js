@@ -22161,6 +22161,9 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
     };
+    this.AddIconStroke = function (color="black") {
+        this.icon.AddStroke(color);
+    };
     this.MirrorIcon = function () {
         this.icon.Mirror();
     };
@@ -26132,6 +26135,11 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css({
             "transform": "scale(-1, 1)"
         });
+    };
+    this.AddStroke = function (color="black") {
+        this.AddShadow(
+            "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
+        );
     };
     this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon_html.css({
@@ -31404,9 +31412,18 @@ function DashLayoutTabs (binder, side_tabs) {
             if (parseInt(i) === parseInt(index)) {
                 content_data["button"].SetSelected(true);
                 button = content_data["button"];
+                if (content_data["selected_css"]) {
+                    content_data["button"].html.css(content_data["selected_css"]);
+                }
             }
             else {
                 content_data["button"].SetSelected(false);
+                if (content_data["unselected_css"]) {
+                    content_data["button"].html.css(content_data["unselected_css"]);
+                }
+            }
+            if (content_data["css"]) {
+                content_data["button"].html.css(content_data["css"]);
             }
         }
         this.content_area.empty();

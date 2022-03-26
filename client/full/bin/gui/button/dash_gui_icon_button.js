@@ -23,6 +23,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.AddShadow(value);
     };
 
+    this.AddIconStroke = function (color="black") {
+        this.icon.AddStroke(color);
+    };
+
     this.MirrorIcon = function () {
         this.icon.Mirror();
     };

@@ -85,11 +85,24 @@ function DashLayoutTabs (binder, side_tabs) {
 
             if (parseInt(i) === parseInt(index)) {
                 content_data["button"].SetSelected(true);
+
                 button = content_data["button"];
+
+                if (content_data["selected_css"]) {
+                    content_data["button"].html.css(content_data["selected_css"]);
+                }
             }
 
             else {
                 content_data["button"].SetSelected(false);
+
+                if (content_data["unselected_css"]) {
+                    content_data["button"].html.css(content_data["unselected_css"]);
+                }
+            }
+
+            if (content_data["css"]) {
+                content_data["button"].html.css(content_data["css"]);
             }
         }
 
