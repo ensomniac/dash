@@ -78,6 +78,8 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
 
         this.html.append(this.icon.html);
         this.html.append(this.label);
+
+        return this.icon;
     };
 
     this.setup_styles();

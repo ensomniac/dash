@@ -31,6 +31,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.click = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.style = this.options["style"] || "default";
+    this.read_only = this.options["read_only"] || false;
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
@@ -89,6 +90,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.add_dropdown_icon = function (icon_size_mult=0.75, icon_name="arrow_down") {
+        if (this.read_only) {
+            return;
+        }
+
         this.dropdown_icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
@@ -258,6 +263,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.on_click = function (skirt_clicked=false) {
+        if (this.read_only) {
+            return;
+        }
+
         if (!skirt_clicked && this.initialized && this.multi_select) {
             if (!this.expanded) {
                 this.show();

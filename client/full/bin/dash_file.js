@@ -146,10 +146,12 @@ function DashFile () {
         );
     };
 
-    this.GetVideoPreview = function (url, height) {
+    this.GetVideoPreview = function (url, height, center_in_parent=true) {
         var html = $("<video src='" + url + "' controls></video>");
 
-        html.css(this.abs_center_css);
+        if (center_in_parent) {
+            html.css(this.abs_center_css);
+        }
 
         return this.set_preview_size(html, height, null);
     };

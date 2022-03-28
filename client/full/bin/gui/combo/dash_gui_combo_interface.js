@@ -1,6 +1,10 @@
 /**@member DashGuiCombo*/
 
 function DashGuiComboInterface () {
+    this.SetReadOnly = function (read_only=false) {
+        this.read_only = read_only;
+    };
+
     this.DisableShowRowsOnEmptySearch = function () {
         // This is for ludicrously long lists, but really
         // should display a certain max of rows, or recent

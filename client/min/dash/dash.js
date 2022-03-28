@@ -18639,9 +18639,11 @@ function DashFile () {
             "100%"
         );
     };
-    this.GetVideoPreview = function (url, height) {
+    this.GetVideoPreview = function (url, height, center_in_parent=true) {
         var html = $("<video src='" + url + "' controls></video>");
-        html.css(this.abs_center_css);
+        if (center_in_parent) {
+            html.css(this.abs_center_css);
+        }
         return this.set_preview_size(html, height, null);
     };
     this.GetAudioPreview = function (url, height) {
@@ -21243,6 +21245,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         });
         this.html.append(this.icon.html);
         this.html.append(this.label);
+        return this.icon;
     };
     this.setup_styles();
 }
@@ -23797,6 +23800,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.click = $("<div class='Combo'></div>");
     this.highlight = $("<div class='Combo'></div>");
     this.style = this.options["style"] || "default";
+    this.read_only = this.options["read_only"] || false;
     this.label = $("<div class='ComboLabel Combo'></div>");
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
@@ -23839,6 +23843,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.click_skirt = null;
     };
     this.add_dropdown_icon = function (icon_size_mult=0.75, icon_name="arrow_down") {
+        if (this.read_only) {
+            return;
+        }
         this.dropdown_icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
@@ -23970,6 +23977,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.init_labels_drawn = true;
     };
     this.on_click = function (skirt_clicked=false) {
+        if (this.read_only) {
+            return;
+        }
         if (!skirt_clicked && this.initialized && this.multi_select) {
             if (!this.expanded) {
                 this.show();
@@ -24671,6 +24681,9 @@ function DashGuiComboRow (combo, option) {
 
 /**@member DashGuiCombo*/
 function DashGuiComboInterface () {
+    this.SetReadOnly = function (read_only=false) {
+        this.read_only = read_only;
+    };
     this.DisableShowRowsOnEmptySearch = function () {
         // This is for ludicrously long lists, but really
         // should display a certain max of rows, or recent
@@ -26191,6 +26204,7 @@ function DashGuiIcons (icon) {
         "baseball":              new DashGuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
+        "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
@@ -26221,6 +26235,7 @@ function DashGuiIcons (icon) {
         "close_square":          new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square"),
         "color_palette":         new DashGuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
         "comment":               new DashGuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
+        "comment_square":        new DashGuiIconDefinition(this.icon, "Conversation Box", this.weight["regular"], "comment-alt-lines"),
         "comments":              new DashGuiIconDefinition(this.icon, "Multiple Conversations Bubble", this.weight["solid"], "comments"),
         "comments_square":       new DashGuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
         "complete":              new DashGuiIconDefinition(this.icon, "Complete", this.weight["regular"], "check"),
@@ -26306,6 +26321,7 @@ function DashGuiIcons (icon) {
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),
         "share":                 new DashGuiIconDefinition(this.icon, "Share", this.weight["regular"],"share"),
+        "shield":                new DashGuiIconDefinition(this.icon, "Shield", this.weight["regular"],"shield-alt"),
         "signal_full":           new DashGuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
         "signal_none":           new DashGuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
         "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
@@ -26314,6 +26330,7 @@ function DashGuiIcons (icon) {
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
         "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
+        "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
@@ -26342,6 +26359,7 @@ function DashGuiIcons (icon) {
         "upload":                new DashGuiIconDefinition(this.icon, "Upload", this.weight["regular"], "upload"),
         "upload_file":           new DashGuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
         "user":                  new DashGuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
+        "users":                 new DashGuiIconDefinition(this.icon, "Users", this.weight["regular"], "users"),
         "user_settings":         new DashGuiIconDefinition(this.icon, "User Settings", this.weight["regular"], "user-cog"),
         "video":                 new DashGuiIconDefinition(this.icon, "Video", this.weight["regular"], "video"),
         "view":                  new DashGuiIconDefinition(this.icon, "View", this.weight["regular"], "eye"),
