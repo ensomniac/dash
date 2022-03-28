@@ -63,7 +63,11 @@ function DashGuiButtonInterface () {
     };
 
     this.Disable = function () {
-        this.html.css({"opacity": 0.5, "pointer-events": "none"});
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
     };
 
     this.Enable = function () {
