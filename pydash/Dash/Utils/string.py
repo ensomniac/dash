@@ -43,19 +43,19 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
         return date_markup
 
     # Display just the date in a human-readable format
-    elif time_format == 1:
+    if time_format == 1:
         return datetime_object.strftime("%m/%d/%y at %I:%M %p")
 
     # Format: Sunday, July 17th 2011 at 12:15pm
-    elif time_format == 2:
+    if time_format == 2:
         return datetime_object.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
 
     # Format: 4/24/2017
-    elif time_format == 3:
+    if time_format == 3:
         return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
 
     # Format: 12:15 PM
-    elif time_format == 4:
+    if time_format == 4:
         formatted_time = datetime_object.strftime("%I:%M %p")
 
         if formatted_time[0] == "0":
@@ -64,50 +64,61 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
         return formatted_time
 
     # Format: 12:15:01pm
-    elif time_format == 5:
+    if time_format == 5:
         return datetime_object.strftime("%I:%M:%S %p")
 
     # Format: July 17th, 2011
-    elif time_format == 6:
+    if time_format == 6:
         return datetime_object.strftime(f"%B {day}{suffix}, %Y")
 
     # Format: 4_24_11
-    elif time_format == 7:
+    if time_format == 7:
         return datetime_object.strftime("%m_%d_%y")
 
     # Format: Monday, July 17th
-    elif time_format == 8:
+    if time_format == 8:
         return datetime_object.strftime(f"%A %B {day}{suffix}")
 
     # Format: 12 days ago / 2 months ago
-    elif time_format == 9:
+    if time_format == 9:
         timesince = (datetime.now() - datetime_object)
 
         if timesince.days == 0:
             return "Today"
-        elif timesince.days == 1:
+
+        if timesince.days == 1:
             return "Yesterday"
-        elif timesince.days <= 30:
+
+        if timesince.days <= 30:
             return f"{timesince.days} days ago"
-        elif timesince.days <= 45:
+
+        if timesince.days <= 45:
             return "A month ago"
-        elif timesince.days <= 75:
+
+        if timesince.days <= 75:
             return f"{timesince.days} days ago"
-        else:
-            # More than 75 days ago
-            return f"{int(round(timesince.days / 30.0))} months ago"
+
+        # More than 75 days ago
+        return f"{int(round(timesince.days / 30.0))} months ago"
 
     # Format: 4/24
-    elif time_format == 10:
+    if time_format == 10:
         return f"{datetime_object.month}/{datetime_object.day}"
 
     # Format: 02/04/2022
-    elif time_format == 11:
+    if time_format == 11:
         return datetime_object.strftime("%m/%d/%Y")
 
+    # Format: Sunday, July 17, 2011
+    if time_format == 12:
+        return datetime_object.strftime(f"%A, %B {day}, %Y")
+
+    # Format: 02.04.2022
+    if time_format == 13:
+        return datetime_object.strftime("%m.%d.%Y")
+
     # Format date and time in a human-readable format
-    else:
-        return f"{date_markup} at {time_markup}"
+    return f"{date_markup} at {time_markup}"
 
 
 def GetAssetPath(string):

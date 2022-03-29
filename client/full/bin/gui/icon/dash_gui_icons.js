@@ -165,6 +165,7 @@ function DashGuiIcons (icon) {
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
+        "tag":                   new DashGuiIconDefinition(this.icon, "Tag", this.weight["regular"], "tag"),
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
