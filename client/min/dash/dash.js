@@ -26181,6 +26181,7 @@ function DashGuiIcons (icon) {
     };
     
     this.icon_map = {
+        "abacus":                new DashGuiIconDefinition(this.icon, "Abacus", this.weight["regular"], "abacus"),
         "add":                   new DashGuiIconDefinition(this.icon, "Add", this.weight["regular"], "plus"),
         "add_light":             new DashGuiIconDefinition(this.icon, "Add (Light)", this.weight["light"], "plus"),
         "add_layer":             new DashGuiIconDefinition(this.icon, "Add Layer", this.weight["regular"], "layer-plus"),
@@ -26333,13 +26334,16 @@ function DashGuiIcons (icon) {
         "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
         "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
+        "sort_numeric_down":     new DashGuiIconDefinition(this.icon, "Sort (Numeric - Down)", this.weight["regular"], "sort-numeric-down"),
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
+        "stars":                 new DashGuiIconDefinition(this.icon, "Stars", this.weight["regular"], "stars"),
         "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
         "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
         "tag":                   new DashGuiIconDefinition(this.icon, "Tag", this.weight["regular"], "tag"),
+        "tally":                 new DashGuiIconDefinition(this.icon, "Tally", this.weight["regular"], "tally"),
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
