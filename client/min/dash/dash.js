@@ -26202,6 +26202,7 @@ function DashGuiIcons (icon) {
         "arrow_right_to_right":  new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-to-right"),
         "arrow_to_left":         new DashGuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
         "arrow_up":              new DashGuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up"),
+        "asterisk":              new DashGuiIconDefinition(this.icon, "Asterisk", this.weight["solid"], "asterisk"),
         "at_sign":               new DashGuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new DashGuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "aws_logo":              new DashGuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
@@ -26295,6 +26296,7 @@ function DashGuiIcons (icon) {
         "link":                  new DashGuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
         "linked":                new DashGuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                  new DashGuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
+        "list_bulleted":         new DashGuiIconDefinition(this.icon, "Bulleted List", this.weight["regular"], "list"),
         "list_offset":           new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
@@ -30418,24 +30420,40 @@ function DashLayoutListRowElements () {
         return combo;
     };
     this.get_input = function (column_config_data) {
-        var input = new Dash.Gui.Input(
-            column_config_data["options"]["placeholder_label"] || "",
-            column_config_data["options"]["color"] || this.color
-        );
-        input.html.css({
+        var color = column_config_data["options"]["color"] || this.color;
+        var placeholder_label = column_config_data["options"]["placeholder_label"] || "";
+        var input = new Dash.Gui.Input(placeholder_label, color);
+        var css = {
             "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1,
-            "box-shadow": "0px 0px 4px 1px rgba(0, 0, 0, 0.2)"
-        });
+            "margin-top": Dash.Size.Padding * 0.1
+        };
         if (column_config_data["width"]) {
-            input.html.css({
-                "width": column_config_data["width"]
-            });
+            css["width"] = column_config_data["width"];
         }
+        if (this.is_header) {
+            css["box-shadow"] = "none";
+        }
+        else {
+            css["box-shadow"] = "0px 0px 4px 1px rgba(0, 0, 0, 0.2)";
+            if (column_config_data["css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["css"]
+                };
+            }
+        }
+        input.html.css(css);
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
+            if (placeholder_label) {
+                input.html.css({
+                    "color": color.Text,
+                    "font-family": "sans_serif_bold"
+                });
+                input.html.text(placeholder_label);
+            }
             this.prevent_events_for_header_placeholder(input.html);
             return input;
         }

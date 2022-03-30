@@ -145,27 +145,49 @@ function DashLayoutListRowElements () {
     };
 
     this.get_input = function (column_config_data) {
-        var input = new Dash.Gui.Input(
-            column_config_data["options"]["placeholder_label"] || "",
-            column_config_data["options"]["color"] || this.color
-        );
+        var color = column_config_data["options"]["color"] || this.color;
+        var placeholder_label = column_config_data["options"]["placeholder_label"] || "";
+        var input = new Dash.Gui.Input(placeholder_label, color);
 
-        input.html.css({
+        var css = {
             "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1,
-            "box-shadow": "0px 0px 4px 1px rgba(0, 0, 0, 0.2)"
-        });
+            "margin-top": Dash.Size.Padding * 0.1
+        };
 
         if (column_config_data["width"]) {
-            input.html.css({
-                "width": column_config_data["width"]
-            });
+            css["width"] = column_config_data["width"];
         }
+
+        if (this.is_header) {
+            css["box-shadow"] = "none";
+        }
+
+        else {
+            css["box-shadow"] = "0px 0px 4px 1px rgba(0, 0, 0, 0.2)";
+
+            if (column_config_data["css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["css"]
+                };
+            }
+        }
+
+        input.html.css(css);
 
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
+
+            if (placeholder_label) {
+                input.html.css({
+                    "color": color.Text,
+                    "font-family": "sans_serif_bold"
+                });
+
+                input.html.text(placeholder_label);
+            }
 
             this.prevent_events_for_header_placeholder(input.html);
 
