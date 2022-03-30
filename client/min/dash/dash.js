@@ -18639,12 +18639,12 @@ function DashFile () {
             "100%"
         );
     };
-    this.GetVideoPreview = function (url, height, center_in_parent=true) {
+    this.GetVideoPreview = function (url, height, center_in_parent=true, square=false) {
         var html = $("<video src='" + url + "' controls></video>");
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
-        return this.set_preview_size(html, height, null);
+        return this.set_preview_size(html, height, square ? height : null);
     };
     this.GetAudioPreview = function (url, height) {
         var html = $("<audio src='" + url + "' controls></audio>");
@@ -18688,7 +18688,7 @@ function DashFile () {
         return this.set_preview_size(html, height, "100%");
     };
     // Basic version
-    this.GetImagePreview = function (url, height) {
+    this.GetImagePreview = function (url, height, width=null) {
         var html = $("<div></div>");
         html.css({
             "background-image": "url(" + url + ")",
@@ -18696,7 +18696,7 @@ function DashFile () {
             "background-size": "contain",
             "background-position": "center center"
         });
-        return this.set_preview_size(html, height, "100%");
+        return this.set_preview_size(html, width ? width : height, width ? height : "100%");
     };
     this.GetPlaceholderPreview = function (color, filename="File Preview") {
         var html = $("<div></div>");
