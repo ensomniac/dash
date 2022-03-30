@@ -47,10 +47,10 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
     return EnsureUniqueFilename(file_data, file_root, nested, is_image)
 
 
-def GetFileURLFromPath(dash_context, server_file_path):
+def GetFileURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
     from .file import GetURLFromPath
 
-    return GetURLFromPath(dash_context, server_file_path)
+    return GetURLFromPath(dash_context, server_file_path, add_anti_caching_id)
 
 
 def GetFilePathFromURL(dash_context, server_file_url):

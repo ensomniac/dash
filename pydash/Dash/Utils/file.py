@@ -93,8 +93,21 @@ def Upload(
     return file_data
 
 
-def GetURLFromPath(dash_context, server_file_path):
-    return f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
+def GetURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
+    url = f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
+
+    # Add a unique ID to the URL to forcibly bypass the client's cached version, forcing any preview to update
+    if add_anti_caching_id:
+        from .number import GetRandomID
+
+        id_tag = "?=id="
+
+        if id_tag in url:
+            url = url.split(id_tag)[0]
+
+        url += f"{id_tag}{GetRandomID()}"
+
+    return url
 
 
 def GetPathFromURL(dash_context, server_file_url):
