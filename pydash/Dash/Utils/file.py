@@ -431,7 +431,15 @@ def save_images(img, orig_path, thumb_path, thumb_square_path):
 
     thumb_size = 512
 
-    img.save(orig_path)
+    try:
+        img.save(orig_path)
+
+    except OSError as e:
+        if "cannot write mode RGBA as JPEG" in str(e):
+            img.convert("RGB")
+            img.save(orig_path)
+        else:
+            raise OSError(e)
 
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
