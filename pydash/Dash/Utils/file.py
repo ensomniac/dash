@@ -267,9 +267,14 @@ def get_image_with_data(file_bytes_or_existing_path, filename):
     elif type(file_bytes_or_existing_path) is str:
         img = Image.open(file_bytes_or_existing_path)
 
+    img_format = img.format.lower()
+
+    if (img_format in ["jpg", "jpeg"] or filename.endswith("jpg") or filename.endswith("jpeg")) and img.mode == "RGBA":
+        img = img.convert("RGB")
+
     file_data = {
         "exif": process_exif_image_data(img),
-        "org_format": img.format.lower(),
+        "org_format": img_format,
         "orig_filename": filename,
         "orig_width": img.size[0],
         "orig_height": img.size[1],
@@ -431,21 +436,13 @@ def save_images(img, orig_path, thumb_path, thumb_square_path):
 
     thumb_size = 512
 
-    try:
-        img.save(orig_path)
-
-    except OSError as e:
-        if "cannot write mode RGBA as JPEG" in str(e):
-            img.convert("RGB")
-            img.save(orig_path)
-        else:
-            raise OSError(e)
+    img.save(orig_path)
 
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
 
     # TODO: Check to see if the image has transparency, or at least only do this
-    # if the original image is a file format that has transparency (ex. no jpg)
+    #  if the original image is a file format that has transparency (ex. no jpg)
     png_thumb = img.copy()
     png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
     png_thumb.save(thumb_path.replace("_thb.jpg", "_thb.png"), quality=40)
