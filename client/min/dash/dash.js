@@ -22308,7 +22308,11 @@ function DashGuiButtonInterface () {
         });
     };
     this.Enable = function () {
-        this.html.css({"opacity": 1.0, "pointer-events": "auto"});
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
     this.SetBorderRadius = function (border_radius) {
         this.html.css({
