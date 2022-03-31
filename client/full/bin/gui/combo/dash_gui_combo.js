@@ -74,6 +74,13 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         this.setup_styles();
+
+        if (this.read_only) {
+            this.html.css({
+                "cursor": "auto"
+            });
+        }
+
         this.initialize_rows();
     };
 
@@ -548,6 +555,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this.setup_connections = function () {
+        if (this.read_only) {
+            return;
+        }
+
         (function (self) {
             $(window).on("click." + self.random_id, function (event) {
                 if (!self.html.is(":visible")) {

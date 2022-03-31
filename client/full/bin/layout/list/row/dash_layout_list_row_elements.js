@@ -212,13 +212,17 @@ function DashLayoutListRowElements () {
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
 
-                        callback(self.id, input.Text());
+                        callback(self.id, input.Text(), column_config_data, self, input);
                     },
                     column_config_data["options"]["binder"]
                 );
 
                 input.EnableAutosave();
             })(this, column_config_data, input);
+        }
+
+        if (column_config_data["can_edit"] === false) {
+            input.SetLocked(true);
         }
 
         return input;

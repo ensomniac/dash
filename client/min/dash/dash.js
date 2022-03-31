@@ -23835,6 +23835,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             DashGuiComboStyleDefault.call(this);
         }
         this.setup_styles();
+        if (this.read_only) {
+            this.html.css({
+                "cursor": "auto"
+            });
+        }
         this.initialize_rows();
     };
     this.hide_skirt = function () {
@@ -24190,6 +24195,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
     this.setup_connections = function () {
+        if (this.read_only) {
+            return;
+        }
         (function (self) {
             $(window).on("click." + self.random_id, function (event) {
                 if (!self.html.is(":visible")) {
@@ -26301,6 +26309,7 @@ function DashGuiIcons (icon) {
         "list_offset":           new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
         "log_out":               new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
+        "magic_wand":            new DashGuiIconDefinition(this.icon, "Magic Wand", this.weight["solid"], "magic"),
         "map_marker":            new DashGuiIconDefinition(this.icon, "Map Marker", this.weight["regular"], "map-marker-alt"),
         "minimize":              new DashGuiIconDefinition(this.icon, "Minimize", this.weight["regular"], "compress-alt"),
         "minus_circle":          new DashGuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
@@ -26323,6 +26332,7 @@ function DashGuiIcons (icon) {
         "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),
         "remove_person":         new DashGuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash"),
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
+        "robot":                 new DashGuiIconDefinition(this.icon, "Robot", this.weight["regular"], "robot"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"floppy-o"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
@@ -30475,12 +30485,15 @@ function DashLayoutListRowElements () {
                 input.SetOnSubmit(
                     function () {
                         var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
-                        callback(self.id, input.Text());
+                        callback(self.id, input.Text(), column_config_data, self, input);
                     },
                     column_config_data["options"]["binder"]
                 );
                 input.EnableAutosave();
             })(this, column_config_data, input);
+        }
+        if (column_config_data["can_edit"] === false) {
+            input.SetLocked(true);
         }
         return input;
     };
