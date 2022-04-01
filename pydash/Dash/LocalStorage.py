@@ -215,7 +215,7 @@ class DashLocalStorage:
             if self.nested:
                 from shutil import rmtree
 
-                rmtree(record_path, True)
+                rmtree(record_path)
             else:
                 os.remove(record_path)
 
@@ -462,7 +462,7 @@ class DashLocalStorage:
 
         return order
 
-    def get_data_root(self, obj_id_email):
+    def get_data_root(self, obj_id):
         """
         Nearly identical to self.get_store_root, but returns slightly
         different paths depending on whether the record is nested
@@ -473,7 +473,7 @@ class DashLocalStorage:
             return self.GetRecordRoot()
         else:
             # /local/store_path/202283291732434/data.json <- This is the data
-            return os.path.join(self.GetRecordRoot(obj_id_email), obj_id_email + "/")
+            return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")
 
     def write_binary(self, full_path, data):
         return open(full_path, "wb").write(data)
