@@ -79,8 +79,8 @@ class DashColorSet {
     };
 
     get StrokeLight () {
-        if (this._stroke == null) {
-            this._stroke = Dash.Color.ToRGBA([
+        if (this._stroke_light == null) {
+            this._stroke_light = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
@@ -88,7 +88,7 @@ class DashColorSet {
             ]);
         }
 
-        return this._stroke;
+        return this._stroke_light;
     };
 
     // Use to draw very fine lines to suggest depth / shadow

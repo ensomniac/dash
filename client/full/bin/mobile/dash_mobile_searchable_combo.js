@@ -31,7 +31,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
 
         this.html.css({
             "height": Dash.Size.RowHeight,
-            "border": "1px solid " + this.color.StrokeLight,
+            "border": "1px solid " + this.color.Stroke,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
             ...shared_css

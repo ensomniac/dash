@@ -18102,11 +18102,12 @@ function DashGui() {
         toggle.SetIconSize(190);
         toggle.SetTrueIconName("toggle_on_light");
         toggle.SetFalseIconName("toggle_off_light");
-        if (toggle.IsChecked()) {
-            toggle.SetIconColor(color.AccentGood);
-        }
         var sun_icon = new Dash.Gui.Icon(color, "sun");
         var moon_icon = new Dash.Gui.Icon(color, "moon");
+        sun_icon.SetColor(color.AccentGood);
+        sun_icon.AddShadow();
+        moon_icon.SetColor(color.AccentGood);
+        moon_icon.AddShadow();
         sun_icon.html.css({
             "pointer-events": "none"
         });
@@ -20435,15 +20436,15 @@ class DashColorSet {
         return this._stroke;
     };
     get StrokeLight () {
-        if (this._stroke == null) {
-            this._stroke = Dash.Color.ToRGBA([
+        if (this._stroke_light == null) {
+            this._stroke_light = Dash.Color.ToRGBA([
                 this.TextColorData[0], // Red
                 this.TextColorData[1], // Green
                 this.TextColorData[2], // Blue
                 0.4
             ]);
         }
-        return this._stroke;
+        return this._stroke_light;
     };
     // Use to draw very fine lines to suggest depth / shadow
     get Pinstripe () {
@@ -26170,9 +26171,17 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
         );
     };
-    this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+    this.AddShadow = function (value="") {
+        if (!value) {
+            if (Dash.DarkModeActive) {
+                value = "0px 0px 0px rgba(255, 255, 255, 0.2)";
+            }
+            else {
+                value = "0px 0px 0px rgba(0, 0, 0, 0.2)";
+            }
+        }
         this.icon_html.css({
-            "text-shadow": value,
+            "text-shadow": value
         });
     };
     // this.update = function (icon_id) {
@@ -30480,7 +30489,7 @@ function DashLayoutListRowElements () {
             "line-height": (Dash.Size.RowHeight * 0.9) + "px",
             "padding-left": Dash.Size.Padding * 0.35
         });
-        var starting_value = this.get_data_for_key(column_config_data);
+        var starting_value = column_config_data["options"]["default_value"] || this.get_data_for_key(column_config_data);
         if (starting_value) {
             input.SetText(starting_value.toString());
         }
@@ -32208,7 +32217,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             "min-width": "100%",
             "max-width": "100%",
             "border-radius": Dash.Size.BorderRadius * 0.5,
-            "border": "1px solid " + this.color.StrokeLight,
+            "border": "1px solid " + this.color.Stroke,
             "padding-left": Dash.Size.Padding * 0.25
         });
         this.add_options();
@@ -32992,7 +33001,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         };
         this.html.css({
             "height": Dash.Size.RowHeight,
-            "border": "1px solid " + this.color.StrokeLight,
+            "border": "1px solid " + this.color.Stroke,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
             ...shared_css

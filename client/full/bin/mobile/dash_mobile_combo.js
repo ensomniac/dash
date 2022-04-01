@@ -15,7 +15,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             "min-width": "100%",
             "max-width": "100%",
             "border-radius": Dash.Size.BorderRadius * 0.5,
-            "border": "1px solid " + this.color.StrokeLight,
+            "border": "1px solid " + this.color.Stroke,
             "padding-left": Dash.Size.Padding * 0.25
         });
 

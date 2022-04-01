@@ -448,12 +448,14 @@ function DashGui() {
         toggle.SetTrueIconName("toggle_on_light");
         toggle.SetFalseIconName("toggle_off_light");
 
-        if (toggle.IsChecked()) {
-            toggle.SetIconColor(color.AccentGood);
-        }
-
         var sun_icon = new Dash.Gui.Icon(color, "sun");
         var moon_icon = new Dash.Gui.Icon(color, "moon");
+
+        sun_icon.SetColor(color.AccentGood);
+        sun_icon.AddShadow();
+
+        moon_icon.SetColor(color.AccentGood);
+        moon_icon.AddShadow();
 
         sun_icon.html.css({
             "pointer-events": "none"

@@ -200,7 +200,7 @@ function DashLayoutListRowElements () {
             "padding-left": Dash.Size.Padding * 0.35
         });
 
-        var starting_value = this.get_data_for_key(column_config_data);
+        var starting_value = column_config_data["options"]["default_value"] || this.get_data_for_key(column_config_data);
 
         if (starting_value) {
             input.SetText(starting_value.toString());

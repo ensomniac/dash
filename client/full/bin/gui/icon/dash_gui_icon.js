@@ -87,9 +87,19 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         );
     };
 
-    this.AddShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
+    this.AddShadow = function (value="") {
+        if (!value) {
+            if (Dash.DarkModeActive) {
+                value = "0px 0px 0px rgba(255, 255, 255, 0.2)";
+            }
+
+            else {
+                value = "0px 0px 0px rgba(0, 0, 0, 0.2)";
+            }
+        }
+
         this.icon_html.css({
-            "text-shadow": value,
+            "text-shadow": value
         });
     };
 
