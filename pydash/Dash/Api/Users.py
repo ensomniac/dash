@@ -101,7 +101,26 @@ class ApiUsers:
 
         for email in os.listdir(users_root):
             user_path = os.path.join(users_root, email, "usr.data")
-            user_data = self.conform_user_data(Read(user_path))
+            user_data = Read(user_path)
+
+            if not user_data:
+                # For now, sending an alert email as to not interrupt the user's session,
+                # but it may end up being better to raise an exception here instead
+                from Dash.Utils import SendEmail
+
+                msg = f"\nWARNING: Failed to read user data for '{email}' - it may be corrupted.\n\nPath:\n{user_path}"
+
+                if self.Params:
+                    msg += f"\n\nParams:\n{self.Params}"
+
+                SendEmail(
+                    subject="Dash Error - Users.get_all()",
+                    msg=msg
+                )
+
+                continue
+
+            user_data = self.conform_user_data(user_data)
 
             pairs_to_sort.append([user_data.get("first_name") or user_data.get("email"), user_data.get("id")])
 
@@ -123,7 +142,7 @@ class ApiUsers:
 
         return self.SetResponse(response)
 
-    # TODO: Evaluate whether or not this is useful/needed
+    # TODO: Evaluate whether this is actually serving any purpose
     def conform_user_data(self, user_data):
         # Light wrapper to make sure certain things exist in returned user data
 
