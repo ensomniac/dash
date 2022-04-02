@@ -63,6 +63,12 @@ function DashGuiButtonInterface () {
     };
 
     this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
         this.html.css({
             "opacity": 0.5,
             "pointer-events": "none",
@@ -71,6 +77,12 @@ function DashGuiButtonInterface () {
     };
 
     this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
         this.html.css({
             "opacity": 1,
             "pointer-events": "auto",
@@ -146,7 +158,7 @@ function DashGuiButtonInterface () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
 
-    this.SetLoading = function (is_loading, size_mult=1, vertical=true) {
+    this.SetLoading = function (is_loading, size_mult=1, vertical=true, color=null, css={}) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -163,20 +175,24 @@ function DashGuiButtonInterface () {
             return;
         }
 
-        this.load_dots = new Dash.Gui.LoadDots((this.html.outerHeight() - Dash.Size.Padding) * size_mult);
+        this.load_dots = new Dash.Gui.LoadDots(
+            (this.html.outerHeight() - Dash.Size.Padding) * size_mult,
+            color || this.color
+        );
 
         if (vertical) {
             this.load_dots.SetOrientation("vertical");
         }
 
-        this.html.append(this.load_dots.html);
-
         this.load_dots.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
             "bottom": 0,
-            "right": 0
+            "right": 0,
+            ...css
         });
+
+        this.html.append(this.load_dots.html);
 
         this.load_dots.Start();
     };

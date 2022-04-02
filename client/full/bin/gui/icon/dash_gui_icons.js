@@ -42,6 +42,7 @@ function DashGuiIcons (icon) {
         "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
+        "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
         "cdn_tool_accordion":    new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),

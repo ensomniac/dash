@@ -17,6 +17,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
     this.label_shown           = null;
     this.last_right_label_text = null;
     this.is_selected           = false;
+    this.disabled              = false;
     this.style                 = this.options["style"] || "default";
     this.in_toolbar            = this.style === "toolbar";
 

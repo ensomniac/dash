@@ -21960,6 +21960,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
     this.label_shown           = null;
     this.last_right_label_text = null;
     this.is_selected           = false;
+    this.disabled              = false;
     this.style                 = this.options["style"] || "default";
     this.in_toolbar            = this.style === "toolbar";
     DashGuiButtonInterface.call(this);
@@ -22302,6 +22303,10 @@ function DashGuiButtonInterface () {
         }
     };
     this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
         this.html.css({
             "opacity": 0.5,
             "pointer-events": "none",
@@ -22309,6 +22314,10 @@ function DashGuiButtonInterface () {
         });
     };
     this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
         this.html.css({
             "opacity": 1,
             "pointer-events": "auto",
@@ -22368,7 +22377,7 @@ function DashGuiButtonInterface () {
     this.IsLoading = function () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
-    this.SetLoading = function (is_loading, size_mult=1, vertical=true) {
+    this.SetLoading = function (is_loading, size_mult=1, vertical=true, color=null, css={}) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -22380,17 +22389,21 @@ function DashGuiButtonInterface () {
             this.load_dots = null;
             return;
         }
-        this.load_dots = new Dash.Gui.LoadDots((this.html.outerHeight() - Dash.Size.Padding) * size_mult);
+        this.load_dots = new Dash.Gui.LoadDots(
+            (this.html.outerHeight() - Dash.Size.Padding) * size_mult,
+            color || this.color
+        );
         if (vertical) {
             this.load_dots.SetOrientation("vertical");
         }
-        this.html.append(this.load_dots.html);
         this.load_dots.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
             "bottom": 0,
-            "right": 0
+            "right": 0,
+            ...css
         });
+        this.html.append(this.load_dots.html);
         this.load_dots.Start();
     };
     this.SetFileUploader = function (api, params, optional_on_start_callback, optional_css={}) {
@@ -26235,6 +26248,7 @@ function DashGuiIcons (icon) {
         "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
+        "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
         "cdn_tool_accordion":    new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
