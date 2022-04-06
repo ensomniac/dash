@@ -22396,6 +22396,14 @@ function DashGuiButtonInterface () {
         if (vertical) {
             this.load_dots.SetOrientation("vertical");
         }
+        if (!color) {
+            // (Only if 'color' is not already provided, since that's likely the opposite Dash color instance to combat this issue)
+            // It seemed like virtually every time I added loading dots to a button with this function,
+            // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
+            // since the text color will obviously be something that's visible against the button
+            // background, but there's of course a chance that this will break the visuals somewhere.
+            this.load_dots.SetColor(this.color.Button.Text.Base);
+        }
         this.load_dots.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
@@ -26241,6 +26249,7 @@ function DashGuiIcons (icon) {
         "at_sign":               new DashGuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new DashGuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
         "aws_logo":              new DashGuiIconDefinition(this.icon, "AWS Logo", this.weight["brand"], "aws"),
+        "barcode":               new DashGuiIconDefinition(this.icon, "Barcode", this.weight["light"], "barcode-alt"),
         "baseball":              new DashGuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
@@ -26375,6 +26384,7 @@ function DashGuiIcons (icon) {
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stars":                 new DashGuiIconDefinition(this.icon, "Stars", this.weight["regular"], "stars"),
         "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "stroopwafel":           new DashGuiIconDefinition(this.icon, "Stroopwafel", this.weight["regular"], "stroopwafel"),
         "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),

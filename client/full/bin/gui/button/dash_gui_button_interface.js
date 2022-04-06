@@ -184,6 +184,15 @@ function DashGuiButtonInterface () {
             this.load_dots.SetOrientation("vertical");
         }
 
+        if (!color) {
+            // (Only if 'color' is not already provided, since that's likely the opposite Dash color instance to combat this issue)
+            // It seemed like virtually every time I added loading dots to a button with this function,
+            // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
+            // since the text color will obviously be something that's visible against the button
+            // background, but there's of course a chance that this will break the visuals somewhere.
+            this.load_dots.SetColor(this.color.Button.Text.Base);
+        }
+
         this.load_dots.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
