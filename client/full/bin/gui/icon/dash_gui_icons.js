@@ -155,6 +155,7 @@ function DashGuiIcons (icon) {
         "remove_person":         new DashGuiIconDefinition(this.icon, "Remove Person", this.weight["regular"], "user-slash"),
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
         "robot":                 new DashGuiIconDefinition(this.icon, "Robot", this.weight["regular"], "robot"),
+        "rocket":                new DashGuiIconDefinition(this.icon, "Rocket", this.weight["regular"], "rocket"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"floppy-o"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
