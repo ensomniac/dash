@@ -94,7 +94,7 @@ class DashLocalStorage:
 
         return all_ids
 
-    def GetAll(self):
+    def GetAll(self, extensionless=False):
         """
         Returns a dictionary containing ID > Data pairs
         """
@@ -117,6 +117,9 @@ class DashLocalStorage:
 
             if not data:
                 continue
+
+            if extensionless and obj_id.count(".") == 1:
+                obj_id = obj_id.split(".")[0]
 
             all_data["data"][obj_id] = data
 
@@ -532,8 +535,8 @@ def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
     return DashLocalStorage(dash_context, store_path, nested, filter_out_keys=filter_out_keys).GetData(obj_id)
 
 
-def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[]):
-    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll()
+def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[], extensionless=False):
+    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll(extensionless)
 
 
 def GetAllIDs(dash_context, store_path, nested=False):
