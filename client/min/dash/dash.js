@@ -20696,7 +20696,7 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
         );
     };
     this.get_email = function () {
-        return this.email_input.Text().trim();
+        return this.email_input.Text().trim().toLowerCase();
     };
     this.setup_desktop_sizing = function () {
         var login_box_width = window.outerWidth * 0.5;

@@ -56,13 +56,19 @@ class ApiAdmin:
 
         return users
 
+    # TODO: This needs to come from Dash.Users instead
     def get_all_users(self):
         response = {"users": []}
         users_root = os.path.join(self.DashContext["srv_path_local"], "users/")
 
         for email in os.listdir(users_root):
+            email = email.lower()
             user_path = os.path.join(users_root, email, "usr.data")
+            user_data = LocalStorage.Read(user_path)
 
-            response["users"].append(LocalStorage.Read(user_path))
+            if not user_data:
+                continue
+
+            response["users"].append(user_data)
 
         return self.SetResponse(response)

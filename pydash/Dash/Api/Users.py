@@ -100,6 +100,7 @@ class ApiUsers:
         users_root = os.path.join(self.DashContext["srv_path_local"], "users/")
 
         for email in os.listdir(users_root):
+            email = email.lower()  # TODO: This needs to be sanitized upon account creation
             user_path = os.path.join(users_root, email, "usr.data")
             user_data = Read(user_path)
 
