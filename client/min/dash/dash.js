@@ -26298,6 +26298,7 @@ function DashGuiIcons (icon) {
         "dots_horizontal":       new DashGuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new DashGuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
         "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["regular"], "download"),
+        "download_solid":        new DashGuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
         "download_file":         new DashGuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
         "edit":                  new DashGuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new DashGuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
