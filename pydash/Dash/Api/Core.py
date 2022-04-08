@@ -27,6 +27,7 @@ class ApiCore:
         self._public = {}
         self._private = {}  # Requires an authenticated user
         self._render_html = None
+        self._additional_notify_emails = []
         self._proceeding_with_empty_fs = False
 
         try:
@@ -146,6 +147,12 @@ class ApiCore:
     @property
     def Response(self):
         return self._response
+
+    def AddNotifyEmail(self, email):
+        if email in self._additional_notify_emails:
+            return
+
+        self._additional_notify_emails.append(email)
 
     def SetUser(self, user_data):
         if not user_data or type(user_data) is not dict or not user_data.get("email"):
@@ -341,6 +348,10 @@ class ApiCore:
                 error += f"<br><br>Full traceback:<br>{tb}"
         except:
             pass
+
+        for email in self._additional_notify_emails:
+            if email not in notify_email_list:
+                notify_email_list.append(email)
 
         SendEmail(
             subject=subject,
