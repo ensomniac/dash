@@ -65,9 +65,7 @@ function DashGuiInputRowInterface () {
     };
 
     this.SetText = function (text) {
-        text = this.parse_value(text);
-
-        this.input.SetText(text);
+        this.input.SetText(text, this.data_key);
 
         this.input_changed(true);
 

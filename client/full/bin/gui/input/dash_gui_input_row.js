@@ -118,43 +118,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     };
 
     this.set_initial_text = function () {
-        this.input.SetText(this.parse_value(this.initial_value));
-    };
-
-    this.parse_value = function (value) {
-        if (value === null || value === undefined) {
-            return "";
-        }
-
-        if (value === false) {
-            return value.toString();  // Keep this value intact, protect against '!'
-        }
-
-        // Initial value is a dict
-        if (Object.keys(this.initial_value).length !== 0 && this.initial_value.constructor === Object) {
-            return JSON.stringify(value);
-        }
-
-        // Initial value is an array
-        if (this.initial_value.length && Array.isArray(this.initial_value)) {
-            return JSON.stringify(value);
-        }
-
-        // Initial value is ISO datetime string
-        if (Dash.DateTime.IsIsoFormat(value)) {
-            return Dash.DateTime.Readable(value);
-        }
-
-        // Initial value is team member email
-        else if (Dash.Validate.Email(value) && !(this.data_key.includes("email"))) {
-            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
-                if ("display_name" in Dash.User.Init["team"][value]) {
-                    return Dash.User.Init["team"][value]["display_name"];
-                }
-            }
-        }
-
-        return value;
+        this.input.SetText(this.initial_value, this.data_key);
     };
 
     this.create_save_button = function () {
@@ -200,7 +164,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             return;
         }
 
-        this.input.SetText(option["id"]);
+        this.input.SetText(option["id"], this.data_key);
 
         if (this.on_click) {
             this.on_submit();

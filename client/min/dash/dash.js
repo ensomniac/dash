@@ -26611,7 +26611,8 @@ function DashGuiInput (placeholder_text, color) {
     this.Text = function () {
         return this.input.val();
     };
-    this.SetText = function (text) {
+    this.SetText = function (text, input_row_data_key="") {
+        text = this.parse_value(text, input_row_data_key);  // Was formerly (incorrectly) located in InputRow
         this.last_val = text;
         this.last_submitted_text = text;
         return this.input.val(text);
@@ -26639,6 +26640,31 @@ function DashGuiInput (placeholder_text, color) {
     };
     this.Focus = function () {
         this.input.trigger("focus");
+    };
+    this.parse_value = function (value, data_key="") {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (value === false) {
+            return value.toString();  // Keep this value intact, protect against '!'
+        }
+        // Initial value is a dict or array
+        if (Dash.Validate.Object(value)) {
+            return JSON.stringify(value);
+        }
+        // Initial value is ISO datetime string
+        if (Dash.DateTime.IsIsoFormat(value)) {
+            return Dash.DateTime.Readable(value);
+        }
+        // Initial value is team member email
+        if (data_key && !(data_key.includes("email")) && Dash.Validate.Email(value)) {
+            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
+                if ("display_name" in Dash.User.Init["team"][value]) {
+                    return Dash.User.Init["team"][value]["display_name"];
+                }
+            }
+        }
+        return value;
     };
     // Fired if the box is clicked on or the user is typing
     this.on_change = function () {
@@ -26869,36 +26895,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         this.update_label_cursor();
     };
     this.set_initial_text = function () {
-        this.input.SetText(this.parse_value(this.initial_value));
-    };
-    this.parse_value = function (value) {
-        if (value === null || value === undefined) {
-            return "";
-        }
-        if (value === false) {
-            return value.toString();  // Keep this value intact, protect against '!'
-        }
-        // Initial value is a dict
-        if (Object.keys(this.initial_value).length !== 0 && this.initial_value.constructor === Object) {
-            return JSON.stringify(value);
-        }
-        // Initial value is an array
-        if (this.initial_value.length && Array.isArray(this.initial_value)) {
-            return JSON.stringify(value);
-        }
-        // Initial value is ISO datetime string
-        if (Dash.DateTime.IsIsoFormat(value)) {
-            return Dash.DateTime.Readable(value);
-        }
-        // Initial value is team member email
-        else if (Dash.Validate.Email(value) && !(this.data_key.includes("email"))) {
-            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
-                if ("display_name" in Dash.User.Init["team"][value]) {
-                    return Dash.User.Init["team"][value]["display_name"];
-                }
-            }
-        }
-        return value;
+        this.input.SetText(this.initial_value, this.data_key);
     };
     this.create_save_button = function () {
         this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
@@ -26935,7 +26932,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
         if (!this.combo) {
             return;
         }
-        this.input.SetText(option["id"]);
+        this.input.SetText(option["id"], this.data_key);
         if (this.on_click) {
             this.on_submit();
         }
@@ -27128,8 +27125,7 @@ function DashGuiInputRowInterface () {
         return !this.save_button_visible;
     };
     this.SetText = function (text) {
-        text = this.parse_value(text);
-        this.input.SetText(text);
+        this.input.SetText(text, this.data_key);
         this.input_changed(true);
         if (this.input.autosave_timeout) {
             clearTimeout(this.input.autosave_timeout);

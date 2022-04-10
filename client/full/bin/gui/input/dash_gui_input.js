@@ -152,7 +152,9 @@ function DashGuiInput (placeholder_text, color) {
         return this.input.val();
     };
 
-    this.SetText = function (text) {
+    this.SetText = function (text, input_row_data_key="") {
+        text = this.parse_value(text, input_row_data_key);  // Was formerly (incorrectly) located in InputRow
+
         this.last_val = text;
         this.last_submitted_text = text;
 
@@ -188,6 +190,37 @@ function DashGuiInput (placeholder_text, color) {
 
     this.Focus = function () {
         this.input.trigger("focus");
+    };
+
+    this.parse_value = function (value, data_key="") {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        if (value === false) {
+            return value.toString();  // Keep this value intact, protect against '!'
+        }
+
+        // Initial value is a dict or array
+        if (Dash.Validate.Object(value)) {
+            return JSON.stringify(value);
+        }
+
+        // Initial value is ISO datetime string
+        if (Dash.DateTime.IsIsoFormat(value)) {
+            return Dash.DateTime.Readable(value);
+        }
+
+        // Initial value is team member email
+        if (data_key && !(data_key.includes("email")) && Dash.Validate.Email(value)) {
+            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
+                if ("display_name" in Dash.User.Init["team"][value]) {
+                    return Dash.User.Init["team"][value]["display_name"];
+                }
+            }
+        }
+
+        return value;
     };
 
     // Fired if the box is clicked on or the user is typing
