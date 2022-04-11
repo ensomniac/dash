@@ -9,6 +9,7 @@ function DashLayoutTabs (binder, side_tabs) {
     this.tab_top = $("<div></div>");
     this.tab_bottom = $("<div></div>");
     this.content_area = $("<div></div>");
+    this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
     if (this.side_tabs) {
@@ -60,6 +61,10 @@ function DashLayoutTabs (binder, side_tabs) {
         })(this);
     };
 
+    this.AlwaysStartOnFirstTab = function () {
+        this.always_start_on_first_tab = true;
+    };
+
     this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
@@ -74,7 +79,9 @@ function DashLayoutTabs (binder, side_tabs) {
             return;
         }
 
-        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        if (!this.always_start_on_first_tab) {
+            Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        }
 
         this.current_index = index;
 
@@ -427,6 +434,12 @@ function DashLayoutTabs (binder, side_tabs) {
         }
 
         if (this.all_content.length === 0) {
+            return;
+        }
+
+        if (this.always_start_on_first_tab) {
+            this.LoadIndex(0);
+
             return;
         }
 

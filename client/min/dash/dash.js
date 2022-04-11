@@ -31446,6 +31446,7 @@ function DashLayoutTabs (binder, side_tabs) {
     this.tab_top = $("<div></div>");
     this.tab_bottom = $("<div></div>");
     this.content_area = $("<div></div>");
+    this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     if (this.side_tabs) {
         this.color = Dash.Color.Dark;
@@ -31487,6 +31488,9 @@ function DashLayoutTabs (binder, side_tabs) {
             });
         })(this);
     };
+    this.AlwaysStartOnFirstTab = function () {
+        this.always_start_on_first_tab = true;
+    };
     this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
@@ -31498,7 +31502,9 @@ function DashLayoutTabs (binder, side_tabs) {
         if (index > this.all_content.length - 1) {
             return;
         }
-        Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        if (!this.always_start_on_first_tab) {
+            Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+        }
         this.current_index = index;
         var button = null;
         for (var i in this.all_content) {
@@ -31772,6 +31778,10 @@ function DashLayoutTabs (binder, side_tabs) {
             return;
         }
         if (this.all_content.length === 0) {
+            return;
+        }
+        if (this.always_start_on_first_tab) {
+            this.LoadIndex(0);
             return;
         }
         var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
