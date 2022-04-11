@@ -117,6 +117,10 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
     if time_format == 13:
         return datetime_object.strftime("%m.%d.%Y")
 
+    # Format: July 17th, 2011 at 12:15pm
+    if time_format == 14:
+        return datetime_object.strftime(f"%B {day}{suffix}, %Y at %I:%M%p")
+
     # Format date and time in a human-readable format
     return f"{date_markup} at {time_markup}"
 
