@@ -7,28 +7,26 @@ import os
 import sys
 
 
-def FormatTime(datetime_object, time_format=1, tz="utc"):
+def FormatTime(dt_obj, time_format=1, tz="utc"):
     """
     Format a timestamp string using a datetime object.
 
-    :param datetime.datetime datetime_object: source datetime object
+    :param datetime.datetime dt_obj: source datetime object
     :param int time_format: (default=1)
     :param str tz: (default="utc")
     :return: strftime-formatted timestamp
     :rtype: string
     """
 
-    from datetime import datetime
-
     if tz != "utc":
-        datetime_object = change_dt_tz(datetime_object, tz)
+        dt_obj = change_dt_tz(dt_obj, tz)
 
-    time_markup = datetime_object.strftime("%I:%M %p").lower()
+    time_markup = dt_obj.strftime("%I:%M %p").lower()
 
     if time_markup.startswith("0"):
         time_markup = time_markup[1:]
 
-    day = int(datetime_object.strftime("%d"))
+    day = int(dt_obj.strftime("%d"))
 
     if 4 <= day <= 20 or 24 <= day <= 30:
         suffix = "th"
@@ -36,7 +34,7 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
         suffix = ["st", "nd", "rd"][day % 10 - 1]
 
     day_string = f"{day}{suffix}"
-    date_markup = datetime_object.strftime(f"%A, %B {day_string} %Y")
+    date_markup = dt_obj.strftime(f"%A, %B {day_string} %Y")
 
     # Display just the date
     if time_format == 0:
@@ -44,19 +42,19 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
 
     # Display just the date in a human-readable format
     if time_format == 1:
-        return datetime_object.strftime("%m/%d/%y at %I:%M %p")
+        return dt_obj.strftime("%m/%d/%y at %I:%M %p")
 
     # Format: Sunday, July 17th 2011 at 12:15pm
     if time_format == 2:
-        return datetime_object.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
+        return dt_obj.strftime(f"%A, %B {day}{suffix} %Y at %I:%M %p")
 
     # Format: 4/24/2017
     if time_format == 3:
-        return f"{datetime_object.month}/{datetime_object.day}/{datetime_object.year}"
+        return f"{dt_obj.month}/{dt_obj.day}/{dt_obj.year}"
 
     # Format: 12:15 PM
     if time_format == 4:
-        formatted_time = datetime_object.strftime("%I:%M %p")
+        formatted_time = dt_obj.strftime("%I:%M %p")
 
         if formatted_time[0] == "0":
             formatted_time = formatted_time[1:]
@@ -65,23 +63,25 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
 
     # Format: 12:15:01pm
     if time_format == 5:
-        return datetime_object.strftime("%I:%M:%S %p")
+        return dt_obj.strftime("%I:%M:%S %p")
 
     # Format: July 17th, 2011
     if time_format == 6:
-        return datetime_object.strftime(f"%B {day}{suffix}, %Y")
+        return dt_obj.strftime(f"%B {day}{suffix}, %Y")
 
     # Format: 4_24_11
     if time_format == 7:
-        return datetime_object.strftime("%m_%d_%y")
+        return dt_obj.strftime("%m_%d_%y")
 
     # Format: Monday, July 17th
     if time_format == 8:
-        return datetime_object.strftime(f"%A %B {day}{suffix}")
+        return dt_obj.strftime(f"%A %B {day}{suffix}")
 
     # Format: 12 days ago / 2 months ago
     if time_format == 9:
-        timesince = (datetime.now() - datetime_object)
+        from datetime import datetime
+
+        timesince = (datetime.now() - dt_obj)
 
         if timesince.days == 0:
             return "Today"
@@ -103,23 +103,23 @@ def FormatTime(datetime_object, time_format=1, tz="utc"):
 
     # Format: 4/24
     if time_format == 10:
-        return f"{datetime_object.month}/{datetime_object.day}"
+        return f"{dt_obj.month}/{dt_obj.day}"
 
     # Format: 02/04/2022
     if time_format == 11:
-        return datetime_object.strftime("%m/%d/%Y")
+        return dt_obj.strftime("%m/%d/%Y")
 
     # Format: Sunday, July 17, 2011
     if time_format == 12:
-        return datetime_object.strftime(f"%A, %B {day}, %Y")
+        return dt_obj.strftime(f"%A, %B {day}, %Y")
 
     # Format: 02.04.2022
     if time_format == 13:
-        return datetime_object.strftime("%m.%d.%Y")
+        return dt_obj.strftime("%m.%d.%Y")
 
-    # Format: July 17th, 2011 at 12:15pm
+    # Format: July 17th, 2011 at 7:15PM (non-zero-padded hour)
     if time_format == 14:
-        return datetime_object.strftime(f"%B {day}{suffix}, %Y at %I:%M%p")
+        return f"{dt_obj.strftime(f'%B {day}{suffix}, %Y')} at {dt_obj.strftime('%I').lstrip('0')}:{dt_obj.strftime('%M%p')}"
 
     # Format date and time in a human-readable format
     return f"{date_markup} at {time_markup}"
