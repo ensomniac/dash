@@ -90,9 +90,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
 
         for (var i in this.header_update_objects) {
-            this.header_update_objects[i]["obj"].SetText(
-                this.get_data_cb()[this.header_update_objects[i]["update_key"]]
-            );
+            var data_key = this.header_update_objects[i]["update_key"];
+            var text = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+
+            this.header_update_objects[i]["obj"].SetText(text);
         }
     };
 

@@ -202,11 +202,7 @@ class Collection:
         for filename in os.listdir(self.Root):
             path = os.path.join(self.Root, filename)
 
-            try:
+            if self.nested:
                 rmtree(path)
-
-            except OSError:
+            else:
                 os.remove(path)
-
-            except:
-                pass

@@ -233,7 +233,7 @@ class DashLocalStorage:
 
     def Write(self, full_path, data, conform_permissions=True):
         if type(data) is bytes or type(data) is memoryview:
-            return self.write_binary(full_path, data)
+            return self.write_binary(full_path, data, conform_permissions)
 
         return self.write_json_protected(full_path, data, conform_permissions)
 
@@ -478,13 +478,21 @@ class DashLocalStorage:
             # /local/store_path/202283291732434/data.json <- This is the data
             return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")
 
-    def write_binary(self, full_path, data):
-        return open(full_path, "wb").write(data)
+    def write_binary(self, full_path, data, conform_permissions=True):
+        open(full_path, "wb").write(data)
 
-    def write_json_unprotected(self, full_path, data):
+        if conform_permissions:
+            self.ConformPermissions(full_path)
+
+        return data
+
+    def write_json_unprotected(self, full_path, data, conform_permissions=True):
         from json import dumps
 
         open(full_path, "w").write(dumps(data))
+
+        if conform_permissions:
+            self.ConformPermissions(full_path)
 
         return data
 
