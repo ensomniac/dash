@@ -149,6 +149,10 @@ function DashGuiComboInterface () {
         this.rows.css({"width": width});
     };
 
+    this.OptionList = function () {
+        return this.option_list;
+    };
+
     this.Request = function (endpoint, params, callback, binder=null) {
         if (!this.load_dots) {
             this.setup_load_dots();
@@ -186,7 +190,7 @@ function DashGuiComboInterface () {
     };
 
     // If the same item is selected, don't fire the callback on updating the list
-    this.Update = function (combo_list, selected, ignore_callback=false) {
+    this.Update = function (combo_list=null, selected=null, ignore_callback=false) {
         if (this.multi_select) {
             this.update_label_for_multi_select();
 

@@ -6,8 +6,10 @@ function DashLayoutTabs (binder, side_tabs) {
     this.selected_index = -1;
     this.current_index = null;
     this.html = $("<div></div>");
+    this.on_tab_changed_cb = null;
     this.tab_top = $("<div></div>");
     this.tab_bottom = $("<div></div>");
+    this.before_tab_changed_cb = null;
     this.content_area = $("<div></div>");
     this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
@@ -69,13 +71,23 @@ function DashLayoutTabs (binder, side_tabs) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
 
+    // The function provided here should return a bool which will
+    // determine if the tab should be allowed to change or not
+    this.BeforeTabChanged = function (callback) {
+        this.before_tab_changed_cb = callback.bind(this.binder);
+    };
+
     this.GetCurrentIndex = function () {
         return this.current_index;
     };
 
     // TODO: Break this function up
-    this.LoadIndex = function (index) {
+    this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
+            return;
+        }
+
+        if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
 
@@ -471,7 +483,7 @@ function DashLayoutTabs (binder, side_tabs) {
             content_data["button"] = new Dash.Gui.Button(
                 label_text,                         // Label
                 function () {                       // Callback
-                    self.LoadIndex(index);
+                    self.LoadIndex(index, true);
                 },
                 self,                               // Binder
                 self.color,                         // Dash Color Set

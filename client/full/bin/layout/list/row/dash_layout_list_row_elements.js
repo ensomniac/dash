@@ -221,6 +221,10 @@ function DashLayoutListRowElements () {
             })(this, column_config_data, input);
         }
 
+        if (column_config_data["options"]["disable_autosave"]) {
+            input.DisableAutosave();
+        }
+
         if (column_config_data["can_edit"] === false) {
             input.SetLocked(true);
         }

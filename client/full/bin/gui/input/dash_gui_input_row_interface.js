@@ -129,8 +129,6 @@ function DashGuiInputRowInterface () {
             return;
         }
 
-        // Not sure why this was commented out - there doesn't seem to be any benefit of not hiding the
-        // save button, but keeping them around on locked rows blocks the ability to highlight/copy their text.
         this.button.SetButtonVisibility(true);
 
         this.input.SetLocked(false);
@@ -142,11 +140,19 @@ function DashGuiInputRowInterface () {
             return;
         }
 
-        // Not sure why this was commented out - there doesn't seem to be any benefit of not hiding the
-        // save button, but keeping them around on locked rows blocks the ability to highlight/copy their text.
         this.button.SetButtonVisibility(false);
 
         this.input.SetLocked(true);
+    };
+
+    this.RemoveSaveButton = function () {
+        if (!this.button) {
+            return;
+        }
+
+        this.button.html.remove();
+
+        this.button = null;
     };
 
     this.IsLoading = function () {

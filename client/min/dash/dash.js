@@ -24830,6 +24830,9 @@ function DashGuiComboInterface () {
         this.html.css({"width": width});
         this.rows.css({"width": width});
     };
+    this.OptionList = function () {
+        return this.option_list;
+    };
     this.Request = function (endpoint, params, callback, binder=null) {
         if (!this.load_dots) {
             this.setup_load_dots();
@@ -24859,7 +24862,7 @@ function DashGuiComboInterface () {
         })(this, endpoint, params);
     };
     // If the same item is selected, don't fire the callback on updating the list
-    this.Update = function (combo_list, selected, ignore_callback=false) {
+    this.Update = function (combo_list=null, selected=null, ignore_callback=false) {
         if (this.multi_select) {
             this.update_label_for_multi_select();
             // Do we need to do more here?
@@ -27172,8 +27175,6 @@ function DashGuiInputRowInterface () {
         if (!this.button) {
             return;
         }
-        // Not sure why this was commented out - there doesn't seem to be any benefit of not hiding the
-        // save button, but keeping them around on locked rows blocks the ability to highlight/copy their text.
         this.button.SetButtonVisibility(true);
         this.input.SetLocked(false);
         this.input.SetTransparent(true);
@@ -27182,10 +27183,15 @@ function DashGuiInputRowInterface () {
         if (!this.button) {
             return;
         }
-        // Not sure why this was commented out - there doesn't seem to be any benefit of not hiding the
-        // save button, but keeping them around on locked rows blocks the ability to highlight/copy their text.
         this.button.SetButtonVisibility(false);
         this.input.SetLocked(true);
+    };
+    this.RemoveSaveButton = function () {
+        if (!this.button) {
+            return;
+        }
+        this.button.html.remove();
+        this.button = null;
     };
     this.IsLoading = function () {
         if (this.button) {
@@ -30528,6 +30534,9 @@ function DashLayoutListRowElements () {
                 input.EnableAutosave();
             })(this, column_config_data, input);
         }
+        if (column_config_data["options"]["disable_autosave"]) {
+            input.DisableAutosave();
+        }
         if (column_config_data["can_edit"] === false) {
             input.SetLocked(true);
         }
@@ -31443,8 +31452,10 @@ function DashLayoutTabs (binder, side_tabs) {
     this.selected_index = -1;
     this.current_index = null;
     this.html = $("<div></div>");
+    this.on_tab_changed_cb = null;
     this.tab_top = $("<div></div>");
     this.tab_bottom = $("<div></div>");
+    this.before_tab_changed_cb = null;
     this.content_area = $("<div></div>");
     this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
@@ -31494,12 +31505,20 @@ function DashLayoutTabs (binder, side_tabs) {
     this.OnTabChanged = function (callback) {
         this.on_tab_changed_cb = callback.bind(this.binder);
     };
+    // The function provided here should return a bool which will
+    // determine if the tab should be allowed to change or not
+    this.BeforeTabChanged = function (callback) {
+        this.before_tab_changed_cb = callback.bind(this.binder);
+    };
     this.GetCurrentIndex = function () {
         return this.current_index;
     };
     // TODO: Break this function up
-    this.LoadIndex = function (index) {
+    this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
+            return;
+        }
+        if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
         if (!this.always_start_on_first_tab) {
@@ -31805,7 +31824,7 @@ function DashLayoutTabs (binder, side_tabs) {
             content_data["button"] = new Dash.Gui.Button(
                 label_text,                         // Label
                 function () {                       // Callback
-                    self.LoadIndex(index);
+                    self.LoadIndex(index, true);
                 },
                 self,                               // Binder
                 self.color,                         // Dash Color Set
