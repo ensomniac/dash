@@ -42,6 +42,7 @@ function DashGuiIcons (icon) {
         "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
+        "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
         "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
