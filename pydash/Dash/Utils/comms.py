@@ -43,7 +43,9 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
         msg = msg.replace("    ", "&nbsp;" * 4)
 
     message = Mail.create(sender_email)
-    message.set_sender_name(f"{sender_name} <{sender_email}>")
+
+    # DO NOT ADD <sender_email> to this string! Mail handles that :facepalm:
+    message.set_sender_name(sender_name)
 
     for email_address in notify_email_list:
         message.add_recipient(f"{email_address.split('@')[0].strip().title()} <{email_address}>")
