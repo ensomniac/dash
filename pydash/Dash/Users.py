@@ -70,21 +70,25 @@ class Users:
 
         open(reset_path, "w").write("")
 
-        return_data = {"email": email, "t": uri_data_64}
+        return_data = {
+            "email": email,
+            "t": uri_data_64
+        }
 
-        link = "https://" + self.dash_context["domain"] + "/Users?f=r&t=" + uri_data_64
+        link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
         body_text = f"Use <a href='{link}'>this link</a> to reset the password for your account."
-        subject = "Create Your " + self.dash_context["display_name"] + " Account: " + email
 
         if account_exists:
-            subject = "Reset Your " + self.dash_context["display_name"] + " Account: " + email
+            subject = f"Reset Your {self.dash_context['display_name']} Account: {email}"
+        else:
+            subject = f"Create Your {self.dash_context['display_name']} Account: {email}"
 
         SendEmail(
             subject=subject,
             notify_email_list=[email],
             msg=body_text,
             sender_email=self.dash_context["admin_from_email"],
-            sender_name=f"{self.dash_context['display_name']} - Reset Login"
+            sender_name=f"{self.dash_context.get('code_copyright_text') or self.dash_context['display_name']}"
         )
 
         return_data["success"] = True
