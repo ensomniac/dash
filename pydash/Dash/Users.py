@@ -87,8 +87,8 @@ class Users:
             subject=subject,
             notify_email_list=[email],
             msg=body_text,
-            sender_email=self.dash_context["admin_from_email"],
-            sender_name=f"{self.dash_context.get('code_copyright_text') or self.dash_context['display_name']}"
+            sender_email=self.dash_context.get("admin_from_email"),
+            sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
         )
 
         return_data["success"] = True
@@ -447,7 +447,9 @@ class Users:
                 SendEmail(
                     subject="Dash Error - Users.get_team()",
                     msg=f"Failed to get user info for {user_email}, data may be corrupted",
-                    error=e
+                    error=e,
+                    sender_email=self.dash_context.get("admin_from_email"),
+                    sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
                 )
 
         return team

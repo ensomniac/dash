@@ -116,7 +116,9 @@ class ApiUsers:
 
                 SendEmail(
                     subject="Dash Error - Users.get_all()",
-                    msg=msg
+                    msg=msg,
+                    sender_email=self.DashContext.get("admin_from_email"),
+                    sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext["display_name"])
                 )
 
                 continue

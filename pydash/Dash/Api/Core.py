@@ -295,7 +295,7 @@ class ApiCore:
 
         return self._response
 
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=[]):
+    def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
             return
 
@@ -357,7 +357,10 @@ class ApiCore:
             subject=subject,
             notify_email_list=notify_email_list,
             msg=msg,
-            error=error
+            error=error,
+            strict_notify=strict_notify,
+            sender_email=self.DashContext.get("admin_from_email"),
+            sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
         )
 
     def SetDashGlobals(self):
