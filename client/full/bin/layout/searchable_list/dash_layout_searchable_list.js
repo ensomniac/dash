@@ -12,6 +12,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.html = $("<div></div>");
     this.row_content_classes = {};
     this.auto_select_disabled = false;
+    this.row_selection_disabled = false;
     this.current_selected_row_id = null;
     this.list_container = $("<div></div>");
     this.row_height = Dash.Size.ButtonHeight;
@@ -46,6 +47,10 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         this.auto_select_disabled = true;
     };
 
+    this.DisableRowSelection = function () {
+        this.row_selection_disabled = true;
+    };
+
     this.SetRowContent = function (row_id, html, class_with_update_function=null) {
         if (class_with_update_function && class_with_update_function.hasOwnProperty("Update")) {
             this.row_content_classes[row_id] = class_with_update_function;
@@ -64,7 +69,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.SetSearchTerm = function (search_term) {
         search_term = search_term.trim().toLowerCase();
 
-        if (search_term == this.filter_text) {
+        if (search_term === this.filter_text) {
             return;
         }
 
@@ -165,7 +170,11 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     };
 
     this.SetActiveRowID = function (row_id) {
-        if (this.current_selected_row_id == row_id) {
+        if (this.row_selection_disabled) {
+            return;
+        }
+
+        if (this.current_selected_row_id === row_id) {
             return;
         }
 
@@ -174,7 +183,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         Dash.Local.Set(this.recall_id, row_id);
 
         for (var id in this.rows) {
-            if (id == row_id) {
+            if (id === row_id) {
                 this.rows[id].SetActive(true);
             }
 

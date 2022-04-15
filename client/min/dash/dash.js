@@ -31078,6 +31078,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.html = $("<div></div>");
     this.row_content_classes = {};
     this.auto_select_disabled = false;
+    this.row_selection_disabled = false;
     this.current_selected_row_id = null;
     this.list_container = $("<div></div>");
     this.row_height = Dash.Size.ButtonHeight;
@@ -31107,6 +31108,9 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.DisableAutomaticSelection = function () {
         this.auto_select_disabled = true;
     };
+    this.DisableRowSelection = function () {
+        this.row_selection_disabled = true;
+    };
     this.SetRowContent = function (row_id, html, class_with_update_function=null) {
         if (class_with_update_function && class_with_update_function.hasOwnProperty("Update")) {
             this.row_content_classes[row_id] = class_with_update_function;
@@ -31120,7 +31124,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     };
     this.SetSearchTerm = function (search_term) {
         search_term = search_term.trim().toLowerCase();
-        if (search_term == this.filter_text) {
+        if (search_term === this.filter_text) {
             return;
         }
         this.filter_text = search_term;
@@ -31194,13 +31198,16 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         }
     };
     this.SetActiveRowID = function (row_id) {
-        if (this.current_selected_row_id == row_id) {
+        if (this.row_selection_disabled) {
+            return;
+        }
+        if (this.current_selected_row_id === row_id) {
             return;
         }
         this.current_selected_row_id = row_id;
         Dash.Local.Set(this.recall_id, row_id);
         for (var id in this.rows) {
-            if (id == row_id) {
+            if (id === row_id) {
                 this.rows[id].SetActive(true);
             }
             else {
@@ -31213,21 +31220,22 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
 }
 
 function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
-    this.slist      = slist;
-    this.color      = this.slist.color;
-    this.row_height = this.slist.row_height;
-    this.row_id     = row_id;
-    this.on_row_draw_callback = this.slist.on_row_draw_callback;
-    this.get_data_callback = this.slist.get_data_callback;
-    this.html          = $("<div></div>");
-    this.content_layer = $("<div></div>");
-    this.hover         = $("<div></div>");
-    this.display_name_label = null;
-    this.pending_update = null;
+    this.slist = slist;
+    this.row_id = row_id;
+    this.optional_row_data = optional_row_data;
     this.observer = null;
     this.is_visible = false;
-    this.cached_draw_response = null;
+    this.pending_update = null;
+    this.html = $("<div></div>");
+    this.hover = $("<div></div>");
     this.pending_drawable = null;
+    this.color = this.slist.color;
+    this.display_name_label = null;
+    this.cached_draw_response = null;
+    this.content_layer = $("<div></div>");
+    this.row_height = this.slist.row_height;
+    this.get_data_callback = this.slist.get_data_callback;
+    this.on_row_draw_callback = this.slist.on_row_draw_callback;
     this.setup_styles = function () {
         this.html.append(this.hover);
         this.html.append(this.content_layer);
@@ -31237,7 +31245,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "border-bottom": "1px solid " + this.color.Pinstripe,
             "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
             "cursor": "pointer",
-            "user-select": "none",
+            "user-select": "none"
         });
         this.hover.css({
             "position": "absolute",
@@ -31248,25 +31256,26 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             "bottom": 0,
             "pointer-events": "none",
             "user-select": "none",
-            "opacity": 0,
+            "opacity": 0
         });
         this.setup_connections();
-        (function(self){
+        (function (self) {
             // This has to process on the next frame since
             // the dom elements aren't attached this frame
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.initialize_visibility();
             });
         })(this);
     };
-    this.initialize_visibility = function(){
+    this.initialize_visibility = function () {
         if (this.observer) {
             return;
-        };
+        }
         this.observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting){
                 this.on_visible();
-            } else {
+            }
+            else {
                 this.on_hidden();
             }
         });
@@ -31277,7 +31286,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         if (this.pending_update) {
             this.pending_update = false;
             this.cached_draw_response = this.pending_drawable(this.row_id);
-        };
+        }
     };
     this.on_hidden = function () {
         this.is_visible = false;
@@ -31287,20 +31296,19 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
     };
     // Call to redraw / on new data
     this.Update = function () {
-        var search_term = null;
         this.pending_drawable = this.on_row_draw_callback || this.update_display_name_label.bind(this);
-        if (this.visible) {
+        if (this.is_visible) {
             this.cached_draw_response = this.pending_drawable(this.row_id);
             return this.cached_draw_response;
         }
         else {
             this.pending_update = true;
             return this.cached_draw_response || this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
-        };
+        }
     };
     this.setup_display_name_label = function () {
         // The display name label is used if there is no callback to draw the
-        // row. This can be useful for simply populating a list of elements
+        // row. This can be useful for simply populating a list of elements.
         this.display_name_label = $("<div></div>");
         this.display_name_label.css({
             "height": Dash.Size.ButtonHeight,
@@ -31341,23 +31349,23 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             this.content_layer.css({
                 "opacity": 0.6,
             });
-        };
+        }
     };
     this.setup_connections = function () {
         (function (self) {
-            self.html.click(function () {
+            self.html.on("click", function () {
                 self.slist.SetActiveRowID(self.row_id);
             });
-            self.html.mouseenter(function () {
+            self.html.on("mouseenter", function () {
                 self.hover.stop().animate({"opacity": 1}, 50);
             });
-            self.html.mouseleave(function () {
+            self.html.on("mouseleave", function () {
                 self.hover.stop().animate({"opacity": 0}, 100);
             });
         })(this);
     };
     this.setup_styles();
-};
+}
 
 function DashLayoutSearchableListSearchInput (slist) {
     this.slist      = slist;
