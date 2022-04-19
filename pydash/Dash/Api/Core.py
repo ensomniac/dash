@@ -353,21 +353,35 @@ class ApiCore:
             if email not in notify_email_list:
                 notify_email_list.append(email)
 
-        # TODO: The refresh token doesn't appear to be working for candy, investigate
-        if self.DashContext.get("asset_path") == "candy":
-            sender_email = ""
-        else:
-            sender_email = self.DashContext.get("admin_from_email")
+        try:
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_email=self.DashContext.get("admin_from_email"),
+                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+            )
 
-        SendEmail(
-            subject=subject,
-            notify_email_list=notify_email_list,
-            msg=msg,
-            error=error,
-            strict_notify=strict_notify,
-            sender_email=sender_email,
-            sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
-        )
+        # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
+        except Exception as e:
+            # Send additional email explaining the failure, likely token refresh issue
+            SendEmail(
+                subject="ApiCore.SendEmail Error",
+                msg="Email failed to send, likely due to an token that failed to refresh (see error).",
+                error=str(e)
+            )
+
+            # Send intended email using default from-email to at least ensure we get it
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+            )
 
     def SetDashGlobals(self):
         if not self._execute_as_module:
