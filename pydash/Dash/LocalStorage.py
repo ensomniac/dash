@@ -54,7 +54,7 @@ class DashLocalStorage:
 
         return data
 
-    def New(self, additional_data, obj_id=None):
+    def New(self, additional_data, obj_id=None, conform_permissions=True):
         """
         Creates and saves a standard user record
         """
@@ -73,9 +73,17 @@ class DashLocalStorage:
             for key in additional_data:
                 data[key] = additional_data[key]
 
-        os.makedirs(self.get_data_root(record_id), exist_ok=True)
+        root = self.get_data_root(record_id)
 
-        self.Write(self.GetRecordPath(record_id), data)
+        if not os.path.exists(root):
+            os.makedirs(root)
+
+            # Previously, if root called this, the file itself was being
+            # conformed in Write, but not the parent folder it was nested in
+            if self.nested and conform_permissions:
+                self.ConformPermissions(root)
+
+        self.Write(self.GetRecordPath(record_id), data, conform_permissions)
 
         return data
 
@@ -471,12 +479,10 @@ class DashLocalStorage:
         different paths depending on whether the record is nested
         """
 
-        if not self.nested:
-            # /local/store_path/202283291732434 <- This is the data
-            return self.GetRecordRoot()
+        if self.nested:
+            return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")  # /local/store_path/202283291732434/data.json <- This is the data
         else:
-            # /local/store_path/202283291732434/data.json <- This is the data
-            return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")
+            return self.GetRecordRoot()  # /local/store_path/202283291732434 <- This is the data
 
     def write_binary(self, full_path, data, conform_permissions=True):
         open(full_path, "wb").write(data)
@@ -526,8 +532,8 @@ class DashLocalStorage:
         return data
 
 
-def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id=obj_id)
+def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
+    return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id, conform_permissions)
 
 
 def CreateOrUpdate(dash_context, store_path, additional_data, obj_id, nested=False):
