@@ -129,6 +129,12 @@ def OSListDirCleaned(path):
     return OSListDirCleaned(path)
 
 
+def GetListPortion(list_obj, center_anchor_value, size=3):
+    from .list import GetListPortion
+
+    return GetListPortion(list_obj, center_anchor_value, size)
+
+
 # ------------------------------------------------- COMMS ---------------------------------------------------
 def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False):
     from .comms import SendEmail
