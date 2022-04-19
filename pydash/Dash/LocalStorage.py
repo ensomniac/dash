@@ -507,15 +507,18 @@ class DashLocalStorage:
         from random import randint
 
         filename = full_path.split("/")[-1].strip()
-        directory = full_path.rstrip(filename) + "/"
-        tmp_filename = f"{directory}_tmp_{randint(100000, 999999)}_{filename}"
+
+        tmp_file_path = os.path.join(
+            full_path.rstrip(filename),
+            f"_tmp_{randint(100000, 999999)}_{filename}"
+        )
 
         try:
-            open(tmp_filename, "w").write(dumps(data))
+            open(tmp_file_path, "w").write(dumps(data))
         except:
-            raise Exception(f"Write fail at {tmp_filename} from {full_path}")
+            raise Exception(f"Write fail at {tmp_file_path} from {full_path}")
 
-        os.rename(tmp_filename, full_path)
+        os.rename(tmp_file_path, full_path)
 
         if conform_permissions:
             self.ConformPermissions(full_path)
