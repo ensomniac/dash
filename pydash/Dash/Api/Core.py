@@ -156,9 +156,18 @@ class ApiCore:
 
     def SetUser(self, user_data):
         if not user_data or type(user_data) is not dict or not user_data.get("email"):
-            raise Exception("Invalid user_data format!")
+            raise Exception("Invalid user data format")
 
         self._user = user_data
+
+        self.set_dash_globals()
+
+    def SetDashContext(self, dash_context):
+        if not dash_context or type(dash_context) is not dict or not dash_context.get("srv_path_local"):
+            raise Exception("Invalid dash context format")
+
+        self._dash_context = dash_context
+
         self.set_dash_globals()
 
     def Run(self):

@@ -138,7 +138,7 @@ function DashGui() {
             "margin-right": "auto",
             "margin-top": Dash.Size.Padding * 2,
             "width": width_percent ? width_percent.toString + "%" : "98%",
-            "background": color ? color.AccentGood : Dash.Color.Light.AccentGood,
+            "background": color ? color.AccentGood : Dash.Color.Light.AccentGood
         });
 
         return bottom_divider;

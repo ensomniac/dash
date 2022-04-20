@@ -22,6 +22,8 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     import Mail
     from Dash import AdminEmails
 
+    error = str(error)
+
     if not sender_email:
         sender_email = AdminEmails[0]
 
