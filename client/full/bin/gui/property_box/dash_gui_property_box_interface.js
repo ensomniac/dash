@@ -138,7 +138,7 @@ function DashGuiPropertyBoxInterface () {
         return tool_row;
     };
 
-    this.AddButton = function (label_text, callback) {
+    this.AddButton = function (label_text, callback, options={}) {
         callback = callback.bind(this.binder);
 
         if (!this.buttons) {
@@ -152,7 +152,8 @@ function DashGuiPropertyBoxInterface () {
                     callback(button);
                 },
                 self,
-                self.color
+                self.color,
+                options
             );
 
             self.buttons.push(button);
