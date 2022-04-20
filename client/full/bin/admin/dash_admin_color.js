@@ -84,7 +84,7 @@ function DashAdminColor () {
         });
 
         (function (self) {
-            self.header.html.click(function () {
+            self.header.html.on("click", function () {
 
                 if (self.display_theme == "light") {
                     self.display_theme = "dark";

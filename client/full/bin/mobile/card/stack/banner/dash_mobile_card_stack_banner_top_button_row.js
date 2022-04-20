@@ -62,11 +62,11 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
 
     this.setup_connections = function () {
         (function (self) {
-            self.left_button_content.click(function () {
+            self.left_button_content.on("click", function () {
                 self.on_left_button_clicked();
             });
 
-            self.right_button_content.click(function () {
+            self.right_button_content.on("click", function () {
                 self.on_right_button_clicked();
             });
         })(this);

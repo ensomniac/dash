@@ -74,7 +74,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
     this.setup_connections = function () {
         (function (self) {
-            self.html.mousedown(function (event) {
+            self.html.on("mousedown", function (event) {
                 self.on_button_clicked();
 
                 event.preventDefault();

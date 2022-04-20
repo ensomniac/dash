@@ -19564,7 +19564,7 @@ function DashAdminColor () {
             "cursor": "pointer",
         });
         (function (self) {
-            self.header.html.click(function () {
+            self.header.html.on("click", function () {
                 if (self.display_theme == "light") {
                     self.display_theme = "dark";
                 }
@@ -31412,7 +31412,7 @@ function DashLayoutSearchableListSearchInput (slist) {
             "opacity": 0,
         });
         (function (self) {
-            self.icon_clear.html.click(function () {
+            self.icon_clear.html.on("click", function () {
                 self.clear_search();
             });
         })(this);
@@ -33709,7 +33709,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
     };
     this.setup_connections = function () {
         (function (self) {
-            self.html.mousedown(function (event) {
+            self.html.on("mousedown", function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;
@@ -34073,10 +34073,10 @@ function DashMobileCardStackBannerTopButtonRow (banner) {
     };
     this.setup_connections = function () {
         (function (self) {
-            self.left_button_content.click(function () {
+            self.left_button_content.on("click", function () {
                 self.on_left_button_clicked();
             });
-            self.right_button_content.click(function () {
+            self.right_button_content.on("click", function () {
                 self.on_right_button_clicked();
             });
         })(this);
@@ -34216,11 +34216,11 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
     // TODO: not needed?
     this.setup_connections = function () {
         // (function (self) {
-        //     self.left_button_content.click(function () {
+        //     self.left_button_content.on("click", function () {
         //         self.on_left_button_clicked();
         //     });
         //
-        //     self.right_button_content.click(function () {
+        //     self.right_button_content.on("click", function () {
         //         self.on_right_button_clicked();
         //     });
         // })(this);
@@ -34327,7 +34327,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     };
     this.setup_connections = function () {
         (function (self) {
-            self.icon_circle.mousedown(function (event) {
+            self.icon_circle.on("mousedown", function (event) {
                 self.on_button_clicked();
                 event.preventDefault();
                 return false;

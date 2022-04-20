@@ -51,7 +51,7 @@ function DashLayoutSearchableListSearchInput (slist) {
         });
 
         (function (self) {
-            self.icon_clear.html.click(function () {
+            self.icon_clear.html.on("click", function () {
                 self.clear_search();
             });
         })(this);

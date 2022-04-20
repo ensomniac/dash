@@ -118,7 +118,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
 
     this.setup_connections = function () {
         (function (self) {
-            self.icon_circle.mousedown(function (event) {
+            self.icon_circle.on("mousedown", function (event) {
                 self.on_button_clicked();
 
                 event.preventDefault();
