@@ -121,6 +121,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
     if time_format == 14:
         return f"{dt_obj.strftime(f'%B {day}{suffix}, %Y')} at {dt_obj.strftime('%I').lstrip('0')}:{dt_obj.strftime('%M%p')}"
 
+    # Format: 020422_2153
+    if time_format == 15:
+        return dt_obj.strftime("%m%d%y_%H%M")
+
     # Format date and time in a human-readable format
     return f"{date_markup} at {time_markup}"
 
