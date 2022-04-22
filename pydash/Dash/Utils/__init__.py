@@ -21,7 +21,7 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 # ------------------------------------------------- FILE ----------------------------------------------------
 def UploadFile(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path=""
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None
 ):
     from .file import Upload
 
@@ -37,8 +37,15 @@ def UploadFile(
         existing_data_for_update=existing_data_for_update,
         enforce_single_period=enforce_single_period,
         allowable_executable_exts=allowable_executable_exts,
-        related_file_path=related_file_path
+        related_file_path=related_file_path,
+        target_aspect_ratio=target_aspect_ratio
     )
+
+
+def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio=False):
+    from .file import ValidateImageAspectRatio
+
+    return ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio)
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):

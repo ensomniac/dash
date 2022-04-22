@@ -19,7 +19,7 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path=""
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -52,7 +52,11 @@ def Upload(
     is_image = file_ext in ImageExtensions
 
     if is_image:
-        img, file_data = get_image_with_data(file_bytes_or_existing_path, existing_data_for_update.get("orig_filename") or filename)
+        img, file_data = get_image_with_data(
+            file_bytes_or_existing_path,
+            existing_data_for_update.get("orig_filename") or filename,
+            target_aspect_ratio
+        )
     else:
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
@@ -91,6 +95,17 @@ def Upload(
     Write(os.path.join(file_root, f"{file_data['id']}.json"), file_data)
 
     return file_data
+
+
+def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio=False):
+    from PIL import Image
+    from io import BytesIO
+
+    return validate_image_aspect_ratio(
+        Image.open(BytesIO(image_bytes)),
+        target_aspect_ratio,
+        return_image_aspect_ratio
+    )
 
 
 def GetURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
@@ -251,7 +266,7 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes_or_existing_path, filename):
+def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None):
     from PIL import Image
 
     # Allow large uploads, no concern for DecompressionBombError
@@ -266,6 +281,9 @@ def get_image_with_data(file_bytes_or_existing_path, filename):
 
     elif type(file_bytes_or_existing_path) is str:
         img = Image.open(file_bytes_or_existing_path)
+
+    if target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
+        raise Exception(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
 
     img_format = img.format.lower()
 
@@ -285,6 +303,19 @@ def get_image_with_data(file_bytes_or_existing_path, filename):
         img, file_data["rot_deg"] = rotate_image(img, file_data["exif"])
 
     return img, file_data
+
+
+def validate_image_aspect_ratio(image, target_aspect_ratio, return_image_aspect_ratio=False):
+    valid = True
+    image_aspect_ratio = image.size[0] / image.size[1]
+
+    if abs(image_aspect_ratio - target_aspect_ratio) > 0.01:
+        valid = False
+
+    if return_image_aspect_ratio:
+        return valid, image_aspect_ratio
+
+    return valid
 
 
 def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=False):
