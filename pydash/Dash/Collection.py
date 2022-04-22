@@ -135,8 +135,15 @@ class Collection:
             obj_id=obj_id
         )
 
-        if hasattr(self, "_all") and type(self._all) is dict and "data" in self._all:
-            self._all["data"][new_obj["id"]] = new_obj
+        if hasattr(self, "_all") and type(self._all) is dict:
+            if "data" in self._all and not self._all["data"].get(new_obj["id"]):
+                self._all["data"][new_obj["id"]] = new_obj
+
+            if "order" in self._all and new_obj["id"] not in self._all["order"]:
+                self._all["order"].append(new_obj["id"])
+
+        if hasattr(self, "_all_ids") and type(self._all_ids) is list and new_obj["id"] not in self._all_ids:
+            self._all_ids.append(new_obj["id"])
 
         if return_all_data:
             data = self.GetAll()
