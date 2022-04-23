@@ -24,7 +24,7 @@ def GetListPortion(list_obj, center_anchor_value, size=3):
         raise Exception("GetPortion only accepts lists")
 
     if size >= len(list_obj):
-        raise Exception(f"Size ({size}) must be less than the length of the list ({len(list_obj)})")
+        return list_obj
 
     from math import floor
 
