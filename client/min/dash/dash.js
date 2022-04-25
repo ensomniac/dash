@@ -20826,14 +20826,13 @@ function DashGuiLogin (on_login_binder, on_login_callback, color, optional_param
 
 function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
     this.color = color;
+    this.label_text = label_text;
     this.callback = callback;
     this.start_range = start_range;
     this.end_range = end_range;
     this.value = Dash.Math.InverseLerp(this.start_range, this.end_range, current_value);
     this.initial_value = this.value;
-    this.label_text = label_text;
     this.html = Dash.Gui.GetHTMLContext();
-    // this.theme = "light";
     this.label = $("<div></div>");
     this.value_label = $("<div></div>");
     this.slider = $("<div></div>");
@@ -20843,12 +20842,6 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.thumb_inner = $("<div></div>");
     this.thumb_outer = $("<div></div>");
     this.mark = $("<div></div>");
-    this.html.append(this.slider);
-    this.slider.append(this.bar);
-    this.bar.append(this.bar_fill);
-    this.slider.append(this.thumb);
-    this.thumb.append(this.thumb_outer);
-    this.thumb_outer.append(this.thumb_inner);
     this.height = null;
     this.width = null;
     this.outline_size = 1;
@@ -20857,7 +20850,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.on_change_callback = null;
     this.is_active = false;
     this.setup_complete = false;
-    this.initial_mark_value = 0; //
+    this.initial_mark_value = 0;
     this.extra_data = {};
     this.touch_start = 0;
     this.animate_initial_value = false;
@@ -20868,9 +20861,15 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.manual_value = true;
     this.track_width = false;
     this.setup_styles = function () {
+        this.html.append(this.slider);
+        this.slider.append(this.bar);
+        this.bar.append(this.bar_fill);
+        this.slider.append(this.thumb);
+        this.thumb.append(this.thumb_outer);
+        this.thumb_outer.append(this.thumb_inner);
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.RowHeight,
+            "height": Dash.Size.RowHeight
         });
         this.label.css({
             "position": "absolute",
@@ -20880,7 +20879,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "text-overflow": "ellipsis",
             "font-size": "90%",
             "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
         });
         this.value_label.css({
             "position": "absolute",
@@ -20892,7 +20891,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "text-overflow": "ellipsis",
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "font-size": "90%",
+            "font-size": "90%"
         });
         this.slider.css({
             "position": "absolute",
@@ -20900,34 +20899,63 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         });
         this.bar.css({
             "background": "rgba(0,0,0,0.2)",
-            "position": "absolute",
+            "position": "absolute"
         });
         this.bar_fill.css({
-            "position": "absolute",
+            "position": "absolute"
         });
         this.thumb.css({
             "position": "absolute",
-            "left": 0,
+            "left": 0
         });
         this.thumb_inner.css({
-            "position": "absolute",
+            "position": "absolute"
         });
         this.mark.css({
-            "position": "absolute",
+            "position": "absolute"
         });
-        // this.value_label.text("0.5");
-        this.make_connections();
+        this.setup_connections();
         (function (self) {
             requestAnimationFrame(function () {
                 self.SetValue(self.initial_value);
             });
         })(this);
     };
+    this.StyleForPropertyBox = function (extra_slider_left_padding=0) {
+        this.label.css({
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "width": "",
+            "white-space": "",
+            "overflow": "",
+            "text-overflow": "",
+            "text-align": "",
+            "background": "none",
+            "box-shadow": ""
+        });
+        this.label_width = this.label.width();
+        this.html.css({
+            "margin-bottom": Dash.Size.Padding * 0.5,
+            "width": this.width + (this.label_width * 1.5)
+        });
+        var slider_left = this.label_width + extra_slider_left_padding + Dash.Size.Padding;
+        this.slider.css({
+            "left": slider_left
+        });
+        this.value_label.css({
+            "width": Dash.Size.ColumnWidth * 0.25,
+            "background": "none",
+            "box-shadow": "",
+            "border": "1px solid " + this.color.StrokeLight,
+            "height": this.height - 2,
+            "left": slider_left + this.slider_width + Dash.Size.Padding
+        });
+    };
     this.setup_sizing = function () {
         this.track_width = true;
         this.height = Dash.Size.RowHeight;
         this.label_width = Dash.Size.ColumnWidth * 0.75;
-        this.width = (Dash.Size.ColumnWidth*2);
+        this.width = (Dash.Size.ColumnWidth * 2);
         this.slider_width = this.width;
         this.slider_height = this.height;
         this.html.append(this.label);
@@ -20935,13 +20963,13 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.slider_width = this.width - this.slider_height;
         this.html.append(this.value_label);
         this.slider_max_px = this.slider_width - (this.slider_height); // PX
-        this.thumb_size = this.slider_height - (this.outline_size*2);
-        this.thumb_outer_size = this.thumb_size - (this.border_size*2);
-        this.thumb_inner_size = this.thumb_outer_size - (this.border_size*2);
+        this.thumb_size = this.slider_height - (this.outline_size * 2);
+        this.thumb_outer_size = this.thumb_size - (this.border_size * 2);
+        this.thumb_inner_size = this.thumb_outer_size - (this.border_size * 2);
         this.bar_width = this.slider_width;
         this.bar_height = this.slider_height * 0.5;
-        this.bar_fill_height = (this.bar_height * 0.4) - (this.outline_size*2);
-        this.bar_fill_width = (this.bar_width - (this.thumb_size * 0.5)) - (this.outline_size*2);
+        this.bar_fill_height = (this.bar_height * 0.4) - (this.outline_size * 2);
+        this.bar_fill_width = (this.bar_width - (this.thumb_size * 0.5)) - (this.outline_size * 2);
         this.mark_height = this.slider_height * 0.9;
         this.mark_width = this.mark_height * 0.08;
         this.initial_value_px = Dash.Math.Lerp(0, this.slider_width, this.initial_value);
@@ -20952,10 +20980,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         if (this.track_width && !this.monitoring_width) {
             this.monitoring_width = true;
             this.last_width = -1;
-            this.monitor_width();
         }
-    };
-    this.monitor_width = function () {
     };
     this.draw = function (interactive_update) {
         if (interactive_update) {
@@ -20965,21 +20990,20 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.setup_sizing();
         this.html.css({
             "height": this.height,
-            "width": this.width + (this.label_width*1.5),
+            "width": this.width + (this.label_width * 1.5),
         });
         this.label.css({
-            "width": this.label_width-Dash.Size.Padding,
+            "width": this.label_width - Dash.Size.Padding,
             "height": this.height,
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
             "border-radius": 3,
             "background": "rgba(255, 255, 255, 0.9)",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         });
         this.value_label.css({
-            // "background": "pink",
-            "width": (this.label_width * 0.5)-Dash.Size.Padding,
+            "width": (this.label_width * 0.5) - Dash.Size.Padding,
             "height": this.height,
             "line-height": this.height + "px",
             "color": this.color.Text,
@@ -20988,18 +21012,18 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "background": "rgba(255, 255, 255, 0.9)",
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
             "right": 0,
-            "left": "auto",
+            "left": "auto"
         });
         this.slider.css({
             "width": this.slider_width,
             "height": this.slider_height,
-            "left": this.label_width + Dash.Size.Padding,
+            "left": this.label_width + Dash.Size.Padding
         });
         this.bar.css({
             "height": this.bar_height,
             "width": this.bar_width,
-            "top": (this.slider_height * 0.5)-(this.bar_height * 0.5),
-            "border-radius": this.bar_height,
+            "top": (this.slider_height * 0.5) - (this.bar_height * 0.5),
+            "border-radius": this.bar_height
         });
         this.bar_fill.css({
             "background": "rgba(255,255,255,1)",
@@ -21009,19 +21033,19 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "top": (this.bar_height * 0.5) - (this.bar_fill_height * 0.5) - this.outline_size,
             "left": (this.bar_width * 0.5) - (this.bar_fill_width * 0.5) - this.outline_size,
             "border-radius": this.bar_fill_height,
-            "border": this.outline_size + "px solid rgba(0, 0, 0, 0.5)",
+            "border": this.outline_size + "px solid rgba(0, 0, 0, 0.5)"
         });
         this.thumb.css({
             "width": this.thumb_size,
             "height": this.thumb_size,
             "border-radius": this.thumb_size,
-            "border": this.outline_size + "px solid rgba(0, 0, 0, 0.5)",
+            "border": this.outline_size + "px solid rgba(0, 0, 0, 0.5)"
         });
         this.thumb_outer.css({
             "width": this.thumb_outer_size,
             "height": this.thumb_outer_size,
             "border-radius": this.thumb_outer_size,
-            "border": this.border_size + "px solid rgba(255, 255, 255, 1)",
+            "border": this.border_size + "px solid rgba(255, 255, 255, 1)"
         });
         this.thumb_inner.css({
             "background": "rgba(255,255,255,1)",
@@ -21029,26 +21053,25 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "height": this.bar_height,
             "top": (this.thumb_outer_size - this.bar_height) * 0.5,
             "left": (this.thumb_outer_size - this.bar_height) * 0.5,
-            "border-radius": this.bar_height,
+            "border-radius": this.bar_height
         });
         this.mark.css({
             "height": this.mark_height,
             "width": this.mark_width,
             "background": "rgba(255,255,255,0.8)",
-            "top": (this.container_height * 0.5)-(this.mark_height * 0.5),
+            "top": (this.container_height * 0.5) - (this.mark_height * 0.5)  // TODO: this.container_height is undefined...
         });
     };
     this.SetSize = function (width, height) {
         this.width = width;
         this.height = height;
-        // this.slider_width = this.width;
         this.setup_sizing();
     };
     this.SetLabel = function (label) {
         this.label_text = label;
     };
+    // When true, sliders can't be MANUALLY moved
     this.SetLock = function (locked) {
-        // When true, sliders can't be MANUALLY moved
         this.locked = locked;
         if (this.locked) {
             this.slider.stop().animate({"opacity": 0.6});
@@ -21057,8 +21080,8 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             this.slider.stop().animate({"opacity": 1});
         }
     };
+    // The value is manually set, externally
     this.SetValue = function (value) {
-        // The value is manually set, externally
         var valPx = Dash.Math.Lerp(0, this.slider_width, value);
         this.value = value;
         this.manual_value = true;
@@ -21088,27 +21111,33 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.value_label_visible = visible;
     };
     this.on_mouse_up = function (event) {
-        if (!this.is_active) {return;}
+        if (!this.is_active) {
+            return;
+        }
         this.is_active = false;
     };
     this.get_touch_w_offset = function (event) {
-        return event.pageX - $(this.slider).parent().offset().left - (this.label_width+Dash.Size.Padding);
+        return event.pageX - $(this.slider).parent().offset().left - (this.label_width + Dash.Size.Padding);
     };
     this.on_mouse_down = function (event) {
-        if (this.is_active) {return;}
+        if (this.is_active) {
+            return;
+        }
         this.touch_start = this.get_touch_w_offset(event);
         this.slider_pos_touch_start = this.set_thumb(this.touch_start);
         this.is_active = true;
     };
     this.on_mouse_move = function (event) {
-        if (!this.is_active) {return;}
+        if (!this.is_active) {
+            return;
+        }
         var now_pos = this.get_touch_w_offset(event) + (this.height * 0.5);
-        this.slider_pos = this.set_thumb(this.slider_pos_touch_start + (now_pos-this.touch_start));
+        this.slider_pos = this.set_thumb(this.slider_pos_touch_start + (now_pos - this.touch_start));
         this.update_value_label();
         this.callback(this.GetValue());
     };
+    // Safely set the position of the slider. Returns a clamped value if provided value extends slider bounds
     this.set_thumb = function (xPosPx, animate) {
-        // Safely set the position of the slider. Returns a clamped value if provided value extends slider bounds
         animate = false;
         xPosPx = xPosPx-(this.slider_height * 0.5);
         if (xPosPx < 0) {
@@ -21140,14 +21169,14 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         return xPosPx;
     };
     this.set_mark = function (xPosPx, animate) {
-        xPosPx = xPosPx-(this.slider_height * 0.5);
+        xPosPx = xPosPx - (this.slider_height * 0.5);
         if (xPosPx < 0) {
             xPosPx = 0;
         }
         if (xPosPx > this.slider_max_px) {
             xPosPx = this.slider_max_px;
         }
-        animate = false;
+        animate = false;  // Why?
         if (animate) {
             this.mark.stop().animate({"left": xPosPx + (this.thumb_size * 0.5)}, 500);
         }
@@ -21155,7 +21184,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             this.mark.css({"left": xPosPx + (this.thumb_size * 0.5)});
         }
     };
-    this.make_connections = function () {
+    this.setup_connections = function () {
         (function (self) {
             self.slider.on("mousedown", function ( event ) {
                 if (self.locked) {
@@ -21167,11 +21196,11 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
                 self.bar_fill.stop();
                 event.preventDefault();
             });
-            $(document).on('mousemove', self.slider, function (event) {
+            $(document).on("mousemove", self.slider, function (event) {
                 self.on_mouse_move(event);
                 event.preventDefault();
             });
-            $(document).on('mouseup', self.slider, function (event) {
+            $(document).on("mouseup", self.slider, function (event) {
                 self.on_mouse_up(event);
             });
             requestAnimationFrame(function () {
@@ -26385,6 +26414,7 @@ function DashGuiIcons (icon) {
         "signal_none":           new DashGuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
         "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
         "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
+        "sliders_horizontal":    new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "sort_numeric_down":     new DashGuiIconDefinition(this.icon, "Sort (Numeric - Down)", this.weight["regular"], "sort-numeric-down"),
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
