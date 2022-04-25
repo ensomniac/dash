@@ -6,21 +6,23 @@
 import os
 import sys
 
-from googleapiclient.errors import HttpError
 
-
-def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False):
+def SendEmail(
+        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash",
+        strict_notify=False, reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[]
+):
     from . import OapiRoot
 
-    # This is a temporary stop until we set up Dash to be able to always run this, regardless of server
+    # TODO: Remove this once the Mail module is migrated to Dash
     if not os.path.exists(OapiRoot):
         raise Exception("The Mail Module can currently only run directly from the server.")
 
     if strict_notify and not notify_email_list:
         raise Exception("The 'strict_notify' parameter requires 'notify_email_list' to not be empty.")
 
-    import Mail
+    from Mail import create  # noqa
     from Dash import AdminEmails
+    from googleapiclient.errors import HttpError
 
     error = str(error)
 
@@ -44,7 +46,7 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
     if "    " in msg:
         msg = msg.replace("    ", "&nbsp;" * 4)
 
-    message = Mail.create(sender_email)
+    message = create(sender_email)
 
     # DO NOT ADD <sender_email> to this string! Mail handles that :facepalm:
     message.set_sender_name(sender_name)
@@ -54,17 +56,28 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
 
     if not strict_notify:
         for email_address in AdminEmails:
-            if email_address not in notify_email_list:
+            if email_address not in notify_email_list and email_address not in bcc_email_list:
                 message.add_bcc_recipient(email_address)
 
-        if sender_email not in notify_email_list:
+        if sender_email not in notify_email_list and sender_email not in bcc_email_list:
             message.add_bcc_recipient(sender_email)
+
+    if bcc_email_list:
+        for email in bcc_email_list:
+            message.add_bcc_recipient(email)
+
+    if reply_to_email:
+        message.set_reply_to(reply_to_email, reply_to_name)
+
+    if attachment_file_paths:
+        for file_path in attachment_file_paths:
+            message.add_attachment(file_path)
 
     message.set_subject(subject)
     message.set_body_html(msg)
     
     try:
-        message.send()
+        response = message.send()
     
     # Attempt to decode Google's "unprintable" error
     except HttpError as http_error:
@@ -85,7 +98,11 @@ def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", 
         raise Exception(e)
 
     return {
-        "recipients": notify_email_list,
+        "recipients": message.recipients,
         "subject": subject,
-        "body": msg
+        "body": msg,
+        "attachments": message.attachment_file_paths,
+        "sender": sender_email,
+        "reply_to": reply_to_email,
+        "bcc_recipients": message.bcc_recipients
     }

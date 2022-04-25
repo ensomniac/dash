@@ -143,10 +143,25 @@ def GetListPortion(list_obj, center_anchor_value, size=3):
 
 
 # ------------------------------------------------- COMMS ---------------------------------------------------
-def SendEmail(subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False):
+def SendEmail(
+        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash",
+        strict_notify=False, reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[]
+):
     from .comms import SendEmail
 
-    return SendEmail(subject, notify_email_list, msg, error, sender_email, sender_name, strict_notify)
+    return SendEmail(
+        subject,
+        notify_email_list,
+        msg,
+        error,
+        sender_email,
+        sender_name,
+        strict_notify,
+        reply_to_email,
+        reply_to_name,
+        bcc_email_list,
+        attachment_file_paths=attachment_file_paths
+    )
 
 
 def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
