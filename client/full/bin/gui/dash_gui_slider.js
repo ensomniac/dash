@@ -41,6 +41,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.value = null;
     this.manual_value = true;
     this.track_width = false;
+    this.value_label_editable = false;
 
     this.setup_styles = function () {
         this.html.append(this.slider);
@@ -81,7 +82,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         this.slider.css({
             "position": "absolute",
-            "bottom": 0,
+            "bottom": 0
         });
 
         this.bar.css({
@@ -95,6 +96,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         this.thumb.css({
             "position": "absolute",
+            "cursor": "pointer",
             "left": 0
         });
 
@@ -170,7 +172,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.value_label_visible = visible;
     };
 
-    this.StyleForPropertyBox = function (extra_slider_left_padding=0) {
+    this.StyleForPropertyBox = function (extra_slider_left_padding=0, value_label_editable=true) {
         this.extra_slider_left_padding = extra_slider_left_padding;
 
         this.label.css({
@@ -198,18 +200,26 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "left": slider_left
         });
 
-        // this.thumb.css({
-        //     "left": this.thumb.css("left") + this.extra_slider_left_padding
-        // });
+        if (value_label_editable) {
+            this.MakeValueLabelEditable();
+        }
 
-        this.value_label.css({
-            "width": Dash.Size.ColumnWidth * 0.25,
-            "background": "none",
-            "box-shadow": "",
-            "border": "1px solid " + this.color.StrokeLight,
-            "height": this.height - 2,
-            "left": slider_left + this.slider_width + Dash.Size.Padding
-        });
+        else {
+            this.value_label.css({
+                "width": Dash.Size.ColumnWidth * 0.25,
+                "background": "none",
+                "box-shadow": "",
+                "border": "1px solid " + this.color.StrokeLight,
+                "height": this.height - 2,
+                "left": slider_left + this.slider_width + Dash.Size.Padding
+            });
+        }
+    };
+
+    this.MakeValueLabelEditable = function () {
+        this.value_label_editable = true;
+
+        this.make_value_label_editable();
     };
 
     this.SetCallbackDelayMS = function (ms) {
@@ -240,11 +250,13 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             );
         })(this);
 
+        var value_label_width = this.value_label_editable ? this.value_label.html.width() : this.value_label.width();
+
         this.reset_button.html.css({
             "position": "absolute",
             "top": 0,
             "margin": 0,
-            "left": this.label_width + this.extra_slider_left_padding + this.slider_width + this.value_label.width() + (Dash.Size.Padding * 4)
+            "left": this.label_width + this.extra_slider_left_padding + this.slider_width + value_label_width + (Dash.Size.Padding * 4)
         });
 
         this.html.append(this.reset_button.html);
@@ -252,6 +264,47 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
     this.FireCallbackOnUpInsteadOfMove = function (enabled=true) {
         this.fire_callback_on_up_instead_of_move = enabled;
+    };
+
+    this.make_value_label_editable = function () {
+        this.value_label.remove();
+
+        this.value_label = new Dash.Gui.Input("", this.color);
+
+        var width = Dash.Size.ColumnWidth * 0.3;
+
+        this.value_label.html.css({
+            "width": width,
+            "position": "absolute",
+            "bottom": 0,
+            "right": 0,
+            "box-shadow": "",
+            "border": "1px solid " + this.color.StrokeLight,
+            "left": this.label_width + this.extra_slider_left_padding + this.slider_width + (Dash.Size.Padding * 2.5)
+        });
+
+        this.value_label.input.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "width": width - Dash.Size.Padding,
+            "white-space": "",
+            "overflow": "",
+            "text-overflow": ""
+        });
+
+        this.html.append(this.value_label.html);
+
+        this.update_value_label();
+
+        (function (self) {
+            self.value_label.SetOnSubmit(
+                function () {
+                    self.SetValue(parseFloat(self.value_label.Text()));
+                    self.fire_callback(true);
+                },
+                self
+            );
+        })(this);
     };
 
     this.setup_sizing = function () {
@@ -397,7 +450,13 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             label_text = label_text.slice(0, this.max_value_label_length);
         }
 
-        this.value_label.text(label_text);
+        if (this.value_label_editable) {
+            this.value_label.SetText(label_text);
+        }
+
+        else {
+            this.value_label.text(label_text);
+        }
     };
 
     this.on_mouse_up = function (event) {

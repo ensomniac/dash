@@ -289,9 +289,7 @@ class ApiCore:
         self._response = response
 
         if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
-            from Dash import AdminEmails
-
-            if self.User and self.User.get("email") in AdminEmails:
+            if self.User and self.User.get("email") == "ryan@ensomniac.com":
                 # Adding this here as a quick solution for now - it shouldn't be
                 # an issue to leave it this way, but may need to update this later.
                 pass
