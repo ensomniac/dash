@@ -109,8 +109,8 @@ function DashGuiPropertyBoxInterface () {
         return header_obj;
     };
 
-    this.AddButtonBar = function (label_text) {
-        var bar = new Dash.Gui.ButtonBar(this.binder, this.color);
+    this.AddButtonBar = function (style="default") {
+        var bar = new Dash.Gui.ButtonBar(this.binder, this.color, style);
 
         bar.html.css({
             "margin-top": Dash.Size.Padding,
