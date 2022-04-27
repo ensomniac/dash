@@ -21366,6 +21366,9 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             this.html.append(this.border);
         }
     };
+    this.Text = function () {
+        return this.label.text();
+    };
     this.SetText = function (label_text) {
         this.label.text(label_text);
     };
@@ -24959,7 +24962,10 @@ function DashGuiComboInterface () {
     this.ActiveID = function () {
         return this.selected_option_id;
     };
-    // Why does this exist when we can simply call ActiveOption()?
+    this.ActiveLabel = function () {
+        return this.selected_option["label_text"] || this.selected_option["display_name"];
+    };
+    // Deprecated
     this.GetActiveOption = function () {
         return this.ActiveOption();
     };

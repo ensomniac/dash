@@ -127,7 +127,11 @@ function DashGuiComboInterface () {
         return this.selected_option_id;
     };
 
-    // Why does this exist when we can simply call ActiveOption()?
+    this.ActiveLabel = function () {
+        return this.selected_option["label_text"] || this.selected_option["display_name"];
+    };
+
+    // Deprecated
     this.GetActiveOption = function () {
         return this.ActiveOption();
     };

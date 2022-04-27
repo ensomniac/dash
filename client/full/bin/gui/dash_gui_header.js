@@ -44,6 +44,10 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         }
     };
 
+    this.Text = function () {
+        return this.label.text();
+    };
+
     this.SetText = function (label_text) {
         this.label.text(label_text);
     };
