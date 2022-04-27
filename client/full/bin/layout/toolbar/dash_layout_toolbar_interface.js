@@ -1,6 +1,16 @@
 /**@member DashLayoutToolbar */
 
 function DashLayoutToolbarInterface () {
+    this.RemoveStrokeSep = function () {
+        this.stroke_sep.remove();
+
+        this.height -= this.stroke_height;
+
+        this.html.css({
+            "height": this.height
+        });
+    };
+
     this.DisablePaddingRefactoring = function () {
         this.allow_padding_refactoring = false;
     };
@@ -411,5 +421,31 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
 
         return obj["html"];
+    };
+
+    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
+        var checkbox = new Dash.Gui.Checkbox(
+            "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
+            default_state,                                          // Default state
+            this.color,                                             // Color
+            hover_hint,                                             // Hover hint text
+            this,                                                   // Binder
+            callback ? callback.bind(this.binder) : callback,       // Callback
+            label_text,                                             // Label text
+            true,                                                   // Label first
+            label_border                                            // Include border
+        );
+
+        checkbox.html.css({
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+
+        if (checkbox_redraw_styling) {
+            checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);
+        }
+
+        this.AddHTML(checkbox.html);
+
+        return checkbox;
     };
 }

@@ -190,6 +190,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.label_width = this.label.width();
 
         this.html.css({
+            "margin-left": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding * 0.5,
             "width": this.width + (this.label_width * 1.5)
         });
