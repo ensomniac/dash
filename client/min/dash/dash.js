@@ -21847,16 +21847,14 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return button;
     };
     this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
-        var checkbox = new Dash.Gui.Checkbox(
-            "dash_gui_tool_row_toggle_" + label_text + identifier,  // Local storage key
-            default_state,                                          // Default state
-            this.color,                                             // Color
-            hover_hint,                                             // Hover hint text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
-            label_text,                                             // Label text
-            true,                                                   // Label first
-            label_border                                            // Include border
+        var checkbox = this.toolbar.AddCheckbox(
+            label_text,
+            default_state,
+            callback ? callback.bind(this.binder) : callback,
+            identifier,
+            hover_hint,
+            checkbox_redraw_styling,
+            label_border
         );
         checkbox.html.css({
             "margin-top": 0
@@ -21885,10 +21883,6 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 });
             }
         }
-        if (checkbox_redraw_styling) {
-            checkbox.AddIconButtonRedrawStyling(checkbox_redraw_styling);
-        }
-        this.toolbar.AddHTML(checkbox.html);
         return checkbox;
     };
     this.AddHTML = function (html) {
@@ -28167,7 +28161,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddCheckbox = function (
         local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
-        callback=null, label_text="", label_first=true, include_border=false, read_only=false
+        callback=null, label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null
     ) {
         var checkbox = new Dash.Gui.Checkbox(
             local_storage_key,
@@ -28181,19 +28175,24 @@ function DashGuiPropertyBoxInterface () {
             include_border
         );
         checkbox.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
+            "margin-left": Dash.Size.Padding * 2
         });
         checkbox.label.label.css({
             "font-family": "sans_serif_bold",
             "font-size": "80%"
         });
-        checkbox.icon_button.html.css({
-            "margin-top": Dash.Size.Padding * 0.15
-        });
         checkbox.SetIconSize(125);
         if (read_only) {
             checkbox.SetReadOnly(true);
         }
+        if (icon_redraw_styling) {
+            icon_redraw_styling["margin-top"] = Dash.Size.Padding * 0.15;
+        }
+        else {
+            icon_redraw_styling = {"margin-top": Dash.Size.Padding * 0.15};
+        }
+        checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
         this.AddHTML(checkbox.html);
         return checkbox;
     };
