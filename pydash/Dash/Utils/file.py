@@ -115,10 +115,14 @@ def GetURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
     if add_anti_caching_id:
         from .number import GetRandomID
 
-        id_tag = "?=id="
+        id_tag = "?id="
 
         if id_tag in url:
             url = url.split(id_tag)[0]
+
+        # Mistakes we made
+        elif "?=id=" in url:
+            url = url.split("?=id=")[0]
 
         url += f"{id_tag}{GetRandomID()}"
 
