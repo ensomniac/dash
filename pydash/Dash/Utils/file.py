@@ -131,6 +131,9 @@ def GetURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
 
 def GetPathFromURL(dash_context, server_file_url):
     # For some weird reason, join() wasn't working properly without splitting both elements first
+
+    server_file_url = server_file_url.split("?")[0].strip() # Remove request params
+
     return "/" + os.path.join(
         *dash_context["srv_path_http_root"].split("/"),
         *server_file_url.replace(f"https://{dash_context['domain']}", "").split("/")
