@@ -26472,6 +26472,7 @@ function DashGuiIcons (icon) {
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "flag":                  new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
+        "flag_checkered":        new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-checkered"),
         "gem":                   new DashGuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
         "golf_ball":             new DashGuiIconDefinition(this.icon, "Golf Ball", this.weight["regular"], "golf-ball"),
         "google_drive":          new DashGuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
