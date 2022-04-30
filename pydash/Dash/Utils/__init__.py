@@ -72,7 +72,7 @@ def GetImageExtensions():
     return ImageExtensions
 
 
-def CreateZIP(dir_path): 
+def CreateZIP(dir_path):
     from .file import CreateZIP
 
     return CreateZIP(dir_path)
