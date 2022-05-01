@@ -26382,6 +26382,7 @@ function DashGuiIcons (icon) {
         "admin_tools":           new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
         "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),
+        "analytics":             new DashGuiIconDefinition(this.icon, "Analytics", this.weight["regular"], "analytics"),
         "apple_logo":            new DashGuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
         "archive":               new DashGuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
         "archive_light":         new DashGuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
