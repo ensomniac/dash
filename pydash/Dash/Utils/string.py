@@ -235,6 +235,26 @@ def GetAssetPath(string):
     return asset_path.strip("_")
 
 
+def ValidateEmailAddress(email):
+    email = email.lower()
+
+    if not email:
+        return False
+
+    domain = email.split("@")[-1]
+
+    if not domain:
+        return False
+
+    if len(email) and (email.count("@") != 1 or "." not in domain):
+        return False
+
+    if not len(domain.split(".")[0]) or not len(domain.split(".")[-1]) or not len(email.split("@")[0]):
+        return False
+
+    return True
+
+
 def change_dt_tz(dt_obj, tz):
     from pytz import timezone as pytz_timezone
 

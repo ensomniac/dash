@@ -129,6 +129,12 @@ def GetAssetPath(name):
     return GetAssetPath(name)
 
 
+def ValidateEmailAddress(email):
+    from .string import ValidateEmailAddress
+
+    return ValidateEmailAddress(email)
+
+
 # -------------------------------------------------- LIST ----------------------------------------------------
 def OSListDirCleaned(path):
     from .list import OSListDirCleaned
