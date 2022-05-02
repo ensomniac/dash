@@ -254,8 +254,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return text;
         }
 
-        for (var label_text of this.valid_mentions) {
-            text = this.process_mention(label_text, text, track);
+        if (Dash.Validate.Object(this.valid_mentions)) {
+            for (var label_text of this.valid_mentions) {
+                text = this.process_mention(label_text, text, track);
+            }
         }
 
         return text;
