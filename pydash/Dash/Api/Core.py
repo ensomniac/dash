@@ -255,6 +255,8 @@ class ApiCore:
 
             self._params[key] = default_value
 
+        return self._params[key]
+
     def StopExecutionOnError(self, error):
         self._response["error"] = error
 
