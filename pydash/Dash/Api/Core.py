@@ -246,12 +246,12 @@ class ApiCore:
     def ParseParam(self, key, target_type, default_value=None):
         if key in self._params:
             if type(self._params[key]) is target_type:
-                return
+                return self._params[key]
 
             self._params[key] = json.loads(self._params[key])
         else:
             if default_value is None:
-                return
+                return self._params[key]
 
             self._params[key] = default_value
 
