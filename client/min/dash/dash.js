@@ -25291,6 +25291,16 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         }
         this.supports_desktop_client = true;  // In case it wasn't set to true on instantiation
         this.desktop_client_name = name;
+        // Re-instantiate these to update the desktop client name
+        if (!this.read_only) {
+            this.instantiate_button_configs();
+            // Default button config
+            this.buttons = [
+                this.OpenButtonConfig,
+                this.DownloadButtonConfig,
+                this.DeleteButtonConfig
+            ];
+        }
         this.loader.SetDesktopClientName(name);
     };
     this.Flatten = function () {
