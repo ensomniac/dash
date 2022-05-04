@@ -8,8 +8,8 @@ import sys
 
 
 def SendEmail(
-        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash",
-        strict_notify=False, reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[]
+        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False,
+        reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[], ensure_sender_gets_copied=True
 ):
     from . import OapiRoot
 
@@ -59,7 +59,7 @@ def SendEmail(
             if email_address not in notify_email_list and email_address not in bcc_email_list:
                 message.add_bcc_recipient(email_address)
 
-        if sender_email not in notify_email_list and sender_email not in bcc_email_list:
+        if ensure_sender_gets_copied and sender_email not in notify_email_list and sender_email not in bcc_email_list:
             message.add_bcc_recipient(sender_email)
 
     if bcc_email_list:
@@ -77,7 +77,7 @@ def SendEmail(
     message.set_body_html(msg)
     
     try:
-        response = message.send()
+        message.send()
     
     # Attempt to decode Google's "unprintable" error
     except HttpError as http_error:

@@ -370,7 +370,11 @@ class ApiCore:
                 error=error,
                 strict_notify=strict_notify,
                 sender_email=self.DashContext.get("admin_from_email"),
-                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name")),
+
+                # Since the "admin_from_email" will typically be an alternate email that we Dash admins control, we
+                # don't want to get the emails sent to both addresses. Sending it to our primary addresses is sufficient.
+                ensure_sender_gets_copied=(not bool(self.DashContext.get("admin_from_email")))
             )
 
         # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
