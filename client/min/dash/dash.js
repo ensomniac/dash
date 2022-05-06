@@ -24929,7 +24929,7 @@ function DashGuiComboInterface () {
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {
             this.dropdown_icon.html.remove();
-            this.add_dropdown_icon(icon_size_mult, icon_name);
+            this.add_dropdown_icon(icon_size_mult || 0.75, icon_name);
         }
         this.html.css({
             "margin-left": Dash.Size.Padding * 0.5
@@ -26482,6 +26482,7 @@ function DashGuiIcons (icon) {
         "file_video":            new DashGuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
         "file_word":             new DashGuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
         "filter":                new DashGuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
+        "filter_solid":          new DashGuiIconDefinition(this.icon, "Filter", this.weight["solid"], "filter"),
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "flag":                  new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
@@ -31579,6 +31580,7 @@ function DashLayoutSearchableListSearchInput (slist) {
         this.input.OnChange(this.on_search, this);
         this.html.append(this.icon_search.html);
         this.html.append(this.icon_clear.html);
+        this.icon_search.Mirror();
         this.html.css({
             "position": "absolute",
             "left": 0,

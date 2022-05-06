@@ -14,11 +14,12 @@ function DashLayoutSearchableListSearchInput (slist) {
     this.clear_icon_visible  = false;
 
     this.setup_styles = function () {
-
         this.input.OnChange(this.on_search, this);
 
         this.html.append(this.icon_search.html);
         this.html.append(this.icon_clear.html);
+
+        this.icon_search.Mirror();
 
         this.html.css({
             "position": "absolute",

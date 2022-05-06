@@ -85,7 +85,7 @@ function DashGuiComboInterface () {
         if (icon_name || icon_size_mult) {
             this.dropdown_icon.html.remove();
 
-            this.add_dropdown_icon(icon_size_mult, icon_name);
+            this.add_dropdown_icon(icon_size_mult || 0.75, icon_name);
         }
 
         this.html.css({

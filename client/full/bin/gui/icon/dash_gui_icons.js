@@ -106,6 +106,7 @@ function DashGuiIcons (icon) {
         "file_video":            new DashGuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
         "file_word":             new DashGuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
         "filter":                new DashGuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
+        "filter_solid":          new DashGuiIconDefinition(this.icon, "Filter", this.weight["solid"], "filter"),
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "flag":                  new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),
