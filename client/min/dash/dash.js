@@ -31329,22 +31329,29 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         this.filter_rows();
     };
     this.UpdateRows = function (order, data) {
-        // order = a list of IDs
-        // data  = a dict of data that corresponds to each ID in order
+        /**
+         * @param {Array} order - IDs that correspond to data's keys
+         * @param {Object} data - Data objects whose keys correspond to order
+         */
         this.id_list = order;
+        this.search_terms = [];  // Reset each time
         var id;
         for (id in this.rows) {
             this.rows[id].html.detach();
         }
-        for (var i = 0; i < order.length; i++) {
-            var row_id = order[i];
+        for (var row_id of order) {
             var row_data = data[row_id];
-            if (!this.rows[row_id]) {
+            if (!this.rows[row_id] || !this.rows[row_id].html.parent) {
                 this.rows[row_id] = new DashLayoutSearchableListRow(this, row_id, row_data);
             }
-
             if (this.row_content_classes[row_id]) {
                 this.row_content_classes[row_id].Update(row_data);
+            }
+            else if (this.on_row_draw_callback) {
+                this.on_row_draw_callback(row_id);
+                if (this.row_content_classes[row_id]) {
+                    this.row_content_classes[row_id].Update(row_data);
+                }
             }
             var search_text = this.rows[row_id].Update(row_data);
             if (search_text) {
@@ -31353,16 +31360,10 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
                 search_text = search_text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             }
             else {
-                console.log("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row");
+                console.warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
             }
             this.search_terms.push(search_text);
             this.list_container.append(this.rows[row_id].html);
-        }
-        for (id in this.rows) {
-            if (!order.includes(id)) {
-                this.rows[id].html.remove();
-                delete this.rows[id];
-            }
         }
         if (this.filter_text.length > 0) {
             this.filter_rows();
@@ -31371,18 +31372,6 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             var last_loaded = Dash.Local.Get(this.recall_id);
             if (last_loaded && order.includes(last_loaded)) {
                 this.SetActiveRowID(last_loaded);
-            }
-        }
-    };
-    this.filter_rows = function () {
-        for (var id in this.rows) {
-            this.rows[id].html.detach();
-        }
-        for (var i = 0; i < this.id_list.length; i++) {
-            var row_id = this.id_list[i];
-            var search_text = this.search_terms[i];
-            if (!search_text || !this.filter_text || search_text.includes(this.filter_text) || this.filter_text === row_id) {
-                this.list_container.append(this.rows[row_id].html);
             }
         }
     };
@@ -31413,6 +31402,18 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             }
         }
         this.on_selection_callback(this.current_selected_row_id);
+    };
+    this.filter_rows = function () {
+        for (var id in this.rows) {
+            this.rows[id].html.detach();
+        }
+        for (var i in this.id_list) {
+            var row_id = this.id_list[i];
+            var search_text = this.search_terms[i];
+            if (!search_text || !this.filter_text || search_text.includes(this.filter_text) || this.filter_text === row_id) {
+                this.list_container.append(this.rows[row_id].html);
+            }
+        }
     };
     this.setup_styles();
 }
