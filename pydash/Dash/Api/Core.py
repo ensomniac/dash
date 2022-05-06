@@ -351,6 +351,8 @@ class ApiCore:
                 error += f"<br><br>Private error:<br>{private_error}"
 
         try:
+            from traceback import format_exc
+
             tb = format_exc()
 
             if tb and str(tb).strip() != "NoneType: None":
@@ -378,12 +380,14 @@ class ApiCore:
             )
 
         # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
-        except Exception as e:
+        except Exception:
+            from traceback import format_exc
+
             # Send additional email explaining the failure, likely token refresh issue
             SendEmail(
                 subject="ApiCore.SendEmail Error",
                 msg="Email failed to send, likely due to an token that failed to refresh (see error).",
-                error=str(e)
+                error=format_exc()
             )
 
             # Send intended email using default from-email to at least ensure we get it
