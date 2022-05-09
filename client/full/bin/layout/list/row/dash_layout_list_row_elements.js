@@ -152,7 +152,8 @@ function DashLayoutListRowElements () {
         var css = {
             "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1
+            "margin-top": Dash.Size.Padding * 0.1,
+            "box-shadow": "none"
         };
 
         if (column_config_data["width"]) {
@@ -160,11 +161,11 @@ function DashLayoutListRowElements () {
         }
 
         if (this.is_header) {
-            css["box-shadow"] = "none";
+            css["border"] = "none";
         }
 
         else {
-            css["box-shadow"] = "0px 0px 4px 1px rgba(0, 0, 0, 0.2)";
+            css["border"] = "1px solid " + this.color.Pinstripe;
 
             if (column_config_data["css"]) {
                 css = {

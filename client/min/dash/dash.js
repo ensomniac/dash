@@ -26417,7 +26417,8 @@ function DashGuiIcons (icon) {
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
-        "browser_window":        new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["solid"], "window"),
+        "box":                   new DashGuiIconDefinition(this.icon, "Box", this.weight["regular"], "box"),
+        "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
@@ -26494,6 +26495,7 @@ function DashGuiIcons (icon) {
         "info":                  new DashGuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
+        "gears":                 new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
         "goal_reply":            new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new DashGuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
         "history":               new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
@@ -30680,16 +30682,17 @@ function DashLayoutListRowElements () {
         var css = {
             "background": "none",
             "height": Dash.Size.RowHeight * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1
+            "margin-top": Dash.Size.Padding * 0.1,
+            "box-shadow": "none"
         };
         if (column_config_data["width"]) {
             css["width"] = column_config_data["width"];
         }
         if (this.is_header) {
-            css["box-shadow"] = "none";
+            css["border"] = "none";
         }
         else {
-            css["box-shadow"] = "0px 0px 4px 1px rgba(0, 0, 0, 0.2)";
+            css["border"] = "1px solid " + this.color.Pinstripe;
             if (column_config_data["css"]) {
                 css = {
                     ...css,
