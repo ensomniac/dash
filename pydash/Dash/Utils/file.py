@@ -480,10 +480,20 @@ def save_images(img, orig_path, thumb_path, thumb_square_path):
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
 
-    # TODO: Check to see if the image has transparency, or at least only do this
-    #  if the original image is a file format that has transparency (ex. no jpg)
     png_thumb = img.copy()
     png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+
+    # If a file is uploaded as CMYK, it can't be saved as a PNG
+    if png_thumb.mode == "CMYK":
+        try:
+            # Try to preserve transparency is present and if possible
+            if png_thumb.info.get("transparency", None) is not None:
+                png_thumb = png_thumb.convert("RGBA")
+            else:
+                png_thumb = png_thumb.convert("RGB")
+        except:
+            png_thumb = png_thumb.convert("RGB")
+
     png_thumb.save(thumb_path.replace("_thb.jpg", "_thb.png"), quality=40)
 
     # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
