@@ -178,7 +178,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         input.html.css({
             "margin-right": 0,
             "height": this.height * 0.65,
-            "margin-top": Dash.Size.Padding * 0.25
+            "margin-top": Dash.Size.Padding * 0.25,
+            "border-bottom": ""
         });
 
         input.input.css({
