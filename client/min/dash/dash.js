@@ -26387,6 +26387,7 @@ function DashGuiIcons (icon) {
     
     this.icon_map = {
         "abacus":                new DashGuiIconDefinition(this.icon, "Abacus", this.weight["regular"], "abacus"),
+        "accessible":            new DashGuiIconDefinition(this.icon, "Accessible", this.weight["regular"], "universal-access"),
         "add":                   new DashGuiIconDefinition(this.icon, "Add", this.weight["regular"], "plus"),
         "add_light":             new DashGuiIconDefinition(this.icon, "Add (Light)", this.weight["light"], "plus"),
         "add_layer":             new DashGuiIconDefinition(this.icon, "Add Layer", this.weight["regular"], "layer-plus"),
@@ -26495,6 +26496,7 @@ function DashGuiIcons (icon) {
         "golf_ball":             new DashGuiIconDefinition(this.icon, "Golf Ball", this.weight["regular"], "golf-ball"),
         "google_drive":          new DashGuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
         "dropbox_logo":          new DashGuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
+        "infinity":              new DashGuiIconDefinition(this.icon, "Infinity", this.weight["regular"], "infinity"),
         "info":                  new DashGuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
