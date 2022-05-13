@@ -39,7 +39,7 @@ def Upload(
 
     file_ext = get_file_extension(filename)
 
-    if not file_ext or not (2 <= len(file_ext) <= 4):
+    if not file_ext or not (2 <= len(file_ext) <= 5):
         raise ClientAlert(f"Invalid file extension: {file_ext}")
 
     if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
