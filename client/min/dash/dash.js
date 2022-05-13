@@ -26424,6 +26424,7 @@ function DashGuiIcons (icon) {
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
+        "camera":                new DashGuiIconDefinition(this.icon, "Camera", this.weight["regular"], "camera"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
         "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
@@ -26584,6 +26585,7 @@ function DashGuiIcons (icon) {
         "trash_alt":             new DashGuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
         "trash_restore":         new DashGuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
         "trash_solid":           new DashGuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
+        "truck":                 new DashGuiIconDefinition(this.icon, "Truck", this.weight["regular"], "truck"),
         "unchecked_box":         new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
         "undo":                  new DashGuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new DashGuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
@@ -32636,11 +32638,20 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.SetLineBreakReplacement = function (value="") {
         this.line_break_replacement = value;
     };
-    this.Lock = function () {
-        this.textarea.css({
-            "color": this.color.StrokeLight,
-            "border": this.border_size.toString() + "px solid " + this.color.StrokeLight
-        });
+    this.Lock = function (restyle=true, text_and_border_color=null) {
+        if (restyle) {
+            if (!text_and_border_color) {
+                text_and_border_color = this.color.StrokeLight;
+            }
+            var css = {"color": text_and_border_color};
+            if (this.textarea.css("border-top") !== "none") {
+                css["border"] = this.border_size.toString() + "px solid " + text_and_border_color;
+            }
+            else {
+                css["border-bottom"] = this.border_size.toString() + "px solid " + text_and_border_color;
+            }
+            this.textarea.css(css);
+        }
         this.textarea.prop("readOnly", true);
         // Prevent navigating to locked box via tab
         this.textarea[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
@@ -32673,6 +32684,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.SetHeight = function (height) {
         this.textarea.css({
             "height": height
+        });
+    };
+    this.SetWidth = function (width) {
+        this.html.css({
+            "width": width
         });
     };
     this.DisableAutoSubmit = function () {

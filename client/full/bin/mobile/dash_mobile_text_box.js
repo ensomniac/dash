@@ -68,11 +68,24 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.line_break_replacement = value;
     };
 
-    this.Lock = function () {
-        this.textarea.css({
-            "color": this.color.StrokeLight,
-            "border": this.border_size.toString() + "px solid " + this.color.StrokeLight
-        });
+    this.Lock = function (restyle=true, text_and_border_color=null) {
+        if (restyle) {
+            if (!text_and_border_color) {
+                text_and_border_color = this.color.StrokeLight;
+            }
+
+            var css = {"color": text_and_border_color};
+
+            if (this.textarea.css("border-top") !== "none") {
+                css["border"] = this.border_size.toString() + "px solid " + text_and_border_color;
+            }
+
+            else {
+                css["border-bottom"] = this.border_size.toString() + "px solid " + text_and_border_color;
+            }
+
+            this.textarea.css(css);
+        }
 
         this.textarea.prop("readOnly", true);
 
@@ -114,6 +127,12 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.SetHeight = function (height) {
         this.textarea.css({
             "height": height
+        });
+    };
+
+    this.SetWidth = function (width) {
+        this.html.css({
+            "width": width
         });
     };
 
