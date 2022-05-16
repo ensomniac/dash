@@ -101,7 +101,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         else {
             this.pending_update = true;
 
-            return this.cached_draw_response || this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+            return this.cached_draw_response || this.get_label();
         }
     };
 
@@ -130,12 +130,22 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         }
 
         if (!text) {
-            text = this.get_data_callback()[this.row_id]["display_name"] || this.row_id;
+            text = this.get_label();
         }
 
         this.display_name_label.text(text);
 
         return text;
+    };
+
+    this.get_label = function () {
+        var data = this.get_data_callback(this.row_id);
+
+        if (typeof data === "string") {
+            return data;
+        }
+
+        return data[this.row_id]["display_name"] || this.row_id || "";
     };
 
     this.SetActive = function (is_active) {
