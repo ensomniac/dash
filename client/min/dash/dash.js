@@ -17470,6 +17470,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 },{}]},{},[1]);
 
+/*!
+ * Signature Pad v4.0.4 | https://github.com/szimek/signature_pad
+ * (c) 2022 Szymon Nowak | Released under the MIT license
+ */
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).SignaturePad=e()}(this,(function(){"use strict";class t{constructor(t,e,i,n){if(isNaN(t)||isNaN(e))throw new Error(`Point is invalid: (${t}, ${e})`);this.x=+t,this.y=+e,this.pressure=i||0,this.time=n||Date.now()}distanceTo(t){return Math.sqrt(Math.pow(this.x-t.x,2)+Math.pow(this.y-t.y,2))}equals(t){return this.x===t.x&&this.y===t.y&&this.pressure===t.pressure&&this.time===t.time}velocityFrom(t){return this.time!==t.time?this.distanceTo(t)/(this.time-t.time):0}}class e{constructor(t,e,i,n,s,o){this.startPoint=t,this.control2=e,this.control1=i,this.endPoint=n,this.startWidth=s,this.endWidth=o}static fromPoints(t,i){const n=this.calculateControlPoints(t[0],t[1],t[2]).c2,s=this.calculateControlPoints(t[1],t[2],t[3]).c1;return new e(t[1],n,s,t[2],i.start,i.end)}static calculateControlPoints(e,i,n){const s=e.x-i.x,o=e.y-i.y,h=i.x-n.x,r=i.y-n.y,a=(e.x+i.x)/2,d=(e.y+i.y)/2,c=(i.x+n.x)/2,l=(i.y+n.y)/2,u=Math.sqrt(s*s+o*o),v=Math.sqrt(h*h+r*r),m=v/(u+v),_=c+(a-c)*m,p=l+(d-l)*m,g=i.x-_,w=i.y-p;return{c1:new t(a+g,d+w),c2:new t(c+g,l+w)}}length(){let t,e,i=0;for(let n=0;n<=10;n+=1){const s=n/10,o=this.point(s,this.startPoint.x,this.control1.x,this.control2.x,this.endPoint.x),h=this.point(s,this.startPoint.y,this.control1.y,this.control2.y,this.endPoint.y);if(n>0){const n=o-t,s=h-e;i+=Math.sqrt(n*n+s*s)}t=o,e=h}return i}point(t,e,i,n,s){return e*(1-t)*(1-t)*(1-t)+3*i*(1-t)*(1-t)*t+3*n*(1-t)*t*t+s*t*t*t}}class i extends class{constructor(){try{this._et=new EventTarget}catch(t){this._et=document}}addEventListener(t,e,i){this._et.addEventListener(t,e,i)}dispatchEvent(t){return this._et.dispatchEvent(t)}removeEventListener(t,e,i){this._et.removeEventListener(t,e,i)}}{constructor(t,e={}){super(),this.canvas=t,this._handleMouseDown=t=>{1===t.buttons&&(this._drawningStroke=!0,this._strokeBegin(t))},this._handleMouseMove=t=>{this._drawningStroke&&this._strokeMoveUpdate(t)},this._handleMouseUp=t=>{1===t.buttons&&this._drawningStroke&&(this._drawningStroke=!1,this._strokeEnd(t))},this._handleTouchStart=t=>{if(t.preventDefault(),1===t.targetTouches.length){const e=t.changedTouches[0];this._strokeBegin(e)}},this._handleTouchMove=t=>{t.preventDefault();const e=t.targetTouches[0];this._strokeMoveUpdate(e)},this._handleTouchEnd=t=>{if(t.target===this.canvas){t.preventDefault();const e=t.changedTouches[0];this._strokeEnd(e)}},this._handlePointerStart=t=>{this._drawningStroke=!0,t.preventDefault(),this._strokeBegin(t)},this._handlePointerMove=t=>{this._drawningStroke&&(t.preventDefault(),this._strokeMoveUpdate(t))},this._handlePointerEnd=t=>{this._drawningStroke&&(t.preventDefault(),this._drawningStroke=!1,this._strokeEnd(t))},this.velocityFilterWeight=e.velocityFilterWeight||.7,this.minWidth=e.minWidth||.5,this.maxWidth=e.maxWidth||2.5,this.throttle="throttle"in e?e.throttle:16,this.minDistance="minDistance"in e?e.minDistance:5,this.dotSize=e.dotSize||0,this.penColor=e.penColor||"black",this.backgroundColor=e.backgroundColor||"rgba(0,0,0,0)",this._strokeMoveUpdate=this.throttle?function(t,e=250){let i,n,s,o=0,h=null;const r=()=>{o=Date.now(),h=null,i=t.apply(n,s),h||(n=null,s=[])};return function(...a){const d=Date.now(),c=e-(d-o);return n=this,s=a,c<=0||c>e?(h&&(clearTimeout(h),h=null),o=d,i=t.apply(n,s),h||(n=null,s=[])):h||(h=window.setTimeout(r,c)),i}}(i.prototype._strokeUpdate,this.throttle):i.prototype._strokeUpdate,this._ctx=t.getContext("2d"),this.clear(),this.on()}clear(){const{_ctx:t,canvas:e}=this;t.fillStyle=this.backgroundColor,t.clearRect(0,0,e.width,e.height),t.fillRect(0,0,e.width,e.height),this._data=[],this._reset(),this._isEmpty=!0}fromDataURL(t,e={}){return new Promise((i,n)=>{const s=new Image,o=e.ratio||window.devicePixelRatio||1,h=e.width||this.canvas.width/o,r=e.height||this.canvas.height/o,a=e.xOffset||0,d=e.yOffset||0;this._reset(),s.onload=()=>{this._ctx.drawImage(s,a,d,h,r),i()},s.onerror=t=>{n(t)},s.crossOrigin="anonymous",s.src=t,this._isEmpty=!1})}toDataURL(t="image/png",e){switch(t){case"image/svg+xml":return this._toSVG();default:return this.canvas.toDataURL(t,e)}}on(){this.canvas.style.touchAction="none",this.canvas.style.msTouchAction="none",this.canvas.style.userSelect="none";const t=/Macintosh/.test(navigator.userAgent)&&"ontouchstart"in document;window.PointerEvent&&!t?this._handlePointerEvents():(this._handleMouseEvents(),"ontouchstart"in window&&this._handleTouchEvents())}off(){this.canvas.style.touchAction="auto",this.canvas.style.msTouchAction="auto",this.canvas.style.userSelect="auto",this.canvas.removeEventListener("pointerdown",this._handlePointerStart),this.canvas.removeEventListener("pointermove",this._handlePointerMove),document.removeEventListener("pointerup",this._handlePointerEnd),this.canvas.removeEventListener("mousedown",this._handleMouseDown),this.canvas.removeEventListener("mousemove",this._handleMouseMove),document.removeEventListener("mouseup",this._handleMouseUp),this.canvas.removeEventListener("touchstart",this._handleTouchStart),this.canvas.removeEventListener("touchmove",this._handleTouchMove),this.canvas.removeEventListener("touchend",this._handleTouchEnd)}isEmpty(){return this._isEmpty}fromData(t,{clear:e=!0}={}){e&&this.clear(),this._fromData(t,this._drawCurve.bind(this),this._drawDot.bind(this)),this._data=this._data.concat(t)}toData(){return this._data}_strokeBegin(t){this.dispatchEvent(new CustomEvent("beginStroke",{detail:t}));const e={dotSize:this.dotSize,minWidth:this.minWidth,maxWidth:this.maxWidth,penColor:this.penColor,points:[]};this._data.push(e),this._reset(),this._strokeUpdate(t)}_strokeUpdate(t){if(0===this._data.length)return void this._strokeBegin(t);this.dispatchEvent(new CustomEvent("beforeUpdateStroke",{detail:t}));const e=t.clientX,i=t.clientY,n=void 0!==t.pressure?t.pressure:void 0!==t.force?t.force:0,s=this._createPoint(e,i,n),o=this._data[this._data.length-1],h=o.points,r=h.length>0&&h[h.length-1],a=!!r&&s.distanceTo(r)<=this.minDistance,{penColor:d,dotSize:c,minWidth:l,maxWidth:u}=o;if(!r||!r||!a){const t=this._addPoint(s);r?t&&this._drawCurve(t,{penColor:d,dotSize:c,minWidth:l,maxWidth:u}):this._drawDot(s,{penColor:d,dotSize:c,minWidth:l,maxWidth:u}),h.push({time:s.time,x:s.x,y:s.y,pressure:s.pressure})}this.dispatchEvent(new CustomEvent("afterUpdateStroke",{detail:t}))}_strokeEnd(t){this._strokeUpdate(t),this.dispatchEvent(new CustomEvent("endStroke",{detail:t}))}_handlePointerEvents(){this._drawningStroke=!1,this.canvas.addEventListener("pointerdown",this._handlePointerStart),this.canvas.addEventListener("pointermove",this._handlePointerMove),document.addEventListener("pointerup",this._handlePointerEnd)}_handleMouseEvents(){this._drawningStroke=!1,this.canvas.addEventListener("mousedown",this._handleMouseDown),this.canvas.addEventListener("mousemove",this._handleMouseMove),document.addEventListener("mouseup",this._handleMouseUp)}_handleTouchEvents(){this.canvas.addEventListener("touchstart",this._handleTouchStart),this.canvas.addEventListener("touchmove",this._handleTouchMove),this.canvas.addEventListener("touchend",this._handleTouchEnd)}_reset(){this._lastPoints=[],this._lastVelocity=0,this._lastWidth=(this.minWidth+this.maxWidth)/2,this._ctx.fillStyle=this.penColor}_createPoint(e,i,n){const s=this.canvas.getBoundingClientRect();return new t(e-s.left,i-s.top,n,(new Date).getTime())}_addPoint(t){const{_lastPoints:i}=this;if(i.push(t),i.length>2){3===i.length&&i.unshift(i[0]);const t=this._calculateCurveWidths(i[1],i[2]),n=e.fromPoints(i,t);return i.shift(),n}return null}_calculateCurveWidths(t,e){const i=this.velocityFilterWeight*e.velocityFrom(t)+(1-this.velocityFilterWeight)*this._lastVelocity,n=this._strokeWidth(i),s={end:n,start:this._lastWidth};return this._lastVelocity=i,this._lastWidth=n,s}_strokeWidth(t){return Math.max(this.maxWidth/(t+1),this.minWidth)}_drawCurveSegment(t,e,i){const n=this._ctx;n.moveTo(t,e),n.arc(t,e,i,0,2*Math.PI,!1),this._isEmpty=!1}_drawCurve(t,e){const i=this._ctx,n=t.endWidth-t.startWidth,s=2*Math.ceil(t.length());i.beginPath(),i.fillStyle=e.penColor;for(let i=0;i<s;i+=1){const o=i/s,h=o*o,r=h*o,a=1-o,d=a*a,c=d*a;let l=c*t.startPoint.x;l+=3*d*o*t.control1.x,l+=3*a*h*t.control2.x,l+=r*t.endPoint.x;let u=c*t.startPoint.y;u+=3*d*o*t.control1.y,u+=3*a*h*t.control2.y,u+=r*t.endPoint.y;const v=Math.min(t.startWidth+r*n,e.maxWidth);this._drawCurveSegment(l,u,v)}i.closePath(),i.fill()}_drawDot(t,e){const i=this._ctx,n=e.dotSize>0?e.dotSize:(e.minWidth+e.maxWidth)/2;i.beginPath(),this._drawCurveSegment(t.x,t.y,n),i.closePath(),i.fillStyle=e.penColor,i.fill()}_fromData(e,i,n){for(const s of e){const{penColor:e,dotSize:o,minWidth:h,maxWidth:r,points:a}=s;if(a.length>1)for(let n=0;n<a.length;n+=1){const s=a[n],d=new t(s.x,s.y,s.pressure,s.time);this.penColor=e,0===n&&this._reset();const c=this._addPoint(d);c&&i(c,{penColor:e,dotSize:o,minWidth:h,maxWidth:r})}else this._reset(),n(a[0],{penColor:e,dotSize:o,minWidth:h,maxWidth:r})}}_toSVG(){const t=this._data,e=Math.max(window.devicePixelRatio||1,1),i=this.canvas.width/e,n=this.canvas.height/e,s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("width",this.canvas.width.toString()),s.setAttribute("height",this.canvas.height.toString()),this._fromData(t,(t,{penColor:e})=>{const i=document.createElement("path");if(!(isNaN(t.control1.x)||isNaN(t.control1.y)||isNaN(t.control2.x)||isNaN(t.control2.y))){const n=`M ${t.startPoint.x.toFixed(3)},${t.startPoint.y.toFixed(3)} C ${t.control1.x.toFixed(3)},${t.control1.y.toFixed(3)} ${t.control2.x.toFixed(3)},${t.control2.y.toFixed(3)} ${t.endPoint.x.toFixed(3)},${t.endPoint.y.toFixed(3)}`;i.setAttribute("d",n),i.setAttribute("stroke-width",(2.25*t.endWidth).toFixed(3)),i.setAttribute("stroke",e),i.setAttribute("fill","none"),i.setAttribute("stroke-linecap","round"),s.appendChild(i)}},(t,{penColor:e,dotSize:i,minWidth:n,maxWidth:o})=>{const h=document.createElement("circle"),r=i>0?i:(n+o)/2;h.setAttribute("r",r.toString()),h.setAttribute("cx",t.x.toString()),h.setAttribute("cy",t.y.toString()),h.setAttribute("fill",e),s.appendChild(h)});const o=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${this.canvas.width} ${this.canvas.height}" width="${i}" height="${n}">`;let h=s.innerHTML;if(void 0===h){const t=document.createElement("dummy"),e=s.childNodes;t.innerHTML="";for(let i=0;i<e.length;i+=1)t.appendChild(e[i].cloneNode(!0));h=t.innerHTML}return"data:image/svg+xml;base64,"+btoa(o+h+"</svg>")}}return i}));
+//# sourceMappingURL=signature_pad.umd.min.js.map
+
 function Dash () {
     this.width = 0;
     this.height = 0;
@@ -17764,6 +17771,7 @@ function DashGui() {
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
     this.PropertyBox               = DashGuiPropertyBox;
+    this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.ToolRow                   = DashGuiToolRow;
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
@@ -22088,6 +22096,135 @@ function LoadDot (dots) {
     this.setup_styles();
 }
 
+function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null, on_clear_cb=null, color=null) {
+    this.width = width;
+    this.height = height || (width ? width * 0.5 : height);
+    this.binder = binder;
+    this.on_save_cb = binder && on_save_cb ? on_save_cb.bind(binder) : on_save_cb;
+    this.on_clear_cb = binder && on_clear_cb ? on_clear_cb.bind(binder) : on_clear_cb;
+    this.color = color || Dash.Color.Light;
+    this.signature = null;
+    this.html = $("<div></div>");
+    this.canvas = $("<canvas></canvas>");
+    this.setup_styles = function () {
+        this.html.append(this.canvas);
+        this.canvas.css({
+            "border": "1px solid " + this.color.Stroke,
+            "border-radius": Dash.Size.BorderRadius * 0.5
+        });
+        if (this.width) {
+            this.SetWidth(this.width);
+        }
+        if (this.height) {
+            this.SetHeight(this.height);
+        }
+        // This must be instantiated after the canvas size has initially been set, if applicable
+        this.signature = new SignaturePad(this.canvas[0]);
+        (function (self) {
+            requestAnimationFrame(function () {
+                window.addEventListener("resize", self.ensure_proper_size.bind(self));
+                self.ensure_proper_size();
+                self.add_button_bar();
+            });
+        })(this);
+    };
+    this.Clear = function () {
+        this.signature.clear();
+    };
+    this.IsEmpty = function () {
+        return this.signature.isEmpty();
+    };
+    this.Disable = function () {
+        this.signature.off();
+    };
+    this.Enable = function () {
+        this.signature.on();
+    };
+    this.GetPNGDataURL = function () {
+        return this.signature.toDataURL();
+    };
+    this.GetJPEGDataURL = function (quality=1.0) {
+        return this.signature.toDataURL("image/jpeg", quality);
+    };
+    this.RestoreFromDataURL = function (data_url) {
+        this.signature.fromDataURL(data_url);
+    };
+    this.SetWidth = function (width) {
+        this.width = width;
+        // This is the only way it will work without breaking the canvas (jQuery.css doesn't work properly)
+        this.canvas[0].width = width;
+    };
+    this.SetHeight = function (height) {
+        this.height = height;
+        // This is the only way it will work without breaking the canvas (jQuery.css doesn't work properly)
+        this.canvas[0].height = height;
+    };
+    this.SetLineColor = function (color="black") {
+        this.signature.penColor = color;
+    };
+    this.SetBackgroundColor = function (color="rgba(0, 0, 0, 0)") {
+        // Use a non-transparent color to be able to save signatures as JPEG images without transparency.
+        this.signature.backgroundColor = color;
+    };
+    this.SetMinLineWidth = function (width=0.5) {
+        this.signature.minWidth = width;
+    };
+    this.SetMaxLineWidth = function (width=2.5) {
+        this.signature.maxWidth = width;
+    };
+    this.SetDotRadius = function (size=1.0) {
+        this.signature.dotSize = size;
+    };
+    this.SetOnBeginStroke = function (callback, binder=null) {
+        this.signature.addEventListener("beginStroke", binder ? callback.bind(binder) : callback);
+    };
+    this.SetOnEndStroke = function (callback, binder=null) {
+        this.signature.addEventListener("endStroke", binder ? callback.bind(binder) : callback);
+    };
+    this.add_button_bar = function () {
+        var button_bar = new Dash.Gui.ButtonBar(this, this.color, "toolbar");
+        button_bar.html.css({
+            "height": Dash.IsMobile ? Dash.Size.RowHeight : "fit-content",
+            "padding-top": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 0.5),
+            "padding-left": Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1),
+            "padding-right": Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1)
+        });
+        (function (self) {
+            button_bar.AddButton(
+                "Clear",
+                function () {
+                    self.Clear();
+                    if (self.on_clear_cb) {
+                        self.on_clear_cb();  // TODO: what to return?
+                    }
+                }
+            );
+            button_bar.AddButton(
+                "Save",
+                function () {
+                    if (self.IsEmpty()) {
+                        alert("The signature box is empty.\nPlease sign first, then try again.");
+                        return;
+                    }
+                    if (self.on_save_cb) {
+                        self.on_save_cb(self.GetPNGDataURL());  // TODO: what to return?
+                    }
+                }
+            );
+        })(this);
+        this.html.append(button_bar.html);
+    };
+    // This ensures a correctly-handled canvas on both high and low DPI screens
+    this.ensure_proper_size = function () {
+        var ratio =  Math.max(window.devicePixelRatio || 1, 1);
+        this.SetWidth(this.canvas[0].offsetWidth * ratio);
+        this.SetHeight(this.canvas[0].offsetHeight * ratio);
+        this.canvas[0].getContext("2d").scale(ratio, ratio);
+        this.signature.clear(); // Otherwise this.signature.isEmpty() might return incorrect value
+    };
+    this.setup_styles();
+}
+
 function DashGuiButton (label, callback, bind, color=null, options={}) {
     this.label      = label;
     this.callback   = callback;
@@ -22244,7 +22381,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.ButtonHeight,
+            "height": Dash.Size.ButtonHeight
         });
     };
     this.SetHeight = function (height) {
@@ -22267,18 +22404,18 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             self.buttons.push(button);
             button.html.css({
                 "margin": 0,
-                "flex-grow": 1,
+                "flex-grow": 1
             });
             self.html.append(button.html);
         })(this, callback);
         this.update_spacing();
         return this.buttons.Last();
     };
+    // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
     this.update_spacing = function () {
-        // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
         for (var i in this.buttons) {
             var button = this.buttons[i];
-            var right_padding = Dash.Size.Padding;
+            var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);
             if (parseInt(i) === this.buttons.length - 1) {
                 right_padding = 0;
             }
@@ -22823,7 +22960,7 @@ function DashGuiButtonStyleDefault () {
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
-        this.default_html_background = this.color_set.Background.Base;
+        this.default_html_background = Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color_set.Background.Base;
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
@@ -22959,7 +23096,7 @@ function DashGuiButtonStyleToolbar () {
         this.html.append(this.load_bar);
         this.html.append(this.click_highlight);
         this.html.append(this.label);
-        this.default_html_background = this.color_set.Background.Base;
+        this.default_html_background = Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color_set.Background.Base;
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";

@@ -7,7 +7,7 @@ function DashGuiButtonStyleToolbar () {
         this.html.append(this.click_highlight);
         this.html.append(this.label);
 
-        this.default_html_background = this.color_set.Background.Base;
+        this.default_html_background = Dash.IsMobile ? Dash.Color.Mobile.AccentPrimary : this.color_set.Background.Base;
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";

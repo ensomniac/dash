@@ -13,7 +13,7 @@ from .errors import ClientAlert
 from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write
 
-ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp"]
+ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
