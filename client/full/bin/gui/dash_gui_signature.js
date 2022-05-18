@@ -6,9 +6,17 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.on_clear_cb = binder && on_clear_cb ? on_clear_cb.bind(binder) : on_clear_cb;
     this.color = color || Dash.Color.Light;
 
+    this.last_url = "";
     this.signature = null;
+    this.save_button = null;
+    this.clear_button = null;
+    this.initialized = false;
+    this.size_doubled = false;
     this.html = $("<div></div>");
+    this.device_dimensions = null;  // For mobile
+    this.initial_width_margin = null;
     this.canvas = $("<canvas></canvas>");
+    this.initial_height_to_width_ratio = null;
 
     this.setup_styles = function () {
         this.html.append(this.canvas);
@@ -35,6 +43,8 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
                 self.ensure_proper_size();
                 self.add_button_bar();
+
+                self.initialized = true;
             });
         })(this);
     };
@@ -49,10 +59,18 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
     this.Disable = function () {
         this.signature.off();
+
+        this.save_button.Disable();
+
+        this.clear_button.Disable();
     };
 
     this.Enable = function () {
         this.signature.on();
+
+        this.save_button.Enable();
+
+        this.clear_button.Enable();
     };
 
     this.GetPNGDataURL = function () {
@@ -63,8 +81,27 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         return this.signature.toDataURL("image/jpeg", quality);
     };
 
-    this.RestoreFromDataURL = function (data_url) {
+    this.RestoreFromDataURL = function (data_url, disabled=false) {
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.RestoreFromDataURL(data_url);
+                    },
+                    250
+                );
+            })(this);
+
+            return;
+        }
+
         this.signature.fromDataURL(data_url);
+
+        this.last_url = data_url;
+
+        if (disabled) {
+            this.Disable();
+        }
     };
 
     this.SetWidth = function (width) {
@@ -121,18 +158,18 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         });
 
         (function (self) {
-            button_bar.AddButton(
+            self.clear_button = button_bar.AddButton(
                 "Clear",
                 function () {
                     self.Clear();
 
                     if (self.on_clear_cb) {
-                        self.on_clear_cb();  // TODO: what to return?
+                        self.on_clear_cb();  // Return anything?
                     }
                 }
             );
 
-            button_bar.AddButton(
+            self.save_button = button_bar.AddButton(
                 "Save",
                 function () {
                     if (self.IsEmpty()) {
@@ -141,8 +178,10 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
                         return;
                     }
 
+                    self.last_url = self.GetPNGDataURL();
+
                     if (self.on_save_cb) {
-                        self.on_save_cb(self.GetPNGDataURL());  // TODO: what to return?
+                        self.on_save_cb(self.last_url);
                     }
                 }
             );
@@ -151,16 +190,83 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         this.html.append(button_bar.html);
     };
 
-    // This ensures a correctly-handled canvas on both high and low DPI screens
+    // This ensures a correctly-handled canvas on both high and low DPI screens, as well as mobile device rotation
     this.ensure_proper_size = function () {
+        if (Dash.IsMobile) {
+            if (!this.device_dimensions) {
+                this.device_dimensions = [
+                    window.innerWidth,
+                    window.innerHeight
+                ];
+            }
+
+            else {
+                // During device rotation, the "resize" event can sometimes get called more than once
+                if (!(this.device_dimensions.includes(window.innerWidth)) || !(this.device_dimensions.includes(window.innerHeight))) {
+                    return;
+                }
+            }
+        }
+
+        var width;
+        var height;
         var ratio =  Math.max(window.devicePixelRatio || 1, 1);
 
-        this.SetWidth(this.canvas[0].offsetWidth * ratio);
-        this.SetHeight(this.canvas[0].offsetHeight * ratio);
+        if (!this.initialized) {
+            width = this.canvas[0].offsetWidth * ratio;
+            height = this.canvas[0].offsetHeight * ratio;
+
+            this.initial_width_margin = window.innerWidth - width;
+            this.initial_height_to_width_ratio = height / width;
+        }
+
+        else if (window.innerWidth > window.innerHeight) {
+            width = this.width * 2;
+            height = this.height * 2;
+
+            this.size_doubled = true;
+        }
+
+        else if (window.innerWidth <= this.width || this.size_doubled) {
+            width = this.width * 0.5;
+            height = this.height * 0.5;
+
+            this.size_doubled = false;
+        }
+
+        else {
+            width = this.canvas[0].offsetWidth * ratio;
+            height = this.canvas[0].offsetHeight * ratio;
+        }
+
+        if (Dash.IsMobile) {
+            var width_margin;
+
+            if (window.innerWidth > width) {
+                width_margin = window.innerWidth - width;
+            }
+
+            else {
+                width_margin = width - window.innerWidth;
+            }
+
+            if (width_margin !== this.initial_width_margin) {
+                width = window.innerWidth - this.initial_width_margin;
+                height = width * this.initial_height_to_width_ratio;
+            }
+        }
+
+        this.SetWidth(width);
+        this.SetHeight(height);
 
         this.canvas[0].getContext("2d").scale(ratio, ratio);
 
         this.signature.clear(); // Otherwise this.signature.isEmpty() might return incorrect value
+
+        // In case this listener is called while the signature is still being viewed/used
+        if (this.last_url) {
+            this.RestoreFromDataURL(this.last_url);
+        }
     };
 
     this.setup_styles();
