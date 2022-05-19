@@ -155,15 +155,17 @@ class Collection:
         return new_obj
 
     def Delete(self, obj_id, return_all_data=True):
-        LocalStorage.Delete(
+        deleted = LocalStorage.Delete(
             self.DashContext,
             self.store_path,
             obj_id=obj_id,
-            nested=self.nested,
+            nested=self.nested
         )
 
         if return_all_data:
             return self.GetAll()
+
+        return deleted
 
     def SetProperty(self, obj_id, key, value, return_all_data=True):
         updated_data = LocalStorage.SetProperty(
