@@ -18026,7 +18026,8 @@ function DashGui() {
                 if (callback) {
                     callback();
                 }
-                alert("File download failed, please try again, or open a new tab and go to the file's URL:\n\n" + url);
+                console.error("File download using Dash.Gui.OpenFileURLDownloadDialog() failed. The URL will now be opened in a new tab:\n" + url);
+                window.open(url, "_blank");
             }
         );
     };
