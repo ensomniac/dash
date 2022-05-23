@@ -125,6 +125,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
     if time_format == 15:
         return dt_obj.strftime("%m%d%y_%H%M")
 
+    # Format: July 17, 2011
+    if time_format == 16:
+        return dt_obj.strftime(f"%B {day}, %Y")
+
     # Format date and time in a human-readable format
     return f"{date_markup} at {time_markup}"
 
