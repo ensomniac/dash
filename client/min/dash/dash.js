@@ -22178,15 +22178,17 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
             this.Disable();
         }
     };
-    this.SetWidth = function (width) {
+    this.SetWidth = function (width, ratio=null) {
         this.width = width;
         // This is the only way it will work without breaking the canvas (jQuery.css doesn't work properly)
-        this.canvas[0].width = width;
+        this.canvas[0].style.width = width + "px";
+        this.canvas[0].width = width * (ratio || window.devicePixelRatio || 1);
     };
-    this.SetHeight = function (height) {
+    this.SetHeight = function (height, ratio=null) {
         this.height = height;
         // This is the only way it will work without breaking the canvas (jQuery.css doesn't work properly)
-        this.canvas[0].height = height;
+        this.canvas[0].style.height = height + "px";
+        this.canvas[0].height = height * (ratio || window.devicePixelRatio || 1);
     };
     this.SetLineColor = function (color="black") {
         this.signature.penColor = color;
@@ -22260,28 +22262,27 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
                 }
             }
         }
-        var width;
-        var height;
-        var ratio =  Math.max(window.devicePixelRatio || 1, 1);
+        var width = this.canvas[0].offsetWidth;
+        var height = this.canvas[0].offsetHeight;
+        var ratio = window.devicePixelRatio || 1;
         if (!this.initialized) {
-            width = this.canvas[0].offsetWidth * ratio;
-            height = this.canvas[0].offsetHeight * ratio;
-            this.initial_width_margin = window.innerWidth - width;
+            if (window.innerWidth > width) {
+                this.initial_width_margin = window.innerWidth - width;
+            }
+            else {
+                this.initial_width_margin = width - window.innerWidth;
+            }
             this.initial_height_to_width_ratio = height / width;
         }
         else if (window.innerWidth > window.innerHeight) {
-            width = this.width * 2;
-            height = this.height * 2;
+            width = width * 2;
+            height = height * 2;
             this.size_doubled = true;
         }
         else if (window.innerWidth <= this.width || this.size_doubled) {
-            width = this.width * 0.5;
-            height = this.height * 0.5;
+            width = width * 0.5;
+            height = height * 0.5;
             this.size_doubled = false;
-        }
-        else {
-            width = this.canvas[0].offsetWidth * ratio;
-            height = this.canvas[0].offsetHeight * ratio;
         }
         if (Dash.IsMobile) {
             var width_margin;
@@ -22296,8 +22297,8 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
                 height = width * this.initial_height_to_width_ratio;
             }
         }
-        this.SetWidth(width);
-        this.SetHeight(height);
+        this.SetWidth(width, ratio);
+        this.SetHeight(height, ratio);
         this.canvas[0].getContext("2d").scale(ratio, ratio);
         this.signature.clear(); // Otherwise this.signature.isEmpty() might return incorrect value
         // In case this listener is called while the signature is still being viewed/used
