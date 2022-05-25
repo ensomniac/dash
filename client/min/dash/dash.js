@@ -22133,7 +22133,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
             requestAnimationFrame(function () {
                 if (Dash.IsMobile) {
                     if (window.navigator.standalone === true) {  // iOS - as of writing, doesn't support latest methods
-                        window.onorientationchange = self.ensure_proper_size.bind(self);
+                        window.addEventListener("orientationchange", self.ensure_proper_size.bind(self));
                     }
                     else {
                         screen.orientation.addEventListener("change", self.ensure_proper_size.bind(self));
@@ -22318,6 +22318,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         if (this.last_url) {
             this.RestoreFromDataURL(this.last_url);
         }
+        alert("TEST resize " + landscape + " " + width + "x" + height + " " + window.innerWidth + "x" + window.innerHeight + " " + ratio);
     };
     this.setup_styles();
 }
