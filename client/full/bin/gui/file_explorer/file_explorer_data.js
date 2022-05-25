@@ -154,7 +154,7 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (Dash.Validate.Object(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+        if (this.files_data && Dash.Validate.Object(this.files_data["data"]) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
             return;
         }
 

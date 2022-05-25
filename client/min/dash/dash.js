@@ -25544,9 +25544,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
         }
         if (wait_for_list) {
             if (!this.list) {
-                html.css({
-                    "opacity": 0
-                });
+                html.hide();
             }
             this.extra_gui.push(html);
         }
@@ -25749,9 +25747,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             }
             this.add_list();
             for (var extra_gui of this.extra_gui) {
-                extra_gui.css({
-                    "opacity": 1
-                });
+                extra_gui.show();
             }
         }
         if (this.display_folders_first) {
@@ -26159,7 +26155,7 @@ function DashGuiFileExplorerData () {
             })(this, response, archive_mode);
             return;
         }
-        if (Dash.Validate.Object(this.files_data) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
+        if (this.files_data && Dash.Validate.Object(this.files_data["data"]) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
             return;
         }
         console.log("(File Explorer) Files data:", response);

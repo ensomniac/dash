@@ -170,9 +170,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
 
         if (wait_for_list) {
             if (!this.list) {
-                html.css({
-                    "opacity": 0
-                });
+                html.hide();
             }
 
             this.extra_gui.push(html);
@@ -438,9 +436,7 @@ function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_
             this.add_list();
 
             for (var extra_gui of this.extra_gui) {
-                extra_gui.css({
-                    "opacity": 1
-                });
+                extra_gui.show();
             }
         }
 
