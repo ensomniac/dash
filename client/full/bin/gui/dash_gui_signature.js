@@ -206,23 +206,6 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
     // This ensures a correctly-handled canvas on both high and low DPI screens, as well as mobile device rotation
     this.ensure_proper_size = function () {
-        // if (Dash.IsMobile) {
-        //     if (!this.device_dimensions) {
-        //         this.device_dimensions = [
-        //             window.innerWidth,
-        //             window.innerHeight
-        //         ];
-        //     }
-        //
-        //     else {
-        //         // During device rotation, the "resize" event can sometimes get called more than once
-        //         if (!(this.device_dimensions.includes(window.innerWidth)) || !(this.device_dimensions.includes(window.innerHeight))) {
-        //             alert("TEST return early" + this.device_dimensions[0] + "x" + this.device_dimensions[1] + " " + window.innerWidth + "x" + window.innerHeight);
-        //             return;
-        //         }
-        //     }
-        // }
-
         var width = this.canvas[0].offsetWidth;
         var height = this.canvas[0].offsetHeight;
         var ratio = window.devicePixelRatio || 1;
@@ -285,8 +268,6 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         if (this.last_url) {
             this.RestoreFromDataURL(this.last_url);
         }
-
-        alert("TEST resize " + landscape + " " + width + "x" + height + " " + window.innerWidth + "x" + window.innerHeight + " " + ratio);
     };
 
     this.setup_styles();
