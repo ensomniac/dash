@@ -13,7 +13,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.initialized = false;
     this.size_doubled = false;
     this.html = $("<div></div>");
-    this.device_dimensions = null;  // For mobile
+    // this.device_dimensions = null;  // For mobile
     this.initial_width_margin = null;
     this.canvas = $("<canvas></canvas>");
     this.initial_height_to_width_ratio = null;
@@ -39,19 +39,19 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
         (function (self) {
             requestAnimationFrame(function () {
-                if (Dash.IsMobile) {
-                    if (window.navigator.standalone === true) {  // iOS - as of writing, doesn't support latest methods
-                        window.addEventListener("orientationchange", self.ensure_proper_size.bind(self));
-                    }
-
-                    else {
-                        screen.orientation.addEventListener("change", self.ensure_proper_size.bind(self));
-                    }
-                }
-
-                else {
-                    window.addEventListener("resize", self.ensure_proper_size.bind(self));
-                }
+                // if (Dash.IsMobile) {
+                //     if (window.navigator.standalone === true) {  // iOS - as of writing, doesn't support latest methods
+                //         window.addEventListener("orientationchange", self.ensure_proper_size.bind(self));
+                //     }
+                //
+                //     else {
+                //         screen.orientation.addEventListener("change", self.ensure_proper_size.bind(self));
+                //     }
+                // }
+                //
+                // else { 
+                window.addEventListener("resize", self.ensure_proper_size.bind(self));
+                // }
 
                 self.ensure_proper_size();
                 self.add_button_bar();
@@ -206,22 +206,22 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
     // This ensures a correctly-handled canvas on both high and low DPI screens, as well as mobile device rotation
     this.ensure_proper_size = function () {
-        if (Dash.IsMobile) {
-            if (!this.device_dimensions) {
-                this.device_dimensions = [
-                    window.innerWidth,
-                    window.innerHeight
-                ];
-            }
-
-            else {
-                // During device rotation, the "resize" event can sometimes get called more than once
-                if (!(this.device_dimensions.includes(window.innerWidth)) || !(this.device_dimensions.includes(window.innerHeight))) {
-                    alert("TEST return early" + this.device_dimensions[0] + "x" + this.device_dimensions[1] + " " + window.innerWidth + "x" + window.innerHeight);
-                    return;
-                }
-            }
-        }
+        // if (Dash.IsMobile) {
+        //     if (!this.device_dimensions) {
+        //         this.device_dimensions = [
+        //             window.innerWidth,
+        //             window.innerHeight
+        //         ];
+        //     }
+        //
+        //     else {
+        //         // During device rotation, the "resize" event can sometimes get called more than once
+        //         if (!(this.device_dimensions.includes(window.innerWidth)) || !(this.device_dimensions.includes(window.innerHeight))) {
+        //             alert("TEST return early" + this.device_dimensions[0] + "x" + this.device_dimensions[1] + " " + window.innerWidth + "x" + window.innerHeight);
+        //             return;
+        //         }
+        //     }
+        // }
 
         var width = this.canvas[0].offsetWidth;
         var height = this.canvas[0].offsetHeight;
