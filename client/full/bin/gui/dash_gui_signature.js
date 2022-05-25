@@ -214,6 +214,9 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         var height = this.canvas[0].offsetHeight;
         var ratio = window.devicePixelRatio || 1;
 
+        // window.orientation is deprecated in favor of screen.orientation.type, but as of writing, iOS Safari still doesn't support the latter
+        var landscape = screen.orientation && screen.orientation.type ? screen.orientation.type.includes("landscape") : [90, -90].includes(window.orientation);
+
         if (!this.initialized) {
             if (window.innerWidth > width) {
                 this.initial_width_margin = window.innerWidth - width;
@@ -226,7 +229,8 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
             this.initial_height_to_width_ratio = height / width;
         }
 
-        else if (window.innerWidth > window.innerHeight) {
+        // On mobile, the width > height check doesn't seem to work, so attempt the extra orientation check as a backup
+        else if (window.innerWidth > window.innerHeight || landscape) {
             width = width * 2;
             height = height * 2;
 
