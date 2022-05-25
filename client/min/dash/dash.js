@@ -22268,6 +22268,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
             else {
                 // During device rotation, the "resize" event can sometimes get called more than once
                 if (!(this.device_dimensions.includes(window.innerWidth)) || !(this.device_dimensions.includes(window.innerHeight))) {
+                    alert("TEST return early" + this.device_dimensions[0] + "x" + this.device_dimensions[1] + " " + window.innerWidth + "x" + window.innerHeight);
                     return;
                 }
             }
