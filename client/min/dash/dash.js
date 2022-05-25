@@ -22131,19 +22131,17 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         this.signature = new SignaturePad(this.canvas[0]);
         (function (self) {
             requestAnimationFrame(function () {
-                // if (Dash.IsMobile) {
-                //     if (window.navigator.standalone === true) {  // iOS - as of writing, doesn't support latest methods
-                //         window.addEventListener("orientationchange", self.ensure_proper_size.bind(self));
-                //     }
-                //
-                //     else {
-                //         screen.orientation.addEventListener("change", self.ensure_proper_size.bind(self));
-                //     }
-                // }
-                //
-                // else { 
-                window.addEventListener("resize", self.ensure_proper_size.bind(self));
-                // }
+                if (Dash.IsMobile) {
+                    if (window.navigator.standalone === true) {  // iOS - as of writing, doesn't support latest methods
+                        window.addEventListener("orientationchange", self.ensure_proper_size.bind(self));
+                    }
+                    else {
+                        screen.orientation.addEventListener("change", self.ensure_proper_size.bind(self));
+                    }
+                }
+                else {
+                    window.addEventListener("resize", self.ensure_proper_size.bind(self));
+                }
                 self.ensure_proper_size();
                 self.add_button_bar();
                 self.initialized = true;
