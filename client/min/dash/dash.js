@@ -32485,7 +32485,7 @@ function DashLayoutToolbarInterface () {
                     self.on_button_clicked(obj_index, data);
                 },
                 self,
-                null,
+                self.color,
                 {"style": "toolbar"}
             );
             self.html.append(button.html);
