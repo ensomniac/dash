@@ -5,6 +5,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
     this.buttons = [];
     this.html = $("<div></div>");
+    this.auto_spacing_enabled = true;
 
     this.setup_styles = function () {
         this.html.css({
@@ -17,6 +18,17 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.html.css({
             "height": height
         });
+    };
+
+    this.FitContent = function () {
+        this.html.css({
+            "height": "fit-content",
+            "width": "fit-content"
+        });
+    };
+
+    this.DisableAutoSpacing = function () {
+        this.auto_spacing_enabled = false;
     };
 
     this.AddButton = function (label_text, callback) {
@@ -50,6 +62,10 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
     // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
     this.update_spacing = function () {
+        if (!this.auto_spacing_enabled) {
+            return;
+        }
+
         for (var i in this.buttons) {
             var button = this.buttons[i];
             var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);

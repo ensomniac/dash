@@ -22461,6 +22461,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.style = button_style;
     this.buttons = [];
     this.html = $("<div></div>");
+    this.auto_spacing_enabled = true;
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
@@ -22471,6 +22472,15 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.html.css({
             "height": height
         });
+    };
+    this.FitContent = function () {
+        this.html.css({
+            "height": "fit-content",
+            "width": "fit-content"
+        });
+    };
+    this.DisableAutoSpacing = function () {
+        this.auto_spacing_enabled = false;
     };
     this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
@@ -22496,6 +22506,9 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     };
     // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
     this.update_spacing = function () {
+        if (!this.auto_spacing_enabled) {
+            return;
+        }
         for (var i in this.buttons) {
             var button = this.buttons[i];
             var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);
@@ -25238,12 +25251,22 @@ function DashGuiComboInterface () {
             // Do we need to do more here?
             return;
         }
-        if (typeof(selected) == "string") {
-            console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
-            console.log("combo_list", combo_list);
-            console.log("selected", selected);
-            console.log("ignore_callback", ignore_callback);
-            return;
+        if (typeof selected === "string") {
+            if (combo_list !== null) {
+                for (var combo of combo_list) {
+                    if (combo["id"] === selected) {
+                        selected = combo;
+                        break;
+                    }
+                }
+            }
+            if (typeof selected === "string") {
+                console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+                console.log("combo_list", combo_list);
+                console.log("selected", selected);
+                console.log("ignore_callback", ignore_callback);
+                return;
+            }
         }
         if (!ignore_callback && selected) {
             ignore_callback = (selected["id"].toString() === this.selected_option_id);
@@ -26545,6 +26568,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             this.icon_html.remove();
         }
         this.icon_html = icon_html;
+        return this;
     };
     this.SetSize = function (percentage_number) {
         percentage_number = parseInt(percentage_number);
@@ -26555,21 +26579,25 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css({
             "font-size": percentage_number.toString() + "%"
         });
+        return this;
     };
     this.SetColor = function (color) {
         this.icon_html.css({
             "color": color
         });
+        return this;
     };
     this.Mirror = function () {
         this.icon_html.css({
             "transform": "scale(-1, 1)"
         });
+        return this;
     };
     this.AddStroke = function (color="black") {
         this.AddShadow(
             "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
         );
+        return this;
     };
     this.AddShadow = function (value="") {
         if (!value) {
@@ -26583,6 +26611,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css({
             "text-shadow": value
         });
+        return this;
     };
     // this.update = function (icon_id) {
     //     this.id = icon_id;
@@ -26639,6 +26668,7 @@ function DashGuiIcons (icon) {
         "box_open":              new DashGuiIconDefinition(this.icon, "Box (Open)", this.weight["regular"], "box-open"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
+        "business_time":         new DashGuiIconDefinition(this.icon, "Business Time", this.weight["regular"], "business-time"),
         "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
         "camera":                new DashGuiIconDefinition(this.icon, "Camera", this.weight["regular"], "camera"),
         "cancel":                new DashGuiIconDefinition(this.icon, "Cancel", this.weight["regular"], "ban"),
@@ -26777,6 +26807,7 @@ function DashGuiIcons (icon) {
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stars":                 new DashGuiIconDefinition(this.icon, "Stars", this.weight["regular"], "stars"),
         "stop":                  new DashGuiIconDefinition(this.icon, "Stop", this.weight["solid"], "stop"),
+        "stopwatch":             new DashGuiIconDefinition(this.icon, "Stopwatch", this.weight["regular"], "stopwatch"),
         "stroopwafel":           new DashGuiIconDefinition(this.icon, "Stroopwafel", this.weight["regular"], "stroopwafel"),
         "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
@@ -28174,6 +28205,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddHTML = function (html) {
         this.html.append(html);
+        return html;
     };
     this.AddExpander = function () {
         var expander = Dash.Gui.GetFlexSpacer();

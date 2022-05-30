@@ -53,6 +53,8 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         }
 
         this.icon_html = icon_html;
+
+        return this;
     };
 
     this.SetSize = function (percentage_number) {
@@ -67,24 +69,32 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css({
             "font-size": percentage_number.toString() + "%"
         });
+
+        return this;
     };
 
     this.SetColor = function (color) {
         this.icon_html.css({
             "color": color
         });
+
+        return this;
     };
 
     this.Mirror = function () {
         this.icon_html.css({
             "transform": "scale(-1, 1)"
         });
+
+        return this;
     };
 
     this.AddStroke = function (color="black") {
         this.AddShadow(
             "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
         );
+
+        return this;
     };
 
     this.AddShadow = function (value="") {
@@ -101,6 +111,8 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css({
             "text-shadow": value
         });
+
+        return this;
     };
 
     // this.update = function (icon_id) {

@@ -203,14 +203,26 @@ function DashGuiComboInterface () {
             return;
         }
 
-        if (typeof(selected) == "string") {
-            console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+        if (typeof selected === "string") {
+            if (combo_list !== null) {
+                for (var combo of combo_list) {
+                    if (combo["id"] === selected) {
+                        selected = combo;
 
-            console.log("combo_list", combo_list);
-            console.log("selected", selected);
-            console.log("ignore_callback", ignore_callback);
+                        break;
+                    }
+                }
+            }
 
-            return;
+            if (typeof selected === "string") {
+                console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+
+                console.log("combo_list", combo_list);
+                console.log("selected", selected);
+                console.log("ignore_callback", ignore_callback);
+
+                return;
+            }
         }
 
         if (!ignore_callback && selected) {

@@ -62,6 +62,8 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddHTML = function (html) {
         this.html.append(html);
+
+        return html;
     };
 
     this.AddExpander = function () {
