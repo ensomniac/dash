@@ -21534,11 +21534,13 @@ function DashGuiCheckbox (
             return;
         }
         this.checked = !this.checked;
-        if (this.checked) {
-            Dash.Local.Set(this.local_storage_key, "true");
-        }
-        else {
-            Dash.Local.Set(this.local_storage_key, "false");
+        if (this.local_storage_key) {
+            if (this.checked) {
+                Dash.Local.Set(this.local_storage_key, "true");
+            }
+            else {
+                Dash.Local.Set(this.local_storage_key, "false");
+            }
         }
         this.redraw();
         if (skip_callback || !this.callback) {
@@ -22636,6 +22638,9 @@ function DashGuiButtonInterface () {
         if (width) {
             this.html.css({"width": width});
         }
+    };
+    this.Text = function () {
+        return this.label.text();
     };
     // Deprecated
     this.ChangeLabel = function (label_text, width=null) {

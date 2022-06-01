@@ -9,6 +9,10 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.Text = function () {
+        return this.label.text();
+    };
+
     // Deprecated
     this.ChangeLabel = function (label_text, width=null) {
         this.SetText(label_text, width);

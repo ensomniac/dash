@@ -158,12 +158,14 @@ function DashGuiCheckbox (
 
         this.checked = !this.checked;
 
-        if (this.checked) {
-            Dash.Local.Set(this.local_storage_key, "true");
-        }
+        if (this.local_storage_key) {
+            if (this.checked) {
+                Dash.Local.Set(this.local_storage_key, "true");
+            }
 
-        else {
-            Dash.Local.Set(this.local_storage_key, "false");
+            else {
+                Dash.Local.Set(this.local_storage_key, "false");
+            }
         }
 
         this.redraw();
