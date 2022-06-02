@@ -24,6 +24,12 @@ def SendEmail(
     from Dash import AdminEmails
     from googleapiclient.errors import HttpError
 
+    # If sender email is not in AdminEmails, it will typically be an alternate email that we Dash admins control,
+    # we don't want to get the emails sent to both addresses. Sending it to our primary addresses is sufficient. It
+    # should be fine to make this change here at this global level, but we can update if it ends up affecting future things.
+    if sender_email not in AdminEmails:
+        ensure_sender_gets_copied = False
+
     error = str(error)
 
     if not sender_email:
@@ -84,7 +90,7 @@ def SendEmail(
         try:
             raise Exception(
                 f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
-                f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'
+                f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'  # noqa
             )
         except:
             try:
