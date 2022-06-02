@@ -17,9 +17,9 @@ function DashLayoutListRow (list, row_id) {
     this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
 
     this.columns = {
-        "combos": [],
-        "inputs": [],
         "default": [],
+        "inputs": [],
+        "combos": [],
         "spacers": [],
         "dividers": [],
         "icon_buttons": []
@@ -195,6 +195,22 @@ function DashLayoutListRow (list, row_id) {
 
                     if (new_value) {
                         input["obj"].SetText(new_value);
+                    }
+                }
+            }
+
+            else if (type === "combos") {
+                for (var combo of this.columns[type]) {
+                    var value = this.get_data_for_key(combo["column_config_data"], "", true);
+
+                    if (value) {
+                        if (this.is_header) {
+                            // TODO
+                        }
+
+                        else {
+                            combo["obj"].Update(null, value, true);
+                        }
                     }
                 }
             }
@@ -400,6 +416,12 @@ function DashLayoutListRow (list, row_id) {
         this.column_box.empty();
 
         this.setup_columns();
+    };
+
+    this.SetHighlightColor = function (color) {
+        this.highlight.css({
+            "background": color
+        });
     };
 
     this.store_css_on_expansion = function (row) {

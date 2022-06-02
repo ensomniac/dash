@@ -203,9 +203,9 @@ function DashGuiComboInterface () {
             return;
         }
 
-        if (typeof selected === "string") {
-            if (combo_list !== null) {
-                for (var combo of combo_list) {
+        if (typeof selected !== "object") {
+            if (combo_list || this.option_list) {
+                for (var combo of (combo_list || this.option_list)) {
                     if (combo["id"] === selected) {
                         selected = combo;
 
@@ -214,8 +214,8 @@ function DashGuiComboInterface () {
                 }
             }
 
-            if (typeof selected === "string") {
-                console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+            if (typeof selected !== "object") {
+                console.warn("Warning: A combo object is using a non-object to identify a selected property. This should be an object only.");
 
                 console.log("combo_list", combo_list);
                 console.log("selected", selected);

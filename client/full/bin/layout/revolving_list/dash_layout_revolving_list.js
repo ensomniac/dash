@@ -1,5 +1,5 @@
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false) {
+function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
@@ -32,6 +32,8 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.row_highlight_color = row_options["row_highlight_color"];
+    this.header_background_color = row_options["header_background_color"];
 
     // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.row_height = Dash.Size.RowHeight + 1;
@@ -158,6 +160,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.on_view_scrolled();
     };
 
+    // Intended to be used when custom CSS is used on divider elements
+    this.DisableDividerColorChangeOnHover = function () {
+        this.allow_row_divider_color_change_on_hover = false;
+    };
+
     this.get_row = function (row_id) {
         if (!Dash.Validate.Object(this.row_objects) || !row_id) {
             return;
@@ -270,11 +277,21 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
             row.html.css(css);
 
+            if (header && this.header_background_color) {
+                row.column_box.css({
+                    "background": this.header_background_color
+                });
+            }
+
             // The on-scroll revolving row system used in this style doesn't work when the rows
             // are animated to expand/collapse. That anim delay breaks the revolving system when a
             // row is left expanded and the view gets scrolled. Delaying the revolving system doesn't
             // work to solve that, because the scroll events keep coming, causing further breakage.
             row.DisableAnimation();
+
+            if (this.row_highlight_color) {
+                row.SetHighlightColor(this.row_highlight_color);
+            }
         }
 
         return row;

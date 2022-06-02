@@ -109,18 +109,26 @@ function DashLayoutListRowElements () {
     };
 
     this.get_combo = function (column_config_data) {
+        var read_only = this.is_header || this.is_sublist;
+        var label = column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "";
+
         var combo = new Dash.Gui.Combo (
-            column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "",
+            label,
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
             column_config_data["options"]["binder"] || null,
-            column_config_data["options"]["combo_options"] || null,
+            this.is_header && label ? [{"id": label, "label_text": label}] : column_config_data["options"]["combo_options"] || null,
             this.get_data_for_key(column_config_data, "", true),
             this.color,
-            {"style": "row", "additional_data": {"row_id": this.id}}  // Using this.id here probably won't work well with revolving lists
+            {
+                "style": "row",
+                "read_only": read_only,
+                "additional_data": {"row_id": this.id}  // Relying on this.id here probably won't work well with revolving lists
+            }
         );
 
         combo.html.css({
-            "height": Dash.Size.RowHeight
+            "height": Dash.Size.RowHeight,
+            "width": column_config_data["width"]
         });
 
         combo.label.css({
@@ -132,11 +140,21 @@ function DashLayoutListRowElements () {
             combo.html.css(column_config_data["css"]);
         }
 
-        if (this.is_header || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't show the actual element
-            combo.html.css({
-                "opacity": 0
-            });
+        if (read_only) {
+            if (this.is_header && label) {
+                // TODO: need a title thing up here, use default column element?
+                combo.label.css({
+                    "font-family": "sans_serif_bold",
+                    "color": this.color.Stroke
+                });
+            }
+
+            else {
+                // Keep the container so the row stays properly aligned, but don't show the actual element
+                combo.html.css({
+                    "opacity": 0
+                });
+            }
 
             this.prevent_events_for_header_placeholder(combo.html);
         }

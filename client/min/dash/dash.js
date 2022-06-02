@@ -25270,17 +25270,17 @@ function DashGuiComboInterface () {
             // Do we need to do more here?
             return;
         }
-        if (typeof selected === "string") {
-            if (combo_list !== null) {
-                for (var combo of combo_list) {
+        if (typeof selected !== "object") {
+            if (combo_list || this.option_list) {
+                for (var combo of (combo_list || this.option_list)) {
                     if (combo["id"] === selected) {
                         selected = combo;
                         break;
                     }
                 }
             }
-            if (typeof selected === "string") {
-                console.warn("Warning: A combo object is using a string to identify a selected property. This should be an object only.");
+            if (typeof selected !== "object") {
+                console.warn("Warning: A combo object is using a non-object to identify a selected property. This should be an object only.");
                 console.log("combo_list", combo_list);
                 console.log("selected", selected);
                 console.log("ignore_callback", ignore_callback);
@@ -30257,9 +30257,9 @@ function DashLayoutListRow (list, row_id) {
     this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
     this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
     this.columns = {
-        "combos": [],
-        "inputs": [],
         "default": [],
+        "inputs": [],
+        "combos": [],
         "spacers": [],
         "dividers": [],
         "icon_buttons": []
@@ -30400,6 +30400,19 @@ function DashLayoutListRow (list, row_id) {
                     var new_value = this.get_data_for_key(input["column_config_data"]);
                     if (new_value) {
                         input["obj"].SetText(new_value);
+                    }
+                }
+            }
+            else if (type === "combos") {
+                for (var combo of this.columns[type]) {
+                    var value = this.get_data_for_key(combo["column_config_data"], "", true);
+                    if (value) {
+                        if (this.is_header) {
+                            // TODO
+                        }
+                        else {
+                            combo["obj"].Update(null, value, true);
+                        }
                     }
                 }
             }
@@ -30555,6 +30568,11 @@ function DashLayoutListRow (list, row_id) {
     this.RedrawColumns = function () {
         this.column_box.empty();
         this.setup_columns();
+    };
+    this.SetHighlightColor = function (color) {
+        this.highlight.css({
+            "background": color
+        });
     };
     this.store_css_on_expansion = function (row) {
         var border_bottom = row.html.css("border-bottom");
@@ -30982,17 +31000,24 @@ function DashLayoutListRowElements () {
         return divider_line;
     };
     this.get_combo = function (column_config_data) {
+        var read_only = this.is_header || this.is_sublist;
+        var label = column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "";
         var combo = new Dash.Gui.Combo (
-            column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "",
+            label,
             column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
             column_config_data["options"]["binder"] || null,
-            column_config_data["options"]["combo_options"] || null,
+            this.is_header && label ? [{"id": label, "label_text": label}] : column_config_data["options"]["combo_options"] || null,
             this.get_data_for_key(column_config_data, "", true),
             this.color,
-            {"style": "row", "additional_data": {"row_id": this.id}}  // Using this.id here probably won't work well with revolving lists
+            {
+                "style": "row",
+                "read_only": read_only,
+                "additional_data": {"row_id": this.id}  // Relying on this.id here probably won't work well with revolving lists
+            }
         );
         combo.html.css({
-            "height": Dash.Size.RowHeight
+            "height": Dash.Size.RowHeight,
+            "width": column_config_data["width"]
         });
         combo.label.css({
             "height": Dash.Size.RowHeight,
@@ -31001,11 +31026,20 @@ function DashLayoutListRowElements () {
         if (column_config_data["css"]) {
             combo.html.css(column_config_data["css"]);
         }
-        if (this.is_header || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't show the actual element
-            combo.html.css({
-                "opacity": 0
-            });
+        if (read_only) {
+            if (this.is_header && label) {
+                // TODO: need a title thing up here, use default column element?
+                combo.label.css({
+                    "font-family": "sans_serif_bold",
+                    "color": this.color.Stroke
+                });
+            }
+            else {
+                // Keep the container so the row stays properly aligned, but don't show the actual element
+                combo.html.css({
+                    "opacity": 0
+                });
+            }
             this.prevent_events_for_header_placeholder(combo.html);
         }
         return combo;
@@ -31117,7 +31151,7 @@ function DashLayoutListRowElements () {
 }
 
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false) {
+function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
@@ -31145,6 +31179,8 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.row_highlight_color = row_options["row_highlight_color"];
+    this.header_background_color = row_options["header_background_color"];
     // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.row_height = Dash.Size.RowHeight + 1;
     DashLayoutRevolvingListScrolling.call(this);
@@ -31235,6 +31271,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
         this.on_view_scrolled();
     };
+    // Intended to be used when custom CSS is used on divider elements
+    this.DisableDividerColorChangeOnHover = function () {
+        this.allow_row_divider_color_change_on_hover = false;
+    };
     this.get_row = function (row_id) {
         if (!Dash.Validate.Object(this.row_objects) || !row_id) {
             return;
@@ -31316,11 +31356,19 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         else {
             row = new DashLayoutListRow(this, header ? this.header_row_tag : "");
             row.html.css(css);
+            if (header && this.header_background_color) {
+                row.column_box.css({
+                    "background": this.header_background_color
+                });
+            }
             // The on-scroll revolving row system used in this style doesn't work when the rows
             // are animated to expand/collapse. That anim delay breaks the revolving system when a
             // row is left expanded and the view gets scrolled. Delaying the revolving system doesn't
             // work to solve that, because the scroll events keep coming, causing further breakage.
             row.DisableAnimation();
+            if (this.row_highlight_color) {
+                row.SetHighlightColor(this.row_highlight_color);
+            }
         }
         return row;
     };
