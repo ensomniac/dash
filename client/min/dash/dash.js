@@ -22146,6 +22146,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
                 }
                 self.ensure_proper_size();
                 self.add_button_bar();
+                self.add_icon();
                 self.initialized = true;
             });
         })(this);
@@ -22223,6 +22224,19 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     };
     this.SetOnEndStroke = function (callback, binder=null) {
         this.signature.addEventListener("endStroke", binder ? callback.bind(binder) : callback);
+    };
+    this.add_icon = function () {
+        var icon = new Dash.Gui.Icon(this.color, "signature", Dash.Size.Padding);
+        icon.SetColor(this.color.StrokeLight);
+        icon.html.css({
+            "pointer-events": "none",
+            "user-select": "none",
+            "z-index": 10,
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.25,
+            "left": Dash.Size.Padding * 0.25
+        });
+        this.html.append(icon.html);
     };
     this.add_button_bar = function () {
         var button_bar = new Dash.Gui.ButtonBar(this, this.color, "toolbar");
@@ -26805,6 +26819,7 @@ function DashGuiIcons (icon) {
         "signal_full":           new DashGuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
         "signal_none":           new DashGuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
         "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
+        "signature":             new DashGuiIconDefinition(this.icon, "Signature", this.weight["regular"],"signature"),
         "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
         "sliders_horizontal":    new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
@@ -32882,6 +32897,9 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             return;
         }
         this.html.val(option_id);
+    };
+    this.Lock = function () {
+        this.html.prop("disabled", true);
     };
     this.add_options = function () {
         for (var id in this.options) {

@@ -178,6 +178,7 @@ function DashGuiIcons (icon) {
         "signal_full":           new DashGuiIconDefinition(this.icon, "Full Signal", this.weight["regular"],"signal-alt"),
         "signal_none":           new DashGuiIconDefinition(this.icon, "No Signal", this.weight["regular"],"signal-alt-slash"),
         "signal_some":           new DashGuiIconDefinition(this.icon, "Some Signal", this.weight["regular"],"signal-alt-2"),
+        "signature":             new DashGuiIconDefinition(this.icon, "Signature", this.weight["regular"],"signature"),
         "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
         "sliders_horizontal":    new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),

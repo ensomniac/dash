@@ -81,6 +81,10 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.html.val(option_id);
     };
 
+    this.Lock = function () {
+        this.html.prop("disabled", true);
+    };
+
     this.add_options = function () {
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false);

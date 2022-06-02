@@ -55,6 +55,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
                 self.ensure_proper_size();
                 self.add_button_bar();
+                self.add_icon();
 
                 self.initialized = true;
             });
@@ -159,6 +160,23 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
     this.SetOnEndStroke = function (callback, binder=null) {
         this.signature.addEventListener("endStroke", binder ? callback.bind(binder) : callback);
+    };
+
+    this.add_icon = function () {
+        var icon = new Dash.Gui.Icon(this.color, "signature", Dash.Size.Padding);
+
+        icon.SetColor(this.color.StrokeLight);
+
+        icon.html.css({
+            "pointer-events": "none",
+            "user-select": "none",
+            "z-index": 10,
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.25,
+            "left": Dash.Size.Padding * 0.25
+        });
+
+        this.html.append(icon.html);
     };
 
     this.add_button_bar = function () {
