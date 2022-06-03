@@ -21664,7 +21664,7 @@ function DashGuiCheckbox (
     };
     this.get_checked_state = function () {
         if (!this.local_storage_key) {
-            return false;
+            return this.default_state;
         }
         var local = Dash.Local.Get(this.local_storage_key);
         if (["true", true].includes(local)) {
@@ -21731,7 +21731,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return combo;
     };
     this.AddText = function (text, color=null) {
-        return this.toolbar.AddText(text, color);
+        var label = this.toolbar.AddText(text, color);
+        this.elements.push(label);
+        return label;
     };
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
@@ -21792,11 +21794,6 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(label);
         return label;
     };
-    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
-    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
-    this.SetGetFormattedDataCallback = function (callback, binder=null) {
-        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
-    };
     this.AddInput = function (label_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -21856,9 +21853,12 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         if (hover_hint) {
             button.SetHoverHint(hover_hint);
         }
+        this.elements.push(button);
         return button;
     };
-    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
+    this.AddCheckbox = function (
+        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+    ) {
         var checkbox = this.toolbar.AddCheckbox(
             label_text,
             default_state,
@@ -21866,7 +21866,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             identifier,
             hover_hint,
             checkbox_redraw_styling,
-            label_border
+            label_border,
+            strict_identifier
         );
         checkbox.html.css({
             "margin-top": 0
@@ -21895,10 +21896,18 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 });
             }
         }
+        this.elements.push(checkbox);
         return checkbox;
     };
     this.AddHTML = function (html) {
         this.toolbar.AddHTML(html);
+        this.elements.push(html);
+        return html;
+    };
+    // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
+    // it's only been implemented in input-related areas for now (there may be other areas it should be added)
+    this.SetGetFormattedDataCallback = function (callback, binder=null) {
+        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -32863,9 +32872,11 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return obj["html"];
     };
-    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
+    this.AddCheckbox = function (
+        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+    ) {
         var checkbox = new Dash.Gui.Checkbox(
-            "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
             default_state,                                          // Default state
             this.color,                                             // Color
             hover_hint,                                             // Hover hint text

@@ -423,9 +423,11 @@ function DashLayoutToolbarInterface () {
         return obj["html"];
     };
 
-    this.AddCheckbox = function (label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true) {
+    this.AddCheckbox = function (
+        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+    ) {
         var checkbox = new Dash.Gui.Checkbox(
-            "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
             default_state,                                          // Default state
             this.color,                                             // Color
             hover_hint,                                             // Hover hint text

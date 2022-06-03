@@ -328,7 +328,7 @@ function DashGuiCheckbox (
 
     this.get_checked_state = function () {
         if (!this.local_storage_key) {
-            return false;
+            return this.default_state;
         }
 
         var local = Dash.Local.Get(this.local_storage_key);
