@@ -27863,6 +27863,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.bubble_dots.Start();
         this.bubble_label.SetText(this.get_loading_label_text(progress));
     };
+    this.SetLabelPrefix = function (label_prefix="Loading") {
+        this.label_prefix = label_prefix;
+    };
     this.setup_bubble = function () {
         this.bubble = Dash.Gui.GetHTMLBoxContext();
         this.bubble.css({
