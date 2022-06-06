@@ -122,7 +122,11 @@ function DashLayoutListRowElements () {
             {
                 "style": "row",
                 "read_only": read_only,
-                "additional_data": {"row_id": this.id}  // Relying on this.id here probably won't work well with revolving lists
+                "additional_data": {
+                    "row_id": this.id,
+                    "row": this,  // For revolving lists, use this instead of relying on row_id
+                    "column_index": this.columns["combos"].length
+                }
             }
         );
 

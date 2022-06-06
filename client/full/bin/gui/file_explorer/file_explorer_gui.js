@@ -174,18 +174,10 @@ function DashGuiFileExplorerGUI () {
             return this.column_config;
         }
 
-        var column_config = new Dash.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
+        var column_config = new Dash.Layout.List.ColumnConfig();
 
-        column_config.AddColumn(
-            "Filename",
-            "filename",
-            false,
-            null,
-            {"css": {"flex-grow": 2, "flex-shrink": 2}}
-        );
-
-
+        column_config.AddFlexText("filename");
         column_config.AddSpacer(true);
 
         if (this.include_uploaded_keys_columns || this.include_modified_keys_columns || this.buttons.length) {
@@ -193,73 +185,32 @@ function DashGuiFileExplorerGUI () {
         }
 
         if (this.include_modified_keys_columns) {
-            column_config.AddColumn(
-                "Modified By",
-                "modified_by",
-                false,
-                Dash.Size.ColumnWidth * 0.7,
-                {"css": {"flex": "none"}}
-            );
-
+            column_config.AddText("modified_by", 0.7);
             column_config.AddDivider(border_css);
-
-            column_config.AddColumn(
-                "Modified On",
-                "modified_on",
-                false,
-                Dash.Size.ColumnWidth * 0.95,
-                {"css": {"flex": "none"}}
-            );
-
+            column_config.AddText("modified_on", 0.95);
             column_config.AddDivider(border_css);
         }
 
         if (this.include_uploaded_keys_columns) {
-            column_config.AddColumn(
-                "Uploaded By",
-                "uploaded_by",
-                false,
-                Dash.Size.ColumnWidth * 0.7,
-                {"css": {"flex": "none"}}
-            );
-
+            column_config.AddText("uploaded_by", 0.7);
             column_config.AddDivider(border_css);
-
-            column_config.AddColumn(
-                "Uploaded On",
-                "uploaded_on",
-                false,
-                Dash.Size.ColumnWidth * 0.95,
-                {"css": {"flex": "none"}}
-            );
-
+            column_config.AddText("uploaded_on", 0.95);
             column_config.AddDivider(border_css);
         }
 
         for (var button_config of this.buttons) {
-            column_config.AddColumn(
-                button_config["config_name"],
-                "",
-                false,
-                Dash.Size.ColumnWidth * 0.15,
+            column_config.AddIconButton(
+                button_config["icon_name"],
+                this,
+                button_config["callback"],
+                button_config["hover_preview"] || button_config["config_name"] || "",
+                0.85,
+                0.15,
                 {
-                    "type": "icon_button",
-                    "options": {
-                        "icon_name": button_config["icon_name"],
-                        "callback": button_config["callback"],
-                        "binder": this,
-                        "color": this.color,
-                        "hover_text": button_config["hover_preview"] || button_config["config_name"],
-                        "options": {
-                            "size_mult": 0.85
-                        }
-                    },
-                    "css": {
-                        "margin-left": Dash.Size.Padding,
-                        "margin-right": button_config["right_margin"],
-                        "margin-top": Dash.Size.Padding * 0.15,
-                        "flex": "none"
-                    }
+                    "margin-left": Dash.Size.Padding,
+                    "margin-right": button_config["right_margin"],
+                    "margin-top": Dash.Size.Padding * 0.15,
+                    "flex": "none"
                 }
             );
         }

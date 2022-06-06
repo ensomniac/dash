@@ -25983,80 +25983,38 @@ function DashGuiFileExplorerGUI () {
         if (!force && this.column_config) {
             return this.column_config;
         }
-        var column_config = new Dash.Layout.List.ColumnConfig();
         var border_css = {"background": this.color.Pinstripe};
-        column_config.AddColumn(
-            "Filename",
-            "filename",
-            false,
-            null,
-            {"css": {"flex-grow": 2, "flex-shrink": 2}}
-        );
-
+        var column_config = new Dash.Layout.List.ColumnConfig();
+        column_config.AddFlexText("filename");
         column_config.AddSpacer(true);
         if (this.include_uploaded_keys_columns || this.include_modified_keys_columns || this.buttons.length) {
             column_config.AddDivider(border_css);
         }
         if (this.include_modified_keys_columns) {
-            column_config.AddColumn(
-                "Modified By",
-                "modified_by",
-                false,
-                Dash.Size.ColumnWidth * 0.7,
-                {"css": {"flex": "none"}}
-            );
+            column_config.AddText("modified_by", 0.7);
             column_config.AddDivider(border_css);
-            column_config.AddColumn(
-                "Modified On",
-                "modified_on",
-                false,
-                Dash.Size.ColumnWidth * 0.95,
-                {"css": {"flex": "none"}}
-            );
+            column_config.AddText("modified_on", 0.95);
             column_config.AddDivider(border_css);
         }
         if (this.include_uploaded_keys_columns) {
-            column_config.AddColumn(
-                "Uploaded By",
-                "uploaded_by",
-                false,
-                Dash.Size.ColumnWidth * 0.7,
-                {"css": {"flex": "none"}}
-            );
+            column_config.AddText("uploaded_by", 0.7);
             column_config.AddDivider(border_css);
-            column_config.AddColumn(
-                "Uploaded On",
-                "uploaded_on",
-                false,
-                Dash.Size.ColumnWidth * 0.95,
-                {"css": {"flex": "none"}}
-            );
+            column_config.AddText("uploaded_on", 0.95);
             column_config.AddDivider(border_css);
         }
         for (var button_config of this.buttons) {
-            column_config.AddColumn(
-                button_config["config_name"],
-                "",
-                false,
-                Dash.Size.ColumnWidth * 0.15,
+            column_config.AddIconButton(
+                button_config["icon_name"],
+                this,
+                button_config["callback"],
+                button_config["hover_preview"] || button_config["config_name"] || "",
+                0.85,
+                0.15,
                 {
-                    "type": "icon_button",
-                    "options": {
-                        "icon_name": button_config["icon_name"],
-                        "callback": button_config["callback"],
-                        "binder": this,
-                        "color": this.color,
-                        "hover_text": button_config["hover_preview"] || button_config["config_name"],
-                        "options": {
-                            "size_mult": 0.85
-                        }
-                    },
-                    "css": {
-                        "margin-left": Dash.Size.Padding,
-                        "margin-right": button_config["right_margin"],
-                        "margin-top": Dash.Size.Padding * 0.15,
-                        "flex": "none"
-                    }
+                    "margin-left": Dash.Size.Padding,
+                    "margin-right": button_config["right_margin"],
+                    "margin-top": Dash.Size.Padding * 0.15,
+                    "flex": "none"
                 }
             );
         }
@@ -30733,12 +30691,12 @@ function DashLayoutListColumnConfig () {
             "css": css
         });
     };
-    this.AddCombo = function (label_text, combo_options, binder, callback, width=null, data_key="", can_edit=true, css=null, header_css=null) {
+    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=1, css={}, header_css={}) {
         this.AddColumn(
             label_text,
             data_key,
-            can_edit,
-            width,
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
             {
                 "type": "combo",
                 "options": {
@@ -30752,12 +30710,14 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    this.AddIconButton = function (display_name, icon_name, binder, callback, size_mult=1.0, width=null, data_key="", can_edit=true, css=null, header_css=null) {
+    this.AddIconButton = function (icon_name, binder, callback, hover_text="", size_mult=1, width_mult=0.25, css={}, header_css={}) {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
         this.AddColumn(
-            display_name,
-            data_key,
-            can_edit,
-            width,
+            "",
+            "",
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
             {
                 "type": "icon_button",
                 "options": {
@@ -30765,6 +30725,7 @@ function DashLayoutListColumnConfig () {
                     "callback": callback,
                     "binder": binder,
                     "color": binder.color || Dash.Color.Light,
+                    "hover_text": hover_text,
                     "options": {
                         "size_mult": size_mult
                     }
@@ -30774,20 +30735,55 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    this.AddInput = function (label_text, binder, callback, width=null, data_key="", can_edit=true, css=null, header_css=null) {
+    this.AddInput = function (label_text, binder=null, callback=null, data_key="", width_mult=1, css={}, header_css={}, placeholder_label="") {
         this.AddColumn(
             label_text,
             data_key,
-            can_edit,
-            width,
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
             {
                 "type": "input",
                 "options": {
-                    "placeholder_label": label_text,
+                    "placeholder_label": placeholder_label || label_text,
                     "callback" : callback,
                     "binder": binder,
-                    "color": binder.color || Dash.Color.Light
+                    "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light
                 },
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+    // Abstraction to simplify AddColumn when just using a simple text value
+    this.AddText = function (data_key, width_mult=1, label_text="", css={}, header_css={}) {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
+        this.AddColumn(
+            label_text || data_key.Title(),
+            data_key,
+            false,
+            Dash.Size.ColumnWidth * width_mult,
+            {
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+    // Abstraction to simplify AddColumn when just using a flex text value
+    this.AddFlexText = function (data_key, label_text="", min_width_mult=0.25, css={}, header_css={}) {
+        var min_width = Dash.Size.ColumnWidth * min_width_mult;
+        css["flex-grow"] = 2;
+        css["flex-shrink"] = 2;
+        css["min-width"] = min_width;
+        header_css["flex-grow"] = 2;
+        header_css["flex-shrink"] = 2;
+        header_css["min-width"] = min_width;
+        this.AddColumn(
+            label_text || data_key.Title(),
+            data_key,
+            false,
+            null,
+            {
                 "css": css,
                 "header_css": header_css
             }
@@ -31024,7 +31020,11 @@ function DashLayoutListRowElements () {
             {
                 "style": "row",
                 "read_only": read_only,
-                "additional_data": {"row_id": this.id}  // Relying on this.id here probably won't work well with revolving lists
+                "additional_data": {
+                    "row_id": this.id,
+                    "row": this,  // For revolving lists, use this instead of relying on row_id
+                    "column_index": this.columns["combos"].length
+                }
             }
         );
         combo.html.css({
