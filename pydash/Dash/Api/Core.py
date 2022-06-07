@@ -315,6 +315,11 @@ class ApiCore:
         if "_error" in self._response:
             del self._response["_error"]
 
+        # When using as module, errors get silently ignored, rather than raised - this solves that, but
+        # it may be too broad of a solution, so this may need to be adjusted or removed, we'll see
+        if self._execute_as_module and self._response.get("error"):
+            raise Exception(self._response["error"])
+
         return self._response
 
     def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False):
