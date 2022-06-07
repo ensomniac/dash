@@ -16,7 +16,7 @@ from Dash.Utils import GetRandomID, SendEmail, ClientAlert
 class ApiCore:
     _user: dict
     _dash_context: dict
-    dash_global: callable
+    _dash_global: callable
 
     def __init__(self, execute_as_module, asset_path, send_email_on_error=False):
         self._execute_as_module = execute_as_module
@@ -106,21 +106,27 @@ class ApiCore:
         """
 
         if not hasattr(self, "_dash_context"):
-            from Dash.PackageContext import Get
+            if self._execute_as_module and self.dash_global.Context:
+                self._dash_context = self.dash_global.Context
+            else:
+                from Dash.PackageContext import Get
 
-            self._dash_context = Get(self._asset_path)
+                self._dash_context = Get(self._asset_path)
 
         return self._dash_context
 
     @property
     def User(self):
         if not hasattr(self, "_user"):
-            if not self.DashContext:
-                raise Exception("Dash Context is missing x8136")
+            if self._execute_as_module and self.dash_global.RequestUser:
+                self._user = self.dash_global.RequestUser
+            else:
+                if not self.DashContext:
+                    raise Exception("Dash Context is missing x8136")
 
-            from Dash.Users import Users as DashUsers
+                from Dash.Users import Users as DashUsers
 
-            self._user = DashUsers(self._params, self.DashContext).ValidateUser()
+                self._user = DashUsers(self._params, self.DashContext).ValidateUser()
 
         return self._user
 
@@ -147,6 +153,13 @@ class ApiCore:
     @property
     def Response(self):
         return self._response
+
+    @property
+    def dash_global(self):
+        if not hasattr(self, "_dash_global"):
+            self._dash_global = sys.modules[DashName]
+
+        return self._dash_global
 
     def AddNotifyEmail(self, email):
         if email in self._additional_notify_emails:
@@ -429,9 +442,6 @@ class ApiCore:
 
         if self._proceeding_with_empty_fs:
             return  # See notes in init
-
-        if not hasattr(self, "dash_global"):
-            self.dash_global = sys.modules[DashName]
 
         self.dash_global.RequestData = self._params
         self.dash_global.RequestUser = self.User
