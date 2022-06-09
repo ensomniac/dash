@@ -462,17 +462,16 @@ function DashLayoutListRow (list, row_id) {
         this.html.prepend(this.expanded_highlight);
     };
 
-    // Helper/handler for external GetDataForKey functions
     this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
         if (this.is_header) {
             return column_config_data["display_name"] || column_config_data["data_key"].Title();
         }
 
         if (third_param !== null) {
-            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+            return this.list.get_data_for_key(this.id, column_config_data["data_key"], third_param) || default_value;
         }
 
-        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
+        return this.list.get_data_for_key(this.id, column_config_data["data_key"]) || default_value;
     };
 
     this.setup_connections = function () {

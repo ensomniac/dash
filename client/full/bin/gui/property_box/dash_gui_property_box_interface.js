@@ -368,6 +368,12 @@ function DashGuiPropertyBoxInterface () {
         local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
         callback=null, label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null
     ) {
+        label_text = label_text.trim();
+
+        if (label_text && !label_text.endsWith(":")) {
+            label_text += ":";  // To ensure conformity with property box row styling
+        }
+
         var checkbox = new Dash.Gui.Checkbox(
             local_storage_key,
             default_state,

@@ -35,6 +35,21 @@ function DashLayoutListColumnConfig () {
         });
     };
 
+    // This has not yet been tested for support with header rows
+    this.AddLabel = function (text, css={}, header_css={}) {
+        this.AddColumn(
+            text,
+            "",
+            false,
+            null,
+            {
+                "type": "label",
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+
     this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=1, css={}, header_css={}) {
         this.AddColumn(
             label_text,

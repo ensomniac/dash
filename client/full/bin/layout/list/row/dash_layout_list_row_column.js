@@ -36,6 +36,10 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["width"] = this.width;
         }
 
+        if (this.column_config_data["type"] === "label") {
+            css["font-size"] = "80%";
+        }
+
         css = this.get_css_margins(css);
         css = this.get_column_config_css(css);
         css = this.get_text_color_css(css);
@@ -92,6 +96,10 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             }
         }
 
+        if (this.column_config_data["type"] === "label") {
+            css["margin-right"] = Dash.Size.Padding * 0.5;
+        }
+
         return css;
     };
 
@@ -118,11 +126,15 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     };
 
     this.Update = function () {
+        var css = {};
         var column_value;
-        var font_family;
 
-        if (this.list_row.is_header) {
-            column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            column_value = (this.column_config_data["display_name"] || this.column_config_data["data_key"].Title() || "").trim();
+
+            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":")) {
+                column_value += ":";
+            }
         }
 
         else if (this.list_row.is_sublist) {
@@ -136,23 +148,23 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
 
         else {
-            column_value = this.list.binder.GetDataForKey(
+            column_value = this.list.get_data_for_key(
                 this.list_row.id,
                 this.column_config_data["data_key"],
                 this
             );
         }
 
-        if (this.list_row.is_header) {
-            font_family = "sans_serif_bold";
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            css["font-family"] = "sans_serif_bold";
         }
 
         else if (this.list_row.is_sublist) {
-            font_family = "sans_serif_italic";
+            css["font-family"] = "sans_serif_italic";
         }
 
         else if (column_value && column_value.length > 0) {
-            font_family = "sans_serif_normal";
+            css["font-family"] = "sans_serif_normal";
         }
 
         if (!column_value) {
@@ -162,13 +174,10 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
                 column_value = this.column_config_data["display_name"];
             }
 
-            font_family = "sans_serif_italic";
+            css["font-family"] = "sans_serif_italic";
         }
 
-        this.html.css({
-            "font-family": font_family
-        });
-
+        this.html.css(css);
         this.html.text(column_value);
     };
 

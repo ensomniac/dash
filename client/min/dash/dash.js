@@ -28425,6 +28425,10 @@ function DashGuiPropertyBoxInterface () {
         local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
         callback=null, label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null
     ) {
+        label_text = label_text.trim();
+        if (label_text && !label_text.endsWith(":")) {
+            label_text += ":";  // To ensure conformity with property box row styling
+        }
         var checkbox = new Dash.Gui.Checkbox(
             local_storage_key,
             default_state,
@@ -29973,17 +29977,19 @@ function DashLayoutDashboardModuleSquare () {
     };
 }
 
-function DashLayoutList (binder, selected_callback, column_config, color=null) {
+function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
+    // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
+    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
         console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
         return;
     }
-    if (!this.binder.GetDataForKey) {
-        console.error("Error: Calling class must contain a function named GetDataForKey()");
+    if (!this.get_data_for_key) {
+        console.error("Error: If optional 'get_data_for_key' param is not provided, calling class must contain a function named GetDataForKey()");
         return;
     }
     this.rows = [];
@@ -30574,15 +30580,14 @@ function DashLayoutListRow (list, row_id) {
         }
         this.html.prepend(this.expanded_highlight);
     };
-    // Helper/handler for external GetDataForKey functions
     this.get_data_for_key = function (column_config_data, default_value=null, third_param=null) {
         if (this.is_header) {
             return column_config_data["display_name"] || column_config_data["data_key"].Title();
         }
         if (third_param !== null) {
-            return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"], third_param) || default_value;
+            return this.list.get_data_for_key(this.id, column_config_data["data_key"], third_param) || default_value;
         }
-        return this.list.binder.GetDataForKey(this.id, column_config_data["data_key"]) || default_value;
+        return this.list.get_data_for_key(this.id, column_config_data["data_key"]) || default_value;
     };
     this.setup_connections = function () {
         (function (self) {
@@ -30690,6 +30695,20 @@ function DashLayoutListColumnConfig () {
             "type": "divider",
             "css": css
         });
+    };
+    // This has not yet been tested for support with header rows
+    this.AddLabel = function (text, css={}, header_css={}) {
+        this.AddColumn(
+            text,
+            "",
+            false,
+            null,
+            {
+                "type": "label",
+                "css": css,
+                "header_css": header_css
+            }
+        );
     };
     this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=1, css={}, header_css={}) {
         this.AddColumn(
@@ -30821,6 +30840,9 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.width > 0) {
             css["width"] = this.width;
         }
+        if (this.column_config_data["type"] === "label") {
+            css["font-size"] = "80%";
+        }
         css = this.get_css_margins(css);
         css = this.get_column_config_css(css);
         css = this.get_text_color_css(css);
@@ -30863,6 +30885,9 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
                 css["margin-left"] = Dash.Size.Padding;
             }
         }
+        if (this.column_config_data["type"] === "label") {
+            css["margin-right"] = Dash.Size.Padding * 0.5;
+        }
         return css;
     };
     this.set_click_callback = function () {
@@ -30882,10 +30907,13 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         })(this);
     };
     this.Update = function () {
+        var css = {};
         var column_value;
-        var font_family;
-        if (this.list_row.is_header) {
-            column_value = this.column_config_data["display_name"] || this.column_config_data["data_key"].Title();
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            column_value = (this.column_config_data["display_name"] || this.column_config_data["data_key"].Title() || "").trim();
+            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":")) {
+                column_value += ":";
+            }
         }
         else if (this.list_row.is_sublist) {
             if (this.index === 0) {
@@ -30896,31 +30924,29 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             }
         }
         else {
-            column_value = this.list.binder.GetDataForKey(
+            column_value = this.list.get_data_for_key(
                 this.list_row.id,
                 this.column_config_data["data_key"],
                 this
             );
         }
-        if (this.list_row.is_header) {
-            font_family = "sans_serif_bold";
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            css["font-family"] = "sans_serif_bold";
         }
         else if (this.list_row.is_sublist) {
-            font_family = "sans_serif_italic";
+            css["font-family"] = "sans_serif_italic";
         }
         else if (column_value && column_value.length > 0) {
-            font_family = "sans_serif_normal";
+            css["font-family"] = "sans_serif_normal";
         }
         if (!column_value) {
             var options = this.column_config_data["options"];
             if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
                 column_value = this.column_config_data["display_name"];
             }
-            font_family = "sans_serif_italic";
+            css["font-family"] = "sans_serif_italic";
         }
-        this.html.css({
-            "font-family": font_family
-        });
+        this.html.css(css);
         this.html.text(column_value);
     };
     this.setup_styles();
