@@ -1,9 +1,12 @@
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}) {
+function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
     this.include_header_row = include_header_row;
+
+    // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
+    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
 
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
         console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
@@ -11,7 +14,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         return;
     }
 
-    if (!this.binder.GetDataForKey) {
+    if (!this.get_data_for_key) {
         console.error("Error: Calling class must contain a function named GetDataForKey()");
 
         return;
