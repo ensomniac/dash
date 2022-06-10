@@ -28197,6 +28197,9 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(html);
         return html;
     };
+    this.AddLineBreak = function () {
+        return this.AddHTML($("<br>"));
+    };
     this.AddExpander = function () {
         var expander = Dash.Gui.GetFlexSpacer();
         this.html.css({

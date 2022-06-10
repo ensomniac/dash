@@ -66,6 +66,10 @@ function DashGuiPropertyBoxInterface () {
         return html;
     };
 
+    this.AddLineBreak = function () {
+        return this.AddHTML($("<br>"));
+    };
+
     this.AddExpander = function () {
         var expander = Dash.Gui.GetFlexSpacer();
 
