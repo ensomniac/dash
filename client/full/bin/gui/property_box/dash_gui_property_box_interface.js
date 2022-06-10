@@ -299,20 +299,7 @@ function DashGuiPropertyBoxInterface () {
 
             self.update_inputs[row_details["key"]] = row;
 
-            var indent_px = Dash.Size.Padding * 2;
-            var indent_row = false;
-
-            if (self.num_headers > 0) {
-                indent_row = true;
-            }
-
-            if (self.indent_properties || self.indent_properties > 0) {
-                indent_px += self.indent_properties;
-            }
-
-            if (indent_row) {
-                row.html.css("margin-left", indent_px);
-            }
+            self.indent_row(row);
 
             if (!row_details["can_edit"]) {
                 row.SetLocked(true);
@@ -336,6 +323,22 @@ function DashGuiPropertyBoxInterface () {
         })(this, row_details, options["callback"] || null);
 
         return this.update_inputs[data_key];
+    };
+
+    this.indent_row = function (row) {
+        if (this.num_headers <= 0) {
+            return;
+        }
+
+        var indent_px = Dash.Size.Padding * 2;
+
+        if (this.indent_properties || this.indent_properties > 0) {
+            indent_px += this.indent_properties;
+        }
+
+        row.html.css({
+            "margin-left": indent_px
+        });
     };
 
     this.AddLabel = function (text, color=null) {
@@ -390,9 +393,10 @@ function DashGuiPropertyBoxInterface () {
             include_border
         );
 
+        this.indent_row(checkbox);
+
         checkbox.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
-            "margin-left": Dash.Size.Padding * 2
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
 
         checkbox.label.label.css({

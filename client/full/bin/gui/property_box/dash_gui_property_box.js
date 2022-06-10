@@ -14,10 +14,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
-    this.color = this.options["color"] || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
-    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.color = this.options["color"] || binder.color || Dash.Color.Light;
 
     DashGuiPropertyBoxInterface.call(this);
 

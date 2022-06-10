@@ -68,7 +68,7 @@ function DashGui() {
             "margin-bottom": Dash.Size.Padding,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
             ...optional_style_css
         });

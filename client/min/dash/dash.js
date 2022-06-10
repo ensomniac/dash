@@ -17812,7 +17812,7 @@ function DashGui() {
             "margin-bottom": Dash.Size.Padding,
             "color": color.Background,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
             ...optional_style_css
         });
@@ -27903,10 +27903,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
-    this.color = this.options["color"] || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
-    this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
+    this.color = this.options["color"] || binder.color || Dash.Color.Light;
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         // DashGlobalImpactChange | 12/21/21 | Ryan
@@ -28374,17 +28374,7 @@ function DashGuiPropertyBoxInterface () {
                 row_details["key"]
             );
             self.update_inputs[row_details["key"]] = row;
-            var indent_px = Dash.Size.Padding * 2;
-            var indent_row = false;
-            if (self.num_headers > 0) {
-                indent_row = true;
-            }
-            if (self.indent_properties || self.indent_properties > 0) {
-                indent_px += self.indent_properties;
-            }
-            if (indent_row) {
-                row.html.css("margin-left", indent_px);
-            }
+            self.indent_row(row);
             if (!row_details["can_edit"]) {
                 row.SetLocked(true);
             }
@@ -28402,6 +28392,18 @@ function DashGuiPropertyBoxInterface () {
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);
         return this.update_inputs[data_key];
+    };
+    this.indent_row = function (row) {
+        if (this.num_headers <= 0) {
+            return;
+        }
+        var indent_px = Dash.Size.Padding * 2;
+        if (this.indent_properties || this.indent_properties > 0) {
+            indent_px += this.indent_properties;
+        }
+        row.html.css({
+            "margin-left": indent_px
+        });
     };
     this.AddLabel = function (text, color=null) {
         var header = new Dash.Gui.Header(text, color);
@@ -28443,9 +28445,9 @@ function DashGuiPropertyBoxInterface () {
             label_first,
             include_border
         );
+        this.indent_row(checkbox);
         checkbox.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)",
-            "margin-left": Dash.Size.Padding * 2
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
         });
         checkbox.label.label.css({
             "font-family": "sans_serif_bold",
