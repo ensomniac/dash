@@ -17996,52 +17996,6 @@ function DashGui() {
         if (!filename) {
             filename = url.split("/").Last();
         }
-        // fetch(
-        //     url
-        // ).then(
-        //     resp => resp.blob()
-        // ).then(
-        //     blob => {
-        //         var url_pointer = window.URL.createObjectURL(blob);
-        //
-        //         // This will only already exist if we don't removeChild at the end of this
-        //         // function - however, using removeChild at the end seems most efficient
-        //         var dialog = document.getElementById(dialog_id);
-        //
-        //         if (!dialog) {
-        //             dialog = document.createElement("a");
-        //
-        //             dialog.setAttribute("id", dialog_id);
-        //
-        //             dialog.style.display = "none";
-        //         }
-        //
-        //         dialog.href = url_pointer;
-        //         dialog.download = filename;
-        //
-        //         document.body.appendChild(dialog);
-        //
-        //         dialog.click();
-        //
-        //         window.URL.revokeObjectURL(url_pointer);
-        //
-        //         document.body.removeChild(dialog);
-        //
-        //         if (callback) {
-        //             callback();
-        //         }
-        //     }
-        // ).catch(
-        //     () => {
-        //         if (callback) {
-        //             callback();
-        //         }
-        //
-        //         console.error("File download using Dash.Gui.OpenFileURLDownloadDialog() failed. The URL will now be opened in a new tab:\n" + url);
-        //
-        //         window.open(url, "_blank");
-        //     }
-        // );
         Dash.File.URLToBlob(
             url,
             function (blob) {
