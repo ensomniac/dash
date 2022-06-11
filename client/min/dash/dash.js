@@ -29982,15 +29982,16 @@ function DashLayoutDashboardModuleSquare () {
     };
 }
 
-function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null) {
+function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null, row_height=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
+    this.row_height = row_height || Dash.Size.RowHeight;
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
         return;
     }
     if (!this.get_data_for_key) {
@@ -30012,7 +30013,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         // Placeholder
     };
     this.AddRow = function (row_id) {
-        var row = new DashLayoutListRow(this, row_id);
+        var row = new DashLayoutListRow(this, row_id, this.row_height);
         this.rows.push(row);
         this.html.append(row.html);
         return row;
@@ -30210,7 +30211,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             preview.css({
                 "padding-left": Dash.Size.Padding,
                 "padding-top": Dash.Size.Padding * 0.5,
-                "height": Dash.Size.RowHeight,
+                "height": this.row_height,
                 "color": this.color.Text,
                 "font-family": "sans_serif_italic"
             });
@@ -30221,9 +30222,10 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.setup_styles();
 }
 
-function DashLayoutListRow (list, row_id) {
+function DashLayoutListRow (list, row_id, height=null) {
     this.list = list;
     this.id = row_id;
+    this.height = height || Dash.Size.RowHeight;
     this.is_shown = true;
     this.tmp_css_cache = [];
     this.sublist_queue = [];
@@ -30276,7 +30278,7 @@ function DashLayoutListRow (list, row_id) {
                 "left": 0,
                 "top": 0,
                 "right": 0,
-                "height": Dash.Size.RowHeight,
+                "height": this.height,
                 "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
                 "pointer-events": "none",
                 "opacity": 0
@@ -30290,16 +30292,15 @@ function DashLayoutListRow (list, row_id) {
         this.column_box.css({
             "position": "absolute",
             "top": 0,
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "display": "flex"
         });
         this.html.css({
-            // "background": this.color.Background,
             "color": this.color.Text,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            "min-height": Dash.Size.RowHeight,
+            "min-height": this.height,
             "cursor": "pointer"  // This is changed in setup_columns(), if relevant
         });
         this.setup_columns();
@@ -30442,7 +30443,7 @@ function DashLayoutListRow (list, row_id) {
             "overflow-y": "auto",
             "opacity": 1,
             "height": "auto",
-            "padding-top": Dash.Size.RowHeight,
+            "padding-top": this.height,
         });
         html.css({
             "border-bottom": "1px solid rgb(200, 200, 200)"
@@ -30820,8 +30821,9 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
     this.color = color || Dash.Color.Light;
-    this.list = this.list_row.list;
     this.html = $("<div></div>");
+    this.list = this.list_row.list;
+    this.height = this.list_row.height;
     this.width = this.column_config_data["width"] || -1;
     this.setup_styles = function () {
         this.set_click_callback();
@@ -30832,8 +30834,8 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     };
     this.get_css = function () {
         var css = {
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
+            "height": this.height,
+            "line-height": this.height.toString() + "px",
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
@@ -30952,7 +30954,13 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["font-family"] = "sans_serif_italic";
         }
         this.html.css(css);
-        this.html.text(column_value);
+        if (column_value.includes("</")) {
+            // JQuery's .text() escapes HTML tags, so this approach is required
+            this.html[0].innerHTML = column_value;
+        }
+        else {
+            this.html.text(column_value);
+        }
     };
     this.setup_styles();
 }
@@ -31014,7 +31022,7 @@ function DashLayoutListRowElements () {
     this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "flex-grow": 2,
             "flex-shrink": 2
         });
@@ -31059,12 +31067,12 @@ function DashLayoutListRowElements () {
             }
         );
         combo.html.css({
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "width": column_config_data["width"]
         });
         combo.label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px"
+            "height": this.height,
+            "line-height": this.height + "px"
         });
         if (column_config_data["css"]) {
             combo.html.css(column_config_data["css"]);
@@ -31093,7 +31101,7 @@ function DashLayoutListRowElements () {
         var input = new Dash.Gui.Input(placeholder_label, color);
         var css = {
             "background": "none",
-            "height": Dash.Size.RowHeight * 0.9,
+            "height": this.height * 0.9,
             "margin-top": Dash.Size.Padding * 0.1,
             "box-shadow": "none"
         };
@@ -31127,8 +31135,8 @@ function DashLayoutListRowElements () {
             return input;
         }
         input.input.css({
-            "height": Dash.Size.RowHeight * 0.9,
-            "line-height": (Dash.Size.RowHeight * 0.9) + "px",
+            "height": this.height * 0.9,
+            "line-height": (this.height * 0.9) + "px",
             "padding-left": Dash.Size.Padding * 0.35
         });
         var starting_value = column_config_data["options"]["default_value"] || this.get_data_for_key(column_config_data);
@@ -31169,7 +31177,7 @@ function DashLayoutListRowElements () {
             );
         })(this);
         icon_button.html.css({
-            "height": Dash.Size.RowHeight
+            "height": this.height
         });
         if (column_config_data["css"]) {
             icon_button.html.css(column_config_data["css"]);
@@ -31202,7 +31210,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
         return;
     }
     if (!this.get_data_for_key) {
@@ -31226,8 +31234,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_tag = "_top_header_row";
     this.row_highlight_color = row_options["row_highlight_color"];
     this.header_background_color = row_options["header_background_color"];
-    // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
-    this.row_height = Dash.Size.RowHeight + 1;
+    // For creating new rows
+    this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
+    // For calculations - ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
+    this.full_row_height = this.row_height + 1;
     DashLayoutRevolvingListScrolling.call(this);
     this.setup_styles = function () {
         this.html.css({
@@ -31237,7 +31247,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.container.css({
             "position": "absolute",
             "inset": 0,
-            "top": this.include_header_row ? this.row_height : 0,
+            "top": this.include_header_row ? this.full_row_height : 0,
             "overflow-y": "auto"
         });
         this.add_header_row();
@@ -31346,7 +31356,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.add_header_row_backing = function () {
         this.header_row_backing = this.get_new_row(false, true);
         this.header_row_backing.css({
-            "height": this.row_height,
+            "height": this.full_row_height,
             "background": this.header_row.column_box.css("background-color")
         });
         this.html.append(this.header_row_backing);
@@ -31362,9 +31372,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             "overflow": "hidden",
             "text-overflow": "clip",
             "white-space": "nowrap",
-            "max-height": this.row_height,
-            "height": this.row_height,
-            "line-height": this.row_height + "px",
+            "max-height": this.full_row_height,
+            "height": this.full_row_height,
+            "line-height": this.full_row_height + "px",
             "opacity": 0
         });
         this.container.append(filler_html);
@@ -31399,7 +31409,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             row.css(css);
         }
         else {
-            row = new DashLayoutListRow(this, header ? this.header_row_tag : "");
+            row = new DashLayoutListRow(
+                this,
+                header ? this.header_row_tag : "",
+                this.row_height
+            );
             row.html.css(css);
             if (header && this.header_background_color) {
                 row.column_box.css({
@@ -31437,7 +31451,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
         row.html.css({
-            "top": row_index * this.row_height,
+            "top": row_index * this.full_row_height,
             "display": "initial",
             "pointer-events": "auto"
         });
@@ -31480,7 +31494,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
     // The 'expanded' param exists just in case row.IsExpanded() isn't immediately ready when this is called
     this.adjust_row_tops = function (row, height_adj, expanded=true) {
-        var row_buffer = Math.ceil(height_adj / this.row_height);
+        var row_buffer = Math.ceil(height_adj / this.full_row_height);
         if (row_buffer > this.row_count_buffer) {
             this.row_count_buffer = row_buffer;
         }
@@ -31489,7 +31503,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
                 continue;
             }
             var top_pos = parseInt(other_row.html.css("top"));
-            var default_top_pos = other_row.index * this.row_height;
+            var default_top_pos = other_row.index * this.full_row_height;
             if (expanded || top_pos > default_top_pos) {
                 var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;
                 if (new_top < default_top_pos) {
@@ -31557,12 +31571,12 @@ function DashLayoutRevolvingListScrolling () {
         if (start_pos < 0) {
             start_pos = 0;
         }
-        var end_pos = start_pos + window.innerHeight + this.row_height;
-        var start_index = Math.floor(parseInt((start_pos / this.row_height).toString()));
+        var end_pos = start_pos + window.innerHeight + this.full_row_height;
+        var start_index = Math.floor(parseInt((start_pos / this.full_row_height).toString()));
         return [start_pos, end_pos, start_index];
     };
     this.get_scroll_indexes = function () {
-        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.row_height);
+        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.full_row_height);
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
             if (!Dash.Validate.Object(expanded_data) || !expanded_data["preview_content"]) {
@@ -31572,7 +31586,7 @@ function DashLayoutRevolvingListScrolling () {
                 continue;
             }
             var preview_height = parseInt(expanded_data["preview_content"].css("height"));
-            var index_buffer = Math.ceil(preview_height / this.row_height);
+            var index_buffer = Math.ceil(preview_height / this.full_row_height);
             if (start_index > (expanded_data["row_index"] + index_buffer)) {
                 start_pos -= preview_height;
                 [start_pos, end_pos, start_index] = this.get_scroll_index_components(start_pos);
@@ -31582,7 +31596,7 @@ function DashLayoutRevolvingListScrolling () {
             end_pos -= preview_height;
             break;
         }
-        var end_index = parseInt((end_pos / this.row_height).toString());
+        var end_index = parseInt((end_pos / this.full_row_height).toString());
         if (start_index < 0) {
             start_index = 0;
         }
@@ -31646,7 +31660,7 @@ function DashLayoutRevolvingListScrolling () {
         }
         for (row of this.row_objects) {
             row.html.css({
-                "top": row.index * this.row_height
+                "top": row.index * this.full_row_height
             });
         }
     };

@@ -9,7 +9,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
 
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
 
         return;
     }
@@ -38,8 +38,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.row_highlight_color = row_options["row_highlight_color"];
     this.header_background_color = row_options["header_background_color"];
 
-    // Ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
-    this.row_height = Dash.Size.RowHeight + 1;
+    // For creating new rows
+    this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
+
+    // For calculations - ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
+    this.full_row_height = this.row_height + 1;
 
     DashLayoutRevolvingListScrolling.call(this);
 
@@ -52,7 +55,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.container.css({
             "position": "absolute",
             "inset": 0,
-            "top": this.include_header_row ? this.row_height : 0,
+            "top": this.include_header_row ? this.full_row_height : 0,
             "overflow-y": "auto"
         });
 
@@ -204,7 +207,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.header_row_backing = this.get_new_row(false, true);
 
         this.header_row_backing.css({
-            "height": this.row_height,
+            "height": this.full_row_height,
             "background": this.header_row.column_box.css("background-color")
         });
 
@@ -225,9 +228,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             "overflow": "hidden",
             "text-overflow": "clip",
             "white-space": "nowrap",
-            "max-height": this.row_height,
-            "height": this.row_height,
-            "line-height": this.row_height + "px",
+            "max-height": this.full_row_height,
+            "height": this.full_row_height,
+            "line-height": this.full_row_height + "px",
             "opacity": 0
         });
 
@@ -276,7 +279,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         else {
-            row = new DashLayoutListRow(this, header ? this.header_row_tag : "");
+            row = new DashLayoutListRow(
+                this,
+                header ? this.header_row_tag : "",
+                this.row_height
+            );
 
             row.html.css(css);
 
@@ -330,7 +337,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         row.id = this.included_row_ids[row_index];
 
         row.html.css({
-            "top": row_index * this.row_height,
+            "top": row_index * this.full_row_height,
             "display": "initial",
             "pointer-events": "auto"
         });
@@ -390,7 +397,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     // The 'expanded' param exists just in case row.IsExpanded() isn't immediately ready when this is called
     this.adjust_row_tops = function (row, height_adj, expanded=true) {
-        var row_buffer = Math.ceil(height_adj / this.row_height);
+        var row_buffer = Math.ceil(height_adj / this.full_row_height);
 
         if (row_buffer > this.row_count_buffer) {
             this.row_count_buffer = row_buffer;
@@ -402,7 +409,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             }
 
             var top_pos = parseInt(other_row.html.css("top"));
-            var default_top_pos = other_row.index * this.row_height;
+            var default_top_pos = other_row.index * this.full_row_height;
 
             if (expanded || top_pos > default_top_pos) {
                 var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;

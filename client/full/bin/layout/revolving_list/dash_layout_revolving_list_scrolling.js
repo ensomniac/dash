@@ -19,14 +19,14 @@ function DashLayoutRevolvingListScrolling () {
             start_pos = 0;
         }
 
-        var end_pos = start_pos + window.innerHeight + this.row_height;
-        var start_index = Math.floor(parseInt((start_pos / this.row_height).toString()));
+        var end_pos = start_pos + window.innerHeight + this.full_row_height;
+        var start_index = Math.floor(parseInt((start_pos / this.full_row_height).toString()));
 
         return [start_pos, end_pos, start_index];
     };
 
     this.get_scroll_indexes = function () {
-        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.row_height);
+        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.full_row_height);
 
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
@@ -40,7 +40,7 @@ function DashLayoutRevolvingListScrolling () {
             }
 
             var preview_height = parseInt(expanded_data["preview_content"].css("height"));
-            var index_buffer = Math.ceil(preview_height / this.row_height);
+            var index_buffer = Math.ceil(preview_height / this.full_row_height);
 
             if (start_index > (expanded_data["row_index"] + index_buffer)) {
                 start_pos -= preview_height;
@@ -57,7 +57,7 @@ function DashLayoutRevolvingListScrolling () {
             break;
         }
 
-        var end_index = parseInt((end_pos / this.row_height).toString());
+        var end_index = parseInt((end_pos / this.full_row_height).toString());
 
         if (start_index < 0) {
             start_index = 0;
@@ -147,7 +147,7 @@ function DashLayoutRevolvingListScrolling () {
 
         for (row of this.row_objects) {
             row.html.css({
-                "top": row.index * this.row_height
+                "top": row.index * this.full_row_height
             });
         }
     };

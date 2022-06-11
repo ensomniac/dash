@@ -1,6 +1,7 @@
-function DashLayoutListRow (list, row_id) {
+function DashLayoutListRow (list, row_id, height=null) {
     this.list = list;
     this.id = row_id;
+    this.height = height || Dash.Size.RowHeight;
 
     this.is_shown = true;
     this.tmp_css_cache = [];
@@ -61,7 +62,7 @@ function DashLayoutListRow (list, row_id) {
                 "left": 0,
                 "top": 0,
                 "right": 0,
-                "height": Dash.Size.RowHeight,
+                "height": this.height,
                 "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
                 "pointer-events": "none",
                 "opacity": 0
@@ -78,17 +79,16 @@ function DashLayoutListRow (list, row_id) {
         this.column_box.css({
             "position": "absolute",
             "top": 0,
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "display": "flex"
         });
 
         this.html.css({
-            // "background": this.color.Background,
             "color": this.color.Text,
             "border-bottom": "1px solid rgb(200, 200, 200)",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
-            "min-height": Dash.Size.RowHeight,
+            "min-height": this.height,
             "cursor": "pointer"  // This is changed in setup_columns(), if relevant
         });
 
@@ -276,7 +276,7 @@ function DashLayoutListRow (list, row_id) {
             "overflow-y": "auto",
             "opacity": 1,
             "height": "auto",
-            "padding-top": Dash.Size.RowHeight,
+            "padding-top": this.height,
         });
 
         html.css({

@@ -77,7 +77,7 @@ function DashLayoutListRowElements () {
         var spacer = $("<div></div>");
 
         spacer.css({
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "flex-grow": 2,
             "flex-shrink": 2
         });
@@ -131,13 +131,13 @@ function DashLayoutListRowElements () {
         );
 
         combo.html.css({
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "width": column_config_data["width"]
         });
 
         combo.label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px"
+            "height": this.height,
+            "line-height": this.height + "px"
         });
 
         if (column_config_data["css"]) {
@@ -173,7 +173,7 @@ function DashLayoutListRowElements () {
 
         var css = {
             "background": "none",
-            "height": Dash.Size.RowHeight * 0.9,
+            "height": this.height * 0.9,
             "margin-top": Dash.Size.Padding * 0.1,
             "box-shadow": "none"
         };
@@ -218,8 +218,8 @@ function DashLayoutListRowElements () {
         }
 
         input.input.css({
-            "height": Dash.Size.RowHeight * 0.9,
-            "line-height": (Dash.Size.RowHeight * 0.9) + "px",
+            "height": this.height * 0.9,
+            "line-height": (this.height * 0.9) + "px",
             "padding-left": Dash.Size.Padding * 0.35
         });
 
@@ -271,7 +271,7 @@ function DashLayoutListRowElements () {
         })(this);
 
         icon_button.html.css({
-            "height": Dash.Size.RowHeight
+            "height": this.height
         });
 
         if (column_config_data["css"]) {

@@ -1,14 +1,15 @@
-function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null) {
+function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null, row_height=null) {
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
     this.color = color || Dash.Color.Light;
+    this.row_height = row_height || Dash.Size.RowHeight;
 
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
 
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
+        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
 
         return;
     }
@@ -36,7 +37,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     };
 
     this.AddRow = function (row_id) {
-        var row = new DashLayoutListRow(this, row_id);
+        var row = new DashLayoutListRow(this, row_id, this.row_height);
 
         this.rows.push(row);
 
@@ -303,7 +304,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             preview.css({
                 "padding-left": Dash.Size.Padding,
                 "padding-top": Dash.Size.Padding * 0.5,
-                "height": Dash.Size.RowHeight,
+                "height": this.row_height,
                 "color": this.color.Text,
                 "font-family": "sans_serif_italic"
             });

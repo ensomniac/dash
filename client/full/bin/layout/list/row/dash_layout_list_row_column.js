@@ -4,8 +4,9 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     this.index = parseInt(index);
     this.color = color || Dash.Color.Light;
 
-    this.list = this.list_row.list;
     this.html = $("<div></div>");
+    this.list = this.list_row.list;
+    this.height = this.list_row.height;
     this.width = this.column_config_data["width"] || -1;
 
     this.setup_styles = function () {
@@ -20,8 +21,8 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
 
     this.get_css = function () {
         var css = {
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
+            "height": this.height,
+            "line-height": this.height.toString() + "px",
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
@@ -178,7 +179,15 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
 
         this.html.css(css);
-        this.html.text(column_value);
+
+        if (column_value.includes("</")) {
+            // JQuery's .text() escapes HTML tags, so this approach is required
+            this.html[0].innerHTML = column_value;
+        }
+
+        else {
+            this.html.text(column_value);
+        }
     };
 
     this.setup_styles();
