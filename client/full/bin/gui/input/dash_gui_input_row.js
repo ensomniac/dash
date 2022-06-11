@@ -1,11 +1,11 @@
-function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="") {
+function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key="") {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
 
     this.html = $("<div></div>");

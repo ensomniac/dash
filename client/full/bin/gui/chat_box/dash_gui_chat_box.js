@@ -5,7 +5,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
     this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
     this.at_combo_options = at_combo_options;  // When mobile, this expects the mobile combo options structure
-    this.color = color || Dash.Color.Dark;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Dark);
     this.dual_sided = dual_sided;
 
     this.html = null;

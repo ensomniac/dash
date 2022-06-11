@@ -4,7 +4,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.binder = binder;
     this.on_save_cb = binder && on_save_cb ? on_save_cb.bind(binder) : on_save_cb;
     this.on_clear_cb = binder && on_clear_cb ? on_clear_cb.bind(binder) : on_clear_cb;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
 
     this.last_url = "";
     this.signature = null;

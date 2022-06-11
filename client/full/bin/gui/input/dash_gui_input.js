@@ -1,4 +1,4 @@
-function DashGuiInput (placeholder_text, color) {
+function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
 

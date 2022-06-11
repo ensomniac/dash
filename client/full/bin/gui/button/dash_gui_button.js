@@ -1,25 +1,23 @@
-function DashGuiButton (label, callback, bind, color=null, options={}) {
-    this.label      = label;
-    this.callback   = callback;
-    this.bind       = bind;
-    this.color      = color || Dash.Color.Light;
-    this.options    = options;
+function DashGuiButton (label, callback, binder, color=null, options={}) {
+    this.label = label;
+    this.callback = callback;
+    this.bind = binder;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
+    this.options = options;
 
-    this.html            = $("<div></div>");
-    this.highlight       = $("<div></div>");
-    this.click_highlight = $("<div></div>");
-    this.load_bar        = $("<div></div>");
-    this.label           = $("<div>" + this.label + "</div>");
-
-    this.load_dots             = null;
-    this.color_set             = null;
-    this.right_label           = null;
-    this.label_shown           = null;
+    this.disabled = false;
+    this.load_dots = null;
+    this.color_set = null;
+    this.right_label = null;
+    this.label_shown = null;
+    this.is_selected = false;
+    this.html = $("<div></div>");
+    this.load_bar = $("<div></div>");
+    this.highlight = $("<div></div>");
     this.last_right_label_text = null;
-    this.is_selected           = false;
-    this.disabled              = false;
-    this.style                 = this.options["style"] || "default";
-    this.in_toolbar            = this.style === "toolbar";
+    this.click_highlight = $("<div></div>");
+    this.label = $("<div>" + this.label + "</div>");
+    this.style = this.options["style"] || "default";
 
     DashGuiButtonInterface.call(this);
 
@@ -167,7 +165,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
 
         this.html.append(this.right_label);
 
-        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
+        var size = Math.round(Dash.Size.RowHeight - Dash.Size.Padding);
 
         this.right_label.css({
             "position": "absolute",
@@ -180,7 +178,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
             "border-radius": Dash.Size.BorderRadiusInteractive,
             "font-size": (size * 0.5) + "px",
             "text-align": "center",
-            "opacity": 0,
+            "opacity": 0
         });
     };
 

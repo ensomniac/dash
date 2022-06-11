@@ -22,8 +22,7 @@ function DashGuiButtonStyleToolbar () {
             "margin": 0,
             "margin-top": Dash.Size.Padding * 0.5,
             "height": Dash.Size.RowHeight,
-            "margin-right": Dash.Size.Padding * 0.5,
-            // "width": Dash.Size.ColumnWidth,
+            "margin-right": Dash.Size.Padding * 0.5
         });
 
         this.highlight.css({

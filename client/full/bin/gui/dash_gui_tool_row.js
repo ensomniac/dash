@@ -2,7 +2,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.binder = binder;
     this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
     this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
 
     this.html = null;
     this.elements = [];

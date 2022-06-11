@@ -1,17 +1,14 @@
-function DashGuiLogin (on_login_binder, on_login_callback, color, optional_params={}) {
+function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null, optional_params={}) {
+    this.on_login_callback = on_login_binder && on_login_callback ? on_login_callback.bind(on_login_binder) : null;
+    this.color = color || (on_login_binder && on_login_binder.color ? on_login_binder.color : Dash.Color.Dark);
+    this.optional_params = optional_params;
+
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
     this.email_row = $("<div></div>");
     this.password_row = $("<div></div>");
     this.button_bar = $("<div></div>");
-    this.color = color || Dash.Color.Dark;
-    this.on_login_callback = null;
-    this.optional_params = optional_params;
-
-    if (on_login_binder && on_login_callback) {
-        this.on_login_callback = on_login_callback.bind(on_login_binder);
-    }
 
     this.setup_styles = function () {
         this.login_button = new Dash.Gui.Button("Login", this.Login, this, this.color);

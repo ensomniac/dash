@@ -41,6 +41,26 @@ function DashFile () {
         "transform": "translate(-50%, -50%)"
     };
 
+    this.URLToBlob = function (url, callback, error_callback=null) {
+        fetch(
+            url
+        ).then(
+            resp => resp.blob()
+        ).then(
+            blob => callback(blob)
+        ).catch(
+            () => {
+                if (error_callback) {
+                    error_callback();
+                }
+
+                console.error("File download using Dash.File.URLToBlob() failed. The URL will now be opened in a new tab:\n" + url);
+
+                window.open(url, "_blank");
+            }
+        );
+    };
+
     this.GetPreview = function (color, file_data, height) {
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];

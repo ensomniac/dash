@@ -1,4 +1,4 @@
-function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
      * --------------------------

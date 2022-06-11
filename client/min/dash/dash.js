@@ -17996,12 +17996,55 @@ function DashGui() {
         if (!filename) {
             filename = url.split("/").Last();
         }
-        fetch(
-            url
-        ).then(
-            resp => resp.blob()
-        ).then(
-            blob => {
+        // fetch(
+        //     url
+        // ).then(
+        //     resp => resp.blob()
+        // ).then(
+        //     blob => {
+        //         var url_pointer = window.URL.createObjectURL(blob);
+        //
+        //         // This will only already exist if we don't removeChild at the end of this
+        //         // function - however, using removeChild at the end seems most efficient
+        //         var dialog = document.getElementById(dialog_id);
+        //
+        //         if (!dialog) {
+        //             dialog = document.createElement("a");
+        //
+        //             dialog.setAttribute("id", dialog_id);
+        //
+        //             dialog.style.display = "none";
+        //         }
+        //
+        //         dialog.href = url_pointer;
+        //         dialog.download = filename;
+        //
+        //         document.body.appendChild(dialog);
+        //
+        //         dialog.click();
+        //
+        //         window.URL.revokeObjectURL(url_pointer);
+        //
+        //         document.body.removeChild(dialog);
+        //
+        //         if (callback) {
+        //             callback();
+        //         }
+        //     }
+        // ).catch(
+        //     () => {
+        //         if (callback) {
+        //             callback();
+        //         }
+        //
+        //         console.error("File download using Dash.Gui.OpenFileURLDownloadDialog() failed. The URL will now be opened in a new tab:\n" + url);
+        //
+        //         window.open(url, "_blank");
+        //     }
+        // );
+        Dash.File.URLToBlob(
+            url,
+            function (blob) {
                 var url_pointer = window.URL.createObjectURL(blob);
                 // This will only already exist if we don't removeChild at the end of this
                 // function - however, using removeChild at the end seems most efficient
@@ -18020,15 +18063,8 @@ function DashGui() {
                 if (callback) {
                     callback();
                 }
-            }
-        ).catch(
-            () => {
-                if (callback) {
-                    callback();
-                }
-                console.error("File download using Dash.Gui.OpenFileURLDownloadDialog() failed. The URL will now be opened in a new tab:\n" + url);
-                window.open(url, "_blank");
-            }
+            },
+            callback
         );
     };
     // This is rather quick/dirty and should probably become its own style at some point (will require it to first be visually improved)
@@ -18570,6 +18606,23 @@ function DashFile () {
         "top": "50%",
         "left": "50%",
         "transform": "translate(-50%, -50%)"
+    };
+    this.URLToBlob = function (url, callback, error_callback=null) {
+        fetch(
+            url
+        ).then(
+            resp => resp.blob()
+        ).then(
+            blob => callback(blob)
+        ).catch(
+            () => {
+                if (error_callback) {
+                    error_callback();
+                }
+                console.error("File download using Dash.File.URLToBlob() failed. The URL will now be opened in a new tab:\n" + url);
+                window.open(url, "_blank");
+            }
+        );
     };
     this.GetPreview = function (color, file_data, height) {
         var file_url = file_data["url"] || file_data["orig_url"] || "";
@@ -19699,7 +19752,7 @@ function DashAdminSettings (admin_view) {
     this.setup_styles();
 }
 
-function DashAdminColorDoc (color) {
+function DashAdminColorDoc (color=null) {
     this.html = Dash.Gui.GetHTMLContext("--");
     this.color = color || Dash.Color.Light;
     this.setup_styles = function () {
@@ -19709,7 +19762,7 @@ function DashAdminColorDoc (color) {
             "margin-bottom": Dash.Size.Padding,
             "padding": Dash.Size.Padding,
             "border": "2px solid " + this.color.AccentGood,
-            "border-radius": 5,
+            "border-radius": 5
         });
     };
     this.setup_styles();
@@ -20603,19 +20656,16 @@ class DashColorStateSet {
     };
 }
 
-function DashGuiLogin (on_login_binder, on_login_callback, color, optional_params={}) {
+function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null, optional_params={}) {
+    this.on_login_callback = on_login_binder && on_login_callback ? on_login_callback.bind(on_login_binder) : null;
+    this.color = color || (on_login_binder && on_login_binder.color ? on_login_binder.color : Dash.Color.Dark);
+    this.optional_params = optional_params;
     this.html = $("<div></div>");
     this.login_box = $("<div></div>");
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
     this.email_row = $("<div></div>");
     this.password_row = $("<div></div>");
     this.button_bar = $("<div></div>");
-    this.color = color || Dash.Color.Dark;
-    this.on_login_callback = null;
-    this.optional_params = optional_params;
-    if (on_login_binder && on_login_callback) {
-        this.on_login_callback = on_login_callback.bind(on_login_binder);
-    }
     this.setup_styles = function () {
         this.login_button = new Dash.Gui.Button("Login", this.Login, this, this.color);
         this.reset_button = new Dash.Gui.Button("Create / Reset Login", this.ResetLogin, this, this.color);
@@ -21416,7 +21466,7 @@ function DashGuiCheckbox (
 ) {
     this.local_storage_key = local_storage_key;
     this.default_state = default_state;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
     this.binder = binder;
     this.callback = callback && binder ? callback.bind(binder) : callback;
@@ -21682,7 +21732,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.binder = binder;
     this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
     this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.html = null;
     this.elements = [];
     this.toolbar = null;
@@ -22114,7 +22164,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.binder = binder;
     this.on_save_cb = binder && on_save_cb ? on_save_cb.bind(binder) : on_save_cb;
     this.on_clear_cb = binder && on_clear_cb ? on_clear_cb.bind(binder) : on_clear_cb;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.last_url = "";
     this.signature = null;
     this.save_button = null;
@@ -22333,26 +22383,25 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.setup_styles();
 }
 
-function DashGuiButton (label, callback, bind, color=null, options={}) {
-    this.label      = label;
-    this.callback   = callback;
-    this.bind       = bind;
-    this.color      = color || Dash.Color.Light;
-    this.options    = options;
-    this.html            = $("<div></div>");
-    this.highlight       = $("<div></div>");
-    this.click_highlight = $("<div></div>");
-    this.load_bar        = $("<div></div>");
-    this.label           = $("<div>" + this.label + "</div>");
-    this.load_dots             = null;
-    this.color_set             = null;
-    this.right_label           = null;
-    this.label_shown           = null;
+function DashGuiButton (label, callback, binder, color=null, options={}) {
+    this.label = label;
+    this.callback = callback;
+    this.bind = binder;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
+    this.options = options;
+    this.disabled = false;
+    this.load_dots = null;
+    this.color_set = null;
+    this.right_label = null;
+    this.label_shown = null;
+    this.is_selected = false;
+    this.html = $("<div></div>");
+    this.load_bar = $("<div></div>");
+    this.highlight = $("<div></div>");
     this.last_right_label_text = null;
-    this.is_selected           = false;
-    this.disabled              = false;
-    this.style                 = this.options["style"] || "default";
-    this.in_toolbar            = this.style === "toolbar";
+    this.click_highlight = $("<div></div>");
+    this.label = $("<div>" + this.label + "</div>");
+    this.style = this.options["style"] || "default";
     DashGuiButtonInterface.call(this);
     this.initialize_style = function () {
         // Toss a warning if this isn't a known style, so we don't fail silently
@@ -22461,7 +22510,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
     this.setup_right_label = function () {
         this.right_label = $("<div>--</div>");
         this.html.append(this.right_label);
-        var size = Math.round(Dash.Size.RowHeight-Dash.Size.Padding);
+        var size = Math.round(Dash.Size.RowHeight - Dash.Size.Padding);
         this.right_label.css({
             "position": "absolute",
             "right": Dash.Size.Padding * 0.5,
@@ -22473,7 +22522,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
             "border-radius": Dash.Size.BorderRadiusInteractive,
             "font-size": (size * 0.5) + "px",
             "text-align": "center",
-            "opacity": 0,
+            "opacity": 0
         });
     };
     this.initialize_style();
@@ -22482,7 +22531,7 @@ function DashGuiButton (label, callback, bind, color=null, options={}) {
 
 function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.binder = binder;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.style = button_style;
     this.buttons = [];
     this.html = $("<div></div>");
@@ -23234,8 +23283,7 @@ function DashGuiButtonStyleToolbar () {
             "margin": 0,
             "margin-top": Dash.Size.Padding * 0.5,
             "height": Dash.Size.RowHeight,
-            "margin-right": Dash.Size.Padding * 0.5,
-            // "width": Dash.Size.ColumnWidth,
+            "margin-right": Dash.Size.Padding * 0.5
         });
         this.highlight.css({
             "position": "absolute",
@@ -23337,7 +23385,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.del_msg_callback = binder && del_msg_cb ? del_msg_cb.bind(binder) : del_msg_cb;
     this.mention_callback = binder && mention_cb ? mention_cb.bind(binder) : mention_cb;
     this.at_combo_options = at_combo_options;  // When mobile, this expects the mobile combo options structure
-    this.color = color || Dash.Color.Dark;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Dark);
     this.dual_sided = dual_sided;
     this.html = null;
     this.messages = [];
@@ -23741,7 +23789,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.chat_box = chat_box;  // Also acts as binder
     this.msg_submit_callback = msg_submit_callback.bind(this.chat_box);
     this.at_combo_options = at_combo_options;
-    this.color = color || Dash.Color.Light;
+    this.color = color || chat_box.color || Dash.Color.Light;
     
     this.html = null;
     this.input = null;
@@ -23966,7 +24014,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.align_right = align_right;
     this.include_delete_button = include_delete_button;
     this.index = index;
-    this.color = color || Dash.Color.Light;
+    this.color = color || chat_box.color || Dash.Color.Light;
     this.id = id || Dash.Math.RandomID();
     this.html = null;
     this.user_icon = null;
@@ -24212,7 +24260,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.binder = binder;
     this.option_list = option_list;
     this.selected_option_id = selected_option_id;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;
     this.bool = bool;
     this.color_set = null;
@@ -25451,7 +25499,7 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-function DashGuiFileExplorer (color, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
      * --------------------------
@@ -26895,7 +26943,7 @@ function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
     };
 }
 
-function DashGuiInput (placeholder_text, color) {
+function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
     this.autosave = false;
@@ -27209,14 +27257,14 @@ function DashGuiInput (placeholder_text, color) {
     this.setup_connections();
 }
 
-function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color, data_key="") {
+function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key="") {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
     this.button_text = button_text;
     this.on_click = on_click;
     this.on_click_bind = on_click_bind;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
     this.html = $("<div></div>");
     this.flash_save = $("<div></div>");
@@ -27906,7 +27954,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
-    this.color = this.options["color"] || binder.color || Dash.Color.Light;
+    this.color = this.options["color"] || (binder && binder.color ? binder.color : Dash.Color.Light);
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         // DashGlobalImpactChange | 12/21/21 | Ryan
@@ -29986,7 +30034,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.row_height = row_height || Dash.Size.RowHeight;
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
@@ -30820,7 +30868,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     this.list_row = list_row;
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
-    this.color = color || Dash.Color.Light;
+    this.color = color || list_row.color || Dash.Color.Light;
     this.html = $("<div></div>");
     this.list = this.list_row.list;
     this.height = this.list_row.height;
@@ -31205,7 +31253,7 @@ function DashLayoutListRowElements () {
 function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null) {
     this.binder = binder;
     this.column_config = column_config;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.include_header_row = include_header_row;
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
@@ -32945,7 +32993,7 @@ function DashLayoutToolbarInterface () {
 }
 
 function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null) {
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;  // Format: {id: label}
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
@@ -33028,7 +33076,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
 }
 
 function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
@@ -33301,6 +33349,20 @@ function DashMobileCard (stack) {
         });
         this.AddHTML(label);
         return label;
+    };
+    this.AddButton = function (label_text, binder, callback) {
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
+            binder,
+            this.color,
+            {"style": "toolbar"}
+        );
+        button.html.css({
+            "margin-right": 0
+        });
+        this.AddHTML(button.html);
+        return button;
     };
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
@@ -33732,7 +33794,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
 }
 
 function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;  // Format: {id: label}
     this.placeholder_text = placeholder_text;
     this.binder = binder;

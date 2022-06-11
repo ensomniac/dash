@@ -1,6 +1,6 @@
 function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.binder = binder;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.style = button_style;
 
     this.buttons = [];

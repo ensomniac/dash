@@ -2,7 +2,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.chat_box = chat_box;  // Also acts as binder
     this.msg_submit_callback = msg_submit_callback.bind(this.chat_box);
     this.at_combo_options = at_combo_options;
-    this.color = color || Dash.Color.Light;
+    this.color = color || chat_box.color || Dash.Color.Light;
     
     this.html = null;
     this.input = null;

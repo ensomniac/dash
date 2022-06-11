@@ -57,6 +57,24 @@ function DashMobileCard (stack) {
         return label;
     };
 
+    this.AddButton = function (label_text, binder, callback) {
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
+            binder,
+            this.color,
+            {"style": "toolbar"}
+        );
+
+        button.html.css({
+            "margin-right": 0
+        });
+
+        this.AddHTML(button.html);
+
+        return button;
+    };
+
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };

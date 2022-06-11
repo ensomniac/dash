@@ -6,7 +6,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.align_right = align_right;
     this.include_delete_button = include_delete_button;
     this.index = index;
-    this.color = color || Dash.Color.Light;
+    this.color = color || chat_box.color || Dash.Color.Light;
     this.id = id || Dash.Math.RandomID();
 
     this.html = null;

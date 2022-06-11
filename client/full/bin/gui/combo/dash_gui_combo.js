@@ -4,7 +4,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.binder = binder;
     this.option_list = option_list;
     this.selected_option_id = selected_option_id;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;
     this.bool = bool;
 

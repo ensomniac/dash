@@ -1,5 +1,5 @@
 function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null) {
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;  // Format: {id: label}
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;

@@ -1,5 +1,5 @@
 function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.placeholder_text = placeholder_text;
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;

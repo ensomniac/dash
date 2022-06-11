@@ -2,7 +2,7 @@
 function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null) {
     this.binder = binder;
     this.column_config = column_config;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.include_header_row = include_header_row;
 
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function

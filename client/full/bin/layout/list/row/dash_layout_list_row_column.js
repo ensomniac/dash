@@ -2,7 +2,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     this.list_row = list_row;
     this.column_config_data = column_config_data;
     this.index = parseInt(index);
-    this.color = color || Dash.Color.Light;
+    this.color = color || list_row.color || Dash.Color.Light;
 
     this.html = $("<div></div>");
     this.list = this.list_row.list;

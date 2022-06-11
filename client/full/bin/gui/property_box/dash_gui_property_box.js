@@ -17,7 +17,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
-    this.color = this.options["color"] || binder.color || Dash.Color.Light;
+    this.color = this.options["color"] || (binder && binder.color ? binder.color : Dash.Color.Light);
 
     DashGuiPropertyBoxInterface.call(this);
 

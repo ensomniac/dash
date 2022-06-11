@@ -2,7 +2,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.binder = binder;
     this.selected_callback = selected_callback.bind(this.binder);
     this.column_config = column_config;
-    this.color = color || Dash.Color.Light;
+    this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.row_height = row_height || Dash.Size.RowHeight;
 
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
