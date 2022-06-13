@@ -30956,7 +30956,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["font-family"] = "sans_serif_italic";
         }
         this.html.css(css);
-        if (column_value.includes("</")) {
+        if (column_value && column_value.includes("</")) {
             // JQuery's .text() escapes HTML tags, so this approach is required
             this.html[0].innerHTML = column_value;
         }
