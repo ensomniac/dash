@@ -389,7 +389,11 @@ class DashLocalStorage:
             return 0
 
     def ConformPermissions(self, full_path):
-        os.chown(full_path, 10000, 1004)
+        try:
+            os.chown(full_path, 10000, 1004)
+
+        except FileNotFoundError:
+            pass
 
     def get_folder_possibilities(self, name):
         return [name, f"/{name}", f"{name}/", f"/{name}/"]
