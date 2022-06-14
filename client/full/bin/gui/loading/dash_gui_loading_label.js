@@ -39,43 +39,57 @@ function DashGuiLoadingLabel (binder, label_text, height=null) {
         this.label.animate({"opacity": 1}, 250);
     };
 
-    // Called after fade out is complete
-    this.destroy = function () {
-        this.label.remove();
-
-        this.loading_dots.html.remove();
-
-        this.html.remove();
-
-        this.label = null;
-        this.loading_dots = null;
-        this.html = null;
-    };
-
     this.Clear = function () {
         // This function will fade out the loading label while converting
         // it to an absolutely positioned element. Since this element is
         // really meant to be used to show while something is loading, once
         // loading is complete, this flow makes it easy to build the loaded
-        // content without having to wait to fade out the label first and fire a callback
+        // content without having to wait to fade out the label first and fire a callback.
 
-        this.html.css({
-            "position": "absolute",
-            "top": this.html[0].offsetTop,
-            "left": this.html[0].offsetLeft
-        });
+        if (this.html) {
+            this.html.css({
+                "position": "absolute",
+                "top": this.html[0].offsetTop,
+                "left": this.html[0].offsetLeft
+            });
+        }
 
-        this.label.stop().animate({"opacity": 0}, 250, this.destroy.bind(this));
+        this.Stop();
 
-        this.loading_dots.Stop();
+        if (this.label) {
+            this.label.stop().animate({"opacity": 0}, 250, this.destroy.bind(this));
+        }
     };
 
     this.Stop = function () {
-        this.loading_dots.Stop();
+        if (this.loading_dots) {
+            this.loading_dots.Stop();
+        }
     };
 
     this.SetText = function (text) {
-        this.label.text(text);
+        if (this.label) {
+            this.label.text(text);
+        }
+    };
+
+    // Called after fade out is complete
+    this.destroy = function () {
+        if (this.label) {
+            this.label.remove();
+        }
+
+        if (this.loading_dots) {
+            this.loading_dots.html.remove();
+        }
+
+        if (this.html) {
+            this.html.remove();
+        }
+
+        this.label = null;
+        this.loading_dots = null;
+        this.html = null;
     };
 
     this.setup_styles();
