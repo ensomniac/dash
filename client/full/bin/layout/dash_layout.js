@@ -9,7 +9,15 @@ function DashLayout () {
     this.UserProfile       = DashLayoutUserProfile;
 
     this.Tabs = {
-        Side: DashLayoutTabsSide,
-        Top:  DashLayoutTabsTop
+        Side: class DashLayoutTabsSide extends DashLayoutTabs {
+            constructor(binder, recall_id_suffix="") {
+                super(binder, true, recall_id_suffix);
+            };
+        },
+        Top:  class DashLayoutTabsTop extends DashLayoutTabs {
+            constructor(binder, recall_id_suffix="") {
+                super(binder, false, recall_id_suffix);
+            };
+        }
     };
 }

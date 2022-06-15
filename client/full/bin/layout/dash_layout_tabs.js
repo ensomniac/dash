@@ -1,4 +1,4 @@
-function DashLayoutTabs (binder, side_tabs) {
+function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.binder = binder;
     this.side_tabs = side_tabs;
 
@@ -13,6 +13,12 @@ function DashLayoutTabs (binder, side_tabs) {
     this.content_area = $("<div></div>");
     this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+
+    // This is necessary if there will be two different lists within the same script.
+    // Without this, both lists will share the same recall ID and load indexes incorrectly.
+    if (recall_id_suffix) {
+        this.recall_id += "_" + recall_id_suffix;
+    }
 
     if (this.side_tabs) {
         this.color = Dash.Color.Dark;
