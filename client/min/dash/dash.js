@@ -17919,24 +17919,28 @@ function DashGui() {
         });
         return html;
     };
-    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#000000") {
+    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#00ff00") {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
         callback = callback.bind(binder);
-        var color_picker = {};
-        color_picker["html"] = $("<div></div>");
-        color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
-        color_picker["input"] = $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>");
+        var color_picker = {
+            "html": $("<div></div>"),
+            "label": $("<label for='colorpicker'>" + label_text + "</label>"),
+            "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
+        };
         color_picker.label.css({
-            "font-family": "sans_serif_normal",
-            "color": dash_color.Text || "black"
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": dash_color.Text || "black",
+            "top": -Dash.Size.Padding * 0.5
         });
         color_picker.input.css({
+            "height": Dash.Size.ButtonHeight,
             "margin-left": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding,
-            "font-family": "sans_serif_normal",
-            "color": dash_color.Text || "black"
+            "background": "none",
+            "border": "1px solid " + dash_color.StrokeLight,
+            "border-radius": Dash.Size.Padding * 0.3
         });
         color_picker.html.append(color_picker.label);
         color_picker.html.append(color_picker.input);
