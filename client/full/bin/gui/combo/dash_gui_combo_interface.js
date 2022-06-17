@@ -215,11 +215,10 @@ function DashGuiComboInterface () {
             }
 
             if (typeof selected !== "object") {
-                console.warn("Warning: A combo object is using a non-object to identify a selected property. This should be an object only.");
-
-                console.log("combo_list", combo_list);
-                console.log("selected", selected);
-                console.log("ignore_callback", ignore_callback);
+                console.warn(
+                    "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
+                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected, "\nignore_callback:", ignore_callback
+                );
 
                 return;
             }

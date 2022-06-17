@@ -79,13 +79,15 @@ function DashGuiCheckbox (
     };
 
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
-        if ((is_checked && !this.checked) || (!is_checked && this.checked)) {
-            if (hover_hint) {
-                this.hover_hint = hover_hint;
-            }
-
-            this.Toggle(skip_callback);
+        if (is_checked === this.checked) {
+            return;
         }
+
+        if (hover_hint) {
+            this.hover_hint = hover_hint;
+        }
+
+        this.Toggle(skip_callback);
     };
 
     this.SetConfirmationMsg = function (msg) {

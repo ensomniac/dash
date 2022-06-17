@@ -63,6 +63,19 @@ class DashColorSet {
         return this._text_color_data;
     };
 
+    get StrokeDark () {
+        if (this._stroke_dark == null) {
+            this._stroke_dark = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.85
+            ]);
+        }
+
+        return this._stroke_dark;
+    };
+
     // Use to draw lines and boxes that compliment the interface
     // Think of this color as a lighter version of Text
     get Stroke () {
