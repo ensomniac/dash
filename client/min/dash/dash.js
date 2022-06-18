@@ -28339,13 +28339,21 @@ function DashGuiPropertyBoxInterface () {
             row.html.css("margin-left", indent_px);
         }
         var selected_key = default_value || this.get_data_cb()[property_key];
-        (function (self, row, selected_key, property_key, combo_options, bool) {
-            var callback = function (selected_option) {
-                self.on_combo_updated(property_key, selected_option["id"]);
-            };
+        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
+            var _callback;
+            if (callback) {
+                _callback = function (selected_option) {
+                    callback(property_key, selected_option["id"]);
+                };
+            }
+            else {
+                _callback = function (selected_option) {
+                    self.on_combo_updated(property_key, selected_option["id"]);
+                };
+            }
             var combo = new Dash.Gui.Combo (
                 selected_key,     // Label
-                callback,         // Callback
+                _callback,         // Callback
                 self,             // Binder
                 combo_options,    // Option List
                 selected_key,     // Selected
@@ -28368,7 +28376,7 @@ function DashGuiPropertyBoxInterface () {
                 "line-height": Dash.Size.RowHeight + "px",
             });
             row.property_box_input_combo = combo;
-        })(this, row, selected_key, property_key, combo_options, bool);
+        })(this, row, selected_key, property_key, combo_options, bool, options["callback"] || null);
         return row;
     };
     this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
