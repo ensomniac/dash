@@ -347,7 +347,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.setup_row_connections(row);
     };
 
-    this.on_row_selected = function (row, preview_content=null, force_expand=false) {
+    this.on_row_selected = function (row, force_expand=false) {
         if (!row) {
             return;
         }
@@ -358,7 +358,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
 
-        if (!preview_content && !this.get_expand_preview) {
+        if (!this.get_expand_preview) {
             return;
         }
 
@@ -372,9 +372,8 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
 
-        if (!preview_content) {
-            preview_content = this.get_expand_preview(row);
-        }
+        // Always redraw this content, otherwise, the connections won't work
+        var preview_content = this.get_expand_preview(row);
 
         if (!preview_content) {
             return;

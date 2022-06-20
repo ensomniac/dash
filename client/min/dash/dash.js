@@ -19390,6 +19390,12 @@ function DashDateTime () {
     };
     this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true) {
         iso_string = iso_string.replace("Z", "");
+        var included_offset_hours;
+        // Check for included offset hours at end of the ISO string (ex: -04:00)
+        if (iso_string[iso_string.length - 6] === "-") {
+            iso_string = iso_string.substring(0, iso_string.length - 6);
+            included_offset_hours = parseInt(iso_string.substring(iso_string.length - 5, iso_string.length));
+        }
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
         if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
@@ -19404,6 +19410,10 @@ function DashDateTime () {
             //
             // For now, we won't alter the date object, until we can find a way to differentiate the two
             is_static_date = true;
+        }
+        else if (included_offset_hours) {
+            // If the ISO string has offset hours included within it, we don't need to
+            // manually determine and adjust for the offset hours, so do nothing here
         }
         else {
             dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone, account_for_dst));
@@ -31905,7 +31915,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         row.Update();
         this.setup_row_connections(row);
     };
-    this.on_row_selected = function (row, preview_content=null, force_expand=false) {
+    this.on_row_selected = function (row, force_expand=false) {
         if (!row) {
             return;
         }
@@ -31913,7 +31923,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             this.non_expanding_click_cb(row, this);
             return;
         }
-        if (!preview_content && !this.get_expand_preview) {
+        if (!this.get_expand_preview) {
             return;
         }
         if (!force_expand && row.IsExpanded()) {
@@ -31922,9 +31932,8 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             this.setup_row_connections(row);
             return;
         }
-        if (!preview_content) {
-            preview_content = this.get_expand_preview(row);
-        }
+        // Always redraw this content, otherwise, the connections won't work
+        var preview_content = this.get_expand_preview(row);
         if (!preview_content) {
             return;
         }
@@ -32122,7 +32131,7 @@ function DashLayoutRevolvingListScrolling () {
                     continue;
                 }
                 if (!row.IsExpanded()) {
-                    this.on_row_selected(row, expanded_data["preview_content"], true);
+                    this.on_row_selected(row, true);
                 }
                 break;
             }

@@ -166,7 +166,7 @@ function DashLayoutRevolvingListScrolling () {
                 }
 
                 if (!row.IsExpanded()) {
-                    this.on_row_selected(row, expanded_data["preview_content"], true);
+                    this.on_row_selected(row, true);
                 }
 
                 break;
