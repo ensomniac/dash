@@ -1,4 +1,4 @@
-function DashLayoutToolbar (binder, color) {
+function DashLayoutToolbar (binder, color=null) {
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
 

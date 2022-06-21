@@ -215,11 +215,10 @@ function DashLayoutToolbarInterface () {
 
         this.html.append(end_border);
 
-        var obj_index = this.objects.length;
         this.objects.push({
             "html_elem": end_border,
             "callback": null,
-            "index": obj_index
+            "index": this.objects.length
         });
 
         this.refactor_item_padding();
@@ -386,7 +385,7 @@ function DashLayoutToolbarInterface () {
             };
 
             var combo = new Dash.Gui.Combo (
-                selected_id,      // Label
+                label_text,      // Label
                 _callback,        // Callback
                 self,             // Binder
                 combo_options,    // Option List
