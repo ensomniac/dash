@@ -212,6 +212,9 @@ class DashLocalStorage:
         return response
 
     def Delete(self, obj_id):
+        from time import sleep
+        from shutil import rmtree
+
         if self.nested:
             record_path = self.get_data_root(obj_id)
         else:
@@ -222,15 +225,30 @@ class DashLocalStorage:
             "record_path": record_path
         }
 
-        if result["existed"]:
-            if self.nested:
-                from shutil import rmtree
+        error = ""
+        attempts = 0
 
-                rmtree(record_path)
-            else:
-                os.remove(record_path)
+        while attempts < 5:
+            attempts += 1
 
-        result["exists_now"] = os.path.exists(record_path)
+            try:
+                if not os.path.exists(record_path):
+                    break
+
+                if self.nested:
+                    rmtree(record_path)
+                else:
+                    os.remove(record_path)
+
+            except Exception as e:
+                error = e
+
+                sleep(0.2)
+
+        if os.path.exists(record_path):
+            raise Exception(f"Failed to delete: {record_path}, error: {error}, ({attempts} attempts)")
+
+        result["exists_now"] = False
 
         return result
 
@@ -264,6 +282,9 @@ class DashLocalStorage:
 
                 if is_json:
                     data = loads(data)
+
+                if data:
+                    return data
 
             except Exception as e:
                 error = e
