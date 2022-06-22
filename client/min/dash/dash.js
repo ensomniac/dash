@@ -21765,6 +21765,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(label);
         return label;
     };
+    // TODO: These params are a mess, fix it (globally)
     this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
         if (right_margin !== null) {
@@ -21824,19 +21825,22 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(label);
         return label;
     };
-    this.AddInput = function (label_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false) {
+    // TODO: These params are a mess, fix it (globally)
+    this.AddInput = function (
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text=""
+    ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
             return;
         }
         if (include_label) {
-            var label = this.AddLabel(label_text, null, null, null, false);
+            var label = this.AddLabel(label_text || placeholder_text, null, null, null, false);
             label.html.css({
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
         var input = this.toolbar.AddTransparentInput(
-            label_text,
+            placeholder_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
@@ -21846,6 +21850,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "data_key": data_key
             }
         );
+        if (include_label) {
+            input.label = label;
+        }
         input.html.css({
             "margin-right": 0,
             "height": this.height * 0.65,
@@ -21875,13 +21882,16 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(input);
         return input;
     };
-    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null) {
+    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null, icon_size=null) {
         var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), null, additional_data);
         button.html.css({
             "margin-top": Dash.Size.Padding * 0.15
         });
         if (hover_hint) {
             button.SetHoverHint(hover_hint);
+        }
+        if (icon_size) {
+            button.SetIconSize(icon_size);
         }
         this.elements.push(button);
         return button;
@@ -21914,7 +21924,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-left": Dash.Size.Padding * 0.1
             });
             checkbox.label.label.css({
-                "margin-left": Dash.Size.Padding * 1.5,
+                "margin-left": this.elements.length > 0 ? Dash.Size.Padding * 1.5 : 0,
                 "font-size": "80%",
                 "font-family": "sans_serif_bold"
             });
