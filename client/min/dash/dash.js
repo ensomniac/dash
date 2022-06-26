@@ -27726,7 +27726,7 @@ function DashGuiLoadingLabel (binder, label_text, height=null) {
             "color": this.color.Text,
             "opacity": 0
         });
-        this.loading_dots.Start();
+        this.Start();
         this.label.animate({"opacity": 1}, 250);
     };
     this.Clear = function () {
@@ -27750,6 +27750,11 @@ function DashGuiLoadingLabel (binder, label_text, height=null) {
     this.Stop = function () {
         if (this.loading_dots) {
             this.loading_dots.Stop();
+        }
+    };
+    this.Start = function () {
+        if (this.loading_dots) {
+            this.loading_dots.Start();
         }
     };
     this.SetText = function (text) {
