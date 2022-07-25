@@ -18667,9 +18667,11 @@ function DashFile () {
         }
         return this.set_preview_size(html, height, square ? height : null);
     };
-    this.GetAudioPreview = function (url, height) {
+    this.GetAudioPreview = function (url, height, center_in_parent=true) {
         var html = $("<audio src='" + url + "' controls></audio>");
-        html.css(this.abs_center_css);
+        if (center_in_parent) {
+            html.css(this.abs_center_css);
+        }
         return this.set_preview_size(html, height - (Dash.Size.Padding * 2), null);
     };
     this.GetMicrosoftPreview = function (url, height) {
@@ -26740,6 +26742,7 @@ function DashGuiIcons (icon) {
         "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["regular"], "download"),
         "download_solid":        new DashGuiIconDefinition(this.icon, "Download", this.weight["solid"], "download"),
         "download_file":         new DashGuiIconDefinition(this.icon, "Download File", this.weight["regular"], "file-download"),
+        "dropbox_logo":          new DashGuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
         "edit":                  new DashGuiIconDefinition(this.icon, "Edit", this.weight["regular"], "pencil"),
         "edit_square":           new DashGuiIconDefinition(this.icon, "Edit (Square)", this.weight["regular"], "edit"),
         "email":                 new DashGuiIconDefinition(this.icon, "Email", this.weight["regular"], "at"),
@@ -26766,7 +26769,7 @@ function DashGuiIcons (icon) {
         "gem":                   new DashGuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
         "golf_ball":             new DashGuiIconDefinition(this.icon, "Golf Ball", this.weight["regular"], "golf-ball"),
         "google_drive":          new DashGuiIconDefinition(this.icon, "Google Drive", this.weight["brand"], "google-drive"),
-        "dropbox_logo":          new DashGuiIconDefinition(this.icon, "Dropbox Logo", this.weight["brand"], "dropbox"),
+        "headphones":            new DashGuiIconDefinition(this.icon, "Audio", this.weight["regular"], "headphones"),
         "infinity":              new DashGuiIconDefinition(this.icon, "Infinity", this.weight["regular"], "infinity"),
         "info":                  new DashGuiIconDefinition(this.icon, "Info Circle", this.weight["regular"], "info-circle"),
         "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),

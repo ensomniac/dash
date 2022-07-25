@@ -176,10 +176,12 @@ function DashFile () {
         return this.set_preview_size(html, height, square ? height : null);
     };
 
-    this.GetAudioPreview = function (url, height) {
+    this.GetAudioPreview = function (url, height, center_in_parent=true) {
         var html = $("<audio src='" + url + "' controls></audio>");
 
-        html.css(this.abs_center_css);
+        if (center_in_parent) {
+            html.css(this.abs_center_css);
+        }
 
         return this.set_preview_size(html, height - (Dash.Size.Padding * 2), null);
     };
