@@ -546,8 +546,9 @@ class DashLocalStorage:
 
         try:
             open(tmp_file_path, "w").write(dumps(data))
-        except:
-            raise Exception(f"Write fail at {tmp_file_path} from {full_path}")
+
+        except Exception as e:
+            raise Exception(f"Write fail at {tmp_file_path} from {full_path}\n\nException: {e}")
 
         os.rename(tmp_file_path, full_path)
 
