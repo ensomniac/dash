@@ -239,10 +239,10 @@ function DashGuiPropertyBoxInterface () {
 
             var combo = new Dash.Gui.Combo (
                 selected_key,     // Label
-                _callback,         // Callback
+                _callback,        // Callback
                 self,             // Binder
                 combo_options,    // Option List
-                selected_key,     // Selected
+                default_value !== null ? default_value : selected_key,  // Selected
                 self.color,       // Color set
                 {
                     "style": "row",
@@ -341,22 +341,6 @@ function DashGuiPropertyBoxInterface () {
         })(this, row_details, options["callback"] || null);
 
         return this.inputs[data_key];
-    };
-
-    this.indent_row = function (row) {
-        if (this.num_headers <= 0) {
-            return;
-        }
-
-        var indent_px = Dash.Size.Padding * 2;
-
-        if (this.indent_properties || this.indent_properties > 0) {
-            indent_px += this.indent_properties;
-        }
-
-        row.html.css({
-            "margin-left": indent_px
-        });
     };
 
     this.AddLabel = function (text, color=null) {

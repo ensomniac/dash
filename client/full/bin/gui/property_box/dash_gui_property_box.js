@@ -67,7 +67,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
     this.update_combos = function () {
         for (var data_key in this.combos) {
-            this.combos[data_key].Update(null, this.get_update_value(data_key), true);
+            var value = this.get_update_value(data_key);
+
+            // This might be too biased... unsure, but without it, a default value provided to the
+            // combo gets immediately switched to the first option if the data has no value for that key
+            if (value !== "") {
+                this.combos[data_key].Update(null, value, true);
+            }
         }
     };
 
@@ -87,6 +93,22 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
 
         return this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+    };
+
+    this.indent_row = function (row) {
+        if (this.num_headers <= 0) {
+            return;
+        }
+
+        var indent_px = Dash.Size.Padding * 2;
+
+        if (this.indent_properties || this.indent_properties > 0) {
+            indent_px += this.indent_properties;
+        }
+
+        row.html.css({
+            "margin-left": indent_px
+        });
     };
 
     this.on_server_property_set = function (property_set_data) {

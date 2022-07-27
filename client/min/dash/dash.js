@@ -24413,7 +24413,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.option_list.length > 0) {
             selected_obj = this.option_list[0];
         }
-        if (this.selected_option_id) {
+        if (this.selected_option_id || this.selected_option_id === 0) {
             for (var option of this.option_list) {
                 if (option["id"].toString() === this.selected_option_id.toString()) {
                     selected_obj = option;
@@ -25444,7 +25444,7 @@ function DashGuiComboInterface () {
             // Do we need to do more here?
             return;
         }
-        if (typeof selected !== "object") {
+        if (selected !== null && typeof selected !== "object") {
             if (combo_list || this.option_list) {
                 for (var combo of (combo_list || this.option_list)) {
                     if (combo["id"] === selected) {
@@ -25456,7 +25456,7 @@ function DashGuiComboInterface () {
             if (typeof selected !== "object") {
                 console.warn(
                     "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
-                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected, 
+                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected,
                     "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
                 );
                 return;
@@ -28132,7 +28132,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
     this.update_combos = function () {
         for (var data_key in this.combos) {
-            this.combos[data_key].Update(null, this.get_update_value(data_key), true);
+            var value = this.get_update_value(data_key);
+            // This might be too biased... unsure, but without it, a default value provided to the
+            // combo gets immediately switched to the first option if the data has no value for that key
+            if (value !== "") {
+                this.combos[data_key].Update(null, value, true);
+            }
         }
     };
     this.update_headers = function () {
@@ -28148,6 +28153,18 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return this.property_set_data[data_key];
         }
         return this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+    };
+    this.indent_row = function (row) {
+        if (this.num_headers <= 0) {
+            return;
+        }
+        var indent_px = Dash.Size.Padding * 2;
+        if (this.indent_properties || this.indent_properties > 0) {
+            indent_px += this.indent_properties;
+        }
+        row.html.css({
+            "margin-left": indent_px
+        });
     };
     this.on_server_property_set = function (property_set_data) {
         if (property_set_data["error"]) {
@@ -28508,10 +28525,10 @@ function DashGuiPropertyBoxInterface () {
             }
             var combo = new Dash.Gui.Combo (
                 selected_key,     // Label
-                _callback,         // Callback
+                _callback,        // Callback
                 self,             // Binder
                 combo_options,    // Option List
-                selected_key,     // Selected
+                default_value !== null ? default_value : selected_key,  // Selected
                 self.color,       // Color set
                 {
                     "style": "row",
@@ -28588,18 +28605,6 @@ function DashGuiPropertyBoxInterface () {
             self.html.append(row.html);
         })(this, row_details, options["callback"] || null);
         return this.inputs[data_key];
-    };
-    this.indent_row = function (row) {
-        if (this.num_headers <= 0) {
-            return;
-        }
-        var indent_px = Dash.Size.Padding * 2;
-        if (this.indent_properties || this.indent_properties > 0) {
-            indent_px += this.indent_properties;
-        }
-        row.html.css({
-            "margin-left": indent_px
-        });
     };
     this.AddLabel = function (text, color=null) {
         var header = new Dash.Gui.Header(text, color);

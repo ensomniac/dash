@@ -350,7 +350,7 @@ function DashGuiComboInterface () {
             return;
         }
 
-        if (typeof selected !== "object") {
+        if (selected !== null && typeof selected !== "object") {
             if (combo_list || this.option_list) {
                 for (var combo of (combo_list || this.option_list)) {
                     if (combo["id"] === selected) {
@@ -364,7 +364,7 @@ function DashGuiComboInterface () {
             if (typeof selected !== "object") {
                 console.warn(
                     "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
-                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected, 
+                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected,
                     "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
                 );
 

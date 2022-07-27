@@ -206,7 +206,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             selected_obj = this.option_list[0];
         }
 
-        if (this.selected_option_id) {
+        if (this.selected_option_id || this.selected_option_id === 0) {
             for (var option of this.option_list) {
                 if (option["id"].toString() === this.selected_option_id.toString()) {
                     selected_obj = option;
