@@ -13,6 +13,8 @@ from .errors import ClientAlert
 from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write
 
+VideoExtensions = ["mp4"]
+AudioExtensions = ["mp3", "wav", "ogg"]
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 

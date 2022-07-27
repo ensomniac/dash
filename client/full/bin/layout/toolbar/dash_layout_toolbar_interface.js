@@ -367,7 +367,7 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}) {
+    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
         var obj_index = this.objects.length;
 
         if (callback) {
@@ -385,13 +385,17 @@ function DashLayoutToolbarInterface () {
             };
 
             var combo = new Dash.Gui.Combo (
-                label_text,      // Label
+                label_text,       // Label
                 _callback,        // Callback
                 self,             // Binder
                 combo_options,    // Option List
                 selected_id,      // Selected
-                self.color,             // Color set
-                {"style": "row", "additional_data": additional_data}
+                self.color,       // Color set
+                {
+                    "style": "row",
+                    "additional_data": additional_data,
+                    ...extra_options
+                }
             );
 
             self.html.append(combo.html);

@@ -8,9 +8,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.options = options;
     this.bool = bool;
 
+    this.disabled = false;
     this.color_set = null;
     this.row_buttons = [];
     this.click_skirt = null;
+    this.on_click_cb = null;
     this.searchable_min = 20;
     this.initialized = false;
     this.dropdown_icon = null;
@@ -20,9 +22,14 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
+    this.static_label_text = "";
+    this.as_button_combo = false;
+    this.on_rows_drawn_cb = null;
     this.list_offset_vertical = 0;
     this.highlighted_button = null;
     this.init_labels_drawn = false;
+    this.gravity_width_override = null;
+    this.gravity_height_override = null;
     this.previous_selected_option = null;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
@@ -45,9 +52,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     // be set back to false in whatever code is referencing this attribute
     this.enter_key_event_fired = false;
 
-    this.random_id = "combo_" + Dash.Math.RandomID() + "_" +
-                     (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
-                     "_" + this.option_list[0]["id"];
+    this.random_id = (
+        "combo_" + Dash.Math.RandomID() + "_" +
+        (this.option_list[0]["label_text"] || this.option_list[0]["display_name"]) +
+        "_" + this.option_list[0]["id"]
+    );
 
     DashGuiComboInterface.call(this);
 
@@ -217,15 +226,15 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.setup_load_dots = function () {
-        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.ButtonHeight - Dash.Size.Padding);
+    this.setup_load_dots = function (align_right=false) {
+        this.load_dots = new Dash.Gui.LoadDots(this.style === "row" ? Dash.Size.RowHeight - (Dash.Size.Padding * 0.5) : Dash.Size.ButtonHeight - Dash.Size.Padding);
 
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.7)");
 
         this.html.append(this.load_dots.html);
 
-        if (this.text_alignment.toString() === "right") {
+        if (align_right || this.text_alignment.toString() === "right") {
             this.load_dots.html.css({
                 "position": "absolute",
                 "top": Dash.Size.Padding * 0.5,
@@ -266,6 +275,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             this.row_buttons.push(button);
         }
 
+        if (this.on_rows_drawn_cb) {
+            this.on_rows_drawn_cb();
+        }
+
         this.init_labels_drawn = true;
     };
 
@@ -298,6 +311,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         else {
             this.show();
         }
+
+        if (this.on_click_cb) {
+            this.on_click_cb();
+        }
     };
 
     this.flash = function () {
@@ -321,7 +338,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     };
 
     this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
-        var label_text = selected_option["label_text"] || selected_option["display_name"];
+        var label_text = this.static_label_text || selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
             this.label.text("ERROR");
@@ -418,7 +435,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.gravity_horizontal = 0;
 
         // Expand the combo upwards if not enough room below
-        if (total_height > window.innerHeight) {
+        if (total_height > (this.gravity_height_override || window.innerHeight)) {
 
             // As long as there's enough room above
             if (end_height < this.html.offset().top) {
@@ -427,8 +444,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
             // Otherwise, if there's enough room on screen, raise it up enough to not cause overflow
             else {
-                if (end_height < window.innerHeight) {
-                    gravity = -(Math.floor(total_height - this.html.height() - window.innerHeight));
+                if (end_height < (this.gravity_height_override || window.innerHeight)) {
+                    gravity = -(Math.floor(total_height - this.html.height() - (this.gravity_height_override || window.innerHeight)));
                 }
             }
 
@@ -445,7 +462,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (this.rows.width() > this.html.width()) {
 
             // Expand the combo to the left if not enough room on the right
-            if ((this.html.offset().left + this.html.width() + this.rows.width()) > window.innerWidth) {
+            if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {
 
                 // As long as there's enough room to the left
                 if (this.rows.width() < this.html.offset().left) {

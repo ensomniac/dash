@@ -80,6 +80,10 @@ function DashGuiComboInterface () {
         }
     };
 
+    this.IsExpanded = function () {
+        return this.expanded;
+    };
+
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {
@@ -107,8 +111,77 @@ function DashGuiComboInterface () {
         this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
     };
 
+    // Only tested using the Row style
+    this.UseAsButtonCombo = function (label_text) {
+        this.html.css({
+            "background": this.color.Button.Background.Base,
+            "padding-left": Dash.Size.Padding * 0.5
+        });
+
+        this.label.css({
+            "color": this.color.Button.Text.Base,
+            "padding-right": Dash.Size.Padding * 0.25
+        });
+
+        this.dropdown_icon.html.remove();
+
+        this.add_dropdown_icon(0.7, "caret_down");
+
+        this.dropdown_icon.SetColor(this.color.Button.Text.Base);
+
+        var highlight_color = Dash.Color.GetTransparent(this.color.Button.Background.Base, 0.1);
+
+        (function (self) {
+            self.SetOnRowsDrawnCallback(function () {
+                self.rows.css({
+                    "background": self.color.Button.Text.Base,
+                    "box-sizing": "border-box",
+                    "border": "1px solid " + self.color.Button.Background.Base,
+                    "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.07)",
+                });
+
+                for (var button of self.row_buttons) {
+                    button.label.css({
+                        "color": self.color.Button.Background.Base,
+                        "border-bottom": "1px solid " + self.color.Button.Background.Base
+                    });
+
+                    button.highlight.css({
+                        "background": highlight_color
+                    });
+                }
+            });
+        })(this);
+
+        this.SetStaticLabelText(label_text);
+
+        this.as_button_combo = true;
+    };
+
     this.DisableFlash = function () {
         this.flash_enabled = false;
+    };
+
+    this.SetStaticLabelText = function (value) {
+        this.static_label_text = value;
+
+        this.label.text(this.static_label_text);
+    };
+
+    this.SetOnRowsDrawnCallback = function (callback) {
+        this.on_rows_drawn_cb = callback.bind(this.binder);
+    };
+
+    this.SetOnClickCallback = function (callback) {
+        this.on_click_cb = callback.bind(this.binder);
+    };
+
+    this.SetGravityHeightOverride = function (value) {
+        this.gravity_height_override = value;
+    };
+
+    this.SetGravityWidthOverride = function (value) {
+        this.gravity_width_override = value;
     };
 
     this.SetListVerticalOffset = function (offset) {
@@ -121,6 +194,34 @@ function DashGuiComboInterface () {
         }
 
         this.list_offset_vertical = offset;
+    };
+
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
 
     this.ActiveID = function () {
@@ -157,6 +258,51 @@ function DashGuiComboInterface () {
         return this.option_list;
     };
 
+    this.SetLoading = function (is_loading) {
+        if (is_loading && this.load_dots) {
+            return;
+        }
+
+        if (!is_loading && !this.load_dots) {
+            return;
+        }
+
+        if (!is_loading && this.load_dots) {
+            this.load_dots.Stop();
+
+            this.load_dots.html.remove();
+
+            this.load_dots = null;
+
+            if (this.as_button_combo) {
+                this.dropdown_icon.html.css({
+                    "opacity": 1
+                });
+            }
+
+            return;
+        }
+
+        if (!this.load_dots) {
+            this.setup_load_dots(this.as_button_combo);
+
+            if (this.as_button_combo) {
+                this.load_dots.SetColor(this.color.Button.Text.Base);
+
+                this.load_dots.html.css({
+                    "top": Dash.Size.Padding * 0.25,
+                    "right": Dash.Size.Padding * 0.25
+                });
+
+                this.dropdown_icon.html.css({
+                    "opacity": 0
+                });
+            }
+        }
+
+        this.load_dots.Start();
+    };
+
     this.Request = function (endpoint, params, callback, binder=null) {
         if (!this.load_dots) {
             this.setup_load_dots();
@@ -169,6 +315,7 @@ function DashGuiComboInterface () {
         }
 
         this.load_dots.Start();
+
         this.on_request_response_callback = null;
 
         binder = binder || this.binder;

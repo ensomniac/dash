@@ -76,7 +76,7 @@ function DashGui() {
         return html;
     };
 
-    this.GetModalBackground = function (color=null, parent=null) {
+    this.GetModalBackground = function (color=null, parent=null, opacity=0.6) {
         if (!color) {
             color = Dash.Color.Light;
         }
@@ -103,7 +103,7 @@ function DashGui() {
             {
                 "z-index": 100000,  // Set Modal element to this +1
                 "background": color.BackgroundRaised,
-                "opacity": 0.6,
+                "opacity": opacity,
                 "height": height
             }
         );

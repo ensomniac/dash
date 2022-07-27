@@ -72,6 +72,18 @@ def GetImageExtensions():
     return ImageExtensions
 
 
+def GetAudioExtensions():
+    from .file import AudioExtensions
+
+    return AudioExtensions
+
+
+def GetVideoExtensions():
+    from .file import VideoExtensions
+
+    return VideoExtensions
+
+
 def CreateZIP(dir_path):
     from .file import CreateZIP
 
