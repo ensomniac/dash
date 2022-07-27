@@ -7,11 +7,12 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.options = options;
 
     this.data = {};
+    this.combos= {};
+    this.inputs = {};
+    this.headers = [];
     this.num_headers = 0;
-    this.update_inputs = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
-    this.header_update_objects = [];
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -50,38 +51,24 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         this.Flatten();
     };
 
-    this.Load = function () {
-        Dash.Request(
-            this,
-            this.on_server_property_set,
-            this.endpoint,
-            {
-                "f": "get_property_set",
-                "obj_id": this.dash_obj_id
-            }
-        );
-    };
+    this.update_inputs = function () {
+        for (var data_key in this.inputs) {
+            var input_row = this.inputs[data_key];
 
-    this.Update = function () {
-        for (var data_key in this.update_inputs) {
-            var row_input = this.update_inputs[data_key];
-
-            if (!row_input.CanAutoUpdate() || (row_input.input && row_input.input.InFocus())) {
+            if (!input_row.CanAutoUpdate() || (input_row.input && input_row.input.InFocus())) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;
             }
 
-            if (this.property_set_data) {
-                row_input.SetText(this.property_set_data[data_key]);
-            }
-
-            else {
-                row_input.SetText(this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key]);
-            }
+            input_row.SetText(this.get_update_value(data_key));
         }
+    };
 
-        this.update_headers();
+    this.update_combos = function () {
+        for (var data_key in this.combos) {
+            this.combos[data_key].Update(null, this.get_update_value(data_key), true);
+        }
     };
 
     this.update_headers = function () {
@@ -89,12 +76,17 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
-        for (var i in this.header_update_objects) {
-            var data_key = this.header_update_objects[i]["update_key"];
-            var text = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
-
-            this.header_update_objects[i]["obj"].SetText(text);
+        for (var i in this.headers) {
+            this.headers[i]["obj"].SetText(this.get_update_value(this.headers[i]["update_key"]));
         }
+    };
+
+    this.get_update_value = function (data_key) {
+        if (this.property_set_data) {
+            return this.property_set_data[data_key];
+        }
+
+        return this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
     };
 
     this.on_server_property_set = function (property_set_data) {
@@ -283,8 +275,8 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             params["f"] = "update_password";
             params["p"] = new_value;
 
-            if (this.update_inputs && this.update_inputs["email"]) {
-                var email = this.update_inputs["email"].Text();
+            if (this.inputs && this.inputs["email"]) {
+                var email = this.inputs["email"].Text();
 
                 if (email) {
                     params["email"] = email;

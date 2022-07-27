@@ -1,6 +1,12 @@
 /**@member DashGuiPropertyBox*/
 
 function DashGuiPropertyBoxInterface () {
+    this.Update = function () {
+        this.update_inputs();
+        this.update_combos();
+        this.update_headers();
+    };
+    
     this.SetTopRightLabel = function (label_text) {
 
         if (!this.top_right_label) {
@@ -106,7 +112,7 @@ function DashGuiPropertyBoxInterface () {
         this.num_headers += 1;
 
         if (update_key != null && this.get_data_cb) {
-            this.header_update_objects.push({
+            this.headers.push({
                 "obj": header_obj,
                 "update_key": update_key
             });
@@ -245,6 +251,8 @@ function DashGuiPropertyBoxInterface () {
                 bool              // Bool (Toggle)
             );
 
+            self.combos[property_key] = combo;
+
             row.input.html.append(combo.html);
 
             combo.html.css({
@@ -307,7 +315,7 @@ function DashGuiPropertyBoxInterface () {
                 row_details["key"]
             );
 
-            self.update_inputs[row_details["key"]] = row;
+            self.inputs[row_details["key"]] = row;
 
             self.indent_row(row);
 
@@ -332,7 +340,7 @@ function DashGuiPropertyBoxInterface () {
 
         })(this, row_details, options["callback"] || null);
 
-        return this.update_inputs[data_key];
+        return this.inputs[data_key];
     };
 
     this.indent_row = function (row) {
@@ -433,5 +441,17 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(checkbox.html);
 
         return checkbox;
+    };
+
+    this.Load = function () {
+        Dash.Request(
+            this,
+            this.on_server_property_set,
+            this.endpoint,
+            {
+                "f": "get_property_set",
+                "obj_id": this.dash_obj_id
+            }
+        );
     };
 }

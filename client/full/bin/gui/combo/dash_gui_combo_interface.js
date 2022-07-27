@@ -364,7 +364,8 @@ function DashGuiComboInterface () {
             if (typeof selected !== "object") {
                 console.warn(
                     "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
-                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected, "\nignore_callback:", ignore_callback
+                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected, 
+                    "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
                 );
 
                 return;
