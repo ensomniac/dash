@@ -106,7 +106,7 @@ class ApiCore:
         """
 
         if not hasattr(self, "_dash_context"):
-            if self._execute_as_module and self.dash_global.Context:
+            if self._execute_as_module and hasattr(self.dash_global, "Context") and self.dash_global.Context:
                 self._dash_context = self.dash_global.Context
             else:
                 from Dash.PackageContext import Get
