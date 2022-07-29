@@ -50,12 +50,12 @@ function DashLayoutListColumnConfig () {
         );
     };
 
-    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=1, css={}, header_css={}) {
+    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=null, css={}, header_css={}) {
         this.AddColumn(
             label_text,
             data_key,
             true,
-            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            width_mult ? Dash.Size.ColumnWidth * width_mult : null,
             {
                 "type": "combo",
                 "options": {

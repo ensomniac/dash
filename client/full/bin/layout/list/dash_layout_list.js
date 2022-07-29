@@ -1,6 +1,6 @@
 function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null, row_height=null) {
     this.binder = binder;
-    this.selected_callback = selected_callback.bind(this.binder);
+    this.selected_callback = selected_callback && binder ? selected_callback.bind(this.binder) : null;
     this.column_config = column_config;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.row_height = row_height || Dash.Size.RowHeight;
@@ -163,7 +163,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         }
 
         else {
-            this.selected_callback(row.id, is_selected, row);
+            if (this.selected_callback) {
+                this.selected_callback(row.id, is_selected, row);
+            }
         }
 
         this.last_selection_id = is_selected ? row.id : null;

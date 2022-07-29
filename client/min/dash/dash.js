@@ -30606,7 +30606,7 @@ function DashLayoutDashboardModuleSquare () {
 
 function DashLayoutList (binder, selected_callback, column_config, color=null, get_data_for_key=null, row_height=null) {
     this.binder = binder;
-    this.selected_callback = selected_callback.bind(this.binder);
+    this.selected_callback = selected_callback && binder ? selected_callback.bind(this.binder) : null;
     this.column_config = column_config;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.row_height = row_height || Dash.Size.RowHeight;
@@ -30726,7 +30726,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             this.expand_sublist(row, is_selected);
         }
         else {
-            this.selected_callback(row.id, is_selected, row);
+            if (this.selected_callback) {
+                this.selected_callback(row.id, is_selected, row);
+            }
         }
         this.last_selection_id = is_selected ? row.id : null;
     };
@@ -31287,7 +31289,12 @@ function DashLayoutListRow (list, row_id, height=null) {
         this.html.css({
             // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
             // The change only pertains to the row itself, and then each element controls their own cursor behavior.
-            "cursor": this.is_header ? "auto" : this.is_sublist ? "context-menu" : default_columns_only ? "pointer" : "cell"
+            "cursor": this.is_header ? "auto" :
+                this.is_sublist ? "context-menu" :
+                default_columns_only ? "pointer" :
+                this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
+                this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (this.list.non_expanding_click_cb ? "pointer" : "default") :
+                "cell"
         });
     };
     this.setup_styles();
@@ -31338,12 +31345,12 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=1, css={}, header_css={}) {
+    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=null, css={}, header_css={}) {
         this.AddColumn(
             label_text,
             data_key,
             true,
-            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            width_mult ? Dash.Size.ColumnWidth * width_mult : null,
             {
                 "type": "combo",
                 "options": {
