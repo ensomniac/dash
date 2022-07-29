@@ -67,7 +67,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
     this.update_combos = function () {
         for (var data_key in this.combos) {
-            if (data === "") {
+            if (data_key === "") {
                 continue;
             }
 
