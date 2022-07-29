@@ -24303,8 +24303,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     );
     DashGuiComboInterface.call(this);
     this.initialize_style = function () {
-        // Toss a warning if this isn't a known style, so we don't fail silently
         this.styles = ["default", "row"];
+        // Toss a warning if this isn't a known style, so we don't fail silently
         if (!this.styles.includes(this.style)) {
             console.error("Error: Unknown Dash Combo Style: " + this.style);
             this.style = "default";
@@ -28132,6 +28132,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     };
     this.update_combos = function () {
         for (var data_key in this.combos) {
+            if (data === "") {
+                continue;
+            }
             var value = this.get_update_value(data_key);
             // This might be too biased... unsure, but without it, a default value provided to the
             // combo gets immediately switched to the first option if the data has no value for that key

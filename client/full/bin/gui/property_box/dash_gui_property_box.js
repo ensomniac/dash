@@ -67,6 +67,10 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
     this.update_combos = function () {
         for (var data_key in this.combos) {
+            if (data === "") {
+                continue;
+            }
+
             var value = this.get_update_value(data_key);
 
             // This might be too biased... unsure, but without it, a default value provided to the

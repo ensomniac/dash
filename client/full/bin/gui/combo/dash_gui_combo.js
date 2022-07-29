@@ -61,9 +61,9 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     DashGuiComboInterface.call(this);
 
     this.initialize_style = function () {
-        // Toss a warning if this isn't a known style, so we don't fail silently
         this.styles = ["default", "row"];
 
+        // Toss a warning if this isn't a known style, so we don't fail silently
         if (!this.styles.includes(this.style)) {
             console.error("Error: Unknown Dash Combo Style: " + this.style);
 
