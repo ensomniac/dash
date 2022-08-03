@@ -25454,6 +25454,12 @@ function DashGuiComboInterface () {
                 }
             }
             if (typeof selected !== "object") {
+                if (!this.option_list || this.option_list.length === 0) {
+                    return;  // Warning message irrelevant
+                }
+                if (this.option_list.length === 1 && ["", "none"].includes(this.option_list[0]["id"])) {
+                    return;  // Warning message irrelevant
+                }
                 console.warn(
                     "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
                     "object only.\n\ncombo_list:", combo_list, "\nselected:", selected,
