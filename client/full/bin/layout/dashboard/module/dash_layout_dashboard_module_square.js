@@ -14,8 +14,8 @@ function DashLayoutDashboardModuleSquare () {
             self.label_header.fadeOut(500);
 
             self.label_header_text = text.toString().toUpperCase();
-            self.label_header.text(self.label_header_text);
 
+            self.label_header.text(self.label_header_text);
             self.label_header.fadeIn(500);
         })(this, text);
     };

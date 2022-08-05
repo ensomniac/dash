@@ -4,6 +4,12 @@ function DashLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
 
+    this.text_css["overflow"] = "hidden";
+    this.text_css["text-overflow"] = "ellipsis";
+
+    this.centered_text_css["overflow"] = "hidden";
+    this.centered_text_css["text-overflow"] = "ellipsis";
+
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
             console.error("Error: SetBarData() only applies to Flex-Bar Modules");

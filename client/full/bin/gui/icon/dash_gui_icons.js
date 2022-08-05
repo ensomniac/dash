@@ -42,6 +42,7 @@ function DashGuiIcons (icon) {
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
+        "binoculars":            new DashGuiIconDefinition(this.icon, "Binoculars", this.weight["regular"], "binoculars"),
         "box":                   new DashGuiIconDefinition(this.icon, "Box", this.weight["regular"], "box"),
         "box_open":              new DashGuiIconDefinition(this.icon, "Box (Open)", this.weight["regular"], "box-open"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),

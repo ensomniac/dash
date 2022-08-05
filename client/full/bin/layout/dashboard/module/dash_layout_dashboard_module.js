@@ -20,8 +20,6 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
 
     this.text_css = {
         "font-family": this.bold_font,
-        "overflow": "hidden",
-        "text-overflow": "ellipsis",
         "white-space": "nowrap"
     };
 
@@ -42,7 +40,6 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     };
 
     this.initialize_style = function () {
-
         if (this.style === "flex") {
             DashLayoutDashboardModuleFlex.call(this);
         }

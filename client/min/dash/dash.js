@@ -26822,6 +26822,7 @@ function DashGuiIcons (icon) {
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
         "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
+        "binoculars":            new DashGuiIconDefinition(this.icon, "Binoculars", this.weight["regular"], "binoculars"),
         "box":                   new DashGuiIconDefinition(this.icon, "Box", this.weight["regular"], "box"),
         "box_open":              new DashGuiIconDefinition(this.icon, "Box (Open)", this.weight["regular"], "box-open"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
@@ -29889,8 +29890,6 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.secondary_color = this.color.Stroke;
     this.text_css = {
         "font-family": this.bold_font,
-        "overflow": "hidden",
-        "text-overflow": "ellipsis",
         "white-space": "nowrap"
     };
     this.centered_text_css = {
@@ -29960,6 +29959,10 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
 function DashLayoutDashboardModuleFlex () {
     this.styles = ["bar"];
     this.bar_data = {};
+    this.text_css["overflow"] = "hidden";
+    this.text_css["text-overflow"] = "ellipsis";
+    this.centered_text_css["overflow"] = "hidden";
+    this.centered_text_css["text-overflow"] = "ellipsis";
     this.SetBarData = function (data) {
         if (this.sub_style !== "bar") {
             console.error("Error: SetBarData() only applies to Flex-Bar Modules");
