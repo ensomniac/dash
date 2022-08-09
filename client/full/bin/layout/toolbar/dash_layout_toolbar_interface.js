@@ -259,8 +259,8 @@ function DashLayoutToolbarInterface () {
         return label;
     };
 
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
-        var input = this.AddInput(placeholder_label, callback, options, additional_data);
+    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+        var input = this.AddInput(placeholder_label, callback, options, additional_data, double_click_clear);
 
         input.EnableAutosave();
 
@@ -307,7 +307,7 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
+    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
 
@@ -353,11 +353,14 @@ function DashLayoutToolbarInterface () {
                 );
             }
 
-            input.input.on("dblclick", function () {
-                input.SetText("");
+            // This really shouldn't be default behavior, but leaving the default as true to ensure nothing breaks.
+            if (double_click_clear) {
+                input.input.on("dblclick", function () {
+                    input.SetText("");
 
-                self.on_input_changed(obj_index);
-            });
+                    self.on_input_changed(obj_index);
+                });
+            }
         })(this, input, obj_index, obj);
 
         this.html.append(input.html);

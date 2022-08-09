@@ -21829,7 +21829,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
-        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text=""
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text="", double_click_clear=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -21850,7 +21850,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             },
             {
                 "data_key": data_key
-            }
+            },
+            double_click_clear
         );
         if (include_label) {
             input.label = label;
@@ -31593,7 +31594,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
         this.html.css(css);
         if (column_value && column_value.toString().includes("</")) {
-            // JQuery's .text() escapes HTML tags, so this approach is required
+            // jQuery's .text() escapes HTML tags, so this approach is required
             this.html[0].innerHTML = column_value;
         }
         else {
@@ -33020,8 +33021,8 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return label;
     };
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}) {
-        var input = this.AddInput(placeholder_label, callback, options, additional_data);
+    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+        var input = this.AddInput(placeholder_label, callback, options, additional_data, double_click_clear);
         input.EnableAutosave();
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
@@ -33058,7 +33059,7 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return input;
     };
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}) {
+    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
         input.html.css({
@@ -33096,10 +33097,13 @@ function DashLayoutToolbarInterface () {
                     self
                 );
             }
-            input.input.on("dblclick", function () {
-                input.SetText("");
-                self.on_input_changed(obj_index);
-            });
+            // This really shouldn't be default behavior, but leaving the default as true to ensure nothing breaks.
+            if (double_click_clear) {
+                input.input.on("dblclick", function () {
+                    input.SetText("");
+                    self.on_input_changed(obj_index);
+                });
+            }
         })(this, input, obj_index, obj);
         this.html.append(input.html);
         this.refactor_item_padding();

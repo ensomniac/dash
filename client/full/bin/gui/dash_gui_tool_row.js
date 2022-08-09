@@ -149,7 +149,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
-        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text=""
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text="", double_click_clear=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -174,7 +174,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             },
             {
                 "data_key": data_key
-            }
+            },
+            double_click_clear
         );
 
         if (include_label) {

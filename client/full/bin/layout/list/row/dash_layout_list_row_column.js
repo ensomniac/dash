@@ -181,7 +181,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         this.html.css(css);
 
         if (column_value && column_value.toString().includes("</")) {
-            // JQuery's .text() escapes HTML tags, so this approach is required
+            // jQuery's .text() escapes HTML tags, so this approach is required
             this.html[0].innerHTML = column_value;
         }
 
