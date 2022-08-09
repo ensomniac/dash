@@ -98,7 +98,8 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "height": Dash.Size.RowHeight,
             "min-height": Dash.Size.RowHeight,
             "max-height": Dash.Size.RowHeight,
-            "overflow-y": "hidden"
+            "overflow-y": "hidden",
+            "white-space": "nowrap"
         };
 
         if (bottom_border_only) {
@@ -122,6 +123,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
         // This shouldn't be necessary since we block the enter key, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
+    };
+
+    this.SetMaxCharacters = function (num) {
+        this.textarea.attr("maxlength", num);
     };
 
     this.SetHeight = function (height) {
