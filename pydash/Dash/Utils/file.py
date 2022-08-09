@@ -385,6 +385,12 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
         if os.path.exists(glb_path):
             file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
 
+    elif file_ext in AudioExtensions:
+        pass  # TODO: convert to mp3 if not already, or something along those lines
+
+    elif file_ext in VideoExtensions:
+        pass  # TODO: create some sort of compressed version or something?
+
     return file_data
 
 
