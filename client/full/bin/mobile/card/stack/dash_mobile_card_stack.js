@@ -25,6 +25,7 @@ function DashMobileCardStack (binder, color=null) {
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
     this.html = Dash.Gui.GetHTMLAbsContext();
+    this.footer_overlay_width_padding = Dash.Size.Padding * 0.5;
     this.iphone_standalone = /iPhone/i.test(navigator.userAgent) && Dash.IsMobileFromHomeScreen;
     this.footer_height = Dash.Size.ButtonHeight + (this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0);
 
@@ -244,16 +245,26 @@ function DashMobileCardStack (binder, color=null) {
         this.slide_to_index(2);
     };
 
-    this.AddFooterButton = function (icon_name, label_text, callback, left_side_icon=false) {
+    this.AddFooterButton = function (icon_name, label_text, callback, left_side_icon=false, icon_only=false) {
         if (!this.footer_button_overlay) {
             this.create_footer_overlay();
         }
 
-        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback, left_side_icon);
+        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback, left_side_icon, icon_only);
 
         this.footer_buttons.push(button);
 
         this.footer_button_overlay.append(button.html);
+
+        if (icon_only && this.footer_overlay_width_padding !== Dash.Size.Padding) {
+            this.footer_button_overlay.css({
+                "justify-content": "space-between",
+                "overflow": "hidden",
+                "padding-right": Dash.Size.Padding * 0.5
+            });
+
+            this.footer_overlay_width_padding = Dash.Size.Padding;
+        }
 
         return button;
     };
@@ -438,7 +449,7 @@ function DashMobileCardStack (binder, color=null) {
             "line-height": this.footer_height + "px",
             "bottom": 0,
             "left": this.width,
-            "width": this.width - (Dash.Size.Padding * 0.5),
+            "width": this.width - this.footer_overlay_width_padding,
             "right": "auto"
         });
     };

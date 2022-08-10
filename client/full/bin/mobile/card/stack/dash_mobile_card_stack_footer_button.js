@@ -1,54 +1,94 @@
-function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", callback=null, left_side_icon=false) {
+function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callback=null, left_side_icon=false, icon_only=false) {
     this.stack = stack;
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
     this.left_side_icon = left_side_icon;
+    this.icon_only = icon_only;
 
     this.icon = null;
+    this.label = null;
     this.click_active = false;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
-    this.label = Dash.Gui.GetHTMLAbsContext();
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.height = Dash.Size.ButtonHeight - Dash.Size.Padding;
+    this.height = Dash.Size.ButtonHeight - (Dash.Size.Padding * (this.icon_only ? 0.4 : 1));
 
     this.setup_styles = function () {
+        var css = {
+            "height": this.height,
+            "width": this.icon_only ? this.height : "auto",
+            "background": this.icon_only ? "none" : Dash.Color.Mobile.ButtonGradient,
+            "margin-top": Dash.Size.Padding * (this.icon_only ? 0.2 : 0.5),
+            "margin-bottom": Dash.Size.Padding * 0.5,
+            "margin-right": Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5),
+            "line-height": this.height + "px",
+            "border-radius": this.height
+        };
+
+        if (this.icon_only) {
+            css["margin-left"] = Dash.Size.Padding * 0.25;
+        }
+
+        else {
+            css["flex-grow"] = 1;
+        }
+
+        this.html.css(css);
+
+        this.add_icon();
+        this.add_label();
+        this.setup_connections();
+    };
+
+    this.add_icon = function () {
+        var size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
+
         this.icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
-            this.height - (Dash.Size.Padding * 0.5),
-            0.75,
+            size,
+            this.icon_only ? 0.65 : 0.75,
             Dash.Color.Mobile.AccentPrimary
         );
 
         this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
 
-        this.label.text(this.label_text);
-
-        this.html.css({
-            "height": this.height,
-            "width": "auto",
-            "flex-grow": 1,
-            "background": Dash.Color.Mobile.ButtonGradient,
-            "margin-top": Dash.Size.Padding * 0.5,
-            "margin-bottom": Dash.Size.Padding * 0.5,
-            "margin-right": Dash.Size.Padding * 0.5,
-            "line-height": this.height + "px",
-            "border-radius": this.height
-        });
-
-        this.icon_circle.css({
-            "left": this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto",
-            "top": Dash.Size.Padding * 0.25,
-            "right": this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25,
-            "bottom": "auto",
+        var css = {
             "background": "rgb(250, 250, 250)",
-            "height": this.height - (Dash.Size.Padding * 0.5),
-            "width": this.height - (Dash.Size.Padding * 0.5),
-            "border-radius": (this.height - (Dash.Size.Padding * 0.5)) * 0.5,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
-        });
+            "height": size,
+            "width": size,
+            "border-radius": size * 0.5,
+            "box-shadow": (this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)") +
+                ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
+        };
+
+        if (this.icon_only) {
+            css["inset"] = 0;
+            css["top"] = (this.height - size) * 0.5;
+            css["left"] = (this.height - size) * 0.5;
+        }
+
+        else {
+            css["left"] = this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto";
+            css["top"] = Dash.Size.Padding * 0.25;
+            css["right"] = this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25;
+            css["bottom"] = "auto";
+        }
+
+        this.icon_circle.css(css);
+
+        this.icon_circle.append(this.icon.html);
+
+        this.html.append(this.icon_circle);
+    };
+
+    this.add_label = function () {
+        if (this.icon_only) {
+            return;
+        }
+
+        this.label = Dash.Gui.GetHTMLAbsContext();
 
         var label_css = {
             "height": this.height,
@@ -64,12 +104,9 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="--", cal
 
         this.label.css(label_css);
 
-        this.icon_circle.append(this.icon.html);
+        this.label.text(this.label_text);
 
-        this.html.append(this.icon_circle);
         this.html.append(this.label);
-
-        this.setup_connections();
     };
 
     this.setup_connections = function () {
