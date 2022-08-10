@@ -264,6 +264,8 @@ function DashMobileCardStack (binder, color=null) {
             });
 
             this.footer_overlay_width_padding = Dash.Size.Padding;
+
+            this.set_footer_overlay_size();
         }
 
         return button;

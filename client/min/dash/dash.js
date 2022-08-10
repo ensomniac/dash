@@ -34385,6 +34385,7 @@ function DashMobileCardStack (binder, color=null) {
                 "padding-right": Dash.Size.Padding * 0.5
             });
             this.footer_overlay_width_padding = Dash.Size.Padding;
+            this.set_footer_overlay_size();
         }
         return button;
     };
