@@ -412,7 +412,7 @@ class PyDoc:
 
         for block_line in reversed(self.source_code[line_index:(self.current_block_end_index + 1)]):
 
-            # Ryan - the space in "return " below is intentional, please don't change
+            # Ryan - the space in "return " below is intentional, please don't change.
             # If it is triggering an error, please give me the details, so I
             # can debug that fringe case and rework this if needed, thanks!
             if block_line.strip().startswith("return ") and len(block_line.split("return ")[1].strip()):
@@ -427,6 +427,9 @@ class PyDoc:
 
                     if comment_stub in self.block_return:
                         self.block_return = self.block_return.split(comment_stub)[0].rstrip()
+
+                    if self.block_return and self.block_return.startswith("self.SetResponse"):
+                        self.block_return = "response"
 
                     last_return_found = True
                 except:
@@ -646,6 +649,9 @@ class PyDoc:
             param_type = self.check_value_for_type(value)
         else:
             param_type = self.check_value_for_type(param)
+
+        if not param_type and param == "response":
+            param_type = "dict"
 
         return param_type
 
