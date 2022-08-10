@@ -29765,7 +29765,8 @@ function DashLayoutDashboard (binder, color=null) {
         this.SetVerticalSpacePercent(15);
         this.html.css({
             "background": this.color.Background,
-            "display": "flex"
+            "display": "flex",
+            "overflow": "hidden"
         });
     };
     this.add_module = function (style, sub_style) {

@@ -47,7 +47,8 @@ function DashLayoutDashboard (binder, color=null) {
 
         this.html.css({
             "background": this.color.Background,
-            "display": "flex"
+            "display": "flex",
+            "overflow": "hidden"
         });
     };
 
