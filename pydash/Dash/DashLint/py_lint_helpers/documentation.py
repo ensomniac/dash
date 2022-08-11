@@ -661,6 +661,7 @@ class PyDoc:
 
         try:
             int(value)
+
             return "int"
         except:
             pass
@@ -668,12 +669,12 @@ class PyDoc:
         if value.count(".") == 1 and not value.startswith(".") and not value.endswith("."):
             try:
                 float(value)
+
                 return "float"
             except:
                 pass
 
-        if (value.startswith('"') or value.startswith("'")) \
-                and (value.endswith('"') or value.endswith("'")):
+        if (value.startswith('"') or value.startswith("'")) and (value.endswith('"') or value.endswith("'")):
             param_type = "str"
 
         elif value.startswith("[") and value.endswith("]"):
