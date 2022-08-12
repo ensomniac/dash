@@ -19628,7 +19628,7 @@ function DashAdminColor () {
         this.property_box.AddInput("first_name",  "First Name",     "", null, true);
         this.new_password_row = new Dash.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
         this.new_password_row.html.css("margin-left", Dash.Size.Padding * 2);
-        this.property_box.html.append(this.new_password_row.html);
+        this.property_box.AddHTML(this.new_password_row.html);
         this.property_box.AddButton("Property Box Button", this.dummy_cb);
     };
     this.get_data = function () {
@@ -26911,6 +26911,8 @@ function DashGuiIcons (icon) {
         "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "gears":                 new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
+        "git":                   new DashGuiIconDefinition(this.icon, "Git", this.weight["brand"], "git-square"),
+        "github":                new DashGuiIconDefinition(this.icon, "Github", this.weight["brand"], "github"),
         "goal_reply":            new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new DashGuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
         "history":               new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),

@@ -130,6 +130,8 @@ function DashGuiIcons (icon) {
         "film":                  new DashGuiIconDefinition(this.icon, "Film", this.weight["regular"], "film"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "gears":                 new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
+        "git":                   new DashGuiIconDefinition(this.icon, "Git", this.weight["brand"], "git-square"),
+        "github":                new DashGuiIconDefinition(this.icon, "Github", this.weight["brand"], "github"),
         "goal_reply":            new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
         "group":                 new DashGuiIconDefinition(this.icon, "Group", this.weight["solid"], "layer-group"),
         "history":               new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
