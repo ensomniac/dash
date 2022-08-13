@@ -14,6 +14,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.highlight = $("<div></div>");
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
+    this.clear_sublist_preview_on_update = true;
     this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
     this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
 
@@ -175,8 +176,15 @@ function DashLayoutListRow (list, row_id, height=null) {
         this.html.css("display", "block");
     };
 
+    // Use this if a sublist is not going to be updating (it's only generated once and that's it)
+    this.DisableSublistClearOnUpdate = function () {
+        this.clear_sublist_preview_on_update = false;
+    };
+
     this.Update = function () {
-        this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
+        if (this.clear_sublist_preview_on_update) {
+            this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
+        }
 
         for (var type in this.columns) {
             if (!Dash.Validate.Object(this.columns[type])) {

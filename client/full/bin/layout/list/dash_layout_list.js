@@ -261,6 +261,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         var preview = row.GetCachedPreview();
 
         if (!(preview instanceof DashLayoutList)) {
+            var test = preview;
             preview = row.SetCachedPreview(this.get_sublist());
             refresh_connections = false;
         }
