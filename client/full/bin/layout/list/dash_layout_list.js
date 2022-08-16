@@ -26,6 +26,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.header_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
+    this.highlight_active_row = false;
     this.sublist_row_tag = "_sublist_row_";
     this.header_row_tag = "_top_header_row";
     this.allow_row_divider_color_change_on_hover = true;
@@ -168,7 +169,13 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             }
         }
 
+        this.update_rows_highlighting(row, is_selected);
+
         this.last_selection_id = is_selected ? row.id : null;
+    };
+
+    this.EnableActiveRowHighlighting = function () {
+        this.highlight_active_row = true;
     };
 
     this.GetRow = function (row_id, is_sublist=false) {
@@ -217,6 +224,51 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+
+    this.update_rows_highlighting = function (row, is_selected) {
+        if (!this.highlight_active_row) {
+            return;
+        }
+
+        this.update_row_highlighting(row, is_selected);
+
+        if (is_selected) {
+            for (var other_row of this.rows) {
+                if (other_row === row) {
+                    continue;
+                }
+
+                this.update_row_highlighting(other_row, false);
+            }
+        }
+    };
+
+    this.update_row_highlighting = function (row, is_selected) {
+        try {
+            var row_bg = row.html.css("background-color");
+            var highlight_bg = row.highlight ? row.highlight.css("background-color") : null;
+
+            if (is_selected) {
+                if ((!row_bg || row_bg === "rgba(0, 0, 0, 0)") && highlight_bg) {
+                    row.html.css({
+                        "background": row.highlight.css("background-color")
+                    });
+                }
+            }
+
+            else {
+                if (highlight_bg === row_bg) {
+                    row.html.css({
+                        "background": "none"
+                    });
+                }
+            }
+        }
+
+        catch {
+            // Pass
+        }
     };
 
     this.add_header_row = function () {

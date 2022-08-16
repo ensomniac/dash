@@ -104,6 +104,20 @@ class DashColorSet {
         return this._stroke_light;
     };
 
+    get PinstripeDark () {
+        if (this._pinstripe_dark == null) {
+            this._pinstripe_dark = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.25                    // Opacity
+            ]);
+
+        }
+
+        return this._pinstripe_dark;
+    };
+
     // Use to draw very fine lines to suggest depth / shadow
     get Pinstripe () {
         if (this._pinstripe == null) {

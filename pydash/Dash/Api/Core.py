@@ -382,6 +382,11 @@ class ApiCore:
             if email not in notify_email_list:
                 notify_email_list.append(email)
 
+        sender_name = self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name")
+
+        if sender_name == "Ensomniac":
+            sender_name = "Dash"
+
         try:
             SendEmail(
                 subject=subject,
@@ -390,7 +395,7 @@ class ApiCore:
                 error=error,
                 strict_notify=strict_notify,
                 sender_email=self.DashContext.get("admin_from_email"),
-                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+                sender_name=sender_name
             )
 
         # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue

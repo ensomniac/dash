@@ -31,6 +31,12 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.Mirror();
     };
 
+    this.SetIcon = function (icon_name) {
+        this.icon_name = icon_name;
+
+        this.icon.SetIcon(icon_name);
+    };
+
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
     };
