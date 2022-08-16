@@ -52,6 +52,7 @@ function Dash () {
 
     this.Docs = {
         Box:  DashDocsBox,
+        Help: DashDocsHelp,
         View: DashDocsView
     };
 
