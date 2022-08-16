@@ -20860,7 +20860,7 @@ function DashDocsBox (docs_view, name, data) {
             if (typeof data["default"] === "object") {
                 data["default"] = JSON.stringify(data["default"]);
             }
-            var default_value = ("(default=" + data["default"] + ") ").replaceAll("'", '"').replaceAll("<", "&lt;");
+            var default_value = ("(default=" + data["default"] + ") ").replaceAll("<", "&lt;");
             text += "<i style='font-family: sans_serif_bold, sans-serif; white-space: pre-wrap; color: " + this.color.StrokeLight + "'>" + default_value + "</i>";
         }
         text += (data["description"] || "Missing description");
