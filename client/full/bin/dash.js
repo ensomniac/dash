@@ -50,6 +50,11 @@ function Dash () {
         SearchableCombo: DashMobileSearchableCombo
     };
 
+    this.Docs = {
+        Box:  DashDocsBox,
+        View: DashDocsView
+    };
+
     this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
     this.Logout           = this.User.Logout;
     this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
