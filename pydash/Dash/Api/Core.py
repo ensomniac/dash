@@ -121,12 +121,22 @@ class ApiCore:
             if self._execute_as_module and self.dash_global.RequestUser:
                 self._user = self.dash_global.RequestUser
             else:
-                if not self.DashContext:
-                    raise Exception("Dash Context is missing x8136")
-
                 from Dash.Users import Users as DashUsers
 
-                self._user = DashUsers(self._params, self.DashContext).ValidateUser()
+                # This asset path override param can be used when doing cross-context requests.
+                # For example, allowing any context to call Dash Guide's Documentation endpoint.
+                # Without this cross-context authentication, a request from any context other
+                # than Dash Guide would fail. The alternative to this would be to create a wrapper
+                # endpoint for every other context in a case like this, which is too messy.
+                if self.Params.get("dash_context_auth_asset_path"):
+                    from Dash.PackageContext import Get
+
+                    self._user = DashUsers(self._params, Get(self.Params["dash_context_auth_asset_path"])).ValidateUser()
+                else:
+                    if not self.DashContext:
+                        raise Exception("Dash Context is missing x8136")
+
+                    self._user = DashUsers(self._params, self.DashContext).ValidateUser()
 
         return self._user
 

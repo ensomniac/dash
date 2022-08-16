@@ -189,6 +189,11 @@ function DashDocsView (package_id, ext, color_options={}) {
             "package_id": this.package_id
         };
 
+        // To properly authenticate the user's token across contexts
+        if (Dash.Context["asset_path"] !== "dash_guide") {
+            params["dash_context_auth_asset_path"] = Dash.Context["asset_path"];
+        }
+
         if (this.is_py) {
             params["front_end"] = false;
         }
