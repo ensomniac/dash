@@ -23310,7 +23310,7 @@ function DashGuiButtonInterface () {
     this.StyleAsDeleteButton = function (width=null, faint=true) {
         if (faint) {
             this.html.css({
-                "background": this.color.Pinstripe
+                "background": this.color.PinstripeDark
             });
         }
         this.html.css({
