@@ -102,9 +102,9 @@ class DashLocalStorage:
 
         return all_ids
 
-    def GetAll(self, extensionless=False):
+    def GetAll(self, extensionless=False, filter_params={}):
         """
-        Returns a dictionary containing ID > Data pairs
+        Returns a dictionary containing ID > Data pairs.
         """
 
         all_data = {
@@ -129,12 +129,23 @@ class DashLocalStorage:
             if extensionless and obj_id.count(".") == 1:
                 obj_id = obj_id.split(".")[0]
 
-            all_data["data"][obj_id] = data
+            exclude = False
+
+            if filter_params:
+                for key, val in filter_params.items():
+                    if data.get(key) != val:
+                        exclude = True
+                        
+                        break
+
+            if not exclude:
+                all_data["data"][obj_id] = data
 
         if self.sort_by_key:
             all_data["order"] = self.get_dict_order_by_sort_key(all_data["data"])
         else:
             all_data["order"] = list(all_data["data"].keys())
+            
             all_data["order"].sort()
             all_data["order"].reverse()
 
@@ -578,8 +589,8 @@ def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
     return DashLocalStorage(dash_context, store_path, nested, filter_out_keys=filter_out_keys).GetData(obj_id)
 
 
-def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[], extensionless=False):
-    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll(extensionless)
+def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[], extensionless=False, filter_params={}):
+    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll(extensionless, filter_params=filter_params)
 
 
 def GetAllIDs(dash_context, store_path, nested=False):
