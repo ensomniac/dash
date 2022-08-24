@@ -2,6 +2,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.binder = binder;
     this.side_tabs = side_tabs;
 
+    this.temp_html = [];
     this.all_content = [];
     this.selected_index = -1;
     this.current_index = null;
@@ -96,6 +97,8 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
+
+        this.remove_temp_html();
 
         if (!this.always_start_on_first_tab) {
             Dash.Local.Set("sidebar_index_" + this.recall_id, index);
@@ -224,12 +227,24 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         }
     };
 
-    this.AddHTML = function (html) {
+    this.remove_temp_html = function () {
+        for (var html of this.temp_html) {
+            html.remove();
+        }
+
+        this.temp_html = [];
+    };
+
+    this.AddHTML = function (html, remove_on_tab_change=false) {
         html.css({
             "margin-bottom": 1
         });
 
         this.tab_top.append(html);
+
+        if (remove_on_tab_change) {
+            this.temp_html.push(html);
+        }
     };
 
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
