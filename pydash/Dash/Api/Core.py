@@ -355,11 +355,14 @@ class ApiCore:
                 if params.get(key) and type(params[key]) is bytes:
                     params[key] = "truncated..."
 
+            if params.get("token"):
+                params["token"] = "truncated..."
+
             # Keep this private
             if "pass" in params:
                 del params["pass"]
 
-            request_details += f"Params: {params}<br><br>"
+            request_details += f"Params:<br>{json.dumps(params, indent=4, sort_keys=True)}<br><br>"
 
         if not msg:
             msg = request_details
