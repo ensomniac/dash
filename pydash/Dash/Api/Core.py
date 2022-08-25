@@ -391,9 +391,10 @@ class ApiCore:
         except:
             pass
 
-        for email in self._additional_notify_emails:
-            if email not in notify_email_list:
-                notify_email_list.append(email)
+        if not strict_notify:
+            for email in self._additional_notify_emails:
+                if email not in notify_email_list:
+                    notify_email_list.append(email)
 
         sender_name = self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name")
 

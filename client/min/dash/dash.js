@@ -19430,6 +19430,35 @@ function DashDateTime () {
         }
         return dt_obj;
     };
+    this.GetReadableDifference = function (start_iso, end_iso, include_seconds=false) {
+        var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
+        var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
+        var secs = Math.floor((end_ms - start_ms) / 1000);
+        var mins = Math.floor(secs / 60);
+        var hours = Math.floor(mins / 60);
+        secs = secs % 60;
+        mins = mins % 60;
+        if (secs < 0) {
+            secs = 0;
+        }
+        if (mins < 0) {
+            mins = 0;
+        }
+        if (hours < 0) {
+            hours = 0;
+        }
+        if (secs >= 30) {
+            mins += 1;
+        }
+        if (mins === 0 && secs) {
+            mins += 1;
+        }
+        var readable = hours + "h " + mins + "m";
+        if (include_seconds) {
+            readable += " " + secs + "s";
+        }
+        return readable;
+    };
     this.GetUTCDateObject = function () {
         return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
     };
