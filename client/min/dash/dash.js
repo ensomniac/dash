@@ -19405,7 +19405,6 @@ function DashDateTime () {
         }
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
-        console.debug("TEST2", dt_obj);
         if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
             // The time information is 00:00:00
             //
