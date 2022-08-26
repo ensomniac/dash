@@ -171,6 +171,25 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.allow_row_divider_color_change_on_hover = false;
     };
 
+    this.BubbleStyle = function () {
+        this.html.css({
+            "border-radius": Dash.Size.Padding,
+            "background": this.color.Pinstripe,
+            "border": "2px solid " + this.color.StrokeLight
+        });
+
+        var header_css = {
+            "border-top-left-radius": Dash.Size.Padding,
+            "border-top-right-radius": Dash.Size.Padding
+        };
+
+        this.header_row.html.css(header_css);
+
+        this.header_row.column_box.css(header_css);
+
+        this.header_row_backing.css(header_css);
+    };
+
     this.get_row = function (row_id) {
         if (!Dash.Validate.Object(this.row_objects) || !row_id) {
             return;

@@ -19506,6 +19506,20 @@ function DashDateTime () {
         // Timeago library: /bin/src/timeago.js
         return timeago.format(this.GetDateObjectFromISO(iso_string));
     };
+    this.GetDayOrdinalSuffix = function (day_num) {
+        var j = day_num % 10;
+        var k = day_num % 100;
+        if (j === 1 && k !== 11) {
+            return "st";
+        }
+        if (j === 2 && k !== 12) {
+            return "nd";
+        }
+        if (j === 3 && k !== 13) {
+            return "rd";
+        }
+        return "th";
+    };
     this.get_server_offset_hours = function (dt_obj=null, timezone="EST", account_for_dst=true) {
         timezone = timezone.toLowerCase();
         if (timezone === "utc" || timezone === "gmt") {
@@ -32958,6 +32972,20 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+    this.BubbleStyle = function () {
+        this.html.css({
+            "border-radius": Dash.Size.Padding,
+            "background": this.color.Pinstripe,
+            "border": "2px solid " + this.color.StrokeLight
+        });
+        var header_css = {
+            "border-top-left-radius": Dash.Size.Padding,
+            "border-top-right-radius": Dash.Size.Padding
+        };
+        this.header_row.html.css(header_css);
+        this.header_row.column_box.css(header_css);
+        this.header_row_backing.css(header_css);
     };
     this.get_row = function (row_id) {
         if (!Dash.Validate.Object(this.row_objects) || !row_id) {
