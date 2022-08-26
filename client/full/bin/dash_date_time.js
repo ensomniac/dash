@@ -56,7 +56,7 @@ function DashDateTime () {
         return readable;
     };
 
-    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true) {
+    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true, offset_hours=0) {
         iso_string = iso_string.replace("Z", "");
 
         var included_offset_hours;
@@ -69,6 +69,8 @@ function DashDateTime () {
 
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
+
+        console.debug("TEST2", dt_obj);
 
         if (dt_obj.getHours() === 0 && dt_obj.getMinutes() === 0 && dt_obj.getSeconds() === 0) {
             // The time information is 00:00:00
@@ -90,7 +92,7 @@ function DashDateTime () {
         }
 
         else {
-            dt_obj.setHours(dt_obj.getHours() - this.get_server_offset_hours(dt_obj, timezone, account_for_dst));
+            dt_obj.setHours(dt_obj.getHours() - (offset_hours || this.get_server_offset_hours(dt_obj, timezone, account_for_dst)));
         }
 
         if (check_static) {
@@ -200,9 +202,15 @@ function DashDateTime () {
         return Math.max(jan, jul) !== dt_obj.getTimezoneOffset();
     };
 
+    // Timeago library: /bin/src/timeago.js
     this.FormatTime = function (iso_string) {
-        // Timeago library: /bin/src/timeago.js
-        return timeago.format(this.GetDateObjectFromISO(iso_string));
+        return timeago.format(this.GetDateObjectFromISO(
+            iso_string,
+            "EST",
+            false,
+            true,
+            (new Date().getTimezoneOffset() / 60))  // Ensure the timeago representation is always relevant to the user's timezone
+        );
     };
 
     this.GetDayOrdinalSuffix = function (day_num) {
