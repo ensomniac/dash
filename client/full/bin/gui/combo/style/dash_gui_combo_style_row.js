@@ -27,7 +27,7 @@ function DashGuiComboStyleRow () {
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
         });
 
         this.highlight.css({
@@ -68,7 +68,7 @@ function DashGuiComboStyleRow () {
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "orange",
         });
     };

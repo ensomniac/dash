@@ -502,18 +502,16 @@ def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
     ).GetUserDataPath(user_email_to_get)
 
 
+# This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
 def Get(user_email_to_get, request_params=None, dash_context=None):
-    # This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
-
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context
     ).GetUserData(user_email_to_get)
 
 
+# This function allows you to return a User object based on a valid token
 def GetByToken(user_token, request_params=None, dash_context=None):
-    # This function allows you to return a User object based on a valid token
-
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context

@@ -369,7 +369,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "rgba(255, 255, 255, 0.9)",
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         });
@@ -380,7 +380,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "rgba(255, 255, 255, 0.9)",
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
             "right": 0,

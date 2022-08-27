@@ -91,20 +91,23 @@ function DashLayoutToolbarInterface () {
         return button;
     };
 
-    this.AddButton = function (label_text, callback, width=null, data=null) {
-        var obj_index = this.objects.length;
-        var button = null;
-
+    this.AddButton = function (label_text, callback, width=null, data=null, style="toolbar") {
         (function (self, obj_index, data) {
-            button = new Dash.Gui.Button(
+            var button = new Dash.Gui.Button(
                 label_text,
                 function () {
                     self.on_button_clicked(obj_index, data);
                 },
                 self,
-                null,
-                {"style": "toolbar"}
+                self.color,
+                {"style": style}
             );
+
+            if (width) {
+                button.html.css({
+                    "width": width
+                });
+            }
 
             self.html.append(button.html);
 
@@ -114,11 +117,11 @@ function DashLayoutToolbarInterface () {
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
-        })(this, obj_index, data);
+        })(this, this.objects.length, data);
 
         this.refactor_item_padding();
 
-        return button;
+        return this.objects.Last()["html"];
     };
 
     this.AddHTML = function (html) {
@@ -387,6 +390,12 @@ function DashLayoutToolbarInterface () {
                 );
             };
 
+            var opts = {
+                "style": "row",
+                "additional_data": additional_data,
+                ...extra_options
+            };
+
             var combo = new Dash.Gui.Combo (
                 label_text,       // Label
                 _callback,        // Callback
@@ -394,25 +403,23 @@ function DashLayoutToolbarInterface () {
                 combo_options,    // Option List
                 selected_id,      // Selected
                 self.color,       // Color set
-                {
-                    "style": "row",
-                    "additional_data": additional_data,
-                    ...extra_options
-                }
+                opts
             );
 
             self.html.append(combo.html);
 
-            combo.html.css({
-                "margin-top": Dash.Size.Padding * 0.5,
-                "margin-right": Dash.Size.Padding * 0.5,
-                "height": Dash.Size.RowHeight,
-            });
+            if (opts["style"] === "row") {
+                combo.html.css({
+                    "margin-top": Dash.Size.Padding * 0.5,
+                    "margin-right": Dash.Size.Padding * 0.5,
+                    "height": Dash.Size.RowHeight,
+                });
 
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px",
-            });
+                combo.label.css({
+                    "height": Dash.Size.RowHeight,
+                    "line-height": Dash.Size.RowHeight + "px",
+                });
+            }
 
             self.objects.push({
                 "html": combo,

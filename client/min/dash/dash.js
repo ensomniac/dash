@@ -18065,7 +18065,7 @@ function DashGui() {
             "margin": Dash.Size.Padding,
             "height": start_minimized ? height * 0.25 : height,
             "width": start_minimized ? height * 0.25 : height,
-            "border-radius": 3
+            "border-radius": Dash.Size.BorderRadius
         });
         if (centered) {
             image.css({
@@ -22106,7 +22106,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "rgba(255, 255, 255, 0.9)",
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         });
@@ -22116,7 +22116,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "rgba(255, 255, 255, 0.9)",
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
             "right": 0,
@@ -25248,7 +25248,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     );
     DashGuiComboInterface.call(this);
     this.initialize_style = function () {
-        this.styles = ["default", "row"];
+        this.styles = ["default", "row", "default_bubbled"];
         // Toss a warning if this isn't a known style, so we don't fail silently
         if (!this.styles.includes(this.style)) {
             console.error("Error: Unknown Dash Combo Style: " + this.style);
@@ -25288,7 +25288,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             icon_name,
             Dash.Size.RowHeight,
             icon_size_mult,
-            this.style === "default" ? this.color.Button.Text.Base : null
+            this.style.includes("default") ? this.color.Button.Text.Base : null
         );
         this.dropdown_icon.html.addClass("ComboLabel");
         this.dropdown_icon.html.addClass("Combo");
@@ -26453,7 +26453,7 @@ function DashGuiComboStyleRow () {
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
         });
         this.highlight.css({
             "position": "absolute",
@@ -26489,7 +26489,7 @@ function DashGuiComboStyleRow () {
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "border-radius": 3,
+            "border-radius": Dash.Size.BorderRadius,
             "background": "orange",
         });
     };
@@ -26506,11 +26506,17 @@ function DashGuiComboStyleDefault () {
         "pointer-events": "none"
     };
     this.setup_styles = function () {
+        if (this.style === "default_bubbled") {
+            this.list_offset_vertical = 4;
+        }
+        var height = Dash.Size.ButtonHeight - (this.style === "default_bubbled" ? this.list_offset_vertical : 0);
+        var border_radius = this.style === "default_bubbled" ? Dash.Size.Padding * 2 : Dash.Size.BorderRadius;
         this.highlight_css = {
             "position": "absolute",
             "inset": 0,
             "background": this.color_set.Background.BaseHover,
-            "opacity": 0,
+            "border-radius": border_radius,
+            "opacity": 0
         };
         this.font_size = "100%";
         this.text_alignment = "center";
@@ -26529,25 +26535,32 @@ function DashGuiComboStyleDefault () {
         this.add_dropdown_icon();
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.ButtonHeight,
+            "height": height
         });
         this.inner_html.css({
             "background": this.label_background,
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
-            "border-radius": 3,
+            "border-radius": border_radius
         });
+        if (this.style === "default_bubbled") {
+            this.inner_html.css({
+                "border": "2px solid " + this.color.StrokeLight,
+                "box-sizing": "border-box"
+            });
+        }
         this.highlight.css(this.highlight_css);
         this.click.css({
             "position": "absolute",
             "inset": 0,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "line-height": height + "px",
+            "border-radius": border_radius,
             "background": this.color_set.Background.Base,
-            "opacity": 0,
+            "opacity": 0
         });
         this.label.css({
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "line-height": height + "px",
             "text-align": this.text_alignment,
             "font-size": this.font_size,
             "color": this.color_set.Text.Base,
@@ -26555,15 +26568,15 @@ function DashGuiComboStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.ButtonHeight,
+            "padding-right": height
         });
         this.rows.css({
             "position": "absolute",
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "border-radius": 3,
-            "background": "orange",
+            "border-radius": border_radius,
+            "background": "orange"
         });
     };
 }
@@ -28883,8 +28896,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     // set. You also shouldn't need to append this to any html manually, but in the case that is needed,
     // use this.AppendTo(), instead of the standard method of appending 'this.html' to the desired element.
     this.bubble = null;
-    this.is_showing=false;
+    this.removed = false;
     this.background = null;
+    this.is_showing = false;
     this.bubble_dots = null;
     this.bubble_label = null;
     this.setup_styles = function () {
@@ -28917,12 +28931,8 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
         if (this.simple) {
-            this.background.css({
-                "display": "initial"
-            });
-            this.bubble.css({
-                "display": "initial"
-            });
+            this.background.show();
+            this.bubble.show();
             this.is_showing = true;
             return;
         }
@@ -28933,18 +28943,21 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             console.warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
             return;
         }
-        this.AppendTo(this.html_to_append_to);
+        if (this.removed) {
+            this.AppendTo(this.html_to_append_to);
+        }
+        else {
+            this.background.show();
+            this.bubble.show();
+            this.is_showing = true;
+        }
     };
     this.Hide = function () {
         if (!this.is_showing) {
             return;
         }
-        this.background.css({
-            "display": "none"
-        });
-        this.bubble.css({
-            "display": "none"
-        });
+        this.bubble.hide();
+        this.background.hide();
         this.is_showing = false;
     };
     this.Remove = function () {
@@ -28956,6 +28969,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.background.remove();
         this.bubble.remove();
         this.progress = 0;
+        this.removed = true;
     };
     this.SetProgress = function (progress) {
         if (progress > 0 && progress < 1) {
@@ -33827,7 +33841,7 @@ function DashLayoutToolbar (binder, color=null) {
             });
         })(this);
     };
-    // Note: Never call this directly. Instead, use this.refactor_item_padding()
+    // Never call this directly. Instead, use this.refactor_item_padding()
     this._refactor_item_padding = function () {
         if (!this.refactor_itom_padding_requested) {
             return;
@@ -33917,19 +33931,22 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return button;
     };
-    this.AddButton = function (label_text, callback, width=null, data=null) {
-        var obj_index = this.objects.length;
-        var button = null;
+    this.AddButton = function (label_text, callback, width=null, data=null, style="toolbar") {
         (function (self, obj_index, data) {
-            button = new Dash.Gui.Button(
+            var button = new Dash.Gui.Button(
                 label_text,
                 function () {
                     self.on_button_clicked(obj_index, data);
                 },
                 self,
-                null,
-                {"style": "toolbar"}
+                self.color,
+                {"style": style}
             );
+            if (width) {
+                button.html.css({
+                    "width": width
+                });
+            }
             self.html.append(button.html);
             self.objects.push({
                 "html": button,
@@ -33937,9 +33954,9 @@ function DashLayoutToolbarInterface () {
                 "callback": callback.bind(self.binder),
                 "index": obj_index
             });
-        })(this, obj_index, data);
+        })(this, this.objects.length, data);
         this.refactor_item_padding();
-        return button;
+        return this.objects.Last()["html"];
     };
     this.AddHTML = function (html) {
         this.html.append(html);
@@ -34147,6 +34164,11 @@ function DashLayoutToolbarInterface () {
                     additional_data
                 );
             };
+            var opts = {
+                "style": "row",
+                "additional_data": additional_data,
+                ...extra_options
+            };
             var combo = new Dash.Gui.Combo (
                 label_text,       // Label
                 _callback,        // Callback
@@ -34154,22 +34176,20 @@ function DashLayoutToolbarInterface () {
                 combo_options,    // Option List
                 selected_id,      // Selected
                 self.color,       // Color set
-                {
-                    "style": "row",
-                    "additional_data": additional_data,
-                    ...extra_options
-                }
+                opts
             );
             self.html.append(combo.html);
-            combo.html.css({
-                "margin-top": Dash.Size.Padding * 0.5,
-                "margin-right": Dash.Size.Padding * 0.5,
-                "height": Dash.Size.RowHeight,
-            });
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px",
-            });
+            if (opts["style"] === "row") {
+                combo.html.css({
+                    "margin-top": Dash.Size.Padding * 0.5,
+                    "margin-right": Dash.Size.Padding * 0.5,
+                    "height": Dash.Size.RowHeight,
+                });
+                combo.label.css({
+                    "height": Dash.Size.RowHeight,
+                    "line-height": Dash.Size.RowHeight + "px",
+                });
+            }
             self.objects.push({
                 "html": combo,
                 "html_elem": combo.html,

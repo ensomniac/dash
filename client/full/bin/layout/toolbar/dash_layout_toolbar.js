@@ -76,7 +76,7 @@ function DashLayoutToolbar (binder, color=null) {
         })(this);
     };
 
-    // Note: Never call this directly. Instead, use this.refactor_item_padding()
+    // Never call this directly. Instead, use this.refactor_item_padding()
     this._refactor_item_padding = function () {
         if (!this.refactor_itom_padding_requested) {
             return;

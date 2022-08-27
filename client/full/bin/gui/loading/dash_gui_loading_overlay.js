@@ -17,8 +17,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     // use this.AppendTo(), instead of the standard method of appending 'this.html' to the desired element.
 
     this.bubble = null;
-    this.is_showing=false;
+    this.removed = false;
     this.background = null;
+    this.is_showing = false;
     this.bubble_dots = null;
     this.bubble_label = null;
 
@@ -62,13 +63,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         }
 
         if (this.simple) {
-            this.background.css({
-                "display": "initial"
-            });
+            this.background.show();
 
-            this.bubble.css({
-                "display": "initial"
-            });
+            this.bubble.show();
 
             this.is_showing = true;
 
@@ -85,7 +82,17 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
 
-        this.AppendTo(this.html_to_append_to);
+        if (this.removed) {
+            this.AppendTo(this.html_to_append_to);
+        }
+
+        else {
+            this.background.show();
+
+            this.bubble.show();
+
+            this.is_showing = true;
+        }
     };
 
     this.Hide = function () {
@@ -93,13 +100,9 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
 
-        this.background.css({
-            "display": "none"
-        });
+        this.bubble.hide();
 
-        this.bubble.css({
-            "display": "none"
-        });
+        this.background.hide();
 
         this.is_showing = false;
     };
@@ -117,6 +120,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.bubble.remove();
 
         this.progress = 0;
+        this.removed = true;
     };
 
     this.SetProgress = function (progress) {

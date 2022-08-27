@@ -11,11 +11,19 @@ function DashGuiComboStyleDefault () {
     };
 
     this.setup_styles = function () {
+        if (this.style === "default_bubbled") {
+            this.list_offset_vertical = 4;
+        }
+
+        var height = Dash.Size.ButtonHeight - (this.style === "default_bubbled" ? this.list_offset_vertical : 0);
+        var border_radius = this.style === "default_bubbled" ? Dash.Size.Padding * 2 : Dash.Size.BorderRadius;
+
         this.highlight_css = {
             "position": "absolute",
             "inset": 0,
             "background": this.color_set.Background.BaseHover,
-            "opacity": 0,
+            "border-radius": border_radius,
+            "opacity": 0
         };
 
         this.font_size = "100%";
@@ -42,7 +50,7 @@ function DashGuiComboStyleDefault () {
 
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.ButtonHeight,
+            "height": height
         });
 
         this.inner_html.css({
@@ -50,21 +58,29 @@ function DashGuiComboStyleDefault () {
             "height": Dash.Size.ButtonHeight,
             "line-height": Dash.Size.ButtonHeight + "px",
             "cursor": "pointer",
-            "border-radius": 3,
+            "border-radius": border_radius
         });
+
+        if (this.style === "default_bubbled") {
+            this.inner_html.css({
+                "border": "2px solid " + this.color.StrokeLight,
+                "box-sizing": "border-box"
+            });
+        }
 
         this.highlight.css(this.highlight_css);
 
         this.click.css({
             "position": "absolute",
             "inset": 0,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "line-height": height + "px",
+            "border-radius": border_radius,
             "background": this.color_set.Background.Base,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.label.css({
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "line-height": height + "px",
             "text-align": this.text_alignment,
             "font-size": this.font_size,
             "color": this.color_set.Text.Base,
@@ -72,7 +88,7 @@ function DashGuiComboStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.ButtonHeight,
+            "padding-right": height
         });
 
         this.rows.css({
@@ -80,8 +96,8 @@ function DashGuiComboStyleDefault () {
             "z-index": 10,
             "overflow": "hidden",
             "height": 0,
-            "border-radius": 3,
-            "background": "orange",
+            "border-radius": border_radius,
+            "background": "orange"
         });
     };
 }

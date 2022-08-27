@@ -61,7 +61,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     DashGuiComboInterface.call(this);
 
     this.initialize_style = function () {
-        this.styles = ["default", "row"];
+        this.styles = ["default", "row", "default_bubbled"];
 
         // Toss a warning if this isn't a known style, so we don't fail silently
         if (!this.styles.includes(this.style)) {
@@ -115,7 +115,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             icon_name,
             Dash.Size.RowHeight,
             icon_size_mult,
-            this.style === "default" ? this.color.Button.Text.Base : null
+            this.style.includes("default") ? this.color.Button.Text.Base : null
         );
 
         this.dropdown_icon.html.addClass("ComboLabel");

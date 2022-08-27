@@ -387,7 +387,7 @@ function DashGui() {
             "margin": Dash.Size.Padding,
             "height": start_minimized ? height * 0.25 : height,
             "width": start_minimized ? height * 0.25 : height,
-            "border-radius": 3
+            "border-radius": Dash.Size.BorderRadius
         });
 
         if (centered) {
