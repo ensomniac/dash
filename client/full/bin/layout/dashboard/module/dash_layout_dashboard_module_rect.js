@@ -20,6 +20,10 @@ function DashLayoutDashboardModuleRect () {
             return;
         }
 
+        if (Dash.Validate.Object(this.list_data) && JSON.stringify(this.list_data) === JSON.stringify(data_list)) {
+            return;
+        }
+
         this.list_data = data_list;
 
         this.redraw_list_rows();
@@ -106,31 +110,31 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
 
         content.css({
             "display": "flex",
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
 
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": "1.5vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "17vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
 
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": "2.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "4vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
 
         content.append(this.get_dot_icon().html);
@@ -156,9 +160,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
 
         return dot_icon;
@@ -169,7 +173,7 @@ function DashLayoutDashboardModuleRect () {
 
         line.css({
             "background": this.secondary_color,
-            "height": "0.1vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
         });
 
         return line;

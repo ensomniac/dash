@@ -79,6 +79,7 @@ function DashGuiIcons (icon) {
         "close":                 new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times"),
         "close_thin":            new DashGuiIconDefinition(this.icon, "Close", this.weight["light"], "times"),
         "close_square":          new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square"),
+        "cloud":                 new DashGuiIconDefinition(this.icon, "Cloud", this.weight["regular"], "cloud"),
         "color_palette":         new DashGuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
         "comment":               new DashGuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
         "comment_square":        new DashGuiIconDefinition(this.icon, "Conversation Box", this.weight["regular"], "comment-alt-lines"),

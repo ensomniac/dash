@@ -188,7 +188,7 @@ function DashLayoutToolbarInterface () {
 
     // Intended to be the first item, if you want a header-style label starting the toolbar
     this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color);
+        var header = new Dash.Gui.Header(text, color || this.color);
 
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,

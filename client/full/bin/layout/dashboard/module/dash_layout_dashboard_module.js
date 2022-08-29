@@ -34,9 +34,29 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.SetHeaderText = function (text) {
         text = text.toString().toUpperCase();
 
+        if (text === this.header_text) {
+            return;
+        }
+
+        if (!this.header_text) {
+            this.header_text = text;
+
+            this.header.text(this.header_text);
+
+            return;  // No need to animate
+        }
+
         this.header_text = text;
 
-        this.header.text(text);
+        (function (self) {
+            self.header.fadeOut(
+                500,
+                function () {
+                    self.header.text(self.header_text);
+                    self.header.fadeIn(500);
+                }
+            );
+        })(this);
     };
 
     this.initialize_style = function () {
@@ -90,8 +110,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
         });
 
         if (this.header_text) {

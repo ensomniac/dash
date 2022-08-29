@@ -1,11 +1,13 @@
-function DashLayoutDashboard (binder, color=null) {
+function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.binder = binder;
-    this.color  = color || this.binder.color || Dash.Color.Dark;
+    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.vertical_space_percent = vertical_space_percent;
 
-    this.modules = [];
-    this.canvas_containers = [];
     this.margin = 1;
+    this.vsizes = {};
+    this.modules = [];
     this.padding = 0.4;
+    this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
@@ -13,20 +15,46 @@ function DashLayoutDashboard (binder, color=null) {
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
 
-    this.AddSquareTagModule = function () {
-        return this.add_module("square", "tag");
+    this.AddSquareTagModule = function (header_text="", label_header_text="", label_text="") {
+        var mod = this.add_module("square", "tag", header_text);
+
+        if (label_text.toString()) {
+            mod.SetLabelText(label_text);
+        }
+
+        if (label_header_text.toString()) {
+            mod.SetLabelHeaderText(label_header_text);
+        }
+
+        return mod;
     };
 
-    this.AddSquareRadialModule = function () {
-        return this.add_module("square", "radial");
+    this.AddSquareRadialModule = function (header_text="", label_header_text="", radial_fill_percent=null) {
+        var mod = this.add_module("square", "radial", header_text);
+
+        if (parseInt(radial_fill_percent)) {
+            mod.SetRadialFillPercent(radial_fill_percent);
+        }
+
+        if (label_header_text.toString()) {
+            mod.SetLabelHeaderText(label_header_text);
+        }
+
+        return mod;
     };
 
-    this.AddRectListModule = function () {
-        return this.add_module("rect", "list");
+    this.AddRectListModule = function (header_text="") {
+        return this.add_module("rect", "list", header_text);
     };
 
-    this.AddFlexBarModule = function () {
-        return this.add_module("flex", "bar");
+    this.AddFlexBarModule = function (header_text="", bar_data=null) {
+        var mod = this.add_module("flex", "bar", header_text);
+
+        if (bar_data) {
+            mod.SetBarData(bar_data);
+        }
+
+        return mod;
     };
 
     this.SetVerticalSpacePercent = function (num) {
@@ -38,12 +66,29 @@ function DashLayoutDashboard (binder, color=null) {
             return;
         }
 
+        this.vertical_space_percent = num;
         this.VerticalSpaceTakenPercent = num.toString() + "%";
         this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+
+        for (var data of this.modules) {
+            this.modules["module"].setup_styles(true);  // CSS update only
+        }
+    };
+
+    this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
+        var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
+
+        if (this.vsizes[key]) {
+            return this.vsizes[key];
+        }
+
+        this.vsizes[key] = ((Math.round(parseInt(this.VerticalSpaceTakenPercent) * 10) / 10) * percentage_decimal_of_dashboard_size);
+
+        return this.vsizes[key];
     };
 
     this.setup_styles = function () {
-        this.SetVerticalSpacePercent(15);
+        this.SetVerticalSpacePercent(this.vertical_space_percent);
 
         this.html.css({
             "background": this.color.Background,
@@ -52,9 +97,13 @@ function DashLayoutDashboard (binder, color=null) {
         });
     };
 
-    this.add_module = function (style, sub_style) {
+    this.add_module = function (style, sub_style, header_text="") {
         var index = this.modules.length;
         var module = new DashLayoutDashboardModule(this, style, sub_style);
+
+        if (header_text.toString()) {
+            module.SetHeaderText(header_text);
+        }
 
         this.html.append(module.html);
 

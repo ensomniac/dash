@@ -29,23 +29,31 @@ function DashLayoutDashboardModuleFlex () {
             return;
         }
 
+        if (Dash.Validate.Object(this.bar_data) && JSON.stringify(this.bar_data) === JSON.stringify(data)) {
+            return;
+        }
+
         this.bar_data = data;
 
         this.update_bar_data(data);
     };
 
-    this.setup_styles = function () {
+    this.setup_styles = function (css_only=false) {
         this.html.css({
             "flex": 1
         });
 
         if (this.sub_style === "bar") {
-            this.setup_bar_style();
+            this.setup_bar_style(css_only);
         }
     };
 
-    this.setup_bar_style = function () {
+    this.setup_bar_style = function (css_only=false) {
         this.setup_bar_gui();
+
+        if (css_only) {
+            return;
+        }
 
         // Only draw the default placeholder view if it hasn't been set after the first second
         (function (self) {
@@ -61,35 +69,37 @@ function DashLayoutDashboardModuleFlex () {
     };
 
     this.setup_bar_gui = function () {
-        var config = this.get_bar_config();
+        if (!this.canvas) {
+            var config = this.get_bar_config();
 
-        var canvas = document.createElement("canvas");
-        var script = document.createElement("script");
-        var canvas_container = document.createElement("div");
-        var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+            var canvas = document.createElement("canvas");
+            var script = document.createElement("script");
+            var canvas_container = document.createElement("div");
+            var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+
+            canvas.id = canvas_id;
+
+            script.type = "text/javascript";
+            script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+
+            canvas_container.appendChild(canvas);
+
+            this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        }
 
         var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
 
-        canvas_container.style.height = "11.25vh";  // TEMP
-        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + "vh";  // TEMP
+        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
+        this.canvas["container"].style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
 
-        canvas_container.style.overflow = "hidden";
-        canvas_container.style.opacity = "0";
-        canvas_container.style.flex = "1";
-
-        canvas.id = canvas_id;
-
-        script.type = "text/javascript";
-        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
-
-        canvas_container.appendChild(canvas);
-
-        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        this.canvas["container"].style.overflow = "hidden";
+        this.canvas["container"].style.opacity = "0";
+        this.canvas["container"].style.flex = "1";
     };
 
     this.update_bar_data = function (data) {

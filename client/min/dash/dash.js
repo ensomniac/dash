@@ -27817,6 +27817,7 @@ function DashGuiIcons (icon) {
         "close":                 new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times"),
         "close_thin":            new DashGuiIconDefinition(this.icon, "Close", this.weight["light"], "times"),
         "close_square":          new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times-square"),
+        "cloud":                 new DashGuiIconDefinition(this.icon, "Cloud", this.weight["regular"], "cloud"),
         "color_palette":         new DashGuiIconDefinition(this.icon, "Color Palette", this.weight["regular"], "palette"),
         "comment":               new DashGuiIconDefinition(this.icon, "Conversation Bubble", this.weight["solid"], "comment"),
         "comment_square":        new DashGuiIconDefinition(this.icon, "Conversation Box", this.weight["regular"], "comment-alt-lines"),
@@ -30701,29 +30702,49 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.setup_styles();
 }
 
-function DashLayoutDashboard (binder, color=null) {
+function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.binder = binder;
-    this.color  = color || this.binder.color || Dash.Color.Dark;
-    this.modules = [];
-    this.canvas_containers = [];
+    this.color = color || this.binder.color || Dash.Color.Dark;
+    this.vertical_space_percent = vertical_space_percent;
     this.margin = 1;
+    this.vsizes = {};
+    this.modules = [];
     this.padding = 0.4;
+    this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
-    this.AddSquareTagModule = function () {
-        return this.add_module("square", "tag");
+    this.AddSquareTagModule = function (header_text="", label_header_text="", label_text="") {
+        var mod = this.add_module("square", "tag", header_text);
+        if (label_text.toString()) {
+            mod.SetLabelText(label_text);
+        }
+        if (label_header_text.toString()) {
+            mod.SetLabelHeaderText(label_header_text);
+        }
+        return mod;
     };
-    this.AddSquareRadialModule = function () {
-        return this.add_module("square", "radial");
+    this.AddSquareRadialModule = function (header_text="", label_header_text="", radial_fill_percent=null) {
+        var mod = this.add_module("square", "radial", header_text);
+        if (parseInt(radial_fill_percent)) {
+            mod.SetRadialFillPercent(radial_fill_percent);
+        }
+        if (label_header_text.toString()) {
+            mod.SetLabelHeaderText(label_header_text);
+        }
+        return mod;
     };
-    this.AddRectListModule = function () {
-        return this.add_module("rect", "list");
+    this.AddRectListModule = function (header_text="") {
+        return this.add_module("rect", "list", header_text);
     };
-    this.AddFlexBarModule = function () {
-        return this.add_module("flex", "bar");
+    this.AddFlexBarModule = function (header_text="", bar_data=null) {
+        var mod = this.add_module("flex", "bar", header_text);
+        if (bar_data) {
+            mod.SetBarData(bar_data);
+        }
+        return mod;
     };
     this.SetVerticalSpacePercent = function (num) {
         num = parseInt(num);
@@ -30731,20 +30752,35 @@ function DashLayoutDashboard (binder, color=null) {
             console.error("Error: Invalid number passed to SetVerticalSpacePercent()");
             return;
         }
+        this.vertical_space_percent = num;
         this.VerticalSpaceTakenPercent = num.toString() + "%";
         this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
+        for (var data of this.modules) {
+            this.modules["module"].setup_styles(true);  // CSS update only
+        }
+    };
+    this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
+        var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
+        if (this.vsizes[key]) {
+            return this.vsizes[key];
+        }
+        this.vsizes[key] = ((Math.round(parseInt(this.VerticalSpaceTakenPercent) * 10) / 10) * percentage_decimal_of_dashboard_size);
+        return this.vsizes[key];
     };
     this.setup_styles = function () {
-        this.SetVerticalSpacePercent(15);
+        this.SetVerticalSpacePercent(this.vertical_space_percent);
         this.html.css({
             "background": this.color.Background,
             "display": "flex",
             "overflow": "hidden"
         });
     };
-    this.add_module = function (style, sub_style) {
+    this.add_module = function (style, sub_style, header_text="") {
         var index = this.modules.length;
         var module = new DashLayoutDashboardModule(this, style, sub_style);
+        if (header_text.toString()) {
+            module.SetHeaderText(header_text);
+        }
         this.html.append(module.html);
         this.modules.push({
             "module": module,
@@ -30876,8 +30912,24 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     // Applies to all module styles
     this.SetHeaderText = function (text) {
         text = text.toString().toUpperCase();
+        if (text === this.header_text) {
+            return;
+        }
+        if (!this.header_text) {
+            this.header_text = text;
+            this.header.text(this.header_text);
+            return;  // No need to animate
+        }
         this.header_text = text;
-        this.header.text(text);
+        (function (self) {
+            self.header.fadeOut(
+                500,
+                function () {
+                    self.header.text(self.header_text);
+                    self.header.fadeIn(500);
+                }
+            );
+        })(this);
     };
     this.initialize_style = function () {
         if (this.style === "flex") {
@@ -30919,8 +30971,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
         });
         if (this.header_text) {
             this.SetHeaderText(this.header_text);
@@ -30951,19 +31003,25 @@ function DashLayoutDashboardModuleFlex () {
             console.error("Error: SetBarData() expects a dict that contains 'data' and 'order' keys");
             return;
         }
+        if (Dash.Validate.Object(this.bar_data) && JSON.stringify(this.bar_data) === JSON.stringify(data)) {
+            return;
+        }
         this.bar_data = data;
         this.update_bar_data(data);
     };
-    this.setup_styles = function () {
+    this.setup_styles = function (css_only=false) {
         this.html.css({
             "flex": 1
         });
         if (this.sub_style === "bar") {
-            this.setup_bar_style();
+            this.setup_bar_style(css_only);
         }
     };
-    this.setup_bar_style = function () {
+    this.setup_bar_style = function (css_only=false) {
         this.setup_bar_gui();
+        if (css_only) {
+            return;
+        }
         // Only draw the default placeholder view if it hasn't been set after the first second
         (function (self) {
             setTimeout(
@@ -30977,27 +31035,29 @@ function DashLayoutDashboardModuleFlex () {
         })(this);
     };
     this.setup_bar_gui = function () {
-        var config = this.get_bar_config();
-        var canvas = document.createElement("canvas");
-        var script = document.createElement("script");
-        var canvas_container = document.createElement("div");
-        var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+        if (!this.canvas) {
+            var config = this.get_bar_config();
+            var canvas = document.createElement("canvas");
+            var script = document.createElement("script");
+            var canvas_container = document.createElement("div");
+            var canvas_id = "bar_canvas_" + Dash.Math.RandomNumber();
+            canvas.id = canvas_id;
+            script.type = "text/javascript";
+            script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+            canvas_container.appendChild(canvas);
+            this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        }
         var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
         var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
         var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
-        canvas_container.style.height = "11.25vh";  // TEMP
-        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        canvas_container.style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        canvas_container.style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
-        canvas_container.style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
-        canvas_container.style.overflow = "hidden";
-        canvas_container.style.opacity = "0";
-        canvas_container.style.flex = "1";
-        canvas.id = canvas_id;
-        script.type = "text/javascript";
-        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
-        canvas_container.appendChild(canvas);
-        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + "vh";  // TEMP
+        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
+        this.canvas["container"].style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.overflow = "hidden";
+        this.canvas["container"].style.opacity = "0";
+        this.canvas["container"].style.flex = "1";
     };
     this.update_bar_data = function (data) {
         if (!this.canvas) {
@@ -31122,6 +31182,9 @@ function DashLayoutDashboardModuleRect () {
             console.error("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
+        if (Dash.Validate.Object(this.list_data) && JSON.stringify(this.list_data) === JSON.stringify(data_list)) {
+            return;
+        }
         this.list_data = data_list;
         this.redraw_list_rows();
     };
@@ -31188,28 +31251,28 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": "1.5vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "17vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": "2.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "4vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         content.append(this.get_dot_icon().html);
         content.append(key_text);
@@ -31230,9 +31293,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         return dot_icon;
     };
@@ -31240,7 +31303,7 @@ function DashLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            "height": "0.1vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
         });
         return line;
     };
@@ -31262,6 +31325,9 @@ function DashLayoutDashboardModuleRect () {
             console.error("Error: SetListData() requires a list of dicts to be passed in");
             return;
         }
+        if (Dash.Validate.Object(this.list_data) && JSON.stringify(this.list_data) === JSON.stringify(data_list)) {
+            return;
+        }
         this.list_data = data_list;
         this.redraw_list_rows();
     };
@@ -31328,28 +31394,28 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         content.css({
             "display": "flex",
-            "height": "2.75vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": "1.5vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "17vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": "2.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "width": "4vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         content.append(this.get_dot_icon().html);
         content.append(key_text);
@@ -31370,9 +31436,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": "1.25vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "2.75vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
         });
         return dot_icon;
     };
@@ -31380,7 +31446,7 @@ function DashLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            "height": "0.1vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
         });
         return line;
     };
@@ -31396,31 +31462,57 @@ function DashLayoutDashboardModuleSquare () {
     this.radial_fill_percent = 0;
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelHeaderText = function (text) {
-        (function (self, text) {
-            self.label_header.fadeOut(500);
-            self.label_header_text = text.toString().toUpperCase();
-            self.label_header.text(self.label_header_text);
-            self.label_header.fadeIn(500);
-        })(this, text);
+        text = text.toString().toUpperCase();
+        if (text === this.label_header_text) {
+            return;
+        }
+        if (!this.label_header_text) {
+            this.label_header_text = text;
+            this.label_header.text(this.label_header_text);
+            return;  // No need to animate
+        }
+        this.label_header_text = text;
+        (function (self) {
+            self.label_header.fadeOut(
+                500,
+                function () {
+                    self.label_header.text(self.label_header_text);
+                    self.label_header.fadeIn(500);
+                }
+            );
+        })(this);
     };
     // Works for both "tag" and "radial" sub-styles
     this.SetLabelText = function (text) {
-        (function (self, text) {
-            self.label.fadeOut(500);
-            self.label_text = text.toString().toUpperCase();
-            if (self.label_text.length > 4) {
-                console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
-            }
-            if (self.sub_style === "tag" && self.label_text.length <= 3) {
-                self.label.css({
-                    "font-size": "5.5vh",  // TEMP
-                    "height": "5.5vh",  // TEMP
-                    "line-height": "6vh",  // TEMP
-                });
-            }
-            self.label.text(self.label_text);
-            self.label.fadeIn(500);
-        })(this, text);
+        text = text.toString().toUpperCase();
+        if (text === this.label_text) {
+            return;
+        }
+        if (!this.label_text) {
+            this.label_text = text;
+            this.label.text(this.label_text);
+            return;  // No need to animate
+        }
+        this.label_text = text;
+        if (this.label_text.length > 4) {
+            console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
+        }
+        (function (self) {
+            self.label.fadeOut(
+                500,
+                function () {
+                    if (self.sub_style === "tag" && self.label_text.length <= 3) {
+                        self.label.css({
+                            "font-size": self.dashboard.get_text_vsize(0.36) + "vh",  // TEMP
+                            "height": self.dashboard.get_text_vsize(0.36) + "vh",  // TEMP
+                            "line-height": self.dashboard.get_text_vsize(0.4) + "vh"  // TEMP
+                        });
+                    }
+                    self.label.text(self.label_text);
+                    self.label.fadeIn(500);
+                }
+            );
+        })(this);
     };
     this.SetRadialFillPercent = function (percent) {
         if (this.sub_style !== "radial") {
@@ -31441,36 +31533,42 @@ function DashLayoutDashboardModuleSquare () {
         this.SetLabelText(this.radial_fill_percent.toString() + "%");
         this.update_radial_fill_percent(percent);
     };
-    this.setup_styles = function () {
+    this.setup_styles = function (css_only=false) {
         this.html.css({
             "aspect-ratio": this.square_aspect_ratio
         });
         if (this.sub_style === "tag") {
-            this.setup_tag_style();
+            this.setup_tag_style(css_only);
         }
         else if (this.sub_style === "radial") {
             this.setup_radial_style();
         }
+        if (css_only) {
+            return;
+        }
         this.html.append(this.label_header);
         this.html.append(this.label);
     };
-    this.setup_tag_style = function () {
+    this.setup_tag_style = function (css_only=false) {
         this.label_header.css({
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-            "font-size": "1.5vh",  // TEMP
-            "height": "1.5vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
         });
         this.label.css({
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "95%",
-            "font-size": "4.5vh",  // TEMP
-            "height": "4.5vh",  // TEMP
-            "line-height": "5vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.3) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.3) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.33) + "vh",  // TEMP
         });
+        if (css_only) {
+            return;
+        }
         // Only draw the default placeholder view if it hasn't been set after the first second
         (function (self) {
             setTimeout(
@@ -31489,37 +31587,39 @@ function DashLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-            "font-size": "1vh",  // TEMP
-            "height": "1vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
         });
         this.label.css({
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-            "font-size": "2.75vh",  // TEMP
-            "height": "2.75vh",  // TEMP
-            "line-height": "3.25vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(0.21) + "vh",  // TEMP
         });
         this.setup_radial_gui();
     };
     this.setup_radial_gui = function () {
-        var config = this.get_radial_config();
-        var canvas = document.createElement("canvas");
-        var script = document.createElement("script");
-        var canvas_container = document.createElement("div");
-        var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
-        canvas_container.style.overflow = "hidden";
-        canvas_container.style.width = "10.5vh";  // TEMP
-        canvas_container.style.height = "10.5vh";  // TEMP
-        canvas_container.style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        canvas_container.style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
-        canvas_container.style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
-        canvas_container.style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
-        canvas.id = canvas_id;
-        script.type = "text/javascript";
-        script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
-        canvas_container.appendChild(canvas);
-        this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        if (!this.canvas) {
+            var config = this.get_radial_config();
+            var canvas = document.createElement("canvas");
+            var script = document.createElement("script");
+            var canvas_container = document.createElement("div");
+            var canvas_id = "radial_canvas_" + Dash.Math.RandomNumber();
+            canvas.id = canvas_id;
+            script.type = "text/javascript";
+            script.text = "window." + canvas_id + " = new Chart(document.getElementById('" + canvas_id + "').getContext('2d')," + JSON.stringify(config) + ");";
+            canvas_container.appendChild(canvas);
+            this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
+        }
+        this.canvas["container"].style.overflow = "hidden";
+        this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
+        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
+        this.canvas["container"].style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
+        this.canvas["container"].style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
     };
     this.get_radial_fill_data = function () {
         return [this.radial_fill_percent, 100 - this.radial_fill_percent];
@@ -34006,7 +34106,7 @@ function DashLayoutToolbarInterface () {
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
     this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color);
+        var header = new Dash.Gui.Header(text, color || this.color);
         header.html.css({
             "padding-left": Dash.Size.Padding * 0.5,
             "margin-top": Dash.Size.Padding * 0.5,
