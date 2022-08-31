@@ -28797,13 +28797,13 @@ function DashGuiInputRowInterface () {
     };
 }
 
-function DashGuiLoadingLabel (binder, label_text, height=null) {
+function DashGuiLoadingLabel (binder, label_text, height=null, color=null) {
     this.binder = binder;
     this.label_text = label_text;
     this.height = height || Dash.Size.ButtonHeight;
     this.html = null;
     this.loading_dots = null;
-    this.color = this.binder.color || Dash.Color.Light;
+    this.color = color || this.binder.color || Dash.Color.Light;
     this.label = $("<div>" + this.label_text + "</div>");
 
     this.setup_styles = function () {
