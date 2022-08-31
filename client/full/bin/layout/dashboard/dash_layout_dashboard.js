@@ -6,6 +6,7 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.margin = 1;
     this.vsizes = {};
     this.modules = [];
+    this.vmargins = {};
     this.padding = 0.4;
     this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
@@ -82,9 +83,27 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
             return this.vsizes[key];
         }
 
-        this.vsizes[key] = ((Math.round(parseInt(this.VerticalSpaceTakenPercent) * 10) / 10) * percentage_decimal_of_dashboard_size);
+        this.vsizes[key] = this.get_rounded_single_decimal(this.vertical_space_percent) * percentage_decimal_of_dashboard_size;
 
         return this.vsizes[key];
+    };
+
+    this.get_vmargin = function (margin_mult=1) {
+        var key = this.VerticalSpaceTakenPercent + "_" + margin_mult;
+
+        if (this.vmargins[key]) {
+            return this.vmargins[key];
+        }
+
+        // 15 is the default vertical_space_percent
+        this.vmargins[key] = this.get_rounded_single_decimal((this.margin * margin_mult) * (this.vertical_space_percent / 15));
+
+        return this.vmargins[key];
+    };
+
+    this.get_rounded_single_decimal = function (value) {
+        // Multiplying by 10 and then dividing by 10 yields a single decimal place, if applicable
+        return Math.round(value * 10) / 10;
     };
 
     this.setup_styles = function () {
@@ -210,8 +229,8 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
 
-        container.style.padding = this.padding.toString() + "vh";  // TEMP
-        container.style.margin = this.margin.toString() + "vh";  // TEMP
+        container.style.padding = this.padding + "vh";  // TEMP
+        container.style.margin = this.get_vmargin() + "vh";  // TEMP
 
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;

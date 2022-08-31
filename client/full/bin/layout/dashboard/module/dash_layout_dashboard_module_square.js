@@ -207,10 +207,10 @@ function DashLayoutDashboardModuleSquare () {
         this.canvas["container"].style.overflow = "hidden";
         this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
         this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
-        this.canvas["container"].style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
-        this.canvas["container"].style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(3) + "vh";// TEMP
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + "vh";// TEMP
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + "vh";// TEMP
     };
 
     this.get_radial_fill_data = function () {

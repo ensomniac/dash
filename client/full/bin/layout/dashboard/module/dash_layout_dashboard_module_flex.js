@@ -88,14 +88,12 @@ function DashLayoutDashboardModuleFlex () {
         }
 
         var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
-        var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
-        var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
 
         this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
-        this.canvas["container"].style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(2.2) + "vh";  // TEMP
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(prev_mod_is_flex ? 0.9 : 0.3) + "vw";  // TEMP
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(prev_mod_is_flex ? 1 : 1.25) + "vw";  // TEMP
 
         this.canvas["container"].style.overflow = "hidden";
         this.canvas["container"].style.opacity = "0";

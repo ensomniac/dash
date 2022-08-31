@@ -94,8 +94,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": this.margin.toString() + "vh",  // TEMP
-            "padding": this.padding.toString() + "vh"  // TEMP
+            "margin": this.dashboard.get_vmargin() + "vh",  // TEMP
+            "padding": this.padding + "vh"  // TEMP
         });
 
         if (this.modules && this.modules.length > 0) {

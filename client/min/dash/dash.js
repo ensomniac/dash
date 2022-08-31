@@ -30709,6 +30709,7 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.margin = 1;
     this.vsizes = {};
     this.modules = [];
+    this.vmargins = {};
     this.padding = 0.4;
     this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
@@ -30764,8 +30765,21 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         if (this.vsizes[key]) {
             return this.vsizes[key];
         }
-        this.vsizes[key] = ((Math.round(parseInt(this.VerticalSpaceTakenPercent) * 10) / 10) * percentage_decimal_of_dashboard_size);
+        this.vsizes[key] = this.get_rounded_single_decimal(this.vertical_space_percent) * percentage_decimal_of_dashboard_size;
         return this.vsizes[key];
+    };
+    this.get_vmargin = function (margin_mult=1) {
+        var key = this.VerticalSpaceTakenPercent + "_" + margin_mult;
+        if (this.vmargins[key]) {
+            return this.vmargins[key];
+        }
+        // 15 is the default vertical_space_percent
+        this.vmargins[key] = this.get_rounded_single_decimal((this.margin * margin_mult) * (this.vertical_space_percent / 15));
+        return this.vmargins[key];
+    };
+    this.get_rounded_single_decimal = function (value) {
+        // Multiplying by 10 and then dividing by 10 yields a single decimal place, if applicable
+        return Math.round(value * 10) / 10;
     };
     this.setup_styles = function () {
         this.SetVerticalSpacePercent(this.vertical_space_percent);
@@ -30862,8 +30876,8 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
-        container.style.padding = this.padding.toString() + "vh";  // TEMP
-        container.style.margin = this.margin.toString() + "vh";  // TEMP
+        container.style.padding = this.padding + "vh";  // TEMP
+        container.style.margin = this.get_vmargin() + "vh";  // TEMP
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;
         }
@@ -30957,8 +30971,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": this.margin.toString() + "vh",  // TEMP
-            "padding": this.padding.toString() + "vh"  // TEMP
+            "margin": this.dashboard.get_vmargin() + "vh",  // TEMP
+            "padding": this.padding + "vh"  // TEMP
         });
         if (this.modules && this.modules.length > 0) {
             this.html.css({
@@ -31048,13 +31062,11 @@ function DashLayoutDashboardModuleFlex () {
             this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
         }
         var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
-        var l_margin_mult = prev_mod_is_flex ? 0.9 : 0.3;
-        var r_margin_mult = prev_mod_is_flex ? 1 : 1.25;
         this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = (this.margin * 2.2).toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginLeft = (this.margin * l_margin_mult).toString() + "vw";  // TEMP
-        this.canvas["container"].style.marginRight = (this.margin * r_margin_mult).toString() + "vw";  // TEMP
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(2.2) + "vh";  // TEMP
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(prev_mod_is_flex ? 0.9 : 0.3) + "vw";  // TEMP
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(prev_mod_is_flex ? 1 : 1.25) + "vw";  // TEMP
         this.canvas["container"].style.overflow = "hidden";
         this.canvas["container"].style.opacity = "0";
         this.canvas["container"].style.flex = "1";
@@ -31616,10 +31628,10 @@ function DashLayoutDashboardModuleSquare () {
         this.canvas["container"].style.overflow = "hidden";
         this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
         this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.margin.toString() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = (this.margin * 3).toString() + "vh";// TEMP
-        this.canvas["container"].style.marginLeft = (this.margin * 1.25).toString() + "vh";// TEMP
-        this.canvas["container"].style.marginRight = (this.margin * 2.45).toString() + "vh";// TEMP
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(3) + "vh";// TEMP
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + "vh";// TEMP
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + "vh";// TEMP
     };
     this.get_radial_fill_data = function () {
         return [this.radial_fill_percent, 100 - this.radial_fill_percent];
