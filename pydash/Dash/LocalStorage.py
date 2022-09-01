@@ -121,7 +121,27 @@ class DashLocalStorage:
             if str(obj_id).startswith("."):
                 continue
 
-            data = self.GetData(obj_id)
+            try:
+                data = self.GetData(obj_id)
+
+            # In this context, if there's a failure, it can break an entire portal, so if a folder exists but
+            # is simply missing its data.json, we can safely skip it and send a warning email instead of failing
+            except Exception as e:
+                if "does not exist" in str(e):
+                    from Dash.Utils import SendEmail
+
+                    SendEmail(
+                        subject="Dash.LocalStorage.GetAll",
+                        msg=(
+                            f"Warning:\nA folder was identified as missing its data.json file. This typically happens "
+                            "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
+                        ),
+                        error=str(e)
+                    )
+
+                    continue
+                else:
+                    raise Exception(str(e))
 
             if not data:
                 continue
@@ -383,7 +403,7 @@ class DashLocalStorage:
                     obj_id
                 )
 
-    def GetRecordRoot(self, obj_id=None):
+    def GetRecordRoot(self, obj_id=""):
         """
         | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
         | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id
@@ -516,9 +536,9 @@ class DashLocalStorage:
         """
 
         if self.nested:
-            return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")  # /local/store_path/202283291732434/data.json <- This is the data
+            return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")  # /local/store_path/
         else:
-            return self.GetRecordRoot()  # /local/store_path/202283291732434 <- This is the data
+            return self.GetRecordRoot()  # /local/store_path/
 
     def write_binary(self, full_path, data, conform_permissions=True):
         open(full_path, "wb").write(data)
