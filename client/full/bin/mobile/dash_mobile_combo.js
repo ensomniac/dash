@@ -85,6 +85,22 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.html.prop("disabled", true);
     };
 
+    this.SetWidth = function (width, min=null, max=null) {
+        if (min === null) {
+            min = width;
+        }
+
+        if (max === null) {
+            max = width;
+        }
+
+        this.html.css({
+            "width": width,
+            "min-width": min,
+            "max-width": max
+        });
+    };
+
     this.add_options = function () {
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false);

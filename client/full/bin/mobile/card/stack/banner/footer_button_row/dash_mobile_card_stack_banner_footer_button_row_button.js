@@ -116,6 +116,20 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         });
     };
 
+    this.SetNotificationActive = function (is_active) {
+        if (!this.notification_icon) {
+            this.create_notification_icon();
+        }
+
+        if (is_active) {
+            this.notification_icon.stop().animate({"opacity": 1}, 350);
+        }
+
+        else {
+            this.notification_icon.stop().animate({"opacity": 0}, 350);
+        }
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.icon_circle.on("mousedown", function (event) {
@@ -149,20 +163,6 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
                 self.click_active = false;
             }, 750);
         })(this);
-    };
-
-    this.SetNotificationActive = function (is_active) {
-        if (!this.notification_icon) {
-            this.create_notification_icon();
-        }
-
-        if (is_active) {
-            this.notification_icon.stop().animate({"opacity": 1}, 350);
-        }
-
-        else {
-            this.notification_icon.stop().animate({"opacity": 0}, 350);
-        }
     };
 
     this.create_notification_icon = function () {

@@ -21,7 +21,7 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 # ------------------------------------------------- FILE ----------------------------------------------------
 def UploadFile(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None, additional_data={}
 ):
     from .file import Upload
 
@@ -38,7 +38,8 @@ def UploadFile(
         enforce_single_period=enforce_single_period,
         allowable_executable_exts=allowable_executable_exts,
         related_file_path=related_file_path,
-        target_aspect_ratio=target_aspect_ratio
+        target_aspect_ratio=target_aspect_ratio,
+        additional_data={}
     )
 
 

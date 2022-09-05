@@ -21,7 +21,7 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None, additional_data={}
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -61,6 +61,9 @@ def Upload(
         )
     else:
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
+
+    if additional_data:
+        file_data.update(additional_data)
 
     file_data = add_default_keys(file_data, user, existing_data=existing_data_for_update)
     file_root = get_root(file_root, file_data["id"], nested)

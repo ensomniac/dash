@@ -88,9 +88,21 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         }
 
         this.textarea.prop("readOnly", true);
+    };
 
-        // Prevent navigating to locked box via tab
-        this.textarea[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
+    this.Unlock = function () {
+        var css = {"color": this.color.Text};
+
+        if (this.textarea.css("border-top") !== "none") {
+            css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+        }
+
+        else {
+            css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+        }
+
+        this.textarea.css(css);
+        this.textarea.prop("readOnly", false);
     };
 
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {

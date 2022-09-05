@@ -23923,31 +23923,23 @@ function DashGuiButtonInterface () {
     };
 }
 
-function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_callback) {
-    this.button = GuiButton;
+function DashGuiButtonFileUploader (button, api, params, callback, on_start_callback) {
+    this.button = button;
     this.api = api;
     this.params = params;
-    this.filename = "unknown";
-    this.type = this.button.file_upload_type;
     this.callback = callback;
-    this.file_id = null;
-    this.save_folder = "files";
-    this.dropzone_visible = false;
-    this.on_start_callback = on_start_callback.bind(GuiButton);
-    this.dropzone_label_text = "Drop " + this.type.charAt(0).toUpperCase() + this.type.slice(1);
+    this.on_start_callback = on_start_callback.bind(button);
+    this.filename = "unknown";
     this.html = $("<div></div>");
+    this.dropzone_visible = false;
     this.dropzone_box = $("<div></div>");
-    this.dropzone_label = $("<div>" + this.dropzone_label_text + "</div>");
+    this.type = this.button.file_upload_type;
     this.upload_backing_bar = $("<div></div>");
     this.upload_progress_bar = $("<div></div>");
-    this.html.append(this.dropzone_box);
-    this.dropzone_box.append(this.dropzone_label);
-    this.html.append(this.upload_backing_bar);
-    this.html.append(this.upload_progress_bar);
-    this.dropzone_box.hide();
+    this.dropzone_label = $("<div>" + this.dropzone_label_text + "</div>");
+    this.dropzone_label_text = "Drop " + this.type.charAt(0).toUpperCase() + this.type.slice(1);
     this.SetCallback = function (callback, bind_to) {
         if (!bind_to) {
-            // console.warn("Warning: This SetCallback() callback should be passed a bind_to object");
             this.callback = callback;
         }
         else {
@@ -23963,73 +23955,83 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         this.dropzone_label.text(this.dropzone_label_text);
     };
     this.setup_styles = function () {
-
-        this.html.css({
-            // "background": "rgba(0, 0, 0, 0)",
-            // "text-align": "center",
-        });
-        this.dropzone_box.css({
-        });
+        this.dropzone_box.append(this.dropzone_label);
+        this.html.append(this.dropzone_box);
+        this.html.append(this.upload_backing_bar);
+        this.html.append(this.upload_progress_bar);
+        this.dropzone_box.hide();
+        this.draw();
+        this.draw_dropzone();
     };
     this.draw = function () {
         this.width = this.button.width;
         this.height = Dash.Size.ButtonHeight;
-        var border_width = 2;
         var margin_top = "";
-        var dropzone_box_width = this.width - (border_width*2);
+        var border_width = 2;
+        var dropzone_box_width = this.width - (border_width * 2);
         var dropzone_box_height = Dash.Size.ButtonHeight;
         if (this.dropzone_visible) {
             this.dropzone_box.show();
             margin_top = Dash.Size.ButtonHeight;
         }
-        this.upload_bar_css = {};
-        this.upload_bar_css["height"] = 5;
-        this.upload_bar_css["width"] = this.width;
-        this.upload_bar_css["position"] = "absolute";
-        this.upload_bar_css["bottom"] = 0;
-        this.upload_bar_css["left"] = 0;
-        this.upload_bar_css["background"] = "rgba(255, 255, 255, 0)";
+        this.upload_bar_css = {
+            "height": 5,
+            "width": this.width,
+            "position": "absolute",
+            "bottom": 0,
+            "left": 0,
+            "background": "rgba(255, 255, 255, 0)"
+        };
         this.html.css({
             "padding": 0,
             "height": this.height,
             "width": this.width,
             "margin-top": margin_top,
             "position": "absolute",
-            "inset": 0,
+            "inset": 0
         });
         this.dropzone_box.css({
             "background": "red",
             "width": dropzone_box_width,
             "height": dropzone_box_height,
             "bottom": margin_top,
-            "border": border_width + "px dashed rgba(0, 0, 0, 0.5)",
+            "border": border_width + "px dashed rgba(0, 0, 0, 0.5)"
         });
         this.dropzone_label.css({
             "color": "rgba(0, 0, 0, 0.5)",
             "height": Dash.Size.ButtonHeight,
             "width": dropzone_box_width,
             "text-align": "center",
-            "top": (dropzone_box_height * 0.5)-(Dash.Size.ButtonHeight * 0.5),
+            "top": (dropzone_box_height * 0.5) - (Dash.Size.ButtonHeight * 0.5)
         });
         this.upload_backing_bar.css(this.upload_bar_css);
         this.upload_progress_bar.css(this.upload_bar_css);
-        this.upload_progress_bar.css({"background": "rgba(255, 255, 255, 0.8)", "width": 0});
+        this.upload_progress_bar.css({
+            "background": "rgba(255, 255, 255, 0.8)",
+            "width": 0
+        });
     };
-    this.added_file = function (file, dz) {
+    this.added_file = function () {
         this.html.hide();
     };
     this.error_uploading = function (file, error) {
         console.error("Error uploading", error);
         alert(error["error"] || error);
     };
-    this.processing_upload = function (file) {
+    this.processing_upload = function () {
         this.on_start_callback();
     };
     this.upload_progress = function (file, progress) {
         var progress_t = parseInt(progress) * 0.01;
         this.button.SetLoadBar(progress_t);
-        this.upload_backing_bar.css({"background": "rgba(255, 255, 255, 0.2)", "opacity": 1});
-        this.upload_progress_bar.css({"width": this.width*progress_t, "opacity": 1});
+        this.upload_backing_bar.css({
+            "background": "rgba(255, 255, 255, 0.2)",
+            "opacity": 1
+        });
+        this.upload_progress_bar.css({
+            "width": this.width * progress_t,
+            "opacity": 1
+        });
     };
     this.upload_success = function (file, result) {
         this.button.SetLoadBar(0);
@@ -24041,26 +24043,47 @@ function DashGuiButtonFileUploader(GuiButton, api, params, callback, on_start_ca
         (function (self) {
             self.dropzone_options = {
                 "init": function () {
-                    this.on("addedfile", function (file) {self.added_file(file);});
-                    this.on("error", function (file, error) {self.error_uploading(file, error);});
-                    this.on("processing", function (file) {self.processing_upload(file);});
-                    this.on("uploadprogress", function (file, progress) {self.upload_progress(file, progress);});
-                    this.on("success", function (file, result) {self.upload_success(file, result);});
+                    this.on(
+                        "addedfile",
+                        function (file) {
+                            self.added_file(file);
+                        }
+                    );
+                    this.on(
+                        "error",
+                        function (file, error) {
+                            self.error_uploading(file, error);
+                        }
+                    );
+                    this.on(
+                        "processing",
+                        function (file) {
+                            self.processing_upload(file);
+                        }
+                    );
+                    this.on(
+                        "uploadprogress",
+                        function (file, progress) {
+                            self.upload_progress(file, progress);
+                        }
+                    );
+                    this.on(
+                        "success",
+                        function (file, result) {
+                            self.upload_success(file, result);
+                        }
+                    );
                 },
                 "url": self.api,
                 "uploadMultiple": false,
                 "addRemoveLinks": false,
                 "createImageThumbnails": false,
-                //"params": {"cid": "CID", "t": "TOKEN", "type": self.type, "file_id": self.file_id, "save_folder": self.save_folder}
                 "params": self.params
             };
             self.html.dropzone(self.dropzone_options);
         })(this);
     };
-
     this.setup_styles();
-    this.draw();
-    this.draw_dropzone();
 }
 
 /**@member DashGuiButton*/
@@ -34401,6 +34424,19 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.Lock = function () {
         this.html.prop("disabled", true);
     };
+    this.SetWidth = function (width, min=null, max=null) {
+        if (min === null) {
+            min = width;
+        }
+        if (max === null) {
+            max = width;
+        }
+        this.html.css({
+            "width": width,
+            "min-width": min,
+            "max-width": max
+        });
+    };
     this.add_options = function () {
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false);
@@ -34491,8 +34527,17 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             this.textarea.css(css);
         }
         this.textarea.prop("readOnly", true);
-        // Prevent navigating to locked box via tab
-        this.textarea[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
+    };
+    this.Unlock = function () {
+        var css = {"color": this.color.Text};
+        if (this.textarea.css("border-top") !== "none") {
+            css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+        }
+        else {
+            css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+        }
+        this.textarea.css(css);
+        this.textarea.prop("readOnly", false);
     };
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
         var css = {
@@ -36468,6 +36513,17 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "height": "auto"
         });
     };
+    this.SetNotificationActive = function (is_active) {
+        if (!this.notification_icon) {
+            this.create_notification_icon();
+        }
+        if (is_active) {
+            this.notification_icon.stop().animate({"opacity": 1}, 350);
+        }
+        else {
+            this.notification_icon.stop().animate({"opacity": 0}, 350);
+        }
+    };
     this.setup_connections = function () {
         (function (self) {
             self.icon_circle.on("mousedown", function (event) {
@@ -36494,17 +36550,6 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
                 self.click_active = false;
             }, 750);
         })(this);
-    };
-    this.SetNotificationActive = function (is_active) {
-        if (!this.notification_icon) {
-            this.create_notification_icon();
-        }
-        if (is_active) {
-            this.notification_icon.stop().animate({"opacity": 1}, 350);
-        }
-        else {
-            this.notification_icon.stop().animate({"opacity": 0}, 350);
-        }
     };
     this.create_notification_icon = function () {
         this.notification_icon = $("<div></div>");
