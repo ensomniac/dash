@@ -144,9 +144,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
             Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
             "file"
-        );
-
-        header.icon.AddShadow();
+        ).AddShadow();
     };
 
     this.add_primary_inputs = function (file_data, is_image) {

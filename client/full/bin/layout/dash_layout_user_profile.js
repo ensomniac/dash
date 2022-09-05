@@ -203,9 +203,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
 
         this.header = new Dash.Gui.Header(label, this.color);
 
-        this.header.ReplaceBorderWithIcon("user");
-
-        this.header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("user").AddShadow();
 
         this.header.label.css({
             "flex": 1,

@@ -26985,8 +26985,7 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
         this.header = new Dash.Gui.Header(this.header_text, this.color);
-        this.header.ReplaceBorderWithIcon("paperclip");
-        this.header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("paperclip").AddShadow();
         this.header.html.css({
             "margin-bottom": 0
         });
@@ -27511,8 +27510,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
             Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
             "file"
-        );
-        header.icon.AddShadow();
+        ).AddShadow();
     };
     this.add_primary_inputs = function (file_data, is_image) {
         this.details_property_box.AddInput(is_image ? "orig_filename" : "filename", "Filename", this.file_explorer.get_filename(file_data), null, true);
@@ -30491,8 +30489,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             }
         }
         this.header = new Dash.Gui.Header(label, this.color);
-        this.header.ReplaceBorderWithIcon("user");
-        this.header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("user").AddShadow();
         this.header.label.css({
             "flex": 1,
             "overflow": "hidden",

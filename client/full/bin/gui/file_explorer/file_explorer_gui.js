@@ -4,9 +4,7 @@ function DashGuiFileExplorerGUI () {
     this.add_header = function () {
         this.header = new Dash.Gui.Header(this.header_text, this.color);
 
-        this.header.ReplaceBorderWithIcon("paperclip");
-
-        this.header.icon.AddShadow();
+        this.header.ReplaceBorderWithIcon("paperclip").AddShadow();
 
         this.header.html.css({
             "margin-bottom": 0
