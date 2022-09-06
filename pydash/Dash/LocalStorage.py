@@ -128,16 +128,17 @@ class DashLocalStorage:
             # is simply missing its data.json, we can safely skip it and send a warning email instead of failing
             except Exception as e:
                 if "does not exist" in str(e):
-                    from Dash.Utils import SendEmail
+                    if not obj_id.startswith("_"):
+                        from Dash.Utils import SendEmail
 
-                    SendEmail(
-                        subject="Dash.LocalStorage.GetAll",
-                        msg=(
-                            f"Warning:\nA folder was identified as missing its data.json file. This typically happens "
-                            "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
-                        ),
-                        error=str(e)
-                    )
+                        SendEmail(
+                            subject="Dash.LocalStorage.GetAll",
+                            msg=(
+                                f"Warning:\nA folder was identified as missing its data.json file. This typically happens "
+                                "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
+                            ),
+                            error=str(e)
+                        )
 
                     continue
                 else:
