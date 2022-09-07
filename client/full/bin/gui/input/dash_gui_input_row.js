@@ -77,11 +77,9 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         this.highlight.css({
             "position": "absolute",
-            "left": -Dash.Size.Padding,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "inset": 0,
             "background": highlight_color,
+            "border-radius": Dash.Size.BorderRadius,
             "opacity": 0
         });
 

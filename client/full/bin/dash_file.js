@@ -237,7 +237,7 @@ function DashFile () {
         var html = $("<div></div>");
 
         html.css({
-            "background-image": "url(" + url + ")",
+            "background-image": url ? "url(" + url + ")" : "",
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "background-position": "center center"
