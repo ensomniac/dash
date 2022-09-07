@@ -39,7 +39,7 @@ def UploadFile(
         allowable_executable_exts=allowable_executable_exts,
         related_file_path=related_file_path,
         target_aspect_ratio=target_aspect_ratio,
-        additional_data={}
+        additional_data=additional_data
     )
 
 
