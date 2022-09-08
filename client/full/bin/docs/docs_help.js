@@ -152,7 +152,7 @@ function DashDocsHelp (color=null) {
         var style = "font-size: 100%; font-family: Andale Mono, Monaco, monospace; ";
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
 
-        // This has to come first
+        // This must come first
         try {
             text = text.replaceAll(/W*(?<!style)=/g, equals);
         }
@@ -223,7 +223,7 @@ function DashDocsHelp (color=null) {
         var colon = "<i style='" + style + "color: " + operator_color + "'>:</i>";
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
 
-        // These two have to come first
+        // These two must come first
         text = text.replaceAll(":", colon);
 
         try {
