@@ -21236,7 +21236,12 @@ function DashDocsHelp (color=null) {
         var style = "font-size: 100%; font-family: Andale Mono, Monaco, monospace; ";
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
         // This has to come first
-        text = text.replaceAll(/W*(?<!style)=/g, equals);
+        try {
+            text = text.replaceAll(/W*(?<!style)=/g, equals);
+        }
+        catch {
+            // Pass
+        }
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
         text = text.replaceAll("false", "<i style='" + style + "color: " + keyword_color + "'>false</i>");
@@ -21291,7 +21296,12 @@ function DashDocsHelp (color=null) {
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
         // These two have to come first
         text = text.replaceAll(":", colon);
-        text = text.replaceAll(/W*(?<!style)=/g, equals);
+        try {
+            text = text.replaceAll(/W*(?<!style)=/g, equals);
+        }
+        catch {
+            // Pass
+        }
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
         text = text.replaceAll("False", "<i style='" + style + "color: " + keyword_color + "'>False</i>");

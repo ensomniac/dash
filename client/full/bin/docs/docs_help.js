@@ -153,7 +153,13 @@ function DashDocsHelp (color=null) {
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
 
         // This has to come first
-        text = text.replaceAll(/W*(?<!style)=/g, equals);
+        try {
+            text = text.replaceAll(/W*(?<!style)=/g, equals);
+        }
+
+        catch {
+            // Pass
+        }
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
@@ -219,7 +225,14 @@ function DashDocsHelp (color=null) {
 
         // These two have to come first
         text = text.replaceAll(":", colon);
-        text = text.replaceAll(/W*(?<!style)=/g, equals);
+
+        try {
+            text = text.replaceAll(/W*(?<!style)=/g, equals);
+        }
+
+        catch {
+            // Pass
+        }
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
