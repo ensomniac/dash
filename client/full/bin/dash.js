@@ -42,19 +42,25 @@ function Dash () {
     this.Validate  = new DashValidate();
     this.View      = new DashView();
 
-    this.Mobile = {
-        Combo:           DashMobileCombo,
-        TextBox:         DashMobileTextBox,
-        CardStack:       DashMobileCardStack,
-        UserProfile:     DashMobileUserProfile,
-        SearchableCombo: DashMobileSearchableCombo
-    };
+    if (this.IsMobile) {
+        this.Mobile = {
+            Combo:           DashMobileCombo,
+            TextBox:         DashMobileTextBox,
+            CardStack:       DashMobileCardStack,
+            UserProfile:     DashMobileUserProfile,
+            SearchableCombo: DashMobileSearchableCombo
+        };
+    }
 
-    this.Docs = {
-        Box:  DashDocsBox,
-        Help: DashDocsHelp,
-        View: DashDocsView
-    };
+    // As of 9/8/22, iOS doesn't support regex lookbehind, which is used in DashDocsHelp. For now,
+    // going to skip the inclusion of Docs for mobile, because we really don't need it in that case anyway.
+    if (!this.IsMobile) {
+        this.Docs = {
+            Box:  DashDocsBox,
+            Help: DashDocsHelp,
+            View: DashDocsView
+        };
+    }
 
     this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
     this.Logout           = this.User.Logout;
