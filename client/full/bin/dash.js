@@ -52,7 +52,7 @@ function Dash () {
         };
     }
 
-    // As of 9/8/22, iOS doesn't support regex lookbehind, which is used in DashDocsHelp. For now,
+    // As of 9/8/22, iOS/Safari don't support regex lookbehind, which is used in DashDocsHelp. For now,
     // going to skip the inclusion of Docs for mobile, because we really don't need it in that case anyway.
     if (!this.IsMobile) {
         this.Docs = {

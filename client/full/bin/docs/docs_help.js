@@ -152,21 +152,18 @@ function DashDocsHelp (color=null) {
         var style = "font-size: 100%; font-family: Andale Mono, Monaco, monospace; ";
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
 
-        // This must come first
-        try {
-            text = text.replaceAll(/W*(?<!style)=/g, equals);
-        }
-
-        catch {
-            // Pass
-        }
+        // This has to come first
+        // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
+        // prevents pages from loading at all in those contexts. Since I couldn't
+        // figure out an alternative, I'm going to disable this for now.
+        // text = text.replaceAll(/W*(?<!style)=/g, equals);
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
         text = text.replaceAll("false", "<i style='" + style + "color: " + keyword_color + "'>false</i>");
         text = text.replaceAll('"",', '<i style="' + style + 'color: ' + string_color + '">""</i>,');
         text = text.replaceAll("default" + equals, "<i style='" + style + "color: " + doc_syntax_color + "'>default</i>" + equals);
-        text = text.replaceAll(/W*(?<!doc)string/g, "<i style='" + style + "color: " + type_color + "'>string</i>");
+        text = text.replaceAll(/\bstring\b/g, "<i style='" + style + "color: " + type_color + "'>string</i>");
 
         for (var func of ["OtherClassThatInheritsThis", "call"]) {
             text = text.replaceAll(func, "<i style='" + style + "color: " + function_color + "'>" + func + "</i>");
@@ -223,16 +220,13 @@ function DashDocsHelp (color=null) {
         var colon = "<i style='" + style + "color: " + operator_color + "'>:</i>";
         var equals = "<i style='" + style + "color: " + operator_color + "'>=</i>";
 
-        // These two must come first
+        // These two have to come first
         text = text.replaceAll(":", colon);
 
-        try {
-            text = text.replaceAll(/W*(?<!style)=/g, equals);
-        }
-
-        catch {
-            // Pass
-        }
+        // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
+        // prevents pages from loading at all in those contexts. Since I couldn't
+        // figure out an alternative, I'm going to disable this for now.
+        // text = text.replaceAll(/W*(?<!style)=/g, equals);
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
