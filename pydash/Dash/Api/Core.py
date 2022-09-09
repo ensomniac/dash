@@ -54,7 +54,7 @@ class ApiCore:
         self._response = {"error": "Unauthorized"}
 
         try:
-            self._params = self.get_data()
+            self._params = self.get_field_storage_data()
         except:
             self._params = {}
 
@@ -471,7 +471,7 @@ class ApiCore:
         self.dash_global.RequestUser = self.User
         self.dash_global.Context = self.DashContext
 
-    def get_data(self):
+    def get_field_storage_data(self):
         data = {}
 
         if self._proceeding_with_empty_fs:
