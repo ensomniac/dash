@@ -85,6 +85,10 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.html.prop("disabled", true);
     };
 
+    this.Unlock = function () {
+        this.html.prop("disabled", false);
+    };
+
     this.SetWidth = function (width, min=null, max=null) {
         if (min === null) {
             min = width;
