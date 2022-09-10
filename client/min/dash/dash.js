@@ -18468,6 +18468,9 @@ function DashMath () {
         random_id += Math.floor(Math.random() * 99).toString();
         return random_id;
     };
+    this.Range = function (num) {
+        return [...new Array(num).keys()];
+    };
     this.ensure_double_digit = function (number) {
         number = number.toString();
         if (number.length === 1) {
@@ -27845,6 +27848,7 @@ function DashGuiIcons (icon) {
         "cell":                  new DashGuiIconDefinition(this.icon, "Cell Phone", this.weight["regular"], "mobile-alt"),
         "checked_box":           new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
         "circle_dot":            new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
+        "circle_arrow_right":    new DashGuiIconDefinition(this.icon, "Circle Arrow (Right)", this.weight["solid"], "chevron-circle-right"),
         "clipboard":             new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
         "clone":                 new DashGuiIconDefinition(this.icon, "Clone", this.weight["regular"], "clone"),
         "close":                 new DashGuiIconDefinition(this.icon, "Close", this.weight["regular"], "times"),
@@ -27889,6 +27893,8 @@ function DashGuiIcons (icon) {
         "file_word":             new DashGuiIconDefinition(this.icon, "Word File", this.weight["regular"], "file-word"),
         "filter":                new DashGuiIconDefinition(this.icon, "Filter", this.weight["regular"], "filter"),
         "filter_solid":          new DashGuiIconDefinition(this.icon, "Filter", this.weight["solid"], "filter"),
+        "folder":                new DashGuiIconDefinition(this.icon, "Folder", this.weight["regular"], "folder"),
+        "folder_solid":          new DashGuiIconDefinition(this.icon, "Folder (Solid)", this.weight["solid"], "folder"),
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "flag":                  new DashGuiIconDefinition(this.icon, "Flag", this.weight["solid"], "flag-alt"),

@@ -30,6 +30,10 @@ function DashMath () {
         return random_id;
     };
 
+    this.Range = function (num) {
+        return [...new Array(num).keys()];
+    };
+
     this.ensure_double_digit = function (number) {
         number = number.toString();
 
