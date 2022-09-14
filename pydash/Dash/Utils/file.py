@@ -282,6 +282,12 @@ def get_root(root_path, file_id, nested):
 def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None):
     from PIL import Image
 
+    # This is required for PIL to be able to load HEIC images
+    if filename.lower().endswith(".heic"):
+        from pillow_heif import register_heif_opener
+
+        register_heif_opener()
+
     # Allow large uploads, no concern for DecompressionBombError
     Image.MAX_IMAGE_PIXELS = None
 
