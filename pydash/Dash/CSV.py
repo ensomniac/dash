@@ -7,9 +7,9 @@ import os
 import sys
 
 from Dash.Users import Users
-from datetime import datetime
 from csv import writer, reader
 from collections import OrderedDict
+from dateutil.parser import isoparse
 from Dash.Utils import GetRandomID, FormatTime
 
 
@@ -227,7 +227,7 @@ class CSV:
             if not data.get(key):
                 continue
 
-            data[key] = FormatTime(datetime.fromisoformat(data[key]))
+            data[key] = FormatTime(isoparse(data[key]))
 
         return data
 

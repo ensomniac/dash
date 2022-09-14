@@ -429,6 +429,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
 
     this.determine_gravity = function (end_height) {
         var gravity = null;
+        var offset_added = false;
         var total_height = this.html.offset().top + this.html.height() + end_height;
 
         this.gravity_vertical = 0;
@@ -455,6 +456,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 this.rows.css({
                     "top": gravity + this.list_offset_vertical
                 });
+
+                offset_added = true;
             }
         }
 
@@ -475,6 +478,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     });
                 }
             }
+        }
+
+        if (this.list_offset_vertical && !offset_added) {
+            this.rows.css({
+                "top": (parseInt(this.rows.css("top")) || 0) + this.list_offset_vertical
+            });
         }
     };
 
