@@ -166,7 +166,7 @@ function Dash () {
                         }
 
                         catch {
-                            console.log("Array.prototype.Last() failed:", this);
+                            console.warn("Array.prototype.Last() failed:", this);
 
                             return this;
                         }
@@ -179,7 +179,7 @@ function Dash () {
                         }
 
                         catch {
-                            console.log("Array.prototype.SetLast() failed:", this);
+                            console.warn("Array.prototype.SetLast() failed:", this);
 
                             return this;
                         }
@@ -206,7 +206,7 @@ function Dash () {
             }
 
             catch {
-                console.log("String.prototype.Title() failed:", typeof this, this);
+                console.warn("String.prototype.Title() failed:", typeof this, this);
 
                 return this;
             }
@@ -222,7 +222,7 @@ function Dash () {
             }
 
             catch {
-                console.log("String.prototype.Trim() failed:", typeof this, this);
+                console.warn("String.prototype.Trim() failed:", typeof this, this);
 
                 return this;
             }
@@ -244,7 +244,7 @@ function Dash () {
             }
 
             catch {
-                console.log("String.prototype.LTrim() failed:", typeof this, this);
+                console.warn("String.prototype.LTrim() failed:", typeof this, this);
 
                 return this;
             }
@@ -266,7 +266,31 @@ function Dash () {
             }
 
             catch {
-                console.log("String.prototype.RTrim() failed:", typeof this, this);
+                console.warn("String.prototype.RTrim() failed:", typeof this, this);
+
+                return this;
+            }
+        };
+
+        String.prototype.Count = function (char) {
+            try {
+                return (this.split(char).length - 1);
+            }
+
+            catch {
+                console.warn("String.prototype.Count() failed:", typeof this, this);
+
+                return this;
+            }
+        };
+
+        String.prototype.IsDigit = function () {
+            try {
+                return /^\d+$/.test(this);
+            }
+
+            catch {
+                console.warn("String.prototype.IsDigit() failed:", typeof this, this);
 
                 return this;
             }

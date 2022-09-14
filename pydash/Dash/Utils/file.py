@@ -20,8 +20,8 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None, additional_data={}
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={},
+        enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None, additional_data={}, replace_extra_periods=True
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -47,8 +47,8 @@ def Upload(
     if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
         raise ClientAlert(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
 
-    if period_count > 1:
-        filename = replace_extra_periods(filename, file_ext)
+    if period_count > 1 and replace_extra_periods:
+        filename = replace_extra_periods_in_filename(filename, file_ext)
 
     img = None
     is_image = file_ext in ImageExtensions
@@ -211,7 +211,7 @@ def CreateZIP(dir_path):
     )
 
 
-def replace_extra_periods(filename, extension):
+def replace_extra_periods_in_filename(filename, extension):
     split = filename.split(".")
 
     split.pop()
