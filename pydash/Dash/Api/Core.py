@@ -268,8 +268,16 @@ class ApiCore:
 
     def ParseParam(self, key, target_type, default_value=None):
         if key in self._params:
-            if type(self._params[key]) is target_type:
+            param_type = type(self._params[key])
+
+            if param_type is target_type:
                 return self._params[key]
+
+            if param_type is str:  # Extended bool handling
+                stripped = self._params[key].strip('"').strip("'").lower()
+
+                if stripped == "true" or stripped == "false":
+                    self._params[key] = stripped  # Otherwise, json.loads can't parse it properly
 
             self._params[key] = json.loads(self._params[key])
         else:
