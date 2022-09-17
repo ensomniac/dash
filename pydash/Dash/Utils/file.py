@@ -11,7 +11,7 @@ import sys
 
 from .errors import ClientAlert
 from .model import ModelExtensions
-from Dash.LocalStorage import Read, Write
+from Dash.LocalStorage import Read, Write, ConformPermissions
 
 VideoExtensions = ["mp4"]
 AudioExtensions = ["mp3", "wav", "ogg"]
@@ -82,7 +82,6 @@ def Upload(
             dash_context,
             replace_existing=bool(existing_data_for_update)
         )
-
     else:
         file_data = update_data_with_saved_file(
             file_data,
@@ -526,6 +525,10 @@ def save_images(img, orig_path, thumb_path, thumb_square_path):
     img.save(thumb_path, quality=40)
 
     img_square.save(thumb_square_path, quality=40)
+
+    ConformPermissions(orig_path)
+    ConformPermissions(thumb_path)
+    ConformPermissions(thumb_square_path)
 
     return img
 

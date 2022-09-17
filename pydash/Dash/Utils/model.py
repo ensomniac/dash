@@ -191,11 +191,10 @@ class _FBXConverter:
         move(found_glb, self.output_glb_path)
 
         self.set_path_permissions(self.output_glb_path)
-
         self.add_to_log("Wrote " + self.output_glb_path)
 
     def set_path_permissions(self, path):
-        check_output("chmod 755 " + path + "; chown ensomniac " + path + "; chgrp psacln " + path, shell=True)
+        check_output(" chmod 755 " + path + "; chown ensomniac " + path + "; chgrp psacln " + path, shell=True)
 
     def setup_files(self):
         os.makedirs(self.conversion_path)

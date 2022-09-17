@@ -443,7 +443,7 @@ class DashLocalStorage:
 
     def ConformPermissions(self, full_path):
         try:
-            os.chown(full_path, 10000, 1004)
+            os.chown(full_path, 10000, 1004)  # chmod 755, chown ensomniac, chgrp psacln
 
         except FileNotFoundError:
             pass
