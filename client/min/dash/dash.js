@@ -33690,6 +33690,12 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         for (var id in this.rows) {
             if (id === row_id) {
                 this.rows[id].SetActive(true);
+                try {
+                    this.rows[id].html[0].scrollIntoView();
+                }
+                catch {
+                    // Pass
+                }
             }
             else {
                 this.rows[id].SetActive(false);
