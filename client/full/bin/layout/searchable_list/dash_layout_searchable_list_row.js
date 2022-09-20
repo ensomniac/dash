@@ -53,6 +53,22 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         })(this);
     };
 
+    this.IsVisible = function () {
+        var row_top = this.html.offset()["top"];
+        var row_bottom = row_top + this.html[0].clientHeight;
+        var list_top = this.slist.html.scrollTop();
+        var list_bottom = list_top + this.slist.html[0].clientHeight;
+
+        return (
+            // Fully visible
+            (row_top >= list_top && row_bottom <= list_bottom) ||
+
+            // Partially visible
+            (row_top < list_top && list_top < row_bottom) ||
+            (row_top < list_bottom && list_bottom < row_bottom)
+        );
+    };
+
     this.initialize_visibility = function () {
         if (this.observer) {
             return;

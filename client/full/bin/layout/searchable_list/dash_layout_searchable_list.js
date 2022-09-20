@@ -9,6 +9,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.RowContent = {};
     this.filter_text = "";
     this.search_terms = [];
+    this.init_scroll = false;
     this.html = $("<div></div>");
     this.row_content_classes = {};
     this.auto_select_disabled = false;
@@ -172,12 +173,18 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             if (id === row_id) {
                 this.rows[id].SetActive(true);
 
-                try {
-                    this.rows[id].html[0].scrollIntoView();
-                }
+                if (!this.init_scroll) {
+                    if (!this.rows[id].IsVisible()) {
+                        try {
+                            this.rows[id].html[0].scrollIntoView();
+                        }
 
-                catch {
-                    // Pass
+                        catch {
+                            // Pass
+                        }
+                    }
+
+                    this.init_scroll = true;
                 }
             }
 

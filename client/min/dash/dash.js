@@ -33567,6 +33567,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.RowContent = {};
     this.filter_text = "";
     this.search_terms = [];
+    this.init_scroll = false;
     this.html = $("<div></div>");
     this.row_content_classes = {};
     this.auto_select_disabled = false;
@@ -33690,11 +33691,16 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         for (var id in this.rows) {
             if (id === row_id) {
                 this.rows[id].SetActive(true);
-                try {
-                    this.rows[id].html[0].scrollIntoView();
-                }
-                catch {
-                    // Pass
+                if (!this.init_scroll) {
+                    if (!this.rows[id].IsVisible()) {
+                        try {
+                            this.rows[id].html[0].scrollIntoView();
+                        }
+                        catch {
+                            // Pass
+                        }
+                    }
+                    this.init_scroll = true;
                 }
             }
             else {
@@ -33765,6 +33771,19 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
                 self.initialize_visibility();
             });
         })(this);
+    };
+    this.IsVisible = function () {
+        var row_top = this.html.offset()["top"];
+        var row_bottom = row_top + this.html[0].clientHeight;
+        var list_top = this.slist.html.scrollTop();
+        var list_bottom = list_top + this.slist.html[0].clientHeight;
+        return (
+            // Fully visible
+            (row_top >= list_top && row_bottom <= list_bottom) ||
+            // Partially visible
+            (row_top < list_top && list_top < row_bottom) ||
+            (row_top < list_bottom && list_bottom < row_bottom)
+        );
     };
     this.initialize_visibility = function () {
         if (this.observer) {
