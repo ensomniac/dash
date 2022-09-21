@@ -35,11 +35,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.row_html_css = row_options["row_html_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
-    this.header_background_color = row_options["header_background_color"];
-
-    // For creating new rows
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
+    this.header_background_color = row_options["header_background_color"];
 
     // For calculations - ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.full_row_height = this.row_height + 1;
@@ -306,10 +305,18 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
             row.html.css(css);
 
-            if (header && this.header_background_color) {
-                row.column_box.css({
-                    "background": this.header_background_color
-                });
+            if (header) {
+                if (this.header_background_color) {
+                    row.column_box.css({
+                        "background": this.header_background_color
+                    });
+                }
+            }
+
+            else {
+                if (this.row_html_css) {
+                    row.html.css(this.row_html_css);
+                }
             }
 
             // The on-scroll revolving row system used in this style doesn't work when the rows

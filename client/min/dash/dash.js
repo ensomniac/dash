@@ -19539,6 +19539,17 @@ function DashDateTime () {
             (new Date().getTimezoneOffset() / 60))  // Ensure the timeago representation is always relevant to the user's timezone
         );
     };
+    // Get a date object of the start of a given week/year (Sunday)
+    this.GetDateObjectForWeek = function (week_num, year) {
+        var dt_obj = new Date(year, 0, 1 + (week_num - 1) * 7);
+        dt_obj.setDate((dt_obj.getDay() <= 4 ? (dt_obj.getDate() - dt_obj.getDay() + 1) : (dt_obj.getDate() + 8 - dt_obj.getDay())) - 1);
+        return dt_obj;
+    };
+    this.GetWeekNum = function (dt_obj) {
+        var jan_first = new Date(dt_obj.getFullYear(),0,1);
+        var days_so_far = Math.floor((dt_obj - jan_first) / 86400000);
+        return Math.ceil((dt_obj.getDay() + 1 + days_so_far) / 7);
+    };
     this.GetDayOrdinalSuffix = function (day_num) {
         var j = day_num % 10;
         var k = day_num % 100;
@@ -33068,10 +33079,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.row_html_css = row_options["row_html_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
-    this.header_background_color = row_options["header_background_color"];
-    // For creating new rows
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
+    this.header_background_color = row_options["header_background_color"];
     // For calculations - ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.full_row_height = this.row_height + 1;
     DashLayoutRevolvingListScrolling.call(this);
@@ -33265,10 +33276,17 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
                 this.row_height
             );
             row.html.css(css);
-            if (header && this.header_background_color) {
-                row.column_box.css({
-                    "background": this.header_background_color
-                });
+            if (header) {
+                if (this.header_background_color) {
+                    row.column_box.css({
+                        "background": this.header_background_color
+                    });
+                }
+            }
+            else {
+                if (this.row_html_css) {
+                    row.html.css(this.row_html_css);
+                }
             }
             // The on-scroll revolving row system used in this style doesn't work when the rows
             // are animated to expand/collapse. That anim delay breaks the revolving system when a
