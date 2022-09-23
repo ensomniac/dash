@@ -33,6 +33,10 @@ class ApiUsers:
         self.Add(self.update_password, requires_authentication=True)
 
     def reset(self):
+        if self.Params.get("email") and self.DashContext.get("user_email_domain"):
+            if str(self.Params["email"]).split("@")[-1] != self.DashContext["user_email_domain"]:
+                return self.SetResponse({"error": "Unauthorized"})  # Keep it vague intentionally
+
         from Dash.Users import Users as DashUsers
 
         return self.SetResponse(DashUsers(self.Params, self.DashContext).Reset())

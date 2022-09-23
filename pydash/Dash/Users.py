@@ -49,6 +49,8 @@ class Users:
         account_exists = True
 
         if not os.path.exists(user_root):
+            self.validate_dash_guide_account_creation(email)
+
             os.makedirs(user_root)
 
             account_exists = False
@@ -349,6 +351,35 @@ class Users:
             return_data["init"] = self.get_user_init(email)
 
         return return_data
+
+    def validate_dash_guide_account_creation(self, email):
+        if self.dash_context["domain"] != "dash.guide":
+            return
+
+        from Dash.LocalStorage import GetPrivKey
+
+        auth_key = GetPrivKey("dash_guide_new_account_auth_key", is_json=False)
+
+        if self.request_params.get(auth_key):
+            return
+
+        from Dash.Utils import SendEmail, ClientAlert
+
+        link = f"https://{self.dash_context['domain']}/Users?f=reset&email={email}&{auth_key}=true"
+
+        SendEmail(
+            subject="Dash Guide - New User Request",
+            msg=(
+                f"\n'{email}' has requested to create an account in Dash Guide.\n\n"
+                f"If this is authorized, use <a href='{link}'>this link</a> "
+                "to send the new user the standard reset password email."
+            )
+        )
+
+        raise ClientAlert(
+            "Your request to create an account has been sent to admin. If approved, "
+            "you'll receive an email with a link to get a temporary password to log in."
+        )
 
     def decode_base64(self, data, altchars=b"+/"):
         """
