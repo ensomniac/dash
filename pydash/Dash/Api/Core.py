@@ -100,6 +100,7 @@ class ApiCore:
         - "srv_path_http_root"   : "/var/www/vhosts/oapi.co/candy/",
         - "srv_path_local"       : "/var/www/vhosts/oapi.co/candy/local/"
         - "timezone"             : "EST"
+        - "user_email_domain"    : "candy.com"
 
         :return: self._dash_context
         :rtype: dict

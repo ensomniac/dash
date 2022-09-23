@@ -86,7 +86,8 @@ class PackageContext:
         #     'srv_path_git_oapi': '/var/www/vhosts/oapi.co/altona/altona_io/',
         #     'srv_path_http_root': '/var/www/vhosts/oapi.co/altona/',
         #     'srv_path_local': '/var/www/vhosts/oapi.co/altona/local/'
-        #     'timezone': ''
+        #     'timezone': '',
+        #     'user_email_domain': 'altonametal.com'
         # }
 
         return data
