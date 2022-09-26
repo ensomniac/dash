@@ -127,32 +127,29 @@ class Collection:
         )
 
     def New(self, additional_data={}, return_all_data=True, obj_id=""):
-        new_obj = LocalStorage.New(
-            self.DashContext,
-            self.store_path,
-            additional_data=additional_data,
-            nested=self.nested,
-            obj_id=obj_id
+        return self.handle_new_data(
+            LocalStorage.New(
+                self.DashContext,
+                self.store_path,
+                additional_data=additional_data,
+                nested=self.nested,
+                obj_id=obj_id
+            ),
+            return_all_data
         )
 
-        if hasattr(self, "_all") and type(self._all) is dict:
-            if "data" in self._all and not self._all["data"].get(new_obj["id"]):
-                self._all["data"][new_obj["id"]] = new_obj
-
-            if "order" in self._all and new_obj["id"] not in self._all["order"]:
-                self._all["order"].append(new_obj["id"])
-
-        if hasattr(self, "_all_ids") and type(self._all_ids) is list and new_obj["id"] not in self._all_ids:
-            self._all_ids.append(new_obj["id"])
-
-        if return_all_data:
-            data = self.GetAll()
-
-            data["new_object"] = new_obj["id"]
-
-            return data
-
-        return new_obj
+    def Duplicate(self, id_to_duplicate, include_display_name=True, display_name_tag="Copy", return_all_data=True):
+        return self.handle_new_data(
+            LocalStorage.Duplicate(
+                self.DashContext,
+                self.store_path,
+                id_to_duplicate,
+                include_display_name,
+                display_name_tag,
+                nested=self.nested
+            ),
+            return_all_data
+        )
 
     def Delete(self, obj_id, return_all_data=True):
         deleted = LocalStorage.Delete(
@@ -215,3 +212,23 @@ class Collection:
                 rmtree(path)
             else:
                 os.remove(path)
+
+    def handle_new_data(self, new_data, return_all_data=True):
+        if hasattr(self, "_all") and type(self._all) is dict:
+            if "data" in self._all and not self._all["data"].get(new_data["id"]):
+                self._all["data"][new_data["id"]] = new_data
+
+            if "order" in self._all and new_data["id"] not in self._all["order"]:
+                self._all["order"].append(new_data["id"])
+
+        if hasattr(self, "_all_ids") and type(self._all_ids) is list and new_data["id"] not in self._all_ids:
+            self._all_ids.append(new_data["id"])
+
+        if return_all_data:
+            data = self.GetAll()
+
+            data["new_object"] = new_data["id"]
+
+            return data
+
+        return new_data

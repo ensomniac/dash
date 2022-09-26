@@ -61,16 +61,13 @@ class DashLocalStorage:
 
         record_id = obj_id or GetRandomID()
 
-        data = {
-            "id": record_id,
-            "created_by": Memory.Global.RequestUser["email"],
-            "created_on": datetime.now().isoformat(),
-            "modified_by": Memory.Global.RequestUser["email"],
-            "modified_on": datetime.now().isoformat()
-        }
+        data = self.get_default_data(record_id)
 
         if additional_data:
             for key in additional_data:
+                if key in data:
+                    continue
+
                 data[key] = additional_data[key]
 
         root = self.get_data_root(record_id)
@@ -86,6 +83,39 @@ class DashLocalStorage:
         self.Write(self.GetRecordPath(record_id), data, conform_permissions)
 
         return data
+
+    def Duplicate(self, id_to_duplicate, include_display_name=True, display_name_tag="Copy"):
+        if self.nested:
+            from shutil import copytree
+
+            new_id = GetRandomID()
+
+            copytree(self.get_data_root(id_to_duplicate), self.get_data_root(new_id))
+
+            new_data = self.GetData(new_id)
+
+            new_data.update(self.get_default_data(new_id))
+        else:
+            new_data = self.New(self.GetData(id_to_duplicate))
+            new_id = new_data["id"]
+
+        new_data["_duplicated_from"] = id_to_duplicate
+
+        if new_data.get("display_name"):
+            if not include_display_name:
+                new_data["display_name"] = new_id
+
+            elif display_name_tag:
+                new_data["display_name"] = f"{new_data['display_name']} ({display_name_tag})"
+
+        self.Write(self.GetRecordPath(new_id), new_data)
+
+        if not self.nested:
+            return new_data
+
+        self.recursively_replace_id_in_root(self.get_data_root(new_id), id_to_duplicate, new_id)
+
+        return new_data
 
     def GetAllIDs(self):
         all_ids = []
@@ -386,16 +416,16 @@ class DashLocalStorage:
             )
         else:
             if self.nested:
-                obj_id_path = os.path.join(
+                obj_id_root = os.path.join(
                     self.GetRecordRoot(obj_id),
                     obj_id
                 )
 
-                if not os.path.isdir(obj_id_path):
+                if not os.path.isdir(obj_id_root):
                     return ""
 
                 return os.path.join(
-                    obj_id_path,
+                    obj_id_root,
                     "data.json"
                 )
             else:
@@ -589,9 +619,63 @@ class DashLocalStorage:
 
         return data
 
+    def get_default_data(self, record_id):
+        return {
+            "id": record_id,
+            "created_by": Memory.Global.RequestUser["email"],
+            "created_on": datetime.now().isoformat(),
+            "modified_by": Memory.Global.RequestUser["email"],
+            "modified_on": datetime.now().isoformat()
+        }
+
+    def recursively_replace_id_in_root(self, root, old_id, new_id):
+        if not os.path.exists(root):
+            return
+
+        for filename in os.listdir(root):
+            path = os.path.join(root, filename)
+
+            if filename.endswith(".json"):
+                data, modified = self.recursively_replace_id_in_data(self.Read(path), old_id, new_id)
+
+                if modified:
+                    self.Write(path, data)
+
+            elif os.path.isdir(path):
+                self.recursively_replace_id_in_root(path, old_id, new_id)
+
+            if old_id in filename:
+                os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
+
+    def recursively_replace_id_in_data(self, data, old_id, new_id, _modified=False):
+        if not data:
+            return data, _modified
+
+        key_changes = []
+
+        for key in data:
+            if old_id in key:
+                key_changes.append(key)
+
+            value = data.get(key)
+
+            if not value or type(value) is not str or old_id not in value:
+                continue
+
+            data[key] = value.replace(old_id, new_id)
+
+        for key in key_changes:
+            data[key.replace(old_id, new_id)] = data.pop(key)
+
+        return data, _modified
+
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
     return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id, conform_permissions)
+
+
+def Duplicate(dash_context, store_path, id_to_duplicate, include_display_name=True, display_name_tag="Copy", nested=False):
+    return DashLocalStorage(dash_context, store_path, nested).Duplicate(id_to_duplicate, include_display_name, display_name_tag)
 
 
 def CreateOrUpdate(dash_context, store_path, additional_data, obj_id, nested=False):
