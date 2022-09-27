@@ -33669,6 +33669,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             var search_text = this.rows[row_id].Update(row_data);
             if (search_text) {
                 search_text = search_text.trim().toLowerCase();
+                search_text = search_text.replaceAll(".", "").replaceAll("-", "");
                 // Unidecode
                 search_text = search_text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             }
@@ -33911,21 +33912,22 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
 }
 
 function DashLayoutSearchableListSearchInput (slist) {
-    this.slist      = slist;
-    this.color      = this.slist.color;
-    this.row_height = this.slist.row_height;
-    this.icon_size    = this.row_height-(Dash.Size.Padding * 1.5);
-    this.input        = new Dash.Gui.Input("Search...", this.color);
-    this.icon_search  = new Dash.Gui.Icon(this.color, "search", this.icon_size);
-    this.icon_clear   = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
-    this.html         = this.input.html;
+    this.slist = slist;
+    this.html = null;
+    this.color = this.slist.color;
     this.current_search_term = "";
-    this.clear_icon_visible  = false;
+    this.clear_icon_visible = false;
+    this.row_height = this.slist.row_height;
+    this.input = new Dash.Gui.Input("Search...", this.color);
+    this.icon_size = this.row_height - (Dash.Size.Padding * 1.5);
+    this.clear_icon = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
+    this.search_icon = new Dash.Gui.Icon(this.color, "search", this.icon_size);
     this.setup_styles = function () {
+        this.html = this.input.html;
         this.input.OnChange(this.on_search, this);
-        this.html.append(this.icon_search.html);
-        this.html.append(this.icon_clear.html);
-        this.icon_search.Mirror();
+        this.html.append(this.search_icon.html);
+        this.html.append(this.clear_icon.html);
+        this.search_icon.Mirror();
         this.html.css({
             "position": "absolute",
             "left": 0,
@@ -33936,25 +33938,25 @@ function DashLayoutSearchableListSearchInput (slist) {
             "background": Dash.Color.Lighten(this.color.Background, 10),
             "box-shadow": "none",
             "margin-right": 0,
-            "padding-right": this.row_height + Dash.Size.Padding * 0.5,
+            "padding-right": this.row_height + Dash.Size.Padding * 0.5
         });
-        this.icon_search.html.css({
+        this.search_icon.html.css({
             "position": "absolute",
             "right": Dash.Size.Padding * 0.66,
             "top": Dash.Size.Padding * 0.66,
             "pointer-events": "none",
-            "user-select":    "none",
+            "user-select": "none"
         });
-        this.icon_clear.html.css({
+        this.clear_icon.html.css({
             "position": "absolute",
             "right": Dash.Size.Padding * 0.66,
             "top": Dash.Size.Padding * 0.66,
-            "user-select":    "none",
+            "user-select": "none",
             "cursor": "pointer",
-            "opacity": 0,
+            "opacity": 0
         });
         (function (self) {
-            self.icon_clear.html.on("click", function () {
+            self.clear_icon.html.on("click", function () {
                 self.clear_search();
             });
         })(this);
@@ -33966,36 +33968,36 @@ function DashLayoutSearchableListSearchInput (slist) {
     };
     this.on_search = function () {
         var _current_search_term = this.input.Text();
-        if (_current_search_term == this.current_search_term) {
+        if (_current_search_term === this.current_search_term) {
             return;
-        };
+        }
         this.current_search_term = _current_search_term;
         if (this.current_search_term.length > 0) {
             this.show_clear_icon();
         }
         else {
             this.hide_clear_icon();
-        };
+        }
         this.slist.SetSearchTerm(this.current_search_term);
     };
     this.show_clear_icon = function () {
         if (this.clear_icon_visible) {
             return;
-        };
+        }
         this.clear_icon_visible = true;
-        this.icon_search.html.stop().animate({"opacity": 0}, 250);
-        this.icon_clear.html.stop().animate( {"opacity": 1}, 250);
+        this.search_icon.html.stop().animate({"opacity": 0}, 250);
+        this.clear_icon.html.stop().animate( {"opacity": 1}, 250);
     };
     this.hide_clear_icon = function () {
         if (!this.clear_icon_visible) {
             return;
-        };
+        }
         this.clear_icon_visible = false;
-        this.icon_search.html.stop().animate({"opacity": 1}, 250);
-        this.icon_clear.html.stop().animate( {"opacity": 0}, 250);
+        this.search_icon.html.stop().animate({"opacity": 1}, 250);
+        this.clear_icon.html.stop().animate( {"opacity": 0}, 250);
     };
     this.setup_styles();
-};
+}
 
 function DashLayoutToolbar (binder, color=null) {
     this.binder = binder;
