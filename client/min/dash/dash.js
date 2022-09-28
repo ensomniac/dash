@@ -26116,7 +26116,7 @@ function DashGuiComboRow (combo, option) {
         this.label.css({
             "text-align": "left"
         });
-        if (this.option["id"] === "none") {
+        if (!this.option["id"] || this.option["id"] === "none") {
             return;
         }
         this.user_icon = $("<div></div>");
