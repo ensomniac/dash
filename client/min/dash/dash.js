@@ -19380,7 +19380,7 @@ function DashValidate () {
 }
 
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false) {
         var date;
         var dt_obj;
         var timezone;
@@ -19415,8 +19415,9 @@ function DashDateTime () {
                 break;
             }
         }
-        // Return readable without second
-        readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        if (!include_seconds) {
+            readable = readable.slice(0, parseInt(i)) + readable.slice(parseInt(i) + 3, readable.length);
+        }
         if (include_tz_label && timezone) {
             return readable + " " + timezone;
         }
