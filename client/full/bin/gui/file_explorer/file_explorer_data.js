@@ -154,8 +154,21 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        if (this.files_data && Dash.Validate.Object(this.files_data["data"]) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
-            return;
+        if (this.files_data && Dash.Validate.Object(this.files_data["data"])) {
+            for (var id in response["data"]) {
+                if ("local_ids" in response["data"][id]) {
+                    delete response["data"][id]["local_ids"];
+                }
+
+                // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
+                if (this.supports_desktop_client && "modified_on" in response["data"][id]) {
+                    delete response["data"][id]["modified_on"];
+                }
+            }
+
+            if (JSON.stringify(this.files_data["data"]) === JSON.stringify(response["data"])) {
+                return;
+            }
         }
 
         console.log("(File Explorer) Files data:", response);

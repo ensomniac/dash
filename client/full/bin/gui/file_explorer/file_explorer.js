@@ -94,7 +94,7 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
                 this.DeleteButtonConfig
             ];
 
-            Dash.SetInterval(this, this.get_files_data, 2250);
+            Dash.SetInterval(this, this.get_files_data, 4000);
         }
 
         this.add_header();

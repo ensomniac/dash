@@ -26742,7 +26742,7 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
                 this.DownloadButtonConfig,
                 this.DeleteButtonConfig
             ];
-            Dash.SetInterval(this, this.get_files_data, 2250);
+            Dash.SetInterval(this, this.get_files_data, 4000);
         }
         this.add_header();
         if (!this.read_only) {
@@ -27368,8 +27368,19 @@ function DashGuiFileExplorerData () {
             })(this, response, archive_mode);
             return;
         }
-        if (this.files_data && Dash.Validate.Object(this.files_data["data"]) && JSON.stringify(this.files_data) === JSON.stringify(response)) {
-            return;
+        if (this.files_data && Dash.Validate.Object(this.files_data["data"])) {
+            for (var id in response["data"]) {
+                if ("local_ids" in response["data"][id]) {
+                    delete response["data"][id]["local_ids"];
+                }
+                // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
+                if (this.supports_desktop_client && "modified_on" in response["data"][id]) {
+                    delete response["data"][id]["modified_on"];
+                }
+            }
+            if (JSON.stringify(this.files_data["data"]) === JSON.stringify(response["data"])) {
+                return;
+            }
         }
         console.log("(File Explorer) Files data:", response);
         this.update_cached_data(response);
