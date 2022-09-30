@@ -33,16 +33,22 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Deleting...");
         this.disable_load_buttons();
 
-        Dash.Request(
-            this,
-            this.on_files_changed,
-            this.api,
-            {
-                "f": "delete_file",
-                "parent_obj_id": this.parent_obj_id,
-                "file_id": file_id
-            }
-        );
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_changed(response, false);
+
+                    self.list.RemoveRow(file_id, true);
+                },
+                self.api,
+                {
+                    "f": "delete_file",
+                    "parent_obj_id": self.parent_obj_id,
+                    "file_id": file_id
+                }
+            );
+        })(this);
     };
 
     this.restore_file = function (file_id) {
@@ -80,18 +86,32 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Updating...");
         this.disable_load_buttons();
 
-        Dash.Request(
-            this,
-            this.on_files_changed,
-            this.api,
-            {
-                "f": "set_file_property",
-                "parent_obj_id": this.parent_obj_id,
-                "key": key,
-                "value": value,
-                "file_id": file_id
-            }
-        );
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_changed(response, false);
+
+                    var row = self.list.GetRow(file_id);
+
+                    if (!row) {
+                        row = self.list.GetRow(file_id, false, true);
+                    }
+
+                    if (row) {
+                        row.Update();
+                    }
+                },
+                self.api,
+                {
+                    "f": "set_file_property",
+                    "parent_obj_id": self.parent_obj_id,
+                    "key": key,
+                    "value": value,
+                    "file_id": file_id
+                }
+            );
+        })(this);
     };
 
     this.get_files_data = function (callback=null) {
@@ -154,18 +174,9 @@ function DashGuiFileExplorerData () {
             return;
         }
 
+        response = this.clean_cached_data(response);
+
         if (this.files_data && Dash.Validate.Object(this.files_data["data"])) {
-            for (var id in response["data"]) {
-                if ("local_ids" in response["data"][id]) {
-                    delete response["data"][id]["local_ids"];
-                }
-
-                // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
-                if (this.supports_desktop_client && "modified_on" in response["data"][id]) {
-                    delete response["data"][id]["modified_on"];
-                }
-            }
-
             if (JSON.stringify(this.files_data["data"]) === JSON.stringify(response["data"])) {
                 return;
             }
@@ -180,11 +191,34 @@ function DashGuiFileExplorerData () {
         }
 
         else {
+            if (this.list) {
+                for (var row of this.list.rows) {
+                    if (row.is_sublist && row.IsExpanded()) {
+                        return;  // Make sure we don't redraw when looking in a folder (sublist)
+                    }
+                }
+            }
+
             this.redraw_rows();
         }
     };
 
-    this.on_files_changed = function (response) {
+    this.clean_cached_data = function (data) {
+        for (var id in data["data"]) {
+            if ("local_ids" in data["data"][id]) {
+                delete data["data"][id]["local_ids"];
+            }
+
+            // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
+            if (this.supports_desktop_client && "modified_on" in data["data"][id]) {
+                delete data["data"][id]["modified_on"];
+            }
+        }
+
+        return data;
+    };
+
+    this.on_files_changed = function (response, redraw_rows=true) {
         var error_context = "on_files_changed response (on upload/delete) was invalid.";
 
         if (!response["all_files"]) {
@@ -203,8 +237,12 @@ function DashGuiFileExplorerData () {
             return;
         }
 
-        this.update_cached_data(response["all_files"]);
-        this.redraw_rows();
+        this.update_cached_data(this.clean_cached_data(response["all_files"]));
+
+        if (redraw_rows) {
+            this.redraw_rows();
+        }
+
         this.hide_subheader();
         this.enable_load_buttons();
     };

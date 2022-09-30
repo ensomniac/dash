@@ -83,8 +83,18 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         return row;
     };
 
-    this.RemoveRow = function (row_id) {
-        var row = this.GetRow(row_id);
+    this.RemoveRow = function (row_id, nested_in_sublist=false) {
+        var row;
+        var list;
+
+        if (nested_in_sublist) {
+            [row, list] = this.get_row_nested_in_sublist(row_id, true);
+        }
+
+        else {
+            row = this.GetRow(row_id);
+            list = this;
+        }
 
         if (!row) {
             return;
@@ -95,13 +105,23 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
 
         row.html.remove();
 
-        var index = this.rows.indexOf(row);
+        if (nested_in_sublist && list.parent_row) {
+            for (var i in list.parent_row.sublist_queue) {
+                if (list.parent_row.sublist_queue[i]["row_id"] === row_id) {
+                    list.parent_row.sublist_queue.splice(parseInt(i), 1);
+
+                    break;
+                }
+            }
+        }
+
+        var index = list.rows.indexOf(row);
 
         if (index === null || index === undefined || index < 0) {
             return;
         }
 
-        this.rows.splice(index, 1);
+        list.rows.splice(index, 1);
     };
 
     this.DisableColumn = function (type, type_index) {
@@ -178,9 +198,13 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         this.highlight_active_row = true;
     };
 
-    this.GetRow = function (row_id, is_sublist=false) {
+    this.GetRow = function (row_id, is_sublist=false, nested_in_sublist=false) {
         if (!this.rows) {
             return;
+        }
+
+        if (nested_in_sublist) {
+            return this.get_row_nested_in_sublist(row_id);
         }
 
         for (var i in this.rows) {
@@ -224,6 +248,45 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+
+    this.get_row_nested_in_sublist = function (row_id, return_sublist=false, _rows=null) {
+        if (_rows === null) {
+            _rows = this.rows;
+        }
+
+        for (var top_row of _rows) {
+            if (!top_row.is_sublist) {
+                continue;
+            }
+
+            var sublist = top_row.GetCachedPreview();
+
+            if (!sublist) {
+                continue;
+            }
+
+            for (var sub_row of sublist.rows) {
+                if (sub_row.id === row_id) {
+                    return (return_sublist ? [sub_row, sublist] : sub_row);
+                }
+            }
+
+
+            if (return_sublist) {
+                var [row, list] = this.get_row_nested_in_sublist(row_id, return_sublist, sublist.rows);
+            }
+
+            else {
+                row = this.get_row_nested_in_sublist(row_id, return_sublist, sublist.rows);
+            }
+
+            if (row) {
+                return (return_sublist ? [row, list] : row);
+            }
+        }
+
+        return (return_sublist ? [null, null] : null);
     };
 
     this.update_rows_highlighting = function (row, is_selected) {
@@ -313,7 +376,6 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         var preview = row.GetCachedPreview();
 
         if (!(preview instanceof DashLayoutList)) {
-            var test = preview;
             preview = row.SetCachedPreview(this.get_sublist());
             refresh_connections = false;
         }

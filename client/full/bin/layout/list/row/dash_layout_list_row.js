@@ -418,6 +418,10 @@ function DashLayoutListRow (list, row_id, height=null) {
         this.column_box.off("click");
 
         this.setup_connections();
+
+        for (var icon_button of this.columns["icon_buttons"]) {
+            icon_button["obj"].RefreshConnections();
+        }
     };
 
     this.RedrawColumns = function () {

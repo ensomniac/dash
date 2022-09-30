@@ -318,9 +318,12 @@ function DashGuiButtonInterface () {
         })(this, endpoint, params);
     };
 
-    this.RefreshConnections  = function () {
-        // This may be necessary in certain cases when the parent html is emptied
-        // and then this button is then re-appended to that parent.
+    // This may be necessary in certain cases when the parent html is
+    // emptied and then this button is then re-appended to that parent.
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
 
         this.setup_connections();
     };

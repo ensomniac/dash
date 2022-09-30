@@ -23937,9 +23937,12 @@ function DashGuiButtonInterface () {
             );
         })(this, endpoint, params);
     };
-    this.RefreshConnections  = function () {
-        // This may be necessary in certain cases when the parent html is emptied
-        // and then this button is then re-appended to that parent.
+    // This may be necessary in certain cases when the parent html is
+    // emptied and then this button is then re-appended to that parent.
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
         this.setup_connections();
     };
     this.SetRightLabelText = function (label_text) {
@@ -27268,16 +27271,21 @@ function DashGuiFileExplorerData () {
         }
         this.show_subheader("Deleting...");
         this.disable_load_buttons();
-        Dash.Request(
-            this,
-            this.on_files_changed,
-            this.api,
-            {
-                "f": "delete_file",
-                "parent_obj_id": this.parent_obj_id,
-                "file_id": file_id
-            }
-        );
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_changed(response, false);
+                    self.list.RemoveRow(file_id, true);
+                },
+                self.api,
+                {
+                    "f": "delete_file",
+                    "parent_obj_id": self.parent_obj_id,
+                    "file_id": file_id
+                }
+            );
+        })(this);
     };
     this.restore_file = function (file_id) {
         if (!window.confirm("Are you sure you want to restore this file?")) {
@@ -27308,18 +27316,29 @@ function DashGuiFileExplorerData () {
     this.set_file_data = function (key, value, file_id) {
         this.show_subheader("Updating...");
         this.disable_load_buttons();
-        Dash.Request(
-            this,
-            this.on_files_changed,
-            this.api,
-            {
-                "f": "set_file_property",
-                "parent_obj_id": this.parent_obj_id,
-                "key": key,
-                "value": value,
-                "file_id": file_id
-            }
-        );
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.on_files_changed(response, false);
+                    var row = self.list.GetRow(file_id);
+                    if (!row) {
+                        row = self.list.GetRow(file_id, false, true);
+                    }
+                    if (row) {
+                        row.Update();
+                    }
+                },
+                self.api,
+                {
+                    "f": "set_file_property",
+                    "parent_obj_id": self.parent_obj_id,
+                    "key": key,
+                    "value": value,
+                    "file_id": file_id
+                }
+            );
+        })(this);
     };
     this.get_files_data = function (callback=null) {
         var archive_mode = this.archive_mode;  // Need archive mode at the moment of the request, not at the moment of the callback
@@ -27368,16 +27387,8 @@ function DashGuiFileExplorerData () {
             })(this, response, archive_mode);
             return;
         }
+        response = this.clean_cached_data(response);
         if (this.files_data && Dash.Validate.Object(this.files_data["data"])) {
-            for (var id in response["data"]) {
-                if ("local_ids" in response["data"][id]) {
-                    delete response["data"][id]["local_ids"];
-                }
-                // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
-                if (this.supports_desktop_client && "modified_on" in response["data"][id]) {
-                    delete response["data"][id]["modified_on"];
-                }
-            }
             if (JSON.stringify(this.files_data["data"]) === JSON.stringify(response["data"])) {
                 return;
             }
@@ -27388,10 +27399,29 @@ function DashGuiFileExplorerData () {
             callback.bind(this)();
         }
         else {
+            if (this.list) {
+                for (var row of this.list.rows) {
+                    if (row.is_sublist && row.IsExpanded()) {
+                        return;  // Make sure we don't redraw when looking in a folder (sublist)
+                    }
+                }
+            }
             this.redraw_rows();
         }
     };
-    this.on_files_changed = function (response) {
+    this.clean_cached_data = function (data) {
+        for (var id in data["data"]) {
+            if ("local_ids" in data["data"][id]) {
+                delete data["data"][id]["local_ids"];
+            }
+            // This isn't ideal, but a lot of times, the sync app can be updating the modified time stamps when there isn't necessarily a change
+            if (this.supports_desktop_client && "modified_on" in data["data"][id]) {
+                delete data["data"][id]["modified_on"];
+            }
+        }
+        return data;
+    };
+    this.on_files_changed = function (response, redraw_rows=true) {
         var error_context = "on_files_changed response (on upload/delete) was invalid.";
         if (!response["all_files"]) {
             console.error("Error:", error_context, "An 'all_files' key is required to update the list:", response);
@@ -27404,8 +27434,10 @@ function DashGuiFileExplorerData () {
         if (!Dash.Validate.Response(response)) {
             return;
         }
-        this.update_cached_data(response["all_files"]);
-        this.redraw_rows();
+        this.update_cached_data(this.clean_cached_data(response["all_files"]));
+        if (redraw_rows) {
+            this.redraw_rows();
+        }
         this.hide_subheader();
         this.enable_load_buttons();
     };
@@ -31847,19 +31879,35 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         }
         return row;
     };
-    this.RemoveRow = function (row_id) {
-        var row = this.GetRow(row_id);
+    this.RemoveRow = function (row_id, nested_in_sublist=false) {
+        var row;
+        var list;
+        if (nested_in_sublist) {
+            [row, list] = this.get_row_nested_in_sublist(row_id, true);
+        }
+        else {
+            row = this.GetRow(row_id);
+            list = this;
+        }
         if (!row) {
             return;
         }
         row.Collapse();
         row.Hide();
         row.html.remove();
-        var index = this.rows.indexOf(row);
+        if (nested_in_sublist && list.parent_row) {
+            for (var i in list.parent_row.sublist_queue) {
+                if (list.parent_row.sublist_queue[i]["row_id"] === row_id) {
+                    list.parent_row.sublist_queue.splice(parseInt(i), 1);
+                    break;
+                }
+            }
+        }
+        var index = list.rows.indexOf(row);
         if (index === null || index === undefined || index < 0) {
             return;
         }
-        this.rows.splice(index, 1);
+        list.rows.splice(index, 1);
     };
     this.DisableColumn = function (type, type_index) {
         if (!this.rows) {
@@ -31917,9 +31965,12 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.EnableActiveRowHighlighting = function () {
         this.highlight_active_row = true;
     };
-    this.GetRow = function (row_id, is_sublist=false) {
+    this.GetRow = function (row_id, is_sublist=false, nested_in_sublist=false) {
         if (!this.rows) {
             return;
+        }
+        if (nested_in_sublist) {
+            return this.get_row_nested_in_sublist(row_id);
         }
         for (var i in this.rows) {
             var row = this.rows[i];
@@ -31953,6 +32004,36 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+    this.get_row_nested_in_sublist = function (row_id, return_sublist=false, _rows=null) {
+        if (_rows === null) {
+            _rows = this.rows;
+        }
+        for (var top_row of _rows) {
+            if (!top_row.is_sublist) {
+                continue;
+            }
+            var sublist = top_row.GetCachedPreview();
+            if (!sublist) {
+                continue;
+            }
+            for (var sub_row of sublist.rows) {
+                if (sub_row.id === row_id) {
+                    return (return_sublist ? [sub_row, sublist] : sub_row);
+                }
+            }
+
+            if (return_sublist) {
+                var [row, list] = this.get_row_nested_in_sublist(row_id, return_sublist, sublist.rows);
+            }
+            else {
+                row = this.get_row_nested_in_sublist(row_id, return_sublist, sublist.rows);
+            }
+            if (row) {
+                return (return_sublist ? [row, list] : row);
+            }
+        }
+        return (return_sublist ? [null, null] : null);
     };
     this.update_rows_highlighting = function (row, is_selected) {
         if (!this.highlight_active_row) {
@@ -32022,7 +32103,6 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
         if (!(preview instanceof DashLayoutList)) {
-            var test = preview;
             preview = row.SetCachedPreview(this.get_sublist());
             refresh_connections = false;
         }
@@ -32400,6 +32480,9 @@ function DashLayoutListRow (list, row_id, height=null) {
         this.html.off("mouseleave");
         this.column_box.off("click");
         this.setup_connections();
+        for (var icon_button of this.columns["icon_buttons"]) {
+            icon_button["obj"].RefreshConnections();
+        }
     };
     this.RedrawColumns = function () {
         this.column_box.empty();
