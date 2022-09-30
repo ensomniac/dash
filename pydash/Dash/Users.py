@@ -39,11 +39,10 @@ class Users:
         if "@" not in email:
             return {"error": "Enter a valid email address."}
 
-        if self.dash_context.get("user_email_domain"):
-            if email.split("@")[-1] != self.dash_context["user_email_domain"]:
-                from Dash.Utils import ClientAlert
+        if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
+            from Dash.Utils import ClientAlert
 
-                raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
 
         from json import dumps
         from random import randint
