@@ -155,7 +155,7 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
         key = "filename"
 
     matches = []
-    filename = file_data[key]
+    filename = get_tagless_filename(file_data[key])
     parent_folders = file_data["parent_folders"]
 
     if nested:
@@ -192,6 +192,21 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
         file_data[key] = update_filename_based_on_matches(filename, matches)
 
     return file_data
+
+
+def get_tagless_filename(filename):
+    if ")." not in filename:
+        return filename
+
+    split = filename.split(").")
+    sub_split = split[0].split("(")
+
+    if not sub_split[-1].isdigit():
+        return filename
+
+    sub_split.pop()
+
+    return get_tagless_filename(f"{'('.join(sub_split).strip()}.{split[-1]}")
 
 
 def CreateZIP(dir_path):
