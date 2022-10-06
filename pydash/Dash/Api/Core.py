@@ -323,12 +323,11 @@ class ApiCore:
         self._response = response
 
         if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
-            if self.User and self.User.get("email") == "ryan@ensomniac.com":
-                # Adding this here as a quick solution for now - it shouldn't be
-                # an issue to leave it this way, but may need to update this later.
-                pass
-            else:
-                self.SendEmail()
+            # Disabling this because it caused Unity calls to not send error emails. Need a better solution.
+            # if self.User and self.User.get("email") == "ryan@ensomniac.com":
+            #     pass
+            # else:
+            self.SendEmail()
 
         # Private errors should be deleted after sending the error email, so they're not exposed to the client
         if "_error" in self._response:
