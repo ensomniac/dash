@@ -359,8 +359,8 @@ class ApiCore:
             # Make a copy of self.Params so we don't modify the original, in case the script is continuing
             params = {k: v for (k, v) in self.Params.items()}
 
-            for key in ["file", "image"]:
-                if params.get(key) and type(params[key]) is bytes:
+            for key in params:
+                if type(params.get(key)) is bytes:
                     params[key] = "truncated..."
 
             if params.get("token"):
