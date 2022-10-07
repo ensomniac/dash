@@ -18294,8 +18294,8 @@ function DashGui() {
                     try {
                         tooltip.text(text_getter());
                     }
-                    catch {
-                        // Ignore
+                    catch (e) {
+                        console.error(e);
                     }
                 }
             },
