@@ -126,7 +126,9 @@ function DashLayoutListRowElements () {
                     "row_id": this.id,
                     "row": this,  // For revolving lists, use this instead of relying on row_id
                     "column_index": this.columns["combos"].length
-                }
+                },
+                "is_user_list": column_config_data["options"]["is_user_list"] || false,
+                "multi_select": column_config_data["options"]["multi_select"] || false
             }
         );
 

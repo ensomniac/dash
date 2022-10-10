@@ -196,18 +196,27 @@ function DashGuiComboInterface () {
         this.list_offset_vertical = offset;
     };
 
-    this.Disable = function () {
+    this.Disable = function (fade=true, hide_icon=false) {
         if (this.disabled) {
             return;
         }
 
         this.disabled = true;
 
-        this.html.css({
-            "opacity": 0.5,
+        var css = {
             "pointer-events": "none",
             "user-select": "none"
-        });
+        };
+
+        if (fade) {
+            css["opacity"] = 0.5;
+        }
+
+        this.html.css(css);
+
+        if (hide_icon && this.dropdown_icon) {
+            this.dropdown_icon.html.hide();
+        }
     };
 
     this.Enable = function () {

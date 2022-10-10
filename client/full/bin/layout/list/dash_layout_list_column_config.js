@@ -50,7 +50,10 @@ function DashLayoutListColumnConfig () {
         );
     };
 
-    this.AddCombo = function (label_text, combo_options, binder, callback, data_key="", width_mult=null, css={}, header_css={}) {
+    this.AddCombo = function (
+        label_text, combo_options, binder, callback, data_key="", width_mult=null,
+        css={}, header_css={}, is_user_list=false, multi_select=false
+    ) {
         this.AddColumn(
             label_text,
             data_key,
@@ -62,7 +65,9 @@ function DashLayoutListColumnConfig () {
                     "label_text": label_text,
                     "callback": callback,
                     "binder": binder,
-                    "combo_options": combo_options
+                    "combo_options": combo_options,
+                    "is_user_list": is_user_list,
+                    "multi_select": multi_select
                 },
                 "css": css,
                 "header_css": header_css
@@ -97,11 +102,14 @@ function DashLayoutListColumnConfig () {
         );
     };
 
-    this.AddInput = function (label_text, binder=null, callback=null, data_key="", width_mult=1, css={}, header_css={}, placeholder_label="") {
+    this.AddInput = function (
+        label_text, binder=null, callback=null, data_key="", width_mult=1, css={},
+        header_css={}, placeholder_label="", default_value="", disable_autosave=false, can_edit=true
+    ) {
         this.AddColumn(
             label_text,
             data_key,
-            true,
+            can_edit,
             !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
             {
                 "type": "input",
@@ -109,7 +117,9 @@ function DashLayoutListColumnConfig () {
                     "placeholder_label": placeholder_label || label_text,
                     "callback" : callback,
                     "binder": binder,
-                    "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light
+                    "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light,
+                    "default_value": default_value,
+                    "disable_autosave": disable_autosave
                 },
                 "css": css,
                 "header_css": header_css
