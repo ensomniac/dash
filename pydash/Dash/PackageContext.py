@@ -38,64 +38,44 @@ class PackageContext:
 
         required_keys = [
             "asset_path",
-            "display_name",
-            "email_access_csv",
-            "domain",
-            "id",
-            "admin_from_email",
-            "srv_path_git_oapi",
-            "srv_path_local",
-            "srv_path_http_root",
             "code_copyright_text",
+            "display_name",
+            "domain",
+            "email_access_csv",
             "email_git_webhook_csv"
+            "id",
+            "srv_path_git_oapi",
+            "srv_path_http_root",
+            "srv_path_local"
         ]
 
         data = {
-            "asset_path": self._asset_path,
             "is_valid": True,
             "is_server": self.logs_root
         }
 
-        available_keys = list(self.PackageData.keys())
-
         for key in required_keys:
-            if key not in available_keys:
+            if key not in self.PackageData:
                 data["is_valid"] = False
+
+                break
+
+        for key in self.PackageData:
+            if key.startswith("created_") or key.startswith("modified_") or key.startswith("usr_path_") or key.startswith("git_"):
+                continue
+
+            if key == "sync_state":
+                continue
 
             data[key] = self.PackageData.get(key)
 
-        # TODO - see if we have authenticated user data and
-        #  return their custom paths if they exist
-
-        # dummy_data = {
-        #     'id': '2021021821221429116',
-        #     'created_by': 'ryan@ensomniac.com',
-        #     'created_on': '2021-02-18T21:22:14.291206',
-        #     'display_name': 'Altona',
-        #     'modified_by': 'ryan@ensomniac.com',
-        #     'modified_on': '2021-02-23T16:31:42.190629',
-        #     'domain': 'altona.io',
-        #     'asset_path': 'altona',
-        #     'admin_from_email': 'ryan@ensomniac.com',
-        #     'email_access_csv': 'ryan@ensomniac.com, stetandrew@gmail.com',
-        #     'usr_local_repo_path_ryan_ensomniac.com': '/Users/rmartin/Google Drive/dash_guide/',
-        #     'git_repo': 'https://github.com/ensomniac/altona_io.git',
-        #     'path_usr_git_stetandrew_gmail.com': '/Users/andrewstet/ensomniac_bin/repos/altona_io/',
-        #     'usr_path_git_ryan@ensomniac.com': '/Users/rmartin/Google Drive/altona/altona_io/',
-        #     'code_copyright_text': 'Altona',
-        #     'srv_path_git_oapi': '/var/www/vhosts/oapi.co/altona/altona_io/',
-        #     'srv_path_http_root': '/var/www/vhosts/oapi.co/altona/',
-        #     'srv_path_local': '/var/www/vhosts/oapi.co/altona/local/'
-        #     'timezone': '',
-        #     'user_email_domain': 'altonametal.com'
-        # }
+        # TODO: See if we have authenticated user data and return their custom paths if they exist
 
         return data
 
+    # TODO: Make a lookup for asset path / package ids
     def get_pkg_data_from_server(self):
         from json import loads
-
-        # TODO: Make a lookup for asset path / package ids
 
         package_data = None
         root = os.path.join(OapiRoot, "dash", "local", "packages/")
