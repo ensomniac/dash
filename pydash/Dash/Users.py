@@ -6,11 +6,6 @@
 import os
 import sys
 
-from Dash import LocalStorage
-from datetime import datetime
-from traceback import format_exc
-from Dash.Utils import Memory, SendEmail
-
 
 class Users:
     def __init__(self, request_params, dash_context=None):
@@ -40,12 +35,16 @@ class Users:
             return {"error": "Enter a valid email address."}
 
         if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
-            from Dash.Utils import ClientAlert
+            from Dash import AdminEmails
 
-            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+            if email not in AdminEmails:
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert("Unauthorized")  # Keep it vague intentionally
 
         from json import dumps
         from random import randint
+        from datetime import datetime
         from Dash.Utils import SendEmail
         from base64 import urlsafe_b64encode
 
@@ -131,6 +130,7 @@ class Users:
             }
 
         from random import choice
+        from datetime import datetime
         from dateutil.parser import parse
         from passlib.apps import custom_app_context as pwd_context
 
@@ -261,6 +261,7 @@ class Users:
             }
 
         from json import dumps
+        from datetime import datetime
         from base64 import urlsafe_b64encode
 
         sessions_path = os.path.join(user_root, "sessions")
@@ -274,7 +275,7 @@ class Users:
             "REMOTE_ADDR": os.environ["REMOTE_ADDR"],
             "email": email,
             "token": token,
-            "time": datetime.now().isoformat(),
+            "time": datetime.now().isoformat()
         }
 
         token = urlsafe_b64encode(token.encode("ascii")).decode()
@@ -292,12 +293,14 @@ class Users:
         return self.get_team()
 
     def GetUserDataPath(self, user_email):
+        from Dash.LocalStorage import GetRecordPath
+
         email = user_email.lower().strip()
 
         if type(email) == bytes:
             email = email.decode()
 
-        return LocalStorage.GetRecordPath(
+        return GetRecordPath(
             dash_context=self.dash_context,
             store_path="users",
             obj_id=email
@@ -408,9 +411,13 @@ class Users:
         try:
             return b64decode(data, altchars)
         except:
+            from traceback import format_exc
+
             raise Exception(f"Parse error x32489\n{format_exc()}")
 
     def get_user_info(self, email):
+        from Dash.Utils import Memory
+
         email = email.lower().strip()
 
         if type(email) == bytes:
@@ -422,14 +429,17 @@ class Users:
             Memory.Global.RequestUser = {"email": email}
 
         if os.path.exists(user_data_path):
-            user_data = LocalStorage.GetData(
+            from Dash.LocalStorage import GetData
+
+            user_data = GetData(
                 dash_context=self.dash_context,
                 store_path="users",
                 obj_id=email,
             )
-
         else:
-            user_data = LocalStorage.New(
+            from Dash.LocalStorage import New
+
+            user_data = New(
                 dash_context=self.dash_context,
                 store_path="users",
                 additional_data={"email": email},
@@ -478,6 +488,8 @@ class Users:
             # In cases where a specific user's data is corrupted etc, we don't
             # want that to prevent everyone else from logging in etc
             except Exception as e:
+                from Dash.Utils import SendEmail
+
                 team[user_email] = {"error": e}
 
                 SendEmail(
@@ -513,6 +525,8 @@ class Users:
 
                 return token, token_data
             except:
+                from traceback import format_exc
+
                 error = format_exc().lower()
 
                 if "incorrect padding" in error:
@@ -532,6 +546,8 @@ def GetUserDataRoot(user_email_to_get, request_params=None, dash_context=None):
 
 
 def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
+    from Dash.Utils import Memory
+
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context
@@ -540,6 +556,8 @@ def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
 
 # This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
 def Get(user_email_to_get, request_params=None, dash_context=None):
+    from Dash.Utils import Memory
+
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context
@@ -548,6 +566,8 @@ def Get(user_email_to_get, request_params=None, dash_context=None):
 
 # This function allows you to return a User object based on a valid token
 def GetByToken(user_token, request_params=None, dash_context=None):
+    from Dash.Utils import Memory
+
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context
@@ -555,6 +575,8 @@ def GetByToken(user_token, request_params=None, dash_context=None):
 
 
 def GetAll(request_params=None, dash_context=None):
+    from Dash.Utils import Memory
+
     return Users(
         request_params or Memory.Global.RequestData,
         dash_context or Memory.Global.Context
