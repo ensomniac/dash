@@ -204,8 +204,7 @@ function DashGuiComboInterface () {
         this.disabled = true;
 
         var css = {
-            "pointer-events": "none",
-            "user-select": "none"
+            "pointer-events": "none"
         };
 
         if (fade) {

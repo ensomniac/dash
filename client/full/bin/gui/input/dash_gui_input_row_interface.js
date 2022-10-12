@@ -125,22 +125,18 @@ function DashGuiInputRowInterface () {
     };
 
     this.EnableSaveButton = function () {
-        if (!this.button) {
-            return;
+        if (this.button) {
+            this.button.SetButtonVisibility(true);
         }
-
-        this.button.SetButtonVisibility(true);
 
         this.input.SetLocked(false);
         this.input.SetTransparent(true);
     };
 
     this.DisableSaveButton = function () {
-        if (!this.button) {
-            return;
+        if (this.button) {
+            this.button.SetButtonVisibility(false);
         }
-
-        this.button.SetButtonVisibility(false);
 
         this.input.SetLocked(true);
     };
