@@ -83,21 +83,27 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         return row;
     };
 
-    this.RemoveRow = function (row_id, nested_in_sublist=false) {
+    this.RemoveRow = function (row_id, could_be_in_sublist=false) {
         var row;
         var list;
+        var nested_in_sublist = false;
 
-        if (nested_in_sublist) {
+        if (could_be_in_sublist) {
             [row, list] = this.get_row_nested_in_sublist(row_id, true);
-        }
 
-        else {
-            row = this.GetRow(row_id);
-            list = this;
+            if (row) {
+                nested_in_sublist = true;
+            }
         }
 
         if (!row) {
-            return;
+            row = this.GetRow(row_id);
+
+            if (!row) {
+                return;
+            }
+
+            list = this;
         }
 
         row.Collapse();
@@ -113,6 +119,8 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
                     break;
                 }
             }
+
+            row.SetExpandedSubListParentHeight(-this.row_height);
         }
 
         var index = list.rows.indexOf(row);

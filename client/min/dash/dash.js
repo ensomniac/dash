@@ -31888,18 +31888,22 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         }
         return row;
     };
-    this.RemoveRow = function (row_id, nested_in_sublist=false) {
+    this.RemoveRow = function (row_id, could_be_in_sublist=false) {
         var row;
         var list;
-        if (nested_in_sublist) {
+        var nested_in_sublist = false;
+        if (could_be_in_sublist) {
             [row, list] = this.get_row_nested_in_sublist(row_id, true);
-        }
-        else {
-            row = this.GetRow(row_id);
-            list = this;
+            if (row) {
+                nested_in_sublist = true;
+            }
         }
         if (!row) {
-            return;
+            row = this.GetRow(row_id);
+            if (!row) {
+                return;
+            }
+            list = this;
         }
         row.Collapse();
         row.Hide();
@@ -31911,6 +31915,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
                     break;
                 }
             }
+            row.SetExpandedSubListParentHeight(-this.row_height);
         }
         var index = list.rows.indexOf(row);
         if (index === null || index === undefined || index < 0) {
@@ -32216,7 +32221,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 "top": 0,
                 "right": 0,
                 "height": this.height,
-                "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
+                "background": Dash.Color.GetTransparent(Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood, 0.5),
                 "pointer-events": "none",
                 "opacity": 0
             });

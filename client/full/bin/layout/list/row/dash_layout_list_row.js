@@ -64,7 +64,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 "top": 0,
                 "right": 0,
                 "height": this.height,
-                "background": Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
+                "background": Dash.Color.GetTransparent(Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood, 0.5),
                 "pointer-events": "none",
                 "opacity": 0
             });
