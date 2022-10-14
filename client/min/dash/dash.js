@@ -23839,7 +23839,7 @@ function DashGuiButtonInterface () {
             // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
             // since the text color will obviously be something that's visible against the button
             // background, but there's of course a chance that this will break the visuals somewhere.
-            this.load_dots.SetColor(this.color.Button.Text.Base);
+            this.load_dots.SetColor(this.icon ? this.color.Text : this.color.Button.Text.Base);
         }
         this.load_dots.html.css({
             "position": "absolute",
@@ -23851,7 +23851,7 @@ function DashGuiButtonInterface () {
         this.html.append(this.load_dots.html);
         this.load_dots.Start();
     };
-    this.SetFileUploader = function (api, params, optional_on_start_callback, optional_css={}) {
+    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
             if (token) {
