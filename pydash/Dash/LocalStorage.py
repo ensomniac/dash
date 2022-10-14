@@ -647,13 +647,18 @@ class DashLocalStorage:
             if old_id in filename:
                 os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
 
-    def recursively_replace_id_in_data(self, data, old_id, new_id, _modified=False):
+    def recursively_replace_id_in_data(self, data, old_id, new_id):
+        modified = False
+
         if not data:
-            return data, _modified
+            return data, modified
 
         key_changes = []
 
         for key in data:
+            if key == "_duplicated_from":
+                continue
+
             if old_id in key:
                 key_changes.append(key)
 
@@ -664,10 +669,14 @@ class DashLocalStorage:
 
             data[key] = value.replace(old_id, new_id)
 
+            modified = True
+
         for key in key_changes:
             data[key.replace(old_id, new_id)] = data.pop(key)
 
-        return data, _modified
+            modified = True
+
+        return data, modified
 
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
