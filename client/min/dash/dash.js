@@ -29232,11 +29232,16 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             if (data_key === "") {
                 continue;
             }
+            var combo = this.combos[data_key];
+            if (combo.IsExpanded()) {
+                console.log("(Currently being edited) Skipping update for " + data_key);
+                continue;
+            }
             var value = this.get_update_value(data_key);
             // This might be too biased... unsure, but without it, a default value provided to the
             // combo gets immediately switched to the first option if the data has no value for that key
             if (value !== "") {
-                this.combos[data_key].Update(null, value, true);
+                combo.Update(null, value, true);
             }
         }
     };
