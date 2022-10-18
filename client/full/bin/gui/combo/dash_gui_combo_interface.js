@@ -360,11 +360,25 @@ function DashGuiComboInterface () {
 
         if (selected !== null && typeof selected !== "object") {
             if (combo_list || this.option_list) {
-                for (var combo of (combo_list || this.option_list)) {
-                    if (combo["id"] === selected) {
+                var combo;
+
+                for (combo of (combo_list || this.option_list)) {
+                    if (combo["id"].toString() === selected.toString()) {
                         selected = combo;
 
                         break;
+                    }
+                }
+
+                // Some old code uses "none" for the default key, instead of "",
+                // so this can help catch those old cases on a more broad level
+                if (selected === "none") {
+                    for (combo of (combo_list || this.option_list)) {
+                        if (combo["id"] === "") {
+                            selected = combo;
+
+                            break;
+                        }
                     }
                 }
             }
