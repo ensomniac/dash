@@ -22428,7 +22428,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
 }
 
 function DashGuiCheckbox (
-    local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
+    local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null,
     callback=null, label_text="", label_first=true, include_border=false
 ) {
     this.local_storage_key = local_storage_key;
@@ -22603,7 +22603,8 @@ function DashGuiCheckbox (
                     self.Toggle();
                 },
                 self,
-                self.color
+                self.color,
+                {"container_size": Dash.Size.RowHeight}
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
