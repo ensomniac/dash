@@ -229,6 +229,7 @@ function DashGuiIcons (icon) {
         "trash_alt":             new DashGuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
         "trash_restore":         new DashGuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
         "trash_solid":           new DashGuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
+        "triangle":              new DashGuiIconDefinition(this.icon, "Triangle", this.weight["regular"], "triangle"),
         "truck":                 new DashGuiIconDefinition(this.icon, "Truck", this.weight["regular"], "truck"),
         "unchecked_box":         new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
         "undo":                  new DashGuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
