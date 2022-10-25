@@ -131,6 +131,7 @@ function DashLayoutRevolvingListScrolling () {
         }
 
         this.re_expand_rows();
+        this.re_highlight_rows();
         this.tighten_scroll_moves();
     };
 
@@ -142,6 +143,7 @@ function DashLayoutRevolvingListScrolling () {
                 continue;
             }
 
+            // What's going on here?
             return;
         }
 
@@ -171,6 +173,22 @@ function DashLayoutRevolvingListScrolling () {
 
                 break;
             }
+        }
+    };
+
+    this.re_highlight_rows = function () {
+        if (!this.non_expanding_click_highlight_color || !this.last_selected_row_id) {
+            return;
+        }
+
+        for (var row of this.row_objects) {
+            if (row.ID() !== this.last_selected_row_id) {
+                continue;
+            }
+
+            row.ShowHighlight(this.non_expanding_click_highlight_color);
+
+            break;
         }
     };
 

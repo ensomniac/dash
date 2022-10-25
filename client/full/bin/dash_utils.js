@@ -3,6 +3,16 @@ function DashUtils () {
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
 
+    this.NormalizeSearchText = function (text="") {
+        if (!text) {
+            return text;
+        }
+
+        text = text.trim().toLowerCase().replaceAll(".", "").replaceAll("-", "");
+
+        return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
+
     this.GetDeepCopy = function (obj) {
         if (!Dash.Validate.Object(obj)) {
             console.warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);

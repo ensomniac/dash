@@ -178,6 +178,11 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["font-family"] = "sans_serif_italic";
         }
 
+        // Make sure this is preserved if provided
+        if (this.column_config_data["css"] && this.column_config_data["css"]["font-family"]) {
+            css["font-family"] = this.column_config_data["css"]["font-family"];
+        }
+
         this.html.css(css);
 
         if (column_value && column_value.toString().includes("</")) {

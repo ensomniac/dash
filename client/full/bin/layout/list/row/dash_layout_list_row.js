@@ -8,6 +8,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.sublist_queue = [];
     this.is_expanded = false;
     this.cached_preview = null;  // Intended for sublists only
+    this.is_highlighted = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
     this.html = $("<div></div>");
@@ -150,6 +151,10 @@ function DashLayoutListRow (list, row_id, height=null) {
         return this.is_expanded;
     };
 
+    this.IsHighlighted = function () {
+        return this.is_highlighted;
+    };
+
     this.ID = function () {
         return this.id;
     };
@@ -272,11 +277,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             this.store_css_on_expansion(this.list.rows.Last());
         }
 
-        if (!this.expanded_highlight) {
-            this.create_expand_highlight();
-        }
-
-        this.expanded_highlight.stop().animate({"opacity": 1}, this.anim_delay["expanded_highlight"]);
+        this.ShowHighlight();
 
         var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
 
@@ -352,11 +353,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                         "opacity": 0,
                     });
 
-                    if (self.expanded_highlight) {
-                        self.expanded_highlight.stop().css({
-                            "opacity": 0
-                        });
-                    }
+                    self.HideHighlight();
 
                     self.expanded_content.empty();
 
@@ -368,6 +365,35 @@ function DashLayoutListRow (list, row_id, height=null) {
         this.SetExpandedSubListParentHeight(-expanded_height);
 
         return expanded_height;
+    };
+
+    this.ShowHighlight = function (highlight_color=null) {
+        if (this.is_highlighted) {
+            return;
+        }
+
+        if (!this.expanded_highlight) {
+            this.create_expand_highlight(highlight_color);
+        }
+
+        this.expanded_highlight.stop().animate(
+            {"opacity": 1},
+            this.anim_delay["expanded_highlight"]
+        );
+
+        this.is_highlighted = true;
+    };
+
+    this.HideHighlight = function () {
+        if (!this.expanded_highlight || !this.is_highlighted) {
+            return;
+        }
+
+        this.expanded_highlight.stop().css({
+            "opacity": 0
+        });
+
+        this.is_highlighted = false;
     };
 
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
@@ -453,11 +479,11 @@ function DashLayoutListRow (list, row_id, height=null) {
         });
     };
 
-    this.create_expand_highlight = function () {
+    this.create_expand_highlight = function (highlight_color=null) {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
 
         this.expanded_highlight.css({
-            "background": this.is_sublist ? "none" : this.color.BackgroundRaised,
+            "background": highlight_color || (this.is_sublist ? "none" : this.color.BackgroundRaised),
             "pointer-events": "none",
             "opacity": 0,
             "top": -1,

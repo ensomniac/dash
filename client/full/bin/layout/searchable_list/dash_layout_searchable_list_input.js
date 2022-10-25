@@ -83,6 +83,11 @@ function DashLayoutSearchableListInput (list, on_search_cb=null) {
             this.hide_clear_icon();
         }
 
+        // Require a min of 2 to search, but allow 0 to reset the list
+        if (this.current_search_term.length === 1) {
+            return;
+        }
+
         if (this.on_search_cb) {
             this.on_search_cb(this.current_search_term);
         }

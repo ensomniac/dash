@@ -18770,6 +18770,13 @@ function DashUtils () {
     this.animation_frame_iter = 0;
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
+    this.NormalizeSearchText = function (text="") {
+        if (!text) {
+            return text;
+        }
+        text = text.trim().toLowerCase().replaceAll(".", "").replaceAll("-", "");
+        return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
     this.GetDeepCopy = function (obj) {
         if (!Dash.Validate.Object(obj)) {
             console.warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
@@ -32287,6 +32294,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.sublist_queue = [];
     this.is_expanded = false;
     this.cached_preview = null;  // Intended for sublists only
+    this.is_highlighted = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
     this.html = $("<div></div>");
@@ -32403,6 +32411,9 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.IsExpanded = function () {
         return this.is_expanded;
     };
+    this.IsHighlighted = function () {
+        return this.is_highlighted;
+    };
     this.ID = function () {
         return this.id;
     };
@@ -32497,10 +32508,7 @@ function DashLayoutListRow (list, row_id, height=null) {
         if (this.is_sublist) {
             this.store_css_on_expansion(this.list.rows.Last());
         }
-        if (!this.expanded_highlight) {
-            this.create_expand_highlight();
-        }
-        this.expanded_highlight.stop().animate({"opacity": 1}, this.anim_delay["expanded_highlight"]);
+        this.ShowHighlight();
         var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
         this.expanded_content.stop().css({
             "overflow-y": "auto",
@@ -32559,11 +32567,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                         "overflow-y": "hidden",
                         "opacity": 0,
                     });
-                    if (self.expanded_highlight) {
-                        self.expanded_highlight.stop().css({
-                            "opacity": 0
-                        });
-                    }
+                    self.HideHighlight();
                     self.expanded_content.empty();
                     self.is_expanded = false;
                 }
@@ -32571,6 +32575,28 @@ function DashLayoutListRow (list, row_id, height=null) {
         })(this);
         this.SetExpandedSubListParentHeight(-expanded_height);
         return expanded_height;
+    };
+    this.ShowHighlight = function (highlight_color=null) {
+        if (this.is_highlighted) {
+            return;
+        }
+        if (!this.expanded_highlight) {
+            this.create_expand_highlight(highlight_color);
+        }
+        this.expanded_highlight.stop().animate(
+            {"opacity": 1},
+            this.anim_delay["expanded_highlight"]
+        );
+        this.is_highlighted = true;
+    };
+    this.HideHighlight = function () {
+        if (!this.expanded_highlight || !this.is_highlighted) {
+            return;
+        }
+        this.expanded_highlight.stop().css({
+            "opacity": 0
+        });
+        this.is_highlighted = false;
     };
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
@@ -32635,10 +32661,10 @@ function DashLayoutListRow (list, row_id, height=null) {
             "css": {"border-bottom": border_bottom}
         });
     };
-    this.create_expand_highlight = function () {
+    this.create_expand_highlight = function (highlight_color=null) {
         this.expanded_highlight = Dash.Gui.GetHTMLAbsContext();
         this.expanded_highlight.css({
-            "background": this.is_sublist ? "none" : this.color.BackgroundRaised,
+            "background": highlight_color || (this.is_sublist ? "none" : this.color.BackgroundRaised),
             "pointer-events": "none",
             "opacity": 0,
             "top": -1,
@@ -33034,6 +33060,10 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             }
             css["font-family"] = "sans_serif_italic";
         }
+        // Make sure this is preserved if provided
+        if (this.column_config_data["css"] && this.column_config_data["css"]["font-family"]) {
+            css["font-family"] = this.column_config_data["css"]["font-family"];
+        }
         this.html.css(css);
         if (column_value && column_value.toString().includes("</")) {
             // jQuery's .text() escapes HTML tags, so this approach is required
@@ -33302,19 +33332,23 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     }
     this.data = null;
     this.parent = null;
+    this.recall_id = "";
     this.row_objects = [];
     this.header_row = null;
     this.expanded_ids = {};
+    this.initial_draw = false;
     this.row_count_buffer = 6;
     this.included_row_ids = [];
     this.html = $("<div></div>");
     this.get_expand_preview = null;
     this.header_row_backing = null;
-    this.container = $("<div></div>");
     this.last_column_config = null;
+    this.last_selected_row_id = "";
+    this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.non_expanding_click_highlight_color = null;
     this.row_html_css = row_options["row_html_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
@@ -33349,9 +33383,13 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
         this.get_expand_preview = binder ? getter.bind(binder) : getter;
     };
-    this.SetNonExpandingClickCallback = function (callback, binder=null) {
+    this.SetNonExpandingClickCallback = function (callback, binder=null, click_highlight_color=null) {
         if (!callback) {
             return;
+        }
+        if (click_highlight_color) {
+            this.non_expanding_click_highlight_color = click_highlight_color;
+            this.SelectRow("");
         }
         this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
     };
@@ -33408,6 +33446,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             this.container.append(row.html);
         }
         this.on_view_scrolled();
+        this.initial_draw = true;
     };
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
@@ -33426,6 +33465,59 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.header_row.html.css(header_css);
         this.header_row.column_box.css(header_css);
         this.header_row_backing.css(header_css);
+    };
+    // This is not fully worked out yet. Since any given row ID may not be
+    // visible in the list when this is called, there needs to be a mechanism
+    // to scroll to the required row first, before selecting it. Until then,
+    // this won't always work as expected, but it's not important right now.
+    this.SelectRow = function (row_id="", default_to_first_row=true) {
+        if (row_id && !this.initial_draw) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SelectRow(row_id, default_to_first_row);
+                    },
+                    100
+                );
+            })(this);
+            return;
+        }
+        var row = row_id ? this.get_row(row_id) : null;
+        if (!row) {
+            if (default_to_first_row && this.row_objects.length) {
+                row = this.row_objects[0];
+            }
+            else {
+                return;
+            }
+        }
+        this.on_row_selected(row, true);
+    };
+    this.SetRecallID = function (recall_id) {
+        if (!this.initial_draw) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SetRecallID(recall_id);
+                    },
+                    100
+                );
+            })(this);
+            return;
+        }
+        this.recall_id = recall_id;
+        var last_loaded_id = Dash.Local.Get(this.recall_id);
+        if (!last_loaded_id) {
+            return;
+        }
+        this.last_selected_row_id = last_loaded_id;
+        var scroll_top = this.included_row_ids.indexOf(last_loaded_id) * this.full_row_height;
+        if (scroll_top > this.html.height()) {
+            this.container.scrollTop(scroll_top);
+        }
+        else {
+            this.SelectRow(last_loaded_id, false);
+        }
     };
     this.get_row = function (row_id) {
         if (!Dash.Validate.Object(this.row_objects) || !row_id) {
@@ -33545,6 +33637,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
     this.show_row = function (row, row_index) {
         row.Collapse();
+        row.HideHighlight();
         // Original ID's expanded data (before moving row)
         var expanded_data = this.expanded_ids[row.ID()];
         if (Dash.Validate.Object(expanded_data) && row.index === expanded_data["row_index"]) {
@@ -33566,7 +33659,19 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         if (!row) {
             return;
         }
+        if (row.ID()) {
+            this.last_selected_row_id = row.ID();
+            if (this.recall_id) {
+                Dash.Local.Set(this.recall_id, row.ID());
+            }
+        }
         if (this.non_expanding_click_cb) {
+            if (this.non_expanding_click_highlight_color && !row.IsHighlighted()) {
+                for (var other_row of this.row_objects) {
+                    other_row.HideHighlight();
+                }
+                row.ShowHighlight(this.non_expanding_click_highlight_color);
+            }
             this.non_expanding_click_cb(row, this);
             return;
         }
@@ -33620,6 +33725,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
     this.hide_row = function (row) {
         row.Collapse();
+        row.HideHighlight();
         row.index = -1;
         row.html.css({
             "top": 0,
@@ -33751,6 +33857,7 @@ function DashLayoutRevolvingListScrolling () {
             row_index += 1;
         }
         this.re_expand_rows();
+        this.re_highlight_rows();
         this.tighten_scroll_moves();
     };
     this.tighten_scroll_moves = function () {
@@ -33759,6 +33866,7 @@ function DashLayoutRevolvingListScrolling () {
             if (!row.IsExpanded()) {
                 continue;
             }
+            // What's going on here?
             return;
         }
         for (row of this.row_objects) {
@@ -33782,6 +33890,18 @@ function DashLayoutRevolvingListScrolling () {
                 }
                 break;
             }
+        }
+    };
+    this.re_highlight_rows = function () {
+        if (!this.non_expanding_click_highlight_color || !this.last_selected_row_id) {
+            return;
+        }
+        for (var row of this.row_objects) {
+            if (row.ID() !== this.last_selected_row_id) {
+                continue;
+            }
+            row.ShowHighlight(this.non_expanding_click_highlight_color);
+            break;
         }
     };
     // If scrollbar exists in container, shift the header to the left to compensate and prevent misalignment
@@ -33812,19 +33932,80 @@ function DashLayoutRevolvingListScrolling () {
 }
 
 // This must be an abstraction to combine the two, since implementing the revolving list into the searchable list is not going to work favorably
-function DashLayoutSearchableRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null) {
-    this.list = new DashLayoutRevolvingList(binder, column_config, color, include_header_row, row_options, get_data_for_key);
-    this.input = new DashLayoutSearchableListInput(this.list, this.on_search.bind(this));
+function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={}, row_highlight_color="", row_height=null, color=null) {
+    this.binder = binder;
+    this.on_row_click_cb = on_row_click_cb.bind(this.binder);
+    this.label_css = label_css;
+    this.row_highlight_color = row_highlight_color;
+    this.row_height = row_height || Dash.Size.ButtonHeight;
+    this.color = color || binder.color || Dash.Color.Light;
+    this.data = null;
+    this.list = null;
+    this.input = null;
+    this.text_formatter = null;
+    this.last_search_text = "";
     this.html = $("<div></div>");
+    this.label_key = "display_name";
     this.setup_styles = function () {
+        var column_config = new Dash.Layout.List.ColumnConfig();
+        column_config.AddFlexText(this.label_key, "", 0.25, this.label_css);
+        this.list = new DashLayoutRevolvingList(
+            this,
+            column_config,
+            this.color,
+            false,
+            {
+                "row_height": this.row_height,
+                "row_highlight_color": this.row_highlight_color
+            }
+        );
         this.list.html.css({
-            "position": ""
+            "top": this.row_height + 1
         });
+        this.list.SetNonExpandingClickCallback(this.on_row_click_cb, this.binder, this.color.AccentGood);
+        this.input = new DashLayoutSearchableListInput(this.list, this.on_search.bind(this));
         this.html.append(this.input.html);
         this.html.append(this.list.html);
     };
-    this.on_search = function (search_text) {
-        console.debug("TEST on search", search_text);  // TODO
+    this.Update = function (data={"data": {}, "order": []}, on_search=true) {
+        this.data = data;
+        this.list.Draw(this.data["order"]);
+        if (on_search) {
+            this.on_search();
+        }
+    };
+    this.SetRecallID = function (recall_id) {
+        this.list.SetRecallID(recall_id);
+    };
+    this.SetTextFormatter = function (formatter_cb) {
+        this.text_formatter = formatter_cb.bind(this.binder);
+    };
+    this.on_search = function () {
+        var search_text = this.input.input.Text().trim().toLowerCase();
+        if (search_text === this.last_search_text) {
+            return;
+        }
+        var matched_ids = [];
+        for (var row_id of this.data["order"]) {
+            var value = Dash.Utils.NormalizeSearchText(this.GetDataForKey(row_id, this.label_key));
+            if (value.includes(search_text)) {
+                matched_ids.push(row_id);
+            }
+        }
+        this.list.Draw(matched_ids);
+        this.last_search_text = search_text;
+    };
+    this.GetDataForKey = function (row_id, key) {
+        try {
+            var value = this.data["data"][row_id][key] || "";
+            if (this.text_formatter) {
+                value = this.text_formatter(value);
+            }
+            return value;
+        }
+        catch {
+            return "";
+        }
     };
     this.setup_styles();
 }
@@ -33922,10 +34103,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             }
             var search_text = this.rows[row_id].Update(row_data);
             if (search_text) {
-                search_text = search_text.trim().toLowerCase();
-                search_text = search_text.replaceAll(".", "").replaceAll("-", "");
-                // Unidecode
-                search_text = search_text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                search_text = Dash.Utils.NormalizeSearchText(search_text);
             }
             else {
                 console.warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
@@ -34232,6 +34410,10 @@ function DashLayoutSearchableListInput (list, on_search_cb=null) {
         }
         else {
             this.hide_clear_icon();
+        }
+        // Require a min of 2 to search, but allow 0 to reset the list
+        if (this.current_search_term.length === 1) {
+            return;
         }
         if (this.on_search_cb) {
             this.on_search_cb(this.current_search_term);

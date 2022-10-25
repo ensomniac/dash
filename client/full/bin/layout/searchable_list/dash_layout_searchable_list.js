@@ -116,11 +116,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             var search_text = this.rows[row_id].Update(row_data);
 
             if (search_text) {
-                search_text = search_text.trim().toLowerCase();
-                search_text = search_text.replaceAll(".", "").replaceAll("-", "");
-
-                // Unidecode
-                search_text = search_text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                search_text = Dash.Utils.NormalizeSearchText(search_text);
             }
 
             else {

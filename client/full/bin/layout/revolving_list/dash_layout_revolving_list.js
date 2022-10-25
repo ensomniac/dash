@@ -22,19 +22,23 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     this.data = null;
     this.parent = null;
+    this.recall_id = "";
     this.row_objects = [];
     this.header_row = null;
     this.expanded_ids = {};
+    this.initial_draw = false;
     this.row_count_buffer = 6;
     this.included_row_ids = [];
     this.html = $("<div></div>");
     this.get_expand_preview = null;
     this.header_row_backing = null;
-    this.container = $("<div></div>");
     this.last_column_config = null;
+    this.last_selected_row_id = "";
+    this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.non_expanding_click_highlight_color = null;
     this.row_html_css = row_options["row_html_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
@@ -81,9 +85,15 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.get_expand_preview = binder ? getter.bind(binder) : getter;
     };
 
-    this.SetNonExpandingClickCallback = function (callback, binder=null) {
+    this.SetNonExpandingClickCallback = function (callback, binder=null, click_highlight_color=null) {
         if (!callback) {
             return;
+        }
+
+        if (click_highlight_color) {
+            this.non_expanding_click_highlight_color = click_highlight_color;
+
+            this.SelectRow("");
         }
 
         this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
@@ -163,6 +173,8 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         this.on_view_scrolled();
+
+        this.initial_draw = true;
     };
 
     // Intended to be used when custom CSS is used on divider elements
@@ -187,6 +199,74 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.header_row.column_box.css(header_css);
 
         this.header_row_backing.css(header_css);
+    };
+
+    // This is not fully worked out yet. Since any given row ID may not be
+    // visible in the list when this is called, there needs to be a mechanism
+    // to scroll to the required row first, before selecting it. Until then,
+    // this won't always work as expected, but it's not important right now.
+    this.SelectRow = function (row_id="", default_to_first_row=true) {
+        if (row_id && !this.initial_draw) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SelectRow(row_id, default_to_first_row);
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        var row = row_id ? this.get_row(row_id) : null;
+
+        if (!row) {
+            if (default_to_first_row && this.row_objects.length) {
+                row = this.row_objects[0];
+            }
+
+            else {
+                return;
+            }
+        }
+
+        this.on_row_selected(row, true);
+    };
+
+    this.SetRecallID = function (recall_id) {
+        if (!this.initial_draw) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SetRecallID(recall_id);
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        this.recall_id = recall_id;
+
+        var last_loaded_id = Dash.Local.Get(this.recall_id);
+
+        if (!last_loaded_id) {
+            return;
+        }
+
+        this.last_selected_row_id = last_loaded_id;
+
+        var scroll_top = this.included_row_ids.indexOf(last_loaded_id) * this.full_row_height;
+
+        if (scroll_top > this.html.height()) {
+            this.container.scrollTop(scroll_top);
+        }
+
+        else {
+            this.SelectRow(last_loaded_id, false);
+        }
     };
 
     this.get_row = function (row_id) {
@@ -347,6 +427,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     this.show_row = function (row, row_index) {
         row.Collapse();
+        row.HideHighlight();
 
         // Original ID's expanded data (before moving row)
         var expanded_data = this.expanded_ids[row.ID()];
@@ -378,7 +459,23 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
 
+        if (row.ID()) {
+            this.last_selected_row_id = row.ID();
+
+            if (this.recall_id) {
+                Dash.Local.Set(this.recall_id, row.ID());
+            }
+        }
+
         if (this.non_expanding_click_cb) {
+            if (this.non_expanding_click_highlight_color && !row.IsHighlighted()) {
+                for (var other_row of this.row_objects) {
+                    other_row.HideHighlight();
+                }
+
+                row.ShowHighlight(this.non_expanding_click_highlight_color);
+            }
+
             this.non_expanding_click_cb(row, this);
 
             return;
@@ -452,6 +549,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     this.hide_row = function (row) {
         row.Collapse();
+        row.HideHighlight();
 
         row.index = -1;
 
