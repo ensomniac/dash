@@ -29896,14 +29896,15 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashLayout () {
-    this.Dashboard         = DashLayoutDashboard;
-    this.List              = DashLayoutList;
-    this.List.ColumnConfig = DashLayoutListColumnConfig;
-    this.PaneSlider        = DashLayoutPaneSlider;
-    this.RevolvingList     = DashLayoutRevolvingList;
-    this.SearchableList    = DashLayoutSearchableList;
-    this.Toolbar           = DashLayoutToolbar;
-    this.UserProfile       = DashLayoutUserProfile;
+    this.Dashboard               = DashLayoutDashboard;
+    this.List                    = DashLayoutList;
+    this.List.ColumnConfig       = DashLayoutListColumnConfig;
+    this.PaneSlider              = DashLayoutPaneSlider;
+    this.RevolvingList           = DashLayoutRevolvingList;
+    this.SearchableList          = DashLayoutSearchableList;
+    this.SearchableRevolvingList = DashLayoutSearchableRevolvingList;
+    this.Toolbar                 = DashLayoutToolbar;
+    this.UserProfile             = DashLayoutUserProfile;
     this.Tabs = {
         Side: class DashLayoutTabsSide extends DashLayoutTabs {
             constructor(binder, recall_id_suffix="") {
@@ -33829,7 +33830,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.list_container = $("<div></div>");
     this.row_height = Dash.Size.ButtonHeight;
     this.color = this.binder.color || Dash.Color.Light;
-    this.input = new DashLayoutSearchableListSearchInput(this);
+    this.input = new DashLayoutSearchableListInput(this);
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     this.setup_styles = function () {
         this.html.css({
@@ -33868,7 +33869,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.SetRecallID = function (recall_id) {
         this.recall_id = recall_id;
     };
-    this.SetSearchTerm = function (search_term) {
+    this.OnSearchTermChanged = function (search_term) {
         search_term = search_term.trim().toLowerCase();
         if (search_term === this.filter_text) {
             return;
@@ -34146,13 +34147,14 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
     this.setup_styles();
 }
 
-function DashLayoutSearchableListSearchInput (slist) {
-    this.slist = slist;
+function DashLayoutSearchableListInput (list, on_search_cb=null) {
+    this.list = list;
+    this.on_search_cb = on_search_cb;
     this.html = null;
-    this.color = this.slist.color;
+    this.color = this.list.color;
     this.current_search_term = "";
     this.clear_icon_visible = false;
-    this.row_height = this.slist.row_height;
+    this.row_height = this.list.row_height;
     this.input = new Dash.Gui.Input("Search...", this.color);
     this.icon_size = this.row_height - (Dash.Size.Padding * 1.5);
     this.clear_icon = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
@@ -34213,7 +34215,12 @@ function DashLayoutSearchableListSearchInput (slist) {
         else {
             this.hide_clear_icon();
         }
-        this.slist.SetSearchTerm(this.current_search_term);
+        if (this.on_search_cb) {
+            this.on_search_cb(this.current_search_term);
+        }
+        else {
+            this.list.OnSearchTermChanged(this.current_search_term);
+        }
     };
     this.show_clear_icon = function () {
         if (this.clear_icon_visible) {

@@ -1,11 +1,12 @@
-function DashLayoutSearchableListSearchInput (slist) {
-    this.slist = slist;
+function DashLayoutSearchableListInput (list, on_search_cb=null) {
+    this.list = list;
+    this.on_search_cb = on_search_cb;
 
     this.html = null;
-    this.color = this.slist.color;
+    this.color = this.list.color;
     this.current_search_term = "";
     this.clear_icon_visible = false;
-    this.row_height = this.slist.row_height;
+    this.row_height = this.list.row_height;
     this.input = new Dash.Gui.Input("Search...", this.color);
     this.icon_size = this.row_height - (Dash.Size.Padding * 1.5);
     this.clear_icon = new Dash.Gui.Icon(this.color, "delete", this.icon_size);
@@ -82,7 +83,13 @@ function DashLayoutSearchableListSearchInput (slist) {
             this.hide_clear_icon();
         }
 
-        this.slist.SetSearchTerm(this.current_search_term);
+        if (this.on_search_cb) {
+            this.on_search_cb(this.current_search_term);
+        }
+
+        else {
+            this.list.OnSearchTermChanged(this.current_search_term);
+        }
     };
 
     this.show_clear_icon = function () {

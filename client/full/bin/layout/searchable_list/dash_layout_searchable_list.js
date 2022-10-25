@@ -18,7 +18,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
     this.list_container = $("<div></div>");
     this.row_height = Dash.Size.ButtonHeight;
     this.color = this.binder.color || Dash.Color.Light;
-    this.input = new DashLayoutSearchableListSearchInput(this);
+    this.input = new DashLayoutSearchableListInput(this);
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
 
     this.setup_styles = function () {
@@ -67,7 +67,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         this.recall_id = recall_id;
     };
 
-    this.SetSearchTerm = function (search_term) {
+    this.OnSearchTermChanged = function (search_term) {
         search_term = search_term.trim().toLowerCase();
 
         if (search_term === this.filter_text) {
