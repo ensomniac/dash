@@ -510,15 +510,15 @@ class DashLocalStorage:
 
                 continue
 
-            sorted_key = entry_data[self.sort_by_key]
+            sort_value = entry_data[self.sort_by_key]
 
-            if type(sorted_key) is str:
-                sorted_key = sorted_key.lower().strip()
+            if type(sort_value) is str:
+                sort_value = sort_value.lower().strip()
 
-            if not restructured_data.get(sorted_key):
-                restructured_data[sorted_key] = entry_data
+            if not restructured_data.get(sort_value):
+                restructured_data[sort_value] = entry_data
             else:
-                restructured_data[f"{sorted_key}_{entry_id}"] = entry_data
+                restructured_data[f"{sort_value}_{entry_id}"] = entry_data
 
         for item in restructured_data:
             keys_to_sort.append(item)
@@ -532,14 +532,15 @@ class DashLocalStorage:
                     sorted_to_prepend.append(key)
 
                 keys_to_sort[index] = int(key)
-
             except:
                 sorted_to_prepend = []
                 keys_to_sort = og_keys_to_sort.copy()
+
                 break
 
         if keys_to_sort != og_keys_to_sort:
             keys_to_sort.sort()
+
             keys_to_sort = [str(k) for k in keys_to_sort]
         else:
             keys_to_sort.sort()
@@ -549,8 +550,8 @@ class DashLocalStorage:
         for unsorted_id in unsortable:
             order.append(unsorted_id)
 
-        for sorted_key in keys_to_sort:
-            order.append(restructured_data[sorted_key]["id"])
+        for sort_value in keys_to_sort:
+            order.append(restructured_data[sort_value]["id"])
 
         if len(sorted_to_prepend):
             sorted_to_prepend.sort()
