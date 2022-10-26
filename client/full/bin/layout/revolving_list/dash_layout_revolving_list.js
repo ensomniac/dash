@@ -93,7 +93,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         if (click_highlight_color) {
             this.non_expanding_click_highlight_color = click_highlight_color;
 
-            this.SelectRow("");
+            this.select_row("");
         }
 
         this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
@@ -201,39 +201,6 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.header_row_backing.css(header_css);
     };
 
-    // This is not fully worked out yet. Since any given row ID may not be
-    // visible in the list when this is called, there needs to be a mechanism
-    // to scroll to the required row first, before selecting it. Until then,
-    // this won't always work as expected, but it's not important right now.
-    this.SelectRow = function (row_id="", default_to_first_row=true) {
-        if (row_id && !this.initial_draw) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.SelectRow(row_id, default_to_first_row);
-                    },
-                    100
-                );
-            })(this);
-
-            return;
-        }
-
-        var row = row_id ? this.get_row(row_id) : null;
-
-        if (!row) {
-            if (default_to_first_row && this.row_objects.length) {
-                row = this.row_objects[0];
-            }
-
-            else {
-                return;
-            }
-        }
-
-        this.on_row_selected(row, true);
-    };
-
     this.SetRecallID = function (recall_id) {
         if (!this.initial_draw) {
             (function (self) {
@@ -256,17 +223,50 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
 
-        this.last_selected_row_id = last_loaded_id;
+        this.SelectRow(last_loaded_id);
+    };
 
-        var scroll_top = this.included_row_ids.indexOf(last_loaded_id) * this.full_row_height;
+    this.SelectRow = function (row_id) {
+        this.last_selected_row_id = row_id;
+
+        var scroll_top = this.included_row_ids.indexOf(this.last_selected_row_id) * this.full_row_height;
 
         if (scroll_top > this.html.height()) {
-            this.container.scrollTop(scroll_top);
+            this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
         }
 
         else {
-            this.SelectRow(last_loaded_id, false);
+            this.select_row(this.last_selected_row_id, false);
         }
+    };
+
+    this.select_row = function (row_id="", default_to_first_row=true) {
+        if (row_id && !this.initial_draw) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.select_row(row_id, default_to_first_row);
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        var row = row_id ? this.get_row(row_id) : null;
+
+        if (!row) {
+            if (default_to_first_row && this.row_objects.length) {
+                row = this.row_objects[0];
+            }
+
+            else {
+                return;
+            }
+        }
+
+        this.on_row_selected(row, true);
     };
 
     this.get_row = function (row_id) {

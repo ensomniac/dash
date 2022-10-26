@@ -1,6 +1,7 @@
-function DashLayoutSearchableListInput (list, on_search_cb=null) {
+function DashLayoutSearchableListInput (list, on_search_cb=null, on_clear_cb=null) {
     this.list = list;
     this.on_search_cb = on_search_cb;
+    this.on_clear_cb = on_clear_cb;
 
     this.html = null;
     this.color = this.list.color;
@@ -64,6 +65,10 @@ function DashLayoutSearchableListInput (list, on_search_cb=null) {
 
         this.hide_clear_icon();
         this.on_search();
+
+        if (this.on_clear_cb) {
+            this.on_clear_cb();
+        }
     };
 
     this.on_search = function () {

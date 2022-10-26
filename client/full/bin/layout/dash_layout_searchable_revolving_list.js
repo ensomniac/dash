@@ -13,6 +13,7 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     this.text_formatter = null;
     this.last_search_text = "";
     this.html = $("<div></div>");
+    this.get_data_for_key = null;
     this.label_key = "display_name";
 
     this.setup_styles = function () {
@@ -37,7 +38,21 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
 
         this.list.SetNonExpandingClickCallback(this.on_row_click_cb, this.binder, this.color.AccentGood);
 
-        this.input = new DashLayoutSearchableListInput(this.list, this.on_search.bind(this));
+        this.input = (function (self) {
+            return new DashLayoutSearchableListInput(
+                self.list,
+                function () {
+                    self.on_search();  // Forego default parameters
+                },
+                function () {
+                    var last_selected_id = self.LastSelectedRowID();
+
+                    if (last_selected_id) {
+                        self.SelectRow(last_selected_id);  // Force scroll
+                    }
+                }
+            );
+        })(this);
 
         this.html.append(this.input.html);
         this.html.append(this.list.html);
@@ -48,9 +63,7 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
 
         this.list.Draw(this.data["order"]);
 
-        if (on_search) {
-            this.on_search();
-        }
+        this.on_search(on_search);
     };
 
     this.SetRecallID = function (recall_id) {
@@ -61,10 +74,22 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
         this.text_formatter = formatter_cb.bind(this.binder);
     };
 
-    this.on_search = function () {
+    this.LastSelectedRowID = function () {
+        return this.list.last_selected_row_id;
+    };
+
+    this.SelectRow = function (row_id) {
+        this.list.SelectRow(row_id);
+    };
+
+    this.OverrideGetDataForKey = function (func) {
+        this.get_data_for_key = func.bind(this.binder);
+    };
+
+    this.on_search = function (force=false) {
         var search_text = this.input.input.Text().trim().toLowerCase();
 
-        if (search_text === this.last_search_text) {
+        if (!force && search_text === this.last_search_text) {
             return;
         }
 
@@ -84,6 +109,10 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     };
 
     this.GetDataForKey = function (row_id, key) {
+        if (this.get_data_for_key) {  // For some reason, simply overriding GetDataForKey wasn't successful...
+            return this.get_data_for_key(row_id, key);
+        }
+
         try {
             var value = this.data["data"][row_id][key] || "";
 
