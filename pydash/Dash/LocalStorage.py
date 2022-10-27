@@ -409,6 +409,8 @@ class DashLocalStorage:
         return converted_ids
 
     def GetRecordPath(self, obj_id):
+        obj_id = str(obj_id)  # IDs usually consist purely of numbers, so this is an extra safeguard
+
         if self.store_path == "users":
             return os.path.join(
                 self.GetRecordRoot(obj_id),
