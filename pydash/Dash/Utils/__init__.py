@@ -249,10 +249,14 @@ class _Memory:
 
         self.global_memory.RequestUser = GetUser(email)
 
+        return self.global_memory.RequestUser
+
     def SetContext(self, asset_path):
         from Dash.PackageContext import Get as GetContext
 
         self.global_memory.Context = GetContext(asset_path)
+
+        return self.global_memory.Context
 
 
 Memory = _Memory()
