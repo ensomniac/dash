@@ -98,7 +98,7 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
         for (var row_id of this.data["order"]) {
             var value = Dash.Utils.NormalizeSearchText(this.GetDataForKey(row_id, this.label_key));
 
-            if (value.includes(search_text)) {
+            if (value.includes(search_text) || row_id === search_text) {
                 matched_ids.push(row_id);
             }
         }

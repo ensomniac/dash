@@ -480,6 +480,11 @@ class DashLocalStorage:
         except FileNotFoundError:
             pass
 
+        except PermissionError:  # Permission error when trying to fix permissions... smfh
+            from subprocess import check_output
+
+            check_output(f"sudo chmod 755 {full_path}; sudo chown ensomniac {full_path}; sudo chgrp psacln {full_path}", shell=True)
+
     def get_folder_possibilities(self, name):
         return [name, f"/{name}", f"{name}/", f"/{name}/"]
 
