@@ -34494,14 +34494,6 @@ function DashLayoutToolbar (binder, color=null) {
         });
         this.html.append(this.stroke_sep);
     };
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
-        }
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
-    };
     this.on_input_changed = function (obj_index) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"].Text(), obj["html"]);
@@ -34837,56 +34829,62 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return input;
     };
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
+        if (callback) {
+            callback(selected_id, previous_selected_option, this, additional_data);
+        }
+        else {
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+        }
+    };
     this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
         var obj_index = this.objects.length;
-        if (callback) {
-            callback = callback.bind(this.binder);
-        }
-        (function (self, selected_id, combo_options, callback, return_full_option, additional_data) {
-            var _callback = function (selected_option, previous_selected_option, additional_data) {
-                self.on_combo_updated(
-                    callback,
+        callback = callback ? callback.bind(this.binder) : function (selected) {
+            console.warn("No callback provided, selected:", selected);
+        };
+        var options = {
+            "style": "row",
+            "additional_data": additional_data,
+            ...extra_options
+        };
+        var combo = new Dash.Gui.Combo (
+            label_text,
+            extra_options["multi_select"] ? function (selected_ids, additional_data) {
+                callback(selected_ids, null, this, additional_data);
+            } : function (selected_option, previous_selected_option, additional_data) {
+                callback(
                     return_full_option ? selected_option : selected_option["id"],
                     return_full_option ? previous_selected_option : previous_selected_option["id"],
+                    this,
                     additional_data
                 );
-            };
-            var opts = {
-                "style": "row",
-                "additional_data": additional_data,
-                ...extra_options
-            };
-            var combo = new Dash.Gui.Combo (
-                label_text,       // Label
-                _callback,        // Callback
-                self,             // Binder
-                combo_options,    // Option List
-                selected_id,      // Selected
-                self.color,       // Color set
-                opts
-            );
-            self.html.append(combo.html);
-            if (opts["style"] === "row") {
-                combo.html.css({
-                    "margin-top": Dash.Size.Padding * 0.5,
-                    "margin-right": Dash.Size.Padding * 0.5,
-                    "height": Dash.Size.RowHeight,
-                });
-                combo.label.css({
-                    "height": Dash.Size.RowHeight,
-                    "line-height": Dash.Size.RowHeight + "px",
-                });
-            }
-            self.objects.push({
-                "html": combo,
-                "html_elem": combo.html,
-                "callback": callback.bind(self.binder),
-                "index": obj_index
+            },
+            this,
+            combo_options,
+            selected_id,
+            this.color,
+            options
+        );
+        this.html.append(combo.html);
+        if (options["style"] === "row") {
+            combo.html.css({
+                "margin-top": Dash.Size.Padding * 0.5,
+                "margin-right": Dash.Size.Padding * 0.5,
+                "height": Dash.Size.RowHeight
             });
-        })(this, selected_id, combo_options, callback, return_full_option, additional_data);
-        var obj = this.objects[obj_index];
+            combo.label.css({
+                "height": Dash.Size.RowHeight,
+                "line-height": Dash.Size.RowHeight + "px"
+            });
+        }
+        this.objects.push({
+            "html": combo,
+            "html_elem": combo.html,
+            "callback": callback,
+            "index": obj_index
+        });
         this.refactor_item_padding();
-        return obj["html"];
+        return this.objects[obj_index]["html"];
     };
     this.AddCheckbox = function (
         label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false

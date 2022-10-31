@@ -30,16 +30,6 @@ function DashLayoutToolbar (binder, color=null) {
         this.html.append(this.stroke_sep);
     };
 
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
-        }
-
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
-    };
-
     this.on_input_changed = function (obj_index) {
         var obj = this.objects[obj_index];
 
