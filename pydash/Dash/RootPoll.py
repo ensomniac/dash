@@ -131,17 +131,22 @@ class PollRequests:
             open(task_path, "w").write(json.dumps(task_state))
 
     def run_task(self, task_path):
+        from subprocess import check_output
+
         task_state = json.loads(open(task_path, "r").read())
-        tmp_log = os.path.join("/var", "tmp", f"rar_{task_state['id']}")
+        # tmp_log = os.path.join("/var", "tmp", f"rar_{task_state['id']}")
 
-        os.system(f"{task_state['cmd']} >> {tmp_log} 2>&1")
+        # os.system(f"{task_state['cmd']} >> {tmp_log} 2>&1")
+        #
+        # log_result = None
+        #
+        # try:
+        #     log_result = open(tmp_log, "r").read()
+        # except:
+        #     pass
 
-        log_result = None
-
-        try:
-            log_result = open(tmp_log, "r").read()
-        except:
-            pass
+        # The above code wasn't working as expected - os.system was only capturing the last command's output
+        log_result = check_output([task_state["cmd"]], shell=True).decode().strip()
 
         task_state = json.loads(open(task_path, "r").read())
         task_state["complete"] = True
