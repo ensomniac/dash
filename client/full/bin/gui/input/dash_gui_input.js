@@ -208,7 +208,7 @@ function DashGuiInput (placeholder_text="", color=null) {
 
         // Initial value is ISO datetime string
         if (Dash.DateTime.IsIsoFormat(value)) {
-            return Dash.DateTime.Readable(value);
+            return Dash.DateTime.Readable(value, false);
         }
 
         // Initial value is team member email

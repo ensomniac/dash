@@ -287,60 +287,47 @@ function DashGuiPropertyBoxInterface () {
             "can_edit": can_edit
         };
 
-        (function (self, row_details, callback) {
-            var _callback;
-
-            if (callback) {
-                _callback = function (row_input) {
-                    callback(row_details["key"], row_input.Text());
-                };
-            }
-
-            else {
-                _callback = function (row_input) {
-                    self.on_row_updated(row_input, row_details);
-                };
-            }
-
-            var label = row_details["label_text"] || row_details["display_name"];
-
-            var row = new Dash.Gui.InputRow(
-                label,
+        var row = (function (self) {
+            return new Dash.Gui.InputRow(
+                label_text,
                 row_details["value"],
-                row_details["default_value"] || label,
+                options["placeholder_text"] || default_value || label_text,
                 combo_options || "Save",
-                _callback,
+                options["callback"] ? function (row_input) {
+                    options["callback"](data_key, row_input.Text());
+                } : function (row_input) {
+                    self.on_row_updated(row_input, row_details);
+                },
                 self,
                 self.color,
-                row_details["key"]
+                data_key
             );
+        })(this);
 
-            self.inputs[row_details["key"]] = row;
+        this.inputs[data_key] = row;
 
-            self.indent_row(row);
+        this.indent_row(row);
 
-            if (!row_details["can_edit"]) {
-                row.SetLocked(true);
-            }
+        if (!can_edit) {
+            row.SetLocked(true);
+        }
 
-            if (options["add_combo"]) {
-                row = self.add_combo(
-                    row,
-                    options["add_combo"],
-                    false,
-                    !!options["on_delete"]
-                );
-            }
+        if (options["add_combo"]) {
+            row = this.add_combo(
+                row,
+                options["add_combo"],
+                false,
+                !!options["on_delete"]
+            );
+        }
 
-            if (options["on_delete"]) {
-                row = self.add_delete_button(row, options["on_delete"], row_details["key"]);
-            }
+        if (options["on_delete"]) {
+            row = this.add_delete_button(row, options["on_delete"], data_key);
+        }
 
-            self.html.append(row.html);
+        this.html.append(row.html);
 
-        })(this, row_details, options["callback"] || null);
-
-        return this.inputs[data_key];
+        return row;
     };
 
     this.AddLabel = function (text, color=null) {
