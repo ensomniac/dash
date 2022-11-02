@@ -256,6 +256,8 @@ class ApiCore:
         except:
             pass
 
+        return value
+
     def SetParams(self, params):
         if not params or type(params) is not dict:
             raise Exception(f"SetParams requires a dict: {params}")
