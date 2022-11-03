@@ -120,6 +120,7 @@ class GitHub:
             "git clean -f -d",
             "git checkout . -f",
             "git pull",
+            "git status"  # So we can see this in the output field of the email
         ]
 
         if local_git_root == dest_path:
