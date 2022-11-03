@@ -240,6 +240,18 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
     };
 
+    this.CollapseExpandedRows = function () {
+        for (var row_id in this.expanded_ids) {
+            for (var row of this.row_objects) {
+                if (row.ID() !== row_id) {
+                    continue;
+                }
+
+                row.Collapse();
+            }
+        }
+    };
+
     this.select_row = function (row_id="", default_to_first_row=true) {
         if (row_id && !this.initial_draw) {
             (function (self) {

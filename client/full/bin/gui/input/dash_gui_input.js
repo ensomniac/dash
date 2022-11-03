@@ -89,6 +89,8 @@ function DashGuiInput (placeholder_text="", color=null) {
                 }
 
                 if (self.Text().toString() !== self.last_submitted_text.toString()) {
+                    self.skip_next_autosave = true;  // Autosave was happening at the same time as blur
+
                     self.on_submit();
                 }
             });
@@ -261,6 +263,10 @@ function DashGuiInput (placeholder_text="", color=null) {
 
     // Fired on 'enter' or 'paste'
     this.on_submit = function (from_autosave=false) {
+        if (this.previous_submitted_text && this.Text().toString() !== this.previous_submitted_text.toString()) {
+            return;
+        }
+
         if (from_autosave) {
             if (!this.on_autosave_callback) {
                 return;
