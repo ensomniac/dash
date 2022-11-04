@@ -17,6 +17,7 @@ function DashGuiIcons (icon) {
         "add_light":             new DashGuiIconDefinition(this.icon, "Add (Light)", this.weight["light"], "plus"),
         "add_person":            new DashGuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus"),
         "add_phone":             new DashGuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus"),
+        "add_square":            new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["regular"], "plus-square"),
         "admin_tools":           new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
         "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),

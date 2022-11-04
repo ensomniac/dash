@@ -47,6 +47,14 @@ function DashGuiComboInterface () {
         this.update_label_for_multi_select();
     };
 
+    // See draw_click_skirt for override keys
+    this.UpdateSkirtOverrides = function (overrides={}) {
+        this.skirt_overrides = {
+            ...this.skirt_overrides,
+            ...overrides
+        };
+    };
+
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result

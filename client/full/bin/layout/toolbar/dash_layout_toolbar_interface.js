@@ -57,7 +57,8 @@ function DashLayoutToolbarInterface () {
         this.html.append(space);
     };
 
-    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null) {
+    // TODO: These params are a mess
+    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0) {
         var obj_index = this.objects.length;
         var button = null;
 
@@ -69,7 +70,11 @@ function DashLayoutToolbarInterface () {
                 },
                 self,
                 self.color,
-                {"style": "toolbar"}
+                {
+                    "style": "toolbar",
+                    "container_size": container_size,
+                    "size_mult": size_mult
+                }
             );
 
             self.html.append(button.html);

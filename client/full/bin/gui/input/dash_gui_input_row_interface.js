@@ -29,6 +29,37 @@ function DashGuiInputRowInterface () {
         })(this);
     };
 
+    this.AddEndTag = function (text, css={}) {
+        this.end_tag = $("<div>" + text + "</div>");
+
+        this.end_tag.css({
+            "color": this.color.Stroke,
+            "font-family": "sans_serif_italic",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            ...css
+        });
+
+        this.html.append(this.end_tag);
+
+        (function (self) {
+            setTimeout(
+                function () {
+                    var right = self.end_tag.width() + Dash.Size.Padding;
+
+                    self.highlight.css({
+                        "right": right
+                    });
+
+                    self.flash_save.css({
+                        "right": right
+                    });
+                },
+                250
+            );
+        })(this);
+    };
+
     this.SetupCombo = function (combo_options) {
         this.initial_value = this.initial_value || combo_options[0]["id"];
 

@@ -23729,7 +23729,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             if (!this.icon_height) {
                 this.icon_height = Dash.Size.RowHeight;
             }
-            this.icon_size_mult = 0.75;
+            // This is old and not great, but removing it will break stuff - ugh
+            if (this.icon_size_mult === 1.0) {
+                this.icon_size_mult = 0.75;
+            }
             this.setup_toolbar_icon();
         }
         else if (this.style === "default") {
@@ -25388,6 +25391,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
+    this.skirt_overrides = {};  // See draw_click_skirt on usage
     this.is_searchable = false;
     this.selected_option = null;
     this.combo_option_index = 0;
@@ -25487,16 +25491,41 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         var skirt_thickness = Dash.Size.ColumnWidth * 1.2;
         var skirt_top = skirt_thickness;
         var bottom_top = height;
-        var right_width = skirt_thickness;
         if (this.gravity_vertical > 0) {
             skirt_top += this.gravity_vertical;
             bottom_top = this.html.height();
         }
         // top -> right -> bottom -> left
-        var set_left = [0, width, 0, -skirt_thickness];
-        var set_top = [-skirt_top, -skirt_top, bottom_top, -skirt_top];
-        var set_width = [width, right_width, width, skirt_thickness];
-        var set_height = [skirt_thickness, height + (skirt_thickness * 2), skirt_thickness, height + (skirt_thickness * 2)];
+        var set_left = [
+            "top_left" in this.skirt_overrides ? this.skirt_overrides["top_left"] : 0,
+            "right_left" in this.skirt_overrides ? this.skirt_overrides["right_left"] : width,
+            "bottom_left" in this.skirt_overrides ? this.skirt_overrides["bottom_left"] : 0,
+            "left_left" in this.skirt_overrides ? this.skirt_overrides["left_left"] : -skirt_thickness
+        ];
+        // top -> right -> bottom -> left
+        var set_top = [
+            "top_top" in this.skirt_overrides ? this.skirt_overrides["top_top"] : -skirt_top,
+            "right_top" in this.skirt_overrides ? this.skirt_overrides["right_top"] : -skirt_top,
+            "bottom_top" in this.skirt_overrides ? this.skirt_overrides["bottom_top"] : bottom_top,
+            "left_top" in this.skirt_overrides ? this.skirt_overrides["left_top"] : -skirt_top
+        ];
+        // top -> right -> bottom -> left
+        var set_width = [
+            "top_width" in this.skirt_overrides ? this.skirt_overrides["top_width"] : width,
+            "right_width" in this.skirt_overrides ? this.skirt_overrides["right_width"] : skirt_thickness,
+            "bottom_width" in this.skirt_overrides ? this.skirt_overrides["bottom_width"] : width,
+            "left_width" in this.skirt_overrides ? this.skirt_overrides["left_width"] : skirt_thickness
+        ];
+        var top_height = "top_height" in this.skirt_overrides ? this.skirt_overrides["top_height"] : skirt_thickness;
+        var bottom_height = "bottom_height" in this.skirt_overrides ? this.skirt_overrides["bottom_height"] : skirt_thickness;
+        // top -> right -> bottom -> left
+        var set_height = [
+            top_height,
+            "right_height" in this.skirt_overrides ? this.skirt_overrides["right_height"] : height + top_height + bottom_height,
+            bottom_height,
+            "left_height" in this.skirt_overrides ? this.skirt_overrides["left_height"] : height + top_height + bottom_height
+        ];
+
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];
             panel.css({
@@ -26347,6 +26376,13 @@ function DashGuiComboInterface () {
             }
         }
         this.update_label_for_multi_select();
+    };
+    // See draw_click_skirt for override keys
+    this.UpdateSkirtOverrides = function (overrides={}) {
+        this.skirt_overrides = {
+            ...this.skirt_overrides,
+            ...overrides
+        };
     };
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
         // If the user has entered text in the search bar and has no results,
@@ -27994,6 +28030,7 @@ function DashGuiIcons (icon) {
         "add_light":             new DashGuiIconDefinition(this.icon, "Add (Light)", this.weight["light"], "plus"),
         "add_person":            new DashGuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus"),
         "add_phone":             new DashGuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus"),
+        "add_square":            new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["regular"], "plus-square"),
         "admin_tools":           new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
         "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),
@@ -28610,12 +28647,13 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.on_click_bind = on_click_bind;
     this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
-    this.html = $("<div></div>");
-    this.flash_save = $("<div></div>");
-    this.highlight = $("<div></div>");
-    this.invalid_input_highlight = $("<div></div>");
-    this.save_button_visible = false;
+    this.end_tag = null;
     this.icon_button_count = 0;
+    this.html = $("<div></div>");
+    this.save_button_visible = false;
+    this.highlight = $("<div></div>");
+    this.flash_save = $("<div></div>");
+    this.invalid_input_highlight = $("<div></div>");
     // For lock toggle
     this.locked = false;
     this.lock_button = null;
@@ -28895,6 +28933,31 @@ function DashGuiInputRowInterface () {
             self.flash_save.stop().animate({"opacity": 1}, 100, function () {
                 self.flash_save.stop().animate({"opacity": 0}, 1000);
             });
+        })(this);
+    };
+    this.AddEndTag = function (text, css={}) {
+        this.end_tag = $("<div>" + text + "</div>");
+        this.end_tag.css({
+            "color": this.color.Stroke,
+            "font-family": "sans_serif_italic",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            ...css
+        });
+        this.html.append(this.end_tag);
+        (function (self) {
+            setTimeout(
+                function () {
+                    var right = self.end_tag.width() + Dash.Size.Padding;
+                    self.highlight.css({
+                        "right": right
+                    });
+                    self.flash_save.css({
+                        "right": right
+                    });
+                },
+                250
+            );
         })(this);
     };
     this.SetupCombo = function (combo_options) {
@@ -34592,7 +34655,8 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         this.html.append(space);
     };
-    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null) {
+    // TODO: These params are a mess
+    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0) {
         var obj_index = this.objects.length;
         var button = null;
         (function (self, obj_index, data) {
@@ -34603,7 +34667,11 @@ function DashLayoutToolbarInterface () {
                 },
                 self,
                 self.color,
-                {"style": "toolbar"}
+                {
+                    "style": "toolbar",
+                    "container_size": container_size,
+                    "size_mult": size_mult
+                }
             );
             self.html.append(button.html);
             self.objects.push({

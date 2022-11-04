@@ -18,6 +18,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
+    this.skirt_overrides = {};  // See draw_click_skirt on usage
     this.is_searchable = false;
     this.selected_option = null;
     this.combo_option_index = 0;
@@ -143,18 +144,48 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         var skirt_thickness = Dash.Size.ColumnWidth * 1.2;
         var skirt_top = skirt_thickness;
         var bottom_top = height;
-        var right_width = skirt_thickness;
 
         if (this.gravity_vertical > 0) {
             skirt_top += this.gravity_vertical;
+
             bottom_top = this.html.height();
         }
 
         // top -> right -> bottom -> left
-        var set_left = [0, width, 0, -skirt_thickness];
-        var set_top = [-skirt_top, -skirt_top, bottom_top, -skirt_top];
-        var set_width = [width, right_width, width, skirt_thickness];
-        var set_height = [skirt_thickness, height + (skirt_thickness * 2), skirt_thickness, height + (skirt_thickness * 2)];
+        var set_left = [
+            "top_left" in this.skirt_overrides ? this.skirt_overrides["top_left"] : 0,
+            "right_left" in this.skirt_overrides ? this.skirt_overrides["right_left"] : width,
+            "bottom_left" in this.skirt_overrides ? this.skirt_overrides["bottom_left"] : 0,
+            "left_left" in this.skirt_overrides ? this.skirt_overrides["left_left"] : -skirt_thickness
+        ];
+
+        // top -> right -> bottom -> left
+        var set_top = [
+            "top_top" in this.skirt_overrides ? this.skirt_overrides["top_top"] : -skirt_top,
+            "right_top" in this.skirt_overrides ? this.skirt_overrides["right_top"] : -skirt_top,
+            "bottom_top" in this.skirt_overrides ? this.skirt_overrides["bottom_top"] : bottom_top,
+            "left_top" in this.skirt_overrides ? this.skirt_overrides["left_top"] : -skirt_top
+        ];
+
+        // top -> right -> bottom -> left
+        var set_width = [
+            "top_width" in this.skirt_overrides ? this.skirt_overrides["top_width"] : width,
+            "right_width" in this.skirt_overrides ? this.skirt_overrides["right_width"] : skirt_thickness,
+            "bottom_width" in this.skirt_overrides ? this.skirt_overrides["bottom_width"] : width,
+            "left_width" in this.skirt_overrides ? this.skirt_overrides["left_width"] : skirt_thickness
+        ];
+
+        var top_height = "top_height" in this.skirt_overrides ? this.skirt_overrides["top_height"] : skirt_thickness;
+        var bottom_height = "bottom_height" in this.skirt_overrides ? this.skirt_overrides["bottom_height"] : skirt_thickness;
+
+        // top -> right -> bottom -> left
+        var set_height = [
+            top_height,
+            "right_height" in this.skirt_overrides ? this.skirt_overrides["right_height"] : height + top_height + bottom_height,
+            bottom_height,
+            "left_height" in this.skirt_overrides ? this.skirt_overrides["left_height"] : height + top_height + bottom_height
+        ];
+
 
         for (var i in this.click_skirt) {
             var panel = this.click_skirt[i];

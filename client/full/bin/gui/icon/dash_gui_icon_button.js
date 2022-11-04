@@ -56,7 +56,10 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
                 this.icon_height = Dash.Size.RowHeight;
             }
 
-            this.icon_size_mult = 0.75;
+            // This is old and not great, but removing it will break stuff - ugh
+            if (this.icon_size_mult === 1.0) {
+                this.icon_size_mult = 0.75;
+            }
 
             this.setup_toolbar_icon();
         }
