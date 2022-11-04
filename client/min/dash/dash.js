@@ -18784,6 +18784,9 @@ function DashUtils () {
         }
         return JSON.parse(JSON.stringify(obj));
     };
+    this.GetClassName = function (class_instance) {
+        return class_instance.constructor.toString().split("(")[0].replace("function", "").trim();
+    };
     this.SetTimer = function (binder, callback, ms, source=null) {
         var timer = {
             "callback": callback.bind(binder),
