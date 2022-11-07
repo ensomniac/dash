@@ -263,12 +263,12 @@ function DashGuiInput (placeholder_text="", color=null) {
 
     // Fired on 'enter' or 'paste'
     this.on_submit = function (from_autosave=false) {
-        if (this.previous_submitted_text && this.Text().toString() !== this.previous_submitted_text.toString()) {
-            return;
-        }
-
         if (from_autosave) {
             if (!this.on_autosave_callback) {
+                return;
+            }
+
+            if (this.previous_submitted_text && this.Text().toString() === this.previous_submitted_text.toString()) {
                 return;
             }
         }

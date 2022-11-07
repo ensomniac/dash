@@ -23610,6 +23610,25 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             "opacity": 0
         });
     };
+    this.set_file_uploader_size = function () {
+        var width = this.html.width();
+        var height = this.html.height();
+        if (!height || !width) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.set_file_uploader_size();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.file_uploader.html.css({
+            "height": height,
+            "width": width
+        });
+    };
     this.initialize_style();
     this.setup_connections();
 }
@@ -23805,6 +23824,9 @@ function DashGuiButtonInterface () {
     };
     this.Text = function () {
         return this.label.text();
+    };
+    this.IsSelected = function () {
+        return this.is_selected;
     };
     // Deprecated
     this.ChangeLabel = function (label_text, width=null) {
@@ -24003,25 +24025,6 @@ function DashGuiButtonInterface () {
             this.set_file_uploader_size();
         }
         this.html.append(this.file_uploader.html);
-    };
-    this.set_file_uploader_size = function () {
-        var width = this.html.width();
-        var height = this.html.height();
-        if (!height || !width) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.set_file_uploader_size();
-                    },
-                    10
-                );
-            })(this);
-            return;
-        }
-        this.file_uploader.html.css({
-            "height": height,
-            "width": width
-        });
     };
     this.Request = function (endpoint, params, callback, binder=null) {
         if (this.load_dots) {
@@ -28531,11 +28534,11 @@ function DashGuiInput (placeholder_text="", color=null) {
     };
     // Fired on 'enter' or 'paste'
     this.on_submit = function (from_autosave=false) {
-        if (this.previous_submitted_text && this.Text().toString() !== this.previous_submitted_text.toString()) {
-            return;
-        }
         if (from_autosave) {
             if (!this.on_autosave_callback) {
+                return;
+            }
+            if (this.previous_submitted_text && this.Text().toString() === this.previous_submitted_text.toString()) {
                 return;
             }
         }

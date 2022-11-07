@@ -13,6 +13,10 @@ function DashGuiButtonInterface () {
         return this.label.text();
     };
 
+    this.IsSelected = function () {
+        return this.is_selected;
+    };
+
     // Deprecated
     this.ChangeLabel = function (label_text, width=null) {
         this.SetText(label_text, width);
@@ -262,29 +266,6 @@ function DashGuiButtonInterface () {
         }
 
         this.html.append(this.file_uploader.html);
-    };
-
-    this.set_file_uploader_size = function () {
-        var width = this.html.width();
-        var height = this.html.height();
-
-        if (!height || !width) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.set_file_uploader_size();
-                    },
-                    10
-                );
-            })(this);
-
-            return;
-        }
-
-        this.file_uploader.html.css({
-            "height": height,
-            "width": width
-        });
     };
 
     this.Request = function (endpoint, params, callback, binder=null) {

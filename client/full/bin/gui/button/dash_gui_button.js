@@ -182,6 +182,29 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         });
     };
 
+    this.set_file_uploader_size = function () {
+        var width = this.html.width();
+        var height = this.html.height();
+
+        if (!height || !width) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.set_file_uploader_size();
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.file_uploader.html.css({
+            "height": height,
+            "width": width
+        });
+    };
+
     this.initialize_style();
     this.setup_connections();
 }
