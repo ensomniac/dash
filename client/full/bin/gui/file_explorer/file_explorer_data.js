@@ -1,11 +1,11 @@
 /**@member DashGuiFileExplorer*/
 
 function DashGuiFileExplorerData () {
-    this.open_file = function (file_id) {
-        this.loader.OpenFile(this.get_file_data(file_id));
+    this.open_file = function (row) {
+        this.loader.OpenFile(this.get_file_data(row.ID()));
     };
 
-    this.update_file_content = function (file_id) {
+    this.update_file_content = function (row) {
         if (!window.confirm(this.UpdateContentButtonConfig["hover_preview"] + "?")) {
             return;
         }
@@ -17,7 +17,7 @@ function DashGuiFileExplorerData () {
             this.api,
             {
                 ...this.upload_button_params,
-                "existing_id_to_update": file_id
+                "existing_id_to_update": row.ID()
             },
             this.on_file_upload_started
         );
@@ -25,7 +25,7 @@ function DashGuiFileExplorerData () {
         this.upload_button.file_uploader.html.trigger("click");
     };
 
-    this.delete_file = function (file_id) {
+    this.delete_file = function (row) {
         if (!window.confirm("Are you sure you want to delete this file?")) {
             return;
         }
@@ -39,19 +39,19 @@ function DashGuiFileExplorerData () {
                 function (response) {
                     self.on_files_changed(response, false);
 
-                    self.list.RemoveRow(file_id, true);
+                    self.list.RemoveRow(row.ID(), true);
                 },
                 self.api,
                 {
                     "f": "delete_file",
                     "parent_obj_id": self.parent_obj_id,
-                    "file_id": file_id
+                    "file_id": row.ID()
                 }
             );
         })(this);
     };
 
-    this.restore_file = function (file_id) {
+    this.restore_file = function (row) {
         if (!window.confirm("Are you sure you want to restore this file?")) {
             return;
         }
@@ -66,15 +66,15 @@ function DashGuiFileExplorerData () {
             {
                 "f": "restore_archived_file",
                 "parent_obj_id": this.parent_obj_id,
-                "file_id": file_id,
+                "file_id": row.ID(),
                 "return_all": false,
                 "return_all_archived": true
             }
         );
     };
 
-    this.download_file = function (file_id) {
-        var file_data = this.get_file_data(file_id);
+    this.download_file = function (row) {
+        var file_data = this.get_file_data(row.ID());
 
         Dash.Gui.OpenFileURLDownloadDialog(
             this.get_file_url(file_data),

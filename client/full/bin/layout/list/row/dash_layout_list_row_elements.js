@@ -261,10 +261,8 @@ function DashLayoutListRowElements () {
         var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
                 column_config_data["options"]["icon_name"],
-                function () {
-                    var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
-
-                    callback(self.id);
+                function (event, button) {
+                    column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"])(self, button);
                 },
                 column_config_data["options"]["binder"],
                 column_config_data["options"]["color"] || self.color,
