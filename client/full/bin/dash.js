@@ -310,14 +310,15 @@ function Dash () {
 }
 
 $(document).on("ready", function () {
-    $.fn.extend({
-        animateStep: function (options) {   // TODO: What is this?
+    $.fn.extend({  // TODO: are these extensions used?
+        "animateStep": function (options) {
             return this.each(function () {
                 var elementOptions = $.extend({}, options, {step: options.step.bind($(this))});
+
                 $({x: options.from}).animate({x: options.to}, elementOptions);
             });
         },
-        rotate: function (value) {
+        "rotate": function (value) {
             return this.css("transform", "rotate(" + value + "deg)");
         }
     });
@@ -348,6 +349,7 @@ $(document).on("ready", function () {
 
     window.Dash = new Dash();
     window.d = window.Dash;  // TODO: deprecate this
+
     window.Dash.Initialize();
 
     $("body").empty().append(window.Dash.html);

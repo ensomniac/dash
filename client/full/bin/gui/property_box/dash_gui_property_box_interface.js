@@ -361,7 +361,7 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddCheckbox = function (
-        local_storage_key, default_state=true, color=null, hover_hint="Toggle", binder=null,
+        local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null,
         callback=null, label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null
     ) {
         label_text = label_text.trim();
@@ -400,11 +400,11 @@ function DashGuiPropertyBoxInterface () {
         }
 
         if (icon_redraw_styling) {
-            icon_redraw_styling["margin-top"] = Dash.Size.Padding * 0.15;
+            icon_redraw_styling["margin-top"] = Dash.Size.Padding * 0.1;
         }
 
         else {
-            icon_redraw_styling = {"margin-top": Dash.Size.Padding * 0.15};
+            icon_redraw_styling = {"margin-top": 0.1};
         }
 
         checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
