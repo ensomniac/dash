@@ -31059,6 +31059,31 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         }
         return mod;
     };
+    this.AddDivider = function () {
+        if (!this.modules.length) {
+            console.warn("No modules in dashboard, can't add divider");
+            return;
+        }
+        var divider = $("<div></div>");
+        var module = this.modules.Last()["module"];
+        this.html.append(divider);
+        (function (self) {
+            requestAnimationFrame(function () {
+                module.html.css({
+                    "margin-right": 0
+                });
+                divider.css({
+                    "width": Dash.Size.Stroke,
+                    "height": module.html.height(),
+                    "margin-top": parseInt(module.html.css("margin-top")) + (parseInt(module.html.css("padding-top")) * 2),
+                    "margin-left": Dash.Size.Padding * 2,
+                    "margin-right": Dash.Size.Padding * 2,
+                    "background": self.color.AccentGood
+                });
+            });
+        })(this);
+        return divider;
+    };
     this.SetVerticalSpacePercent = function (num) {
         num = parseInt(num);
         if (isNaN(num)) {
