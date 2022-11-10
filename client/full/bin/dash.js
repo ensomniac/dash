@@ -184,6 +184,40 @@ function Dash () {
                             return this;
                         }
                     }
+                },
+                "Remove": {
+                    "value": function (item) {
+                        try {
+                            this.Pop(this.indexOf(item));
+
+                            return this;
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Last() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
+                "Pop": {
+                    "value": function (index) {
+                        try {
+                            index = parseInt(index);
+
+                            if (index > -1) { // -1 means it's not in the array
+                                this.splice(index, 1);
+                            }
+
+                            return this;
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Last() failed:", this);
+
+                            return this;
+                        }
+                    }
                 }
             }
         );

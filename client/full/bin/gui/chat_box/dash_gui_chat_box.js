@@ -435,7 +435,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.delete_message = function (message) {
-        this.messages.splice(message.Index(), 1);
+        this.messages.Pop(message.Index());
 
         // Update indexes of remaining messages
         for (var i in this.messages) {

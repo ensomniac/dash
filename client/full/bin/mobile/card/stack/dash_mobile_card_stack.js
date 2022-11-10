@@ -161,7 +161,7 @@ function DashMobileCardStack (binder, color=null) {
     };
 
     this.RemoveCard = function (card) {
-        this.cards.splice(this.cards.indexOf(card), 1);
+        this.cards.Remove(card);
 
         card.html.remove();
 

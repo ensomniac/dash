@@ -119,7 +119,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
 
-        this.included_row_ids.splice(this.included_row_ids.indexOf(row_id), 1);
+        this.included_row_ids.Remove(row_id);
 
         this.Draw(this.included_row_ids);
     };

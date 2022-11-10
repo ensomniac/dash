@@ -17640,6 +17640,33 @@ function Dash () {
                             return this;
                         }
                     }
+                },
+                "Remove": {
+                    "value": function (item) {
+                        try {
+                            this.Pop(this.indexOf(item));
+                            return this;
+                        }
+                        catch {
+                            console.warn("Array.prototype.Last() failed:", this);
+                            return this;
+                        }
+                    }
+                },
+                "Pop": {
+                    "value": function (index) {
+                        try {
+                            index = parseInt(index);
+                            if (index > -1) { // -1 means it's not in the array
+                                this.splice(index, 1);
+                            }
+                            return this;
+                        }
+                        catch {
+                            console.warn("Array.prototype.Last() failed:", this);
+                            return this;
+                        }
+                    }
                 }
             }
         );
@@ -24845,7 +24872,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.html.append(this.message_area);
     };
     this.delete_message = function (message) {
-        this.messages.splice(message.Index(), 1);
+        this.messages.Pop(message.Index());
         // Update indexes of remaining messages
         for (var i in this.messages) {
             var msg = this.messages[i];
@@ -32127,7 +32154,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         if (nested_in_sublist && list.parent_row) {
             for (var i in list.parent_row.sublist_queue) {
                 if (list.parent_row.sublist_queue[i]["row_id"] === row_id) {
-                    list.parent_row.sublist_queue.splice(parseInt(i), 1);
+                    list.parent_row.sublist_queue.Pop(i);
                     break;
                 }
             }
@@ -32137,7 +32164,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         if (index === null || index === undefined || index < 0) {
             return;
         }
-        list.rows.splice(index, 1);
+        list.rows.Pop(index);
     };
     this.DisableColumn = function (type, type_index) {
         if (!this.rows) {
@@ -33507,7 +33534,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         if (!Dash.Validate.Object(this.included_row_ids) || !row_id) {
             return;
         }
-        this.included_row_ids.splice(this.included_row_ids.indexOf(row_id), 1);
+        this.included_row_ids.Remove(row_id);
         this.Draw(this.included_row_ids);
     };
     this.AddRow = function (row_id, top=false) {
@@ -36177,7 +36204,7 @@ function DashMobileCardStack (binder, color=null) {
         return card;
     };
     this.RemoveCard = function (card) {
-        this.cards.splice(this.cards.indexOf(card), 1);
+        this.cards.Remove(card);
         card.html.remove();
         return null;
     };

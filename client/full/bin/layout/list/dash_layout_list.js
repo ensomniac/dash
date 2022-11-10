@@ -114,7 +114,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         if (nested_in_sublist && list.parent_row) {
             for (var i in list.parent_row.sublist_queue) {
                 if (list.parent_row.sublist_queue[i]["row_id"] === row_id) {
-                    list.parent_row.sublist_queue.splice(parseInt(i), 1);
+                    list.parent_row.sublist_queue.Pop(i);
 
                     break;
                 }
@@ -129,7 +129,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             return;
         }
 
-        list.rows.splice(index, 1);
+        list.rows.Pop(index);
     };
 
     this.DisableColumn = function (type, type_index) {
