@@ -314,7 +314,11 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
 
-    this.SetTabAreaSize = function (size) {
+    this.SetTabAreaSize = function (size=null) {
+        if (size) {
+            this.tab_area_size = size;
+        }
+
         if (this.side_tabs) {
             this.content_area.css({
                 "left": this.tab_area_size

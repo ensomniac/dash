@@ -28144,6 +28144,7 @@ function DashGuiIcons (icon) {
         "folder":                new DashGuiIconDefinition(this.icon, "Folder", this.weight["regular"], "folder"),
         "folder_solid":          new DashGuiIconDefinition(this.icon, "Folder (Solid)", this.weight["solid"], "folder"),
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
+        "font":                  new DashGuiIconDefinition(this.icon, "Font", this.weight["regular"], "font"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "gears":                 new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
@@ -28233,7 +28234,6 @@ function DashGuiIcons (icon) {
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
-        "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
         "ticket":                new DashGuiIconDefinition(this.icon, "Ticket", this.weight["regular"], "ticket-alt"),
         "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle Off", this.weight["regular"], "toggle-off"),
         "toggle_off_light":      new DashGuiIconDefinition(this.icon, "Toggle Off (Light)", this.weight["light"], "toggle-off"),
@@ -30233,7 +30233,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
-    this.SetTabAreaSize = function (size) {
+    this.SetTabAreaSize = function (size=null) {
+        if (size) {
+            this.tab_area_size = size;
+        }
         if (this.side_tabs) {
             this.content_area.css({
                 "left": this.tab_area_size

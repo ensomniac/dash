@@ -8,7 +8,6 @@ function DashGuiPropertyBoxInterface () {
     };
     
     this.SetTopRightLabel = function (label_text) {
-
         if (!this.top_right_label) {
             this.add_top_right_label();
         }
