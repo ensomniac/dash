@@ -54,7 +54,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         var label = this.GetLabel();
 
         for (var id in this.options) {
-            if (this.options[id] === label) {
+            if (this.options[id].toString().toLowerCase() === label.toString().toLowerCase()) {
                 if (id === "none" && !allow_none) {
                     return null;
                 }
