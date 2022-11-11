@@ -26577,7 +26577,7 @@ function DashGuiComboInterface () {
     this.OptionList = function () {
         return this.option_list;
     };
-    this.SetLoading = function (is_loading) {
+    this.SetLoading = function (is_loading, align_right=false) {
         if (is_loading && this.load_dots) {
             return;
         }
@@ -26596,7 +26596,7 @@ function DashGuiComboInterface () {
             return;
         }
         if (!this.load_dots) {
-            this.setup_load_dots(this.as_button_combo);
+            this.setup_load_dots(align_right || this.read_only || Boolean(this.as_button_combo));
             if (this.as_button_combo) {
                 this.load_dots.SetColor(this.color.Button.Text.Base);
                 this.load_dots.html.css({
