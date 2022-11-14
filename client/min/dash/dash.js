@@ -34786,6 +34786,7 @@ function DashLayoutToolbarInterface () {
             "index": obj_index
         });
         this.refactor_item_padding();
+        return html;
     };
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
         var button = new Dash.Gui.Button(

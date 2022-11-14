@@ -140,6 +140,8 @@ function DashLayoutToolbarInterface () {
         });
 
         this.refactor_item_padding();
+
+        return html;
     };
 
     this.AddUploadButton = function (label_text, callback, bind, api, params) {
