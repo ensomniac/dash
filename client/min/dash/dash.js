@@ -18678,7 +18678,6 @@ function DashFile () {
         }
         return this.GetPlaceholderPreview(color, filename);
     };
-    // Dash.Size.RowHeight * 15
     this.set_preview_size = function (html, width, height=null) {
         var css = {"width": width};
         if (height) {
@@ -18773,12 +18772,16 @@ function DashFile () {
     // Basic version
     this.GetImagePreview = function (url, height, width=null) {
         var html = $("<div></div>");
-        html.css({
+        var css = {
             "background-image": url ? "url(" + url + ")" : "",
             "background-repeat": "no-repeat",
             "background-size": "contain",
             "background-position": "center center"
-        });
+        };
+        if (!url) {
+            css["background-color"] = Dash.Color.Light.StrokeDark;
+        }
+        html.css(css);
         return this.set_preview_size(html, width ? width : height, width ? height : "100%");
     };
     this.GetPlaceholderPreview = function (color, filename="File Preview") {
