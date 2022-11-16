@@ -22400,6 +22400,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.color = color || Dash.Color.Light;
     this.include_border = include_border;
     this.icon = null;
+    this.line = null;
     this.border = null;
     this.html = $("<div></div>");
     this.label = $("<div>" + this.label_text + "</div>");
@@ -22463,6 +22464,23 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         this.html.append(this.icon.html);
         this.html.append(this.label);
         return this.icon;
+    };
+    this.AddLine = function (height=0, color="", additional_css={}) {
+        if (this.line) {
+            return this.line;
+        }
+        this.line = Dash.Gui.GetFlexSpacer();
+        if (!height) {
+            height = Dash.Size.Padding * 0.1;
+        }
+        this.line.css({
+            "background": color || this.color.Pinstripe,
+            "height": height,
+            "margin-top": (this.html.height() * 0.5) - height,
+            ...additional_css
+        });
+        this.html.append(this.line);
+        return this.line;
     };
     this.setup_styles();
 }
