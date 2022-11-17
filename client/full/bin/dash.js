@@ -186,34 +186,42 @@ function Dash () {
                     }
                 },
                 "Remove": {
-                    "value": function (item) {
+                    "value": function (item, return_item=true) {
                         try {
-                            this.Pop(this.indexOf(item));
+                            var removed = this.Pop(this.indexOf(item), return_item);
 
-                            return this;
-                        }
-
-                        catch {
-                            console.warn("Array.prototype.Last() failed:", this);
-
-                            return this;
-                        }
-                    }
-                },
-                "Pop": {
-                    "value": function (index) {
-                        try {
-                            index = parseInt(index);
-
-                            if (index > -1) { // -1 means it's not in the array
-                                this.splice(index, 1);
+                            if (return_item) {
+                                return removed;
                             }
 
                             return this;
                         }
 
                         catch {
-                            console.warn("Array.prototype.Last() failed:", this);
+                            console.warn("Array.prototype.Remove() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
+                "Pop": {
+                    "value": function (index, return_item=true) {
+                        try {
+                            index = parseInt(index);
+
+                            if (index > -1) { // -1 means it's not in the array
+                                var removed = this.splice(index, 1);
+                            }
+
+                            if (return_item) {
+                                return removed.length ? removed[0] : null;  // Splice returns an array
+                            }
+
+                            return this;
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Pop() failed:", this);
 
                             return this;
                         }

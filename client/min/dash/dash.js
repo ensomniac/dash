@@ -17642,28 +17642,34 @@ function Dash () {
                     }
                 },
                 "Remove": {
-                    "value": function (item) {
+                    "value": function (item, return_item=true) {
                         try {
-                            this.Pop(this.indexOf(item));
+                            var removed = this.Pop(this.indexOf(item), return_item);
+                            if (return_item) {
+                                return removed;
+                            }
                             return this;
                         }
                         catch {
-                            console.warn("Array.prototype.Last() failed:", this);
+                            console.warn("Array.prototype.Remove() failed:", this);
                             return this;
                         }
                     }
                 },
                 "Pop": {
-                    "value": function (index) {
+                    "value": function (index, return_item=true) {
                         try {
                             index = parseInt(index);
                             if (index > -1) { // -1 means it's not in the array
-                                this.splice(index, 1);
+                                var removed = this.splice(index, 1);
+                            }
+                            if (return_item) {
+                                return removed.length ? removed[0] : null;  // Splice returns an array
                             }
                             return this;
                         }
                         catch {
-                            console.warn("Array.prototype.Last() failed:", this);
+                            console.warn("Array.prototype.Pop() failed:", this);
                             return this;
                         }
                     }
@@ -22503,6 +22509,7 @@ function DashGuiCheckbox (
     this.can_click = true;
     this._hover_hint = "";
     this.icon_size = null;
+    this.disabled = false;
     this.icon_color = null;
     this.true_color = null;
     this.false_color = null;
@@ -22592,7 +22599,12 @@ function DashGuiCheckbox (
         this.html.css({
             "pointer-events": pointer_events
         });
-        this.DisableClick();
+        if (is_read_only) {
+            this.DisableClick();
+        }
+        else {
+            // TODO: the inverse of DisableClick
+        }
         this.is_read_only = is_read_only;
     };
     this.DisableClick = function () {
@@ -22650,6 +22662,30 @@ function DashGuiCheckbox (
         this.true_color = true_color;
         this.false_color = false_color;
         this.redraw();
+    };
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.icon_button.Disable();
+        this.label.label.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+        this.disabled = true;
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.icon_button.Enable();
+        this.label.label.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+        this.disabled = false;
     };
     this.redraw = function () {
         this.html.empty();

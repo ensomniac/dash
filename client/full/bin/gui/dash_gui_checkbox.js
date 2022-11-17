@@ -17,6 +17,7 @@ function DashGuiCheckbox (
     this.can_click = true;
     this._hover_hint = "";
     this.icon_size = null;
+    this.disabled = false;
     this.icon_color = null;
     this.true_color = null;
     this.false_color = null;
@@ -134,7 +135,13 @@ function DashGuiCheckbox (
             "pointer-events": pointer_events
         });
 
-        this.DisableClick();
+        if (is_read_only) {
+            this.DisableClick();
+        }
+
+        else {
+            // TODO: the inverse of DisableClick
+        }
 
         this.is_read_only = is_read_only;
     };
@@ -143,6 +150,7 @@ function DashGuiCheckbox (
         this.can_click = false;
 
         this.html.off("click");
+
         this.icon_button.html.off("click");
     };
 
@@ -213,6 +221,38 @@ function DashGuiCheckbox (
         this.false_color = false_color;
 
         this.redraw();
+    };
+
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.icon_button.Disable();
+
+        this.label.label.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+
+        this.disabled = true;
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.icon_button.Enable();
+
+        this.label.label.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+
+        this.disabled = false;
     };
 
     this.redraw = function () {
