@@ -20,8 +20,9 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={},
-        enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None, additional_data={}, replace_extra_periods=True
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
+        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None,
+        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -80,7 +81,10 @@ def Upload(
             file_ext,
             img,
             dash_context,
-            replace_existing=bool(existing_data_for_update)
+            replace_existing=bool(existing_data_for_update),
+            include_jpg_thumb=include_jpg_thumb,
+            include_png_thumb=include_png_thumb,
+            include_square_thumb=include_square_thumb
         )
     else:
         file_data = update_data_with_saved_file(
@@ -351,29 +355,39 @@ def validate_image_aspect_ratio(image, target_aspect_ratio, return_image_aspect_
     return valid
 
 
-def update_data_with_saved_images(file_data, file_root, file_ext, img, dash_context, replace_existing=False):
-    file_path = os.path.join(file_root, f"{file_data['id']}_orig.{file_ext}")
-    thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg")
-    thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png")
-    thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg")
+def update_data_with_saved_images(
+        file_data, file_root, file_ext, img, dash_context, replace_existing=False,
+        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False
+):
+    orig_path = os.path.join(file_root, f"{file_data['id']}_orig.{file_ext}")
+    thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if include_jpg_thumb else ""
+    thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if include_png_thumb else ""
+    thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg") if include_square_thumb else ""
 
     if replace_existing:
-        for path in [file_path, thumb_path, thumb_square_path]:
+        for path in [orig_path, thumb_path, thumb_square_path, thumb_png_path]:
             if os.path.exists(path):
                 os.remove(path)
 
-    img = save_images(img, file_path, thumb_path, thumb_square_path)
+    img = save_images(img, orig_path, thumb_path, thumb_square_path, thumb_png_path)
 
     url_data = {
-        "orig_url": GetURLFromPath(dash_context, file_path),
-        "thumb_url": GetURLFromPath(dash_context, thumb_path),
-        "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path),
+        "orig_url": GetURLFromPath(dash_context, orig_path),
+        "thumb_url": GetURLFromPath(dash_context, thumb_path) if thumb_path else "",
+        "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path) if thumb_square_path else "",
+        "thumb_png_url": GetURLFromPath(dash_context, thumb_png_path) if thumb_png_path else "",
         "width": img.size[0],
         "height": img.size[1],
         "aspect": img.size[0] / float(img.size[1])
     }
 
-    if os.path.exists(thumb_png_path):
+    if thumb_path and os.path.exists(thumb_path):
+        url_data["thumb_url"] = GetURLFromPath(dash_context, thumb_path)
+
+    if thumb_square_path and os.path.exists(thumb_square_path):
+        url_data["thumb_sq_url"] = GetURLFromPath(dash_context, thumb_square_path)
+
+    if thumb_png_path and os.path.exists(thumb_png_path):
         url_data["thumb_png_url"] = GetURLFromPath(dash_context, thumb_png_path)
 
     file_data.update(url_data)
@@ -501,49 +515,57 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
     return glb_path
 
 
-def save_images(img, orig_path, thumb_path, thumb_square_path):
+def save_images(img, orig_path, thumb_path="", thumb_square_path="", thumb_png_path=""):
     from PIL.Image import ANTIALIAS
 
     thumb_size = 512
 
     img.save(orig_path)
 
+    ConformPermissions(orig_path)
+
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
 
-    png_thumb = img.copy()
-    png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+    if thumb_png_path:
+        png_thumb = img.copy()
 
-    # If a file is uploaded as CMYK, it can't be saved as a PNG
-    if png_thumb.mode == "CMYK":
-        try:
-            # Try to preserve transparency is present and if possible
-            if png_thumb.info.get("transparency", None) is not None:
-                png_thumb = png_thumb.convert("RGBA")
-            else:
+        png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+
+        # If a file is uploaded as CMYK, it can't be saved as a PNG
+        if png_thumb.mode == "CMYK":
+            try:
+                # Try to preserve transparency is present and if possible
+                if png_thumb.info.get("transparency", None) is not None:
+                    png_thumb = png_thumb.convert("RGBA")
+                else:
+                    png_thumb = png_thumb.convert("RGB")
+            except:
                 png_thumb = png_thumb.convert("RGB")
-        except:
-            png_thumb = png_thumb.convert("RGB")
 
-    png_thumb.save(thumb_path.replace("_thb.jpg", "_thb.png"), quality=40)
+        png_thumb.save(thumb_png_path, quality=40)
 
-    # Convert to RGB AFTER saving the original, otherwise we lose alpha channel if present
-    img = img.convert("RGB")
-    img_square = get_square_image_copy(img)
+    if thumb_path or thumb_square_path:
+        # Convert to RGB AFTER saving the original and PNG thumb, otherwise we lose alpha channel if present
+        img = img.convert("RGB")
 
-    if img_square.size[0] > thumb_size or img_square.size[1] > thumb_size:
-        img_square = img_square.resize((thumb_size, thumb_size), ANTIALIAS)
+        if img.size[0] > thumb_size or img.size[1] > thumb_size:
+            img.thumbnail((thumb_size, thumb_size), ANTIALIAS)
 
-    if img.size[0] > thumb_size or img.size[1] > thumb_size:
-        img.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+        if thumb_path:
+            img.save(thumb_path, quality=40)
 
-    img.save(thumb_path, quality=40)
+            ConformPermissions(thumb_path)
 
-    img_square.save(thumb_square_path, quality=40)
+        if thumb_square_path:
+            img_square = get_square_image_copy(img)
 
-    ConformPermissions(orig_path)
-    ConformPermissions(thumb_path)
-    ConformPermissions(thumb_square_path)
+            if img_square.size[0] > thumb_size or img_square.size[1] > thumb_size:
+                img_square = img_square.resize((thumb_size, thumb_size), ANTIALIAS)
+
+            img_square.save(thumb_square_path, quality=40)
+
+            ConformPermissions(thumb_square_path)
 
     return img
 
