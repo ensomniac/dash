@@ -258,16 +258,33 @@ class ApiCore:
 
         return value
 
-    def SetParams(self, params):
+    def SetParams(self, params, replace=True, ignore_falsy=False):
         if not params or type(params) is not dict:
             raise Exception(f"SetParams requires a dict: {params}")
 
-        self._params = params
+        if replace:
+            self._params = params
+        else:
+            for key in params:
+                value = params.get(key)
+
+                if ignore_falsy and not value:
+                    continue
+
+                self._params[key] = value
 
         try:
             self.dash_global.RequestData = params
         except:
             pass
+
+    # Wrapper
+    def SetOptionalParams(self, params):
+        self.SetParams(
+            params=params,
+            replace=False,
+            ignore_falsy=True
+        )
 
     def ParseParam(self, key, target_type, default_value=None):
         if key in self._params:
