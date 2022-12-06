@@ -35117,9 +35117,11 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.options = options;  // Format: {id: label}
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
-    this.html = $("<select></select>");
+    this.label = null;
+    this.html = $("<div></div>");
+    this.select = $("<select></select>");
     this.setup_styles = function () {
-        this.html.css({
+        this.select.css({
             "color": this.color.Text,
             "height": Dash.Size.RowHeight,
             "box-sizing": "border-box",
@@ -35130,11 +35132,12 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             "border": "1px solid " + this.color.Stroke,
             "padding-left": Dash.Size.Padding * 0.25
         });
+        this.html.append(this.select);
         this.add_options();
         this.setup_connections();
     };
     this.GetID = function (allow_none=true) {
-        var id = this.html.val();
+        var id = this.select.val();
         if (id === "none" && !allow_none) {
             return null;
         }
@@ -35147,7 +35150,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         return this.options;
     };
     this.SetOptions = function (options={}) {
-        this.html.empty();
+        this.select.empty();
         this.options = options;
         this.add_options();
     };
@@ -35166,20 +35169,20 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         row.css({
             "height": Dash.Size.RowHeight
         });
-        this.html.append(row);
+        this.select.append(row);
     };
     this.SetSelection = function (option_id) {
         if (!this.options[option_id]) {
             console.warn("Option ID (" + option_id + ") not in options:", this.options);
             return;
         }
-        this.html.val(option_id);
+        this.select.val(option_id);
     };
     this.Lock = function () {
-        this.html.prop("disabled", true);
+        this.select.prop("disabled", true);
     };
     this.Unlock = function () {
-        this.html.prop("disabled", false);
+        this.select.prop("disabled", false);
     };
     this.SetWidth = function (width, min=null, max=null) {
         if (min === null) {
@@ -35188,11 +35191,27 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         if (max === null) {
             max = width;
         }
-        this.html.css({
+        this.select.css({
             "width": width,
             "min-width": min,
             "max-width": max
         });
+    };
+    this.AddLabel = function (text) {
+        if (this.label) {
+            return this.label;
+        }
+        this.label = $("<div>" + text + "</div>");
+        this.label.css({
+            "position": "absolute",
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.StrokeLight,
+            "top": -Dash.Size.Padding * 0.8,
+            "left": Dash.Size.Padding * 0.1
+        });
+        this.html.append(this.label);
+        return this.label;
     };
     this.add_options = function () {
         for (var id in this.options) {
@@ -35201,7 +35220,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     };
     this.setup_connections = function () {
         (function (self) {
-            self.html.on("change", function () {
+            self.select.on("change", function () {
                 if (self.on_change_cb) {
                     self.on_change_cb(self.GetID());
                 }
@@ -35217,6 +35236,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.binder = binder;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.delay_change_cb = delay_change_cb;
+    this.label = null;
     this.border_size = 1;
     this.last_change_ts = null;
     this.change_timeout = null;
@@ -35366,6 +35386,22 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 }
             );
         })(this);
+    };
+    this.AddLabel = function (text) {
+        if (this.label) {
+            return this.label;
+        }
+        this.label = $("<div>" + text + "</div>");
+        this.label.css({
+            "position": "absolute",
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.StrokeLight,
+            "top": -Dash.Size.Padding * 0.8,
+            "left": Dash.Size.Padding * 0.1
+        });
+        this.html.append(this.label);
+        return this.label;
     };
     this.setup_connections = function () {
         // Important note:

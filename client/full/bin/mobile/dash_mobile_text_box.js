@@ -5,6 +5,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.delay_change_cb = delay_change_cb;
 
+    this.label = null;
     this.border_size = 1;
     this.last_change_ts = null;
     this.change_timeout = null;
@@ -189,6 +190,27 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 }
             );
         })(this);
+    };
+
+    this.AddLabel = function (text) {
+        if (this.label) {
+            return this.label;
+        }
+
+        this.label = $("<div>" + text + "</div>");
+
+        this.label.css({
+            "position": "absolute",
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.StrokeLight,
+            "top": -Dash.Size.Padding * 0.8,
+            "left": Dash.Size.Padding * 0.1
+        });
+
+        this.html.append(this.label);
+
+        return this.label;
     };
 
     this.setup_connections = function () {
