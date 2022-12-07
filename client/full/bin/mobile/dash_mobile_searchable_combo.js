@@ -6,6 +6,8 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
 
+    this.label = null;
+    this.clear_button = null;
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
     this.datalist = $("<datalist></datalist", {"id": this.id});
@@ -22,9 +24,6 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.setup_styles = function () {
         var shared_css = {
             "box-sizing": "border-box",
-            "width": "100%",
-            "min-width": "100%",
-            "max-width": "100%",
             "color": this.color.Text,
             "border-radius": Dash.Size.BorderRadius * 0.5
         };
@@ -42,6 +41,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             ...shared_css
         });
 
+        this.set_width("100%", true);
         this.add_options();
 
         this.html.append(this.datalist);
@@ -72,6 +72,16 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
 
     this.SetLabel = function (text) {
         this.input.val(text);
+    };
+
+    this.SetLabelByID = function (id) {
+        if (!(id in this.options)) {
+            console.warn("ID not in options:", id);
+
+            return;
+        }
+
+        this.SetLabel(this.options[id]);
     };
 
     this.GetOptions = function () {
@@ -114,6 +124,76 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 }
             });
         })(this);
+    };
+
+    this.AddLabel = function (text) {
+        if (this.label) {
+            return this.label;
+        }
+
+        this.label = $("<div>" + text + "</div>");
+
+        this.label.css({
+            "position": "absolute",
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.StrokeLight,
+            "top": -Dash.Size.Padding * 0.8,
+            "left": Dash.Size.Padding * 0.1
+        });
+
+        this.html.append(this.label);
+
+        return this.label;
+    };
+
+    this.AddClearButton = function () {
+        if (this.clear_button) {
+            return this.clear_button;
+        }
+
+        (function (self) {
+            self.clear_button = new Dash.Gui.IconButton(
+                "close_circle",
+                function () {
+                    self.SetLabel("");
+                },
+                self,
+                self.color,
+                {
+                    "container_size": Dash.Size.RowHeight,
+                    "size_mult": 0.6
+                }
+            );
+        })(this);
+
+        this.clear_button.SetIconColor(Dash.Color.Mobile.AccentPrimary);
+
+        this.clear_button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "right": -(Dash.Size.Padding * 1.9)
+        });
+
+        this.set_width("calc(100% - " + (Dash.Size.Padding * 1.4) + "px)");
+
+        this.html.append(this.clear_button.html);
+
+        return this.clear_button;
+    };
+
+    this.set_width = function (width, set_input=false, min_width=null, max_width=null) {
+        var css = {
+            "width": width,
+            "min-width": min_width || width,
+            "max-width": max_width || width
+        };
+
+        this.html.css(css);
+
+        if (set_input) {
+            this.input.css(css);
+        }
     };
 
     this.add_options = function () {
