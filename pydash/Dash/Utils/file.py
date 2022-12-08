@@ -48,6 +48,11 @@ def Upload(
     if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
         raise ClientAlert(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
 
+    if file_ext == "gif":
+        include_jpg_thumb = False
+        include_png_thumb = False
+        include_square_thumb = False
+
     if period_count > 1 and replace_extra_periods:
         filename = replace_extra_periods_in_filename(filename, file_ext)
 
@@ -359,7 +364,7 @@ def update_data_with_saved_images(
         file_data, file_root, file_ext, img, dash_context, replace_existing=False,
         include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False
 ):
-    orig_path = os.path.join(file_root, f"{file_data['id']}_orig.{file_ext}")
+    orig_path = os.path.join(file_root, f"{file_data['id']}{'' if file_ext == 'gif' else '_orig'}.{file_ext}")
     thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if include_jpg_thumb else ""
     thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if include_png_thumb else ""
     thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg") if include_square_thumb else ""
