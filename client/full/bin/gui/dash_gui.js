@@ -305,6 +305,10 @@ function DashGui() {
 
         if (!filename) {
             filename = url.split("/").Last();
+
+            if (filename.includes("?")) {
+                filename = filename.split("?")[0];
+            }
         }
 
         Dash.File.URLToBlob(

@@ -18062,6 +18062,9 @@ function DashGui() {
         var dialog_id = "__dash_file_url_download_dialog";
         if (!filename) {
             filename = url.split("/").Last();
+            if (filename.includes("?")) {
+                filename = filename.split("?")[0];
+            }
         }
         Dash.File.URLToBlob(
             url,

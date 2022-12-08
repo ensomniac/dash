@@ -105,6 +105,22 @@ def Upload(
     return file_data
 
 
+def CreateZIP(dir_path):
+    from shutil import make_archive
+
+    split = dir_path.strip("/").split("/")
+    dir_to_zip = split.pop(-1)
+    dir_path_root = f"/{os.path.join(*split)}/"
+
+    # Returns newly created zip path
+    return make_archive(
+        base_name=dir_path,
+        format="zip",
+        root_dir=dir_path_root,
+        base_dir=dir_to_zip
+    )
+
+
 def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio=False):
     from PIL import Image
     from io import BytesIO
@@ -211,22 +227,6 @@ def get_tagless_filename(filename):
     sub_split.pop()
 
     return get_tagless_filename(f"{'('.join(sub_split).strip()}.{split[-1]}")
-
-
-def CreateZIP(dir_path):
-    from shutil import make_archive
-
-    split = dir_path.strip("/").split("/")
-    dir_to_zip = split.pop(-1)
-    dir_path_root = f"/{os.path.join(*split)}/"
-
-    # Returns newly created zip path
-    return make_archive(
-        base_name=dir_path,
-        format="zip",
-        root_dir=dir_path_root,
-        base_dir=dir_to_zip
-    )
 
 
 def replace_extra_periods_in_filename(filename, extension):
