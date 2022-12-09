@@ -153,6 +153,18 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.label_prefix = label_prefix;
     };
 
+    this.Stop = function (label_prefix="") {
+        this.bubble_dots.Stop();
+
+        if (label_prefix) {
+            this.label_prefix = label_prefix;
+
+            this.bubble_label.SetText(this.get_loading_label_text(this.progress));
+        }
+
+        this.bubble_dots.html.hide();
+    };
+
     this.setup_bubble = function () {
         this.bubble = Dash.Gui.GetHTMLBoxContext();
 
