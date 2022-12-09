@@ -18728,12 +18728,13 @@ function DashFile () {
             "100%"
         );
     };
-    this.GetVideoPreview = function (url, height, center_in_parent=true, square=false) {
-        var html = $("<video src='" + url + "' controls></video>");
+    this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true) {
+        var html = $("<video src='" + url + "'></video>");
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
-        return this.set_preview_size(html, height, square ? height : null);
+        this.check_if_video_exists_in_dom(html, height, square, controls);
+        return html;
     };
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
         var html = $("<audio src='" + url + "' controls></audio>");
@@ -18802,6 +18803,29 @@ function DashFile () {
             "color": Dash.Color.GetOpposite(color).Text,
         });
         return html;
+    };
+    // Doing this on instantiation of the video tag can sometimes cause a conflict between the
+    // drawing of the controls vs the drawing of the video tag in the DOM, which can lead to the
+    // controls not being scaled properly to match the video tag element. Waiting until the
+    // video tag exists in the DOM solves that problem. If the source (URL) is updated
+    // while the video is not in view, this problem may reappear. This isn't perfect.
+    this.check_if_video_exists_in_dom = function (html, height, square=false, controls=true) {
+        var in_dom = $.contains(document, html[0]);
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!in_dom) {
+                        self.check_if_video_exists_in_dom(html, height, square, controls);
+                        return;
+                    }
+                    self.set_preview_size(html, height, square ? height : null);
+                    if (controls) {
+                        html.attr("controls", true);
+                    }
+                },
+                100
+            );
+        })(this);
     };
 }
 
