@@ -17915,7 +17915,7 @@ function DashGui() {
     };
     this.HasOverflow = function (html) {
         try {
-            return html[0].offsetHeight < html[0].scrollHeight;
+            return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
         }
         catch {
             return false;
