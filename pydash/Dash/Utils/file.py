@@ -22,7 +22,7 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 def Upload(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
         existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None,
-        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False
+        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -89,7 +89,8 @@ def Upload(
             replace_existing=bool(existing_data_for_update),
             include_jpg_thumb=include_jpg_thumb,
             include_png_thumb=include_png_thumb,
-            include_square_thumb=include_square_thumb
+            include_square_thumb=include_square_thumb,
+            include_orig_png=include_orig_png
         )
     else:
         file_data = update_data_with_saved_file(
@@ -362,9 +363,9 @@ def validate_image_aspect_ratio(image, target_aspect_ratio, return_image_aspect_
 
 def update_data_with_saved_images(
         file_data, file_root, file_ext, img, dash_context, replace_existing=False,
-        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False
+        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True
 ):
-    orig_path = os.path.join(file_root, f"{file_data['id']}{'' if file_ext == 'gif' else '_orig'}.{file_ext}")
+    orig_path = os.path.join(file_root, f"{file_data['id']}{'' if file_ext == 'gif' else '_orig'}.{file_ext}") if include_orig_png else ""
     thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if include_jpg_thumb else ""
     thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if include_png_thumb else ""
     thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg") if include_square_thumb else ""
@@ -520,14 +521,15 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
     return glb_path
 
 
-def save_images(img, orig_path, thumb_path="", thumb_square_path="", thumb_png_path=""):
+def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_png_path=""):
     from PIL.Image import ANTIALIAS
 
     thumb_size = 512
 
-    img.save(orig_path)
+    if orig_path:
+        img.save(orig_path)
 
-    ConformPermissions(orig_path)
+        ConformPermissions(orig_path)
 
     # PIL will throw a warning on RGB conversion if img has 'palette' transparency, though it's safe to ignore:
     # "UserWarning: Palette images with Transparency expressed in bytes should be converted to RGBA images"
