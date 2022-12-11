@@ -54,7 +54,7 @@ function DashFile () {
                     error_callback();
                 }
 
-                console.error("File download using Dash.File.URLToBlob() failed. The URL will now be opened in a new tab:\n" + url);
+                console.warn("Inline file download using Dash.File.URLToBlob() failed. The URL will be opened in a new tab instead:\n" + url);
 
                 window.open(url, "_blank");
             }
