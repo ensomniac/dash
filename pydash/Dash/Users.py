@@ -8,9 +8,18 @@ import sys
 
 
 class Users:
-    def __init__(self, request_params, dash_context=None):
+    def __init__(self, request_params={}, dash_context={}):
         self.request_params = request_params
         self._dash_context = dash_context
+
+        if not self.request_params or not self._dash_context:
+            from Dash.Utils import Memory
+
+            if not self.request_params and Memory.Global.RequestData:
+                self.request_params = Memory.Global.RequestData
+
+            if not self._dash_context and Memory.Global.Context:
+                self._dash_context = Memory.Global.Context
 
     @property
     def UsersPath(self):
@@ -18,7 +27,7 @@ class Users:
 
     @property
     def dash_context(self):
-        if self._dash_context is None:
+        if not self._dash_context:
             if not self.request_params or not self.request_params.get("asset_path"):
                 raise Exception("Error: (Users) No access to Dash Context asset path (no request params)")
 
@@ -229,51 +238,25 @@ class Users:
         }
 
     def Login(self):
-        email = self.request_params.get("email").lower().strip()
-        password = self.request_params.get("pass").strip()
+        validation = self.ValidateCredentials(return_login_dict=True)
 
-        if not email or not password:
-            return {
-                "error": "Invalid login credentials x1943",
-                "_error": f"email: {email}"
-            }
-
-        user_root = os.path.join(self.UsersPath, email)
-        pass_path = os.path.join(user_root, "phash")
-
-        if not os.path.exists(pass_path):
-            return {
-                "error": "Account does not exist x7832",
-                "_error": f"password path: {pass_path}"
-            }
-
-        from passlib.apps import custom_app_context as pwd_context
-
-        hashed_password = open(pass_path, "r").read()
-        password_correct = pwd_context.verify(password, hashed_password)
-
-        if not password_correct:
-            return {
-                "error": "Incorrect login information",
-                "_error": f"email: {email}",
-                # "h": hashed_password,
-                "p": password
-            }
+        if validation.get("error"):
+            return validation
 
         from json import dumps
         from datetime import datetime
         from base64 import urlsafe_b64encode
 
-        sessions_path = os.path.join(user_root, "sessions")
+        sessions_path = os.path.join(validation["user_root"], "sessions")
 
         os.makedirs(sessions_path, exist_ok=True)
 
-        token = f"{os.environ['HTTP_USER_AGENT']}_|_{email}"
+        token = f"{os.environ['HTTP_USER_AGENT']}_|_{validation['email']}"
 
         session_data = {
             "HTTP_USER_AGENT": os.environ["HTTP_USER_AGENT"],
             "REMOTE_ADDR": os.environ["REMOTE_ADDR"],
-            "email": email,
+            "email": validation["email"],
             "token": token,
             "time": datetime.now().isoformat()
         }
@@ -285,9 +268,58 @@ class Users:
 
         return {
             "token": token,
-            "user": self.get_user_info(email),
-            "init": self.get_user_init(email)
+            "user": self.get_user_info(validation["email"]),
+            "init": self.get_user_init(validation["email"])
         }
+
+    def ValidateCredentials(self, email="", password="", return_login_dict=False):
+        email = (email or self.request_params.get("email")).lower().strip()
+        password = (password or self.request_params.get("pass")).strip()
+
+        if not email or not password:
+            if return_login_dict:
+                return {
+                    "error": "Invalid login credentials x1943",
+                    "_error": f"email: {email}"
+                }
+
+            return False
+
+        user_root = os.path.join(self.UsersPath, email)
+        pass_path = os.path.join(user_root, "phash")
+
+        if not os.path.exists(pass_path):
+            if return_login_dict:
+                return {
+                    "error": "Account does not exist x7832",
+                    "_error": f"password path: {pass_path}"
+                }
+
+            return False
+
+        from passlib.apps import custom_app_context as pwd_context
+
+        hashed_password = open(pass_path, "r").read()
+        password_correct = pwd_context.verify(password, hashed_password)
+
+        if not password_correct:
+            if return_login_dict:
+                return {
+                    "error": "Incorrect login information",
+                    "_error": f"email: {email}",
+                    # "h": hashed_password,
+                    "p": password
+                }
+
+            return False
+
+        if return_login_dict:
+            return {
+                "email": email,
+                "user_root": user_root
+            }
+
+        return True
 
     def GetAll(self):
         return self.get_team()
@@ -539,45 +571,25 @@ class Users:
         return None, None
 
 
-def GetUserDataRoot(user_email_to_get, request_params=None, dash_context=None):
-    data_path = GetUserDataPath(user_email_to_get, request_params, dash_context)
-
-    return "/".join(data_path.split("/")[:-1]) + "/"
+def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
+    return os.path.join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
 
 
-def GetUserDataPath(user_email_to_get, request_params=None, dash_context=None):
-    from Dash.Utils import Memory
-
-    return Users(
-        request_params or Memory.Global.RequestData,
-        dash_context or Memory.Global.Context
-    ).GetUserDataPath(user_email_to_get)
+def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).GetUserDataPath(user_email_to_get)
 
 
-# This function allows an admin to quickly pull a user (for the moment, everyone is an admin)
-def Get(user_email_to_get, request_params=None, dash_context=None):
-    from Dash.Utils import Memory
-
-    return Users(
-        request_params or Memory.Global.RequestData,
-        dash_context or Memory.Global.Context
-    ).GetUserData(user_email_to_get)
+def Get(user_email_to_get, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).GetUserData(user_email_to_get)
 
 
-# This function allows you to return a User object based on a valid token
-def GetByToken(user_token, request_params=None, dash_context=None):
-    from Dash.Utils import Memory
-
-    return Users(
-        request_params or Memory.Global.RequestData,
-        dash_context or Memory.Global.Context
-    ).Validate(user_token)
+def GetByToken(user_token, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).Validate(user_token)
 
 
-def GetAll(request_params=None, dash_context=None):
-    from Dash.Utils import Memory
+def GetAll(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).GetAll()
 
-    return Users(
-        request_params or Memory.Global.RequestData,
-        dash_context or Memory.Global.Context
-    ).GetAll()
+
+def ValidateCredentials(email, password, return_login_dict=False, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).ValidateCredentials(email, password, return_login_dict)

@@ -28343,6 +28343,8 @@ function DashGuiIcons (icon) {
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
+        "tablet":                new DashGuiIconDefinition(this.icon, "Tablet", this.weight["regular"], "tablet-alt"),
+        "tablet_alt":            new DashGuiIconDefinition(this.icon, "Tablet (Alt)", this.weight["regular"], "tablet-android-alt"),
         "tag":                   new DashGuiIconDefinition(this.icon, "Tag", this.weight["regular"], "tag"),
         "tally":                 new DashGuiIconDefinition(this.icon, "Tally", this.weight["regular"], "tally"),
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
