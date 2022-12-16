@@ -378,7 +378,7 @@ def update_data_with_saved_images(
     img = save_images(img, orig_path, thumb_path, thumb_square_path, thumb_png_path)
 
     url_data = {
-        "orig_url": GetURLFromPath(dash_context, orig_path),
+        "orig_url": GetURLFromPath(dash_context, orig_path) if orig_path else "",
         "thumb_url": GetURLFromPath(dash_context, thumb_path) if thumb_path else "",
         "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path) if thumb_square_path else "",
         "thumb_png_url": GetURLFromPath(dash_context, thumb_png_path) if thumb_png_path else "",
