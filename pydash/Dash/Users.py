@@ -572,7 +572,7 @@ class Users:
 
 
 def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
-    return os.path.join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
+    return "/".join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
 
 
 def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):
