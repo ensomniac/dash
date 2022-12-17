@@ -274,7 +274,7 @@ class Users:
 
     def ValidateCredentials(self, email="", password="", return_login_dict=False):
         email = (email or self.request_params.get("email")).lower().strip()
-        password = (password or self.request_params.get("pass")).strip()
+        password = (password or self.request_params.get("pass") or self.request_params.get("password")).strip()
 
         if not email or not password:
             if return_login_dict:
