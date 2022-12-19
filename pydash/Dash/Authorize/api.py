@@ -1,11 +1,11 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2022 Ensomniac Studios. All rights reserved. This material
+# Copyright (c) 2023 Ensomniac Studios. All rights reserved. This material
 # contains the confidential and proprietary information of Ensomniac Studios
 # and may not be copied in whole or in part without the express written permission
 # of Ensomniac Studios. This copyright notice does not imply publication.
 #
-# Ensomniac Studios 2022 Ryan Martin, ryan@ensomniac.com
+# Ensomniac Studios 2023 Ryan Martin, ryan@ensomniac.com
 #                        Andrew Stet, stetandrew@gmail.com
 
 import os

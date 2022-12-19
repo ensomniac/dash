@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2022 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 # TODO: Ideally, we should get rid of all old "orig_" key prefixes (from old image upload

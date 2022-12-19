@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# 2022 Ryan Martin, ryan@ensomniac.com
-#      Andrew Stet, stetandrew@gmail.com
+# 2023 Ensomniac Ryan Martin, ryan@ensomniac.com
+#                Andrew Stet, stetandrew@gmail.com
 
 
 class _Metric:
