@@ -138,6 +138,32 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
 
+    this.StyleAsPIN = function (length=4) {
+        this.StyleAsRow();
+        this.DisableAutoSubmit();
+        this.SetWidth(Dash.Size.ColumnWidth * 0.7);
+        this.SetMaxCharacters(length);
+
+        this.textarea.css({
+            "text-align": "center",
+            "font-size": "350%",
+            "padding-left": Dash.Size.Padding,
+            "letter-spacing": (Dash.Size.Padding * 0.5) + "px",
+            "height": Dash.Size.RowHeight * 2.25,
+            "min-height": Dash.Size.RowHeight * 2.25,
+            "max-height": Dash.Size.RowHeight * 2.25,
+            "line-height": (Dash.Size.RowHeight * 1.8) + "px"
+        });
+
+        this.textarea.attr({
+            "type": "number",
+            "pattern": "[0-9]*",
+            "inputmode": "numeric",
+            "step": "1",
+            "min": "0"
+        });
+    };
+
     this.SetMaxCharacters = function (num) {
         this.textarea.attr("maxlength", num);
     };
