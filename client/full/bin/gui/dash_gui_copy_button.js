@@ -1,4 +1,4 @@
-function DashGuiCopyButton (binder, getter_cb, size_mult=1.0, container_size=null, style="default", icon_name="copy", color=null) {
+function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
     this.size_mult = size_mult;

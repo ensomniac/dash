@@ -73,6 +73,17 @@ function DashLayoutListRowElements () {
         });
     };
 
+    this.add_copy_button_column = function (column_config_data) {
+        var copy_button = this.get_copy_button(column_config_data);
+
+        this.column_box.append(copy_button.html);
+
+        this.columns["copy_buttons"].push({
+            "obj": copy_button,
+            "column_config_data": column_config_data
+        });
+    };
+
     this.get_spacer = function () {
         var spacer = $("<div></div>");
 
@@ -292,6 +303,47 @@ function DashLayoutListRowElements () {
         }
 
         return icon_button;
+    };
+
+    this.get_copy_button = function (column_config_data) {
+        var copy_button = (function (self) {
+            return new Dash.Gui.CopyButton(
+                column_config_data["options"]["binder"],
+                function () {
+                    return column_config_data["options"]["getter_cb"].bind(column_config_data["options"]["binder"])(self);
+                },
+                column_config_data["options"]["size_mult"],
+                null,
+                "default",
+                column_config_data["options"]["icon_name"],
+                column_config_data["options"]["color"] || self.color
+            );
+        })(this);
+
+        copy_button.html.css({
+            "height": this.height
+        });
+
+        if (column_config_data["css"]) {
+            copy_button.html.css(column_config_data["css"]);
+        }
+
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            copy_button.button.icon.icon_html.remove();
+
+            copy_button.label.remove();
+
+            this.prevent_events_for_header_placeholder(copy_button.html);
+
+            return copy_button;
+        }
+
+        if (column_config_data["options"]["hover_text"]) {
+            copy_button.button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        }
+
+        return copy_button;
     };
 
     this.prevent_events_for_header_placeholder = function (html) {

@@ -23484,7 +23484,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.setup_styles();
 }
 
-function DashGuiCopyButton (binder, getter_cb, size_mult=1.0, container_size=null, style="default", icon_name="copy", color=null) {
+function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
     this.size_mult = size_mult;
@@ -32671,6 +32671,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             "combos": [],
             "spacers": [],
             "dividers": [],
+            "copy_buttons": [],
             "icon_buttons": []
         };
         var default_columns_only = true;
@@ -32693,6 +32694,10 @@ function DashLayoutListRow (list, row_id, height=null) {
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
                 this.add_icon_button_column(column_config_data);
+            }
+            else if (column_config_data["type"] === "copy_button") {
+                default_columns_only = false;
+                this.add_copy_button_column(column_config_data);
             }
             else {
                 if (column_config_data["on_click_callback"]) {
@@ -32718,23 +32723,22 @@ function DashLayoutListRow (list, row_id, height=null) {
 function DashLayoutListColumnConfig () {
     this.columns = [];
     this.AddColumn = function (display_name, data_key, can_edit, width, options) {
-        if (typeof can_edit !== "boolean") {
-            can_edit = true;
-        }
-        var column_details = {
+        this.columns.push({
             "width": width,
             "data_key": data_key,
-            "can_edit": can_edit,
+            "can_edit": typeof can_edit !== "boolean" ? true : can_edit,
             "display_name": display_name,
             "type": options && options["type"] ? options["type"] : "",
             "css": options && options["css"] ? options["css"] : null,
             "header_css": options && options["header_css"] ? options["header_css"] : null,
             "options": options && options["options"] ? options["options"] : {},
             "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
-        };
-        this.columns.push(column_details);
+        });
     };
     this.AddSpacer = function (header_only=false) {
+        if (this.columns.length && this.columns.Last()["type"] === "spacer") {
+            return;
+        }
         this.columns.push({
             "type": "spacer",
             "header_only": header_only
@@ -32803,6 +32807,29 @@ function DashLayoutListColumnConfig () {
                     "options": {
                         "size_mult": size_mult
                     }
+                },
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+    this.AddCopyButton = function (binder, getter_cb, hover_text="Copy", width_mult=0.25, css={}, header_css={}, size_mult=0.8, icon_name="copy") {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
+        this.AddColumn(
+            "",
+            "",
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            {
+                "type": "copy_button",
+                "options": {
+                    "binder": binder,
+                    "getter_cb": getter_cb,
+                    "size_mult": size_mult,
+                    "icon_name": icon_name,
+                    "color": binder.color || Dash.Color.Light,
+                    "hover_text": hover_text
                 },
                 "css": css,
                 "header_css": header_css
@@ -33077,6 +33104,14 @@ function DashLayoutListRowElements () {
             "column_config_data": column_config_data
         });
     };
+    this.add_copy_button_column = function (column_config_data) {
+        var copy_button = this.get_copy_button(column_config_data);
+        this.column_box.append(copy_button.html);
+        this.columns["copy_buttons"].push({
+            "obj": copy_button,
+            "column_config_data": column_config_data
+        });
+    };
     this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
@@ -33251,6 +33286,38 @@ function DashLayoutListRowElements () {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
         }
         return icon_button;
+    };
+    this.get_copy_button = function (column_config_data) {
+        var copy_button = (function (self) {
+            return new Dash.Gui.CopyButton(
+                column_config_data["options"]["binder"],
+                function () {
+                    return column_config_data["options"]["getter_cb"].bind(column_config_data["options"]["binder"])(self);
+                },
+                column_config_data["options"]["size_mult"],
+                null,
+                "default",
+                column_config_data["options"]["icon_name"],
+                column_config_data["options"]["color"] || self.color
+            );
+        })(this);
+        copy_button.html.css({
+            "height": this.height
+        });
+        if (column_config_data["css"]) {
+            copy_button.html.css(column_config_data["css"]);
+        }
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            copy_button.button.icon.icon_html.remove();
+            copy_button.label.remove();
+            this.prevent_events_for_header_placeholder(copy_button.html);
+            return copy_button;
+        }
+        if (column_config_data["options"]["hover_text"]) {
+            copy_button.button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        }
+        return copy_button;
     };
     this.prevent_events_for_header_placeholder = function (html) {
         html.css({
@@ -33510,6 +33577,14 @@ function DashLayoutListRowInterface () {
                 this.columns[type][index]["obj"].Disable();
             }
         }
+        else if (type === "copy_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].button.Enable();
+            }
+            else {
+                this.columns[type][index]["obj"].button.Disable();
+            }
+        }
         // Add conditions for the other types as needed
     };
     this.SetHoverPreview = function (content="") {
@@ -33528,6 +33603,9 @@ function DashLayoutListRowInterface () {
         this.setup_connections();
         for (var icon_button of this.columns["icon_buttons"]) {
             icon_button["obj"].RefreshConnections();
+        }
+        for (var copy_button of this.columns["copy_buttons"]) {
+            copy_button["obj"].button.RefreshConnections();
         }
     };
     this.RedrawColumns = function () {
