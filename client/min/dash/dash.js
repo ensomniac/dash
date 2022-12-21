@@ -30294,12 +30294,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             );
         }
     };
-    this.remove_temp_html = function () {
-        for (var html of this.temp_html) {
-            html.remove();
-        }
-        this.temp_html = [];
-    };
     this.AddHTML = function (html, remove_on_tab_change=false) {
         html.css({
             "margin-bottom": 1
@@ -30308,10 +30302,11 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         if (remove_on_tab_change) {
             this.temp_html.push(html);
         }
+        return html;
     };
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
     this.AppendHTML = function (html) {
-        this.AddHTML(html);
+        return this.AddHTML(html);
     };
     this.MidpendHTML = function (html) {
         if (!this.side_tabs) {
@@ -30323,12 +30318,14 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             "margin-bottom": 1
         });
         this.tab_middle.append(html);
+        return html;
     };
     this.PrependHTML = function (html) {
         html.css({
             "margin-top": 1
         });
         this.tab_bottom.append(html);
+        return html;
     };
     this.AppendImage = function (img_url, height=null) {
         // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
@@ -30393,6 +30390,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                 "top": this.tab_area_size
             });
         }
+    };
+    this.remove_temp_html = function () {
+        for (var html of this.temp_html) {
+            html.remove();
+        }
+        this.temp_html = [];
     };
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
