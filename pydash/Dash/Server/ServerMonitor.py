@@ -67,7 +67,50 @@ class ServerMonitor:
         check_output(cmd, shell=True)
 
     def clean_history(self, current_state):
-        current_state["disk_history"] = current_state["disk_history"][-5:]
+        print("\n\n*****\n\n")
+
+        max_history = 60
+
+        last_timestamp = None
+        last_value    = None
+
+        current_state["disk_history"]    = current_state["disk_history"][-max_history:]
+        current_state["disk_history_hr"] = []
+
+        for period in current_state["disk_history"]:
+            # print(x)
+            # x = (len(current_state["disk_history"])-1)-x
+
+            if not last_timestamp:
+                last_value = period[1]
+                last_timestamp = datetime.datetime.fromisoformat(period[0])
+                last_timestamp = last_timestamp - datetime.timedelta(hours=0, minutes=1)
+
+            timestamp = datetime.datetime.fromisoformat(period[0])
+            seconds_since = (timestamp-last_timestamp).total_seconds()
+            space_changed = period[1]-last_value
+            velocity = round(space_changed / seconds_since, 3)
+
+            # print(period)
+            # print(period, seconds_since, space_changed, velocity)
+            history = {}
+            history["seconds_since_last_report"] = seconds_since
+            history["velocity_of_change"]        = velocity
+            history["space_changed"]             = space_changed
+            history["last_value"]                = last_value
+            history["current_value"]             = period[1]
+            history["timestamp"]                 = period[0]
+
+            # print(history)
+            current_state["disk_history_hr"].append(history)
+
+            last_timestamp = timestamp
+            last_value     = period[1]
+
+        # current_state["disk_history"] = current_state["disk_history"][-max_history:]
+
+        print("\n\n*****\n\n")
+
         return current_state
 
     def Monitor(self):

@@ -143,7 +143,7 @@ class ServerStressTest:
             return
 
         self.writing_file = True
-        artificial_clone_path = os.path.join(self.artificial_data_root, "artificial_source_500mb_" + str(self.current_gb_index))
+        artificial_clone_path = os.path.join(self.artificial_data_root, "artificial_source_1gb_" + str(self.current_gb_index))
 
         msg = "SPACE USED: " + str(available_disk_space) + "%"
         msg += ", writing " + artificial_clone_path.split("/")[-1]
