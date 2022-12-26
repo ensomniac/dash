@@ -138,6 +138,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
 
+    this.SetInputMode = function (mode) {
+        this.textarea.attr("inputmode", mode);
+    };
+
     this.StyleAsPIN = function (length=4) {
         this.StyleAsRow();
         this.DisableAutoSubmit();

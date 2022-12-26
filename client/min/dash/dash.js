@@ -35462,6 +35462,9 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         // This shouldn't be necessary since we block the enter key, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
+    this.SetInputMode = function (mode) {
+        this.textarea.attr("inputmode", mode);
+    };
     this.StyleAsPIN = function (length=4) {
         this.StyleAsRow();
         this.DisableAutoSubmit();
@@ -36138,7 +36141,8 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         {
             "list": this.id,
             "class": this.color.PlaceholderClass,
-            "placeholder": this.placeholder_text
+            "placeholder": this.placeholder_text,
+            "inputmode": "search"
         }
     );
     this.setup_styles = function () {
@@ -36158,6 +36162,14 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "height": Dash.Size.RowHeight - 2,  // Account for border
             ...shared_css
         });
+        (function (self) {
+            self.input.on("focus", function () {
+                requestAnimationFrame(function () {
+                    // The list will cover the on-screen keyboard unless re-focusing after it's drawn
+                    self.input.trigger("focus");
+                });
+            });
+        })(this);
         this.set_width("100%", true);
         this.add_options();
         this.html.append(this.datalist);
