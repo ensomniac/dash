@@ -8,8 +8,8 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
 
     this.label = null;
     this.clear_button = null;
-    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
+    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.datalist = $("<datalist></datalist", {"id": this.id});
 
     this.input = $(
@@ -41,22 +41,6 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "height": Dash.Size.RowHeight - 2,  // Account for border
             ...shared_css
         });
-
-        (function (self) {
-            self.input.on("focus", function (event, refocus=false) {
-                if (refocus) {
-                    return;
-                }
-
-                setTimeout(
-                    function () {
-                        // If the list is long, the list will cover the virtual keyboard unless re-focused after initial draw
-                        self.input.trigger("focus", [true]);
-                    },
-                    1000
-                );
-            });
-        })(this);
 
         this.set_width("100%", true);
         this.add_options();
@@ -177,6 +161,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
 
                     requestAnimationFrame(function () {
                         self.input.trigger("focus");
+                        self.input.trigger("click");
                     });
                 },
                 self,
@@ -242,6 +227,23 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 if (self.on_change_cb) {
                     self.on_change_cb(self.GetLabel());
                 }
+            });
+
+            self.input.on("click", function (event, reclick=false) {
+                console.debug("TEST click");
+                if (reclick) {
+                    console.debug("TEST return click");
+                    return;
+                }
+
+                setTimeout(
+                    function () {
+                        console.debug("TEST reclick");
+                        // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
+                        self.input.trigger("click", [true]);
+                    },
+                    1000
+                );
             });
         })(this);
     };
