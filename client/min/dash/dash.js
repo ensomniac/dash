@@ -35464,6 +35464,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     };
     this.SetInputMode = function (mode) {
         this.textarea.attr("inputmode", mode);
+        if (mode === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.textarea.attr("autocapitalize", "off");
+        }
     };
     this.StyleAsPIN = function (length=4) {
         this.StyleAsRow();
@@ -36163,11 +36167,17 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             ...shared_css
         });
         (function (self) {
-            self.input.on("focus", function () {
-                requestAnimationFrame(function () {
-                    // The list will cover the on-screen keyboard unless re-focusing after it's drawn
-                    self.input.trigger("focus");
-                });
+            self.input.on("focus", function (event, refocus=false) {
+                if (refocus) {
+                    return;
+                }
+                setTimeout(
+                    function () {
+                        // If the list is long, the list will cover the virtual keyboard unless re-focused after initial draw
+                        self.input.trigger("focus", [true]);
+                    },
+                    250
+                );
             });
         })(this);
         this.set_width("100%", true);

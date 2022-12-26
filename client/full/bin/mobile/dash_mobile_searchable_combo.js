@@ -43,11 +43,18 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         });
 
         (function (self) {
-            self.input.on("focus", function () {
-                requestAnimationFrame(function () {
-                    // The list will cover the on-screen keyboard unless re-focusing after it's drawn
-                    self.input.trigger("focus");
-                });
+            self.input.on("focus", function (event, refocus=false) {
+                if (refocus) {
+                    return;
+                }
+
+                setTimeout(
+                    function () {
+                        // If the list is long, the list will cover the virtual keyboard unless re-focused after initial draw
+                        self.input.trigger("focus", [true]);
+                    },
+                    250
+                );
             });
         })(this);
 

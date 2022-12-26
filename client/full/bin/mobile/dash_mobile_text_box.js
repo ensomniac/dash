@@ -140,6 +140,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
     this.SetInputMode = function (mode) {
         this.textarea.attr("inputmode", mode);
+
+        if (mode === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.textarea.attr("autocapitalize", "off");
+        }
     };
 
     this.StyleAsPIN = function (length=4) {
