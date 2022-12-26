@@ -36176,7 +36176,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                         // If the list is long, the list will cover the virtual keyboard unless re-focused after initial draw
                         self.input.trigger("focus", [true]);
                     },
-                    250
+                    1000
                 );
             });
         })(this);
@@ -36268,6 +36268,9 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 "close_circle",
                 function () {
                     self.SetLabel("");
+                    requestAnimationFrame(function () {
+                        self.input.trigger("focus");
+                    });
                 },
                 self,
                 self.color,
