@@ -7,7 +7,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
 
     this.label = null;
-    this.option_rows = [];
+    // this.option_rows = [];
     this.clear_button = null;
     this.html = $("<div></div>");
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
@@ -114,7 +114,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "height": Dash.Size.RowHeight
         });
 
-        this.option_rows.push(row);
+        // this.option_rows.push(row);
 
         this.datalist.append(row);
     };
@@ -234,11 +234,11 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             self.input.on("click", function (event, reclick=false) {
                 if (reclick) {
                     // Force redraw of datalist
-                    self.option_rows.Last().detach();
-
-                    requestAnimationFrame(function () {
-                        self.datalist.append(self.option_rows.Last());
-                    });
+                    // self.option_rows.Last().detach();
+                    //
+                    // requestAnimationFrame(function () {
+                    //     self.datalist.append(self.option_rows.Last());
+                    // });
 
                     return;
                 }
