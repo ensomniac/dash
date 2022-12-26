@@ -147,11 +147,14 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         }
     };
 
-    this.StyleAsPIN = function (length=4) {
+    this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
         this.StyleAsRow();
-        this.DisableAutoSubmit();
         this.SetWidth(Dash.Size.ColumnWidth * 0.7);
         this.SetMaxCharacters(length);
+
+        if (disable_auto_submit) {
+            this.DisableAutoSubmit();
+        }
 
         this.textarea.css({
             "text-align": "center",

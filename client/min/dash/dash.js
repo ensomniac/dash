@@ -17657,8 +17657,11 @@ function Dash () {
                     }
                 },
                 "Pop": {
-                    "value": function (index, return_item=true) {
+                    "value": function (index=null, return_item=true) {
                         try {
+                            if (index === null) {
+                                index = this.length - 1;  // Last index
+                            }
                             index = parseInt(index);
                             if (index > -1) { // -1 means it's not in the array
                                 var removed = this.splice(index, 1);
@@ -18525,6 +18528,34 @@ function DashMath () {
     };
     this.Range = function (num) {
         return [...new Array(num).keys()];
+    };
+    // Can't think of a better name for this, nor do I know how to properly explain it...
+    // Ex: Dash.Math.GetPercentageIncrements(5) -> ['0.2', '0.4', '0.6', '0.8']
+    this.GetPercentageIncrements = function (divisor, start_with_0=false, end_with_1=false, conform_length=true) {
+        var list = [];
+        var timeout = 5;
+        var percent = 1 / 5;
+        var len = conform_length ? percent.toString().length : null;
+        for (var index of Dash.Math.Range(timeout)) {
+            var num = ((index + 1) * percent);
+            if (conform_length) {
+                num = parseFloat(num.toString().slice(0, len));
+            }
+            list.push(num);
+        }
+        if (start_with_0 && list[0] !== 0) {
+            list.unshift(0);
+        }
+        else if (list[0] === 0) {
+            list.shift();
+        }
+        if (end_with_1 && list.Last() !== 1) {
+            list.push(1);
+        }
+        else if (list.Last() === 1) {
+            list.Pop();
+        }
+        return list;
     };
     this.ensure_double_digit = function (number) {
         number = number.toString();
@@ -35469,11 +35500,13 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             this.textarea.attr("autocapitalize", "off");
         }
     };
-    this.StyleAsPIN = function (length=4) {
+    this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
         this.StyleAsRow();
-        this.DisableAutoSubmit();
         this.SetWidth(Dash.Size.ColumnWidth * 0.7);
         this.SetMaxCharacters(length);
+        if (disable_auto_submit) {
+            this.DisableAutoSubmit();
+        }
         this.textarea.css({
             "text-align": "center",
             "font-size": "350%",
