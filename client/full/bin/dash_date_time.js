@@ -101,11 +101,15 @@ function DashDateTime () {
         return dt_obj;
     };
 
-    this.GetReadableDifference = function (start_iso, end_iso, include_seconds=false) {
+    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false) {
         var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
         var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
-
         var secs = Math.floor((end_ms - start_ms) / 1000);
+
+        return this.GetReadableHoursMins(secs, include_secs);
+    };
+
+    this.GetReadableHoursMins = function (secs, include_secs=false) {
         var mins = Math.floor(secs / 60);
         var hours = Math.floor(mins / 60);
 
@@ -134,7 +138,7 @@ function DashDateTime () {
 
         var readable = hours + "h " + mins + "m";
 
-        if (include_seconds) {
+        if (include_secs) {
             readable += " " + secs + "s";
         }
 
