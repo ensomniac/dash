@@ -35502,11 +35502,20 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             // This is supposed to happen when the mode is set to "email", but isn't happening automatically
             this.textarea.attr("autocapitalize", "off");
         }
+        else if (mode === "numeric") {
+            this.textarea.attr({
+                "type": "number",
+                "pattern": "[0-9]*",
+                "step": "1",
+                "min": "0"
+            });
+        }
     };
     this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
         this.StyleAsRow();
         this.SetWidth(Dash.Size.ColumnWidth * 0.7);
         this.SetMaxCharacters(length);
+        this.SetInputMode("numeric");
         if (disable_auto_submit) {
             this.DisableAutoSubmit();
         }
@@ -35519,13 +35528,6 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "min-height": Dash.Size.RowHeight * 2.25,
             "max-height": Dash.Size.RowHeight * 2.25,
             "line-height": (Dash.Size.RowHeight * 1.8) + "px"
-        });
-        this.textarea.attr({
-            "type": "number",
-            "pattern": "[0-9]*",
-            "inputmode": "numeric",
-            "step": "1",
-            "min": "0"
         });
     };
     this.SetMaxCharacters = function (num) {
@@ -36892,6 +36894,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
     this.icon_only = icon_only;
     this.icon = null;
     this.label = null;
+    this.icon_size = null;
     this.click_active = false;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
@@ -36920,27 +36923,27 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
         this.setup_connections();
     };
     this.add_icon = function () {
-        var size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
+        this.icon_size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
         this.icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
-            size,
+            this.icon_size,
             this.icon_only ? 0.65 : 0.75,
             Dash.Color.Mobile.AccentPrimary
         );
         this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
         var css = {
             "background": "rgb(250, 250, 250)",
-            "height": size,
-            "width": size,
-            "border-radius": size * 0.5,
+            "height": this.icon_size,
+            "width": this.icon_size,
+            "border-radius": this.icon_size * 0.5,
             "box-shadow": (this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)") +
                 ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         };
         if (this.icon_only) {
             css["inset"] = 0;
-            css["top"] = (this.height - size) * 0.5;
-            css["left"] = (this.height - size) * 0.5;
+            css["top"] = (this.height - this.icon_size) * 0.5;
+            css["left"] = (this.height - this.icon_size) * 0.5;
         }
         else {
             css["left"] = this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto";
@@ -36966,7 +36969,8 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
             "text-overflow": "ellipsis",
             "color": "white"
         };
-        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height * 0.5;
+        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height;
+        label_css["padding-" + (this.left_side_icon ? "right" : "left")] = this.height;
         this.label.css(label_css);
         this.label.text(this.label_text);
         this.html.append(this.label);
