@@ -35735,6 +35735,16 @@ function DashMobileCard (stack) {
         this.AddHTML(button.html);
         return button;
     };
+    this.AddButtonWithIcon = function (icon_name, label_text, callback, left_side_icon=false) {
+        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback, left_side_icon);
+        button.html.css({
+            "margin-right": 0,
+            "border-radius": Dash.Size.BorderRadius,
+            "background": Dash.Color.Mobile.AccentPrimary
+        });
+        this.AddHTML(button.html);
+        return button;
+    };
     this.PullToDelete = function (callback) {
         this.SetLeftPullCallback(callback, "trash_solid");
     };
