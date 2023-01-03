@@ -197,6 +197,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             "combos": [],
             "spacers": [],
             "dividers": [],
+            "copy_buttons": [],
             "icon_buttons": []
         };
 
@@ -229,6 +230,12 @@ function DashLayoutListRow (list, row_id, height=null) {
                 default_columns_only = false;
 
                 this.add_icon_button_column(column_config_data);
+            }
+
+            else if (column_config_data["type"] === "copy_button") {
+                default_columns_only = false;
+
+                this.add_copy_button_column(column_config_data);
             }
 
             else {

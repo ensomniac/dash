@@ -2,26 +2,24 @@ function DashLayoutListColumnConfig () {
     this.columns = [];
 
     this.AddColumn = function (display_name, data_key, can_edit, width, options) {
-        if (typeof can_edit !== "boolean") {
-            can_edit = true;
-        }
-
-        var column_details = {
+        this.columns.push({
             "width": width,
             "data_key": data_key,
-            "can_edit": can_edit,
+            "can_edit": typeof can_edit !== "boolean" ? true : can_edit,
             "display_name": display_name,
             "type": options && options["type"] ? options["type"] : "",
             "css": options && options["css"] ? options["css"] : null,
             "header_css": options && options["header_css"] ? options["header_css"] : null,
             "options": options && options["options"] ? options["options"] : {},
             "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
-        };
-
-        this.columns.push(column_details);
+        });
     };
 
     this.AddSpacer = function (header_only=false) {
+        if (this.columns.length && this.columns.Last()["type"] === "spacer") {
+            return;
+        }
+
         this.columns.push({
             "type": "spacer",
             "header_only": header_only
@@ -95,6 +93,31 @@ function DashLayoutListColumnConfig () {
                     "options": {
                         "size_mult": size_mult
                     }
+                },
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+
+    this.AddCopyButton = function (binder, getter_cb, hover_text="Copy", width_mult=0.25, css={}, header_css={}, size_mult=0.8, icon_name="copy") {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
+
+        this.AddColumn(
+            "",
+            "",
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            {
+                "type": "copy_button",
+                "options": {
+                    "binder": binder,
+                    "getter_cb": getter_cb,
+                    "size_mult": size_mult,
+                    "icon_name": icon_name,
+                    "color": binder.color || Dash.Color.Light,
+                    "hover_text": hover_text
                 },
                 "css": css,
                 "header_css": header_css

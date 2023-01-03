@@ -7,9 +7,10 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
 
     this.label = null;
+    // this.option_rows = [];
     this.clear_button = null;
-    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
+    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.datalist = $("<datalist></datalist", {"id": this.id});
 
     this.input = $(
@@ -17,7 +18,8 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         {
             "list": this.id,
             "class": this.color.PlaceholderClass,
-            "placeholder": this.placeholder_text
+            "placeholder": this.placeholder_text,
+            "inputmode": "search"
         }
     );
 
@@ -112,7 +114,8 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "height": Dash.Size.RowHeight
         });
 
-        // this.html.append(row);
+        // this.option_rows.push(row);
+
         this.datalist.append(row);
     };
 
@@ -157,6 +160,11 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 "close_circle",
                 function () {
                     self.SetLabel("");
+
+                    requestAnimationFrame(function () {
+                        self.input.trigger("focus");
+                        self.input.trigger("click");
+                    });
                 },
                 self,
                 self.color,
@@ -221,6 +229,28 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 if (self.on_change_cb) {
                     self.on_change_cb(self.GetLabel());
                 }
+            });
+
+            self.input.on("click", function (event, reclick=false) {
+                if (reclick) {
+                    // Force redraw of datalist
+                    // self.option_rows.Last().detach();
+                    //
+                    // requestAnimationFrame(function () {
+                    //     self.datalist.append(self.option_rows.Last());
+                    // });
+
+                    return;
+                }
+
+                setTimeout(
+                    function () {
+                        // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
+                        self.input.trigger("focus");
+                        self.input.trigger("click", [true]);
+                    },
+                    300
+                );
             });
         })(this);
     };

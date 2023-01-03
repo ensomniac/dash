@@ -17657,8 +17657,11 @@ function Dash () {
                     }
                 },
                 "Pop": {
-                    "value": function (index, return_item=true) {
+                    "value": function (index=null, return_item=true) {
                         try {
+                            if (index === null) {
+                                index = this.length - 1;  // Last index
+                            }
                             index = parseInt(index);
                             if (index > -1) { // -1 means it's not in the array
                                 var removed = this.splice(index, 1);
@@ -18525,6 +18528,34 @@ function DashMath () {
     };
     this.Range = function (num) {
         return [...new Array(num).keys()];
+    };
+    // Can't think of a better name for this, nor do I know how to properly explain it...
+    // Ex: Dash.Math.GetPercentageIncrements(5) -> ['0.2', '0.4', '0.6', '0.8']
+    this.GetPercentageIncrements = function (divisor, start_with_0=false, end_with_1=false, conform_length=true) {
+        var list = [];
+        var timeout = 5;
+        var percent = 1 / 5;
+        var len = conform_length ? percent.toString().length : null;
+        for (var index of Dash.Math.Range(timeout)) {
+            var num = ((index + 1) * percent);
+            if (conform_length) {
+                num = parseFloat(num.toString().slice(0, len));
+            }
+            list.push(num);
+        }
+        if (start_with_0 && list[0] !== 0) {
+            list.unshift(0);
+        }
+        else if (list[0] === 0) {
+            list.shift();
+        }
+        if (end_with_1 && list.Last() !== 1) {
+            list.push(1);
+        }
+        else if (list.Last() === 1) {
+            list.Pop();
+        }
+        return list;
     };
     this.ensure_double_digit = function (number) {
         number = number.toString();
@@ -19532,10 +19563,13 @@ function DashDateTime () {
         }
         return dt_obj;
     };
-    this.GetReadableDifference = function (start_iso, end_iso, include_seconds=false) {
+    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false) {
         var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
         var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
         var secs = Math.floor((end_ms - start_ms) / 1000);
+        return this.GetReadableHoursMins(secs, include_secs);
+    };
+    this.GetReadableHoursMins = function (secs, include_secs=false) {
         var mins = Math.floor(secs / 60);
         var hours = Math.floor(mins / 60);
         secs = secs % 60;
@@ -19556,7 +19590,7 @@ function DashDateTime () {
             mins += 1;
         }
         var readable = hours + "h " + mins + "m";
-        if (include_seconds) {
+        if (include_secs) {
             readable += " " + secs + "s";
         }
         return readable;
@@ -23484,7 +23518,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.setup_styles();
 }
 
-function DashGuiCopyButton (binder, getter_cb, size_mult=1.0, container_size=null, style="default", icon_name="copy", color=null) {
+function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
     this.size_mult = size_mult;
@@ -30294,12 +30328,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             );
         }
     };
-    this.remove_temp_html = function () {
-        for (var html of this.temp_html) {
-            html.remove();
-        }
-        this.temp_html = [];
-    };
     this.AddHTML = function (html, remove_on_tab_change=false) {
         html.css({
             "margin-bottom": 1
@@ -30308,10 +30336,11 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         if (remove_on_tab_change) {
             this.temp_html.push(html);
         }
+        return html;
     };
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
     this.AppendHTML = function (html) {
-        this.AddHTML(html);
+        return this.AddHTML(html);
     };
     this.MidpendHTML = function (html) {
         if (!this.side_tabs) {
@@ -30323,12 +30352,14 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             "margin-bottom": 1
         });
         this.tab_middle.append(html);
+        return html;
     };
     this.PrependHTML = function (html) {
         html.css({
             "margin-top": 1
         });
         this.tab_bottom.append(html);
+        return html;
     };
     this.AppendImage = function (img_url, height=null) {
         // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
@@ -30393,6 +30424,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                 "top": this.tab_area_size
             });
         }
+    };
+    this.remove_temp_html = function () {
+        for (var html of this.temp_html) {
+            html.remove();
+        }
+        this.temp_html = [];
     };
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
@@ -32668,6 +32705,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             "combos": [],
             "spacers": [],
             "dividers": [],
+            "copy_buttons": [],
             "icon_buttons": []
         };
         var default_columns_only = true;
@@ -32690,6 +32728,10 @@ function DashLayoutListRow (list, row_id, height=null) {
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
                 this.add_icon_button_column(column_config_data);
+            }
+            else if (column_config_data["type"] === "copy_button") {
+                default_columns_only = false;
+                this.add_copy_button_column(column_config_data);
             }
             else {
                 if (column_config_data["on_click_callback"]) {
@@ -32715,23 +32757,22 @@ function DashLayoutListRow (list, row_id, height=null) {
 function DashLayoutListColumnConfig () {
     this.columns = [];
     this.AddColumn = function (display_name, data_key, can_edit, width, options) {
-        if (typeof can_edit !== "boolean") {
-            can_edit = true;
-        }
-        var column_details = {
+        this.columns.push({
             "width": width,
             "data_key": data_key,
-            "can_edit": can_edit,
+            "can_edit": typeof can_edit !== "boolean" ? true : can_edit,
             "display_name": display_name,
             "type": options && options["type"] ? options["type"] : "",
             "css": options && options["css"] ? options["css"] : null,
             "header_css": options && options["header_css"] ? options["header_css"] : null,
             "options": options && options["options"] ? options["options"] : {},
             "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
-        };
-        this.columns.push(column_details);
+        });
     };
     this.AddSpacer = function (header_only=false) {
+        if (this.columns.length && this.columns.Last()["type"] === "spacer") {
+            return;
+        }
         this.columns.push({
             "type": "spacer",
             "header_only": header_only
@@ -32800,6 +32841,29 @@ function DashLayoutListColumnConfig () {
                     "options": {
                         "size_mult": size_mult
                     }
+                },
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+    this.AddCopyButton = function (binder, getter_cb, hover_text="Copy", width_mult=0.25, css={}, header_css={}, size_mult=0.8, icon_name="copy") {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
+        this.AddColumn(
+            "",
+            "",
+            true,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            {
+                "type": "copy_button",
+                "options": {
+                    "binder": binder,
+                    "getter_cb": getter_cb,
+                    "size_mult": size_mult,
+                    "icon_name": icon_name,
+                    "color": binder.color || Dash.Color.Light,
+                    "hover_text": hover_text
                 },
                 "css": css,
                 "header_css": header_css
@@ -33074,6 +33138,14 @@ function DashLayoutListRowElements () {
             "column_config_data": column_config_data
         });
     };
+    this.add_copy_button_column = function (column_config_data) {
+        var copy_button = this.get_copy_button(column_config_data);
+        this.column_box.append(copy_button.html);
+        this.columns["copy_buttons"].push({
+            "obj": copy_button,
+            "column_config_data": column_config_data
+        });
+    };
     this.get_spacer = function () {
         var spacer = $("<div></div>");
         spacer.css({
@@ -33248,6 +33320,38 @@ function DashLayoutListRowElements () {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
         }
         return icon_button;
+    };
+    this.get_copy_button = function (column_config_data) {
+        var copy_button = (function (self) {
+            return new Dash.Gui.CopyButton(
+                column_config_data["options"]["binder"],
+                function () {
+                    return column_config_data["options"]["getter_cb"].bind(column_config_data["options"]["binder"])(self);
+                },
+                column_config_data["options"]["size_mult"],
+                null,
+                "default",
+                column_config_data["options"]["icon_name"],
+                column_config_data["options"]["color"] || self.color
+            );
+        })(this);
+        copy_button.html.css({
+            "height": this.height
+        });
+        if (column_config_data["css"]) {
+            copy_button.html.css(column_config_data["css"]);
+        }
+        if (this.is_header || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            copy_button.button.icon.icon_html.remove();
+            copy_button.label.remove();
+            this.prevent_events_for_header_placeholder(copy_button.html);
+            return copy_button;
+        }
+        if (column_config_data["options"]["hover_text"]) {
+            copy_button.button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        }
+        return copy_button;
     };
     this.prevent_events_for_header_placeholder = function (html) {
         html.css({
@@ -33507,6 +33611,14 @@ function DashLayoutListRowInterface () {
                 this.columns[type][index]["obj"].Disable();
             }
         }
+        else if (type === "copy_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].button.Enable();
+            }
+            else {
+                this.columns[type][index]["obj"].button.Disable();
+            }
+        }
         // Add conditions for the other types as needed
     };
     this.SetHoverPreview = function (content="") {
@@ -33525,6 +33637,9 @@ function DashLayoutListRowInterface () {
         this.setup_connections();
         for (var icon_button of this.columns["icon_buttons"]) {
             icon_button["obj"].RefreshConnections();
+        }
+        for (var copy_button of this.columns["copy_buttons"]) {
+            copy_button["obj"].button.RefreshConnections();
         }
     };
     this.RedrawColumns = function () {
@@ -35381,11 +35496,29 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         // This shouldn't be necessary since we block the enter key, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
-    this.StyleAsPIN = function (length=4) {
+    this.SetInputMode = function (mode) {
+        this.textarea.attr("inputmode", mode);
+        if (mode === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.textarea.attr("autocapitalize", "off");
+        }
+        else if (mode === "numeric") {
+            this.textarea.attr({
+                "type": "number",
+                "pattern": "[0-9]*",
+                "step": "1",
+                "min": "0"
+            });
+        }
+    };
+    this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
         this.StyleAsRow();
-        this.DisableAutoSubmit();
         this.SetWidth(Dash.Size.ColumnWidth * 0.7);
         this.SetMaxCharacters(length);
+        this.SetInputMode("numeric");
+        if (disable_auto_submit) {
+            this.DisableAutoSubmit();
+        }
         this.textarea.css({
             "text-align": "center",
             "font-size": "350%",
@@ -35395,13 +35528,6 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "min-height": Dash.Size.RowHeight * 2.25,
             "max-height": Dash.Size.RowHeight * 2.25,
             "line-height": (Dash.Size.RowHeight * 1.8) + "px"
-        });
-        this.textarea.attr({
-            "type": "number",
-            "pattern": "[0-9]*",
-            "inputmode": "numeric",
-            "step": "1",
-            "min": "0"
         });
     };
     this.SetMaxCharacters = function (num) {
@@ -35607,6 +35733,16 @@ function DashMobileCard (stack) {
         );
         button.html.css({
             "margin-right": 0
+        });
+        this.AddHTML(button.html);
+        return button;
+    };
+    this.AddButtonWithIcon = function (icon_name, label_text, callback, left_side_icon=false) {
+        var button = new DashMobileCardStackFooterButton(this, icon_name, label_text, callback, left_side_icon);
+        button.html.css({
+            "margin-right": 0,
+            "border-radius": Dash.Size.BorderRadius,
+            "background": Dash.Color.Mobile.AccentPrimary
         });
         this.AddHTML(button.html);
         return button;
@@ -36048,16 +36184,18 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.label = null;
+    // this.option_rows = [];
     this.clear_button = null;
-    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.html = $("<div></div>");
+    this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.datalist = $("<datalist></datalist", {"id": this.id});
     this.input = $(
         "<input/>",
         {
             "list": this.id,
             "class": this.color.PlaceholderClass,
-            "placeholder": this.placeholder_text
+            "placeholder": this.placeholder_text,
+            "inputmode": "search"
         }
     );
     this.setup_styles = function () {
@@ -36128,7 +36266,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         row.css({
             "height": Dash.Size.RowHeight
         });
-        // this.html.append(row);
+        // this.option_rows.push(row);
         this.datalist.append(row);
     };
     this.EnableResetInvalidOnBlur = function () {
@@ -36165,6 +36303,10 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 "close_circle",
                 function () {
                     self.SetLabel("");
+                    requestAnimationFrame(function () {
+                        self.input.trigger("focus");
+                        self.input.trigger("click");
+                    });
                 },
                 self,
                 self.color,
@@ -36217,6 +36359,25 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                 if (self.on_change_cb) {
                     self.on_change_cb(self.GetLabel());
                 }
+            });
+            self.input.on("click", function (event, reclick=false) {
+                if (reclick) {
+                    // Force redraw of datalist
+                    // self.option_rows.Last().detach();
+                    //
+                    // requestAnimationFrame(function () {
+                    //     self.datalist.append(self.option_rows.Last());
+                    // });
+                    return;
+                }
+                setTimeout(
+                    function () {
+                        // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
+                        self.input.trigger("focus");
+                        self.input.trigger("click", [true]);
+                    },
+                    300
+                );
             });
         })(this);
     };
@@ -36733,6 +36894,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
     this.icon_only = icon_only;
     this.icon = null;
     this.label = null;
+    this.icon_size = null;
     this.click_active = false;
     this.color = this.stack.color;
     this.html = Dash.Gui.GetHTMLContext();
@@ -36761,27 +36923,27 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
         this.setup_connections();
     };
     this.add_icon = function () {
-        var size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
+        this.icon_size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
         this.icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
-            size,
+            this.icon_size,
             this.icon_only ? 0.65 : 0.75,
             Dash.Color.Mobile.AccentPrimary
         );
         this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
         var css = {
             "background": "rgb(250, 250, 250)",
-            "height": size,
-            "width": size,
-            "border-radius": size * 0.5,
+            "height": this.icon_size,
+            "width": this.icon_size,
+            "border-radius": this.icon_size * 0.5,
             "box-shadow": (this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)") +
                 ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         };
         if (this.icon_only) {
             css["inset"] = 0;
-            css["top"] = (this.height - size) * 0.5;
-            css["left"] = (this.height - size) * 0.5;
+            css["top"] = (this.height - this.icon_size) * 0.5;
+            css["left"] = (this.height - this.icon_size) * 0.5;
         }
         else {
             css["left"] = this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto";
@@ -36807,7 +36969,8 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
             "text-overflow": "ellipsis",
             "color": "white"
         };
-        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height * 0.5;
+        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height;
+        label_css["padding-" + (this.left_side_icon ? "right" : "left")] = this.height;
         this.label.css(label_css);
         this.label.text(this.label_text);
         this.html.append(this.label);

@@ -138,11 +138,33 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
 
-    this.StyleAsPIN = function (length=4) {
+    this.SetInputMode = function (mode) {
+        this.textarea.attr("inputmode", mode);
+
+        if (mode === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.textarea.attr("autocapitalize", "off");
+        }
+
+        else if (mode === "numeric") {
+            this.textarea.attr({
+                "type": "number",
+                "pattern": "[0-9]*",
+                "step": "1",
+                "min": "0"
+            });
+        }
+    };
+
+    this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
         this.StyleAsRow();
-        this.DisableAutoSubmit();
         this.SetWidth(Dash.Size.ColumnWidth * 0.7);
         this.SetMaxCharacters(length);
+        this.SetInputMode("numeric");
+
+        if (disable_auto_submit) {
+            this.DisableAutoSubmit();
+        }
 
         this.textarea.css({
             "text-align": "center",
@@ -153,14 +175,6 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "min-height": Dash.Size.RowHeight * 2.25,
             "max-height": Dash.Size.RowHeight * 2.25,
             "line-height": (Dash.Size.RowHeight * 1.8) + "px"
-        });
-
-        this.textarea.attr({
-            "type": "number",
-            "pattern": "[0-9]*",
-            "inputmode": "numeric",
-            "step": "1",
-            "min": "0"
         });
     };
 

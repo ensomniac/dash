@@ -326,6 +326,16 @@ function DashLayoutListRowInterface () {
             }
         }
 
+        else if (type === "copy_buttons") {
+            if (enabled) {
+                this.columns[type][index]["obj"].button.Enable();
+            }
+
+            else {
+                this.columns[type][index]["obj"].button.Disable();
+            }
+        }
+
         // Add conditions for the other types as needed
     };
 
@@ -350,6 +360,10 @@ function DashLayoutListRowInterface () {
 
         for (var icon_button of this.columns["icon_buttons"]) {
             icon_button["obj"].RefreshConnections();
+        }
+
+        for (var copy_button of this.columns["copy_buttons"]) {
+            copy_button["obj"].button.RefreshConnections();
         }
     };
 

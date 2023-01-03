@@ -237,8 +237,44 @@ class Users:
             "user_email": email
         }
 
-    def Login(self):
-        validation = self.ValidateCredentials(return_login_dict=True)
+    def UpdatePIN(self, email="", pin="", token_validation=True):
+        email = (email or self.request_params.get("email") or "").lower().strip()
+        pin = str(pin or self.request_params.get("pin") or "").strip()
+
+        if not email:
+            return {"error": f"Missing email: {email}"}
+
+        if not pin or len(pin) != 4 or not pin.isdigit():
+            return {"error": f"Invalid pin format: {pin}"}
+
+        if token_validation and "token_validation" in self.request_params:
+            token_validation = self.request_params["token_validation"]
+
+        if token_validation:
+            user = self.ValidateUser()
+
+            if not user:
+                return {
+                    "error": "Invalid User - x73894",
+                    "_error": f"user: {user}"
+                }
+        else:  # For when validation needs to happen outside of this function and/or when the token will not match the email
+            user_data_path = self.GetUserDataPath(email)
+
+            if not user_data_path or not os.path.exists(user_data_path):
+                return {"error": f"User does not exist: {user_data_path}"}
+
+        from passlib.apps import custom_app_context as pwd_context
+
+        open(os.path.join(self.UsersPath, email, "pin_hash"), "w").write(pwd_context.hash(pin))
+
+        return {
+            "updated": True,
+            "user_email": email
+        }
+
+    def Login(self, use_pin=False):
+        validation = self.ValidateCredentials(use_pin=use_pin, return_login_dict=True)
 
         if validation.get("error"):
             return validation
@@ -272,9 +308,15 @@ class Users:
             "init": self.get_user_init(validation["email"])
         }
 
-    def ValidateCredentials(self, email="", password="", return_login_dict=False):
-        email = (email or self.request_params.get("email")).lower().strip()
-        password = (password or self.request_params.get("pass") or self.request_params.get("password")).strip()
+    def ValidateCredentials(self, email="", password="", use_pin=False, return_login_dict=False):
+        email = (email or self.request_params.get("email") or "").lower().strip()
+        password = (password or self.request_params.get("pass") or self.request_params.get("password") or "").strip()
+
+        if use_pin and not password:
+            password = str(self.request_params.get("pin") or "").strip()
+
+            if not password or len(password) != 4 or not password.isdigit():
+                return {"error": f"Invalid pin format: {password}"}
 
         if not email or not password:
             if return_login_dict:
@@ -286,13 +328,22 @@ class Users:
             return False
 
         user_root = os.path.join(self.UsersPath, email)
-        pass_path = os.path.join(user_root, "phash")
+        pass_path = os.path.join(user_root, "pin_hash" if use_pin else "phash")
 
-        if not os.path.exists(pass_path):
+        if not os.path.exists(user_root if use_pin else pass_path):
             if return_login_dict:
                 return {
                     "error": "Account does not exist x7832",
-                    "_error": f"password path: {pass_path}"
+                    "_error": f"user root: {user_root}" if use_pin else f"password path: {pass_path}"
+                }
+
+            return False
+
+        if use_pin and not os.path.exists(pass_path):
+            if return_login_dict:
+                return {
+                    "error": "PIN has not yet been setup",
+                    "_error": f"pin path: {pass_path}"
                 }
 
             return False
@@ -338,12 +389,12 @@ class Users:
             obj_id=email
         )
 
-    def GetUserData(self, user_email):
+    def GetUserData(self, user_email, create_if_missing=True):
         # Andrew - I wanted to expose this function externally and
         # changed the name I didn't have time to see if it would
         # break anything to get rid of the snake case variation
 
-        return self.get_user_info(user_email)
+        return self.get_user_info(user_email, create_if_missing)
 
     def ValidateUser(self):
         response = self.Validate()
@@ -447,7 +498,8 @@ class Users:
 
             raise Exception(f"Parse error x32489\n{format_exc()}")
 
-    def get_user_info(self, email):
+    # create_if_missing should probably default to False, but don't want to break anything
+    def get_user_info(self, email, create_if_missing=True):
         from Dash.Utils import Memory
 
         email = email.lower().strip()
@@ -468,7 +520,12 @@ class Users:
                 store_path="users",
                 obj_id=email,
             )
+
+            user_data["has_pin"] = os.path.exists(user_data_path.replace("usr.data", "pin_hash"))
         else:
+            if not create_if_missing:
+                return {}
+
             from Dash.LocalStorage import New
 
             user_data = New(
@@ -571,25 +628,56 @@ class Users:
         return None, None
 
 
-def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
-    return "/".join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
+def Login(use_pin=False, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).Login(use_pin)
 
 
-def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):
-    return Users(request_params, dash_context).GetUserDataPath(user_email_to_get)
+def UpdatePassword(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).UpdatePassword()
 
 
-def Get(user_email_to_get, request_params={}, dash_context={}):
-    return Users(request_params, dash_context).GetUserData(user_email_to_get)
+def UpdatePIN(email="", pin="", token_validation=True, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).UpdatePIN(email, pin, token_validation)
 
 
-def GetByToken(user_token, request_params={}, dash_context={}):
+def Validate(user_token=None, request_params={}, dash_context={}):
     return Users(request_params, dash_context).Validate(user_token)
+
+
+def ValidateCredentials(email, password, use_pin=False, return_login_dict=False, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).ValidateCredentials(email, password, use_pin, return_login_dict)
 
 
 def GetAll(request_params={}, dash_context={}):
     return Users(request_params, dash_context).GetAll()
 
 
-def ValidateCredentials(email, password, return_login_dict=False, request_params={}, dash_context={}):
-    return Users(request_params, dash_context).ValidateCredentials(email, password, return_login_dict)
+def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).GetUserDataPath(user_email_to_get)
+
+
+def GetUserData(user_email_to_get, request_params={}, dash_context={}, create_if_missing=True):
+    return Users(request_params, dash_context).GetUserData(user_email_to_get, create_if_missing)
+
+
+def Reset(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).Reset()
+
+
+def ResetResponse(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).ResetResponse()
+
+
+# Wrapper
+def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
+    return "/".join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
+
+
+# Deprecated, use Validate instead (same functionality, different name)
+def GetByToken(user_token=None, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).Validate(user_token)
+
+
+# Deprecated, use GetUserData instead (same functionality, different name)
+def Get(user_email_to_get, request_params={}, dash_context={}, create_if_missing=True):
+    return Users(request_params, dash_context).GetUserData(user_email_to_get, create_if_missing)

@@ -205,8 +205,12 @@ function Dash () {
                     }
                 },
                 "Pop": {
-                    "value": function (index, return_item=true) {
+                    "value": function (index=null, return_item=true) {
                         try {
+                            if (index === null) {
+                                index = this.length - 1;  // Last index
+                            }
+
                             index = parseInt(index);
 
                             if (index > -1) { // -1 means it's not in the array
