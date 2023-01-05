@@ -7,8 +7,14 @@ function DashMath () {
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
 
+    // This cannot return multiple unique numbers on the same frame, they'll all be the same - use this.Random instead
     this.RandomNumber = function (min=10000000, max=99999999) {
         return parseInt((min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min)).toString());
+    };
+
+    // Contrary to this.RandomNumber, this will return multiple unique numbers in the same frame
+    this.Random = function () {
+        return parseInt(Math.random().toString().split(".").Last());
     };
 
     // Get a random ID in the same format as PyDash Utils GetRandomID
