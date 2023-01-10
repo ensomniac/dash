@@ -375,6 +375,7 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
+            "border-radius": ""
         });
     };
 

@@ -378,11 +378,13 @@ class ApiCore:
             params = {k: v for (k, v) in self.Params.items()}
 
             for key in params:
-                if type(params.get(key)) is bytes:
+                if (
+                    type(params.get(key)) is bytes
+                    or ("bytes" in key and type(params.get(key)) is str)
+                    or str(params.get(key)).startswith("b'")
+                    or (key == "token" and params.get(key))
+                ):
                     params[key] = "truncated..."
-
-            if params.get("token"):
-                params["token"] = "truncated..."
 
             # Keep this private
             if "pass" in params:
