@@ -429,6 +429,13 @@ class ApiCore:
         if sender_name == "Ensomniac":
             sender_name = "Dash"
 
+        # To assist in tracking down errors with unknown origin
+        if error:
+            try:
+                error += f"<br><br>Env:<br>{json.dumps(dict(os.environ), indent=4, sort_keys=True)}"
+            except:
+                pass
+
         try:
             SendEmail(
                 subject=subject,
