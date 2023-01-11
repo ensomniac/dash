@@ -4,6 +4,7 @@ function DashGui() {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;

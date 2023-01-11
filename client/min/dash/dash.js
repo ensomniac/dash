@@ -17824,6 +17824,7 @@ function DashGui() {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
@@ -27192,6 +27193,281 @@ function DashGuiComboStyleDefault () {
             "background": "orange"
         });
     };
+}
+
+function DashGuiContext2D (obj_id, api, color=null) {
+    /**
+     * Context2D editor element.
+     * -------------------------
+     *
+     * IMPORTANT NOTE: <br>
+     *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
+     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *
+     *         - "get_data":     Get data dict for given object ID
+     *         - "set_property": Set property with a key/value for given object ID
+     *
+     * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
+     * @param {string} api - API name for requests
+     * @param {DashColorSet} color - DashColorSet instance
+     */
+    this.obj_id = obj_id;
+    this.api = api;
+    this.color = color || Dash.Color.Light;
+    this.data = {};
+    this.canvas = null;
+    this.log_bar = null;
+    this.toolbar = null;
+    this.editor_panel = null;
+    this.html = $("<div></div>");
+    this.left_pane_slider = null;
+    this.right_pane_slider = null;
+    this.middle_pane_slider = null;
+    this.left_html = $("<div></div>");
+    this.middle_html = $("<div></div>");
+    this.can_edit = Dash.User.Init["roles"].includes("context_2d_editor") || Dash.User.Init["roles"].includes("master_editor");
+    this.setup_styles = function () {
+        Dash.SetInterval(this, this.refresh_data, 5000);
+        this.canvas = new DashGuiContext2DCanvas(this);
+        this.log_bar = new DashGuiContext2DLogBar(this);
+        this.toolbar = new DashGuiContext2DToolbar(this);
+        this.editor_panel = new DashGuiContext2DEditorPanel(this);
+        this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
+        this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
+        this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0
+        };
+        this.right_pane_slider.SetPaneContentA(this.left_html);
+        this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
+        this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
+        this.html.css(abs_css);
+        this.html.append(this.right_pane_slider.html);
+        this.left_pane_slider.SetPaneContentA(this.toolbar.html);
+        this.left_pane_slider.SetPaneContentB(this.middle_html);
+        this.left_pane_slider.SetMinSize(this.toolbar.min_width);
+        this.left_html.css(abs_css);
+        this.left_html.append(this.left_pane_slider.html);
+        this.middle_pane_slider.SetPaneContentA(this.canvas.html);
+        this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
+        this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
+        this.middle_html.css(abs_css);
+        this.middle_html.append(this.middle_pane_slider.html);
+    };
+    this.refresh_data = function () {
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.data = response || {};
+                    console.log("Context2D data:", self.data);
+                    self.update_property_box();
+                },
+                self.api,
+                {
+                    "f": "get_data",
+                    "obj_id": self.obj_id
+                }
+            );
+        })(this);
+    };
+    this.get_data = function () {
+        return this.data;
+    };
+    this.set_data = function (key, value) {
+        if (this.get_data(key) === value) {
+            return;
+        }
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    console.log("Context2D property '" + key + "' set to:", value);
+                },
+                self.api,
+                {
+                    "f": "set_property",
+                    "obj_id": self.obj_id,
+                    "key": key,
+                    "value": value
+                }
+            );
+        })(this);
+    };
+    this.update_property_box = function () {
+        if (!this.editor_panel || !this.editor_panel.property_box) {
+            return;
+        }
+        this.editor_panel.property_box.Update();
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DCanvas (editor) {
+    this.editor = editor;
+    this.html = $("<div>Canvas</div>");
+    // TODO: flexible, unscaled canvas in the middle of the interface for all elements to be drawn on,
+    //  with bounding box that represents working area based on selected aspect ratio, and canvas shouldn't
+    //  flex smaller than the bounding box (or bounding box and contained elements should shrink when
+    //  the canvas gets too small) - default behavior when an element is clicked should probably be to
+    //  auto-select the layer and be able to manipulate it without having to select the desired layer first
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "orange",
+            "position": "absolute",
+            "inset": 0
+        });
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DLogBar (editor) {
+    this.editor = editor;
+    this.html = $("<div>Log Bar</div>");
+    this.min_height = Dash.Size.RowHeight;
+    // TODO: log bar located at the bottom (under canvas, but _between_ left and right
+    //  panels, not under them) to display log-type messages to the user after each action
+    //  ("new layer created", "element rotated", etc) - this won't be super useful at
+    //  first, but lays the groundwork for a history/undo system that can come later
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "blue",
+            "position": "absolute",
+            "inset": 0
+        });
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DToolbar (editor) {
+    this.editor = editor;
+    this.html = $("<div>Toolbar</div>");
+    this.min_width = Dash.Size.ColumnWidth * 0.3;
+    // TODO:
+    //  - vertical toolbar, in the middle area (on left side of canvas, in between the list of contexts and canvas)
+    //  - add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "green",
+            "position": "absolute",
+            "inset": 0
+        });
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitive (panel) {
+    this.panel = panel;
+    this.html = $("<div></div>");
+    // TODO: primitives have a pre-defined set of data, such as `x`, `y`, `width`, etc
+    this.setup_styles = function () {
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitiveText (panel) {
+    DashGuiContext2DPrimitive.call(this, panel);
+    this.setup_styles = function () {
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitiveImage (panel) {
+    DashGuiContext2DPrimitive.call(this, panel);
+    this.setup_styles = function () {
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanel (editor) {
+    this.editor = editor;
+    this.layers_box = null;
+    this.content_box = null;
+    this.property_box = null;
+    this.html = $("<div></div>");
+    this.first_pane_slider = null;
+    this.second_pane_slider = null;
+    this.top_html = $("<div></div>");
+    this.min_width = Dash.Size.ColumnWidth * 2;
+    this.property_box_height = Dash.Size.ButtonHeight * 5;  // TODO
+    this.setup_styles = function () {
+        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
+        this.content_box = new DashGuiContext2DEditorPanelContent(this);
+        this.property_box = new Dash.Gui.PropertyBox(this.editor, this.editor.get_data, this.editor.set_data);
+        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
+        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0
+        };
+        this.second_pane_slider.SetPaneContentA(this.top_html);
+        this.second_pane_slider.SetPaneContentB(this.layers_box.html);
+        this.second_pane_slider.SetMinSize(this.get_top_html_size());
+        this.html.css(abs_css);
+        this.html.append(this.second_pane_slider.html);
+        this.first_pane_slider.SetPaneContentA(this.property_box.html);
+        this.first_pane_slider.SetPaneContentB(this.content_box.html);
+        this.first_pane_slider.SetMinSize(this.property_box_height);
+        this.top_html.css(abs_css);
+        this.top_html.append(this.first_pane_slider.html);
+        this.setup_property_box();
+    };
+    this.get_top_html_size = function () {
+        return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
+    };
+    this.setup_property_box = function () {
+        this.property_box.Flatten();
+        this.property_box.html.css({
+            "background": "pink",
+            "position": "absolute",
+            "inset": 0,
+            "margin-bottom": 0
+        });
+        this.property_box.AddHeader(
+            this.editor.get_data()["display_name"] || "Properties",
+            "display_name"
+        ).ReplaceBorderWithIcon("pencil_ruler");
+        this.property_box.AddInput("id", "ID", "", null, false);
+        this.property_box.AddInput("display_name", "Display Name", "", null, true);
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelLayers (panel) {
+    this.panel = panel;
+    this.html = $("<div>Layers</div>");
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "purple",
+            "position": "absolute",
+            "inset": 0
+        });
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelContent (panel) {
+    this.panel = panel;
+    this.html = $("<div>Content</div>");
+    this.min_height = Dash.Size.ButtonHeight * 10;  // TODO
+    this.setup_styles = function () {
+        this.html.css({
+            "background": "brown",
+            "position": "absolute",
+            "inset": 0
+        });
+    };
+    this.setup_styles();
 }
 
 function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
