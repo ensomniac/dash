@@ -9,6 +9,8 @@ function DashGuiContext2D (obj_id, api, color=null) {
      *
      *         - "get_data":     Get data dict for given object ID
      *         - "set_property": Set property with a key/value for given object ID
+     *         - "duplicate":    Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *                           should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -24,6 +26,7 @@ function DashGuiContext2D (obj_id, api, color=null) {
     this.log_bar = null;
     this.toolbar = null;
     this.editor_panel = null;
+    this.on_duplicate_cb = null;
     this.html = $("<div></div>");
     this.left_pane_slider = null;
     this.right_pane_slider = null;
@@ -70,6 +73,10 @@ function DashGuiContext2D (obj_id, api, color=null) {
         this.middle_html.append(this.middle_pane_slider.html);
     };
 
+    this.SetOnDuplicateCallback = function (callback, binder=null) {
+        this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+
     this.refresh_data = function () {
         (function (self) {
             Dash.Request(
@@ -83,7 +90,9 @@ function DashGuiContext2D (obj_id, api, color=null) {
 
                     console.log("Context2D data:", self.data);
 
-                    self.update_property_box();
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdatePropertyBox();
+                    }
                 },
                 self.api,
                 {
@@ -122,14 +131,6 @@ function DashGuiContext2D (obj_id, api, color=null) {
                 }
             );
         })(this);
-    };
-
-    this.update_property_box = function () {
-        if (!this.editor_panel || !this.editor_panel.property_box) {
-            return;
-        }
-
-        this.editor_panel.property_box.Update();
     };
 
     this.setup_styles();

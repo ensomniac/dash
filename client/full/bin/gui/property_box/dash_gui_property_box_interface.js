@@ -5,6 +5,39 @@ function DashGuiPropertyBoxInterface () {
         this.update_inputs();
         this.update_combos();
         this.update_headers();
+        this.update_tool_rows();
+    };
+
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+    };
+
+    this.SetIndentPx = function (px) {
+        this.indent_px = px;
     };
     
     this.SetTopRightLabel = function (label_text) {
@@ -145,6 +178,9 @@ function DashGuiPropertyBoxInterface () {
         }
 
         this.AddHTML(tool_row.html);
+        this.indent_row(tool_row);
+
+        this.tool_rows.push(tool_row);
 
         return tool_row;
     };
@@ -156,8 +192,8 @@ function DashGuiPropertyBoxInterface () {
             this.buttons = [];
         }
 
-        (function (self, callback) {
-            var button = new Dash.Gui.Button(
+        var button = (function (self) {
+            return new Dash.Gui.Button(
                 label_text,
                 function () {
                     callback(button);
@@ -166,17 +202,21 @@ function DashGuiPropertyBoxInterface () {
                 self.color,
                 options
             );
+        })(this);
 
-            self.buttons.push(button);
+        this.buttons.push(button);
 
-            button.html.css({
-                "margin-top": Dash.Size.Padding
-            });
+        var css = {"margin-top": Dash.Size.Padding};
 
-            self.html.append(button.html);
-        })(this, callback);
+        if (Dash.Validate.Object(options) && options["style"] === "toolbar") {
+            css["margin-right"] = 0;
+        }
 
-        return this.buttons.Last();
+        button.html.css(css);
+
+        this.html.append(button.html);
+
+        return button;
     };
 
     this.AddDeleteButton = function (callback, faint=true) {

@@ -10,11 +10,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.combos= {};
     this.inputs = {};
     this.headers = [];
+    this.tool_rows = [];
     this.num_headers = 0;
+    this.disabled = false;
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
+    this.indent_px = Dash.Size.Padding * 2;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -99,6 +102,26 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
     };
 
+    this.update_tool_rows = function () {
+        for (var tool_row of this.tool_rows) {
+            for (var element of tool_row.elements) {
+                if (element.hasOwnProperty("Update")) {
+                    element.Update();
+                }
+
+                else if (element instanceof DashGuiInput) {
+                    if (element.InFocus()) {
+                        console.log("(Currently being edited) Skipping update for " + element.data_key);
+
+                        continue;
+                    }
+
+                    element.SetText(this.get_update_value(element.data_key));
+                }
+            }
+        }
+    };
+
     this.get_update_value = function (data_key) {
         if (this.property_set_data) {
             return this.property_set_data[data_key];
@@ -112,14 +135,8 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
-        var indent_px = Dash.Size.Padding * 2;
-
-        if (this.indent_properties || this.indent_properties > 0) {
-            indent_px += this.indent_properties;
-        }
-
         row.html.css({
-            "margin-left": indent_px
+            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
         });
     };
 

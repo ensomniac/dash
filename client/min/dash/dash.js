@@ -23139,7 +23139,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return label;
     };
     // TODO: These params are a mess, fix it (globally)
-    this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
+    this.AddLabel = function (text, right_margin=null, icon_name="", left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
         if (right_margin !== null) {
             label.html.css({
@@ -23149,6 +23149,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         label.html.css({
             "line-height": this.height,
             "margin-top": 0,
+            "margin-bottom": 0,
             "margin-left": left_label_margin !== null ? left_label_margin : Dash.Size.Padding * 0.1
         });
         label.label.css({
@@ -23200,7 +23201,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
-        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text="", double_click_clear=true
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -23212,7 +23214,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
-        var input = this.toolbar.AddTransparentInput(
+        var input;
+        var html_css = {
+            "margin-right": 0,
+            "height": this.height * (transparent ? 0.65 : 0.75),
+            "margin-top": Dash.Size.Padding * (transparent ? 0.25 : 0.15)
+        };
+        input = this.toolbar.AddTransparentInput(
             placeholder_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
@@ -23227,15 +23235,18 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         if (include_label) {
             input.label = label;
         }
-        input.html.css({
-            "margin-right": 0,
-            "height": this.height * 0.65,
-            "margin-top": Dash.Size.Padding * 0.25,
-            "border-bottom": ""
-        });
+        // Hack so that property boxes can update these
+        input.data_key = data_key;
+        if (transparent) {
+            html_css["border-bottom"] = "";
+        }
+        else {
+            html_css["border"] = "1px solid " + this.color.PinstripeDark;
+        }
+        input.html.css(html_css);
         input.input.css({
             "top": 0,
-            "height": this.height * 0.8
+            "height": this.height * (transparent ? 0.8 : 0.85)
         });
         if (flex) {
             input.html.css({
@@ -27206,6 +27217,8 @@ function DashGuiContext2D (obj_id, api, color=null) {
      *
      *         - "get_data":     Get data dict for given object ID
      *         - "set_property": Set property with a key/value for given object ID
+     *         - "duplicate":    Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *                           should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -27219,6 +27232,7 @@ function DashGuiContext2D (obj_id, api, color=null) {
     this.log_bar = null;
     this.toolbar = null;
     this.editor_panel = null;
+    this.on_duplicate_cb = null;
     this.html = $("<div></div>");
     this.left_pane_slider = null;
     this.right_pane_slider = null;
@@ -27255,6 +27269,9 @@ function DashGuiContext2D (obj_id, api, color=null) {
         this.middle_html.css(abs_css);
         this.middle_html.append(this.middle_pane_slider.html);
     };
+    this.SetOnDuplicateCallback = function (callback, binder=null) {
+        this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
     this.refresh_data = function () {
         (function (self) {
             Dash.Request(
@@ -27265,7 +27282,9 @@ function DashGuiContext2D (obj_id, api, color=null) {
                     }
                     self.data = response || {};
                     console.log("Context2D data:", self.data);
-                    self.update_property_box();
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdatePropertyBox();
+                    }
                 },
                 self.api,
                 {
@@ -27300,12 +27319,6 @@ function DashGuiContext2D (obj_id, api, color=null) {
                 }
             );
         })(this);
-    };
-    this.update_property_box = function () {
-        if (!this.editor_panel || !this.editor_panel.property_box) {
-            return;
-        }
-        this.editor_panel.property_box.Update();
     };
     this.setup_styles();
 }
@@ -27390,19 +27403,32 @@ function DashGuiContext2DPrimitiveImage (panel) {
 
 function DashGuiContext2DEditorPanel (editor) {
     this.editor = editor;
+    this.button_bars = [];
     this.layers_box = null;
     this.content_box = null;
     this.property_box = null;
+    this.api = this.editor.api;
+    this.aspect_tool_row = null;
     this.html = $("<div></div>");
     this.first_pane_slider = null;
     this.second_pane_slider = null;
     this.top_html = $("<div></div>");
+    this.obj_id = this.editor.obj_id;
+    this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2;
-    this.property_box_height = Dash.Size.ButtonHeight * 5;  // TODO
+    // Update if things are added to the box
+    this.property_box_height = (
+         Dash.Size.ButtonHeight   +  // Header
+        (Dash.Size.RowHeight * 5) +  // Rows (including empty/blank rows) and toolbar-style-buttons
+        (Dash.Size.Padding   * 2)    // Top and bottom padding
+    );
+    // Wrappers
+    this.get_data = this.editor.get_data.bind(this.editor);
+    this.set_data = this.editor.set_data.bind(this.editor);
     this.setup_styles = function () {
         this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
         this.content_box = new DashGuiContext2DEditorPanelContent(this);
-        this.property_box = new Dash.Gui.PropertyBox(this.editor, this.editor.get_data, this.editor.set_data);
+        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
         this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
         this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
         var abs_css = {
@@ -27421,24 +27447,100 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
     };
+    this.UpdatePropertyBox = function () {
+        if (!this.property_box) {
+            return;
+        }
+        if (this.can_edit) {
+            this.property_box.Enable();
+        }
+        this.property_box.Update();
+    };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
     };
     this.setup_property_box = function () {
         this.property_box.Flatten();
+        this.property_box.Disable();
+        this.property_box.SetIndentPx(Dash.Size.Padding);
         this.property_box.html.css({
-            "background": "pink",
             "position": "absolute",
             "inset": 0,
             "margin-bottom": 0
         });
         this.property_box.AddHeader(
-            this.editor.get_data()["display_name"] || "Properties",
+            this.get_data()["display_name"] || "Properties",
             "display_name"
         ).ReplaceBorderWithIcon("pencil_ruler");
-        this.property_box.AddInput("id", "ID", "", null, false);
-        this.property_box.AddInput("display_name", "Display Name", "", null, true);
-        // TODO
+        this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
+        this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
+        this.add_aspect_tool_row();
+        var button_bar = this.property_box.AddButtonBar("toolbar");
+        button_bar.html.css({
+            "margin-top": Dash.Size.Padding * 2,
+            "margin-left": Dash.Size.Padding
+        });
+        button_bar.AddButton("Duplicate Context", this.duplicate_context);
+        this.button_bars.push(button_bar);
+    };
+    this.duplicate_context = function () {
+        if (!window.confirm("Duplicate this context?\n\n(Duplicates are not tethered to the original)")) {
+            return;
+        }
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    if (self.editor.on_duplicate_cb) {
+                        self.editor.on_duplicate_cb(response);
+                    }
+                },
+                self.api,
+                {
+                    "f": "duplicate",
+                    "obj_id": self.obj_id
+                }
+            );
+        })(this);
+    };
+    this.add_aspect_tool_row = function () {
+        this.aspect_tool_row = this.property_box.AddToolRow();
+        this.get_aspect_tool_row_input("w");
+        var label = this.aspect_tool_row.AddLabel("x", Dash.Size.Padding * 0.7, null, null, false);
+        label.label.css({
+            "padding-left": 0
+        });
+        this.get_aspect_tool_row_input("h");
+    };
+    this.get_aspect_tool_row_input = function (key) {
+        var input = (function (self) {
+            return self.aspect_tool_row.AddInput(
+                key.Title(),
+                "aspect_ratio_" + key,
+                Dash.Size.ColumnWidth * 0.25,
+                false,
+                function (value, input, additional_data) {
+                    if (isNaN(value)) {
+                        alert("Aspect ratio values must be numbers");
+                        return;
+                    }
+                    self.set_data(additional_data["data_key"], value);
+                },
+                null,
+                true,
+                key === "w",
+                key === "w" ? "Aspect Ratio:" : "",
+                true,
+                false
+            );
+        })(this);
+        input.input.css({
+            "text-align": "center"
+        });
+        return input;
     };
     this.setup_styles();
 }
@@ -30038,11 +30140,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.combos= {};
     this.inputs = {};
     this.headers = [];
+    this.tool_rows = [];
     this.num_headers = 0;
+    this.disabled = false;
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
+    this.indent_px = Dash.Size.Padding * 2;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -30107,6 +30212,22 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             this.headers[i]["obj"].SetText(this.get_update_value(this.headers[i]["update_key"]));
         }
     };
+    this.update_tool_rows = function () {
+        for (var tool_row of this.tool_rows) {
+            for (var element of tool_row.elements) {
+                if (element.hasOwnProperty("Update")) {
+                    element.Update();
+                }
+                else if (element instanceof DashGuiInput) {
+                    if (element.InFocus()) {
+                        console.log("(Currently being edited) Skipping update for " + element.data_key);
+                        continue;
+                    }
+                    element.SetText(this.get_update_value(element.data_key));
+                }
+            }
+        }
+    };
     this.get_update_value = function (data_key) {
         if (this.property_set_data) {
             return this.property_set_data[data_key];
@@ -30117,12 +30238,8 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         if (this.num_headers <= 0) {
             return;
         }
-        var indent_px = Dash.Size.Padding * 2;
-        if (this.indent_properties || this.indent_properties > 0) {
-            indent_px += this.indent_properties;
-        }
         row.html.css({
-            "margin-left": indent_px
+            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
         });
     };
     this.on_server_property_set = function (property_set_data) {
@@ -30310,6 +30427,32 @@ function DashGuiPropertyBoxInterface () {
         this.update_inputs();
         this.update_combos();
         this.update_headers();
+        this.update_tool_rows();
+    };
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+    };
+    this.SetIndentPx = function (px) {
+        this.indent_px = px;
     };
     
     this.SetTopRightLabel = function (label_text) {
@@ -30414,6 +30557,8 @@ function DashGuiPropertyBoxInterface () {
             tool_row.SetGetFormattedDataCallback(this.get_formatted_data_cb);
         }
         this.AddHTML(tool_row.html);
+        this.indent_row(tool_row);
+        this.tool_rows.push(tool_row);
         return tool_row;
     };
     this.AddButton = function (label_text, callback, options={}) {
@@ -30421,8 +30566,8 @@ function DashGuiPropertyBoxInterface () {
         if (!this.buttons) {
             this.buttons = [];
         }
-        (function (self, callback) {
-            var button = new Dash.Gui.Button(
+        var button = (function (self) {
+            return new Dash.Gui.Button(
                 label_text,
                 function () {
                     callback(button);
@@ -30431,13 +30576,15 @@ function DashGuiPropertyBoxInterface () {
                 self.color,
                 options
             );
-            self.buttons.push(button);
-            button.html.css({
-                "margin-top": Dash.Size.Padding
-            });
-            self.html.append(button.html);
-        })(this, callback);
-        return this.buttons.Last();
+        })(this);
+        this.buttons.push(button);
+        var css = {"margin-top": Dash.Size.Padding};
+        if (Dash.Validate.Object(options) && options["style"] === "toolbar") {
+            css["margin-right"] = 0;
+        }
+        button.html.css(css);
+        this.html.append(button.html);
+        return button;
     };
     this.AddDeleteButton = function (callback, faint=true) {
         var button = this.AddButton("Delete", callback);

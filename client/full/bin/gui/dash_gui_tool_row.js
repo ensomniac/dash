@@ -74,7 +74,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     // TODO: These params are a mess, fix it (globally)
-    this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
+    this.AddLabel = function (text, right_margin=null, icon_name="", left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
 
         if (right_margin !== null) {
@@ -86,6 +86,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         label.html.css({
             "line-height": this.height,
             "margin-top": 0,
+            "margin-bottom": 0,
             "margin-left": left_label_margin !== null ? left_label_margin : Dash.Size.Padding * 0.1
         });
 
@@ -149,7 +150,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
-        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text="", double_click_clear=true
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -165,7 +167,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
         }
 
-        var input = this.toolbar.AddTransparentInput(
+        var input;
+
+        var html_css = {
+            "margin-right": 0,
+            "height": this.height * (transparent ? 0.65 : 0.75),
+            "margin-top": Dash.Size.Padding * (transparent ? 0.25 : 0.15)
+        };
+
+        input = this.toolbar.AddTransparentInput(
             placeholder_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
@@ -182,16 +192,22 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             input.label = label;
         }
 
-        input.html.css({
-            "margin-right": 0,
-            "height": this.height * 0.65,
-            "margin-top": Dash.Size.Padding * 0.25,
-            "border-bottom": ""
-        });
+        // Hack so that property boxes can update these
+        input.data_key = data_key;
+
+        if (transparent) {
+            html_css["border-bottom"] = "";
+        }
+
+        else {
+            html_css["border"] = "1px solid " + this.color.PinstripeDark;
+        }
+
+        input.html.css(html_css);
 
         input.input.css({
             "top": 0,
-            "height": this.height * 0.8
+            "height": this.height * (transparent ? 0.8 : 0.85)
         });
 
         if (flex) {
