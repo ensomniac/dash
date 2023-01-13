@@ -4,10 +4,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.options = options;  // TODO: convert to proper interface
     this.view_mode = view_mode;
 
+    this.modal = null;
     this.callbacks = {};
-    this.modal_box = null;
     this.property_box = null;
-    this.modal_background = null;
+    this.modal_profile = null;
+    this.top_right_button = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -61,10 +62,13 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     };
 
     this.add_top_right_button = function () {
-        var button = Dash.Gui.GetTopRightIconButton(
+        if (this.modal_of) {
+            return;
+        }
+
+        this.top_right_button = Dash.Gui.GetTopRightIconButton(
             this,
-            this.modal_of ? this.close_modal :
-                this.view_mode === "settings" ? this.log_out :
+            this.view_mode === "settings" ? this.log_out :
                 this.view_mode === "preview" ? this.show_modal :
                 function () {},
             this.modal_of ? "close" :
@@ -73,106 +77,65 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "alert_triangle"
         );
 
-        if (this.modal_of) {
-            this.add_esc_shortcut();
-        }
-
-        button.html.css({
+        this.top_right_button.html.css({
             "margin-top": Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * 0.8
         });
 
-        button.SetIconSize(180);
+        this.top_right_button.SetIconSize(180);
 
-        button.SetHoverHint(
-            this.modal_of ? "Close" :
-                this.view_mode === "settings" ? "Log Out" :
+        this.top_right_button.SetHoverHint(
+            this.view_mode === "settings" ? "Log Out" :
                 this.view_mode === "preview" ? "Expand" :
                 ""
         );
 
-        this.html.append(button.html);
-    };
-
-    this.add_esc_shortcut = function () {
-        var identifier = "dash_layout_user_profile_close_modal";
-
-        (function (self) {
-            $(document).on("keydown." + identifier, function (e) {
-                if (self.html && !self.html.is(":visible")) {
-                    $(document).off("keydown." + identifier);
-
-                    return;
-                }
-
-                if (e.key === "Escape") {
-                    console.log("(Escape key pressed) Close user modal");
-
-                    self.close_modal();
-                }
-            });
-        })(this);
+        this.html.append(this.top_right_button.html);
     };
 
     this.show_modal = function () {
-        if (!this.modal_background) {
-            this.modal_background = Dash.Gui.GetModalBackground(this.color, this.html.parent());
+        if (this.modal) {
+            this.modal.Show();
 
-            this.html.parent().append(this.modal_background);
+            return;
         }
 
-        if (!this.modal_box) {
-            this.modal_box = new Dash.Layout.UserProfile(
-                this.user_data,
-                {
-                    ...this.options,
-                    "modal_of": this
-                },
-                "settings"
-            );
+        this.modal = new Dash.Gui.Modal(
+            this.color,
+            this.html.parent(),
+            Dash.Size.ColumnWidth * 3.25,
+            this.img_box_size + Dash.Size.Padding  // This isn't technically correct, but it's working - moving on
+        );
 
-            var left_margin = 0;
-
-            try {
-                var lm = this.html.parent().offsetLeft || this.html.parent().offset().left;
-
-                if (lm && lm > 0) {
-                    left_margin = lm / 2;
-                }
-            }
-
-            catch {
-                // Do nothing
-            }
-
-            this.modal_box.html.css({
-                "z-index": this.modal_background.css("z-index") + 1,
-                "position": "fixed",
-                "margin-left": left_margin,
-                "top": "50%",
-                "left": "50%",
-                "transform": "translate(-50%, -50%)"
-            });
-
-            this.html.parent().append(this.modal_box.html);
+        if (this.modal_profile) {
+            return;
         }
 
-        this.modal_background.show();
-        this.modal_box.html.show();
+        this.add_modal_profile();
     };
 
-    this.close_modal = function () {
-        if (this.modal_of && this.modal_of.modal_box) {
-            this.modal_of.modal_box.html.hide();
-        }
+    this.add_modal_profile = function () {
+        this.modal_profile = new Dash.Layout.UserProfile(
+            this.user_data,
+            {
+                ...this.options,
+                "modal_of": this
+            },
+            "settings"
+        );
 
-        else {
-            this.html.hide();
-        }
+        this.modal_profile.html.css({
+            "padding": 0,
+            "background": "",
+            "box-shadow": ""
+        });
 
-        if (this.modal_of && this.modal_of.modal_background) {
-            this.modal_of.modal_background.hide();
-        }
+        this.modal_profile.img_box.css({
+            "left": 0,
+            "top": Dash.Size.Padding + Dash.Size.RowHeight
+        });
+
+        this.modal.AddHTML(this.modal_profile.html);
     };
 
     this.add_header = function () {

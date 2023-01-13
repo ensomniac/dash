@@ -4,6 +4,7 @@ function DashGui() {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
@@ -16,6 +17,7 @@ function DashGui() {
     this.LoadingLabel              = DashGuiLoadingLabel;
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
+    this.Modal                     = DashGuiModal;
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
@@ -77,46 +79,6 @@ function DashGui() {
         return html;
     };
 
-    this.GetModalBackground = function (color=null, parent=null, opacity=0.6) {
-        if (!color) {
-            color = Dash.Color.Light;
-        }
-
-        var height = "100%";
-
-        if (parent) {
-            try {
-                var h = parent.scrollHeight || parent.prop("scrollHeight");
-
-                if (h) {
-                    height = h;
-                }
-            }
-
-            catch {
-                // Do nothing
-            }
-        }
-
-        var background = this.GetHTMLAbsContext(
-            "",
-            color,
-            {
-                "z-index": 100000,  // Set Modal element to this +1
-                "background": color.BackgroundRaised,
-                "opacity": opacity,
-                "height": height
-            }
-        );
-
-        // Block any elements from being clicked until app is done loading/processing/etc
-        background.on("click", function (event) {
-            event.stopPropagation();
-        });
-
-        return background;
-    };
-
     this.HasOverflow = function (html) {
         try {
             return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
@@ -146,9 +108,8 @@ function DashGui() {
         return bottom_divider;
     };
 
+    // A full width box that is meant to display information
     this.GetTipBox = function (code, msg, optional_style_css) {
-        // A full width box that is meant to display information
-
         var tip = Dash.Gui.GetHTMLBoxContext(optional_style_css);
         var code_html = Dash.Gui.GetHTMLContext(code);
         var msg_html = Dash.Gui.GetHTMLContext(msg);
@@ -163,9 +124,8 @@ function DashGui() {
         return tip;
     };
 
+    // A full width box that is meant to display an error
     this.GetErrorBox = function (code, msg) {
-        // A full width box that is meant to display an error
-
         var css = {};
         css["background"] = "orange";
 
@@ -416,6 +376,7 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
+            "border-radius": ""
         });
     };
 

@@ -16,17 +16,48 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     // set. You also shouldn't need to append this to any html manually, but in the case that is needed,
     // use this.AppendTo(), instead of the standard method of appending 'this.html' to the desired element.
 
-    this.bubble = null;
+    this.modal = null;
     this.removed = false;
-    this.background = null;
     this.is_showing = false;
     this.bubble_dots = null;
     this.bubble_label = null;
 
-    this.setup_styles = function () {
-        this.background = Dash.Gui.GetModalBackground(this.color, this.html_to_append_to);
+    // Deprecated, just wrappers now - but keeping around to avoid breaking things
+    this.bubble = null;
+    this.background = null;
 
-        this.setup_bubble();
+    this.setup_styles = function () {
+        this.modal = new Dash.Gui.Modal(
+            this.color,
+            null,  // This part is handled in this.AppendTo
+            Dash.Size.ColumnWidth,  // Placeholder value for init
+            Dash.Size.RowHeight,
+            true,
+            0.6,
+            false
+        );
+
+        // Deprecated, just wrappers now - but keeping around to avoid breaking things
+        this.bubble = this.modal.modal;
+        this.background = this.modal.background;
+
+        this.modal.modal.css({
+            "position": "absolute",
+            "inset": 0,
+            "top": "50%",
+            "left": "50%",
+            "display": "flex",
+            "margin": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "width": "fit-content",
+            "transform": "translate(-50%, -50%)"
+        });
+
+        this.setup_label();
+
+        if (!this.simple) {
+            this.setup_dots();
+        }
 
         if (this.html_to_append_to) {
             this.AppendTo(this.html_to_append_to);
@@ -38,8 +69,8 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
 
-        this.background.css(css);
-        this.bubble.css(css);
+        this.modal.background.css(css);
+        this.modal.modal.css(css);
     };
 
     // See note at the top
@@ -50,8 +81,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
 
-        html.append(this.background);
-        html.append(this.bubble);
+        this.modal.SetParentHTML(html);
 
         this.is_showing = true;
         this.html_to_append_to = html;
@@ -63,16 +93,14 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         }
 
         if (this.simple) {
-            this.background.show();
-
-            this.bubble.show();
+            this.modal.Show();
 
             this.is_showing = true;
 
             return;
         }
 
-        if (this.background.is(":visible")) {
+        if (this.modal.background.is(":visible")) {
             return;
         }
 
@@ -87,9 +115,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         }
 
         else {
-            this.background.show();
-
-            this.bubble.show();
+            this.modal.Show();
 
             this.is_showing = true;
         }
@@ -100,9 +126,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
 
-        this.bubble.hide();
-
-        this.background.hide();
+        this.modal.Hide();
 
         this.is_showing = false;
     };
@@ -116,8 +140,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
 
         this.bubble_dots.Stop();
 
-        this.background.remove();
-        this.bubble.remove();
+        this.modal.Remove();
 
         this.progress = 0;
         this.removed = true;
@@ -165,31 +188,6 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         this.bubble_dots.html.hide();
     };
 
-    this.setup_bubble = function () {
-        this.bubble = Dash.Gui.GetHTMLBoxContext();
-
-        this.bubble.css({
-            "position": "absolute",
-            "inset": 0,
-            "z-index": this.background.css("z-index") + 1,
-            "display": "flex",
-            "margin": Dash.Size.Padding,
-            "padding": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "width": "fit-content",
-            "left": "50%",
-            "top": "50%",
-            "transform": "translate(-50%, -50%)",
-            "opacity": 1
-        });
-
-        this.setup_label();
-
-        if (!this.simple) {
-            this.setup_dots();
-        }
-    };
-
     this.setup_dots = function () {
         this.bubble_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight * 0.75);
 
@@ -199,7 +197,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
 
         this.bubble_dots.Start();
 
-        this.bubble.append(this.bubble_dots.html);
+        this.modal.AddHTML(this.bubble_dots.html);
     };
 
     this.setup_label = function () {
@@ -210,7 +208,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             "padding-right": Dash.Size.Padding * 0.5
         });
 
-        this.bubble.append(this.bubble_label.html);
+        this.modal.AddHTML(this.bubble_label.html);
     };
 
     this.get_loading_label_text = function (progress) {

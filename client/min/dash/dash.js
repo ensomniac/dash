@@ -17824,6 +17824,7 @@ function DashGui() {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
@@ -17836,6 +17837,7 @@ function DashGui() {
     this.LoadingLabel              = DashGuiLoadingLabel;
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
+    this.Modal                     = DashGuiModal;
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
@@ -17884,38 +17886,6 @@ function DashGui() {
         });
         return html;
     };
-    this.GetModalBackground = function (color=null, parent=null, opacity=0.6) {
-        if (!color) {
-            color = Dash.Color.Light;
-        }
-        var height = "100%";
-        if (parent) {
-            try {
-                var h = parent.scrollHeight || parent.prop("scrollHeight");
-                if (h) {
-                    height = h;
-                }
-            }
-            catch {
-                // Do nothing
-            }
-        }
-        var background = this.GetHTMLAbsContext(
-            "",
-            color,
-            {
-                "z-index": 100000,  // Set Modal element to this +1
-                "background": color.BackgroundRaised,
-                "opacity": opacity,
-                "height": height
-            }
-        );
-        // Block any elements from being clicked until app is done loading/processing/etc
-        background.on("click", function (event) {
-            event.stopPropagation();
-        });
-        return background;
-    };
     this.HasOverflow = function (html) {
         try {
             return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
@@ -17939,8 +17909,8 @@ function DashGui() {
         });
         return bottom_divider;
     };
+    // A full width box that is meant to display information
     this.GetTipBox = function (code, msg, optional_style_css) {
-        // A full width box that is meant to display information
         var tip = Dash.Gui.GetHTMLBoxContext(optional_style_css);
         var code_html = Dash.Gui.GetHTMLContext(code);
         var msg_html = Dash.Gui.GetHTMLContext(msg);
@@ -17951,8 +17921,8 @@ function DashGui() {
         tip.append(msg_html);
         return tip;
     };
+    // A full width box that is meant to display an error
     this.GetErrorBox = function (code, msg) {
-        // A full width box that is meant to display an error
         var css = {};
         css["background"] = "orange";
         var tip = Dash.Gui.GetHTMLBoxContext(css);
@@ -18148,6 +18118,7 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
+            "border-radius": ""
         });
     };
     this.GetDarkModeToggle = function (color) {
@@ -18507,8 +18478,13 @@ function DashMath () {
     this.Lerp = function (a, b, t) {
         return a + Math.min(Math.max(t, 0), 1) * (b - a);
     };
+    // This cannot return multiple unique numbers on the same frame, they'll all be the same - use this.Random instead
     this.RandomNumber = function (min=10000000, max=99999999) {
         return parseInt((min + (((Date.now() * 9301 + 49297) % 233280) / 233280) * (max - min)).toString());
+    };
+    // Contrary to this.RandomNumber, this will return multiple unique numbers in the same frame
+    this.Random = function () {
+        return parseInt(Math.random().toString().split(".").Last());
     };
     // Get a random ID in the same format as PyDash Utils GetRandomID
     this.RandomID = function () {
@@ -21957,6 +21933,259 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.setup_styles();
 }
 
+function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
+    this.parent_html = parent_html;
+    this.width = width;
+    this.height = height;
+    this.include_bg = include_bg;
+    this.bg_opacity = bg_opacity;
+    this.color = color || Dash.Color.Light;
+    this.include_close_button = include_close_button;
+    // Not using 'this.html' is unconventional, but it's not appropriate in
+    // this context, since the modal consists of two individual elements with
+    // 'this.parent_html' essentially being the equivalent of the usual 'this.html'.
+    // It's also important to note that these elements automatically get appended
+    // to 'this.parent_html' to ensure the elements get appended appropriately.
+    this.modal = null;
+    this.background = null;
+    this.close_button = null;
+    this.on_close_callback = null;
+    this.esc_shortcut_active = false;
+    this.identifier = "dash_gui_modal_esc_" + Dash.Math.Random();
+    this.setup_styles = function () {
+        if (!this.parent_html && !this.width && !this.height) {
+            console.error("If 'parent_html' is not provided, 'width' and 'height' must be");
+            return;
+        }
+        this.add_background();
+        this.add_modal();
+        this.add_close_button();
+        this.add_esc_shortcut();
+    };
+    this.SetOnCloseCallback = function (binder, callback) {
+        if (!this.include_close_button) {
+            return;
+        }
+        this.on_close_callback = callback.bind(binder);
+    };
+    this.SetParentHTML = function (parent_html) {
+        if (this.parent_html) {
+            this.modal.detach();
+            if (this.include_bg) {
+                this.background.detach();
+            }
+        }
+        this.parent_html = parent_html;
+        this.parent_html.append(this.modal);
+        this.parent_html.append(this.background);
+    };
+    this.AddHTML = function (html) {
+        this.modal.append(html);
+    };
+    this.Hide = function () {
+        this.modal.hide();
+        if (this.background) {
+            this.background.hide();
+        }
+    };
+    this.Show = function () {
+        this.modal.show();
+        if (this.background) {
+            this.background.show();
+        }
+        this.add_esc_shortcut();
+    };
+    this.Remove = function () {
+        this.modal.remove();
+        if (this.background) {
+            this.background.remove();
+        }
+    };
+    // If you have multiple modals, or a modal alongside other elements that use
+    // modals or modal backgrounds, such as loading labels and loading overlays,
+    // you'll need to use this function to prioritize each one from top to bottom
+    this.IncreaseZIndex = function (num) {
+        var z_index = this.background.css("z-index") + num;
+        if (this.include_bg) {
+            this.background.css({
+                "z-index": z_index
+            });
+        }
+        this.modal.css({
+            "z-index": z_index + 1
+        });
+        if (this.include_close_button) {
+            this.close_button.html.css({
+                "z-index": z_index + 2
+            });
+        }
+    };
+    this.UpdateSize = function (width=null, height=null) {
+        if (!width && !height) {
+            return;
+        }
+        var update_margin = false;
+        if (width) {
+            this.width = width;
+            update_margin = true;
+        }
+        if (height) {
+            this.height = height;
+        }
+        var css = {
+            "width": this.width,
+            "height": this.height
+        };
+        if (update_margin) {
+            css["margin-left"] = this.parent_html ? this.get_left_margin(this.width) : 0;
+        }
+        this.modal.css(css);
+    };
+    this.add_modal = function () {
+        var parent_width = this.get_parent_width();
+        var parent_height = this.get_parent_height();
+        if (!this.width) {
+            this.width = (parent_width ? parent_width * 0.9 : null);
+        }
+        if (!this.height) {
+            this.height = (parent_height ? parent_height * 0.9 : null);
+        }
+        // This shouldn't happen
+        if (!this.width && !this.height) {
+            console.warn("Failed to get modal width and height");
+            return;
+        }
+        this.modal = Dash.Gui.GetHTMLBoxContext(
+            {
+                "z-index": this.background.css("z-index") + 1,
+                "position": "fixed",
+                "padding-bottom": 0,
+                "margin-left": this.parent_html ? this.get_left_margin(this.width, parent_width) : 0,
+                "margin-top": 0,
+                "left": "50%",
+                "top": "50%",
+                "transform": "translate(-50%, -50%)",
+                "width": this.width,
+                "height": this.height
+            },
+            this.color
+        );
+        if (this.parent_html) {
+            // We can't append this to this.background because the background has transparency
+            this.parent_html.append(this.modal);
+        }
+    };
+    this.get_parent_width = function () {
+        return (this.parent_html ? (this.parent_html.outerWidth() || this.parent_html.innerWidth() || this.parent_html.width()) : null);
+    };
+    this.get_parent_height = function () {
+        return (this.parent_html ? (this.parent_html.outerHeight() || this.parent_html.innerHeight() || this.parent_html.height()) : null);
+    };
+    // Logic to make sure the modal gets centered within the background, which isn't necessarily in the center of the window
+    this.get_left_margin = function (modal_width, parent_width=null) {
+        if (!parent_width) {
+            parent_width = this.get_parent_width();
+            if (!parent_width) {
+                console.error("Failed to get parent width for left margin");
+                return null;
+            }
+        }
+        var left = this.parent_html.offset().left;
+        var right = window.innerWidth - (parent_width + left);
+        var begin_dif = ((window.innerWidth / 2) - (modal_width / 2)) - left;
+        var end_dif = (window.innerWidth - right) - ((window.innerWidth / 2) + (modal_width / 2));
+        var median = (begin_dif + end_dif) / 2;
+        return (begin_dif > end_dif ? - (begin_dif - median) : end_dif - median);
+    };
+    this.add_close_button = function () {
+        if (!this.include_close_button) {
+            return;
+        }
+        this.close_button = (function (self) {
+            return new Dash.Gui.IconButton(
+                "close",
+                function () {
+                    self.Hide();
+                    if (self.on_close_callback) {
+                        self.on_close_callback();
+                    }
+                },
+                self,
+                self.color,
+                {
+                    "container_size": Dash.Size.Padding * 3,
+                    "size_mult": 0.85
+                }
+            );
+        })(this);
+        this.close_button.html.css({
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.5,
+            "right": Dash.Size.Padding * 0.25,
+            "z-index": this.background.css("z-index") + 2
+        });
+        this.close_button.SetHoverHint("Close window (esc)");
+        this.modal.append(this.close_button.html);
+    };
+    this.add_background = function () {
+        if (!this.include_bg) {
+            return;
+        }
+        var height = "100%";
+        if (this.parent_html) {
+            try {
+                var scroll_height = this.parent_html.scrollHeight || this.parent_html.prop("scrollHeight");
+                if (scroll_height) {
+                    height = scroll_height;
+                }
+            }
+            catch {
+                // Ignore
+            }
+        }
+        this.background = Dash.Gui.GetHTMLAbsContext(
+            "",
+            this.color,
+            {
+                "z-index": 100000,
+                "background": this.color.BackgroundRaised,
+                "opacity": this.bg_opacity,
+                "height": height
+            }
+        );
+        // Block any elements behind this from being clicked
+        this.background.on("click", function (event) {
+            event.stopPropagation();
+        });
+        if (this.parent_html) {
+            this.parent_html.append(this.background);
+        }
+    };
+    this.add_esc_shortcut = function () {
+        if (!this.include_close_button || this.esc_shortcut_active) {
+            return;
+        }
+        (function (self) {
+            $(document).on(
+                "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+                function (e) {
+                    if (self.modal && !self.modal.is(":visible")) {
+                        $(document).off("keydown." + self.identifier);
+                        self.esc_shortcut_active = false;
+                        return;
+                    }
+                    if (e.key === "Escape") {
+                        console.log("(Esc key pressed) Close modal");
+                        self.Hide();
+                    }
+                }
+            );
+        })(this);
+        this.esc_shortcut_active = true;
+    };
+    this.setup_styles();
+}
+
 function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
     this.color = color;
     this.label_text = label_text;
@@ -22910,7 +23139,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return label;
     };
     // TODO: These params are a mess, fix it (globally)
-    this.AddLabel = function (text, right_margin=null, icon_name=null, left_label_margin=null, border=true) {
+    this.AddLabel = function (text, right_margin=null, icon_name="", left_label_margin=null, border=true) {
         var label = this.toolbar.AddLabel(text, false, this.color);
         if (right_margin !== null) {
             label.html.css({
@@ -22920,6 +23149,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         label.html.css({
             "line-height": this.height,
             "margin-top": 0,
+            "margin-bottom": 0,
             "margin-left": left_label_margin !== null ? left_label_margin : Dash.Size.Padding * 0.1
         });
         label.label.css({
@@ -22971,7 +23201,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
-        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null, can_edit=true, include_label=false, label_text="", double_click_clear=true
+        placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -22983,7 +23214,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
-        var input = this.toolbar.AddTransparentInput(
+        var input;
+        var html_css = {
+            "margin-right": 0,
+            "height": this.height * (transparent ? 0.65 : 0.75),
+            "margin-top": Dash.Size.Padding * (transparent ? 0.25 : 0.15)
+        };
+        input = this.toolbar.AddTransparentInput(
             placeholder_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
             {
@@ -22998,15 +23235,18 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         if (include_label) {
             input.label = label;
         }
-        input.html.css({
-            "margin-right": 0,
-            "height": this.height * 0.65,
-            "margin-top": Dash.Size.Padding * 0.25,
-            "border-bottom": ""
-        });
+        // Hack so that property boxes can update these
+        input.data_key = data_key;
+        if (transparent) {
+            html_css["border-bottom"] = "";
+        }
+        else {
+            html_css["border"] = "1px solid " + this.color.PinstripeDark;
+        }
+        input.html.css(html_css);
         input.input.css({
             "top": 0,
-            "height": this.height * 0.8
+            "height": this.height * (transparent ? 0.8 : 0.85)
         });
         if (flex) {
             input.html.css({
@@ -26966,6 +27206,501 @@ function DashGuiComboStyleDefault () {
     };
 }
 
+function DashGuiContext2D (obj_id, api, color=null) {
+    /**
+     * Context2D editor element.
+     * -------------------------
+     *
+     * IMPORTANT NOTE: <br>
+     *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
+     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *
+     *         - "get_data":     Get data dict for given object ID
+     *         - "set_property": Set property with a key/value for given object ID
+     *         - "duplicate":    Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *                           should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *
+     * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
+     * @param {string} api - API name for requests
+     * @param {DashColorSet} color - DashColorSet instance
+     */
+    this.obj_id = obj_id;
+    this.api = api;
+    this.color = color || Dash.Color.Light;
+    this.data = {};
+    this.canvas = null;
+    this.log_bar = null;
+    this.toolbar = null;
+    this.editor_panel = null;
+    this.on_duplicate_cb = null;
+    this.html = $("<div></div>");
+    this.left_pane_slider = null;
+    this.right_pane_slider = null;
+    this.middle_pane_slider = null;
+    this.left_html = $("<div></div>");
+    this.middle_html = $("<div></div>");
+    this.can_edit = Dash.User.Init["roles"].includes("context_2d_editor") || Dash.User.Init["roles"].includes("master_editor");
+    this.setup_styles = function () {
+        Dash.SetInterval(this, this.refresh_data, 5000);
+        this.canvas = new DashGuiContext2DCanvas(this);
+        this.log_bar = new DashGuiContext2DLogBar(this);
+        this.toolbar = new DashGuiContext2DToolbar(this);
+        this.editor_panel = new DashGuiContext2DEditorPanel(this);
+        this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
+        this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
+        this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0
+        };
+        this.right_pane_slider.SetPaneContentA(this.left_html);
+        this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
+        this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
+        this.html.css({
+            "box-sizing": "border-box",
+            "background": this.color.Pinstripe,
+            "border": "2px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+        this.html.append(this.right_pane_slider.html);
+        this.left_pane_slider.SetPaneContentA(this.toolbar.html);
+        this.left_pane_slider.SetPaneContentB(this.middle_html);
+        this.left_pane_slider.SetMinSize(this.toolbar.min_width);
+        this.left_html.css({
+            "border-right": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+        this.left_html.append(this.left_pane_slider.html);
+        this.middle_pane_slider.SetPaneContentA(this.canvas.html);
+        this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
+        this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
+        this.middle_html.css({
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+        this.middle_html.append(this.middle_pane_slider.html);
+    };
+    this.SetOnDuplicateCallback = function (callback, binder=null) {
+        this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+    this.GetAspectRatio = function () {
+        if (!this.editor_panel) {
+            return [1, 1];
+        }
+        return this.editor_panel.GetAspectRatio();
+    };
+    this.ResizeCanvas = function () {
+        if (!this.canvas) {
+            return;
+        }
+        this.canvas.Resize();
+    };
+    this.refresh_data = function () {
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.data = response || {};
+                    console.log("Context2D data:", self.data);
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdatePropertyBox();
+                    }
+                },
+                self.api,
+                {
+                    "f": "get_data",
+                    "obj_id": self.obj_id
+                }
+            );
+        })(this);
+    };
+    this.get_data = function () {
+        return this.data;
+    };
+    this.set_data = function (key, value) {
+        if (this.get_data(key) === value) {
+            return;
+        }
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    console.log("Context2D property '" + key + "' set to:", value);
+                },
+                self.api,
+                {
+                    "f": "set_property",
+                    "obj_id": self.obj_id,
+                    "key": key,
+                    "value": value
+                }
+            );
+        })(this);
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DCanvas (editor) {
+    this.editor = editor;
+    this.aspect_ratio = [1, 1];
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
+    this.canvas = $("<div></div>");
+    this.padding = Dash.Size.Padding * 2;
+    // TODO: flexible, unscaled canvas in the middle of the interface for all elements to be drawn on,
+    //  with bounding box that represents working area based on selected aspect ratio, and canvas shouldn't
+    //  flex smaller than the bounding box (or bounding box and contained elements should shrink when
+    //  the canvas gets too small) - default behavior when an element is clicked should probably be to
+    //  auto-select the layer and be able to manipulate it without having to select the desired layer first
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "background": this.color.StrokeDark,
+            "box-sizing": "border-box",
+            "border-bottom": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 2
+        });
+        this.canvas.css({
+            "background": this.color.Background,
+            "width": this.get_calc_dimension(100),
+            "height": this.get_calc_dimension(100),
+            "position": "absolute",
+            "top": "50%",
+            "left": "50%",
+            "transform": "translate(-50%, -50%)"
+        });
+        this.canvas.hide();
+        this.html.append(this.canvas);
+    };
+    this.Resize = function () {
+        var aspect_ratio = this.editor.GetAspectRatio();
+        var width = aspect_ratio[0];
+        var height = aspect_ratio[1];
+        if (width === this.aspect_ratio[0] && height === this.aspect_ratio[1]) {
+            return;
+        }
+        this.aspect_ratio = aspect_ratio;
+        console.log("Canvas resized to new aspect ratio:", width + "/" + height);
+        if (width > height) {
+            this.canvas.css({
+                "width": this.get_calc_dimension(100),
+                "height": this.get_calc_dimension((height / width) * 100)
+            });
+        }
+        else if (width < height) {
+            this.canvas.css({
+                "width": this.get_calc_dimension((width / height) * 100),
+                "height": this.get_calc_dimension(100)
+            });
+        }
+        else {
+            this.canvas.css({
+                "width": this.get_calc_dimension(100),
+                "height": this.get_calc_dimension(100)
+            });
+        }
+        this.canvas.show();
+    };
+    this.get_calc_dimension = function (percent) {
+        return ("calc(" + percent + "% - " + (this.padding * 2) + "px)");
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DLogBar (editor) {
+    this.editor = editor;
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
+    this.min_height = Dash.Size.RowHeight * 1.5;
+    // TODO: log bar located at the bottom (under canvas, but _between_ left and right
+    //  panels, not under them) to display log-type messages to the user after each action
+    //  ("new layer created", "element rotated", etc) - this won't be super useful at
+    //  first, but lays the groundwork for a history/undo system that can come later
+    //  - this should use a revolving list element, and each new log item is just a new row
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "box-sizing": "border-box",
+            "background": this.color.Stroke,
+            "border-top": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 0.5
+        });
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DToolbar (editor) {
+    this.editor = editor;
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
+    this.min_width = Dash.Size.ColumnWidth * 0.3;
+    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "box-sizing": "border-box",
+            "border-right": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 0.5
+        });
+        var icon = new Dash.Gui.Icon(this.color, "tools", Dash.Size.ButtonHeight, 0.75, this.color.AccentGood);
+        icon.html.css({
+            "margin-top": 0,
+            "margin-bottom": 0,
+            "margin-left": "auto",
+            "margin-right": "auto"
+        });
+        var label = $("<div>Tools</div>");
+        label.css({
+            "text-align": "center",
+            "font-family": "sans_serif_bold",
+            "font-size": "90%",
+            "color": this.color.Stroke,
+            "padding-bottom": Dash.Size.Padding * 0.1,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+        this.html.append(icon.html);
+        this.html.append(label);
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitive (panel) {
+    this.panel = panel;
+    this.html = $("<div></div>");
+    // TODO: primitives have a pre-defined set of data, such as `x`, `y`, `width`, etc
+    this.setup_styles = function () {
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitiveText (panel) {
+    DashGuiContext2DPrimitive.call(this, panel);
+    this.setup_styles = function () {
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DPrimitiveImage (panel) {
+    DashGuiContext2DPrimitive.call(this, panel);
+    this.setup_styles = function () {
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanel (editor) {
+    this.editor = editor;
+    this.button_bars = [];
+    this.layers_box = null;
+    this.content_box = null;
+    this.property_box = null;
+    this.api = this.editor.api;
+    this.aspect_tool_row = null;
+    this.html = $("<div></div>");
+    this.first_pane_slider = null;
+    this.color = this.editor.color;
+    this.second_pane_slider = null;
+    this.top_html = $("<div></div>");
+    this.aspect_tool_row_inputs = {};
+    this.obj_id = this.editor.obj_id;
+    this.can_edit = this.editor.can_edit;
+    this.min_width = Dash.Size.ColumnWidth * 2;
+    // Update if things are added to the box
+    this.property_box_height = (
+         Dash.Size.ButtonHeight   +  // Header
+        (Dash.Size.RowHeight * 5) +  // Rows (including empty/blank rows) and toolbar-style-buttons
+        (Dash.Size.Padding   * 2)    // Top and bottom padding
+    );
+    // Wrappers
+    this.get_data = this.editor.get_data.bind(this.editor);
+    this.set_data = this.editor.set_data.bind(this.editor);
+    this.setup_styles = function () {
+        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
+        this.content_box = new DashGuiContext2DEditorPanelContent(this);
+        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
+        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
+        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0
+        };
+        this.second_pane_slider.SetPaneContentA(this.top_html);
+        this.second_pane_slider.SetPaneContentB(this.layers_box.html);
+        this.second_pane_slider.SetMinSize(this.get_top_html_size());
+        this.html.css({
+            "box-sizing": "border-box",
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+        this.html.append(this.second_pane_slider.html);
+        this.first_pane_slider.SetPaneContentA(this.property_box.html);
+        this.first_pane_slider.SetPaneContentB(this.content_box.html);
+        this.first_pane_slider.SetMinSize(this.property_box_height);
+        this.top_html.css(abs_css);
+        this.top_html.append(this.first_pane_slider.html);
+        this.setup_property_box();
+    };
+    this.GetAspectRatio = function () {
+        if (!this.aspect_tool_row) {
+            return [1, 1];
+        }
+        return [
+            parseFloat(this.aspect_tool_row_inputs["w"].Text() || 1) || 1,
+            parseFloat(this.aspect_tool_row_inputs["h"].Text() || 1) || 1
+        ];
+    };
+    this.UpdatePropertyBox = function () {
+        if (!this.property_box) {
+            return;
+        }
+        if (this.can_edit) {
+            this.property_box.Enable();
+        }
+        this.property_box.Update();
+        this.editor.ResizeCanvas();
+    };
+    this.get_top_html_size = function () {
+        return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
+    };
+    this.setup_property_box = function () {
+        this.property_box.Flatten();
+        this.property_box.Disable();
+        this.property_box.SetIndentPx(Dash.Size.Padding);
+        this.property_box.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "margin-bottom": 0,
+            "box-sizing": "border-box",
+            "border-bottom": "1px solid " + this.color.StrokeLight
+        });
+        this.property_box.AddHeader(
+            this.get_data()["display_name"] || "Properties",
+            "display_name"
+        ).ReplaceBorderWithIcon("gear");
+        this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
+        this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
+        this.add_aspect_tool_row();
+        var button_bar = this.property_box.AddButtonBar("toolbar");
+        button_bar.html.css({
+            "margin-top": Dash.Size.Padding * 2,
+            "margin-left": Dash.Size.Padding
+        });
+        button_bar.AddButton("Duplicate Context", this.duplicate_context);
+        this.button_bars.push(button_bar);
+    };
+    this.duplicate_context = function () {
+        if (!window.confirm("Duplicate this context?\n\n(Duplicates are not tethered to the original)")) {
+            return;
+        }
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    if (self.editor.on_duplicate_cb) {
+                        self.editor.on_duplicate_cb(response);
+                    }
+                },
+                self.api,
+                {
+                    "f": "duplicate",
+                    "obj_id": self.obj_id
+                }
+            );
+        })(this);
+    };
+    this.add_aspect_tool_row = function () {
+        this.aspect_tool_row = this.property_box.AddToolRow();
+        this.get_aspect_tool_row_input("w");
+        var label = this.aspect_tool_row.AddLabel("x", Dash.Size.Padding * 0.7, null, null, false);
+        label.label.css({
+            "padding-left": 0
+        });
+        this.get_aspect_tool_row_input("h");
+    };
+    this.get_aspect_tool_row_input = function (key) {
+        this.aspect_tool_row_inputs[key] = (function (self) {
+            return self.aspect_tool_row.AddInput(
+                key.Title(),
+                "aspect_ratio_" + key,
+                Dash.Size.ColumnWidth * 0.25,
+                false,
+                function (value, input, additional_data) {
+                    if (isNaN(value)) {
+                        alert("Aspect ratio values must be numbers");
+                        return;
+                    }
+                    self.set_data(additional_data["data_key"], value);
+                    self.editor.ResizeCanvas();
+                },
+                null,
+                true,
+                key === "w",
+                key === "w" ? "Aspect Ratio:" : "",
+                false,
+                false
+            );
+        })(this);
+        this.aspect_tool_row_inputs[key].input.css({
+            "text-align": "center"
+        });
+        return this.aspect_tool_row_inputs[key];
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelLayers (panel) {
+    this.panel = panel;
+    this.html = $("<div></div>");
+    this.color = this.panel.color;
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "border-top": "1px solid " + this.color.StrokeLight
+        });
+        var header = new Dash.Gui.Header("Layers");
+        header.ReplaceBorderWithIcon("layers");
+        this.html.append(header.html);
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelContent (panel) {
+    this.panel = panel;
+    this.html = $("<div></div>");
+    this.color = this.panel.color;
+    this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "border-top": "1px solid " + this.color.StrokeLight,
+            "border-bottom": "1px solid " + this.color.StrokeLight
+        });
+        var header = new Dash.Gui.Header("Content");
+        header.ReplaceBorderWithIcon("pencil_paintbrush");
+        this.html.append(header.html);
+    };
+    this.setup_styles();
+}
+
 function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
     /**
      * File Explorer box element.
@@ -28316,6 +29051,7 @@ function DashGuiIcons (icon) {
         "invoice":               new DashGuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "invoice_alt":           new DashGuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "javascript_logo":       new DashGuiIconDefinition(this.icon, "JavaScript", this.weight["brand"], "js-square"),
+        "layers":                new DashGuiIconDefinition(this.icon, "Layers", this.weight["regular"], "layer-group"),
         "level_up":              new DashGuiIconDefinition(this.icon, "Level Up", this.weight["regular"], "level-up"),
         "level_down":            new DashGuiIconDefinition(this.icon, "Level Down", this.weight["regular"], "level-down"),
         "link":                  new DashGuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
@@ -28341,6 +29077,7 @@ function DashGuiIcons (icon) {
         "open_folder":           new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
         "paperclip":             new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
         "pen":                   new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
+        "pencil_paintbrush":     new DashGuiIconDefinition(this.icon, "Pencil and Paintbrush", this.weight["regular"], "pencil-paintbrush"),
         "pencil_ruler":          new DashGuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
         "phone":                 new DashGuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
         "play":                  new DashGuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),
@@ -29363,15 +30100,42 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     // because then all the elements are either transparent or opaque, not able to be individually
     // set. You also shouldn't need to append this to any html manually, but in the case that is needed,
     // use this.AppendTo(), instead of the standard method of appending 'this.html' to the desired element.
-    this.bubble = null;
+    this.modal = null;
     this.removed = false;
-    this.background = null;
     this.is_showing = false;
     this.bubble_dots = null;
     this.bubble_label = null;
+    // Deprecated, just wrappers now - but keeping around to avoid breaking things
+    this.bubble = null;
+    this.background = null;
     this.setup_styles = function () {
-        this.background = Dash.Gui.GetModalBackground(this.color, this.html_to_append_to);
-        this.setup_bubble();
+        this.modal = new Dash.Gui.Modal(
+            this.color,
+            null,  // This part is handled in this.AppendTo
+            Dash.Size.ColumnWidth,  // Placeholder value for init
+            Dash.Size.RowHeight,
+            true,
+            0.6,
+            false
+        );
+        // Deprecated, just wrappers now - but keeping around to avoid breaking things
+        this.bubble = this.modal.modal;
+        this.background = this.modal.background;
+        this.modal.modal.css({
+            "position": "absolute",
+            "inset": 0,
+            "top": "50%",
+            "left": "50%",
+            "display": "flex",
+            "margin": Dash.Size.Padding,
+            "padding": Dash.Size.Padding,
+            "width": "fit-content",
+            "transform": "translate(-50%, -50%)"
+        });
+        this.setup_label();
+        if (!this.simple) {
+            this.setup_dots();
+        }
         if (this.html_to_append_to) {
             this.AppendTo(this.html_to_append_to);
         }
@@ -29380,8 +30144,8 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         if (!Dash.Validate.Object(css)) {
             return;
         }
-        this.background.css(css);
-        this.bubble.css(css);
+        this.modal.background.css(css);
+        this.modal.modal.css(css);
     };
     // See note at the top
     this.AppendTo = function (html) {
@@ -29389,8 +30153,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             console.warn("DashGuiLoadingOverlay AppendTo() requires an HTML element:", html);
             return;
         }
-        html.append(this.background);
-        html.append(this.bubble);
+        this.modal.SetParentHTML(html);
         this.is_showing = true;
         this.html_to_append_to = html;
     };
@@ -29399,12 +30162,11 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
         if (this.simple) {
-            this.background.show();
-            this.bubble.show();
+            this.modal.Show();
             this.is_showing = true;
             return;
         }
-        if (this.background.is(":visible")) {
+        if (this.modal.background.is(":visible")) {
             return;
         }
         if (!this.html_to_append_to) {
@@ -29415,8 +30177,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             this.AppendTo(this.html_to_append_to);
         }
         else {
-            this.background.show();
-            this.bubble.show();
+            this.modal.Show();
             this.is_showing = true;
         }
     };
@@ -29424,8 +30185,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         if (!this.is_showing) {
             return;
         }
-        this.bubble.hide();
-        this.background.hide();
+        this.modal.Hide();
         this.is_showing = false;
     };
     this.Remove = function () {
@@ -29434,8 +30194,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             return;
         }
         this.bubble_dots.Stop();
-        this.background.remove();
-        this.bubble.remove();
+        this.modal.Remove();
         this.progress = 0;
         this.removed = true;
     };
@@ -29467,34 +30226,13 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
         }
         this.bubble_dots.html.hide();
     };
-    this.setup_bubble = function () {
-        this.bubble = Dash.Gui.GetHTMLBoxContext();
-        this.bubble.css({
-            "position": "absolute",
-            "inset": 0,
-            "z-index": this.background.css("z-index") + 1,
-            "display": "flex",
-            "margin": Dash.Size.Padding,
-            "padding": Dash.Size.Padding,
-            "height": Dash.Size.RowHeight,
-            "width": "fit-content",
-            "left": "50%",
-            "top": "50%",
-            "transform": "translate(-50%, -50%)",
-            "opacity": 1
-        });
-        this.setup_label();
-        if (!this.simple) {
-            this.setup_dots();
-        }
-    };
     this.setup_dots = function () {
         this.bubble_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight * 0.75);
         this.bubble_dots.html.css({
             "margin-top": Dash.Size.Padding * 0.5
         });
         this.bubble_dots.Start();
-        this.bubble.append(this.bubble_dots.html);
+        this.modal.AddHTML(this.bubble_dots.html);
     };
     this.setup_label = function () {
         this.bubble_label = new Dash.Gui.Header(this.get_loading_label_text(this.progress), null, false);
@@ -29502,7 +30240,7 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
             "padding-left": 0,
             "padding-right": Dash.Size.Padding * 0.5
         });
-        this.bubble.append(this.bubble_label.html);
+        this.modal.AddHTML(this.bubble_label.html);
     };
     this.get_loading_label_text = function (progress) {
         if (progress === "none") {  // Special case
@@ -29533,11 +30271,14 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.combos= {};
     this.inputs = {};
     this.headers = [];
+    this.tool_rows = [];
     this.num_headers = 0;
+    this.disabled = false;
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
+    this.indent_px = Dash.Size.Padding * 2;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -29602,6 +30343,22 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             this.headers[i]["obj"].SetText(this.get_update_value(this.headers[i]["update_key"]));
         }
     };
+    this.update_tool_rows = function () {
+        for (var tool_row of this.tool_rows) {
+            for (var element of tool_row.elements) {
+                if (element.hasOwnProperty("Update")) {
+                    element.Update();
+                }
+                else if (element instanceof DashGuiInput) {
+                    if (element.InFocus()) {
+                        console.log("(Currently being edited) Skipping update for " + element.data_key);
+                        continue;
+                    }
+                    element.SetText(this.get_update_value(element.data_key));
+                }
+            }
+        }
+    };
     this.get_update_value = function (data_key) {
         if (this.property_set_data) {
             return this.property_set_data[data_key];
@@ -29612,12 +30369,8 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         if (this.num_headers <= 0) {
             return;
         }
-        var indent_px = Dash.Size.Padding * 2;
-        if (this.indent_properties || this.indent_properties > 0) {
-            indent_px += this.indent_properties;
-        }
         row.html.css({
-            "margin-left": indent_px
+            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
         });
     };
     this.on_server_property_set = function (property_set_data) {
@@ -29805,6 +30558,32 @@ function DashGuiPropertyBoxInterface () {
         this.update_inputs();
         this.update_combos();
         this.update_headers();
+        this.update_tool_rows();
+    };
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+    };
+    this.SetIndentPx = function (px) {
+        this.indent_px = px;
     };
     
     this.SetTopRightLabel = function (label_text) {
@@ -29909,6 +30688,8 @@ function DashGuiPropertyBoxInterface () {
             tool_row.SetGetFormattedDataCallback(this.get_formatted_data_cb);
         }
         this.AddHTML(tool_row.html);
+        this.indent_row(tool_row);
+        this.tool_rows.push(tool_row);
         return tool_row;
     };
     this.AddButton = function (label_text, callback, options={}) {
@@ -29916,8 +30697,8 @@ function DashGuiPropertyBoxInterface () {
         if (!this.buttons) {
             this.buttons = [];
         }
-        (function (self, callback) {
-            var button = new Dash.Gui.Button(
+        var button = (function (self) {
+            return new Dash.Gui.Button(
                 label_text,
                 function () {
                     callback(button);
@@ -29926,13 +30707,15 @@ function DashGuiPropertyBoxInterface () {
                 self.color,
                 options
             );
-            self.buttons.push(button);
-            button.html.css({
-                "margin-top": Dash.Size.Padding
-            });
-            self.html.append(button.html);
-        })(this, callback);
-        return this.buttons.Last();
+        })(this);
+        this.buttons.push(button);
+        var css = {"margin-top": Dash.Size.Padding};
+        if (Dash.Validate.Object(options) && options["style"] === "toolbar") {
+            css["margin-right"] = 0;
+        }
+        button.html.css(css);
+        this.html.append(button.html);
+        return button;
     };
     this.AddDeleteButton = function (callback, faint=true) {
         var button = this.AddButton("Delete", callback);
@@ -30567,41 +31350,45 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.setup_styles();
 }
 
-function DashLayoutPaneSlider (binder, is_vertical, default_size) {
+function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, identifier="", inverted=false) {
     this.binder = binder;
-    this.is_vertical = is_vertical || false;
+    this.is_vertical = is_vertical;
     this.default_size = default_size || Dash.Size.ColumnWidth;
+    this.identifier = identifier;
+    this.inverted = inverted;
+    this.drag_properties = {};
     this.html = $("<div></div>");
+    this.divider = $("<div></div>");
     this.content_a = $("<div></div>");
     this.content_b = $("<div></div>");
-    this.divider = $("<div></div>");
     this.divider_hover = $("<div></div>");
-    this.recall_id = "dash_pane_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
-    this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
+    this.locked_size = this.default_size;
+    this.divider_color = "rgba(0, 0, 0, 0.2)";
+    this.divider_size = Dash.Size.Padding * 0.1;
+    this.divider_color_active = "rgba(0, 0, 0, 0.6)";
+    this.divider_hover_size = Dash.Size.Padding * 1.5; // A slightly larger size for dragging
+    this.min_size = this.default_size || Dash.Size.ColumnWidth * 0.5;
+    this.recall_id = "dash_layout_pane_slider_" + (
+        // If using multiple sliders with the same binder, they'll need their own, unique identifier strings
+        this.identifier || (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase()
+    );
     if (this.is_vertical) {
         this.recall_id += "_v";
     }
     else {
         this.recall_id += "_h";
     }
-    this.locked_width = this.default_size;
     if (Dash.Local.Get(this.recall_id)) {
-        this.locked_width = parseInt(Dash.Local.Get(this.recall_id));
+        this.locked_size = parseInt(Dash.Local.Get(this.recall_id));
     }
-    this.divider_size = Dash.Size.Padding * 0.1;
-    this.divider_hover_size = Dash.Size.Padding * 1.5; // A slightly larger size for dragging
-    this.min_width = this.default_size || Dash.Size.ColumnWidth * 0.5;
-    this.divider_color = "rgba(0, 0, 0, 0.2)";
-    this.divider_color_active = "rgba(0, 0, 0, 0.6)";
-    this.drag_properties = {};
     this.SetPaneContentA = function (html) {
         this.content_a.empty().append(html);
     };
     this.SetPaneContentB = function (html) {
         this.content_b.empty().append(html);
     };
-    this.SetMinWidth = function (size) {
-        this.min_width = size;
+    this.SetMinSize = function (size) {
+        this.min_size = size;
     };
     this.setup_styles = function () {
         this.html.append(this.content_a);
@@ -30610,7 +31397,7 @@ function DashLayoutPaneSlider (binder, is_vertical, default_size) {
         this.html.append(this.divider_hover);
         this.html.css({
             "position": "absolute",
-            "inset": 0,
+            "inset": 0
         });
         if (this.is_vertical) {
             this.setup_vertical();
@@ -30660,12 +31447,12 @@ function DashLayoutPaneSlider (binder, is_vertical, default_size) {
         this.content_a.css({
             "position": "absolute",
             "inset": 0,
-            "overflow-x": "auto",
+            "overflow-x": "auto"
         });
         this.content_b.css({
             "position": "absolute",
             "inset": 0,
-            "overflow-x": "auto",
+            "overflow-x": "auto"
         });
         this.divider.css({
             "position": "absolute",
@@ -30692,74 +31479,56 @@ function DashLayoutPaneSlider (binder, is_vertical, default_size) {
         (function (self) {
             self.divider_hover.on("mouseenter", function () {
                 self.divider.css({
-                    "background": self.divider_color_active,
+                    "background": self.divider_color_active
                 });
             });
             self.divider_hover.on("mouseleave", function () {
                 self.divider.css({
-                    "background": self.divider_color,
+                    "background": self.divider_color
                 });
             });
             self.html.on("mousemove", function (e) {
-                if (self.drag_active) {
-                    if (self.is_vertical) {
-                        self.drag_properties["last_pos"] = e.screenY;
-                    }
-                    else {
-                        self.drag_properties["last_pos"] = e.screenX;
-                    }
-                    self.on_drag();
-                }
-            });
-            self.divider_hover.on("mousedown", function (e) {
-                if (!self.drag_active) {
-                    self.drag_active = true;
-                    self.drag_properties["start_locked_width"] = self.locked_width;
-                    if (self.is_vertical) {
-                        self.drag_properties["start_pos"] = e.screenY;
-                    }
-                    else {
-                        self.drag_properties["start_pos"] = e.screenX;
-                    }
-                    self.on_draw_start();
-                }
-            });
-            self.html.on("mouseup", function (e) {
                 if (!self.drag_active) {
                     return;
                 }
+                self.drag_properties["last_pos"] = self.is_vertical ? e.screenY : e.screenX;
+                self.on_drag();
+            });
+            self.divider_hover.on("mousedown", function (e) {
                 if (self.drag_active) {
-                    self.drag_active = false;
-                    self.on_draw_end();
+                    return;
                 }
+                self.drag_active = true;
+                self.drag_properties["start_locked_size"] = self.locked_size;
+                self.drag_properties["start_pos"] = self.is_vertical ? e.screenY : e.screenX;
+                self.on_draw_start();
+            });
+            self.html.on("mouseup", function () {
+                if (!self.drag_active) {
+                    return;
+                }
+                self.drag_active = false;
+                self.on_draw_end();
             });
         })(this);
     };
+    // Called when dragging starts
     this.on_draw_start = function () {
-        // Called when dragging starts
     };
+    // Called when dragging ends
     this.on_draw_end = function () {
-        // Called when dragging ends
-        Dash.Local.Set(this.recall_id, this.locked_width);
+        Dash.Local.Set(this.recall_id, this.locked_size);
     };
     this.on_drag = function () {
-        this.drag_properties["change"] = this.drag_properties["start_pos"]-this.drag_properties["last_pos"];
-        var width_now = this.locked_width;
-        this.locked_width = this.drag_properties["start_locked_width"] + this.drag_properties["change"];
-        var content_a_size;
-        if (this.is_vertical) {
-            content_a_size = this.html.height()-this.locked_width;
+        var size_now = this.locked_size;
+        this.drag_properties["change"] = this.inverted ? this.drag_properties["last_pos"] - this.drag_properties["start_pos"] : this.drag_properties["start_pos"] - this.drag_properties["last_pos"];
+        this.locked_size = this.drag_properties["start_locked_size"] + this.drag_properties["change"];
+        var content_a_size = (this.is_vertical ? this.html.height() : this.html.width()) - this.locked_size;
+        if (content_a_size < this.min_size) {
+            this.locked_size = size_now;
         }
-        else {
-            content_a_size = this.html.width()-this.locked_width;
-        }
-        if (content_a_size < this.min_width) {
-            // Clamp content A
-            this.locked_width = width_now;
-        }
-        if (this.locked_width < this.min_width) {
-            // Clamp content B
-            this.locked_width = this.min_width;
+        if (this.locked_size < this.min_size) {
+            this.locked_size = this.min_size;
         }
         this.draw();
     };
@@ -30772,37 +31541,74 @@ function DashLayoutPaneSlider (binder, is_vertical, default_size) {
         }
     };
     this.draw_vertical = function () {
-        this.content_a.css({
-            "bottom": this.locked_width+(this.divider_size * 0.5),
-        });
-        this.content_b.css({
-            "height": this.locked_width-(this.divider_size * 0.5),
-        });
-        this.divider.css({
-            "bottom": this.locked_width-(this.divider_size * 0.5),
-            "top": "auto",
-        });
-        this.divider_hover.css({
-            "bottom": this.locked_width-(this.divider_hover_size * 0.5),
-            "top": "auto",
-        });
+        if (this.inverted) {
+            this.content_a.css({
+                "height": this.locked_size - (this.divider_size * 0.5)
+            });
+            this.content_b.css({
+                "top": this.locked_size + (this.divider_size * 0.5)
+            });
+            this.divider.css({
+                "top": this.locked_size - (this.divider_size * 0.5),
+                "bottom": "auto"
+            });
+            this.divider_hover.css({
+                "top": this.locked_size - (this.divider_hover_size * 0.5),
+                "bottom": "auto"
+            });
+        }
+        else {
+            this.content_a.css({
+                "bottom": this.locked_size + (this.divider_size * 0.5)
+            });
+            this.content_b.css({
+                "height": this.locked_size - (this.divider_size * 0.5)
+            });
+            this.divider.css({
+                "bottom": this.locked_size - (this.divider_size * 0.5),
+                "top": "auto"
+            });
+            this.divider_hover.css({
+                "bottom": this.locked_size - (this.divider_hover_size * 0.5),
+                "top": "auto"
+            });
+        }
     };
     this.draw_horizontal = function () {
-        this.content_a.css({
-            "right": this.locked_width+(this.divider_size * 0.5),
-        });
-        this.content_b.css({
-            "width": this.locked_width-(this.divider_size * 0.5),
-            "left": "auto",
-        });
-        this.divider.css({
-            "right": this.locked_width-(this.divider_size * 0.5),
-            "left": "auto",
-        });
-        this.divider_hover.css({
-            "right": this.locked_width-(this.divider_hover_size * 0.5),
-            "left": "auto",
-        });
+        if (this.inverted) {
+            this.content_a.css({
+                "width": this.locked_size - (this.divider_size * 0.5),
+                "right": "auto"
+            });
+            this.content_b.css({
+                "left": this.locked_size + (this.divider_size * 0.5)
+            });
+            this.divider.css({
+                "left": this.locked_size - (this.divider_size * 0.5),
+                "right": "auto"
+            });
+            this.divider_hover.css({
+                "left": this.locked_size - (this.divider_hover_size * 0.5),
+                "right": "auto"
+            });
+        }
+        else {
+            this.content_a.css({
+                "right": this.locked_size + (this.divider_size * 0.5)
+            });
+            this.content_b.css({
+                "width": this.locked_size - (this.divider_size * 0.5),
+                "left": "auto"
+            });
+            this.divider.css({
+                "right": this.locked_size - (this.divider_size * 0.5),
+                "left": "auto"
+            });
+            this.divider_hover.css({
+                "right": this.locked_size - (this.divider_hover_size * 0.5),
+                "left": "auto"
+            });
+        }
     };
     this.setup_styles();
     this.setup_connections();
@@ -30813,10 +31619,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.user_data = user_data || Dash.User.Data || {};
     this.options = options;  // TODO: convert to proper interface
     this.view_mode = view_mode;
+    this.modal = null;
     this.callbacks = {};
-    this.modal_box = null;
     this.property_box = null;
-    this.modal_background = null;
+    this.modal_profile = null;
+    this.top_right_button = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -30859,10 +31666,12 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         return this.has_privileges;
     };
     this.add_top_right_button = function () {
-        var button = Dash.Gui.GetTopRightIconButton(
+        if (this.modal_of) {
+            return;
+        }
+        this.top_right_button = Dash.Gui.GetTopRightIconButton(
             this,
-            this.modal_of ? this.close_modal :
-                this.view_mode === "settings" ? this.log_out :
+            this.view_mode === "settings" ? this.log_out :
                 this.view_mode === "preview" ? this.show_modal :
                 function () {},
             this.modal_of ? "close" :
@@ -30870,84 +31679,53 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 this.view_mode === "preview" ? "expand" :
                 "alert_triangle"
         );
-        if (this.modal_of) {
-            this.add_esc_shortcut();
-        }
-        button.html.css({
+        this.top_right_button.html.css({
             "margin-top": Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * 0.8
         });
-        button.SetIconSize(180);
-        button.SetHoverHint(
-            this.modal_of ? "Close" :
-                this.view_mode === "settings" ? "Log Out" :
+        this.top_right_button.SetIconSize(180);
+        this.top_right_button.SetHoverHint(
+            this.view_mode === "settings" ? "Log Out" :
                 this.view_mode === "preview" ? "Expand" :
                 ""
         );
-        this.html.append(button.html);
-    };
-    this.add_esc_shortcut = function () {
-        var identifier = "dash_layout_user_profile_close_modal";
-        (function (self) {
-            $(document).on("keydown." + identifier, function (e) {
-                if (self.html && !self.html.is(":visible")) {
-                    $(document).off("keydown." + identifier);
-                    return;
-                }
-                if (e.key === "Escape") {
-                    console.log("(Escape key pressed) Close user modal");
-                    self.close_modal();
-                }
-            });
-        })(this);
+        this.html.append(this.top_right_button.html);
     };
     this.show_modal = function () {
-        if (!this.modal_background) {
-            this.modal_background = Dash.Gui.GetModalBackground(this.color, this.html.parent());
-            this.html.parent().append(this.modal_background);
+        if (this.modal) {
+            this.modal.Show();
+            return;
         }
-        if (!this.modal_box) {
-            this.modal_box = new Dash.Layout.UserProfile(
-                this.user_data,
-                {
-                    ...this.options,
-                    "modal_of": this
-                },
-                "settings"
-            );
-            var left_margin = 0;
-            try {
-                var lm = this.html.parent().offsetLeft || this.html.parent().offset().left;
-                if (lm && lm > 0) {
-                    left_margin = lm / 2;
-                }
-            }
-            catch {
-                // Do nothing
-            }
-            this.modal_box.html.css({
-                "z-index": this.modal_background.css("z-index") + 1,
-                "position": "fixed",
-                "margin-left": left_margin,
-                "top": "50%",
-                "left": "50%",
-                "transform": "translate(-50%, -50%)"
-            });
-            this.html.parent().append(this.modal_box.html);
+        this.modal = new Dash.Gui.Modal(
+            this.color,
+            this.html.parent(),
+            Dash.Size.ColumnWidth * 3.25,
+            this.img_box_size + Dash.Size.Padding  // This isn't technically correct, but it's working - moving on
+        );
+        if (this.modal_profile) {
+            return;
         }
-        this.modal_background.show();
-        this.modal_box.html.show();
+        this.add_modal_profile();
     };
-    this.close_modal = function () {
-        if (this.modal_of && this.modal_of.modal_box) {
-            this.modal_of.modal_box.html.hide();
-        }
-        else {
-            this.html.hide();
-        }
-        if (this.modal_of && this.modal_of.modal_background) {
-            this.modal_of.modal_background.hide();
-        }
+    this.add_modal_profile = function () {
+        this.modal_profile = new Dash.Layout.UserProfile(
+            this.user_data,
+            {
+                ...this.options,
+                "modal_of": this
+            },
+            "settings"
+        );
+        this.modal_profile.html.css({
+            "padding": 0,
+            "background": "",
+            "box-shadow": ""
+        });
+        this.modal_profile.img_box.css({
+            "left": 0,
+            "top": Dash.Size.Padding + Dash.Size.RowHeight
+        });
+        this.modal.AddHTML(this.modal_profile.html);
     };
     this.add_header = function () {
         var label = "User";

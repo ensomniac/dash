@@ -20,14 +20,18 @@ class DashLocalStorage:
         Utility for reading, writing and maintaining common data.
 
         :param dash_context: Dash Context (default=None)
-        :param str store_path: users, packages, jobs, etc. (default="")
+        :param str store_path: Name of the folder located in /local/, such as users, packages, jobs, etc. (default="")
         :param bool nested: If True, core record is considered data.json in a directory named after the ID (default=False)
         :param str sort_by_key: dict key to sort the ordered data by (default="")
         :param list filter_out_keys: dict keys to filter out of each final data object (default=[])
         """
 
         self.nested = nested
+
+        # This attr name is confusing, and should be named local_folder_name, or something
+        # like that, but leaving it alone to not break anything in other code bases
         self.store_path = store_path
+
         self.sort_by_key = sort_by_key
         self.filter_out_keys = filter_out_keys
         self.dash_context = dash_context
