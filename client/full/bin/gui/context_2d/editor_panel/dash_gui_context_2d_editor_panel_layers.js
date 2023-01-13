@@ -1,14 +1,23 @@
 function DashGuiContext2DEditorPanelLayers (panel) {
     this.panel = panel;
 
-    this.html = $("<div>Layers</div>");
+    this.html = $("<div></div>");
+    this.color = this.panel.color;
 
     this.setup_styles = function () {
         this.html.css({
-            "background": "purple",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "border-top": "1px solid " + this.color.StrokeLight
         });
+
+        var header = new Dash.Gui.Header("Layers");
+
+        header.ReplaceBorderWithIcon("layers");
+
+        this.html.append(header.html);
     };
 
     this.setup_styles();

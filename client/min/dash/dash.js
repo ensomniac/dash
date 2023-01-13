@@ -27256,21 +27256,44 @@ function DashGuiContext2D (obj_id, api, color=null) {
         this.right_pane_slider.SetPaneContentA(this.left_html);
         this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
         this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
-        this.html.css(abs_css);
+        this.html.css({
+            "box-sizing": "border-box",
+            "background": this.color.Pinstripe,
+            "border": "2px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
         this.html.append(this.right_pane_slider.html);
         this.left_pane_slider.SetPaneContentA(this.toolbar.html);
         this.left_pane_slider.SetPaneContentB(this.middle_html);
         this.left_pane_slider.SetMinSize(this.toolbar.min_width);
-        this.left_html.css(abs_css);
+        this.left_html.css({
+            "border-right": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
         this.left_html.append(this.left_pane_slider.html);
         this.middle_pane_slider.SetPaneContentA(this.canvas.html);
         this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
         this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
-        this.middle_html.css(abs_css);
+        this.middle_html.css({
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
         this.middle_html.append(this.middle_pane_slider.html);
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+    this.GetAspectRatio = function () {
+        if (!this.editor_panel) {
+            return [1, 1];
+        }
+        return this.editor_panel.GetAspectRatio();
+    };
+    this.ResizeCanvas = function () {
+        if (!this.canvas) {
+            return;
+        }
+        this.canvas.Resize();
     };
     this.refresh_data = function () {
         (function (self) {
@@ -27325,7 +27348,11 @@ function DashGuiContext2D (obj_id, api, color=null) {
 
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
-    this.html = $("<div>Canvas</div>");
+    this.aspect_ratio = [1, 1];
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
+    this.canvas = $("<div></div>");
+    this.padding = Dash.Size.Padding * 2;
     // TODO: flexible, unscaled canvas in the middle of the interface for all elements to be drawn on,
     //  with bounding box that represents working area based on selected aspect ratio, and canvas shouldn't
     //  flex smaller than the bounding box (or bounding box and contained elements should shrink when
@@ -27333,27 +27360,78 @@ function DashGuiContext2DCanvas (editor) {
     //  auto-select the layer and be able to manipulate it without having to select the desired layer first
     this.setup_styles = function () {
         this.html.css({
-            "background": "orange",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "background": this.color.StrokeDark,
+            "box-sizing": "border-box",
+            "border-bottom": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 2
         });
+        this.canvas.css({
+            "background": this.color.Background,
+            "width": this.get_calc_dimension(100),
+            "height": this.get_calc_dimension(100),
+            "position": "absolute",
+            "top": "50%",
+            "left": "50%",
+            "transform": "translate(-50%, -50%)"
+        });
+        this.canvas.hide();
+        this.html.append(this.canvas);
+    };
+    this.Resize = function () {
+        var aspect_ratio = this.editor.GetAspectRatio();
+        var width = aspect_ratio[0];
+        var height = aspect_ratio[1];
+        if (width === this.aspect_ratio[0] && height === this.aspect_ratio[1]) {
+            return;
+        }
+        this.aspect_ratio = aspect_ratio;
+        console.log("Canvas resized to new aspect ratio:", width + "/" + height);
+        if (width > height) {
+            this.canvas.css({
+                "width": this.get_calc_dimension(100),
+                "height": this.get_calc_dimension((height / width) * 100)
+            });
+        }
+        else if (width < height) {
+            this.canvas.css({
+                "width": this.get_calc_dimension((width / height) * 100),
+                "height": this.get_calc_dimension(100)
+            });
+        }
+        else {
+            this.canvas.css({
+                "width": this.get_calc_dimension(100),
+                "height": this.get_calc_dimension(100)
+            });
+        }
+        this.canvas.show();
+    };
+    this.get_calc_dimension = function (percent) {
+        return ("calc(" + percent + "% - " + (this.padding * 2) + "px)");
     };
     this.setup_styles();
 }
 
 function DashGuiContext2DLogBar (editor) {
     this.editor = editor;
-    this.html = $("<div>Log Bar</div>");
-    this.min_height = Dash.Size.RowHeight;
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
+    this.min_height = Dash.Size.RowHeight * 1.5;
     // TODO: log bar located at the bottom (under canvas, but _between_ left and right
     //  panels, not under them) to display log-type messages to the user after each action
     //  ("new layer created", "element rotated", etc) - this won't be super useful at
     //  first, but lays the groundwork for a history/undo system that can come later
+    //  - this should use a revolving list element, and each new log item is just a new row
     this.setup_styles = function () {
         this.html.css({
-            "background": "blue",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "box-sizing": "border-box",
+            "background": this.color.Stroke,
+            "border-top": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 0.5
         });
     };
     this.setup_styles();
@@ -27361,17 +27439,36 @@ function DashGuiContext2DLogBar (editor) {
 
 function DashGuiContext2DToolbar (editor) {
     this.editor = editor;
-    this.html = $("<div>Toolbar</div>");
+    this.html = $("<div></div>");
+    this.color = this.editor.color;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
-    // TODO:
-    //  - vertical toolbar, in the middle area (on left side of canvas, in between the list of contexts and canvas)
-    //  - add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible
+    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible
     this.setup_styles = function () {
         this.html.css({
-            "background": "green",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "box-sizing": "border-box",
+            "border-right": "1px solid " + this.color.StrokeLight,
+            "padding": Dash.Size.Padding * 0.5
         });
+        var icon = new Dash.Gui.Icon(this.color, "tools", Dash.Size.ButtonHeight, 0.75, this.color.AccentGood);
+        icon.html.css({
+            "margin-top": 0,
+            "margin-bottom": 0,
+            "margin-left": "auto",
+            "margin-right": "auto"
+        });
+        var label = $("<div>Tools</div>");
+        label.css({
+            "text-align": "center",
+            "font-family": "sans_serif_bold",
+            "font-size": "90%",
+            "color": this.color.Stroke,
+            "padding-bottom": Dash.Size.Padding * 0.1,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+        this.html.append(icon.html);
+        this.html.append(label);
     };
     this.setup_styles();
 }
@@ -27411,8 +27508,10 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row = null;
     this.html = $("<div></div>");
     this.first_pane_slider = null;
+    this.color = this.editor.color;
     this.second_pane_slider = null;
     this.top_html = $("<div></div>");
+    this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2;
@@ -27438,7 +27537,11 @@ function DashGuiContext2DEditorPanel (editor) {
         this.second_pane_slider.SetPaneContentA(this.top_html);
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
         this.second_pane_slider.SetMinSize(this.get_top_html_size());
-        this.html.css(abs_css);
+        this.html.css({
+            "box-sizing": "border-box",
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
         this.html.append(this.second_pane_slider.html);
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
         this.first_pane_slider.SetPaneContentB(this.content_box.html);
@@ -27446,6 +27549,15 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
+    };
+    this.GetAspectRatio = function () {
+        if (!this.aspect_tool_row) {
+            return [1, 1];
+        }
+        return [
+            parseFloat(this.aspect_tool_row_inputs["w"].Text() || 1) || 1,
+            parseFloat(this.aspect_tool_row_inputs["h"].Text() || 1) || 1
+        ];
     };
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
@@ -27455,6 +27567,7 @@ function DashGuiContext2DEditorPanel (editor) {
             this.property_box.Enable();
         }
         this.property_box.Update();
+        this.editor.ResizeCanvas();
     };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
@@ -27466,12 +27579,14 @@ function DashGuiContext2DEditorPanel (editor) {
         this.property_box.html.css({
             "position": "absolute",
             "inset": 0,
-            "margin-bottom": 0
+            "margin-bottom": 0,
+            "box-sizing": "border-box",
+            "border-bottom": "1px solid " + this.color.StrokeLight
         });
         this.property_box.AddHeader(
             this.get_data()["display_name"] || "Properties",
             "display_name"
-        ).ReplaceBorderWithIcon("pencil_ruler");
+        ).ReplaceBorderWithIcon("gear");
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
         this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
         this.add_aspect_tool_row();
@@ -27516,7 +27631,7 @@ function DashGuiContext2DEditorPanel (editor) {
         this.get_aspect_tool_row_input("h");
     };
     this.get_aspect_tool_row_input = function (key) {
-        var input = (function (self) {
+        this.aspect_tool_row_inputs[key] = (function (self) {
             return self.aspect_tool_row.AddInput(
                 key.Title(),
                 "aspect_ratio_" + key,
@@ -27528,46 +27643,60 @@ function DashGuiContext2DEditorPanel (editor) {
                         return;
                     }
                     self.set_data(additional_data["data_key"], value);
+                    self.editor.ResizeCanvas();
                 },
                 null,
                 true,
                 key === "w",
                 key === "w" ? "Aspect Ratio:" : "",
-                true,
+                false,
                 false
             );
         })(this);
-        input.input.css({
+        this.aspect_tool_row_inputs[key].input.css({
             "text-align": "center"
         });
-        return input;
+        return this.aspect_tool_row_inputs[key];
     };
     this.setup_styles();
 }
 
 function DashGuiContext2DEditorPanelLayers (panel) {
     this.panel = panel;
-    this.html = $("<div>Layers</div>");
+    this.html = $("<div></div>");
+    this.color = this.panel.color;
     this.setup_styles = function () {
         this.html.css({
-            "background": "purple",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "border-top": "1px solid " + this.color.StrokeLight
         });
+        var header = new Dash.Gui.Header("Layers");
+        header.ReplaceBorderWithIcon("layers");
+        this.html.append(header.html);
     };
     this.setup_styles();
 }
 
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
-    this.html = $("<div>Content</div>");
-    this.min_height = Dash.Size.ButtonHeight * 10;  // TODO
+    this.html = $("<div></div>");
+    this.color = this.panel.color;
+    this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
     this.setup_styles = function () {
         this.html.css({
-            "background": "brown",
             "position": "absolute",
-            "inset": 0
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "box-sizing": "border-box",
+            "border-top": "1px solid " + this.color.StrokeLight,
+            "border-bottom": "1px solid " + this.color.StrokeLight
         });
+        var header = new Dash.Gui.Header("Content");
+        header.ReplaceBorderWithIcon("pencil_paintbrush");
+        this.html.append(header.html);
     };
     this.setup_styles();
 }
@@ -28922,6 +29051,7 @@ function DashGuiIcons (icon) {
         "invoice":               new DashGuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "invoice_alt":           new DashGuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "javascript_logo":       new DashGuiIconDefinition(this.icon, "JavaScript", this.weight["brand"], "js-square"),
+        "layers":                new DashGuiIconDefinition(this.icon, "Layers", this.weight["regular"], "layer-group"),
         "level_up":              new DashGuiIconDefinition(this.icon, "Level Up", this.weight["regular"], "level-up"),
         "level_down":            new DashGuiIconDefinition(this.icon, "Level Down", this.weight["regular"], "level-down"),
         "link":                  new DashGuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
@@ -28947,6 +29077,7 @@ function DashGuiIcons (icon) {
         "open_folder":           new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
         "paperclip":             new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
         "pen":                   new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
+        "pencil_paintbrush":     new DashGuiIconDefinition(this.icon, "Pencil and Paintbrush", this.weight["regular"], "pencil-paintbrush"),
         "pencil_ruler":          new DashGuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
         "phone":                 new DashGuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
         "play":                  new DashGuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),

@@ -9,8 +9,10 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row = null;
     this.html = $("<div></div>");
     this.first_pane_slider = null;
+    this.color = this.editor.color;
     this.second_pane_slider = null;
     this.top_html = $("<div></div>");
+    this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2;
@@ -42,7 +44,12 @@ function DashGuiContext2DEditorPanel (editor) {
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
         this.second_pane_slider.SetMinSize(this.get_top_html_size());
 
-        this.html.css(abs_css);
+        this.html.css({
+            "box-sizing": "border-box",
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+
         this.html.append(this.second_pane_slider.html);
 
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
@@ -55,6 +62,17 @@ function DashGuiContext2DEditorPanel (editor) {
         this.setup_property_box();
     };
 
+    this.GetAspectRatio = function () {
+        if (!this.aspect_tool_row) {
+            return [1, 1];
+        }
+
+        return [
+            parseFloat(this.aspect_tool_row_inputs["w"].Text() || 1) || 1,
+            parseFloat(this.aspect_tool_row_inputs["h"].Text() || 1) || 1
+        ];
+    };
+
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
             return;
@@ -65,6 +83,8 @@ function DashGuiContext2DEditorPanel (editor) {
         }
 
         this.property_box.Update();
+
+        this.editor.ResizeCanvas();
     };
 
     this.get_top_html_size = function () {
@@ -79,13 +99,15 @@ function DashGuiContext2DEditorPanel (editor) {
         this.property_box.html.css({
             "position": "absolute",
             "inset": 0,
-            "margin-bottom": 0
+            "margin-bottom": 0,
+            "box-sizing": "border-box",
+            "border-bottom": "1px solid " + this.color.StrokeLight
         });
 
         this.property_box.AddHeader(
             this.get_data()["display_name"] || "Properties",
             "display_name"
-        ).ReplaceBorderWithIcon("pencil_ruler");
+        ).ReplaceBorderWithIcon("gear");
 
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
         this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
@@ -145,7 +167,7 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.get_aspect_tool_row_input = function (key) {
-        var input = (function (self) {
+        this.aspect_tool_row_inputs[key] = (function (self) {
             return self.aspect_tool_row.AddInput(
                 key.Title(),
                 "aspect_ratio_" + key,
@@ -159,21 +181,23 @@ function DashGuiContext2DEditorPanel (editor) {
                     }
 
                     self.set_data(additional_data["data_key"], value);
+
+                    self.editor.ResizeCanvas();
                 },
                 null,
                 true,
                 key === "w",
                 key === "w" ? "Aspect Ratio:" : "",
-                true,
+                false,
                 false
             );
         })(this);
 
-        input.input.css({
+        this.aspect_tool_row_inputs[key].input.css({
             "text-align": "center"
         });
 
-        return input;
+        return this.aspect_tool_row_inputs[key];
     };
 
     this.setup_styles();

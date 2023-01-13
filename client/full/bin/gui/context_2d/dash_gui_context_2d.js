@@ -55,26 +55,56 @@ function DashGuiContext2D (obj_id, api, color=null) {
         this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
         this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
 
-        this.html.css(abs_css);
+        this.html.css({
+            "box-sizing": "border-box",
+            "background": this.color.Pinstripe,
+            "border": "2px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+
         this.html.append(this.right_pane_slider.html);
 
         this.left_pane_slider.SetPaneContentA(this.toolbar.html);
         this.left_pane_slider.SetPaneContentB(this.middle_html);
         this.left_pane_slider.SetMinSize(this.toolbar.min_width);
 
-        this.left_html.css(abs_css);
+        this.left_html.css({
+            "border-right": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+
         this.left_html.append(this.left_pane_slider.html);
 
         this.middle_pane_slider.SetPaneContentA(this.canvas.html);
         this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
         this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
 
-        this.middle_html.css(abs_css);
+        this.middle_html.css({
+            "border-left": "1px solid " + this.color.StrokeLight,
+            ...abs_css
+        });
+
         this.middle_html.append(this.middle_pane_slider.html);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+
+    this.GetAspectRatio = function () {
+        if (!this.editor_panel) {
+            return [1, 1];
+        }
+
+        return this.editor_panel.GetAspectRatio();
+    };
+
+    this.ResizeCanvas = function () {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.Resize();
     };
 
     this.refresh_data = function () {
