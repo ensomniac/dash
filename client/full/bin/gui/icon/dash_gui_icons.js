@@ -174,6 +174,7 @@ function DashGuiIcons (icon) {
         "minus_square":          new DashGuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
         "moon":                  new DashGuiIconDefinition(this.icon, "Moon", this.weight["regular"], "moon"),
         "more":                  new DashGuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
+        "move":                  new DashGuiIconDefinition(this.icon, "Move", this.weight["regular"], "arrows-alt"),
         "navigation":            new DashGuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
         "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
         "note":                  new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),

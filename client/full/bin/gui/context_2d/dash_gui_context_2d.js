@@ -1,4 +1,4 @@
-function DashGuiContext2D (obj_id, api, color=null) {
+function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -14,12 +14,14 @@ function DashGuiContext2D (obj_id, api, color=null) {
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
+     * @param {boolean} can_edit - Determines whether buttons, inputs, etc will be disabled
      * @param {DashColorSet} color - DashColorSet instance
      */
 
     this.obj_id = obj_id;
     this.api = api;
     this.color = color || Dash.Color.Light;
+    this.can_edit = can_edit;
 
     this.data = {};
     this.canvas = null;
@@ -33,7 +35,6 @@ function DashGuiContext2D (obj_id, api, color=null) {
     this.middle_pane_slider = null;
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
-    this.can_edit = Dash.User.Init["roles"].includes("context_2d_editor") || Dash.User.Init["roles"].includes("master_editor");
 
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);
@@ -85,6 +86,14 @@ function DashGuiContext2D (obj_id, api, color=null) {
         });
 
         this.middle_html.append(this.middle_pane_slider.html);
+    };
+
+    this.SetCanvasCursor = function (type) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.SetCursor(type);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {

@@ -78,10 +78,6 @@ function DashGuiContext2DEditorPanel (editor) {
             return;
         }
 
-        if (this.can_edit) {
-            this.property_box.Enable();
-        }
-
         this.property_box.Update();
 
         this.editor.ResizeCanvas();
@@ -93,7 +89,6 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.setup_property_box = function () {
         this.property_box.Flatten();
-        this.property_box.Disable();
         this.property_box.SetIndentPx(Dash.Size.Padding);
 
         this.property_box.html.css({
@@ -110,11 +105,15 @@ function DashGuiContext2DEditorPanel (editor) {
         ).ReplaceBorderWithIcon("gear");
 
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
-        this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
+        this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
 
         this.add_aspect_tool_row();
 
         var button_bar = this.property_box.AddButtonBar("toolbar");
+
+        if (!this.can_edit) {
+            button_bar.Disable();
+        }
 
         button_bar.html.css({
             "margin-top": Dash.Size.Padding * 2,
@@ -185,7 +184,7 @@ function DashGuiContext2DEditorPanel (editor) {
                     self.editor.ResizeCanvas();
                 },
                 null,
-                true,
+                self.can_edit,
                 key === "w",
                 key === "w" ? "Aspect Ratio:" : "",
                 false,

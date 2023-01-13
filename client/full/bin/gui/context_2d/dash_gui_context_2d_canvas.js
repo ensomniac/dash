@@ -38,6 +38,12 @@ function DashGuiContext2DCanvas (editor) {
         this.html.append(this.canvas);
     };
 
+    this.SetCursor = function (type) {
+        this.canvas.css({
+            "cursor": type
+        });
+    };
+
     this.Resize = function () {
         var aspect_ratio = this.editor.GetAspectRatio();
         var width = aspect_ratio[0];

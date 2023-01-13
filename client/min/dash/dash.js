@@ -24023,6 +24023,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.style = button_style;
     this.buttons = [];
+    this.disabled = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
     this.setup_styles = function () {
@@ -24045,10 +24046,22 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.DisableAutoSpacing = function () {
         this.auto_spacing_enabled = false;
     };
+    this.Disable = function () {
+        for (var button of this.buttons) {
+            this.buttons.Disable();
+        }
+        this.disabled = true;
+    };
+    this.Enable = function () {
+        for (var button of this.buttons) {
+            this.buttons.Enable();
+        }
+        this.disabled = false;
+    };
     this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
-        (function (self, callback) {
-            var button = new Dash.Gui.Button(
+        var button = (function (self, callback) {
+            return new Dash.Gui.Button(
                 label_text,
                 function () {
                     callback(button);
@@ -24057,15 +24070,18 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
                 self.color,
                 {"style": self.style}
             );
-            self.buttons.push(button);
-            button.html.css({
-                "margin": 0,
-                "flex-grow": 1
-            });
-            self.html.append(button.html);
         })(this, callback);
+        this.buttons.push(button);
+        button.html.css({
+            "margin": 0,
+            "flex-grow": 1
+        });
+        this.html.append(button.html);
         this.update_spacing();
-        return this.buttons.Last();
+        if (this.disabled) {
+            button.Disable();
+        }
+        return button;
     };
     // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
     this.update_spacing = function () {
@@ -27206,7 +27222,7 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-function DashGuiContext2D (obj_id, api, color=null) {
+function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -27222,11 +27238,13 @@ function DashGuiContext2D (obj_id, api, color=null) {
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
+     * @param {boolean} can_edit - Determines whether buttons, inputs, etc will be disabled
      * @param {DashColorSet} color - DashColorSet instance
      */
     this.obj_id = obj_id;
     this.api = api;
     this.color = color || Dash.Color.Light;
+    this.can_edit = can_edit;
     this.data = {};
     this.canvas = null;
     this.log_bar = null;
@@ -27239,7 +27257,6 @@ function DashGuiContext2D (obj_id, api, color=null) {
     this.middle_pane_slider = null;
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
-    this.can_edit = Dash.User.Init["roles"].includes("context_2d_editor") || Dash.User.Init["roles"].includes("master_editor");
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);
         this.canvas = new DashGuiContext2DCanvas(this);
@@ -27279,6 +27296,12 @@ function DashGuiContext2D (obj_id, api, color=null) {
             ...abs_css
         });
         this.middle_html.append(this.middle_pane_slider.html);
+    };
+    this.SetCanvasCursor = function (type) {
+        if (!this.canvas) {
+            return;
+        }
+        this.canvas.SetCursor(type);
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
@@ -27379,6 +27402,11 @@ function DashGuiContext2DCanvas (editor) {
         this.canvas.hide();
         this.html.append(this.canvas);
     };
+    this.SetCursor = function (type) {
+        this.canvas.css({
+            "cursor": type
+        });
+    };
     this.Resize = function () {
         var aspect_ratio = this.editor.GetAspectRatio();
         var width = aspect_ratio[0];
@@ -27437,26 +27465,97 @@ function DashGuiContext2DLogBar (editor) {
     this.setup_styles();
 }
 
+function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
+    this.toolbar = toolbar;
+    this.icon_name = icon_name;
+    this.hover_hint = hover_hint || this.icon_name.Title();
+    this.selected = false;
+    this.icon_button = null;
+    this.html = $("<div></div>");
+    this.color = this.toolbar.color;
+    this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
+    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible, and update the canvas cursor based on the tool
+    this.setup_styles = function () {
+        this.html.css({
+            "border-radius": Dash.Size.BorderRadius,
+            "height": this.size,
+            "width": this.size,
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": 0,
+            "margin-left": "auto",
+            "margin-right": "auto"
+        });
+        this.icon_button = new Dash.Gui.IconButton(
+            this.icon_name,
+            this.on_click,
+            this,
+            this.color,
+            {
+                "container_size": this.size,
+                "size_mult": 0.7
+            }
+        );
+        this.icon_button.SetHoverHint(this.hover_hint);
+        this.html.append(this.icon_button.html);
+    };
+    this.Deselect = function () {
+        if (!this.selected) {
+            return;
+        }
+        this.html.css({
+            "background": ""
+        });
+        this.selected = false;
+    };
+    this.Select = function () {
+        if (this.selected) {
+            return;
+        }
+        this.toolbar.DeselectTools();
+        this.html.css({
+            "background": this.color.Button.Background.Selected
+        });
+        this.selected = true;
+    };
+    this.on_click = function () {
+        this.Select();
+        // TODO
+    };
+    this.setup_styles();
+}
+
 function DashGuiContext2DToolbar (editor) {
     this.editor = editor;
+    this.tools = [];
     this.html = $("<div></div>");
     this.color = this.editor.color;
+    this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
-    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
             "inset": 0,
             "box-sizing": "border-box",
             "border-right": "1px solid " + this.color.StrokeLight,
-            "padding": Dash.Size.Padding * 0.5
+            "padding": this.padding
         });
+        this.add_header();
+        this.add_tools();
+    };
+    this.DeselectTools = function () {
+        for (var tool of this.tools) {
+            tool.Deselect();
+        }
+    };
+    this.add_header = function () {
         var icon = new Dash.Gui.Icon(this.color, "tools", Dash.Size.ButtonHeight, 0.75, this.color.AccentGood);
         icon.html.css({
             "margin-top": 0,
             "margin-bottom": 0,
             "margin-left": "auto",
-            "margin-right": "auto"
+            "margin-right": "auto",
+            "pointer-events": "none",
+            "user-select": "none"
         });
         var label = $("<div>Tools</div>");
         label.css({
@@ -27465,10 +27564,22 @@ function DashGuiContext2DToolbar (editor) {
             "font-size": "90%",
             "color": this.color.Stroke,
             "padding-bottom": Dash.Size.Padding * 0.1,
-            "border-bottom": "1px solid " + this.color.PinstripeDark
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            "pointer-events": "none",
+            "user-select": "none",
+            "cursor": "default"
         });
         this.html.append(icon.html);
         this.html.append(label);
+    };
+    this.add_tools = function () {
+        for (var icon_name of ["move"]) {
+            var tool = new DashGuiContext2DTool(this, icon_name);
+            this.html.append(tool.html);
+            this.tools.push(tool);
+        }
+        // First tool is selected by default
+        this.tools[0].Select();
     };
     this.setup_styles();
 }
@@ -27563,9 +27674,6 @@ function DashGuiContext2DEditorPanel (editor) {
         if (!this.property_box) {
             return;
         }
-        if (this.can_edit) {
-            this.property_box.Enable();
-        }
         this.property_box.Update();
         this.editor.ResizeCanvas();
     };
@@ -27574,7 +27682,6 @@ function DashGuiContext2DEditorPanel (editor) {
     };
     this.setup_property_box = function () {
         this.property_box.Flatten();
-        this.property_box.Disable();
         this.property_box.SetIndentPx(Dash.Size.Padding);
         this.property_box.html.css({
             "position": "absolute",
@@ -27588,9 +27695,12 @@ function DashGuiContext2DEditorPanel (editor) {
             "display_name"
         ).ReplaceBorderWithIcon("gear");
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
-        this.property_box.AddInput("display_name", "Display Name", "", null, true).RemoveSaveButton();
+        this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
         this.add_aspect_tool_row();
         var button_bar = this.property_box.AddButtonBar("toolbar");
+        if (!this.can_edit) {
+            button_bar.Disable();
+        }
         button_bar.html.css({
             "margin-top": Dash.Size.Padding * 2,
             "margin-left": Dash.Size.Padding
@@ -27646,7 +27756,7 @@ function DashGuiContext2DEditorPanel (editor) {
                     self.editor.ResizeCanvas();
                 },
                 null,
-                true,
+                self.can_edit,
                 key === "w",
                 key === "w" ? "Aspect Ratio:" : "",
                 false,
@@ -27685,6 +27795,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.html = $("<div></div>");
     this.color = this.panel.color;
     this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
+    this.new_box = new DashGuiContext2DEditorPanelContentNew(this);
+    this.edit_box = new DashGuiContext2DEditorPanelContentEdit(this);
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -27697,6 +27809,28 @@ function DashGuiContext2DEditorPanelContent (panel) {
         var header = new Dash.Gui.Header("Content");
         header.ReplaceBorderWithIcon("pencil_paintbrush");
         this.html.append(header.html);
+        this.html.append(this.new_box.html);
+        this.html.append(this.edit_box.html);
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelContentNew (content) {
+    this.content = content;
+    this.html = $("<div></div>");
+    this.color = this.content.color;
+    this.setup_styles = function () {
+        // TODO
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelContentEdit (content) {
+    this.content = content;
+    this.html = $("<div></div>");
+    this.color = this.content.color;
+    this.setup_styles = function () {
+        // TODO
     };
     this.setup_styles();
 }
@@ -29070,6 +29204,7 @@ function DashGuiIcons (icon) {
         "minus_square":          new DashGuiIconDefinition(this.icon, "Minus Square", this.weight["regular"], "minus-square"),
         "moon":                  new DashGuiIconDefinition(this.icon, "Moon", this.weight["regular"], "moon"),
         "more":                  new DashGuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
+        "move":                  new DashGuiIconDefinition(this.icon, "Move", this.weight["regular"], "arrows-alt"),
         "navigation":            new DashGuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
         "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
         "note":                  new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),

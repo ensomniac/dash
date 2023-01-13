@@ -4,6 +4,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.style = button_style;
 
     this.buttons = [];
+    this.disabled = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
 
@@ -31,11 +32,27 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.auto_spacing_enabled = false;
     };
 
+    this.Disable = function () {
+        for (var button of this.buttons) {
+            this.buttons.Disable();
+        }
+
+        this.disabled = true;
+    };
+
+    this.Enable = function () {
+        for (var button of this.buttons) {
+            this.buttons.Enable();
+        }
+
+        this.disabled = false;
+    };
+
     this.AddButton = function (label_text, callback) {
         callback = callback.bind(this.binder);
 
-        (function (self, callback) {
-            var button = new Dash.Gui.Button(
+        var button = (function (self, callback) {
+            return new Dash.Gui.Button(
                 label_text,
                 function () {
                     callback(button);
@@ -44,20 +61,24 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
                 self.color,
                 {"style": self.style}
             );
-
-            self.buttons.push(button);
-
-            button.html.css({
-                "margin": 0,
-                "flex-grow": 1
-            });
-
-            self.html.append(button.html);
         })(this, callback);
+
+        this.buttons.push(button);
+
+        button.html.css({
+            "margin": 0,
+            "flex-grow": 1
+        });
+
+        this.html.append(button.html);
 
         this.update_spacing();
 
-        return this.buttons.Last();
+        if (this.disabled) {
+            button.Disable();
+        }
+
+        return button;
     };
 
     // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
