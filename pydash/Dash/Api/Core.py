@@ -58,9 +58,16 @@ class ApiCore:
         except:
             self._params = {}
 
+            keys = None
+
+            try:
+                keys = str(self._fs.keys())
+            except:
+                pass
+
             self._response = {
                 "cgi": str(cgi),
-                "keys": str(self._fs.keys()),
+                "keys": keys,
                 "traceback": format_exc(),
                 "self._fs": str(self._fs),
             }
