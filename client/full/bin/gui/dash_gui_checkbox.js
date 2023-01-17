@@ -3,7 +3,7 @@ function DashGuiCheckbox (
     callback=null, label_text="", label_first=true, include_border=false
 ) {
     this.local_storage_key = local_storage_key;
-    this.default_state = default_state;
+    this.default_state = default_state === "true" ? true : default_state === "false" ? false : default_state;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.hover_hint = hover_hint === "none" ? "" : hover_hint;  // Leave the default as "Toggle" with a way to still allow a "" value
     this.binder = binder;

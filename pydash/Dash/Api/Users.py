@@ -84,7 +84,7 @@ class ApiUsers:
                 # but it may end up being better to raise an exception here instead
                 from Dash.Utils import SendEmail
 
-                msg = f"\nWARNING: Failed to read user data for '{email}' - it may be corrupted.\n\nPath:\n{user_path}"
+                msg = f"\nWARNING: Failed to read user data for '{email}'. If it's not a new user, it may be corrupted.\n\nPath:\n{user_path}"
 
                 if self.Params:
                     msg += f"\n\nParams:\n{self.Params}"

@@ -1,6 +1,10 @@
 /**@member DashGuiInputRow*/
 
 function DashGuiInputRowInterface () {
+    this.InFocus = function () {
+        return this.input.InFocus();
+    };
+
     this.DisableAutosave = function () {
         this.input.DisableAutosave();
     };
@@ -37,6 +41,9 @@ function DashGuiInputRowInterface () {
             "font-family": "sans_serif_italic",
             "height": Dash.Size.RowHeight,
             "line-height": Dash.Size.RowHeight + "px",
+            "user-select": "none",
+            "pointer-events": "none",
+            "flex": "none",
             ...css
         });
 
@@ -82,6 +89,7 @@ function DashGuiInputRowInterface () {
         options["label_transparent"] = true;
 
         this.combo = new Combo(this, "", options, this.on_combo_changed, this);
+
         this.html.append(this.combo.html);
     };
 
@@ -126,23 +134,30 @@ function DashGuiInputRowInterface () {
             console.log("Cleared input autosave timeout");
         }
 
-        var request = null;
-
         this.request_callback = callback;
         this.request_callback_binder = binder;
 
-        (function (self, endpoint, params) {
-            request = self.button.Request(
-                endpoint,
-                params,
+        return (function (self, endpoint, params) {
+            if (self.button) {
+                return self.button.Request(
+                    endpoint,
+                    params,
+                    function (response) {
+                        self.on_request_response(response);
+                    },
+                    self
+                );
+            }
+
+            return Dash.Request(
+                self,
                 function (response) {
                     self.on_request_response(response);
                 },
-                self
+                endpoint,
+                params
             );
         })(this, endpoint, params);
-
-        return request;
     };
 
     this.SetLocked = function (is_locked) {
@@ -198,15 +213,15 @@ function DashGuiInputRowInterface () {
         this.html.prepend(spacer);
 
         spacer.css({
-            "flex-grow": 1,
+            "flex-grow": 1
         });
 
         this.html.css({
-            "padding-right": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding
         });
 
         this.label.css({
-            "width": "auto",
+            "width": "auto"
         });
     };
 

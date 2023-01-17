@@ -200,15 +200,17 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "border-radius": 0
         });
 
-        // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
-        //  the right things are in place on the back-end, like renaming the user's folder etc
-        this.property_box.AddInput("email", "E-mail Address", "", null, false);
-        
-        this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
-        this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
+        if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
+            // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
+            //  the right things are in place on the back-end, like renaming the user's folder etc
+            this.property_box.AddInput("email", "E-mail Address", "", null, false);
 
-        if (this.has_privileges) {
-            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
+            this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
+
+            if (this.has_privileges) {
+                this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
+            }
         }
 
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
@@ -342,12 +344,13 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         return this.user_data;
     };
 
-    this.set_data = function (updated_data) {
-        // Basic/standard setting of data is taken care of in DashGuiPropertyBox
+    // Basic/standard setting of data is taken care of in DashGuiPropertyBox
+    this.set_data = function (updated_data_or_key, value) {
+        var key = typeof updated_data_or_key === "string" ? updated_data_or_key : updated_data_or_key["key"];
 
         // This is an extra, optional follow-up to that
-        if (updated_data["key"] in this.callbacks) {
-            this.callbacks[updated_data["key"]](updated_data);
+        if (key in this.callbacks) {
+            this.callbacks[key](updated_data_or_key);
         }
     };
 

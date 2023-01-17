@@ -26,13 +26,6 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     DashGuiPropertyBoxInterface.call(this);
 
     this.setup_styles = function () {
-
-        // DashGlobalImpactChange | 12/21/21 | Ryan
-        // Updating the property box's background color to reflect
-        // a slightly brighter color than whatever background it's
-        // placed over. This change will affect the look of all
-        // property boxes, but it does not change mobile styles.
-
         this.html.css({
             "background": "rgba(255, 255, 255, 0.25)",
         });
@@ -105,7 +98,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.update_tool_rows = function () {
         for (var tool_row of this.tool_rows) {
             for (var element of tool_row.elements) {
-                if (element instanceof DashGuiInput) {
+                if (element instanceof DashGuiInput || element instanceof DashGuiInputRow) {
                     if (element.InFocus()) {
                         console.log("(Currently being edited) Skipping update for " + element.data_key);
 
@@ -212,10 +205,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         return row;
     };
 
+    // Note: This function was initially intended for PropertyBox
+    // rows - it may not work well with other styles without modification
     this.add_delete_button = function (row, callback, data_key) {
-        // Note: This function was initially intended for PropertyBox
-        // rows - it may not work well with other styles without modification
-
         callback = callback.bind(this.binder);
 
         if (!this.buttons) {
@@ -307,22 +299,34 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
+        this.set_property(row_details["key"], new_value, row_input, false);
+    };
+
+    this.set_property = function (key, value, row_input=null, check=true) {
+        if (check && this.get_data_cb) {
+            var old_value = this.get_data_cb()[key];
+
+            if (old_value === value) {
+                return;
+            }
+        }
+
         var params = {
             "f": "set_property",
-            "key": row_details["key"],
-            "value": new_value,
+            "key": key,
+            "value": value,
             "obj_id": this.dash_obj_id
         };
 
-        console.log("Row updated - uploading...");
+        console.log("Set property '" + key + "':", value);
 
-        for (var key in this.additional_request_params) {
-            params[key] = this.additional_request_params[key];
+        for (var k in this.additional_request_params) {
+            params[k] = this.additional_request_params[k];
         }
 
-        if (row_details["key"].includes("password") && this.endpoint === "Users") {
+        if (key.includes("password") && this.endpoint === "Users") {
             params["f"] = "update_password";
-            params["p"] = new_value;
+            params["p"] = value;
 
             if (this.inputs && this.inputs["email"]) {
                 var email = this.inputs["email"].Text();
@@ -333,22 +337,34 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
         }
 
-        (function (self, row_input, row_details, params) {
-            row_input.Request(
-                self.endpoint,
-                params,
-                function (response) {
-                    self.on_server_response(response, row_details, row_input);
-                },
-                self
-            );
-        })(this, row_input, row_details, params);
+        (function (self) {
+            if (row_input && row_input.hasOwnProperty("Request")) {
+                row_input.Request(
+                    self.endpoint,
+                    params,
+                    function (response) {
+                        self.on_server_response(response, row_input);
+                    },
+                    self
+                );
+            }
+
+            else {
+                Dash.Request(
+                    self,
+                    function (response) {
+                        self.on_server_response(response);
+                    },
+                    self.endpoint,
+                    params
+                );
+            }
+        })(this);
     };
 
-    this.on_server_response = function (response, row_details, row_input) {
+    this.on_server_response = function (response, row_input=null) {
         if (!Dash.Validate.Response(response)) {
-
-            if (row_input) {
+            if (row_input && row_input.hasOwnProperty("SetInputValidity")) {
                 row_input.SetInputValidity(false);
             }
 
@@ -357,11 +373,37 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
         console.log("SERVER RESPONSE:", response);
 
-        row_input.FlashSave();
+        if (row_input && row_input.hasOwnProperty("FlashSave")) {
+            row_input.FlashSave();
+        }
 
         if (this.set_data_cb) {
             this.set_data_cb(response);
         }
+    };
+
+    this.add_hover_highlight = function (html) {
+        var highlight = $("<div></div>");
+
+        highlight.css({
+            "position": "absolute",
+            "inset": 0,
+            "background": this.color.AccentGood,
+            "border-radius": Dash.Size.BorderRadius,
+            "opacity": 0
+        });
+
+        html.on("mouseenter", function () {
+            highlight.stop().animate({"opacity": 0.5}, 50);
+        });
+
+        html.on("mouseleave", function () {
+            highlight.stop().animate({"opacity": 0}, 250);
+        });
+
+        html.prepend(highlight);
+
+        return highlight;
     };
 
     this.setup_styles();

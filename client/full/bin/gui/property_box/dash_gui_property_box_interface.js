@@ -165,11 +165,11 @@ function DashGuiPropertyBoxInterface () {
         return bar;
     };
 
-    this.AddToolRow = function () {
+    this.AddToolRow = function (set_data_cb=null) {
         var tool_row = new Dash.Gui.ToolRow(
             this.binder,
             this.get_formatted_data_cb ? this.get_formatted_data_cb : this.get_data_cb,
-            this.set_data_cb,
+            set_data_cb ? set_data_cb.bind(this.binder) : this.set_data_cb,
             this.color
         );
 
@@ -400,8 +400,8 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddCheckbox = function (
-        local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null,
-        callback=null, label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null
+        local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null,
+        label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
     ) {
         label_text = label_text.trim();
 
@@ -415,7 +415,13 @@ function DashGuiPropertyBoxInterface () {
             color,
             hover_hint,
             binder,
-            callback,
+            callback && highlight_row ? (function (self) {
+                return function (checkbox) {
+                    callback.bind(binder)(checkbox);
+
+                    self.add_hover_highlight(checkbox.html);
+                };
+            })(this) : callback,
             label_text,
             label_first,
             include_border
@@ -447,6 +453,10 @@ function DashGuiPropertyBoxInterface () {
         }
 
         checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
+
+        if (highlight_row) {
+            this.add_hover_highlight(checkbox.html);
+        }
 
         this.AddHTML(checkbox.html);
 
