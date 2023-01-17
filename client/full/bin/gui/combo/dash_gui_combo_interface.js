@@ -69,9 +69,21 @@ function DashGuiComboInterface () {
     };
 
     this.EnableSearchSelection = function () {
-        DashGuiComboSearch.call(this, this);
+        DashGuiComboSearch.call(this);
 
         this.setup_search_selection();
+    };
+
+    this.InFocus = function (check_search_only=false) {
+        if (check_search_only) {
+            return (this.search_input && this.search_input.InFocus());
+        }
+
+        if (this.search_input) {
+            return this.search_input.InFocus();
+        }
+
+        return this.IsExpanded();
     };
 
     // TODO: Function to disable search selection if option list is reduced below this.searchable_min

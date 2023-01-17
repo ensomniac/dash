@@ -198,6 +198,7 @@ function DashGuiIcons (icon) {
         "rocket":                new DashGuiIconDefinition(this.icon, "Rocket", this.weight["regular"], "rocket"),
         "rotate":                new DashGuiIconDefinition(this.icon, "Rotate", this.weight["regular"], "sync-alt"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"save"),
+        "scale":                 new DashGuiIconDefinition(this.icon, "Scale", this.weight["regular"], "expand-arrows-alt"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),

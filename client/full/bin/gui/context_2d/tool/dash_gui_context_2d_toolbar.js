@@ -18,6 +18,7 @@ function DashGuiContext2DToolbar (editor) {
 
         this.add_header();
         this.add_tools();
+        this.setup_connections();
     };
 
     this.DeselectTools = function () {
@@ -57,7 +58,7 @@ function DashGuiContext2DToolbar (editor) {
     };
 
     this.add_tools = function () {
-        for (var icon_name of ["move", "rotate", "expand_square_arrows"]) {
+        for (var icon_name of ["move", "rotate", "scale"]) {
             var tool = new DashGuiContext2DTool(this, icon_name);
 
             this.html.append(tool.html);
@@ -67,6 +68,38 @@ function DashGuiContext2DToolbar (editor) {
 
         // First tool is selected by default
         this.tools[0].Select();
+    };
+
+    this.setup_connections = function () {
+        var identifier = "dash_gui_context_2d_toolbar";
+
+        (function (self) {
+            $(document).on(
+                "keydown." + identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+                function (e) {
+                    if (self.html && !self.html.is(":visible")) {
+                        $(document).off("keydown." + identifier);
+
+                        self.esc_shortcut_active = false;
+
+                        return;
+                    }
+
+                    for (var tool of self.tools) {
+                        if (tool.hotkey.toLowerCase() !== e.key) {
+                            continue;
+                        }
+
+                        // Ignore if typing in an input
+                        if (!self.editor.EditorPanelInputInFocus()) {
+                            tool.Select();
+                        }
+
+                        break;
+                    }
+                }
+            );
+        })(this);
     };
 
     this.setup_styles();

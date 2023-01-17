@@ -88,6 +88,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.middle_html.append(this.middle_pane_slider.html);
     };
 
+    this.EditorPanelInputInFocus = function () {
+        return this.editor_panel.InputInFocus();
+    };
+
     this.SetCanvasCursor = function (type) {
         if (!this.canvas) {
             return;

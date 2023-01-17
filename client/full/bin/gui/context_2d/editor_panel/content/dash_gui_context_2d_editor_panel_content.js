@@ -26,5 +26,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.html.append(this.edit_box.html);
     };
 
+    // TODO
+    this.InputInFocus = function () {
+        return false;
+    };
+
     this.setup_styles();
 }

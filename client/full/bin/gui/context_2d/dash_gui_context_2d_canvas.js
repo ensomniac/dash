@@ -44,6 +44,7 @@ function DashGuiContext2DCanvas (editor) {
         });
     };
 
+    // TODO: re-scaling the window breaks the aspect ratio!
     this.Resize = function () {
         var aspect_ratio = this.editor.GetAspectRatio();
         var width = aspect_ratio[0];

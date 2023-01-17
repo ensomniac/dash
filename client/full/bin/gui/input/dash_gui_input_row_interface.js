@@ -2,7 +2,7 @@
 
 function DashGuiInputRowInterface () {
     this.InFocus = function () {
-        return this.input.InFocus();
+        return (this.input && this.input.InFocus());
     };
 
     this.DisableAutosave = function () {

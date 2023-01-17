@@ -36,6 +36,38 @@ function DashGuiPropertyBoxInterface () {
         });
     };
 
+    this.InputInFocus = function () {
+        var data_key;
+
+        for (data_key in this.inputs) {
+            var input_row = this.inputs[data_key];
+
+            if (input_row && input_row.InFocus()) {
+                return true;
+            }
+        }
+
+        for (data_key in this.combos) {
+            if (data_key === "") {
+                continue;
+            }
+
+            var combo = this.combos[data_key];
+
+            if (combo && combo.InFocus(true)) {
+                return true;
+            }
+        }
+
+        for (var tool_row of this.tool_rows) {
+            if (tool_row.InputInFocus()) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     this.SetIndentPx = function (px) {
         this.indent_px = px;
     };

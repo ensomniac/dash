@@ -23105,6 +23105,17 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         });
         this.html = this.toolbar.html;
     };
+    this.InputInFocus = function () {
+        for (var element of this.elements) {
+            if ((element instanceof DashGuiInput || element instanceof DashGuiInputRow) && element.InFocus()) {
+                return true;
+            }
+            if (element instanceof DashGuiCombo && element.InFocus(true)) {
+                return true;
+            }
+        }
+        return false;
+    };
     this.AddExpander = function () {
         return this.toolbar.AddExpander();
     };
@@ -26895,8 +26906,17 @@ function DashGuiComboInterface () {
         this.default_search_submit_combo = combo_option;
     };
     this.EnableSearchSelection = function () {
-        DashGuiComboSearch.call(this, this);
+        DashGuiComboSearch.call(this);
         this.setup_search_selection();
+    };
+    this.InFocus = function (check_search_only=false) {
+        if (check_search_only) {
+            return (this.search_input && this.search_input.InFocus());
+        }
+        if (this.search_input) {
+            return this.search_input.InFocus();
+        }
+        return this.IsExpanded();
     };
     // TODO: Function to disable search selection if option list is reduced below this.searchable_min
     this.ShowTray = function () {
@@ -27394,6 +27414,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         });
         this.middle_html.append(this.middle_pane_slider.html);
     };
+    this.EditorPanelInputInFocus = function () {
+        return this.editor_panel.InputInFocus();
+    };
     this.SetCanvasCursor = function (type) {
         if (!this.canvas) {
             return;
@@ -27504,6 +27527,7 @@ function DashGuiContext2DCanvas (editor) {
             "cursor": type
         });
     };
+    // TODO: re-scaling the window breaks the aspect ratio!
     this.Resize = function () {
         var aspect_ratio = this.editor.GetAspectRatio();
         var width = aspect_ratio[0];
@@ -27562,18 +27586,22 @@ function DashGuiContext2DLogBar (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
+function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cursor="") {
     this.toolbar = toolbar;
     this.icon_name = icon_name;
-    this.hover_hint = hover_hint || (icon_name === "expand_square_arrows" ? "Expand" : this.icon_name.Title());
+    this.hover_hint = hover_hint || this.icon_name.Title();
     this.hotkey = hotkey || this.hover_hint[0];
-    console.debug("TEST", this.hotkey);
+    this.cursor = cursor || (
+          this.icon_name === "move" ? "move"
+        : this.icon_name === "rotate" ? ""
+        : this.icon_name === "scale" ? ""
+        : ""
+    );
     this.selected = false;
     this.icon_button = null;
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
-    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible, and update the canvas cursor based on the tool
     this.setup_styles = function () {
         this.html.css({
             "border-radius": Dash.Size.BorderRadius,
@@ -27584,7 +27612,9 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
             "margin-left": "auto",
             "margin-right": "auto"
         });
-        this.setup_icon_button();
+        this.validate_hotkey();
+        this.add_hotkey_letter();
+        this.add_icon_button();
         this.setup_connections();
     };
     this.Deselect = function () {
@@ -27596,6 +27626,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
         });
         this.selected = false;
     };
+    // TODO: update the canvas cursor based on the tool
     this.Select = function () {
         if (this.selected) {
             return;
@@ -27610,7 +27641,24 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
         this.Select();
         // TODO
     };
-    this.setup_icon_button = function () {
+    this.add_hotkey_letter = function () {
+        if (!this.hotkey) {
+            return;
+        }
+        var letter = $("<div>" + this.hotkey + "</div>");
+        letter.css({
+            "position": "absolute",
+            "bottom": 0,
+            "right": 0,
+            "color": this.color.Stroke,
+            "font-family": "sans_serif_bold",
+            "font-size": "75%",
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+        this.html.append(letter);
+    };
+    this.add_icon_button = function () {
         this.icon_button = new Dash.Gui.IconButton(
             this.icon_name,
             this.on_click,
@@ -27618,7 +27666,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
             this.color,
             {
                 "container_size": this.size,
-                "size_mult": this.icon_name === "rotate" ? 0.66 : 0.7
+                "size_mult": this.icon_name === "rotate" ? 0.65 : 0.69
             }
         );
         this.icon_button.SetHoverHint(this.hover_hint);
@@ -27644,6 +27692,20 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
             });
         })(this);
     };
+    this.validate_hotkey = function () {
+        if (!this.hotkey) {
+            return;
+        }
+        for (var tool of this.toolbar.tools) {
+            if (tool.hotkey !== this.hotkey) {
+                continue;
+            }
+            console.warn("Duplicate hotkey:", this.hotkey);
+            this.hotkey = "";
+            return;
+        }
+        this.hover_hint += " [" + this.hotkey + "]";
+    };
     this.setup_styles();
 }
 
@@ -27664,6 +27726,7 @@ function DashGuiContext2DToolbar (editor) {
         });
         this.add_header();
         this.add_tools();
+        this.setup_connections();
     };
     this.DeselectTools = function () {
         for (var tool of this.tools) {
@@ -27696,13 +27759,38 @@ function DashGuiContext2DToolbar (editor) {
         this.html.append(label);
     };
     this.add_tools = function () {
-        for (var icon_name of ["move", "rotate", "expand_square_arrows"]) {
+        for (var icon_name of ["move", "rotate", "scale"]) {
             var tool = new DashGuiContext2DTool(this, icon_name);
             this.html.append(tool.html);
             this.tools.push(tool);
         }
         // First tool is selected by default
         this.tools[0].Select();
+    };
+    this.setup_connections = function () {
+        var identifier = "dash_gui_context_2d_toolbar";
+        (function (self) {
+            $(document).on(
+                "keydown." + identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+                function (e) {
+                    if (self.html && !self.html.is(":visible")) {
+                        $(document).off("keydown." + identifier);
+                        self.esc_shortcut_active = false;
+                        return;
+                    }
+                    for (var tool of self.tools) {
+                        if (tool.hotkey.toLowerCase() !== e.key) {
+                            continue;
+                        }
+                        // Ignore if typing in an input
+                        if (!self.editor.EditorPanelInputInFocus()) {
+                            tool.Select();
+                        }
+                        break;
+                    }
+                }
+            );
+        })(this);
     };
     this.setup_styles();
 }
@@ -27783,6 +27871,13 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
+    };
+    this.InputInFocus = function () {
+        return (
+               (this.property_box && this.property_box.InputInFocus())
+            || (this.layers_box   && this.layers_box.InputInFocus())
+            || (this.content_box  && this.content_box.InputInFocus())
+        );
     };
     this.GetAspectRatio = function () {
         if (!this.aspect_tool_row) {
@@ -27910,6 +28005,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         header.ReplaceBorderWithIcon("layers");
         this.html.append(header.html);
     };
+    // TODO
+    this.InputInFocus = function () {
+        return false;
+    };
     this.setup_styles();
 }
 
@@ -27934,6 +28033,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.html.append(header.html);
         this.html.append(this.new_box.html);
         this.html.append(this.edit_box.html);
+    };
+    // TODO
+    this.InputInFocus = function () {
+        return false;
     };
     this.setup_styles();
 }
@@ -29351,6 +29454,7 @@ function DashGuiIcons (icon) {
         "rocket":                new DashGuiIconDefinition(this.icon, "Rocket", this.weight["regular"], "rocket"),
         "rotate":                new DashGuiIconDefinition(this.icon, "Rotate", this.weight["regular"], "sync-alt"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"save"),
+        "scale":                 new DashGuiIconDefinition(this.icon, "Scale", this.weight["regular"], "expand-arrows-alt"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),
         "server":                new DashGuiIconDefinition(this.icon, "Server", this.weight["regular"], "server"),
@@ -30065,7 +30169,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 /**@member DashGuiInputRow*/
 function DashGuiInputRowInterface () {
     this.InFocus = function () {
-        return this.input.InFocus();
+        return (this.input && this.input.InFocus());
     };
     this.DisableAutosave = function () {
         this.input.DisableAutosave();
@@ -30578,7 +30682,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.update_inputs = function () {
         for (var data_key in this.inputs) {
             var input_row = this.inputs[data_key];
-            if (!input_row.CanAutoUpdate() || (input_row.input && input_row.input.InFocus())) {
+            if (!input_row.CanAutoUpdate() || input_row.InFocus()) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
@@ -30591,7 +30695,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                 continue;
             }
             var combo = this.combos[data_key];
-            if (combo.IsExpanded()) {
+            if (combo.InFocus(false)) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
@@ -30888,6 +30992,30 @@ function DashGuiPropertyBoxInterface () {
             "pointer-events": "auto",
             "user-select": "auto"
         });
+    };
+    this.InputInFocus = function () {
+        var data_key;
+        for (data_key in this.inputs) {
+            var input_row = this.inputs[data_key];
+            if (input_row && input_row.InFocus()) {
+                return true;
+            }
+        }
+        for (data_key in this.combos) {
+            if (data_key === "") {
+                continue;
+            }
+            var combo = this.combos[data_key];
+            if (combo && combo.InFocus(true)) {
+                return true;
+            }
+        }
+        for (var tool_row of this.tool_rows) {
+            if (tool_row.InputInFocus()) {
+                return true;
+            }
+        }
+        return false;
     };
     this.SetIndentPx = function (px) {
         this.indent_px = px;

@@ -62,6 +62,14 @@ function DashGuiContext2DEditorPanel (editor) {
         this.setup_property_box();
     };
 
+    this.InputInFocus = function () {
+        return (
+               (this.property_box && this.property_box.InputInFocus())
+            || (this.layers_box   && this.layers_box.InputInFocus())
+            || (this.content_box  && this.content_box.InputInFocus())
+        );
+    };
+
     this.GetAspectRatio = function () {
         if (!this.aspect_tool_row) {
             return [1, 1];

@@ -51,7 +51,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         for (var data_key in this.inputs) {
             var input_row = this.inputs[data_key];
 
-            if (!input_row.CanAutoUpdate() || (input_row.input && input_row.input.InFocus())) {
+            if (!input_row.CanAutoUpdate() || input_row.InFocus()) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;
@@ -69,7 +69,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
 
             var combo = this.combos[data_key];
 
-            if (combo.IsExpanded()) {
+            if (combo.InFocus(false)) {
                 console.log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;

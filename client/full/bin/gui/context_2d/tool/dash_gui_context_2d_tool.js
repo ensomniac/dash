@@ -1,18 +1,21 @@
-function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
+function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cursor="") {
     this.toolbar = toolbar;
     this.icon_name = icon_name;
-    this.hover_hint = hover_hint || (icon_name === "expand_square_arrows" ? "Expand" : this.icon_name.Title());
+    this.hover_hint = hover_hint || this.icon_name.Title();
     this.hotkey = hotkey || this.hover_hint[0];
 
-    console.debug("TEST", this.hotkey);
+    this.cursor = cursor || (
+          this.icon_name === "move" ? "move"
+        : this.icon_name === "rotate" ? ""
+        : this.icon_name === "scale" ? ""
+        : ""
+    );
 
     this.selected = false;
     this.icon_button = null;
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
-
-    // TODO: add hotkeys for each tool and show that hotkey on hover, and/or next to the icon if feasible, and update the canvas cursor based on the tool
 
     this.setup_styles = function () {
         this.html.css({
@@ -25,7 +28,9 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
             "margin-right": "auto"
         });
 
-        this.setup_icon_button();
+        this.validate_hotkey();
+        this.add_hotkey_letter();
+        this.add_icon_button();
         this.setup_connections();
     };
 
@@ -41,6 +46,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
         this.selected = false;
     };
 
+    // TODO: update the canvas cursor based on the tool
     this.Select = function () {
         if (this.selected) {
             return;
@@ -61,7 +67,28 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
         // TODO
     };
 
-    this.setup_icon_button = function () {
+    this.add_hotkey_letter = function () {
+        if (!this.hotkey) {
+            return;
+        }
+
+        var letter = $("<div>" + this.hotkey + "</div>");
+
+        letter.css({
+            "position": "absolute",
+            "bottom": 0,
+            "right": 0,
+            "color": this.color.Stroke,
+            "font-family": "sans_serif_bold",
+            "font-size": "75%",
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+
+        this.html.append(letter);
+    };
+
+    this.add_icon_button = function () {
         this.icon_button = new Dash.Gui.IconButton(
             this.icon_name,
             this.on_click,
@@ -69,7 +96,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
             this.color,
             {
                 "container_size": this.size,
-                "size_mult": this.icon_name === "rotate" ? 0.66 : 0.7
+                "size_mult": this.icon_name === "rotate" ? 0.65 : 0.69
             }
         );
 
@@ -100,6 +127,26 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
                 });
             });
         })(this);
+    };
+
+    this.validate_hotkey = function () {
+        if (!this.hotkey) {
+            return;
+        }
+
+        for (var tool of this.toolbar.tools) {
+            if (tool.hotkey !== this.hotkey) {
+                continue;
+            }
+
+            console.warn("Duplicate hotkey:", this.hotkey);
+
+            this.hotkey = "";
+
+            return;
+        }
+
+        this.hover_hint += " [" + this.hotkey + "]";
     };
 
     this.setup_styles();

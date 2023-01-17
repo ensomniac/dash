@@ -29,6 +29,20 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.html = this.toolbar.html;
     };
 
+    this.InputInFocus = function () {
+        for (var element of this.elements) {
+            if ((element instanceof DashGuiInput || element instanceof DashGuiInputRow) && element.InFocus()) {
+                return true;
+            }
+
+            if (element instanceof DashGuiCombo && element.InFocus(true)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     this.AddExpander = function () {
         return this.toolbar.AddExpander();
     };

@@ -20,5 +20,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.html.append(header.html);
     };
 
+    // TODO
+    this.InputInFocus = function () {
+        return false;
+    };
+
     this.setup_styles();
 }
