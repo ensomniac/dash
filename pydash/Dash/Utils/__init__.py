@@ -97,6 +97,12 @@ def CreateZIP(dir_path):
     return CreateZIP(dir_path)
 
 
+def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", filename=""):
+    from .file import ImageHasTransparency
+
+    return ImageHasTransparency(pil_image_object, file_bytes_or_existing_path, filename)
+
+
 # ------------------------------------------------- MODEL ---------------------------------------------------
 def GetModelExtensions():
     from .model import ModelExtensions

@@ -196,6 +196,7 @@ function DashGuiIcons (icon) {
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
         "robot":                 new DashGuiIconDefinition(this.icon, "Robot", this.weight["regular"], "robot"),
         "rocket":                new DashGuiIconDefinition(this.icon, "Rocket", this.weight["regular"], "rocket"),
+        "rotate":                new DashGuiIconDefinition(this.icon, "Rotate", this.weight["regular"], "sync-alt"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"save"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),

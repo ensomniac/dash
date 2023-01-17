@@ -27562,10 +27562,12 @@ function DashGuiContext2DLogBar (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
+function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
     this.toolbar = toolbar;
     this.icon_name = icon_name;
-    this.hover_hint = hover_hint || this.icon_name.Title();
+    this.hover_hint = hover_hint || (icon_name === "expand_square_arrows" ? "Expand" : this.icon_name.Title());
+    this.hotkey = hotkey || this.hover_hint[0];
+    console.debug("TEST", this.hotkey);
     this.selected = false;
     this.icon_button = null;
     this.html = $("<div></div>");
@@ -27582,18 +27584,8 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
             "margin-left": "auto",
             "margin-right": "auto"
         });
-        this.icon_button = new Dash.Gui.IconButton(
-            this.icon_name,
-            this.on_click,
-            this,
-            this.color,
-            {
-                "container_size": this.size,
-                "size_mult": 0.7
-            }
-        );
-        this.icon_button.SetHoverHint(this.hover_hint);
-        this.html.append(this.icon_button.html);
+        this.setup_icon_button();
+        this.setup_connections();
     };
     this.Deselect = function () {
         if (!this.selected) {
@@ -27610,13 +27602,47 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
         }
         this.toolbar.DeselectTools();
         this.html.css({
-            "background": this.color.Button.Background.Selected
+            "background": this.color.PinstripeDark
         });
         this.selected = true;
     };
     this.on_click = function () {
         this.Select();
         // TODO
+    };
+    this.setup_icon_button = function () {
+        this.icon_button = new Dash.Gui.IconButton(
+            this.icon_name,
+            this.on_click,
+            this,
+            this.color,
+            {
+                "container_size": this.size,
+                "size_mult": this.icon_name === "rotate" ? 0.66 : 0.7
+            }
+        );
+        this.icon_button.SetHoverHint(this.hover_hint);
+        this.html.append(this.icon_button.html);
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
+                if (self.selected) {
+                    return;
+                }
+                self.html.css({
+                    "background": self.color.Pinstripe
+                });
+            });
+            self.html.on("mouseleave", function () {
+                if (self.selected) {
+                    return;
+                }
+                self.html.css({
+                    "background": ""
+                });
+            });
+        })(this);
     };
     this.setup_styles();
 }
@@ -27670,7 +27696,7 @@ function DashGuiContext2DToolbar (editor) {
         this.html.append(label);
     };
     this.add_tools = function () {
-        for (var icon_name of ["move"]) {
+        for (var icon_name of ["move", "rotate", "expand_square_arrows"]) {
             var tool = new DashGuiContext2DTool(this, icon_name);
             this.html.append(tool.html);
             this.tools.push(tool);
@@ -29323,6 +29349,7 @@ function DashGuiIcons (icon) {
         "remove_notification":   new DashGuiIconDefinition(this.icon, "Remove Notification", this.weight["regular"], "bell-slash"),
         "robot":                 new DashGuiIconDefinition(this.icon, "Robot", this.weight["regular"], "robot"),
         "rocket":                new DashGuiIconDefinition(this.icon, "Rocket", this.weight["regular"], "rocket"),
+        "rotate":                new DashGuiIconDefinition(this.icon, "Rotate", this.weight["regular"], "sync-alt"),
         "save":                  new DashGuiIconDefinition(this.icon, "Save", this.weight["regular"],"save"),
         "search":                new DashGuiIconDefinition(this.icon, "Search", this.weight["regular"],"search"),
         "send":                  new DashGuiIconDefinition(this.icon, "Send", this.weight["solid"],"paper-plane"),

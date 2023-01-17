@@ -56,7 +56,6 @@ def Upload(
     if period_count > 1 and replace_extra_periods:
         filename = replace_extra_periods_in_filename(filename, file_ext)
 
-    img = None
     is_image = file_ext in ImageExtensions
 
     if is_image:
@@ -66,6 +65,7 @@ def Upload(
             target_aspect_ratio
         )
     else:
+        img = None
         file_data = {"filename": existing_data_for_update.get("filename") or filename}
 
     if additional_data:
@@ -220,6 +220,23 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
     return file_data
 
 
+def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", filename=""):
+    if not pil_image_object and not file_bytes_or_existing_path:
+        raise ValueError("Must provide either 'pil_image_object' or 'file_bytes_or_existing_path'")
+
+    if not pil_image_object:
+        pil_image_object = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+    try:
+        # So far, this one-liner has proven more than sufficient, but if
+        # there are fringe cases that don't get caught by this, we may need
+        # to incorporate the other two checks from this SO post:
+        # https://stackoverflow.com/a/58567453/14804363
+        return pil_image_object.info.get("transparency", None) is not None
+    except:
+        return False
+
+
 def get_tagless_filename(filename):
     if ")." not in filename:
         return filename
@@ -304,26 +321,7 @@ def get_root(root_path, file_id, nested):
 
 
 def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None):
-    from PIL import Image
-
-    # This is required for PIL to be able to load HEIC images
-    if filename.lower().endswith(".heic"):
-        from pillow_heif import register_heif_opener
-
-        register_heif_opener()
-
-    # Allow large uploads, no concern for DecompressionBombError
-    Image.MAX_IMAGE_PIXELS = None
-
-    img = None
-
-    if type(file_bytes_or_existing_path) is bytes:
-        from io import BytesIO
-
-        img = Image.open(BytesIO(file_bytes_or_existing_path))
-
-    elif type(file_bytes_or_existing_path) is str:
-        img = Image.open(file_bytes_or_existing_path)
+    img = get_pil_image_object(file_bytes_or_existing_path, filename)
 
     if target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
         raise Exception(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
@@ -346,6 +344,29 @@ def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_rat
         img, file_data["rot_deg"] = rotate_image(img, file_data["exif"])
 
     return img, file_data
+
+
+def get_pil_image_object(file_bytes_or_existing_path, filename=""):
+    from PIL import Image
+
+    # This is required for PIL to be able to load HEIC images
+    if filename and filename.lower().endswith(".heic"):
+        from pillow_heif import register_heif_opener
+
+        register_heif_opener()
+
+    # Allow large uploads, no concern for DecompressionBombError
+    Image.MAX_IMAGE_PIXELS = None
+
+    if type(file_bytes_or_existing_path) is bytes:
+        from io import BytesIO
+
+        return Image.open(BytesIO(file_bytes_or_existing_path))
+
+    if type(file_bytes_or_existing_path) is str:
+        return Image.open(file_bytes_or_existing_path)
+
+    return None
 
 
 def validate_image_aspect_ratio(image, target_aspect_ratio, return_image_aspect_ratio=False):
@@ -543,7 +564,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
         if png_thumb.mode == "CMYK":
             try:
                 # Try to preserve transparency is present and if possible
-                if png_thumb.info.get("transparency", None) is not None:
+                if ImageHasTransparency(png_thumb):
                     png_thumb = png_thumb.convert("RGBA")
                 else:
                     png_thumb = png_thumb.convert("RGB")

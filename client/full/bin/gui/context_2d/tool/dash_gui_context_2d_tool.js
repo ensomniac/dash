@@ -1,7 +1,10 @@
-function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
+function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="") {
     this.toolbar = toolbar;
     this.icon_name = icon_name;
-    this.hover_hint = hover_hint || this.icon_name.Title();
+    this.hover_hint = hover_hint || (icon_name === "expand_square_arrows" ? "Expand" : this.icon_name.Title());
+    this.hotkey = hotkey || this.hover_hint[0];
+
+    console.debug("TEST", this.hotkey);
 
     this.selected = false;
     this.icon_button = null;
@@ -22,20 +25,8 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
             "margin-right": "auto"
         });
 
-        this.icon_button = new Dash.Gui.IconButton(
-            this.icon_name,
-            this.on_click,
-            this,
-            this.color,
-            {
-                "container_size": this.size,
-                "size_mult": 0.7
-            }
-        );
-
-        this.icon_button.SetHoverHint(this.hover_hint);
-
-        this.html.append(this.icon_button.html);
+        this.setup_icon_button();
+        this.setup_connections();
     };
 
     this.Deselect = function () {
@@ -58,7 +49,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
         this.toolbar.DeselectTools();
 
         this.html.css({
-            "background": this.color.Button.Background.Selected
+            "background": this.color.PinstripeDark
         });
 
         this.selected = true;
@@ -68,6 +59,47 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="") {
         this.Select();
 
         // TODO
+    };
+
+    this.setup_icon_button = function () {
+        this.icon_button = new Dash.Gui.IconButton(
+            this.icon_name,
+            this.on_click,
+            this,
+            this.color,
+            {
+                "container_size": this.size,
+                "size_mult": this.icon_name === "rotate" ? 0.66 : 0.7
+            }
+        );
+
+        this.icon_button.SetHoverHint(this.hover_hint);
+
+        this.html.append(this.icon_button.html);
+    };
+
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mouseenter", function () {
+                if (self.selected) {
+                    return;
+                }
+
+                self.html.css({
+                    "background": self.color.Pinstripe
+                });
+            });
+
+            self.html.on("mouseleave", function () {
+                if (self.selected) {
+                    return;
+                }
+
+                self.html.css({
+                    "background": ""
+                });
+            });
+        })(this);
     };
 
     this.setup_styles();

@@ -57,7 +57,7 @@ function DashGuiContext2DToolbar (editor) {
     };
 
     this.add_tools = function () {
-        for (var icon_name of ["move"]) {
+        for (var icon_name of ["move", "rotate", "expand_square_arrows"]) {
             var tool = new DashGuiContext2DTool(this, icon_name);
 
             this.html.append(tool.html);
