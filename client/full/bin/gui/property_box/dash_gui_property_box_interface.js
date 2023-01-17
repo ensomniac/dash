@@ -217,7 +217,7 @@ function DashGuiPropertyBoxInterface () {
         return tool_row;
     };
 
-    this.AddButton = function (label_text, callback=null, options={}) {
+    this.AddButton = function (label_text, callback=null, options={}, wrap_cb=true) {  // See comments
         if (!this.buttons) {
             this.buttons = [];
         }
@@ -225,11 +225,17 @@ function DashGuiPropertyBoxInterface () {
         var button = (function (self) {
             return new Dash.Gui.Button(
                 label_text,
-                function () {
+
+                // Andrew 1/17/23 - For some reason, the original code here wraps the provided callback in an empty function, which
+                // suppresses the button's actual callback return values. I can't understand why it was written this way, but I've
+                // added an extra param, 'wrap_cb', to circumvent this behavior and actually pass the provided callback directly to
+                // the button, as it should be. I've done it this way to make sure nothing else will break, but this is a strange one.
+                wrap_cb ? function () {
                     if (callback) {
                         callback.bind(self.binder)(button);
                     }
-                },
+                } : callback ? callback.bind(this.binder) : null,
+
                 self,
                 self.color,
                 options

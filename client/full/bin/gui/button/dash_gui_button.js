@@ -120,6 +120,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
 
     this.on_click = function (event) {
         if (this.callback && this.bind) {
+            if (this.file_uploader && event.timeStamp) {
+                return;
+            }
+
             this.callback.bind(this.bind)(event, this);
         }
     };

@@ -239,10 +239,8 @@ function DashGuiButtonInterface () {
             this.on_file_upload_start_callback = null;
         }
 
-        this.file_uploader = null;
-
-        (function (self) {
-            self.file_uploader = new DashGuiButtonFileUploader(
+        this.file_uploader = (function (self) {
+            return new DashGuiButtonFileUploader(
                 self,
                 api,
                 params,
