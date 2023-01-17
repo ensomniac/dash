@@ -91,6 +91,12 @@ def GetVideoExtensions():
     return VideoExtensions
 
 
+def GetFontExtensions():
+    from .file import FontExtensions
+
+    return FontExtensions
+
+
 def CreateZIP(dir_path):
     from .file import CreateZIP
 

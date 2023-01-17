@@ -31128,8 +31128,7 @@ function DashGuiPropertyBoxInterface () {
         this.tool_rows.push(tool_row);
         return tool_row;
     };
-    this.AddButton = function (label_text, callback, options={}) {
-        callback = callback.bind(this.binder);
+    this.AddButton = function (label_text, callback=null, options={}) {
         if (!this.buttons) {
             this.buttons = [];
         }
@@ -31137,7 +31136,9 @@ function DashGuiPropertyBoxInterface () {
             return new Dash.Gui.Button(
                 label_text,
                 function () {
-                    callback(button);
+                    if (callback) {
+                        callback.bind(self.binder)(button);
+                    }
                 },
                 self,
                 self.color,
