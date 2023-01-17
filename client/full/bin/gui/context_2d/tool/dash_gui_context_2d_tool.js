@@ -4,7 +4,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.hover_hint = hover_hint || this.icon_name.Title();
     this.hotkey = hotkey || this.hover_hint[0];
     this.cursor = cursor || (
-        this.icon_name === "move" ? "url(https://dash.guide/github/dash/client/full/bin/img/cursor/" + this.icon_name + ".png), grab" : "grab"
+        this.icon_name === "move" ? this.icon_name : "url(https://dash.guide/github/dash/client/full/bin/img/cursor/" + this.icon_name + ".png), grab"
     );
 
     this.selected = false;
