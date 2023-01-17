@@ -85,6 +85,10 @@ function DashGuiContext2DToolbar (editor) {
                         return;
                     }
 
+                    if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
+                        return;
+                    }
+
                     for (var tool of self.tools) {
                         if (tool.hotkey.toLowerCase() !== e.key) {
                             continue;

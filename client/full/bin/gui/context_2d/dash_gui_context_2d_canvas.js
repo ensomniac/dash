@@ -38,10 +38,12 @@ function DashGuiContext2DCanvas (editor) {
         this.html.append(this.canvas);
     };
 
-    this.SetCursor = function (type) {
+    this.SetTool = function (name, cursor="grab") {
         this.canvas.css({
-            "cursor": type
+            "cursor": cursor
         });
+
+        // TODO: restyle the bounding box or something depending on the tool (name)
     };
 
     // TODO: re-scaling the window breaks the aspect ratio!

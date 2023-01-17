@@ -3,12 +3,8 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.icon_name = icon_name;
     this.hover_hint = hover_hint || this.icon_name.Title();
     this.hotkey = hotkey || this.hover_hint[0];
-
     this.cursor = cursor || (
-          this.icon_name === "move" ? "move"
-        : this.icon_name === "rotate" ? ""
-        : this.icon_name === "scale" ? ""
-        : ""
+        this.icon_name === "move" ? "url(https://dash.guide/github/dash/client/full/bin/img/cursor/" + this.icon_name + ".png), grab" : "grab"
     );
 
     this.selected = false;
@@ -46,7 +42,6 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
         this.selected = false;
     };
 
-    // TODO: update the canvas cursor based on the tool
     this.Select = function () {
         if (this.selected) {
             return;
@@ -58,13 +53,15 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
             "background": this.color.PinstripeDark
         });
 
+        this.toolbar.editor.SetCanvasTool(this.icon_name, this.cursor);
+
         this.selected = true;
     };
 
     this.on_click = function () {
         this.Select();
 
-        // TODO
+        // Anything else?
     };
 
     this.add_hotkey_letter = function () {

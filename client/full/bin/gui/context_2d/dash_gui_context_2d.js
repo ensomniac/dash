@@ -92,12 +92,12 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         return this.editor_panel.InputInFocus();
     };
 
-    this.SetCanvasCursor = function (type) {
+    this.SetCanvasTool = function (name, cursor) {
         if (!this.canvas) {
             return;
         }
 
-        this.canvas.SetCursor(type);
+        this.canvas.SetTool(name, cursor);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {

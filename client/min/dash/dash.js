@@ -27417,11 +27417,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };
-    this.SetCanvasCursor = function (type) {
+    this.SetCanvasTool = function (name, cursor) {
         if (!this.canvas) {
             return;
         }
-        this.canvas.SetCursor(type);
+        this.canvas.SetTool(name, cursor);
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
@@ -27522,10 +27522,11 @@ function DashGuiContext2DCanvas (editor) {
         this.canvas.hide();
         this.html.append(this.canvas);
     };
-    this.SetCursor = function (type) {
+    this.SetTool = function (name, cursor="grab") {
         this.canvas.css({
-            "cursor": type
+            "cursor": cursor
         });
+        // TODO: restyle the bounding box or something depending on the tool (name)
     };
     // TODO: re-scaling the window breaks the aspect ratio!
     this.Resize = function () {
@@ -27592,10 +27593,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.hover_hint = hover_hint || this.icon_name.Title();
     this.hotkey = hotkey || this.hover_hint[0];
     this.cursor = cursor || (
-          this.icon_name === "move" ? "move"
-        : this.icon_name === "rotate" ? ""
-        : this.icon_name === "scale" ? ""
-        : ""
+        this.icon_name === "move" ? "url(https://dash.guide/github/dash/client/full/bin/img/cursor/" + this.icon_name + ".png), grab" : "grab"
     );
     this.selected = false;
     this.icon_button = null;
@@ -27626,7 +27624,6 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
         });
         this.selected = false;
     };
-    // TODO: update the canvas cursor based on the tool
     this.Select = function () {
         if (this.selected) {
             return;
@@ -27635,11 +27632,12 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
         this.html.css({
             "background": this.color.PinstripeDark
         });
+        this.toolbar.editor.SetCanvasTool(this.icon_name, this.cursor);
         this.selected = true;
     };
     this.on_click = function () {
         this.Select();
-        // TODO
+        // Anything else?
     };
     this.add_hotkey_letter = function () {
         if (!this.hotkey) {
@@ -27776,6 +27774,9 @@ function DashGuiContext2DToolbar (editor) {
                     if (self.html && !self.html.is(":visible")) {
                         $(document).off("keydown." + identifier);
                         self.esc_shortcut_active = false;
+                        return;
+                    }
+                    if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
                         return;
                     }
                     for (var tool of self.tools) {
