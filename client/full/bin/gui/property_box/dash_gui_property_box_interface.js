@@ -211,6 +211,7 @@ function DashGuiPropertyBoxInterface () {
 
         this.AddHTML(tool_row.html);
         this.indent_row(tool_row);
+        this.track_row(tool_row);
 
         this.tool_rows.push(tool_row);
 
@@ -291,61 +292,53 @@ function DashGuiPropertyBoxInterface () {
 
         row.input.input.css("pointer-events", "none");
 
-        this.html.append(row.html);
-
         if (indent_row) {
             row.html.css("margin-left", indent_px);
         }
 
+        this.html.append(row.html);
+
         var selected_key = default_value || this.get_data_cb()[property_key];
 
-        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
-            var _callback;
-
-            if (callback) {
-                _callback = function (selected_option) {
-                    callback(property_key, selected_option["id"]);
-                };
-            }
-
-            else {
-                _callback = function (selected_option) {
+        var combo = (function (self) {
+            return new Dash.Gui.Combo(
+                selected_key,
+                options["callback"] ? function (selected_option) {
+                    options["callback"](property_key, selected_option["id"]);
+                } : function (selected_option) {
                     self.on_combo_updated(property_key, selected_option["id"]);
-                };
-            }
-
-            var combo = new Dash.Gui.Combo (
-                selected_key,     // Label
-                _callback,        // Callback
-                self,             // Binder
-                combo_options,    // Option List
-                default_value !== null ? default_value : selected_key,  // Selected
-                self.color,       // Color set
+                },
+                self,
+                combo_options,
+                default_value !== null ? default_value : selected_key,
+                self.color,
                 {
                     "style": "row",
                     ...options
                 },
-                bool              // Bool (Toggle)
+                bool
             );
+        })(this);
 
-            self.combos[property_key] = combo;
+        combo.html.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding * 0.5,
+            "top": 0,
+            "height": Dash.Size.RowHeight
+        });
 
-            row.input.html.append(combo.html);
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
 
-            combo.html.css({
-                "position": "absolute",
-                "left": Dash.Size.Padding * 0.5,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-            });
+        row.input.html.append(combo.html);
 
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px",
-            });
+        row.property_box_input_combo = combo;
 
-            row.property_box_input_combo = combo;
-        })(this, row, selected_key, property_key, combo_options, bool, options["callback"] || null);
+        this.combos[property_key] = combo;
+
+        this.track_row(row);
 
         return row;
     };
@@ -403,6 +396,8 @@ function DashGuiPropertyBoxInterface () {
         }
 
         this.html.append(row.html);
+
+        this.track_row(row);
 
         return row;
     };
@@ -497,8 +492,21 @@ function DashGuiPropertyBoxInterface () {
         }
 
         this.AddHTML(checkbox.html);
+        this.track_row(checkbox);
 
         return checkbox;
+    };
+
+    // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
+    this.HighlightEveryOtherRow = function (odd_rows=false, color="") {
+        this.every_other_row_hightlight = {
+            "color": color || this.color.Pinstripe,
+            "highlight": odd_rows
+        };
+
+        for (var row of this.rows) {
+            this.highlight_row_if_applicable(row);
+        }
     };
 
     this.Load = function () {

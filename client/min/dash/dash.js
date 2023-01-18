@@ -30648,6 +30648,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.dash_obj_id = dash_obj_id;
     this.options = options;
     this.data = {};
+    this.rows = [];
     this.combos= {};
     this.inputs = {};
     this.headers = [];
@@ -30659,6 +30660,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.get_formatted_data_cb = null;
     this.top_right_delete_button = null;
     this.indent_px = Dash.Size.Padding * 2;
+    this.every_other_row_hightlight = null;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -30963,6 +30965,21 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         html.prepend(highlight);
         return highlight;
     };
+    this.highlight_row_if_applicable = function (row) {
+        if (!row || !this.every_other_row_hightlight) {
+            return;
+        }
+        if (this.every_other_row_hightlight["highlight"]) {
+            row.html.css({
+                "background": this.every_other_row_hightlight["color"]
+            });
+        }
+        this.every_other_row_hightlight["highlight"] = !this.every_other_row_hightlight["highlight"];
+    };
+    this.track_row = function (row) {
+        this.rows.push(row);
+        this.highlight_row_if_applicable(row);
+    };
     this.setup_styles();
 }
 
@@ -31127,6 +31144,7 @@ function DashGuiPropertyBoxInterface () {
         }
         this.AddHTML(tool_row.html);
         this.indent_row(tool_row);
+        this.track_row(tool_row);
         this.tool_rows.push(tool_row);
         return tool_row;
     };
@@ -31186,50 +31204,44 @@ function DashGuiPropertyBoxInterface () {
             this
         );
         row.input.input.css("pointer-events", "none");
-        this.html.append(row.html);
         if (indent_row) {
             row.html.css("margin-left", indent_px);
         }
+        this.html.append(row.html);
         var selected_key = default_value || this.get_data_cb()[property_key];
-        (function (self, row, selected_key, property_key, combo_options, bool, callback) {
-            var _callback;
-            if (callback) {
-                _callback = function (selected_option) {
-                    callback(property_key, selected_option["id"]);
-                };
-            }
-            else {
-                _callback = function (selected_option) {
+        var combo = (function (self) {
+            return new Dash.Gui.Combo(
+                selected_key,
+                options["callback"] ? function (selected_option) {
+                    options["callback"](property_key, selected_option["id"]);
+                } : function (selected_option) {
                     self.on_combo_updated(property_key, selected_option["id"]);
-                };
-            }
-            var combo = new Dash.Gui.Combo (
-                selected_key,     // Label
-                _callback,        // Callback
-                self,             // Binder
-                combo_options,    // Option List
-                default_value !== null ? default_value : selected_key,  // Selected
-                self.color,       // Color set
+                },
+                self,
+                combo_options,
+                default_value !== null ? default_value : selected_key,
+                self.color,
                 {
                     "style": "row",
                     ...options
                 },
-                bool              // Bool (Toggle)
+                bool
             );
-            self.combos[property_key] = combo;
-            row.input.html.append(combo.html);
-            combo.html.css({
-                "position": "absolute",
-                "left": Dash.Size.Padding * 0.5,
-                "top": 0,
-                "height": Dash.Size.RowHeight,
-            });
-            combo.label.css({
-                "height": Dash.Size.RowHeight,
-                "line-height": Dash.Size.RowHeight + "px",
-            });
-            row.property_box_input_combo = combo;
-        })(this, row, selected_key, property_key, combo_options, bool, options["callback"] || null);
+        })(this);
+        combo.html.css({
+            "position": "absolute",
+            "left": Dash.Size.Padding * 0.5,
+            "top": 0,
+            "height": Dash.Size.RowHeight
+        });
+        combo.label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px"
+        });
+        row.input.html.append(combo.html);
+        row.property_box_input_combo = combo;
+        this.combos[property_key] = combo;
+        this.track_row(row);
         return row;
     };
     this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
@@ -31276,6 +31288,7 @@ function DashGuiPropertyBoxInterface () {
             row = this.add_delete_button(row, options["on_delete"], data_key);
         }
         this.html.append(row.html);
+        this.track_row(row);
         return row;
     };
     this.AddLabel = function (text, color=null) {
@@ -31346,7 +31359,18 @@ function DashGuiPropertyBoxInterface () {
             this.add_hover_highlight(checkbox.html);
         }
         this.AddHTML(checkbox.html);
+        this.track_row(checkbox);
         return checkbox;
+    };
+    // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
+    this.HighlightEveryOtherRow = function (odd_rows=false, color="") {
+        this.every_other_row_hightlight = {
+            "color": color || this.color.Pinstripe,
+            "highlight": odd_rows
+        };
+        for (var row of this.rows) {
+            this.highlight_row_if_applicable(row);
+        }
     };
     this.Load = function () {
         Dash.Request(
@@ -32079,16 +32103,16 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.img_box_size = this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth;
+    this.img_box_size = this.options["img_box_size"] || (this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth);
     this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
     // True by default, but ideally, options["is_admin"] should be provided for added
     // security between non-admins. This is referenced by this.has_privileges when this element
     // is pertaining to the current user, so that users (and admins) can only change their own data.
     this.is_admin = "is_admin" in this.options ? this.options["is_admin"] : true;
     // This manages whether:
-    //     - rows are editable (excluding the ones that are hard-coded)
-    //     - the "Update Password" field is visible
-    //     - the user image can be updated
+    //   - rows are editable (excluding the ones that are hard-coded)
+    //   - the "Update Password" field is visible
+    //   - the user image can be updated
     this.has_privileges = (this.user_data["email"] === Dash.User.Data["email"] || this.is_admin);
     this.setup_styles = function () {
         if (!["settings", "preview"].includes(this.view_mode)) {
