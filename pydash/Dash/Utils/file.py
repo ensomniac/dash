@@ -451,7 +451,22 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
             file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
 
     elif file_ext in FontExtensions:
-        pass  # TODO: convert to ttf if not already
+        if file_ext.startswith("woff"):
+            from fontTools.ttLib.woff2 import decompress
+
+            ttf_path = os.path.join(file_root, f"{file_data['id']}.ttf")
+
+            decompress(file_path, ttf_path)
+
+            file_data["ttf_url"] = GetURLFromPath(dash_context, ttf_path)
+        else:
+            from fontTools.ttLib.woff2 import compress
+
+            woff2_path = os.path.join(file_root, f"{file_data['id']}.woff2")
+
+            compress(file_path, woff2_path)
+
+            file_data["woff2_url"] = GetURLFromPath(dash_context, woff2_path)
 
     elif file_ext in AudioExtensions:
         pass  # TODO: convert to mp3 if not already, or something along those lines
