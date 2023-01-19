@@ -24,6 +24,10 @@ class ApiUsers:
         self._asset_path = asset_path
         self._on_init_callback = None
 
+        # (Intended to be overwritten)
+        # Emails that can bypass DashContext's specified 'user_email_domain' and create an account regardless of domain
+        self.UserEmailDomainBypassEmails = []
+
         self.Add(self.r,                    requires_authentication=False)
         self.Add(self.reset,                requires_authentication=False)
         self.Add(self.login,                requires_authentication=False)
@@ -53,7 +57,8 @@ class ApiUsers:
 
         return self.SetResponse(Reset(
             request_params=self.Params,
-            dash_context=self.DashContext
+            dash_context=self.DashContext,
+            user_email_domain_bypass_emails=self.UserEmailDomainBypassEmails
         ))
 
     def login(self):
@@ -77,24 +82,27 @@ class ApiUsers:
         for email in os.listdir(users_root):
             email = email.lower()  # TODO: This needs to be sanitized upon account creation
             user_path = os.path.join(users_root, email, "usr.data")
-            user_data = Read(user_path)
+            user_data = Read(user_path) if os.path.exists(user_path) else None
 
+            # For now, sending an alert email as to not interrupt the user's session,
+            # but it may end up being better to raise an exception here instead
             if not user_data:
-                # For now, sending an alert email as to not interrupt the user's session,
-                # but it may end up being better to raise an exception here instead
-                from Dash.Utils import SendEmail
+                # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
+                # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
+                if os.path.exists(os.path.join(users_root, email, "sessions")):
+                    from Dash.Utils import SendEmail
 
-                msg = f"\nWARNING: Failed to read user data for '{email}'. If it's not a new user, it may be corrupted.\n\nPath:\n{user_path}"
+                    msg = f"\Warning: Failed to read user data for '{email}'. If it's not a new user, it may be corrupted.\n\nPath:\n{user_path}"
 
-                if self.Params:
-                    msg += f"\n\nParams:\n{self.Params}"
+                    if self.Params:
+                        msg += f"\n\nParams:\n{self.Params}"
 
-                SendEmail(
-                    subject="Dash Error - Users.get_all()",
-                    msg=msg,
-                    sender_email=self.DashContext.get("admin_from_email"),
-                    sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext["display_name"])
-                )
+                    SendEmail(
+                        subject="Dash Error - Users.get_all()",
+                        msg=msg,
+                        sender_email=self.DashContext.get("admin_from_email"),
+                        sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext["display_name"])
+                    )
 
                 continue
 

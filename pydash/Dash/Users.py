@@ -37,29 +37,13 @@ class Users:
 
         return self._dash_context
 
-    def Reset(self):
+    def Reset(self, user_email_domain_bypass_emails=[]):
         email = str(self.request_params.get("email")).strip().lower()
 
         if "@" not in email:
             return {"error": "Enter a valid email address."}
 
-        # If an email domain has been specified, don't allow any emails outside of that domain to create an account
-        if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
-            from Dash import AdminEmails
-
-            # Unless it's one of us
-            if email not in AdminEmails:
-                from Dash.Utils import ClientAlert
-
-                raise ClientAlert("Unauthorized")  # Keep it vague intentionally
-
-        user_data = self.get_user_info(email, create_if_missing=False)
-
-        # Don't allow terminated users to reset their password
-        if user_data.get("terminated"):
-            from Dash.Utils import ClientAlert
-
-            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+        self.validate_reset(email, user_email_domain_bypass_emails)
 
         from json import dumps
         from random import randint
@@ -102,12 +86,18 @@ class Users:
         }
 
         link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
-        body_text = f"Use <a href='{link}'>this link</a> to reset the password for your account."
+        body_text = f"Use <a href='{link}'>this link</a> to "
 
         if account_exists:
             subject = f"Reset Your {self.dash_context['display_name']} Account: {email}"
+
+            body_text += "reset the password for your account and get a new, temporary password."
         else:
             subject = f"Create Your {self.dash_context['display_name']} Account: {email}"
+
+            body_text += "get a temporary password for your account."
+
+        body_text += "\nOnce signed in, please change your password."
 
         SendEmail(
             subject=subject,
@@ -462,6 +452,27 @@ class Users:
 
         return return_data
 
+    def validate_reset(self, email, user_email_domain_bypass_emails=[]):
+        # If an email domain has been specified, don't allow any emails outside of that domain to create an account
+        if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
+            # Unless they're added to the bypass list
+            if email not in user_email_domain_bypass_emails:
+                from Dash import AdminEmails
+
+                # Unless it's one of us
+                if email not in AdminEmails:
+                    from Dash.Utils import ClientAlert
+
+                    raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+
+        user_data = self.get_user_info(email, create_if_missing=False)
+
+        # Don't allow terminated users to reset their password
+        if user_data.get("terminated"):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+
     def validate_dash_guide_account_creation(self, email):
         if self.dash_context["domain"] != "dash.guide":
             return
@@ -587,7 +598,7 @@ class Users:
     # TODO - get rid of this code - it's been moved to Admin.py
     def get_team(self):
         team = {}
-        users_root = os.path.join(self.dash_context["srv_path_local"], "users/")
+        users_root = os.path.join(self.dash_context["srv_path_local"], "users")
 
         for user_email in os.listdir(users_root):
             try:
@@ -596,17 +607,20 @@ class Users:
             # In cases where a specific user's data is corrupted etc, we don't
             # want that to prevent everyone else from logging in etc
             except Exception as e:
-                from Dash.Utils import SendEmail
+                # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
+                # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
+                if os.path.exists(os.path.join(users_root, user_email, "sessions")):
+                    from Dash.Utils import SendEmail
 
-                team[user_email] = {"error": e}
+                    team[user_email] = {"error": e}
 
-                SendEmail(
-                    subject="Dash Error - Users.get_team()",
-                    msg=f"Failed to get user info for {user_email}, data may be corrupted",
-                    error=e,
-                    sender_email=self.dash_context.get("admin_from_email"),
-                    sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
-                )
+                    SendEmail(
+                        subject="Dash Error - Users.get_team()",
+                        msg=f"Warning: Failed to get user info for {user_email}. If it's not a new user, data may be corrupted.",
+                        error=e,
+                        sender_email=self.dash_context.get("admin_from_email"),
+                        sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
+                    )
 
         return team
 
@@ -679,8 +693,8 @@ def GetUserData(user_email_to_get, request_params={}, dash_context={}, create_if
     return Users(request_params, dash_context).GetUserData(user_email_to_get, create_if_missing)
 
 
-def Reset(request_params={}, dash_context={}):
-    return Users(request_params, dash_context).Reset()
+def Reset(request_params={}, dash_context={}, user_email_domain_bypass_emails=[]):
+    return Users(request_params, dash_context).Reset(user_email_domain_bypass_emails)
 
 
 def ResetResponse(request_params={}, dash_context={}):
