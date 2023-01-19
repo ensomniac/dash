@@ -369,7 +369,7 @@ class _ClientCompiler:
                 if word in key:
                     continue
 
-            clean_context[key] = package[key] or ""
+            clean_context[key] = package.get(key) or ""
 
         dash_authors = [
             "Ryan Martin ryan@ensomniac.com",
@@ -386,19 +386,20 @@ class _ClientCompiler:
         ]
 
         max_key_len = [len(x) for x in list(clean_context.keys())]
+
         max_key_len.sort()
+
         max_key_len = max_key_len[-1]
-
         indent = " " * 8
-
         key_order = list(clean_context.keys())
 
         key_order.sort()
 
         for key in key_order:
-            spacer = " " * (max_key_len-len(key))
-            line   = indent + '"' + key.zfill(len(key)-max_key_len) + '": '
-            line   += spacer + '"' + clean_context[key] + '",'
+            spacer = " " * (max_key_len - len(key))
+            line = indent + '"' + key.zfill(len(key) - max_key_len) + '": '
+
+            line += spacer + '"' + clean_context[key] + '",'
 
             header.append(line)
 
