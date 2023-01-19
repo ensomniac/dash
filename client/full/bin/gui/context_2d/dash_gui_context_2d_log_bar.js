@@ -5,7 +5,7 @@ function DashGuiContext2DLogBar (editor) {
     this.color = this.editor.color;
     this.min_height = Dash.Size.RowHeight * 1.5;
 
-    // TODO: log bar located at the bottom (under canvas, but _between_ left and right
+    // TODO: log bar located at the bottom (under canvas, but between left and right
     //  panels, not under them) to display log-type messages to the user after each action
     //  ("new layer created", "element rotated", etc) - this won't be super useful at
     //  first, but lays the groundwork for a history/undo system that can come later
@@ -20,6 +20,12 @@ function DashGuiContext2DLogBar (editor) {
             "border-top": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 0.5
         });
+    };
+
+    this.Add = function (msg) {
+        console.debug("TEST new log:", msg);
+
+        // TODO: add new row to bottom with message and make sure list is scrolled to bottom
     };
 
     this.setup_styles();

@@ -1,8 +1,11 @@
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
 
-    this.aspect_ratio = [1, 1];
+    this.last_aspect_ratio = null;
     this.html = $("<div></div>");
+    this.size_initialized = false;
+    this.resize_event_timer = null;
+    this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
     this.padding = Dash.Size.Padding * 2;
@@ -25,8 +28,8 @@ function DashGuiContext2DCanvas (editor) {
 
         this.canvas.css({
             "background": this.color.Background,
-            "width": this.get_calc_dimension(100),
-            "height": this.get_calc_dimension(100),
+            "width": "calc(100% - " + (this.padding * 2) + "px)",
+            "height": "calc(100% - " + (this.padding * 2) + "px)",
             "position": "absolute",
             "top": "50%",
             "left": "50%",
@@ -38,6 +41,10 @@ function DashGuiContext2DCanvas (editor) {
         this.html.append(this.canvas);
     };
 
+    this.SizeInitialized = function () {
+        return this.size_initialized;
+    };
+
     this.SetTool = function (name, cursor="grab") {
         this.canvas.css({
             "cursor": cursor
@@ -46,46 +53,105 @@ function DashGuiContext2DCanvas (editor) {
         // TODO: restyle the bounding box or something depending on the tool (name)
     };
 
-    // TODO: re-scaling the window breaks the aspect ratio!
-    this.Resize = function () {
-        var aspect_ratio = this.editor.GetAspectRatio();
-        var width = aspect_ratio[0];
-        var height = aspect_ratio[1];
+    this.Resize = function (from_event=false) {
+        if (!from_event) {
+            this.skip_resize_event = true;
+        }
 
-        if (width === this.aspect_ratio[0] && height === this.aspect_ratio[1]) {
+        var aspect_ratio = this.editor.GetAspectRatio();
+        var w = aspect_ratio[0];
+        var h = aspect_ratio[1];
+        var html_width = this.html.innerWidth() - (this.padding * 2);
+        var html_height = this.html.innerHeight() - (this.padding * 2);
+
+        // Horizontal aspect
+        if (w > h) {
+            if (html_width > html_height && (html_width * (h / w)) > html_height) {
+                html_width = html_height * (w / h);
+            }
+
+            this.canvas.css({
+                "width": html_width,
+                "height": html_width * (h / w)
+            });
+        }
+
+        // Vertical aspect
+        else if (w < h) {
+            if (html_height > html_width && (html_height * (w / h)) > html_width) {
+                html_height = html_width * (h / w);
+            }
+
+            this.canvas.css({
+                "width": html_height * (w / h),
+                "height": html_height
+            });
+        }
+
+        // Square aspect
+        else {
+            if (html_width > html_height) {
+                this.canvas.css({
+                    "width": html_height,
+                    "height": html_height
+                });
+            }
+
+            else if (html_width < html_height) {
+                this.canvas.css({
+                    "width": html_width,
+                    "height": html_width
+                });
+            }
+
+            else {
+                this.canvas.css({
+                    "width": html_width,
+                    "height": html_height
+                });
+            }
+        }
+
+        if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
+            this.editor.AddToLog("Canvas aspect ration changed to: " + w + "/" + h);
+        }
+
+        this.last_aspect_ratio = aspect_ratio;
+
+        // TODO: elements will need to be resized as well, but that may happen automatically
+
+        if (this.size_initialized) {
             return;
         }
 
-        this.aspect_ratio = aspect_ratio;
-
-        console.log("Canvas resized to new aspect ratio:", width + "/" + height);
-
-        if (width > height) {
-            this.canvas.css({
-                "width": this.get_calc_dimension(100),
-                "height": this.get_calc_dimension((height / width) * 100)
-            });
-        }
-
-        else if (width < height) {
-            this.canvas.css({
-                "width": this.get_calc_dimension((width / height) * 100),
-                "height": this.get_calc_dimension(100)
-            });
-        }
-
-        else {
-            this.canvas.css({
-                "width": this.get_calc_dimension(100),
-                "height": this.get_calc_dimension(100)
-            });
-        }
-
         this.canvas.show();
+
+        this.add_observer();
+
+        this.size_initialized = true;
     };
 
-    this.get_calc_dimension = function (percent) {
-        return ("calc(" + percent + "% - " + (this.padding * 2) + "px)");
+    this.add_observer = function () {
+        (function (self) {
+            new ResizeObserver(function () {
+                if (self.skip_resize_event) {
+                    self.skip_resize_event = false;
+
+                    return;
+                }
+
+                if (self.resize_event_timer) {
+                    clearTimeout(self.resize_event_timer);
+                }
+
+                self.resize_event_timer = setTimeout(
+                    function () {
+                        self.Resize(true);
+                    },
+                    50
+                );
+            }).observe(self.html[0]);
+        })(this);
     };
 
     this.setup_styles();

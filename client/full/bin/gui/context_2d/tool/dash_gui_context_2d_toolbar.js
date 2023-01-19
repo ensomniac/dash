@@ -2,6 +2,7 @@ function DashGuiContext2DToolbar (editor) {
     this.editor = editor;
 
     this.tools = [];
+    this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.editor.color;
     this.padding = Dash.Size.Padding * 0.5;
@@ -19,6 +20,8 @@ function DashGuiContext2DToolbar (editor) {
         this.add_header();
         this.add_tools();
         this.setup_connections();
+
+        this.initialized = true;
     };
 
     this.DeselectTools = function () {

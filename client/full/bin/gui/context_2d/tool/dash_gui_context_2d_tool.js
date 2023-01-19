@@ -11,6 +11,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.icon_button = null;
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
+    this.editor = this.toolbar.editor;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
 
     this.setup_styles = function () {
@@ -53,7 +54,11 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
             "background": this.color.PinstripeDark
         });
 
-        this.toolbar.editor.SetCanvasTool(this.icon_name, this.cursor);
+        this.editor.SetCanvasTool(this.icon_name, this.cursor);
+
+        if (this.toolbar.initialized) {
+            this.editor.AddToLog("Selected tool: " + this.hover_hint);
+        }
 
         this.selected = true;
     };

@@ -103,10 +103,20 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
     this.GetAspectRatio = function () {
         if (!this.editor_panel) {
-            return [1, 1];
+            var data = this.get_data();
+
+            return [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
         }
 
         return this.editor_panel.GetAspectRatio();
+    };
+
+    this.CanvasSizeInitialized = function () {
+        if (!this.canvas) {
+            return;
+        }
+
+        return this.canvas.SizeInitialized();
     };
 
     this.ResizeCanvas = function () {
@@ -115,6 +125,14 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
 
         this.canvas.Resize();
+    };
+
+    this.AddToLog = function (message) {
+        if (!this.log_bar) {
+            return;
+        }
+
+        this.log_bar.Add(message);
     };
 
     this.refresh_data = function () {
@@ -160,7 +178,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                         return;
                     }
 
-                    console.log("Context2D property '" + key + "' set to:", value);
+                    // Aspect ratio change logging happens on canvas resize
+                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
+                        self.AddToLog("'" + key + "' set to: " + value);
+                    }
                 },
                 self.api,
                 {

@@ -49,7 +49,9 @@ function DashGuiContext2DEditorPanel (editor) {
             ...abs_css
         });
 
-        // TODO: this pane slider won't move...
+        // NOTE TO SELF: Before you go thinking this slider is broken again, it's not.
+        // The slider won't move if there's not enough vertical space on the screen, because
+        // the editor panel boxes have minimum sizes and can't resize if there's not enough space.
         this.html.append(this.second_pane_slider.html);
 
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
@@ -70,13 +72,17 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.GetAspectRatio = function () {
+        var data = this.get_data();
+        var w = data["aspect_ratio_w"];
+        var h = data["aspect_ratio_h"];
+
         if (!this.aspect_tool_row) {
-            return [1, 1];
+            return [w || 1, h || 1];
         }
 
         return [
-            parseFloat(this.aspect_tool_row_inputs["w"].Text() || 1) || 1,
-            parseFloat(this.aspect_tool_row_inputs["h"].Text() || 1) || 1
+            parseFloat(this.aspect_tool_row_inputs["w"].Text() || w || 1) || 1,
+            parseFloat(this.aspect_tool_row_inputs["h"].Text() || h || 1) || 1
         ];
     };
 
@@ -87,7 +93,9 @@ function DashGuiContext2DEditorPanel (editor) {
 
         this.property_box.Update();
 
-        this.editor.ResizeCanvas();
+        if (!this.editor.CanvasSizeInitialized()) {
+            this.editor.ResizeCanvas();
+        }
     };
 
     this.get_top_html_size = function () {

@@ -27429,15 +27429,28 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
     this.GetAspectRatio = function () {
         if (!this.editor_panel) {
-            return [1, 1];
+            var data = this.get_data();
+            return [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
         }
         return this.editor_panel.GetAspectRatio();
+    };
+    this.CanvasSizeInitialized = function () {
+        if (!this.canvas) {
+            return;
+        }
+        return this.canvas.SizeInitialized();
     };
     this.ResizeCanvas = function () {
         if (!this.canvas) {
             return;
         }
         this.canvas.Resize();
+    };
+    this.AddToLog = function (message) {
+        if (!this.log_bar) {
+            return;
+        }
+        this.log_bar.Add(message);
     };
     this.refresh_data = function () {
         (function (self) {
@@ -27475,7 +27488,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     if (!Dash.Validate.Response(response)) {
                         return;
                     }
-                    console.log("Context2D property '" + key + "' set to:", value);
+                    // Aspect ratio change logging happens on canvas resize
+                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
+                        self.AddToLog("'" + key + "' set to: " + value);
+                    }
                 },
                 self.api,
                 {
@@ -27492,8 +27508,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
-    this.aspect_ratio = [1, 1];
+    this.last_aspect_ratio = null;
     this.html = $("<div></div>");
+    this.size_initialized = false;
+    this.resize_event_timer = null;
+    this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
     this.padding = Dash.Size.Padding * 2;
@@ -27513,8 +27532,8 @@ function DashGuiContext2DCanvas (editor) {
         });
         this.canvas.css({
             "background": this.color.Background,
-            "width": this.get_calc_dimension(100),
-            "height": this.get_calc_dimension(100),
+            "width": "calc(100% - " + (this.padding * 2) + "px)",
+            "height": "calc(100% - " + (this.padding * 2) + "px)",
             "position": "absolute",
             "top": "50%",
             "left": "50%",
@@ -27523,44 +27542,95 @@ function DashGuiContext2DCanvas (editor) {
         this.canvas.hide();
         this.html.append(this.canvas);
     };
+    this.SizeInitialized = function () {
+        return this.size_initialized;
+    };
     this.SetTool = function (name, cursor="grab") {
         this.canvas.css({
             "cursor": cursor
         });
         // TODO: restyle the bounding box or something depending on the tool (name)
     };
-    // TODO: re-scaling the window breaks the aspect ratio!
-    this.Resize = function () {
+    this.Resize = function (from_event=false) {
+        if (!from_event) {
+            this.skip_resize_event = true;
+        }
         var aspect_ratio = this.editor.GetAspectRatio();
-        var width = aspect_ratio[0];
-        var height = aspect_ratio[1];
-        if (width === this.aspect_ratio[0] && height === this.aspect_ratio[1]) {
+        var w = aspect_ratio[0];
+        var h = aspect_ratio[1];
+        var html_width = this.html.innerWidth() - (this.padding * 2);
+        var html_height = this.html.innerHeight() - (this.padding * 2);
+        // Horizontal aspect
+        if (w > h) {
+            if (html_width > html_height && (html_width * (h / w)) > html_height) {
+                html_width = html_height * (w / h);
+            }
+            this.canvas.css({
+                "width": html_width,
+                "height": html_width * (h / w)
+            });
+        }
+        // Vertical aspect
+        else if (w < h) {
+            if (html_height > html_width && (html_height * (w / h)) > html_width) {
+                html_height = html_width * (h / w);
+            }
+            this.canvas.css({
+                "width": html_height * (w / h),
+                "height": html_height
+            });
+        }
+        // Square aspect
+        else {
+            if (html_width > html_height) {
+                this.canvas.css({
+                    "width": html_height,
+                    "height": html_height
+                });
+            }
+            else if (html_width < html_height) {
+                this.canvas.css({
+                    "width": html_width,
+                    "height": html_width
+                });
+            }
+            else {
+                this.canvas.css({
+                    "width": html_width,
+                    "height": html_height
+                });
+            }
+        }
+        if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
+            this.editor.AddToLog("Canvas aspect ration changed to: " + w + "/" + h);
+        }
+        this.last_aspect_ratio = aspect_ratio;
+        // TODO: elements will need to be resized as well, but that may happen automatically
+        if (this.size_initialized) {
             return;
         }
-        this.aspect_ratio = aspect_ratio;
-        console.log("Canvas resized to new aspect ratio:", width + "/" + height);
-        if (width > height) {
-            this.canvas.css({
-                "width": this.get_calc_dimension(100),
-                "height": this.get_calc_dimension((height / width) * 100)
-            });
-        }
-        else if (width < height) {
-            this.canvas.css({
-                "width": this.get_calc_dimension((width / height) * 100),
-                "height": this.get_calc_dimension(100)
-            });
-        }
-        else {
-            this.canvas.css({
-                "width": this.get_calc_dimension(100),
-                "height": this.get_calc_dimension(100)
-            });
-        }
         this.canvas.show();
+        this.add_observer();
+        this.size_initialized = true;
     };
-    this.get_calc_dimension = function (percent) {
-        return ("calc(" + percent + "% - " + (this.padding * 2) + "px)");
+    this.add_observer = function () {
+        (function (self) {
+            new ResizeObserver(function () {
+                if (self.skip_resize_event) {
+                    self.skip_resize_event = false;
+                    return;
+                }
+                if (self.resize_event_timer) {
+                    clearTimeout(self.resize_event_timer);
+                }
+                self.resize_event_timer = setTimeout(
+                    function () {
+                        self.Resize(true);
+                    },
+                    50
+                );
+            }).observe(self.html[0]);
+        })(this);
     };
     this.setup_styles();
 }
@@ -27570,7 +27640,7 @@ function DashGuiContext2DLogBar (editor) {
     this.html = $("<div></div>");
     this.color = this.editor.color;
     this.min_height = Dash.Size.RowHeight * 1.5;
-    // TODO: log bar located at the bottom (under canvas, but _between_ left and right
+    // TODO: log bar located at the bottom (under canvas, but between left and right
     //  panels, not under them) to display log-type messages to the user after each action
     //  ("new layer created", "element rotated", etc) - this won't be super useful at
     //  first, but lays the groundwork for a history/undo system that can come later
@@ -27584,6 +27654,10 @@ function DashGuiContext2DLogBar (editor) {
             "border-top": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 0.5
         });
+    };
+    this.Add = function (msg) {
+        console.debug("TEST new log:", msg);
+        // TODO: add new row to bottom with message and make sure list is scrolled to bottom
     };
     this.setup_styles();
 }
@@ -27600,6 +27674,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.icon_button = null;
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
+    this.editor = this.toolbar.editor;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
     this.setup_styles = function () {
         this.html.css({
@@ -27633,7 +27708,10 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
         this.html.css({
             "background": this.color.PinstripeDark
         });
-        this.toolbar.editor.SetCanvasTool(this.icon_name, this.cursor);
+        this.editor.SetCanvasTool(this.icon_name, this.cursor);
+        if (this.toolbar.initialized) {
+            this.editor.AddToLog("Selected tool: " + this.hover_hint);
+        }
         this.selected = true;
     };
     this.on_click = function () {
@@ -27711,6 +27789,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
 function DashGuiContext2DToolbar (editor) {
     this.editor = editor;
     this.tools = [];
+    this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.editor.color;
     this.padding = Dash.Size.Padding * 0.5;
@@ -27726,6 +27805,7 @@ function DashGuiContext2DToolbar (editor) {
         this.add_header();
         this.add_tools();
         this.setup_connections();
+        this.initialized = true;
     };
     this.DeselectTools = function () {
         for (var tool of this.tools) {
@@ -27865,7 +27945,9 @@ function DashGuiContext2DEditorPanel (editor) {
             "border-left": "1px solid " + this.color.StrokeLight,
             ...abs_css
         });
-        // TODO: this pane slider won't move...
+        // NOTE TO SELF: Before you go thinking this slider is broken again, it's not.
+        // The slider won't move if there's not enough vertical space on the screen, because
+        // the editor panel boxes have minimum sizes and can't resize if there's not enough space.
         this.html.append(this.second_pane_slider.html);
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
         this.first_pane_slider.SetPaneContentB(this.content_box.html);
@@ -27881,12 +27963,15 @@ function DashGuiContext2DEditorPanel (editor) {
         );
     };
     this.GetAspectRatio = function () {
+        var data = this.get_data();
+        var w = data["aspect_ratio_w"];
+        var h = data["aspect_ratio_h"];
         if (!this.aspect_tool_row) {
-            return [1, 1];
+            return [w || 1, h || 1];
         }
         return [
-            parseFloat(this.aspect_tool_row_inputs["w"].Text() || 1) || 1,
-            parseFloat(this.aspect_tool_row_inputs["h"].Text() || 1) || 1
+            parseFloat(this.aspect_tool_row_inputs["w"].Text() || w || 1) || 1,
+            parseFloat(this.aspect_tool_row_inputs["h"].Text() || h || 1) || 1
         ];
     };
     this.UpdatePropertyBox = function () {
@@ -27894,7 +27979,9 @@ function DashGuiContext2DEditorPanel (editor) {
             return;
         }
         this.property_box.Update();
-        this.editor.ResizeCanvas();
+        if (!this.editor.CanvasSizeInitialized()) {
+            this.editor.ResizeCanvas();
+        }
     };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
