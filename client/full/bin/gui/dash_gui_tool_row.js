@@ -226,6 +226,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             strict_identifier
         );
 
+        checkbox.SetIconSize(125);
+
         checkbox.html.css({
             "margin-top": 0
         });
@@ -286,14 +288,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     // this.AddComboRow is a better option when combining this with a label
-    this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
+    this.AddCombo = function (combo_options, default_value, callback, additional_data={}, extra_options={}) {
         var combo = this.toolbar.AddCombo(
             "",
             combo_options,
             default_value,
             callback.bind(this.binder),
             true,
-            additional_data
+            additional_data,
+            extra_options
         );
 
         combo.html.css({

@@ -131,7 +131,7 @@ function DashGuiCheckbox (
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
-        this.html.css({
+        this.icon_button.html.css({
             "pointer-events": pointer_events
         });
 

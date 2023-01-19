@@ -299,6 +299,50 @@ function DashLayoutListRowInterface () {
         this.is_highlighted = false;
     };
 
+    // For disabling all columns
+    this.Disable = function () {
+        if (!this.columns) {
+            return;
+        }
+
+        for (var type in this.columns) {
+            if (!Dash.Validate.Object(this.columns[type])) {
+                continue;
+            }
+
+            for (var column of this.columns[type]) {
+                var obj = column["obj"];
+
+                if (type === "default") {
+                    obj.html.css({
+                        "user-select": "none",
+                        "pointer-events": "none"
+                    });
+                }
+
+                else if (type === "copy_buttons") {
+                    obj.button.Disable();
+                }
+
+                else if (type.includes("button")) {
+                    obj.Disable();
+                }
+
+                else if (type === "combos") {
+                    obj.SetReadOnly(true);
+                    obj.Disable(false, true);
+                }
+
+                else if (type === "inputs") {
+                    obj.SetLocked(true);
+                }
+            }
+        }
+    };
+
+    // TODO: this.Enable
+
+    // For disabling individual columns
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
             return;

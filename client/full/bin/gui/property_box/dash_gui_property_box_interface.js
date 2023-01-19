@@ -197,7 +197,7 @@ function DashGuiPropertyBoxInterface () {
         return bar;
     };
 
-    this.AddToolRow = function (set_data_cb=null) {
+    this.AddToolRow = function (set_data_cb=null, highlight_row=true) {
         var tool_row = new Dash.Gui.ToolRow(
             this.binder,
             this.get_formatted_data_cb ? this.get_formatted_data_cb : this.get_data_cb,
@@ -212,6 +212,10 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(tool_row.html);
         this.indent_row(tool_row);
         this.track_row(tool_row);
+
+        if (highlight_row) {
+            this.add_hover_highlight(tool_row.html);
+        }
 
         this.tool_rows.push(tool_row);
 

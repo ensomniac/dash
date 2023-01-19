@@ -22886,7 +22886,7 @@ function DashGuiCheckbox (
             pointer_events = "pointer";
         }
         this.icon_button.SetHoverHint(this.hover_hint);
-        this.html.css({
+        this.icon_button.html.css({
             "pointer-events": pointer_events
         });
         if (is_read_only) {
@@ -23251,6 +23251,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             label_border,
             strict_identifier
         );
+        checkbox.SetIconSize(125);
         checkbox.html.css({
             "margin-top": 0
         });
@@ -23297,14 +23298,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
     };
     // this.AddComboRow is a better option when combining this with a label
-    this.AddCombo = function (combo_options, default_value, callback, additional_data=null) {
+    this.AddCombo = function (combo_options, default_value, callback, additional_data={}, extra_options={}) {
         var combo = this.toolbar.AddCombo(
             "",
             combo_options,
             default_value,
             callback.bind(this.binder),
             true,
-            additional_data
+            additional_data,
+            extra_options
         );
         combo.html.css({
             "line-height": this.height,
@@ -31132,7 +31134,7 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(bar.html);
         return bar;
     };
-    this.AddToolRow = function (set_data_cb=null) {
+    this.AddToolRow = function (set_data_cb=null, highlight_row=true) {
         var tool_row = new Dash.Gui.ToolRow(
             this.binder,
             this.get_formatted_data_cb ? this.get_formatted_data_cb : this.get_data_cb,
@@ -31145,6 +31147,9 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(tool_row.html);
         this.indent_row(tool_row);
         this.track_row(tool_row);
+        if (highlight_row) {
+            this.add_hover_highlight(tool_row.html);
+        }
         this.tool_rows.push(tool_row);
         return tool_row;
     };
@@ -34845,6 +34850,41 @@ function DashLayoutListRowInterface () {
         });
         this.is_highlighted = false;
     };
+    // For disabling all columns
+    this.Disable = function () {
+        if (!this.columns) {
+            return;
+        }
+        for (var type in this.columns) {
+            if (!Dash.Validate.Object(this.columns[type])) {
+                continue;
+            }
+            for (var column of this.columns[type]) {
+                var obj = column["obj"];
+                if (type === "default") {
+                    obj.html.css({
+                        "user-select": "none",
+                        "pointer-events": "none"
+                    });
+                }
+                else if (type === "copy_buttons") {
+                    obj.button.Disable();
+                }
+                else if (type.includes("button")) {
+                    obj.Disable();
+                }
+                else if (type === "combos") {
+                    obj.SetReadOnly(true);
+                    obj.Disable(false, true);
+                }
+                else if (type === "inputs") {
+                    obj.SetLocked(true);
+                }
+            }
+        }
+    };
+    // TODO: this.Enable
+    // For disabling individual columns
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
             return;
