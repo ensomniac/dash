@@ -31168,7 +31168,7 @@ function DashGuiPropertyBoxInterface () {
                     if (callback) {
                         callback.bind(self.binder)(button);
                     }
-                } : callback ? callback.bind(this.binder) : null,
+                } : callback ? callback.bind(self.binder) : null,
                 self,
                 self.color,
                 options
