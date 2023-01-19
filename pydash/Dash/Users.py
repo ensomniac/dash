@@ -43,13 +43,23 @@ class Users:
         if "@" not in email:
             return {"error": "Enter a valid email address."}
 
+        # If an email domain has been specified, don't allow any emails outside of that domain to create an account
         if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
             from Dash import AdminEmails
 
+            # Unless it's one of us
             if email not in AdminEmails:
                 from Dash.Utils import ClientAlert
 
                 raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+
+        user_data = self.get_user_info(email, create_if_missing=False)
+
+        # Don't allow terminated users to reset their password
+        if user_data.get("terminated"):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
 
         from json import dumps
         from random import randint
@@ -59,7 +69,6 @@ class Users:
 
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
-        account_exists = True
 
         if not os.path.exists(user_root):
             self.validate_dash_guide_account_creation(email)
@@ -67,6 +76,8 @@ class Users:
             os.makedirs(user_root)
 
             account_exists = False
+        else:
+            account_exists = True
 
         os.makedirs(user_reset_root, exist_ok=True)
 
@@ -326,6 +337,14 @@ class Users:
                 }
 
             return False
+
+        user_data = self.get_user_info(email, create_if_missing=False)
+
+        # Don't allow terminated users to login
+        if user_data.get("terminated"):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert("Unauthorized")  # Keep it vague intentionally
 
         user_root = os.path.join(self.UsersPath, email)
         pass_path = os.path.join(user_root, "pin_hash" if use_pin else "phash")
