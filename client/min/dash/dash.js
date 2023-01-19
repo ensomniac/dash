@@ -27393,7 +27393,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         };
         this.right_pane_slider.SetPaneContentA(this.left_html);
         this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
-        this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
         this.html.css({
             "box-sizing": "border-box",
             "background": this.color.Pinstripe,
@@ -27403,7 +27402,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.html.append(this.right_pane_slider.html);
         this.left_pane_slider.SetPaneContentA(this.toolbar.html);
         this.left_pane_slider.SetPaneContentB(this.middle_html);
-        this.left_pane_slider.SetMinSize(this.toolbar.min_width);
         this.left_html.css({
             "border-right": "1px solid " + this.color.StrokeLight,
             ...abs_css
@@ -27411,7 +27409,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.left_html.append(this.left_pane_slider.html);
         this.middle_pane_slider.SetPaneContentA(this.canvas.html);
         this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
-        this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
         this.middle_html.css({
             "border-left": "1px solid " + this.color.StrokeLight,
             ...abs_css
@@ -27863,16 +27860,15 @@ function DashGuiContext2DEditorPanel (editor) {
         };
         this.second_pane_slider.SetPaneContentA(this.top_html);
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
-        this.second_pane_slider.SetMinSize(this.get_top_html_size());
         this.html.css({
             "box-sizing": "border-box",
             "border-left": "1px solid " + this.color.StrokeLight,
             ...abs_css
         });
+        // TODO: this pane slider won't move...
         this.html.append(this.second_pane_slider.html);
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
         this.first_pane_slider.SetPaneContentB(this.content_box.html);
-        this.first_pane_slider.SetMinSize(this.property_box_height);
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
@@ -31858,19 +31854,17 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
     else {
         this.recall_id += "_h";
     }
-    if (Dash.Local.Get(this.recall_id)) {
-        this.locked_size = parseInt(Dash.Local.Get(this.recall_id));
-    }
-    this.SetPaneContentA = function (html) {
-        this.content_a.empty().append(html);
-    };
-    this.SetPaneContentB = function (html) {
-        this.content_b.empty().append(html);
-    };
-    this.SetMinSize = function (size) {
-        this.min_size = size;
-    };
     this.setup_styles = function () {
+        var recall_locked_size = Dash.Local.Get(this.recall_id);
+        if (recall_locked_size) {
+            var number = parseInt(recall_locked_size);
+            if (number > this.min_size) {
+                this.locked_size = number;
+            }
+            else if (number < this.min_size) {
+                Dash.Local.Set(this.recall_id, this.min_size);
+            }
+        }
         this.html.append(this.content_a);
         this.html.append(this.content_b);
         this.html.append(this.divider);
@@ -31886,6 +31880,17 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
             this.setup_horizontal();
         }
         this.draw();
+        this.setup_connections();
+    };
+    this.SetPaneContentA = function (html) {
+        this.content_a.empty().append(html);
+    };
+    this.SetPaneContentB = function (html) {
+        this.content_b.empty().append(html);
+    };
+    // Don't need to use this if default size was provided on init and you want the default to be the min
+    this.SetMinSize = function (size) {
+        this.min_size = size;
     };
     this.setup_vertical = function () {
         this.content_a.css({
@@ -32091,7 +32096,6 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
         }
     };
     this.setup_styles();
-    this.setup_connections();
 }
 
 // Profile page layout for the currently logged-in user

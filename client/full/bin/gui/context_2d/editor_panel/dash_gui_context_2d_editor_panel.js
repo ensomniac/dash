@@ -42,7 +42,6 @@ function DashGuiContext2DEditorPanel (editor) {
 
         this.second_pane_slider.SetPaneContentA(this.top_html);
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
-        this.second_pane_slider.SetMinSize(this.get_top_html_size());
 
         this.html.css({
             "box-sizing": "border-box",
@@ -50,11 +49,11 @@ function DashGuiContext2DEditorPanel (editor) {
             ...abs_css
         });
 
+        // TODO: this pane slider won't move...
         this.html.append(this.second_pane_slider.html);
 
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
         this.first_pane_slider.SetPaneContentB(this.content_box.html);
-        this.first_pane_slider.SetMinSize(this.property_box_height);
 
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);

@@ -31,23 +31,21 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
         this.recall_id += "_h";
     }
 
-    if (Dash.Local.Get(this.recall_id)) {
-        this.locked_size = parseInt(Dash.Local.Get(this.recall_id));
-    }
-
-    this.SetPaneContentA = function (html) {
-        this.content_a.empty().append(html);
-    };
-
-    this.SetPaneContentB = function (html) {
-        this.content_b.empty().append(html);
-    };
-
-    this.SetMinSize = function (size) {
-        this.min_size = size;
-    };
-
     this.setup_styles = function () {
+        var recall_locked_size = Dash.Local.Get(this.recall_id);
+
+        if (recall_locked_size) {
+            var number = parseInt(recall_locked_size);
+
+            if (number > this.min_size) {
+                this.locked_size = number;
+            }
+
+            else if (number < this.min_size) {
+                Dash.Local.Set(this.recall_id, this.min_size);
+            }
+        }
+
         this.html.append(this.content_a);
         this.html.append(this.content_b);
         this.html.append(this.divider);
@@ -67,6 +65,20 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
         }
 
         this.draw();
+        this.setup_connections();
+    };
+
+    this.SetPaneContentA = function (html) {
+        this.content_a.empty().append(html);
+    };
+
+    this.SetPaneContentB = function (html) {
+        this.content_b.empty().append(html);
+    };
+
+    // Don't need to use this if default size was provided on init and you want the default to be the min
+    this.SetMinSize = function (size) {
+        this.min_size = size;
     };
 
     this.setup_vertical = function () {
@@ -321,5 +333,4 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
     };
 
     this.setup_styles();
-    this.setup_connections();
 }

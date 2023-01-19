@@ -54,7 +54,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
         this.right_pane_slider.SetPaneContentA(this.left_html);
         this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
-        this.right_pane_slider.SetMinSize(this.editor_panel.min_width);
 
         this.html.css({
             "box-sizing": "border-box",
@@ -67,7 +66,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
         this.left_pane_slider.SetPaneContentA(this.toolbar.html);
         this.left_pane_slider.SetPaneContentB(this.middle_html);
-        this.left_pane_slider.SetMinSize(this.toolbar.min_width);
 
         this.left_html.css({
             "border-right": "1px solid " + this.color.StrokeLight,
@@ -78,7 +76,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
         this.middle_pane_slider.SetPaneContentA(this.canvas.html);
         this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
-        this.middle_pane_slider.SetMinSize(this.log_bar.min_height);
 
         this.middle_html.css({
             "border-left": "1px solid " + this.color.StrokeLight,
