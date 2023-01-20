@@ -29,6 +29,7 @@ class ApiCore:
         self._render_html = None
         self._additional_notify_emails = []
         self._proceeding_with_empty_fs = False
+        self._raw_body = None
 
         try:
             self._fs = cgi.FieldStorage()
@@ -36,17 +37,13 @@ class ApiCore:
             error = format_exc()
 
             if "write() argument must be str, not bytes" in error:
+
                 try:
-                    # Ref: https://bugs.python.org/issue32029
-                    # There's a long-running bug in cgi (see ref) that means we can't properly
-                    # handle certain requests that come through. This is a work-around that
-                    # allows the request to continue without failing, though with no params.
-                    # As of writing, this is useful to allow certain webhooks to hit the server.
-                    self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
-                    self._proceeding_with_empty_fs = True
+                    self.process_raw_body_content()
                 except:
                     # Ref: https://bugs.python.org/issue27777
                     raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
+
             else:
                 # Ref: https://bugs.python.org/issue27777
                 raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
@@ -178,6 +175,24 @@ class ApiCore:
             self._dash_global = sys.modules[DashName]
 
         return self._dash_global
+
+    def process_raw_body_content(self):
+        # This was an attempt at resolving this issue, but it still
+        # isn't solved and I have to move on. Leaving this breakout for
+        # future dev. GOOD NEWS: I know how to parse the content in
+        # this case (see sys.stdin.read()) but that only works if cgi.FieldStorage
+        # has not yet been read. So the solution comes down to determining
+        # what type of request it is first, and then picking the correct method
+
+        self._raw_body = str(sys.stdin.read())
+
+        # Ref: https://bugs.python.org/issue32029
+        # There's a long-running bug in cgi (see ref) that means we can't properly
+        # handle certain requests that come through. This is a work-around that
+        # allows the request to continue without failing, though with no params.
+        # As of writing, this is useful to allow certain webhooks to hit the server.
+        self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
+        self._proceeding_with_empty_fs = True
 
     def AddNotifyEmail(self, email):
         if email in self._additional_notify_emails:
@@ -519,11 +534,16 @@ class ApiCore:
         if self._proceeding_with_empty_fs:
             return data  # See notes in init
 
-        for key in self._fs.keys():
+        keys = self._fs.keys()
+
+        for key in keys:
             if key in data:
                 continue
 
-            mini_field_storage = self._fs[key]
+            try:
+                mini_field_storage = self._fs[key]
+            except:
+                continue
 
             # This catches GitHub Webhook param issues
             if type(mini_field_storage) == list:

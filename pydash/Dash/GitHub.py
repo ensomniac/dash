@@ -94,9 +94,10 @@ class GitHub:
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
         SendEmail(
-            subject=subject,
-            notify_email_list=email_list,
-            msg=msg
+            subject           = subject,
+            notify_email_list = email_list,
+            msg               = msg,
+            strict_notify     = True
         )
 
         del return_data["payload"]
