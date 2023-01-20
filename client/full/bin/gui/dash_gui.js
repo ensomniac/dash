@@ -89,6 +89,10 @@ function DashGui() {
         }
     };
 
+    this.ScrollToBottom = function (html) {
+        html[0].scrollTop = html[0].scrollHeight;
+    };
+
     this.GetBottomDivider = function (color=null, width_percent="") {
         var bottom_divider = $("<div></div>");
 

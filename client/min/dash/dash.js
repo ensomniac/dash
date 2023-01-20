@@ -17894,6 +17894,9 @@ function DashGui() {
             return false;
         }
     };
+    this.ScrollToBottom = function (html) {
+        html[0].scrollTop = html[0].scrollHeight;
+    };
     this.GetBottomDivider = function (color=null, width_percent="") {
         var bottom_divider = $("<div></div>");
         if (width_percent) {
@@ -25139,7 +25142,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         return message;
     };
     this.ScrollToBottom = function () {
-        this.message_area[0].scrollTop = this.message_area[0].scrollHeight;
+        Dash.Gui.ScrollToBottom(this.message_area);
     };
     this.ClearMessages = function () {
         this.message_area.empty();
@@ -27637,14 +27640,13 @@ function DashGuiContext2DCanvas (editor) {
 
 function DashGuiContext2DLogBar (editor) {
     this.editor = editor;
+    this.list = null;
+    this.messages = [];
+    this.min_height = null;
     this.html = $("<div></div>");
     this.color = this.editor.color;
-    this.min_height = Dash.Size.RowHeight * 1.5;
-    // TODO: log bar located at the bottom (under canvas, but between left and right
-    //  panels, not under them) to display log-type messages to the user after each action
-    //  ("new layer created", "element rotated", etc) - this won't be super useful at
-    //  first, but lays the groundwork for a history/undo system that can come later
-    //  - this should use a revolving list element, and each new log item is just a new row
+    this.opposite_color = Dash.Color.GetOpposite(this.color);
+    // This won't be super useful at first, but lays the groundwork for a history/undo system that can come later
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -27654,10 +27656,31 @@ function DashGuiContext2DLogBar (editor) {
             "border-top": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 0.5
         });
+        this.add_list();
     };
-    this.Add = function (msg) {
-        console.debug("TEST new log:", msg);
-        // TODO: add new row to bottom with message and make sure list is scrolled to bottom
+    this.Add = function (message) {
+        this.messages.push(message);
+        this.list.AddRow(this.messages.length, true);
+        this.list.ScrollToBottom();
+    };
+    this.add_list = function () {
+        this.list = new Dash.Layout.RevolvingList(this, this.get_column_config(), this.color, false);
+        this.list.DisableRowEvents();
+        this.min_height = this.list.full_row_height + 1;
+        this.html.append(this.list.html);
+    };
+    this.get_column_config = function () {
+        var config = new Dash.Layout.List.ColumnConfig();
+        config.AddFlexText(
+            "message",
+            "",
+            0.25,
+            {"color": this.opposite_color.Stroke}
+        );
+        return config;
+    };
+    this.GetDataForKey = function (row_id) {
+        return this.messages[row_id - 1];
     };
     this.setup_styles();
 }
@@ -27945,9 +27968,6 @@ function DashGuiContext2DEditorPanel (editor) {
             "border-left": "1px solid " + this.color.StrokeLight,
             ...abs_css
         });
-        // NOTE TO SELF: Before you go thinking this slider is broken again, it's not.
-        // The slider won't move if there's not enough vertical space on the screen, because
-        // the editor panel boxes have minimum sizes and can't resize if there's not enough space.
         this.html.append(this.second_pane_slider.html);
         this.first_pane_slider.SetPaneContentA(this.property_box.html);
         this.first_pane_slider.SetPaneContentB(this.content_box.html);
@@ -32047,9 +32067,37 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
             "user-select": "none"  // Disable unintentional highlighting when dragging slider
         });
     };
+    this.set_cursor = function (reset=false) {
+        var cursor = this.is_vertical ? "ns-resize" : "ew-resize";
+        if (!reset) {
+            var size_a = this.is_vertical ? this.content_a.innerHeight() : this.content_a.innerWidth();
+            var size_b = this.is_vertical ? this.content_b.innerHeight() : this.content_b.innerWidth();
+            // Not enough screen space to move in either direction
+            if (size_a <= this.min_size && size_b <= this.min_size) {
+                cursor = "not-allowed";
+            }
+            // Check if one of the two sides is at min
+            else {
+                if (this.inverted) {
+                    if (size_a <= this.min_size) {
+                        cursor = this.is_vertical ? "s-resize" : "e-resize";
+                    }
+                }
+                else {
+                    if (size_b <= this.min_size) {
+                        cursor = this.is_vertical ? "n-resize" : "w-resize";
+                    }
+                }
+            }
+        }
+        this.divider_hover.css({
+            "cursor": cursor
+        });
+    };
     this.setup_connections = function () {
         (function (self) {
             self.divider_hover.on("mouseenter", function () {
+                self.set_cursor();
                 self.divider.css({
                     "background": self.divider_color_active
                 });
@@ -32073,34 +32121,44 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
                 self.drag_active = true;
                 self.drag_properties["start_locked_size"] = self.locked_size;
                 self.drag_properties["start_pos"] = self.is_vertical ? e.screenY : e.screenX;
-                self.on_draw_start();
+                self.drag_properties["reset_cursor"] = true;
+                self.on_drag_start();
             });
             self.html.on("mouseup", function () {
                 if (!self.drag_active) {
                     return;
                 }
                 self.drag_active = false;
-                self.on_draw_end();
+                self.on_drag_end();
             });
         })(this);
     };
-    // Called when dragging starts
-    this.on_draw_start = function () {
+    this.on_drag_start = function () {
+        // Placeholder
     };
-    // Called when dragging ends
-    this.on_draw_end = function () {
+    this.on_drag_end = function () {
+        this.set_cursor();
         Dash.Local.Set(this.recall_id, this.locked_size);
     };
     this.on_drag = function () {
         var size_now = this.locked_size;
         this.drag_properties["change"] = this.inverted ? this.drag_properties["last_pos"] - this.drag_properties["start_pos"] : this.drag_properties["start_pos"] - this.drag_properties["last_pos"];
         this.locked_size = this.drag_properties["start_locked_size"] + this.drag_properties["change"];
-        var content_a_size = (this.is_vertical ? this.html.height() : this.html.width()) - this.locked_size;
-        if (content_a_size < this.min_size) {
-            this.locked_size = size_now;
+        // If inverted, this is content B, otherwise, content A
+        var secondary_content_size = (this.is_vertical ? this.html.height() : this.html.width()) - this.locked_size;
+        if (this.drag_properties["reset_cursor"]) {
+            this.set_cursor(true);
+            this.drag_properties["reset_cursor"] = false;
         }
+        // If secondary content reaches min, lock it
+        if (secondary_content_size < this.min_size) {
+            this.locked_size = size_now;
+            this.drag_properties["reset_cursor"] = true;
+        }
+        // If primary content reaches min, lock it
         if (this.locked_size < this.min_size) {
             this.locked_size = this.min_size;
+            this.drag_properties["reset_cursor"] = true;
         }
         this.draw();
     };
@@ -33903,6 +33961,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.is_expanded = false;
     this.cached_preview = null;  // Intended for sublists only
     this.is_highlighted = false;
+    this.fully_disabled = false;
     this.color = this.list.color;
     this.expanded_highlight = null;
     this.html = $("<div></div>");
@@ -34091,16 +34150,18 @@ function DashLayoutListRow (list, row_id, height=null) {
                 this.add_default_column(column_config_data, i);
             }
         }
-        this.html.css({
-            // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
-            // The change only pertains to the row itself, and then each element controls their own cursor behavior.
-            "cursor": this.is_header ? "auto" :
-                this.is_sublist ? "context-menu" :
-                default_columns_only ? "pointer" :
-                this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
-                this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (this.list.non_expanding_click_cb ? "pointer" : "default") :
-                "cell"
-        });
+        if (!this.fully_disabled) {
+            this.html.css({
+                // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
+                // The change only pertains to the row itself, and then each element controls their own cursor behavior.
+                "cursor": this.is_header ? "auto" :
+                    this.is_sublist ? "context-menu" :
+                        default_columns_only ? "pointer" :
+                            this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
+                                this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (this.list.non_expanding_click_cb ? "pointer" : "default") :
+                                    "cell"
+            });
+        }
     };
     this.setup_styles();
 }
@@ -34245,21 +34306,6 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    // Abstraction to simplify AddColumn when just using a simple text value
-    this.AddText = function (data_key, width_mult=1, label_text="", css={}, header_css={}) {
-        css["flex"] = "none";
-        header_css["flex"] = "none";
-        this.AddColumn(
-            label_text || data_key.Title(),
-            data_key,
-            false,
-            Dash.Size.ColumnWidth * width_mult,
-            {
-                "css": css,
-                "header_css": header_css
-            }
-        );
-    };
     // Abstraction to simplify AddColumn when just using a flex text value
     this.AddFlexText = function (data_key, label_text="", min_width_mult=0.25, css={}, header_css={}) {
         var min_width = Dash.Size.ColumnWidth * min_width_mult;
@@ -34274,6 +34320,21 @@ function DashLayoutListColumnConfig () {
             data_key,
             false,
             null,
+            {
+                "css": css,
+                "header_css": header_css
+            }
+        );
+    };
+    // Abstraction to simplify AddColumn when just using a simple text value
+    this.AddText = function (data_key, width_mult=1, label_text="", css={}, header_css={}) {
+        css["flex"] = "none";
+        header_css["flex"] = "none";
+        this.AddColumn(
+            label_text || data_key.Title(),
+            data_key,
+            false,
+            Dash.Size.ColumnWidth * width_mult,
             {
                 "css": css,
                 "header_css": header_css
@@ -34975,6 +35036,18 @@ function DashLayoutListRowInterface () {
         }
     };
     // TODO: this.Enable
+    // For extreme cases
+    this.FullyDisable = function () {
+        this.BreakConnections();
+        this.DisableAnimation();
+        this.Disable();
+        this.html.css({
+            "pointer-events": "none",
+            "user-select": "none",
+            "cursor": "default"
+        });
+        this.fully_disabled = true;
+    };
     // For disabling individual columns
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
@@ -35016,10 +35089,13 @@ function DashLayoutListRowInterface () {
         }
         this.html.attr("title", content);
     };
-    this.RefreshConnections = function () {
+    this.BreakConnections = function () {
         this.html.off("mouseenter");
         this.html.off("mouseleave");
         this.column_box.off("click");
+    };
+    this.RefreshConnections = function () {
+        this.BreakConnections();
         this.setup_connections();
         for (var icon_button of this.columns["icon_buttons"]) {
             icon_button["obj"].RefreshConnections();
@@ -35069,6 +35145,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_backing = null;
     this.last_column_config = null;
     this.last_selected_row_id = "";
+    this.row_events_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
@@ -35095,6 +35172,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.add_header_row();
         this.html.append(this.container);
         this.setup_scroll_connections();
+    };
+    this.ScrollToBottom = function () {
+        Dash.Gui.ScrollToBottom(this.container);
     };
     this.SetHoverPreviewGetter = function (getter, binder=null) {
         if (!getter) {
@@ -35228,6 +35308,12 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
                 }
                 row.Collapse();
             }
+        }
+    };
+    this.DisableRowEvents = function () {
+        this.row_events_disabled = true;
+        for (var row of this.row_objects) {
+            row.FullyDisable();
         }
     };
     this.select_row = function (row_id="", default_to_first_row=true) {
@@ -35468,6 +35554,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         });
     };
     this.set_hover_preview = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
         (function (self) {
             row.html.on("mouseenter", function () {
                 if (!self.get_hover_preview_content) {
@@ -35479,6 +35568,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
     // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
         row.column_box.off("click");
         (function (self) {
             row.column_box.on("click", function (e) {
@@ -35491,6 +35583,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         })(this);
     };
     this.setup_row_connections = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
         row.RefreshConnections();
         this.set_on_row_click(row);
         this.set_hover_preview(row);

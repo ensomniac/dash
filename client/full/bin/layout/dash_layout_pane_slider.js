@@ -157,9 +157,44 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
         });
     };
 
+    this.set_cursor = function (reset=false) {
+        var cursor = this.is_vertical ? "ns-resize" : "ew-resize";
+
+        if (!reset) {
+            var size_a = this.is_vertical ? this.content_a.innerHeight() : this.content_a.innerWidth();
+            var size_b = this.is_vertical ? this.content_b.innerHeight() : this.content_b.innerWidth();
+
+            // Not enough screen space to move in either direction
+            if (size_a <= this.min_size && size_b <= this.min_size) {
+                cursor = "not-allowed";
+            }
+
+            // Check if one of the two sides is at min
+            else {
+                if (this.inverted) {
+                    if (size_a <= this.min_size) {
+                        cursor = this.is_vertical ? "s-resize" : "e-resize";
+                    }
+                }
+
+                else {
+                    if (size_b <= this.min_size) {
+                        cursor = this.is_vertical ? "n-resize" : "w-resize";
+                    }
+                }
+            }
+        }
+
+        this.divider_hover.css({
+            "cursor": cursor
+        });
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.divider_hover.on("mouseenter", function () {
+                self.set_cursor();
+
                 self.divider.css({
                     "background": self.divider_color_active
                 });
@@ -190,8 +225,9 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
 
                 self.drag_properties["start_locked_size"] = self.locked_size;
                 self.drag_properties["start_pos"] = self.is_vertical ? e.screenY : e.screenX;
+                self.drag_properties["reset_cursor"] = true;
 
-                self.on_draw_start();
+                self.on_drag_start();
             });
 
             self.html.on("mouseup", function () {
@@ -201,18 +237,18 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
 
                 self.drag_active = false;
 
-                self.on_draw_end();
+                self.on_drag_end();
             });
         })(this);
     };
 
-    // Called when dragging starts
-    this.on_draw_start = function () {
-
+    this.on_drag_start = function () {
+        // Placeholder
     };
 
-    // Called when dragging ends
-    this.on_draw_end = function () {
+    this.on_drag_end = function () {
+        this.set_cursor();
+
         Dash.Local.Set(this.recall_id, this.locked_size);
     };
 
@@ -223,14 +259,27 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
 
         this.locked_size = this.drag_properties["start_locked_size"] + this.drag_properties["change"];
 
-        var content_a_size = (this.is_vertical ? this.html.height() : this.html.width()) - this.locked_size;
+        // If inverted, this is content B, otherwise, content A
+        var secondary_content_size = (this.is_vertical ? this.html.height() : this.html.width()) - this.locked_size;
 
-        if (content_a_size < this.min_size) {
-            this.locked_size = size_now;
+        if (this.drag_properties["reset_cursor"]) {
+            this.set_cursor(true);
+
+            this.drag_properties["reset_cursor"] = false;
         }
 
+        // If secondary content reaches min, lock it
+        if (secondary_content_size < this.min_size) {
+            this.locked_size = size_now;
+
+            this.drag_properties["reset_cursor"] = true;
+        }
+
+        // If primary content reaches min, lock it
         if (this.locked_size < this.min_size) {
             this.locked_size = this.min_size;
+
+            this.drag_properties["reset_cursor"] = true;
         }
 
         this.draw();

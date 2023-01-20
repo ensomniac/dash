@@ -34,6 +34,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_backing = null;
     this.last_column_config = null;
     this.last_selected_row_id = "";
+    this.row_events_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
@@ -67,6 +68,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.html.append(this.container);
 
         this.setup_scroll_connections();
+    };
+
+    this.ScrollToBottom = function () {
+        Dash.Gui.ScrollToBottom(this.container);
     };
 
     this.SetHoverPreviewGetter = function (getter, binder=null) {
@@ -249,6 +254,14 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
                 row.Collapse();
             }
+        }
+    };
+
+    this.DisableRowEvents = function () {
+        this.row_events_disabled = true;
+
+        for (var row of this.row_objects) {
+            row.FullyDisable();
         }
     };
 
@@ -573,6 +586,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
 
     this.set_hover_preview = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
+
         (function (self) {
             row.html.on("mouseenter", function () {
                 if (!self.get_hover_preview_content) {
@@ -586,6 +603,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
+
         row.column_box.off("click");
 
         (function (self) {
@@ -601,6 +622,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
 
     this.setup_row_connections = function (row) {
+        if (this.row_events_disabled) {
+            return;
+        }
+
         row.RefreshConnections();
 
         this.set_on_row_click(row);

@@ -49,9 +49,6 @@ function DashGuiContext2DEditorPanel (editor) {
             ...abs_css
         });
 
-        // NOTE TO SELF: Before you go thinking this slider is broken again, it's not.
-        // The slider won't move if there's not enough vertical space on the screen, because
-        // the editor panel boxes have minimum sizes and can't resize if there's not enough space.
         this.html.append(this.second_pane_slider.html);
 
         this.first_pane_slider.SetPaneContentA(this.property_box.html);

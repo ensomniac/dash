@@ -156,7 +156,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.ScrollToBottom = function () {
-        this.message_area[0].scrollTop = this.message_area[0].scrollHeight;
+        Dash.Gui.ScrollToBottom(this.message_area);
     };
 
     this.ClearMessages = function () {

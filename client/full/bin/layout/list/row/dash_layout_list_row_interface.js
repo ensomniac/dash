@@ -342,6 +342,21 @@ function DashLayoutListRowInterface () {
 
     // TODO: this.Enable
 
+    // For extreme cases
+    this.FullyDisable = function () {
+        this.BreakConnections();
+        this.DisableAnimation();
+        this.Disable();
+
+        this.html.css({
+            "pointer-events": "none",
+            "user-select": "none",
+            "cursor": "default"
+        });
+
+        this.fully_disabled = true;
+    };
+
     // For disabling individual columns
     this.ChangeColumnEnabled = function (type, index, enabled=true) {
         if (!this.columns || !Dash.Validate.Object(this.columns[type])) {
@@ -395,11 +410,15 @@ function DashLayoutListRowInterface () {
         this.html.attr("title", content);
     };
 
-    this.RefreshConnections = function () {
+    this.BreakConnections = function () {
         this.html.off("mouseenter");
         this.html.off("mouseleave");
-        this.column_box.off("click");
 
+        this.column_box.off("click");
+    };
+
+    this.RefreshConnections = function () {
+        this.BreakConnections();
         this.setup_connections();
 
         for (var icon_button of this.columns["icon_buttons"]) {
