@@ -93,11 +93,28 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
+        ryan_personal_packages = [
+            "smartsioux",
+            "rycam",
+            "ensomniac_io",
+            "freshpath"
+        ]
+
+        andrew_personal_repos = [
+            "simplepaycheckbudget"
+        ]
+
+        if return_data["repository"] in ryan_personal_packages:
+            email_list = ["ryan@ensomniac.com"]
+
+        elif return_data["repository"] in andrew_personal_repos:
+            email_list = ["stetandrew@gmail.com"]
+
         SendEmail(
-            subject           = subject,
-            notify_email_list = email_list,
-            msg               = msg,
-            strict_notify     = True
+            subject=subject,
+            notify_email_list=email_list,
+            msg=msg,
+            strict_notify=True
         )
 
         del return_data["payload"]
