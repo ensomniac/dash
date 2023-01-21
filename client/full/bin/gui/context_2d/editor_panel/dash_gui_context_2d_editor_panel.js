@@ -14,7 +14,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
-    this.can_edit = this.editor.can_edit;
+    this.can_edit = this.editor.can_edit;  // TODO: propagate
     this.min_width = Dash.Size.ColumnWidth * 2;
 
     // Update if things are added to the box

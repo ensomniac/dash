@@ -5,6 +5,7 @@ function DashGuiContext2DToolbar (editor) {
     this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.editor.color;
+    this.can_edit = this.editor.can_edit;  // TODO: propagate
     this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
 
@@ -74,6 +75,10 @@ function DashGuiContext2DToolbar (editor) {
     };
 
     this.setup_connections = function () {
+        if (!this.can_edit) {
+            return;
+        }
+
         var identifier = "dash_gui_context_2d_toolbar";
 
         (function (self) {
@@ -82,8 +87,6 @@ function DashGuiContext2DToolbar (editor) {
                 function (e) {
                     if (self.html && !self.html.is(":visible")) {
                         $(document).off("keydown." + identifier);
-
-                        self.esc_shortcut_active = false;
 
                         return;
                     }

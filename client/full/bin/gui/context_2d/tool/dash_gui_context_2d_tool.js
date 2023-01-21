@@ -12,6 +12,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
     this.editor = this.toolbar.editor;
+    this.can_edit = this.toolbar.can_edit;  // TODO: propagate
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
 
     this.setup_styles = function () {
@@ -104,10 +105,18 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
+        if (!this.can_edit) {
+            this.icon_button.Disable();
+        }
+
         this.html.append(this.icon_button.html);
     };
 
     this.setup_connections = function () {
+        if (!this.can_edit) {
+            return;
+        }
+
         (function (self) {
             self.html.on("mouseenter", function () {
                 if (self.selected) {

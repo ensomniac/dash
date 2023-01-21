@@ -85,6 +85,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.middle_html.append(this.middle_pane_slider.html);
     };
 
+    // TODO: regarding all these public functions, some are intended to only be called
+    //  by certain elements, so having them appear as public may be confusing later
+
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };
@@ -95,6 +98,62 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
 
         this.canvas.SetTool(name, cursor);
+    };
+
+    this.SetCanvasActiveLayer = function (index) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.SetActiveLayer(index);
+    };
+
+    this.MoveCanvasLayerUp = function (index) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.MoveLayerUp(index);
+    };
+
+    this.MoveCanvasLayerDown = function (index) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.MoveLayerDown(index);
+    };
+
+    this.AddCanvasLayer = function (index) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.AddLayer(index);
+    };
+
+    this.RemoveCanvasLayer = function (index) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.RemoveLayer(index);
+    };
+
+    this.ToggleCanvasLayerHidden = function (index, hidden) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.ToggleCanvasLayerHidden(index, hidden);
+    };
+
+    this.ToggleCanvasLayerLocked = function (index, locked) {
+        if (!this.canvas) {
+            return;
+        }
+
+        this.canvas.ToggleCanvasLayerLocked(index, locked);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {

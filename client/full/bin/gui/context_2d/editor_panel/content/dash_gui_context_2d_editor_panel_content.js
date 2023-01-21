@@ -3,6 +3,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
     this.html = $("<div></div>");
     this.color = this.panel.color;
+    this.can_edit = this.panel.can_edit;  // TODO: propagate
     this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
     this.new_box = new DashGuiContext2DEditorPanelContentNew(this);
     this.edit_box = new DashGuiContext2DEditorPanelContentEdit(this);

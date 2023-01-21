@@ -53,6 +53,34 @@ function DashGuiContext2DCanvas (editor) {
         // TODO: restyle the bounding box or something depending on the tool (name)
     };
 
+    this.SetActiveLayer = function (index) {
+        // TODO: change focus to the appropriate layer object
+    };
+
+    this.MoveLayerUp = function (index) {
+        // TODO: move the provided index up one, and update the other indexes accordingly
+    };
+
+    this.MoveLayerDown = function (index) {
+        // TODO: move the provided index down one, and update the other indexes accordingly
+    };
+
+    this.AddLayer = function (index) {
+        // TODO: add new layer (don't need to update any other indexes)
+    };
+
+    this.RemoveLayer = function (index) {
+        // TODO: layer has been deleted, so remove it from the canvas and update the other indexes accordingly
+    };
+
+    this.ToggleLayerHidden = function (index, hidden) {
+        // TODO
+    };
+
+    this.ToggleLayerLocked = function (index, locked) {
+        // TODO
+    };
+
     this.Resize = function (from_event=false) {
         if (!from_event) {
             this.skip_resize_event = true;
@@ -113,7 +141,7 @@ function DashGuiContext2DCanvas (editor) {
         }
 
         if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
-            this.editor.AddToLog("Canvas aspect ration changed to: " + w + "/" + h);
+            this.editor.AddToLog("Canvas aspect ration set to: " + w + "/" + h);
         }
 
         this.last_aspect_ratio = aspect_ratio;
