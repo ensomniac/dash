@@ -27164,18 +27164,18 @@ function DashGuiComboInterface () {
                 }
             }
             if (typeof selected !== "object") {
-                if (!this.option_list || this.option_list.length === 0) {
-                    return;  // Warning message irrelevant
+                if (
+                       !(!this.option_list || this.option_list.length === 0)
+                    && !(this.option_list.length === 1 && ["", "none"].includes(this.option_list[0]["id"])))
+                {
+                    console.warn(
+                        "Warning: Failed to find 'selected' object in options list." +
+                        "\n\ncombo_list:", combo_list, "\nselected:", selected,
+                        "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
+                    );
                 }
-                if (this.option_list.length === 1 && ["", "none"].includes(this.option_list[0]["id"])) {
-                    return;  // Warning message irrelevant
-                }
-                console.warn(
-                    "Warning: A combo object is using a non-object to identify a selected property. This should be an " +
-                    "object only.\n\ncombo_list:", combo_list, "\nselected:", selected,
-                    "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
-                );
-                return;
+                // Previously, we would return in this case, but then valid option list changes wouldn't get updated
+                selected = null;
             }
         }
         if (!ignore_callback && selected) {
