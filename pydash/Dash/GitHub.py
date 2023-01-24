@@ -97,6 +97,7 @@ class GitHub:
             "smartsioux",
             "rycam",
             "ensomniac_io",
+            "ensomniac_ai",
             "freshpath"
         ]
 
