@@ -19512,8 +19512,8 @@ function DashDateTime () {
         var included_offset_hours;
         // Check for included offset hours at end of the ISO string (ex: -04:00)
         if (iso_string[iso_string.length - 6] === "-") {
-            iso_string = iso_string.substring(0, iso_string.length - 6);
-            included_offset_hours = parseInt(iso_string.substring(iso_string.length - 5, iso_string.length));
+            included_offset_hours = parseInt(iso_string.substring(iso_string.length - 5, iso_string.length));  // Grab the offset before removing it
+            iso_string = iso_string.substring(0, iso_string.length - 6);  // Remove the offset from the original
         }
         var is_static_date = false;
         var dt_obj = new Date(Date.parse(iso_string));
