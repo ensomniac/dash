@@ -169,10 +169,10 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
 
         var size = Dash.Size.RowHeight;
 
-        this.mobile_at_combo.html.css({
+        this.mobile_at_combo.select.css({
             "width": size,
             "height": size,
-            "line-height": size + "px",
+            // "line-height": size + "px",
             "min-width": size,
             "max-width": size,
             "appearance": "none",
