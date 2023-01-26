@@ -145,7 +145,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             return;
         }
 
-        this.canvas.ToggleCanvasLayerHidden(index, hidden);
+        this.canvas.ToggleLayerHidden(index, hidden);
     };
 
     this.ToggleCanvasLayerLocked = function (index, locked) {
@@ -153,7 +153,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             return;
         }
 
-        this.canvas.ToggleCanvasLayerLocked(index, locked);
+        this.canvas.ToggleLayerLocked(index, locked);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
@@ -239,7 +239,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
                     // Aspect ratio change logging happens on canvas resize
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
-                        self.AddToLog("'" + key + "' set to: " + value);
+                        self.AddToLog(key.Title() + " set to: " + value);
                     }
                 },
                 self.api,

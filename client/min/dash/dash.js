@@ -27463,13 +27463,13 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         if (!this.canvas) {
             return;
         }
-        this.canvas.ToggleCanvasLayerHidden(index, hidden);
+        this.canvas.ToggleLayerHidden(index, hidden);
     };
     this.ToggleCanvasLayerLocked = function (index, locked) {
         if (!this.canvas) {
             return;
         }
-        this.canvas.ToggleCanvasLayerLocked(index, locked);
+        this.canvas.ToggleLayerLocked(index, locked);
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
@@ -27537,7 +27537,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     }
                     // Aspect ratio change logging happens on canvas resize
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
-                        self.AddToLog("'" + key + "' set to: " + value);
+                        self.AddToLog(key.Title() + " set to: " + value);
                     }
                 },
                 self.api,
@@ -27670,7 +27670,7 @@ function DashGuiContext2DCanvas (editor) {
             }
         }
         if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
-            this.editor.AddToLog("Canvas aspect ration set to: " + w + "/" + h);
+            this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
         this.last_aspect_ratio = aspect_ratio;
         // TODO: elements will need to be resized as well, but that may happen automatically
@@ -28181,13 +28181,13 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.color = this.layers.color;
     this.editor = this.layers.editor;
     this.can_edit = this.layers.can_edit;
-    this.height = Dash.Size.ButtonHeight * 1.5;
     this.setup_styles = function () {
         this.html.css({
-            "padding": Dash.Size.Padding * 0.5,
-            "height": this.height
+            "padding": Dash.Size.Padding,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
         });
         this.add_input();
+        this.RefreshConnections();
     };
     this.IsSelected = function () {
         return this.selected;
@@ -28203,7 +28203,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             return;
         }
         this.html.css({
-            "background": ""
+            "background": "",
+            "cursor": "pointer"
         });
         this.selected = false;
     };
@@ -28213,11 +28214,12 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
         this.layers.DeselectLayers();
         this.html.css({
-            "background": this.color.AccentGood
+            "background": this.color.PinstripeDark,
+            "cursor": "auto"
         });
         this.editor.SetCanvasActiveLayer(this.index);
         if (this.layers.initialized) {
-            this.editor.AddToLog("Selected layer: " + this.input.Text().trim() || this.get_data()["display_name"] || (this.index + 1));
+            this.editor.AddToLog("Selected layer: " + this.get_display_name);
         }
         this.selected = true;
     };
@@ -28227,6 +28229,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
         else {
         }
+        if (this.layers.initialized) {
+            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
+        }
     };
     // TODO: restyle the row? Other than that, nothing else needs to happen within this object
     this.ToggleLocked = function (locked) {
@@ -28234,12 +28239,31 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
         else {
         }
+        if (this.layers.initialized) {
+            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
+        }
+    };
+    this.RefreshConnections = function () {
+        (function (self) {
+            self.html.on("click", function (e) {
+                console.debug("TEST index", self.index);
+                self.Select();
+                e.stopPropagation();
+            });
+        })(this);
+    };
+    this.get_display_name = function () {
+        return (this.input.Text().trim() || this.get_data()["display_name"] || "New Layer");
     };
     this.add_input = function () {
         this.input = new Dash.Gui.Input("New Layer", this.color);
         this.input.html.css({
-            "background": "none",
-            "margin-top": (this.height * 0.5) - (Dash.Size.RowHeight * 0.5)
+            "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
+            "box-shadow": "none",
+            "border": "1px solid " + this.color.PinstripeDark
+        });
+        this.input.input.css({
+            "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
         // TODO: add event (if not exists in interface already) to set background color to
         //  white/etc when input receives focus, and back to none when it loses focus
@@ -28271,6 +28295,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.layers = [];
     this.header = null;
     this.toolbar = null;
+    this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.panel.color;
     this.editor = this.panel.editor;
@@ -28289,6 +28314,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.toolbar = new DashGuiContext2DEditorPanelLayersToolbar(this);
         this.header.html.append(this.toolbar.html);
         // TODO: load layers list data
+        this.setup_connections();
+        this.initialized = true;
     };
     this.InputInFocus = function () {
         for (var layer of this.layers) {
@@ -28324,37 +28351,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
         this.layers.Pop(index).html.remove();
+        // TODO: Update other layer indexes
         this.data["layers"].Pop(index);
         this.editor.RemoveCanvasLayer(index);
         this.save_data();
     };
     this.MoveUp = function () {
-        var index = this.GetSelectedIndex();
-        if (index === null) {
-            return;
-        }
-        var new_index = parseInt(index) + 1;
-        var layer = this.layers.Pop(index);
-        var layer_data = this.data["layers"].Pop(index);
-        this.layers.splice(new_index, 0, layer);
-        this.data["layers"].splice(new_index, 0, layer_data);
-        this.redraw_layers_box();
-        this.editor.MoveCanvasLayerUp(index);
-        this.save_data();
+        this.on_move();
     };
     this.MoveDown = function () {
-        var index = this.GetSelectedIndex();
-        if (index === null) {
-            return;
-        }
-        var new_index = parseInt(index) - 1;
-        var layer = this.layers.Pop(index);
-        var layer_data = this.data["layers"].Pop(index);
-        this.layers.splice(new_index, 0, layer);
-        this.data["layers"].splice(new_index, 0, layer_data);
-        this.redraw_layers_box();
-        this.editor.MoveCanvasLayerDown(index);
-        this.save_data();
+        this.on_move(false);
     };
     this.ToggleHidden = function (hidden) {
         var index = this.GetSelectedIndex();
@@ -28387,10 +28393,47 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             layer.Deselect();
         }
     };
+    this.on_move = function (up=true) {
+        var index = this.GetSelectedIndex();
+        if (index === null || this.layers.length < 2 || (up && index === this.layers.length - 1) || (!up && index === 0)) {
+            return;
+        }
+        var layer = this.layers.Pop(index);
+        var new_index = up ? parseInt(index) + 1 : parseInt(index) - 1;
+        if (up) {
+            layer.index += 1;
+        }
+        else {
+            layer.index -= 1;
+        }
+        for (var other_layer of this.layers) {
+            if (other_layer.index !== new_index) {
+                continue;
+            }
+            if (up) {
+                other_layer.index -= 1;
+            }
+            else {
+                other_layer.index += 1;
+            }
+        }
+        var layer_data = this.data["layers"].Pop(index);
+        this.layers.splice(new_index, 0, layer);
+        this.data["layers"].splice(new_index, 0, layer_data);
+        this.redraw_layers_box();
+        if (up) {
+            this.editor.MoveCanvasLayerUp(index);
+        }
+        else {
+            this.editor.MoveCanvasLayerDown(index);
+        }
+        this.save_data();
+    };
     this.redraw_layers_box = function () {
         this.layers_box.empty();
         for (var layer of this.layers) {
             this.layers_box.prepend(layer.html);
+            layer.RefreshConnections();
         }
     };
     this.get_data = function () {
@@ -28434,7 +28477,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.add_layers_box = function () {
         this.layers_box.css({
-            "background": "teal",
             "position": "absolute",
             "inset": 0,
             "top": Dash.Size.ButtonHeight + Dash.Size.Padding,
@@ -28461,6 +28503,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         });
         this.header.html.append(new Dash.Gui.GetFlexSpacer());
         this.html.append(this.header.html);
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.layers_box.on("click", function () {
+                self.DeselectLayers();
+            });
+        })(this);
     };
     this.setup_styles();
 }

@@ -8,15 +8,15 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.color = this.layers.color;
     this.editor = this.layers.editor;
     this.can_edit = this.layers.can_edit;
-    this.height = Dash.Size.ButtonHeight * 1.5;
 
     this.setup_styles = function () {
         this.html.css({
-            "padding": Dash.Size.Padding * 0.5,
-            "height": this.height
+            "padding": Dash.Size.Padding,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
         });
 
         this.add_input();
+        this.RefreshConnections();
     };
 
     this.IsSelected = function () {
@@ -37,7 +37,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
 
         this.html.css({
-            "background": ""
+            "background": "",
+            "cursor": "pointer"
         });
 
         this.selected = false;
@@ -51,13 +52,14 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         this.layers.DeselectLayers();
 
         this.html.css({
-            "background": this.color.AccentGood
+            "background": this.color.PinstripeDark,
+            "cursor": "auto"
         });
 
         this.editor.SetCanvasActiveLayer(this.index);
 
         if (this.layers.initialized) {
-            this.editor.AddToLog("Selected layer: " + this.input.Text().trim() || this.get_data()["display_name"] || (this.index + 1));
+            this.editor.AddToLog("Selected layer: " + this.get_display_name);
         }
 
         this.selected = true;
@@ -72,6 +74,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         else {
 
         }
+
+        if (this.layers.initialized) {
+            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
+        }
     };
 
     // TODO: restyle the row? Other than that, nothing else needs to happen within this object
@@ -83,14 +89,38 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         else {
 
         }
+
+        if (this.layers.initialized) {
+            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
+        }
+    };
+
+    this.RefreshConnections = function () {
+        (function (self) {
+            self.html.on("click", function (e) {
+                console.debug("TEST index", self.index);
+                self.Select();
+
+                e.stopPropagation();
+            });
+        })(this);
+    };
+
+    this.get_display_name = function () {
+        return (this.input.Text().trim() || this.get_data()["display_name"] || "New Layer");
     };
 
     this.add_input = function () {
         this.input = new Dash.Gui.Input("New Layer", this.color);
 
         this.input.html.css({
-            "background": "none",
-            "margin-top": (this.height * 0.5) - (Dash.Size.RowHeight * 0.5)
+            "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
+            "box-shadow": "none",
+            "border": "1px solid " + this.color.PinstripeDark
+        });
+
+        this.input.input.css({
+            "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
 
         // TODO: add event (if not exists in interface already) to set background color to

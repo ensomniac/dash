@@ -141,7 +141,7 @@ function DashGuiContext2DCanvas (editor) {
         }
 
         if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
-            this.editor.AddToLog("Canvas aspect ration set to: " + w + "/" + h);
+            this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
 
         this.last_aspect_ratio = aspect_ratio;
