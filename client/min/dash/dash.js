@@ -27729,7 +27729,13 @@ function DashGuiContext2DLogBar (editor) {
         this.list.ScrollToBottom();
     };
     this.add_list = function () {
-        this.list = new Dash.Layout.RevolvingList(this, this.get_column_config(), this.color, false);
+        this.list = new Dash.Layout.RevolvingList(
+            this,
+            this.get_column_config(),
+            this.color,
+            false,
+            {"row_height": Dash.Size.RowHeight * 1.2}  // This is minimum height for the scroll bar to not look wonky
+        );
         this.list.DisableRowEvents();
         this.min_height = this.list.full_row_height + 1;
         this.html.append(this.list.html);
@@ -28177,16 +28183,24 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.index = index;
     this.input = null;
     this.selected = false;
+    this.hidden_icon = null;
+    this.locked_icon = null;
+    this.icon_size_mult = 0.8;
     this.html = $("<div></div>");
     this.color = this.layers.color;
     this.editor = this.layers.editor;
+    this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
+    this.icon_color = this.color.PinstripeDark;
     this.setup_styles = function () {
         this.html.css({
             "padding": Dash.Size.Padding,
-            "border-bottom": "1px solid " + this.color.PinstripeDark
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            "display": "flex"
         });
         this.add_input();
+        this.html.append(Dash.Gui.GetFlexSpacer());
+        this.add_icon_area();
         this.RefreshConnections();
     };
     this.IsSelected = function () {
@@ -28202,51 +28216,55 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         if (!this.selected) {
             return;
         }
+        this.selected = false;
         this.html.css({
             "background": "",
             "cursor": "pointer"
         });
-        this.selected = false;
     };
     this.Select = function () {
         if (this.selected) {
             return;
         }
         this.layers.DeselectLayers();
+        this.selected = true;
         this.html.css({
             "background": this.color.PinstripeDark,
             "cursor": "auto"
         });
         this.editor.SetCanvasActiveLayer(this.index);
         if (this.layers.initialized) {
-            this.editor.AddToLog("Selected layer: " + this.get_display_name);
+            this.editor.AddToLog("Selected layer: " + this.get_display_name());
+            this.layers.UpdateToolbarIconStates();
         }
-        this.selected = true;
     };
-    // TODO: restyle the row? Other than that, nothing else needs to happen within this object
     this.ToggleHidden = function (hidden) {
         if (hidden) {
+            this.hidden_icon.html.show();
         }
         else {
+            this.hidden_icon.html.hide();
         }
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
+            this.editor.ToggleCanvasLayerHidden(this.index, hidden);
         }
     };
-    // TODO: restyle the row? Other than that, nothing else needs to happen within this object
     this.ToggleLocked = function (locked) {
         if (locked) {
+            this.locked_icon.html.show();
         }
         else {
+            this.locked_icon.html.hide();
         }
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
+            this.editor.ToggleCanvasLayerLocked(this.index, locked);
         }
     };
     this.RefreshConnections = function () {
         (function (self) {
             self.html.on("click", function (e) {
-                console.debug("TEST index", self.index);
                 self.Select();
                 e.stopPropagation();
             });
@@ -28265,8 +28283,6 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         this.input.input.css({
             "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
-        // TODO: add event (if not exists in interface already) to set background color to
-        //  white/etc when input receives focus, and back to none when it loses focus
         var value = this.get_data()["display_name"];
         if (value) {
             this.input.SetText(value);
@@ -28279,6 +28295,25 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             this.input.SetLocked(true);
         }
         this.html.append(this.input.html);
+    };
+    this.add_icon_area = function () {
+        this.icon_area.css({
+            "display": "flex"
+        });
+        this.hidden_icon = new Dash.Gui.Icon(this.color, "hidden", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+        this.locked_icon = new Dash.Gui.Icon(this.color, "lock", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+        this.locked_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+        if (!this.get_data()["hidden"]) {
+            this.hidden_icon.html.hide();
+        }
+        if (!this.get_data()["locked"]) {
+            this.locked_icon.html.hide();
+        }
+        this.icon_area.append(this.hidden_icon.html);
+        this.icon_area.append(this.locked_icon.html);
+        this.html.append(this.icon_area);
     };
     this.on_input_submit = function () {
         this.layers.set_data("display_name", this.input.Text().trim(), this.index);
@@ -28338,11 +28373,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (!new_layer) {
             return;
         }
-        layer.Select();
         if (!("layers" in this.data)) {
             this.data["layers"] = [];
         }
         this.data["layers"].push({"display_name": "New Layer"});
+        layer.Select();
         this.save_data();
     };
     this.Delete = function () {
@@ -28350,8 +28385,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (index === null) {
             return;
         }
+        var is_top_layer = index === this.layers.length - 1;
         this.layers.Pop(index).html.remove();
-        // TODO: Update other layer indexes
+        if (!is_top_layer) {
+            for (var other_layer of this.layers) {
+                if (other_layer.index <= index) {
+                    continue;
+                }
+                other_layer.index -= 1;
+            }
+        }
         this.data["layers"].Pop(index);
         this.editor.RemoveCanvasLayer(index);
         this.save_data();
@@ -28369,7 +28412,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.set_data("hidden", hidden, index);
         this.layers[index].ToggleHidden(hidden);
-        this.editor.ToggleCanvasLayerHidden(index, hidden);
     };
     this.ToggleLocked = function (locked) {
         var index = this.GetSelectedIndex();
@@ -28378,7 +28420,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.set_data("locked", locked, index);
         this.layers[index].ToggleLocked(locked);
-        this.editor.ToggleCanvasLayerLocked(index, locked);
     };
     this.GetSelectedIndex = function () {
         for (var layer of this.layers) {
@@ -28392,6 +28433,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         for (var layer of this.layers) {
             layer.Deselect();
         }
+    };
+    this.UpdateToolbarIconStates = function () {
+        this.toolbar.UpdateIconStates();
     };
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
@@ -28437,8 +28481,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
     this.get_data = function () {
-        // TODO: toolbar will use this to determine if a layer is locked/unlocked, etc
-        //  when changing layers, so this needs to return layer data or something like that
+        // TODO: something like this
         return this.data["layers"] || [];
     };
 
@@ -28571,6 +28614,21 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         });
         this.add_icons();
     };
+    this.UpdateIconStates = function () {
+        var selected_layer_data = this.get_data();
+        for (var key in this.icon_toggles) {
+            if (key in selected_layer_data) {
+                if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
+                    this.icon_toggles[key].Toggle(true);
+                }
+            }
+            else {
+                if (this.icon_toggles[key].IsChecked()) {
+                    this.icon_toggles[key].Toggle(true);
+                }
+            }
+        }
+    };
     this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
@@ -28599,6 +28657,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.icon_toggles[key].SetIconSize(this.icon_size);
         this.icon_toggles[key].SetTrueIconName(true_icon_name);
         this.icon_toggles[key].SetFalseIconName(false_icon_name);
+        this.icon_toggles[key].SetAbleToToggleCallback(this.layer_is_selected, this);
         if (this.can_edit) {
             this.add_on_hover(this.icon_toggles[key].html);
         }
@@ -28606,6 +28665,9 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             this.icon_toggles[key].SetReadOnly();
         }
         this.html.append(this.icon_toggles[key].html);
+    };
+    this.layer_is_selected = function () {
+        return this.layers.GetSelectedIndex() !== null;
     };
     this.add_icon_button = function (key, icon_name, callback) {
         this.icon_buttons[key] = new Dash.Gui.IconButton(icon_name, callback, this, this.color);
@@ -28671,9 +28733,12 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 }
             );
         })(this);
-        var selected_layer_data = this.layers.get_data()[this.layers.GetSelectedIndex()] || {};
+        var selected_layer_data = this.get_data();
         this.add_icon_toggle(selected_layer_data, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer_data, "locked", "unlock_alt", "lock");
+    };
+    this.get_data = function () {
+        return this.layers.get_data()[this.layers.GetSelectedIndex()] || {};
     };
     this.setup_styles();
 }

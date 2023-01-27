@@ -65,13 +65,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
 
-        layer.Select();
-
         if (!("layers" in this.data)) {
             this.data["layers"] = [];
         }
 
         this.data["layers"].push({"display_name": "New Layer"});
+
+        layer.Select();
 
         this.save_data();
     };
@@ -83,9 +83,19 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
 
+        var is_top_layer = index === this.layers.length - 1;
+
         this.layers.Pop(index).html.remove();
 
-        // TODO: Update other layer indexes
+        if (!is_top_layer) {
+            for (var other_layer of this.layers) {
+                if (other_layer.index <= index) {
+                    continue;
+                }
+
+                other_layer.index -= 1;
+            }
+        }
 
         this.data["layers"].Pop(index);
 
@@ -112,8 +122,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.set_data("hidden", hidden, index);
 
         this.layers[index].ToggleHidden(hidden);
-
-        this.editor.ToggleCanvasLayerHidden(index, hidden);
     };
 
     this.ToggleLocked = function (locked) {
@@ -126,8 +134,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.set_data("locked", locked, index);
 
         this.layers[index].ToggleLocked(locked);
-
-        this.editor.ToggleCanvasLayerLocked(index, locked);
     };
 
     this.GetSelectedIndex = function () {
@@ -144,6 +150,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         for (var layer of this.layers) {
             layer.Deselect();
         }
+    };
+
+    this.UpdateToolbarIconStates = function () {
+        this.toolbar.UpdateIconStates();
     };
 
     this.on_move = function (up=true) {
@@ -208,8 +218,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.get_data = function () {
-        // TODO: toolbar will use this to determine if a layer is locked/unlocked, etc
-        //  when changing layers, so this needs to return layer data or something like that
+        // TODO: something like this
         return this.data["layers"] || [];
     };
 

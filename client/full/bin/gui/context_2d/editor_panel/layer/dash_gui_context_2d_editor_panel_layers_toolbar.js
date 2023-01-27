@@ -19,6 +19,24 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.add_icons();
     };
 
+    this.UpdateIconStates = function () {
+        var selected_layer_data = this.get_data();
+
+        for (var key in this.icon_toggles) {
+            if (key in selected_layer_data) {
+                if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
+                    this.icon_toggles[key].Toggle(true);
+                }
+            }
+
+            else {
+                if (this.icon_toggles[key].IsChecked()) {
+                    this.icon_toggles[key].Toggle(true);
+                }
+            }
+        }
+    };
+
     this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
@@ -50,6 +68,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.icon_toggles[key].SetIconSize(this.icon_size);
         this.icon_toggles[key].SetTrueIconName(true_icon_name);
         this.icon_toggles[key].SetFalseIconName(false_icon_name);
+        this.icon_toggles[key].SetAbleToToggleCallback(this.layer_is_selected, this);
 
         if (this.can_edit) {
             this.add_on_hover(this.icon_toggles[key].html);
@@ -60,6 +79,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         }
 
         this.html.append(this.icon_toggles[key].html);
+    };
+
+    this.layer_is_selected = function () {
+        return this.layers.GetSelectedIndex() !== null;
     };
 
     this.add_icon_button = function (key, icon_name, callback) {
@@ -138,10 +161,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             );
         })(this);
 
-        var selected_layer_data = this.layers.get_data()[this.layers.GetSelectedIndex()] || {};
+        var selected_layer_data = this.get_data();
 
         this.add_icon_toggle(selected_layer_data, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer_data, "locked", "unlock_alt", "lock");
+    };
+
+    this.get_data = function () {
+        return this.layers.get_data()[this.layers.GetSelectedIndex()] || {};
     };
 
     this.setup_styles();
