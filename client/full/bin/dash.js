@@ -6,7 +6,7 @@ function Dash () {
     this.Context  = DASH_CONTEXT;
     this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
 
-    // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this
+    // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
