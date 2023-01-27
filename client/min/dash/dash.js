@@ -38478,6 +38478,7 @@ function DashMobileCardStack (binder, color=null) {
     this.banner_fixed = false;  // By default, the banner scrolls with the rest of the content
     this.banner_spacer = null;
     this.touch_active = false;
+    this.content_elements = [];
     this.center_content = null;
     this.center_scroll_top = 0;
     this.active_panel_index = 1;  // Center
@@ -38553,7 +38554,7 @@ function DashMobileCardStack (binder, color=null) {
             return this.banner;
         }
         this.banner = new DashMobileCardStackBanner(this);
-        this.AddHTML(this.banner.html);
+        this.AddHTML(this.banner.html, false);
         return this.banner;
     };
     // When is_fixed is true, the banner does not scroll with the rest of the content on the page
@@ -38596,17 +38597,27 @@ function DashMobileCardStack (binder, color=null) {
     };
     this.AddUserBanner = function (include_refresh_button=true) {
         var banner = new DashMobileCardStackUserBanner(this, include_refresh_button);
-        this.AddHTML(banner.html);
+        this.AddHTML(banner.html, false);
         return banner;
     };
-    this.AddHTML = function (html) {
+    this.AddHTML = function (html, add_to_content_elements=true) {
         html.css({
             ...Dash.HardwareAccelerationCSS
         });
         this.center_content.append(html);
+        if (add_to_content_elements) {
+            this.content_elements.push(html);
+        }
         if (this.footer_spacer) {
             this.center_content.append(this.footer_spacer);
         }
+    };
+    this.EmptyContent = function () {
+        for (var element of this.content_elements) {
+            element.remove();
+        }
+        this.cards = [];
+        this.content_elements = [];
     };
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
     this.AppendHTML = function (html) {
@@ -39506,6 +39517,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
+    this.highlighted = false;
     this.click_active = false;
     this.upload_button = null;
     this.notification_icon = null;
@@ -39517,6 +39529,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
+    this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
+    this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
     this.icon = new Dash.Gui.Icon(
         this.color,
@@ -39546,7 +39560,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "height": this.width,
             "width": this.width,
             "border-radius": this.width * 0.5,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
+            "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
         this.label.css({
             "position": "absolute",
@@ -39608,6 +39622,22 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         else {
             this.notification_icon.stop().animate({"opacity": 0}, 350);
         }
+    };
+    this.ToggleHighlight = function (highlighted) {
+        if (this.highlighted === highlighted) {
+            return;
+        }
+        if (highlighted) {
+            this.icon_circle.css({
+                "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
+            });
+        }
+        else {
+            this.icon_circle.css({
+                "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+            });
+        }
+        this.highlighted = highlighted;
     };
     this.setup_connections = function () {
         (function (self) {
