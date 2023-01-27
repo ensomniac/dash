@@ -27,7 +27,7 @@ class RunAsRoot:
 
     def Queue(self, command):
         self.task_id = GetRandomID()
-        self.cmd = command
+        self.cmd = command  # str or list
         self.cmd_path = os.path.join(self.request_path, self.task_id)
         self.start_time = datetime.now()
 

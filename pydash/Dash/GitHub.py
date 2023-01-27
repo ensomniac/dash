@@ -153,7 +153,8 @@ class GitHub:
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
-        return RunAsRoot.Queue(";".join(cmds))
+        # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called
+        return RunAsRoot.Queue(cmds)
 
 
 def UpdateFromWebhook(local_git_root, local_git_path, dest_path):

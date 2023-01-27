@@ -133,24 +133,32 @@ class PollRequests:
     def run_task(self, task_path):
         from subprocess import check_output
 
+        error_occurred = False
         task_state = json.loads(open(task_path, "r").read())
-        # tmp_log = os.path.join("/var", "tmp", f"rar_{task_state['id']}")
+        cmd_type = type(task_state["cmd"])
 
-        # os.system(f"{task_state['cmd']} >> {tmp_log} 2>&1")
-        #
-        # log_result = None
-        #
-        # try:
-        #     log_result = open(tmp_log, "r").read()
-        # except:
-        #     pass
+        if cmd_type is list:
+            log_results = []
 
-        # The above code wasn't working as expected - os.system was only capturing the last command's output
-        log_result = check_output([task_state["cmd"]], shell=True).decode().strip()
+            for command in task_state["cmd"]:
+                # check_output takes a list of commands, but it appears it joins those commands
+                # with a semicolon to run them (though I can't find confirmation), which we don't
+                # want, so we'll fire off an individual call for each command instead
+                log_results.append(check_output([command], shell=True).decode().strip())
+
+            log_result = "\n".join(log_results)
+
+        elif cmd_type is str:
+            log_result = check_output([task_state["cmd"]], shell=True).decode().strip()
+
+        else:
+            error_occurred = True
+            log_result = f"Invalid command type: {cmd_type}"
 
         task_state = json.loads(open(task_path, "r").read())
         task_state["complete"] = True
-        task_state["error"] = False
+        task_state["error"] = error_occurred
+        task_state["cmd_type"] = str(cmd_type)
         task_state["output"] = log_result
 
         open(task_path, "w").write(json.dumps(task_state))
