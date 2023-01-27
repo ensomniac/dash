@@ -16,16 +16,14 @@ from Dash.Utils import OapiRoot, GetRandomID
 
 class RunAsRoot:
     def __init__(self):
-        # TODO: Put this path in dash guide
-        self.request_path = os.path.join(OapiRoot, "dash", "local", "rar", "active/")
-
-        self.task_id = None
         self.cmd = None
-        self.cmd_path = None
-        self.start_time = None
-        self.fail_timeout = 10  # In seconds
         self.state = None
         self.timestamp = ""
+        self.task_id = None
+        self.cmd_path = None
+        self.start_time = None
+        self.fail_timeout = 20  # In seconds (formerly 10, but git updates were failing for some repos that take a bit longer)
+        self.request_path = os.path.join(OapiRoot, "dash", "local", "rar", "active/")  # TODO: Put this path in dash guide
 
     def Queue(self, command):
         self.task_id = GetRandomID()
