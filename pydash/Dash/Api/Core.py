@@ -380,6 +380,7 @@ class ApiCore:
 
         return self._response
 
+    # TODO: break this up
     def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
             return
@@ -457,6 +458,28 @@ class ApiCore:
                 error += f"<br><br>Env:<br>{json.dumps(dict(os.environ), indent=4, sort_keys=True)}"
             except:
                 pass
+
+        # Asset paths
+        ryan_personal_packages = [
+            "smartsioux",
+            "rycam",
+            "ensomniac_io",
+            "ensomniac_ai",
+            "freshpath"
+        ]
+
+        # Asset paths
+        andrew_personal_packages = [
+            "simple_paycheck_budget"
+        ]
+
+        if self._asset_path in ryan_personal_packages:
+            strict_notify = True
+            notify_email_list = ["ryan@ensomniac.com"]
+
+        if self._asset_path in andrew_personal_packages:
+            strict_notify = True
+            notify_email_list = ["stetandrew@gmail.com"]
 
         try:
             SendEmail(

@@ -93,7 +93,8 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
-        ryan_personal_packages = [
+        # Repo names
+        ryan_personal_repos = [
             "smartsioux",
             "rycam",
             "ensomniac_io",
@@ -101,11 +102,12 @@ class GitHub:
             "freshpath"
         ]
 
+        # Repo names
         andrew_personal_repos = [
             "simplepaycheckbudget"
         ]
 
-        if return_data["repository"] in ryan_personal_packages:
+        if return_data["repository"] in ryan_personal_repos:
             email_list = ["ryan@ensomniac.com"]
 
         elif return_data["repository"] in andrew_personal_repos:
