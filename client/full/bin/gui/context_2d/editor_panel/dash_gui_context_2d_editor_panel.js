@@ -60,6 +60,10 @@ function DashGuiContext2DEditorPanel (editor) {
         this.setup_property_box();
     };
 
+    this.SwitchContentToEditTab = function () {
+        this.content_box.SwitchToEditTab();
+    };
+
     this.InputInFocus = function () {
         return (
                (this.property_box && this.property_box.InputInFocus())
@@ -74,13 +78,20 @@ function DashGuiContext2DEditorPanel (editor) {
         var h = data["aspect_ratio_h"];
 
         if (!this.aspect_tool_row) {
-            return [w || 1, h || 1];
+            return [
+                w || 1,
+                h || 1
+            ];
         }
 
         return [
             parseFloat(this.aspect_tool_row_inputs["w"].Text() || w || 1) || 1,
             parseFloat(this.aspect_tool_row_inputs["h"].Text() || h || 1) || 1
         ];
+    };
+
+    this.GetSelectedLayer = function () {
+        return this.layers_box.GetSelectedLayer();
     };
 
     this.UpdatePropertyBox = function () {

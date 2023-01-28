@@ -45,21 +45,21 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return false;
     };
 
-    this.AddLayer = function (index=null) {
+    this.AddLayer = function (_index=null) {
         var new_layer = false;
 
-        if (index === null) {
-            index = this.layers.length;
+        if (_index === null) {
+            _index = this.layers.length;
             new_layer = true;
         }
 
-        var layer = new DashGuiContext2DEditorPanelLayer(this, index);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index);
 
         this.layers.push(layer);
 
         this.layers_box.prepend(layer.html);
 
-        this.editor.AddCanvasLayer(index);
+        this.editor.AddCanvasLayer(_index);
 
         if (!new_layer) {
             return;
@@ -137,9 +137,19 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.GetSelectedIndex = function () {
+        var layer = this.GetSelectedLayer();
+
+        if (layer) {
+            return layer.GetIndex();
+        }
+
+        return null;
+    };
+
+    this.GetSelectedLayer = function () {
         for (var layer of this.layers) {
             if (layer.IsSelected()) {
-                return layer.GetIndex();
+                return layer;
             }
         }
 

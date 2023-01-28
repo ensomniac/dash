@@ -9,6 +9,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.icon_size_mult = 0.8;
     this.html = $("<div></div>");
     this.color = this.layers.color;
+    this.panel = this.layers.panel;
     this.editor = this.layers.editor;
     this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
@@ -35,6 +36,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
     this.GetIndex = function () {
         return this.index;
+    };
+
+    this.GetData = function () {
+        return this.get_data();
     };
 
     this.InputInFocus = function () {
@@ -74,6 +79,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
 
             this.layers.UpdateToolbarIconStates();
+
+            this.panel.SwitchContentToEditTab();
         }
     };
 

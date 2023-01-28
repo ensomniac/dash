@@ -28056,6 +28056,9 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
     };
+    this.SwitchContentToEditTab = function () {
+        this.content_box.SwitchToEditTab();
+    };
     this.InputInFocus = function () {
         return (
                (this.property_box && this.property_box.InputInFocus())
@@ -28068,12 +28071,18 @@ function DashGuiContext2DEditorPanel (editor) {
         var w = data["aspect_ratio_w"];
         var h = data["aspect_ratio_h"];
         if (!this.aspect_tool_row) {
-            return [w || 1, h || 1];
+            return [
+                w || 1,
+                h || 1
+            ];
         }
         return [
             parseFloat(this.aspect_tool_row_inputs["w"].Text() || w || 1) || 1,
             parseFloat(this.aspect_tool_row_inputs["h"].Text() || h || 1) || 1
         ];
+    };
+    this.GetSelectedLayer = function () {
+        return this.layers_box.GetSelectedLayer();
     };
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
@@ -28188,6 +28197,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.icon_size_mult = 0.8;
     this.html = $("<div></div>");
     this.color = this.layers.color;
+    this.panel = this.layers.panel;
     this.editor = this.layers.editor;
     this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
@@ -28208,6 +28218,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     };
     this.GetIndex = function () {
         return this.index;
+    };
+    this.GetData = function () {
+        return this.get_data();
     };
     this.InputInFocus = function () {
         return this.input.InFocus();
@@ -28236,6 +28249,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         if (this.layers.initialized) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
             this.layers.UpdateToolbarIconStates();
+            this.panel.SwitchContentToEditTab();
         }
     };
     this.ToggleHidden = function (hidden) {
@@ -28360,16 +28374,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         return false;
     };
-    this.AddLayer = function (index=null) {
+    this.AddLayer = function (_index=null) {
         var new_layer = false;
-        if (index === null) {
-            index = this.layers.length;
+        if (_index === null) {
+            _index = this.layers.length;
             new_layer = true;
         }
-        var layer = new DashGuiContext2DEditorPanelLayer(this, index);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index);
         this.layers.push(layer);
         this.layers_box.prepend(layer.html);
-        this.editor.AddCanvasLayer(index);
+        this.editor.AddCanvasLayer(_index);
         if (!new_layer) {
             return;
         }
@@ -28422,9 +28436,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[index].ToggleLocked(locked);
     };
     this.GetSelectedIndex = function () {
+        var layer = this.GetSelectedLayer();
+        if (layer) {
+            return layer.GetIndex();
+        }
+        return null;
+    };
+    this.GetSelectedLayer = function () {
         for (var layer of this.layers) {
             if (layer.IsSelected()) {
-                return layer.GetIndex();
+                return layer;
             }
         }
         return null;
@@ -28559,14 +28580,27 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
-    this.html = $("<div></div>");
+    this.html = null;
+    this.header = null;
+    this.layout = null;
+    this.new_box = null;
+    this.edit_box = null;
+    this.edit_tab_index = null;
     this.color = this.panel.color;
     this.can_edit = this.panel.can_edit;  // TODO: propagate
     this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
-    this.new_box = new DashGuiContext2DEditorPanelContentNew(this);
-    this.edit_box = new DashGuiContext2DEditorPanelContentEdit(this);
+    this.PrimitiveTypes = [
+        "text",
+        "image"
+        // Add to this list as support for more primitives are added
+    ];
     this.setup_styles = function () {
+        this.layout = new Dash.Layout.Tabs.Top(this);
+        this.layout.OnTabChanged(this.on_tab_changed);
+        this.layout.AlwaysStartOnFirstTab();
+        this.html = this.layout.html;
         this.html.css({
+            "background": "none",
             "position": "absolute",
             "inset": 0,
             "padding": Dash.Size.Padding,
@@ -28574,15 +28608,79 @@ function DashGuiContext2DEditorPanelContent (panel) {
             "border-top": "1px solid " + this.color.StrokeLight,
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
-        var header = new Dash.Gui.Header("Content");
-        header.ReplaceBorderWithIcon("pencil_paintbrush");
-        this.html.append(header.html);
-        this.html.append(this.new_box.html);
-        this.html.append(this.edit_box.html);
+        this.add_header();
+        this.add_new_box();
+        this.add_edit_box();
+        this.set_header_right_margin();
     };
-    // TODO
     this.InputInFocus = function () {
+        var tab = this.layout.all_content[this.layout.GetCurrentIndex()]["content_div_html_class"];
+        if (tab.hasOwnProperty("InputInFocus")) {
+            return tab.InputInFocus();
+        }
         return false;
+    };
+    this.SwitchToEditTab = function () {
+        this.layout.LoadIndex(this.edit_tab_index);
+    };
+    this.add_edit_box = function () {
+        this.edit_box = new DashGuiContext2DEditorPanelContentEdit(this);
+        this.layout.Prepend("Edit", this.edit_box);
+        this.edit_tab_index = this.layout.all_content.length - 1;
+    };
+    this.add_new_box = function () {
+        this.new_box = new DashGuiContext2DEditorPanelContentNew(this);
+        this.layout.Prepend("New", this.new_box);
+    };
+    this.add_header = function () {
+        this.header = new Dash.Gui.Header("Content");
+        this.header.ReplaceBorderWithIcon("pencil_paintbrush");
+        this.header.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "margin-left": Dash.Size.Padding * 0.5,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "padding-bottom": Dash.Size.Padding * 0.4,
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            "flex": 2
+        });
+        this.layout.AppendHTML(this.header.html);
+    };
+    this.on_tab_changed = function (selected_content_data) {
+        this.remove_tab_backgrounds(selected_content_data);
+        if (selected_content_data["content_div_html_class"] === this.edit_box) {
+            this.edit_box.Redraw();
+        }
+    };
+    this.set_header_right_margin = function () {
+        var tabs_width = 0;
+        for (var content_data of this.layout.all_content) {
+            var width = content_data["button"].html.width();
+            if (!width) {
+                (function (self) {
+                    setTimeout(
+                        function () {
+                            self.set_header_right_margin();
+                        },
+                        100
+                    );
+                })(this);
+                return;
+            }
+            tabs_width += width;
+        }
+        this.header.html.css({
+            "margin-right": tabs_width + (Dash.Size.Padding * (this.layout.all_content.length + 1))
+        });
+    };
+    this.remove_tab_backgrounds = function (selected_content_data) {
+        for (var content_data of this.layout.all_content) {
+            if (selected_content_data["button"] === content_data["button"]) {
+                continue;
+            }
+            content_data["button"].html.css({
+                "background": "none"
+            });
+        }
     };
     this.setup_styles();
 }
@@ -28593,6 +28691,12 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.color = this.content.color;
     this.can_edit = this.content.can_edit;  // TODO: propagate
     this.setup_styles = function () {
+        for (var primitive_type of this.content.PrimitiveTypes) {
+            // TODO
+        }
+        // TODO
+    };
+    this.InputInFocus = function () {
         // TODO
     };
     this.setup_styles();
@@ -28705,7 +28809,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.add_icons = function () {
         (function (self) {
             self.add_icon_button(
-                "new_layer",
+                "new_layer",  // TODO: might not actually want/need this, since the content>new will add layers
                 "add_layer",
                 function () {
                     self.layers.AddLayer();
@@ -28745,11 +28849,67 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
 function DashGuiContext2DEditorPanelContentEdit (content) {
     this.content = content;
+    this.contexts = {};
     this.html = $("<div></div>");
     this.color = this.content.color;
+    this.panel = this.content.panel;
     this.can_edit = this.content.can_edit;  // TODO: propagate
     this.setup_styles = function () {
-        // TODO
+        for (var key of ["general", ...this.content.PrimitiveTypes]) {
+            this.add_context(key);
+        }
+    };
+    this.InputInFocus = function () {
+        for (var key in this.contexts) {
+            if (!this.contexts[key]["visible"]) {
+                continue;
+            }
+            for (var input of this.contexts[key]["inputs"]) {
+                if (input.InFocus()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    this.Redraw = function () {
+        for (var key in this.contexts) {
+            if (key === "general") {
+                continue;
+            }
+            this.hide_context(key);
+        }
+        var selected_layer = this.panel.GetSelectedLayer();
+        if (!selected_layer) {
+            this.hide_context("general");
+            return;
+        }
+        // Always show general context when a layer is selected
+        this.show_context("general");
+        // TODO: something like this
+        this.show_context((selected_layer["primitive"] || {})["type"]);
+    };
+    this.show_context = function (key) {
+        if (!key || !this.contexts[key] || this.contexts[key]["visible"]) {
+            return;
+        }
+        this.contexts[key]["html"].show();
+        this.contexts[key]["visible"] = true;
+    };
+    this.hide_context = function (key) {
+        if (!key || !this.contexts[key] || !this.contexts[key]["visible"]) {
+            return;
+        }
+        this.contexts[key]["html"].hide();
+        this.contexts[key]["visible"] = false;
+    };
+    this.add_context = function (key) {
+        this.contexts[key] = {
+            "html": $("<div></div>"),
+            "visible": false,
+            "inputs": []  // TODO: any inputs that get added to these contexts should be added to this list
+        };
+        this.html.append(this.contexts[key]["html"]);
     };
     this.setup_styles();
 }

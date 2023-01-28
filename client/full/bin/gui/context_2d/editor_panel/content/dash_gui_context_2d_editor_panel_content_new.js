@@ -6,6 +6,14 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.can_edit = this.content.can_edit;  // TODO: propagate
 
     this.setup_styles = function () {
+        for (var primitive_type of this.content.PrimitiveTypes) {
+            // TODO
+        }
+
+        // TODO
+    };
+
+    this.InputInFocus = function () {
         // TODO
     };
 
