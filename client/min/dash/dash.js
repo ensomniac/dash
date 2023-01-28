@@ -17864,7 +17864,7 @@ function DashGui() {
             "position": "absolute",
             "inset": 0,
             "overflow-y": "auto",
-            "color": "black",
+            "color": color.Text,
             "background": color.Background,
             ...optional_style_css
         });
@@ -17878,7 +17878,7 @@ function DashGui() {
         html.css({
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "color": color.Background,
+            "color": color.Text,
             "border-radius": Dash.Size.Padding * 0.5,
             "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
