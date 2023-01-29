@@ -28460,7 +28460,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
-        if (index === null || this.layers.length < 2 || (up && index === this.layers.length - 1) || (!up && index === 0)) {
+        if (index === null || this.layers.length < 2 || (up && index === (this.layers.length - 1)) || (!up && index === 0)) {
             return;
         }
         var layer = this.layers.Pop(index);
@@ -30136,6 +30136,7 @@ function DashGuiIcons (icon) {
         "archive_light":         new DashGuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
         "arrow_down":            new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down"),
         "arrow_down_alt":        new DashGuiIconDefinition(this.icon, "Arrow Down Alt", this.weight["regular"], "arrow-down"),
+        "arrow_down_alt_heavy":  new DashGuiIconDefinition(this.icon, "Arrow Down Alt (Heavy)", this.weight["solid"], "arrow-down"),
         "arrow_left":            new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),
         "arrow_left_alt":        new DashGuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
         "arrow_left_long":       new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
@@ -30146,6 +30147,7 @@ function DashGuiIcons (icon) {
         "arrow_to_left":         new DashGuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
         "arrow_up":              new DashGuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up"),
         "arrow_up_alt":          new DashGuiIconDefinition(this.icon, "Arrow Up Alt", this.weight["regular"], "arrow-up"),
+        "arrow_up_alt_heavy":    new DashGuiIconDefinition(this.icon, "Arrow Up Alt (Heavy)", this.weight["solid"], "arrow-up"),
         "asterisk":              new DashGuiIconDefinition(this.icon, "Asterisk", this.weight["solid"], "asterisk"),
         "at_sign":               new DashGuiIconDefinition(this.icon, "At Sign", this.weight["regular"], "at"),
         "award":                 new DashGuiIconDefinition(this.icon, "Award", this.weight["regular"], "award"),
@@ -30355,6 +30357,8 @@ function DashGuiIcons (icon) {
         "transferring":          new DashGuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new DashGuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
         "trash_alt":             new DashGuiIconDefinition(this.icon, "Trash Alt", this.weight["regular"], "trash-alt"),
+        "trash_alt_light":       new DashGuiIconDefinition(this.icon, "Trash Alt (Light)", this.weight["light"], "trash-alt"),
+        "trash_alt_solid":       new DashGuiIconDefinition(this.icon, "Trash Alt (Solid)", this.weight["solid"], "trash-alt"),
         "trash_restore":         new DashGuiIconDefinition(this.icon, "Trash Undo", this.weight["regular"], "trash-restore"),
         "trash_solid":           new DashGuiIconDefinition(this.icon, "Trash", this.weight["solid"], "trash"),
         "triangle":              new DashGuiIconDefinition(this.icon, "Triangle", this.weight["regular"], "triangle"),
@@ -35035,8 +35039,9 @@ function DashLayoutListColumnConfig () {
         );
     };
     this.AddInput = function (
-        label_text, binder=null, callback=null, data_key="", width_mult=1, css={},
-        header_css={}, placeholder_label="", default_value="", disable_autosave=false, can_edit=true
+        label_text="", binder=null, callback=null, data_key="", width_mult=1, css={},
+        header_css={}, placeholder_label="", default_value="", disable_autosave=false,
+        can_edit=true, use_placeholder_label_for_header=true
     ) {
         this.AddColumn(
             label_text,
@@ -35047,6 +35052,7 @@ function DashLayoutListColumnConfig () {
                 "type": "input",
                 "options": {
                     "placeholder_label": placeholder_label || label_text,
+                    "use_placeholder_label_for_header": use_placeholder_label_for_header,
                     "callback" : callback,
                     "binder": binder,
                     "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light,
@@ -35353,29 +35359,48 @@ function DashLayoutListRowElements () {
                 "additional_data": {
                     "row_id": this.id,
                     "row": this,  // For revolving lists, use this instead of relying on row_id
-                    "column_index": this.columns["combos"].length
+                    "column_index": this.columns["combos"].length,
+                    "data_key": column_config_data["data_key"]
                 },
                 "is_user_list": column_config_data["options"]["is_user_list"] || false,
                 "multi_select": column_config_data["options"]["multi_select"] || false
             }
         );
-        combo.html.css({
+        var css = {
             "height": this.height,
             "width": column_config_data["width"]
-        });
+        };
+        if (column_config_data["css"]) {
+            if (column_config_data["css"]["border"] && column_config_data["css"]["border"] !== "none" && !this.is_header) {
+                css["box-sizing"] = "border-box";
+                css["padding-left"] = Dash.Size.Padding * 0.2;
+            }
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+        if (this.is_header) {
+            css["border"] = "none";
+            if (column_config_data["header_css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["header_css"]
+                };
+            }
+        }
+        combo.html.css(css);
         combo.label.css({
             "height": this.height,
+            "margin-top": -Dash.Size.Padding * 0.1,
             "line-height": this.height + "px"
         });
-        if (column_config_data["css"]) {
-            combo.html.css(column_config_data["css"]);
-        }
         if (read_only) {
             if (this.is_header && label) {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": "sans_serif_bold",
-                    "color": this.color.Stroke
+                    // "color": this.color.Stroke  // Why was this the default?
                 });
             }
             else {
@@ -35395,7 +35420,7 @@ function DashLayoutListRowElements () {
         var css = {
             "background": "none",
             "height": this.height * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1,
+            // "margin-top": Dash.Size.Padding * 0.1,  // Why was this added?
             "box-shadow": "none"
         };
         if (column_config_data["width"]) {
@@ -35403,6 +35428,12 @@ function DashLayoutListRowElements () {
         }
         if (this.is_header) {
             css["border"] = "none";
+            if (column_config_data["header_css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["header_css"]
+                };
+            }
         }
         else {
             css["border"] = "1px solid " + this.color.Pinstripe;
@@ -35422,8 +35453,11 @@ function DashLayoutListRowElements () {
                     "color": color.Text,
                     "font-family": "sans_serif_bold"
                 });
-                input.html.text(placeholder_label);
             }
+            input.html.text(
+                placeholder_label && column_config_data["options"]["use_placeholder_label_for_header"] ?
+                placeholder_label : column_config_data["display_name"]
+            );
             this.prevent_events_for_header_placeholder(input.html);
             return input;
         }
@@ -35527,6 +35561,21 @@ function DashLayoutListRowElements () {
 
 /**@member DashLayoutListRow*/
 function DashLayoutListRowInterface () {
+    // Sometimes, you may want the row to be a certain height, but not have all the elements fill that height
+    this.AddTopAndBottomPadding = function (pad) {
+        this.column_box.css({
+            "padding-top": pad,
+            "left": 0,
+            "right": 0
+        });
+        this.html.css({
+            "padding-top": pad,
+            "padding-bottom": pad
+        });
+        this.highlight.css({
+            "height": this.height + (pad * 2)
+        });
+    };
     this.DisableAnimation = function () {
         this.anim_delay = {
             "highlight_show": 0,
@@ -35610,7 +35659,7 @@ function DashLayoutListRowInterface () {
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
                     var new_value = this.get_data_for_key(input["column_config_data"]);
-                    if (new_value) {
+                    if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
                     }
                 }

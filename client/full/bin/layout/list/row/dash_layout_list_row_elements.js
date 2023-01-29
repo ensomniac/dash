@@ -136,33 +136,56 @@ function DashLayoutListRowElements () {
                 "additional_data": {
                     "row_id": this.id,
                     "row": this,  // For revolving lists, use this instead of relying on row_id
-                    "column_index": this.columns["combos"].length
+                    "column_index": this.columns["combos"].length,
+                    "data_key": column_config_data["data_key"]
                 },
                 "is_user_list": column_config_data["options"]["is_user_list"] || false,
                 "multi_select": column_config_data["options"]["multi_select"] || false
             }
         );
 
-        combo.html.css({
+        var css = {
             "height": this.height,
             "width": column_config_data["width"]
-        });
+        };
+
+        if (column_config_data["css"]) {
+            if (column_config_data["css"]["border"] && column_config_data["css"]["border"] !== "none" && !this.is_header) {
+                css["box-sizing"] = "border-box";
+                css["padding-left"] = Dash.Size.Padding * 0.2;
+            }
+
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+
+        if (this.is_header) {
+            css["border"] = "none";
+
+            if (column_config_data["header_css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["header_css"]
+                };
+            }
+        }
+
+        combo.html.css(css);
 
         combo.label.css({
             "height": this.height,
+            "margin-top": -Dash.Size.Padding * 0.1,
             "line-height": this.height + "px"
         });
-
-        if (column_config_data["css"]) {
-            combo.html.css(column_config_data["css"]);
-        }
 
         if (read_only) {
             if (this.is_header && label) {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": "sans_serif_bold",
-                    "color": this.color.Stroke
+                    // "color": this.color.Stroke  // Why was this the default?
                 });
             }
 
@@ -187,7 +210,7 @@ function DashLayoutListRowElements () {
         var css = {
             "background": "none",
             "height": this.height * 0.9,
-            "margin-top": Dash.Size.Padding * 0.1,
+            // "margin-top": Dash.Size.Padding * 0.1,  // Why was this added?
             "box-shadow": "none"
         };
 
@@ -197,6 +220,13 @@ function DashLayoutListRowElements () {
 
         if (this.is_header) {
             css["border"] = "none";
+
+            if (column_config_data["header_css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["header_css"]
+                };
+            }
         }
 
         else {
@@ -221,9 +251,12 @@ function DashLayoutListRowElements () {
                     "color": color.Text,
                     "font-family": "sans_serif_bold"
                 });
-
-                input.html.text(placeholder_label);
             }
+
+            input.html.text(
+                placeholder_label && column_config_data["options"]["use_placeholder_label_for_header"] ?
+                placeholder_label : column_config_data["display_name"]
+            );
 
             this.prevent_events_for_header_placeholder(input.html);
 

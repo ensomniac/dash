@@ -169,7 +169,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
 
-        if (index === null || this.layers.length < 2 || (up && index === this.layers.length - 1) || (!up && index === 0)) {
+        if (index === null || this.layers.length < 2 || (up && index === (this.layers.length - 1)) || (!up && index === 0)) {
             return;
         }
 
