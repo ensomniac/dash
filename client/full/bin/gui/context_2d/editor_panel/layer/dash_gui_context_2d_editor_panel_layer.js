@@ -42,6 +42,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         return this.get_data();
     };
 
+    this.SetData = function (key, value) {
+        return this.set_data(key, value);
+    };
+
     this.InputInFocus = function () {
         return this.input.InFocus();
     };
@@ -186,7 +190,11 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     };
 
     this.on_input_submit = function () {
-        this.layers.set_data("display_name", this.input.Text().trim(), this.index);
+        this.set_data("display_name", this.input.Text().trim());
+    };
+
+    this.set_data = function (key, value) {
+        this.layers.set_data(key, value, this.index);
     };
 
     this.get_data = function () {

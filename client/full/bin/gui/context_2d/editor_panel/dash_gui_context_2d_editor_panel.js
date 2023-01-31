@@ -14,14 +14,14 @@ function DashGuiContext2DEditorPanel (editor) {
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
-    this.can_edit = this.editor.can_edit;  // TODO: propagate
+    this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2;
 
     // Update if things are added to the box
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
-        (Dash.Size.RowHeight * 5) +  // Rows (including empty/blank rows) and toolbar-style-buttons
-        (Dash.Size.Padding   * 2)    // Top and bottom padding
+        (Dash.Size.RowHeight * 4) +  // Rows and toolbar-style-buttons
+        (Dash.Size.Padding   * 2.5)  // Top, bottom, and button padding
     );
 
     // Wrappers
@@ -62,6 +62,10 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.SwitchContentToEditTab = function () {
         this.content_box.SwitchToEditTab();
+    };
+
+    this.SwitchContentToNewTab = function () {
+        this.content_box.SwitchToNewTab();
     };
 
     this.InputInFocus = function () {
@@ -106,6 +110,10 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
+    this.UpdateContentBoxComboOptions = function () {
+        this.content_box.UpdateComboOptions();
+    };
+
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
     };
@@ -117,15 +125,48 @@ function DashGuiContext2DEditorPanel (editor) {
         this.property_box.html.css({
             "position": "absolute",
             "inset": 0,
+            "padding-top": Dash.Size.Padding * 0.5,
             "margin-bottom": 0,
+            "background": this.color.Background,
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
 
-        this.property_box.AddHeader(
+        var header = this.property_box.AddHeader(
             this.get_data()["display_name"] || "Properties",
             "display_name"
-        ).ReplaceBorderWithIcon("gear");
+        );
+
+        header.ReplaceBorderWithIcon("gear").html.css({
+            "margin-left": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+
+        header.icon.icon_html.css({
+            "padding-left": Dash.Size.Padding * 0.3
+        });
+
+        header.html.css({
+            "background": this.color.Pinstripe,
+            "margin-top": -Dash.Size.Padding,
+            "margin-left": -Dash.Size.Padding,
+            "margin-right": -Dash.Size.Padding,
+            "padding-bottom": Dash.Size.Padding * 0.6,
+            "padding-top": Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding
+        });
+
+        header.label.css({
+            "flex": 2,
+            "margin-right": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.4,
+            "padding-right": Dash.Size.Padding * 1.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
 
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
         this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
@@ -139,7 +180,8 @@ function DashGuiContext2DEditorPanel (editor) {
         }
 
         button_bar.html.css({
-            "margin-top": Dash.Size.Padding * 2,
+            "height": "fit-content",
+            "margin-top": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
         });
 
@@ -214,6 +256,10 @@ function DashGuiContext2DEditorPanel (editor) {
                 false
             );
         })(this);
+
+        this.aspect_tool_row_inputs[key].html.css({
+            "background": this.color.Background
+        });
 
         this.aspect_tool_row_inputs[key].input.css({
             "text-align": "center"

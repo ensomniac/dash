@@ -17,6 +17,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "position": "absolute",
             "inset": 0,
             "padding": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "border-top": "1px solid " + this.color.StrokeLight
         });
@@ -277,7 +278,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers_box.css({
             "position": "absolute",
             "inset": 0,
-            "top": Dash.Size.ButtonHeight + Dash.Size.Padding,
+            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
             "overflow-y": "auto"
         });
 
@@ -304,8 +305,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.header.ReplaceBorderWithIcon("layers");
 
         this.header.html.css({
+            "margin-left": -Dash.Size.Padding * 0.5,
+            "margin-right": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
             "padding-bottom": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+
+        this.header.label.css({
+            "padding-left": Dash.Size.Padding * 0.5
         });
 
         this.header.html.append(new Dash.Gui.GetFlexSpacer());
@@ -317,6 +326,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         (function (self) {
             self.layers_box.on("click", function () {
                 self.DeselectLayers();
+
+                self.panel.SwitchContentToNewTab();
             });
         })(this);
     };

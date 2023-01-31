@@ -196,6 +196,7 @@ function DashGui() {
             "height": Dash.Size.ButtonHeight,
             "margin-left": Dash.Size.Padding * 0.5,
             "background": "none",
+            "cursor": "pointer",
             "border": "1px solid " + dash_color.StrokeLight,
             "border-radius": Dash.Size.Padding * 0.3
         });

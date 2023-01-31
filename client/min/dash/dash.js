@@ -17978,6 +17978,7 @@ function DashGui() {
             "height": Dash.Size.ButtonHeight,
             "margin-left": Dash.Size.Padding * 0.5,
             "background": "none",
+            "cursor": "pointer",
             "border": "1px solid " + dash_color.StrokeLight,
             "border-radius": Dash.Size.Padding * 0.3
         });
@@ -22189,12 +22190,14 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
     this.setup_styles();
 }
 
-function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
+function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value, width=null, height=null) {
     this.color = color;
     this.label_text = label_text;
     this.callback = callback;
     this.start_range = start_range;
     this.end_range = end_range;
+    this.width = width;
+    this.height = height;
     this.value = Dash.Math.InverseLerp(this.start_range, this.end_range, current_value);
     this.fire_callback_on_up_instead_of_move = false;
     this.callback_delay_ms = 0;
@@ -22210,9 +22213,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.thumb_inner = $("<div></div>");
     this.thumb_outer = $("<div></div>");
     this.mark = $("<div></div>");
-    this.height = null;
     this.max_value_label_length = 4;
-    this.width = null;
     this.reset_button = null;
     this.extra_slider_left_padding = 0;
     this.outline_size = 1;
@@ -22233,12 +22234,12 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.track_width = false;
     this.value_label_editable = false;
     this.setup_styles = function () {
-        this.html.append(this.slider);
-        this.slider.append(this.bar);
-        this.bar.append(this.bar_fill);
-        this.slider.append(this.thumb);
-        this.thumb.append(this.thumb_outer);
         this.thumb_outer.append(this.thumb_inner);
+        this.thumb.append(this.thumb_outer);
+        this.slider.append(this.thumb);
+        this.bar.append(this.bar_fill);
+        this.slider.append(this.bar);
+        this.html.append(this.slider);
         this.html.css({
             "display": "flex",
             "height": Dash.Size.RowHeight
@@ -22335,6 +22336,70 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.SetValueLabelVisibility = function (visible) {
         this.value_label_visible = visible;
     };
+    // This is a much more flexible approach and should be the default, but don't want to break any pre-existing usages
+    // TODO: This is not fully worked out, need to figure out how the slider and all of its components will flex and redraw on resize
+    // this.FlexInsteadOfAbsolute = function () {
+    //     this.html.css({
+    //         "width": "calc(100% - " + (Dash.Size.Padding * 2) + "px)"
+    //     });
+    //
+    //     this.label.detach();
+    //
+    //     this.label.css({
+    //         "position": "",
+    //         "inset": "",
+    //         "padding-left": 0
+    //     });
+    //
+    //     this.html.append(this.label);
+    //
+    //     this.slider.detach();
+    //
+    //     this.slider.css({
+    //         "position": "",
+    //         "inset": "",
+    //         "width": "auto",
+    //         "flex": 2,
+    //         "background": "red"
+    //     });
+    //
+    //     this.html.append(this.slider);
+    //
+    //     if (this.value_label_editable) {
+    //         this.value_label.html.detach();
+    //
+    //         this.value_label.html.css({
+    //             "position": "",
+    //             "inset": "",
+    //             "margin-left": Dash.Size.Padding
+    //         });
+    //
+    //         this.html.append(this.value_label.html);
+    //     }
+    //
+    //     else {
+    //         this.value_label.detach();
+    //
+    //         this.value_label.css({
+    //             "position": "",
+    //             "inset": ""
+    //         });
+    //
+    //         this.html.append(this.value_label);
+    //     }
+    //
+    //     if (this.reset_button) {
+    //         this.reset_button.html.detach();
+    //
+    //         this.reset_button.html.css({
+    //             "position": "",
+    //             "inset": "",
+    //             "margin-left": Dash.Size.Padding * 0.5
+    //         });
+    //
+    //         this.html.append(this.reset_button.html);
+    //     }
+    // };
     this.StyleForPropertyBox = function (extra_slider_left_padding=0, value_label_editable=true) {
         this.extra_slider_left_padding = extra_slider_left_padding;
         this.label.css({
@@ -22411,6 +22476,19 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.FireCallbackOnUpInsteadOfMove = function (enabled=true) {
         this.fire_callback_on_up_instead_of_move = enabled;
     };
+    this.Disable = function () {
+        this.slider.css({
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+        if (this.value_label_editable) {
+            this.value_label.SetLocked(true);
+        }
+        if (this.reset_button) {
+            this.reset_button.Disable();
+        }
+    };
+    // TODO: this.Enable
     this.make_value_label_editable = function () {
         this.value_label.remove();
         this.value_label = new Dash.Gui.Input("", this.color);
@@ -22421,6 +22499,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "bottom": 0,
             "right": 0,
             "box-shadow": "",
+            "box-sizing": "border-box",
             "border": "1px solid " + this.color.StrokeLight,
             "left": this.label_width + this.extra_slider_left_padding + this.slider_width + (Dash.Size.Padding * 2.5)
         });
@@ -22446,9 +22525,9 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     };
     this.setup_sizing = function () {
         this.track_width = true;
-        this.height = Dash.Size.RowHeight;
+        this.height = this.height || Dash.Size.RowHeight;
         this.label_width = Dash.Size.ColumnWidth * 0.75;
-        this.width = (Dash.Size.ColumnWidth * 2);
+        this.width = this.width || (Dash.Size.ColumnWidth * 2);
         this.slider_width = this.width;
         this.slider_height = this.height;
         this.html.append(this.label);
@@ -23131,7 +23210,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         });
         return divider;
     };
-    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data=null) {
+    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}) {
         if (!label_text.endsWith(":")) {
             label_text += ":";
         }
@@ -23165,7 +23244,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         });
         label.html.detach();
         container.append(label.html);
-        var combo = this.AddCombo(combo_options, default_value, callback, additional_data);
+        var combo = this.AddCombo(combo_options, default_value, callback, additional_data, extra_options);
         combo.html.detach();
         container.append(combo.html);
         this.AddHTML(container);
@@ -27355,10 +27434,16 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_data":     Get data dict for given object ID
-     *         - "set_property": Set property with a key/value for given object ID
-     *         - "duplicate":    Duplicate the given object ID as a new context (not tethered to the original) - backend function
-     *                           should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_data":          Get data dict for given object ID
+     *         - "set_property":      Set property with a key/value for given object ID
+     *         - "duplicate":         Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *                                should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_combo_options": Get dict with keys for different combo option types, such as "fonts", with values being lists
+     *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
+     *
+     *                                Required/expected combo option type keys:
+     *                                  - fonts
+     *                                  - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -27374,6 +27459,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.log_bar = null;
     this.toolbar = null;
     this.editor_panel = null;
+    this.ComboOptions = null;
     this.on_duplicate_cb = null;
     this.html = $("<div></div>");
     this.left_pane_slider = null;
@@ -27383,6 +27469,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.middle_html = $("<div></div>");
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);
+        this.get_combo_options();
         this.canvas = new DashGuiContext2DCanvas(this);
         this.log_bar = new DashGuiContext2DLogBar(this);
         this.toolbar = new DashGuiContext2DToolbar(this);
@@ -27518,6 +27605,28 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     "f": "get_data",
                     "obj_id": self.obj_id
                 }
+            );
+        })(this);
+    };
+    this.get_combo_options = function () {
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    if ("error" in response) {
+                        delete response["error"];
+                    }
+                    self.ComboOptions = response;
+                    console.log("Context2D combo options:", self.ComboOptions);
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdateContentBoxComboOptions();
+                    }
+                },
+                self.api,
+                {"f": "get_combo_options"}
             );
         })(this);
     };
@@ -28021,13 +28130,13 @@ function DashGuiContext2DEditorPanel (editor) {
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
-    this.can_edit = this.editor.can_edit;  // TODO: propagate
+    this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2;
     // Update if things are added to the box
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
-        (Dash.Size.RowHeight * 5) +  // Rows (including empty/blank rows) and toolbar-style-buttons
-        (Dash.Size.Padding   * 2)    // Top and bottom padding
+        (Dash.Size.RowHeight * 4) +  // Rows and toolbar-style-buttons
+        (Dash.Size.Padding   * 2.5)  // Top, bottom, and button padding
     );
     // Wrappers
     this.get_data = this.editor.get_data.bind(this.editor);
@@ -28058,6 +28167,9 @@ function DashGuiContext2DEditorPanel (editor) {
     };
     this.SwitchContentToEditTab = function () {
         this.content_box.SwitchToEditTab();
+    };
+    this.SwitchContentToNewTab = function () {
+        this.content_box.SwitchToNewTab();
     };
     this.InputInFocus = function () {
         return (
@@ -28093,6 +28205,9 @@ function DashGuiContext2DEditorPanel (editor) {
             this.editor.ResizeCanvas();
         }
     };
+    this.UpdateContentBoxComboOptions = function () {
+        this.content_box.UpdateComboOptions();
+    };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
     };
@@ -28102,14 +28217,43 @@ function DashGuiContext2DEditorPanel (editor) {
         this.property_box.html.css({
             "position": "absolute",
             "inset": 0,
+            "padding-top": Dash.Size.Padding * 0.5,
             "margin-bottom": 0,
+            "background": this.color.Background,
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
-        this.property_box.AddHeader(
+        var header = this.property_box.AddHeader(
             this.get_data()["display_name"] || "Properties",
             "display_name"
-        ).ReplaceBorderWithIcon("gear");
+        );
+        header.ReplaceBorderWithIcon("gear").html.css({
+            "margin-left": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+        header.icon.icon_html.css({
+            "padding-left": Dash.Size.Padding * 0.3
+        });
+        header.html.css({
+            "background": this.color.Pinstripe,
+            "margin-top": -Dash.Size.Padding,
+            "margin-left": -Dash.Size.Padding,
+            "margin-right": -Dash.Size.Padding,
+            "padding-bottom": Dash.Size.Padding * 0.6,
+            "padding-top": Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding
+        });
+        header.label.css({
+            "flex": 2,
+            "margin-right": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.4,
+            "padding-right": Dash.Size.Padding * 1.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
         this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
         this.add_aspect_tool_row();
@@ -28118,7 +28262,8 @@ function DashGuiContext2DEditorPanel (editor) {
             button_bar.Disable();
         }
         button_bar.html.css({
-            "margin-top": Dash.Size.Padding * 2,
+            "height": "fit-content",
+            "margin-top": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
         });
         button_bar.AddButton("Duplicate Context", this.duplicate_context);
@@ -28179,6 +28324,9 @@ function DashGuiContext2DEditorPanel (editor) {
                 false
             );
         })(this);
+        this.aspect_tool_row_inputs[key].html.css({
+            "background": this.color.Background
+        });
         this.aspect_tool_row_inputs[key].input.css({
             "text-align": "center"
         });
@@ -28221,6 +28369,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     };
     this.GetData = function () {
         return this.get_data();
+    };
+    this.SetData = function (key, value) {
+        return this.set_data(key, value);
     };
     this.InputInFocus = function () {
         return this.input.InFocus();
@@ -28330,7 +28481,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         this.html.append(this.icon_area);
     };
     this.on_input_submit = function () {
-        this.layers.set_data("display_name", this.input.Text().trim(), this.index);
+        this.set_data("display_name", this.input.Text().trim());
+    };
+    this.set_data = function (key, value) {
+        this.layers.set_data(key, value, this.index);
     };
     this.get_data = function () {
         return this.layers.get_data()[this.index] || {};
@@ -28355,6 +28509,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "position": "absolute",
             "inset": 0,
             "padding": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "border-top": "1px solid " + this.color.StrokeLight
         });
@@ -28543,7 +28698,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers_box.css({
             "position": "absolute",
             "inset": 0,
-            "top": Dash.Size.ButtonHeight + Dash.Size.Padding,
+            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
             "overflow-y": "auto"
         });
         var layers = this.get_data();
@@ -28562,8 +28717,15 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.header = new Dash.Gui.Header("Layers");
         this.header.ReplaceBorderWithIcon("layers");
         this.header.html.css({
+            "margin-left": -Dash.Size.Padding * 0.5,
+            "margin-right": -Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
             "padding-bottom": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+        this.header.label.css({
+            "padding-left": Dash.Size.Padding * 0.5
         });
         this.header.html.append(new Dash.Gui.GetFlexSpacer());
         this.html.append(this.header.html);
@@ -28572,6 +28734,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         (function (self) {
             self.layers_box.on("click", function () {
                 self.DeselectLayers();
+                self.panel.SwitchContentToNewTab();
             });
         })(this);
     };
@@ -28583,12 +28746,13 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.html = null;
     this.header = null;
     this.layout = null;
-    this.new_box = null;
-    this.edit_box = null;
+    this.new_tab_index = null;
     this.edit_tab_index = null;
     this.color = this.panel.color;
-    this.can_edit = this.panel.can_edit;  // TODO: propagate
-    this.min_height = Dash.Size.ButtonHeight * 10;  // TODO?
+    this.last_instantiated_class = null;
+    this.can_edit = this.panel.can_edit;
+    this.min_height = Dash.Size.ButtonHeight * 5;  // Increase this when any other elements are added that would increase the overall height
+    this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -28597,7 +28761,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.setup_styles = function () {
         this.layout = new Dash.Layout.Tabs.Top(this);
         this.layout.OnTabChanged(this.on_tab_changed);
-        this.layout.AlwaysStartOnFirstTab();
+        // this.layout.AlwaysStartOnFirstTab();  // TODO?
         this.html = this.layout.html;
         this.html.css({
             "background": "none",
@@ -28623,14 +28787,49 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.SwitchToEditTab = function () {
         this.layout.LoadIndex(this.edit_tab_index);
     };
+    this.SwitchToNewTab = function () {
+        this.layout.LoadIndex(this.new_tab_index);
+    };
+    this.UpdateComboOptions = function () {
+        if (!this.last_instantiated_class) {
+            return;
+        }
+        if (this.layout.GetCurrentIndex() === this.edit_tab_index) {
+            this.last_instantiated_class.UpdateFontComboOptions();
+        }
+        else if (this.layout.GetCurrentIndex() === this.new_tab_index) {
+            this.last_instantiated_class.UpdateImportComboOptions();
+        }
+    };
+    this.GetCombo = function (label_text, options, callback, default_value="") {
+        var tool_row = new Dash.Gui.ToolRow(this);
+        tool_row.html.css({
+            "margin-left": 0,
+            "margin-bottom": Dash.Size.Padding
+        });
+        (function (self) {
+            tool_row.AddComboRow(
+                label_text,
+                options,
+                default_value,
+                callback,
+                {},
+                {"read_only": !self.can_edit}
+            );
+        })(this);
+        return tool_row;
+    };
     this.add_edit_box = function () {
-        this.edit_box = new DashGuiContext2DEditorPanelContentEdit(this);
-        this.layout.Prepend("Edit", this.edit_box);
+        this.layout.Prepend("Edit", function () {
+            return new DashGuiContext2DEditorPanelContentEdit(this);
+        });
         this.edit_tab_index = this.layout.all_content.length - 1;
     };
     this.add_new_box = function () {
-        this.new_box = new DashGuiContext2DEditorPanelContentNew(this);
-        this.layout.Prepend("New", this.new_box);
+        this.layout.Prepend("New", function () {
+            return new DashGuiContext2DEditorPanelContentNew(this);
+        });
+        this.new_tab_index = this.layout.all_content.length - 1;
     };
     this.add_header = function () {
         this.header = new Dash.Gui.Header("Content");
@@ -28643,13 +28842,14 @@ function DashGuiContext2DEditorPanelContent (panel) {
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "flex": 2
         });
+        this.header.label.css({
+            "padding-left": Dash.Size.Padding * 0.5
+        });
         this.layout.AppendHTML(this.header.html);
     };
-    this.on_tab_changed = function (selected_content_data) {
-        this.remove_tab_backgrounds(selected_content_data);
-        if (selected_content_data["content_div_html_class"] === this.edit_box) {
-            this.edit_box.Redraw();
-        }
+    this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
+        this.set_inactive_tabs_bg_color(selected_content_data);
+        this.last_instantiated_class = instantiated_class;
     };
     this.set_header_right_margin = function () {
         var tabs_width = 0;
@@ -28669,16 +28869,16 @@ function DashGuiContext2DEditorPanelContent (panel) {
             tabs_width += width;
         }
         this.header.html.css({
-            "margin-right": tabs_width + (Dash.Size.Padding * (this.layout.all_content.length + 1))
+            "margin-right": tabs_width + (Dash.Size.Padding * (this.layout.all_content.length)) + (Dash.Size.Padding * 0.5)
         });
     };
-    this.remove_tab_backgrounds = function (selected_content_data) {
+    this.set_inactive_tabs_bg_color = function (selected_content_data) {
         for (var content_data of this.layout.all_content) {
             if (selected_content_data["button"] === content_data["button"]) {
                 continue;
             }
             content_data["button"].html.css({
-                "background": "none"
+                "background": this.inactive_tab_bg_color
             });
         }
     };
@@ -28687,17 +28887,98 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
 function DashGuiContext2DEditorPanelContentNew (content) {
     this.content = content;
+    this.import_combo = null;
     this.html = $("<div></div>");
     this.color = this.content.color;
-    this.can_edit = this.content.can_edit;  // TODO: propagate
+    this.panel = this.content.panel;
+    this.editor = this.panel.editor;
+    this.can_edit = this.content.can_edit;
     this.setup_styles = function () {
-        for (var primitive_type of this.content.PrimitiveTypes) {
-            // TODO
-        }
-        // TODO
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "overflow-x": "hidden"
+        });
+        this.draw_types();
+        this.add_import_combo();  // TODO: Anyway to have this combo display at a higher level so that it doesn't get cut off at the panel's bottom edge?
     };
     this.InputInFocus = function () {
         // TODO
+    };
+    // Called by DashGuiContext2D when combo options are received
+    this.UpdateImportComboOptions = function () {
+        if (!this.import_combo) {
+            return;
+        }
+        this.import_combo.Update(
+            this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}],
+            "",
+            true
+        );
+    };
+    this.draw_types = function () {
+        for (var primitive_type of this.content.PrimitiveTypes) {
+            if (primitive_type === "text") {
+                this.html.append(this.get_button("New Text Layer", this.on_new_text).html);
+            }
+            else if (primitive_type === "image") {
+                this.html.append(this.get_upload_button(primitive_type, "New Image Layer").html);
+            }
+            else {
+                console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+            }
+        }
+    };
+    this.get_button = function (label_text, callback) {
+        var button = new Dash.Gui.Button(label_text, callback, this, this.color, {"style": "toolbar"});
+        button.html.css({
+            "margin-top": 0,
+            "margin-right": 0,
+            "margin-bottom": Dash.Size.Padding
+        });
+        if (!this.can_edit) {
+            button.Disable();
+        }
+        return button;
+    };
+    this.get_upload_button = function (primitive_type, label_text) {
+        var button = (function (self) {
+            return self.get_button(
+                label_text + " (Upload)",
+                function (event, button) {
+                    console.debug("TEST on upload", event, button);
+                    // self.on_new_upload(primitive_type);  // TODO
+                }
+            );
+        })(this);
+        button.SetFileUploader(
+            this.editor.api,
+            {
+                // TODO
+            }
+        );
+        return button;
+    };
+    this.add_import_combo = function () {
+        var tool_row = this.content.GetCombo(
+            "Import Another Context",
+            this.editor.ComboOptions ? (
+                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
+            ) : [{"id": "", "label_text": "Loading..."}],
+            this.on_import.bind(this)
+        );
+        this.import_combo = tool_row.elements.Last().combo;
+        this.html.append(tool_row.html);
+    };
+    this.on_import = function (selected_option) {
+        console.debug("TEST on import", selected_option);  // TODO
+    };
+    this.on_new_upload = function (primitive_type) {
+        console.debug("TEST on new", primitive_type);  // TODO
+    };
+    this.on_new_text = function () {
+        console.debug("TEST on new text");  // TODO
     };
     this.setup_styles();
 }
@@ -28850,14 +29131,25 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 function DashGuiContext2DEditorPanelContentEdit (content) {
     this.content = content;
     this.contexts = {};
+    this.font_combo = null;
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
-    this.can_edit = this.content.can_edit;  // TODO: propagate
+    this.editor = this.panel.editor;
+    this.no_selected_layer_label = null;
+    this.font_name_data_key = "font_name";
+    this.can_edit = this.content.can_edit;
     this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "overflow-x": "hidden"
+        });
         for (var key of ["general", ...this.content.PrimitiveTypes]) {
             this.add_context(key);
         }
+        this.redraw();
     };
     this.InputInFocus = function () {
         for (var key in this.contexts) {
@@ -28872,7 +29164,19 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         return false;
     };
-    this.Redraw = function () {
+    // Called by DashGuiContext2D when combo options are received
+    this.UpdateFontComboOptions = function () {
+        if (!this.font_combo) {
+            return;
+        }
+        this.font_combo.Update(
+            this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}],
+            this.get_data()[this.font_name_data_key] || "",
+            true
+        );
+    };
+    this.redraw = function () {
+        this.hide_no_selected_layer_label();
         for (var key in this.contexts) {
             if (key === "general") {
                 continue;
@@ -28882,6 +29186,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var selected_layer = this.panel.GetSelectedLayer();
         if (!selected_layer) {
             this.hide_context("general");
+            this.show_no_selected_layer_label();
             return;
         }
         // Always show general context when a layer is selected
@@ -28889,12 +29194,37 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         // TODO: something like this
         this.show_context((selected_layer["primitive"] || {})["type"]);
     };
+    this.show_no_selected_layer_label = function () {
+        if (!this.no_selected_layer_label) {
+            this.no_selected_layer_label = $("<div>No Layer Selected</div>");
+            this.no_selected_layer_label.css({
+                "color": this.color.Text,
+                "font-family": "sans_serif_bold",
+                "width": "fit-content",
+                "margin-top": Dash.Size.Padding,
+                "margin-bottom": "0",
+                "margin-left": "auto",
+                "margin-right": "auto"
+            });
+            this.html.append(this.no_selected_layer_label);
+        }
+        this.no_selected_layer_label.show();
+    };
+    this.hide_no_selected_layer_label = function () {
+        if (!this.no_selected_layer_label) {
+            return;
+        }
+        this.no_selected_layer_label.hide();
+    };
     this.show_context = function (key) {
         if (!key || !this.contexts[key] || this.contexts[key]["visible"]) {
             return;
         }
         this.contexts[key]["html"].show();
         this.contexts[key]["visible"] = true;
+        if (!this.contexts[key]["initialized"]) {
+            this.initialize_context(key);
+        }
     };
     this.hide_context = function (key) {
         if (!key || !this.contexts[key] || !this.contexts[key]["visible"]) {
@@ -28903,13 +29233,135 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[key]["html"].hide();
         this.contexts[key]["visible"] = false;
     };
+    this.get_data = function () {
+        var selected_layer = this.panel.GetSelectedLayer();
+        if (!selected_layer) {
+            return {};
+        }
+        return selected_layer.GetData();
+    };
+    this.set_data = function (key, value) {
+        var selected_layer = this.panel.GetSelectedLayer();
+        if (!selected_layer) {
+            return;
+        }
+        selected_layer.SetData(key, value);
+    };
     this.add_context = function (key) {
         this.contexts[key] = {
             "html": $("<div></div>"),
             "visible": false,
-            "inputs": []  // TODO: any inputs that get added to these contexts should be added to this list
+            "initialized": false,
+            "inputs": []  // Any inputs that get added to these contexts need to be added to this list
         };
+        this.contexts[key]["html"].hide();
         this.html.append(this.contexts[key]["html"]);
+    };
+    this.initialize_context = function (key) {
+        if (key === "general") {
+            this.contexts[key]["html"].append(this.get_slider(1, key, "opacity", 1.05).html);
+        }
+        else if (key === "text") {
+            this.contexts[key]["html"].append(this.get_color_picker("font_color", "Color").html);
+            // This could be on the same row as the color picker, and actually looks better
+            // that way, but some font names will be long, so best this is on its own row
+            var tool_row = (function (self) {
+                 return self.content.GetCombo(
+                     "Font",
+                    self.editor.ComboOptions ? (
+                        self.editor.ComboOptions["fonts"] ? self.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+                    ) : [{"id": "", "label_text": "Loading..."}],
+                    function (selected_option) {
+                        self.set_data(self.font_name_data_key, selected_option["id"]);
+                    },
+                    self.get_data()[self.font_name_data_key] || ""
+                );
+            })(this);
+            this.font_combo = tool_row.elements.Last().combo;
+            this.contexts[key]["html"].append(tool_row.html);
+        }
+        else if (key === "image") {
+            this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
+            this.contexts[key]["html"].append(this.get_slider(0.5, key, "brightness", 0.95).html);
+        }
+        else {
+            console.warn("Warning: Unhandled 'Edit' tab context type:", key);
+        }
+        this.contexts[key]["initialized"] = true;
+    };
+    this.get_color_picker = function (data_key, label_text="") {
+        var color_picker = (function (self) {
+            return Dash.Gui.GetColorPicker(
+                self,
+                function (color_val) {
+                    if (!color_val) {
+                        return;
+                    }
+                    self.set_data(data_key, color_val);
+                },
+                (label_text || data_key.Title()) + ":",
+                self.color,
+                self.get_data()[data_key] || "#000000"
+            );
+        })(this);
+        var css = {"margin-bottom": Dash.Size.Padding};
+        if (!this.can_edit) {
+            css["user-select"] = "none";
+            css["pointer-events"] = "none";
+        }
+        color_picker.html.css(css);
+        return color_picker;
+    };
+    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="") {
+        return (function (self) {
+            var slider = new Dash.Gui.Slider(
+                self.color,
+                (label_text || data_key.Title()) + ":",
+                function (value) {
+                    self.set_data(data_key, value);
+                },
+                0.0,
+                1.0,
+                self.get_data()[data_key] || default_value,
+                Dash.Size.ColumnWidth * width_mult
+            );
+            requestAnimationFrame(function () {
+                self.style_slider(slider, default_value, context_key);
+            });
+            return slider;
+        })(this);
+    };
+    this.style_slider = function (slider, default_value, context_key) {
+        slider.FireCallbackOnUpInsteadOfMove();
+        slider.SetMaxValueLabelLength(5);
+        slider.StyleForPropertyBox(0);
+        slider.AddResetToDefaultButton(default_value, "Reset");
+        // Ideally, we use this instead of the below slop, but it's not fully worked out yet
+        // slider.FlexInsteadOfAbsolute();
+        slider.label.css({
+            "padding-left": 0
+        });
+        slider.reset_button.label.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
+        });
+        slider.slider.css({
+            "left": parseInt(slider.slider.css("left")) - (Dash.Size.Padding * 0.5)
+        });
+        slider.value_label.html.css({
+            "left": parseInt(slider.value_label.html.css("left")) - (Dash.Size.Padding * 1.5)
+        });
+        slider.reset_button.html.css({
+            "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
+        });
+        if (!this.can_edit) {
+            slider.Disable();
+        }
+        slider.html.css({
+            "margin-left": 0,
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.contexts[context_key]["inputs"].push(slider.value_label);
     };
     this.setup_styles();
 }

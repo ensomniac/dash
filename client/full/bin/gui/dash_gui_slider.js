@@ -1,9 +1,11 @@
-function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value) {
+function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value, width=null, height=null) {
     this.color = color;
     this.label_text = label_text;
     this.callback = callback;
     this.start_range = start_range;
     this.end_range = end_range;
+    this.width = width;
+    this.height = height;
 
     this.value = Dash.Math.InverseLerp(this.start_range, this.end_range, current_value);
     this.fire_callback_on_up_instead_of_move = false;
@@ -20,9 +22,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.thumb_inner = $("<div></div>");
     this.thumb_outer = $("<div></div>");
     this.mark = $("<div></div>");
-    this.height = null;
     this.max_value_label_length = 4;
-    this.width = null;
     this.reset_button = null;
     this.extra_slider_left_padding = 0;
     this.outline_size = 1;
@@ -44,12 +44,17 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.value_label_editable = false;
 
     this.setup_styles = function () {
-        this.html.append(this.slider);
-        this.slider.append(this.bar);
-        this.bar.append(this.bar_fill);
-        this.slider.append(this.thumb);
-        this.thumb.append(this.thumb_outer);
         this.thumb_outer.append(this.thumb_inner);
+
+        this.thumb.append(this.thumb_outer);
+
+        this.slider.append(this.thumb);
+
+        this.bar.append(this.bar_fill);
+
+        this.slider.append(this.bar);
+
+        this.html.append(this.slider);
 
         this.html.css({
             "display": "flex",
@@ -172,6 +177,71 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.value_label_visible = visible;
     };
 
+    // This is a much more flexible approach and should be the default, but don't want to break any pre-existing usages
+    // TODO: This is not fully worked out, need to figure out how the slider and all of its components will flex and redraw on resize
+    // this.FlexInsteadOfAbsolute = function () {
+    //     this.html.css({
+    //         "width": "calc(100% - " + (Dash.Size.Padding * 2) + "px)"
+    //     });
+    //
+    //     this.label.detach();
+    //
+    //     this.label.css({
+    //         "position": "",
+    //         "inset": "",
+    //         "padding-left": 0
+    //     });
+    //
+    //     this.html.append(this.label);
+    //
+    //     this.slider.detach();
+    //
+    //     this.slider.css({
+    //         "position": "",
+    //         "inset": "",
+    //         "width": "auto",
+    //         "flex": 2,
+    //         "background": "red"
+    //     });
+    //
+    //     this.html.append(this.slider);
+    //
+    //     if (this.value_label_editable) {
+    //         this.value_label.html.detach();
+    //
+    //         this.value_label.html.css({
+    //             "position": "",
+    //             "inset": "",
+    //             "margin-left": Dash.Size.Padding
+    //         });
+    //
+    //         this.html.append(this.value_label.html);
+    //     }
+    //
+    //     else {
+    //         this.value_label.detach();
+    //
+    //         this.value_label.css({
+    //             "position": "",
+    //             "inset": ""
+    //         });
+    //
+    //         this.html.append(this.value_label);
+    //     }
+    //
+    //     if (this.reset_button) {
+    //         this.reset_button.html.detach();
+    //
+    //         this.reset_button.html.css({
+    //             "position": "",
+    //             "inset": "",
+    //             "margin-left": Dash.Size.Padding * 0.5
+    //         });
+    //
+    //         this.html.append(this.reset_button.html);
+    //     }
+    // };
+
     this.StyleForPropertyBox = function (extra_slider_left_padding=0, value_label_editable=true) {
         this.extra_slider_left_padding = extra_slider_left_padding;
 
@@ -267,6 +337,23 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.fire_callback_on_up_instead_of_move = enabled;
     };
 
+    this.Disable = function () {
+        this.slider.css({
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+
+        if (this.value_label_editable) {
+            this.value_label.SetLocked(true);
+        }
+
+        if (this.reset_button) {
+            this.reset_button.Disable();
+        }
+    };
+
+    // TODO: this.Enable
+
     this.make_value_label_editable = function () {
         this.value_label.remove();
 
@@ -280,6 +367,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "bottom": 0,
             "right": 0,
             "box-shadow": "",
+            "box-sizing": "border-box",
             "border": "1px solid " + this.color.StrokeLight,
             "left": this.label_width + this.extra_slider_left_padding + this.slider_width + (Dash.Size.Padding * 2.5)
         });
@@ -310,9 +398,9 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
     this.setup_sizing = function () {
         this.track_width = true;
-        this.height = Dash.Size.RowHeight;
+        this.height = this.height || Dash.Size.RowHeight;
         this.label_width = Dash.Size.ColumnWidth * 0.75;
-        this.width = (Dash.Size.ColumnWidth * 2);
+        this.width = this.width || (Dash.Size.ColumnWidth * 2);
         this.slider_width = this.width;
         this.slider_height = this.height;
 
