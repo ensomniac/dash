@@ -1,5 +1,5 @@
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true) {
         var date;
         var dt_obj;
         var timezone;
@@ -23,7 +23,7 @@ function DashDateTime () {
             date = dt_obj.toLocaleDateString();
         }
 
-        if (is_static_date) {
+        if (is_static_date || !include_time) {
             return date;
         }
 
