@@ -83,9 +83,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
 
             this.layers.UpdateToolbarIconStates();
-
-            this.panel.SwitchContentToEditTab();
         }
+
+        this.panel.SwitchContentToEditTab();
     };
 
     this.ToggleHidden = function (hidden) {

@@ -17,7 +17,10 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         });
 
         this.draw_types();
-        this.add_import_combo();  // TODO: Anyway to have this combo display at a higher level so that it doesn't get cut off at the panel's bottom edge?
+
+        // I tried everything to get this to sit on top of the layers
+        // panel when expanded, but I could not get it to work and moved on
+        this.add_import_combo();
     };
 
     this.InputInFocus = function () {
@@ -73,19 +76,17 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         var button = (function (self) {
             return self.get_button(
                 label_text + " (Upload)",
-                function (event, button) {
-                    console.debug("TEST on upload", event, button);
+                function (event, button,c,d,e) {
+                    console.debug("TEST on upload", event, button,c,d,e);
 
-                    // self.on_new_upload(primitive_type);  // TODO
+                    self.on_new_upload(primitive_type);  // TODO
                 }
             );
         })(this);
 
         button.SetFileUploader(
             this.editor.api,
-            {
-                // TODO
-            }
+            {"f": "upload_image"}
         );
 
         return button;

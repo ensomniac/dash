@@ -19,10 +19,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
     ];
 
     this.setup_styles = function () {
-        this.layout = new Dash.Layout.Tabs.Top(this);
+        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content");
 
         this.layout.OnTabChanged(this.on_tab_changed);
-        // this.layout.AlwaysStartOnFirstTab();  // TODO?
 
         this.html = this.layout.html;
 

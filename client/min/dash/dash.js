@@ -27434,9 +27434,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_data":          Get data dict for given object ID
-     *         - "set_property":      Set property with a key/value for given object ID
-     *         - "duplicate":         Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *         - "get_data":          Get data dict for provided object ID
+     *         - "set_property":      Set property with a key/value for provided object ID
+     *         - "upload_image":      Upload image (for new image layer) to provided object ID
+     *         - "duplicate":         Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "get_combo_options": Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
@@ -28164,12 +28165,24 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
+        // TODO: re-enable
+        // if (this.GetSelectedLayer()) {
+        //     this.SwitchContentToEditTab();
+        // }
+        //
+        // else {
+        //     this.SwitchContentToNewTab();
+        // }
     };
     this.SwitchContentToEditTab = function () {
-        this.content_box.SwitchToEditTab();
+        if (this.content_box) {
+            this.content_box.SwitchToEditTab();
+        }
     };
     this.SwitchContentToNewTab = function () {
-        this.content_box.SwitchToNewTab();
+        if (this.content_box) {
+            this.content_box.SwitchToNewTab();
+        }
     };
     this.InputInFocus = function () {
         return (
@@ -28400,8 +28413,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         if (this.layers.initialized) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
             this.layers.UpdateToolbarIconStates();
-            this.panel.SwitchContentToEditTab();
         }
+        this.panel.SwitchContentToEditTab();
     };
     this.ToggleHidden = function (hidden) {
         if (hidden) {
@@ -28759,9 +28772,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
         // Add to this list as support for more primitives are added
     ];
     this.setup_styles = function () {
-        this.layout = new Dash.Layout.Tabs.Top(this);
+        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content");
         this.layout.OnTabChanged(this.on_tab_changed);
-        // this.layout.AlwaysStartOnFirstTab();  // TODO?
         this.html = this.layout.html;
         this.html.css({
             "background": "none",
@@ -28901,7 +28913,9 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             "overflow-x": "hidden"
         });
         this.draw_types();
-        this.add_import_combo();  // TODO: Anyway to have this combo display at a higher level so that it doesn't get cut off at the panel's bottom edge?
+        // I tried everything to get this to sit on top of the layers
+        // panel when expanded, but I could not get it to work and moved on
+        this.add_import_combo();
     };
     this.InputInFocus = function () {
         // TODO
@@ -28946,17 +28960,15 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         var button = (function (self) {
             return self.get_button(
                 label_text + " (Upload)",
-                function (event, button) {
-                    console.debug("TEST on upload", event, button);
-                    // self.on_new_upload(primitive_type);  // TODO
+                function (event, button,c,d,e) {
+                    console.debug("TEST on upload", event, button,c,d,e);
+                    self.on_new_upload(primitive_type);  // TODO
                 }
             );
         })(this);
         button.SetFileUploader(
             this.editor.api,
-            {
-                // TODO
-            }
+            {"f": "upload_image"}
         );
         return button;
     };

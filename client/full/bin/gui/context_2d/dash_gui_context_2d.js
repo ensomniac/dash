@@ -7,9 +7,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_data":          Get data dict for given object ID
-     *         - "set_property":      Set property with a key/value for given object ID
-     *         - "duplicate":         Duplicate the given object ID as a new context (not tethered to the original) - backend function
+     *         - "get_data":          Get data dict for provided object ID
+     *         - "set_property":      Set property with a key/value for provided object ID
+     *         - "upload_image":      Upload image (for new image layer) to provided object ID
+     *         - "duplicate":         Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "get_combo_options": Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}

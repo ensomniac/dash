@@ -58,14 +58,27 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.append(this.first_pane_slider.html);
 
         this.setup_property_box();
+
+        // TODO: re-enable
+        // if (this.GetSelectedLayer()) {
+        //     this.SwitchContentToEditTab();
+        // }
+        //
+        // else {
+        //     this.SwitchContentToNewTab();
+        // }
     };
 
     this.SwitchContentToEditTab = function () {
-        this.content_box.SwitchToEditTab();
+        if (this.content_box) {
+            this.content_box.SwitchToEditTab();
+        }
     };
 
     this.SwitchContentToNewTab = function () {
-        this.content_box.SwitchToNewTab();
+        if (this.content_box) {
+            this.content_box.SwitchToNewTab();
+        }
     };
 
     this.InputInFocus = function () {
