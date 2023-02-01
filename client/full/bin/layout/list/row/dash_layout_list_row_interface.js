@@ -1,6 +1,24 @@
 /**@member DashLayoutListRow*/
 
 function DashLayoutListRowInterface () {
+    // Sometimes, you may want the row to be a certain height, but not have all the elements fill that height
+    this.AddTopAndBottomPadding = function (pad) {
+        this.column_box.css({
+            "padding-top": pad,
+            "left": 0,
+            "right": 0
+        });
+
+        this.html.css({
+            "padding-top": pad,
+            "padding-bottom": pad
+        });
+
+        this.highlight.css({
+            "height": this.height + (pad * 2)
+        });
+    };
+
     this.DisableAnimation = function () {
         this.anim_delay = {
             "highlight_show": 0,
@@ -109,7 +127,7 @@ function DashLayoutListRowInterface () {
                 for (var input of this.columns[type]) {
                     var new_value = this.get_data_for_key(input["column_config_data"]);
 
-                    if (new_value) {
+                    if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
                     }
                 }

@@ -16,6 +16,7 @@ function DashMobileCardStack (binder, color=null) {
     this.banner_fixed = false;  // By default, the banner scrolls with the rest of the content
     this.banner_spacer = null;
     this.touch_active = false;
+    this.content_elements = [];
     this.center_content = null;
     this.center_scroll_top = 0;
     this.active_panel_index = 1;  // Center
@@ -113,7 +114,7 @@ function DashMobileCardStack (binder, color=null) {
 
         this.banner = new DashMobileCardStackBanner(this);
 
-        this.AddHTML(this.banner.html);
+        this.AddHTML(this.banner.html, false);
 
         return this.banner;
     };
@@ -171,21 +172,34 @@ function DashMobileCardStack (binder, color=null) {
     this.AddUserBanner = function (include_refresh_button=true) {
         var banner = new DashMobileCardStackUserBanner(this, include_refresh_button);
 
-        this.AddHTML(banner.html);
+        this.AddHTML(banner.html, false);
 
         return banner;
     };
 
-    this.AddHTML = function (html) {
+    this.AddHTML = function (html, add_to_content_elements=true) {
         html.css({
             ...Dash.HardwareAccelerationCSS
         });
 
         this.center_content.append(html);
 
+        if (add_to_content_elements) {
+            this.content_elements.push(html);
+        }
+
         if (this.footer_spacer) {
             this.center_content.append(this.footer_spacer);
         }
+    };
+
+    this.EmptyContent = function () {
+        for (var element of this.content_elements) {
+            element.remove();
+        }
+
+        this.cards = [];
+        this.content_elements = [];
     };
 
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash

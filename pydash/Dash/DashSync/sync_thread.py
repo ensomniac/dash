@@ -176,8 +176,9 @@ class SyncThread:
 
         if has_changes:
             msg = "* " + self.context.get("asset_path") + " > "
-            msg += "GitHub > Needs commit/push ("
-            msg += self.context.get("usr_path_git") + ")"
+            msg += "GitHub > Needs commit/push"
+            # msg += "GitHub > Needs commit/push ("
+            # msg += self.context.get("usr_path_git") + ")"
             print(msg)
 
         if response.get("livesync_git_commit_request"):

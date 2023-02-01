@@ -10,11 +10,9 @@ function DashGuiContext2DCanvas (editor) {
     this.canvas = $("<div></div>");
     this.padding = Dash.Size.Padding * 2;
 
-    // TODO: flexible, unscaled canvas in the middle of the interface for all elements to be drawn on,
-    //  with bounding box that represents working area based on selected aspect ratio, and canvas shouldn't
-    //  flex smaller than the bounding box (or bounding box and contained elements should shrink when
-    //  the canvas gets too small) - default behavior when an element is clicked should probably be to
-    //  auto-select the layer and be able to manipulate it without having to select the desired layer first
+    // TODO:
+    //  - contained elements should resize with the canvas itself
+    //  - default behavior when an element is clicked should probably be to auto-select the layer in the layers panel
 
     this.setup_styles = function () {
         this.html.css({
@@ -65,8 +63,8 @@ function DashGuiContext2DCanvas (editor) {
         // TODO: move the provided index down one, and update the other indexes accordingly
     };
 
-    this.AddLayer = function (index) {
-        // TODO: add new layer (don't need to update any other indexes)
+    this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
+        // TODO: add new layer using primitive (don't need to update any other indexes)
     };
 
     this.RemoveLayer = function (index) {
@@ -74,11 +72,11 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.ToggleLayerHidden = function (index, hidden) {
-        // TODO
+        // TODO: hide/show
     };
 
     this.ToggleLayerLocked = function (index, locked) {
-        // TODO
+        // TODO: click event on/off
     };
 
     this.Resize = function (from_event=false) {
@@ -141,12 +139,12 @@ function DashGuiContext2DCanvas (editor) {
         }
 
         if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
-            this.editor.AddToLog("Canvas aspect ration set to: " + w + "/" + h);
+            this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
 
         this.last_aspect_ratio = aspect_ratio;
 
-        // TODO: elements will need to be resized as well, but that may happen automatically
+        // TODO: elements will need to be resized as well, but that may happen automatically - need to confirm
 
         if (this.size_initialized) {
             return;

@@ -59,7 +59,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return divider;
     };
 
-    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data=null) {
+    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}) {
         if (!label_text.endsWith(":")) {
             label_text += ":";
         }
@@ -107,7 +107,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
         container.append(label.html);
 
-        var combo = this.AddCombo(combo_options, default_value, callback, additional_data);
+        var combo = this.AddCombo(combo_options, default_value, callback, additional_data, extra_options);
 
         combo.html.detach();
 

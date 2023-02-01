@@ -31,7 +31,13 @@ function DashGuiContext2DLogBar (editor) {
     };
 
     this.add_list = function () {
-        this.list = new Dash.Layout.RevolvingList(this, this.get_column_config(), this.color, false);
+        this.list = new Dash.Layout.RevolvingList(
+            this,
+            this.get_column_config(),
+            this.color,
+            false,
+            {"row_height": Dash.Size.RowHeight * 1.2}  // This is minimum height for the scroll bar to not look wonky
+        );
 
         this.list.DisableRowEvents();
 

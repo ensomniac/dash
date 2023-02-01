@@ -4,6 +4,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.label_text = label_text;
     this.callback = callback;
 
+    this.highlighted = false;
     this.click_active = false;
     this.upload_button = null;
     this.notification_icon = null;
@@ -15,6 +16,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
+    this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
+    this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
 
     this.icon = new Dash.Gui.Icon(
@@ -49,7 +52,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "height": this.width,
             "width": this.width,
             "border-radius": this.width * 0.5,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
+            "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
 
         this.label.css({
@@ -128,6 +131,26 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         else {
             this.notification_icon.stop().animate({"opacity": 0}, 350);
         }
+    };
+
+    this.ToggleHighlight = function (highlighted) {
+        if (this.highlighted === highlighted) {
+            return;
+        }
+
+        if (highlighted) {
+            this.icon_circle.css({
+                "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
+            });
+        }
+
+        else {
+            this.icon_circle.css({
+                "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+            });
+        }
+
+        this.highlighted = highlighted;
     };
 
     this.setup_connections = function () {

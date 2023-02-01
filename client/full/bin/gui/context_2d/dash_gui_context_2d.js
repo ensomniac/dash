@@ -7,10 +7,17 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
      *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
      *
-     *         - "get_data":     Get data dict for given object ID
-     *         - "set_property": Set property with a key/value for given object ID
-     *         - "duplicate":    Duplicate the given object ID as a new context (not tethered to the original) - backend function
-     *                           should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_data":          Get data dict for provided object ID
+     *         - "set_property":      Set property with a key/value for provided object ID
+     *         - "upload_image":      Upload image (for new image layer) to provided object ID
+     *         - "duplicate":         Duplicate the provided object ID as a new context (not tethered to the original) - backend function
+     *                                should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_combo_options": Get dict with keys for different combo option types, such as "fonts", with values being lists
+     *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
+     *
+     *                                Required/expected combo option type keys:
+     *                                  - fonts
+     *                                  - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -28,6 +35,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.log_bar = null;
     this.toolbar = null;
     this.editor_panel = null;
+    this.ComboOptions = null;
     this.on_duplicate_cb = null;
     this.html = $("<div></div>");
     this.left_pane_slider = null;
@@ -38,6 +46,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);
+
+        this.get_combo_options();
 
         this.canvas = new DashGuiContext2DCanvas(this);
         this.log_bar = new DashGuiContext2DLogBar(this);
@@ -86,7 +96,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
 
     // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later
+    //  by certain elements, so having them appear as public may be confusing later - rename?
 
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
@@ -124,12 +134,12 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.canvas.MoveLayerDown(index);
     };
 
-    this.AddCanvasLayer = function (index) {
+    this.AddCanvasLayer = function (index, primitive_type, primitive_file_data=null) {
         if (!this.canvas) {
             return;
         }
 
-        this.canvas.AddLayer(index);
+        this.canvas.AddLayer(index, primitive_type, primitive_file_data);
     };
 
     this.RemoveCanvasLayer = function (index) {
@@ -145,7 +155,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             return;
         }
 
-        this.canvas.ToggleCanvasLayerHidden(index, hidden);
+        this.canvas.ToggleLayerHidden(index, hidden);
     };
 
     this.ToggleCanvasLayerLocked = function (index, locked) {
@@ -153,7 +163,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             return;
         }
 
-        this.canvas.ToggleCanvasLayerLocked(index, locked);
+        this.canvas.ToggleLayerLocked(index, locked);
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
@@ -220,6 +230,33 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         })(this);
     };
 
+    this.get_combo_options = function () {
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+
+                    if ("error" in response) {
+                        delete response["error"];
+                    }
+
+                    self.ComboOptions = response;
+
+                    console.log("Context2D combo options:", self.ComboOptions);
+
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdateContentBoxComboOptions();
+                    }
+                },
+                self.api,
+                {"f": "get_combo_options"}
+            );
+        })(this);
+    };
+
     this.get_data = function () {
         return this.data;
     };
@@ -239,7 +276,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
                     // Aspect ratio change logging happens on canvas resize
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
-                        self.AddToLog("'" + key + "' set to: " + value);
+                        self.AddToLog(key.Title() + " set to: " + value);
                     }
                 },
                 self.api,

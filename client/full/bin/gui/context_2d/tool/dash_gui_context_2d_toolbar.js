@@ -5,7 +5,7 @@ function DashGuiContext2DToolbar (editor) {
     this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.editor.color;
-    this.can_edit = this.editor.can_edit;  // TODO: propagate
+    this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
 

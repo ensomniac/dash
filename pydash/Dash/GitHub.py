@@ -93,18 +93,21 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
-        ryan_personal_packages = [
+        # Repo names
+        ryan_personal_repos = [
             "smartsioux",
             "rycam",
             "ensomniac_io",
+            "ensomniac_ai",
             "freshpath"
         ]
 
+        # Repo names
         andrew_personal_repos = [
             "simplepaycheckbudget"
         ]
 
-        if return_data["repository"] in ryan_personal_packages:
+        if return_data["repository"] in ryan_personal_repos:
             email_list = ["ryan@ensomniac.com"]
 
         elif return_data["repository"] in andrew_personal_repos:
@@ -152,7 +155,8 @@ class GitHub:
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
-        return RunAsRoot.Queue(";".join(cmds))
+        # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called
+        return RunAsRoot.Queue(cmds)
 
 
 def UpdateFromWebhook(local_git_root, local_git_path, dest_path):

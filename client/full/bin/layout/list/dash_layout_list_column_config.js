@@ -126,8 +126,9 @@ function DashLayoutListColumnConfig () {
     };
 
     this.AddInput = function (
-        label_text, binder=null, callback=null, data_key="", width_mult=1, css={},
-        header_css={}, placeholder_label="", default_value="", disable_autosave=false, can_edit=true
+        label_text="", binder=null, callback=null, data_key="", width_mult=1, css={},
+        header_css={}, placeholder_label="", default_value="", disable_autosave=false,
+        can_edit=true, use_placeholder_label_for_header=true
     ) {
         this.AddColumn(
             label_text,
@@ -138,6 +139,7 @@ function DashLayoutListColumnConfig () {
                 "type": "input",
                 "options": {
                     "placeholder_label": placeholder_label || label_text,
+                    "use_placeholder_label_for_header": use_placeholder_label_for_header,
                     "callback" : callback,
                     "binder": binder,
                     "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light,

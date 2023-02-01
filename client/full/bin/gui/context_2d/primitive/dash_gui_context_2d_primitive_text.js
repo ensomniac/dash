@@ -1,9 +1,7 @@
-function DashGuiContext2DPrimitiveText (panel) {
-    DashGuiContext2DPrimitive.call(this, panel);
-
-    this.setup_styles = function () {
-        // TODO
+function DashGuiContext2DPrimitiveText () {
+    this._setup_styles = function () {
+        // TODO?
     };
 
-    this.setup_styles();
+    this._setup_styles();
 }

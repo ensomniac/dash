@@ -1,5 +1,5 @@
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true) {
         var date;
         var dt_obj;
         var timezone;
@@ -23,7 +23,7 @@ function DashDateTime () {
             date = dt_obj.toLocaleDateString();
         }
 
-        if (is_static_date) {
+        if (is_static_date || !include_time) {
             return date;
         }
 
@@ -64,8 +64,8 @@ function DashDateTime () {
 
         // Check for included offset hours at end of the ISO string (ex: -04:00)
         if (iso_string[iso_string.length - 6] === "-") {
-            iso_string = iso_string.substring(0, iso_string.length - 6);
-            included_offset_hours = parseInt(iso_string.substring(iso_string.length - 5, iso_string.length));
+            included_offset_hours = parseInt(iso_string.substring(iso_string.length - 5, iso_string.length));  // Grab the offset before removing it
+            iso_string = iso_string.substring(0, iso_string.length - 6);  // Remove the offset from the original
         }
 
         var is_static_date = false;
