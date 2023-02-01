@@ -504,6 +504,8 @@ class _ClientCompiler:
 
         return f"{head}{vstring}{quote_type}{tail}"
 
+def CompileAndDistribute():
+    _ClientCompiler().CompileAndDistribute()
 
 if __name__ == "__main__":
     _ClientCompiler().CompileAndDistribute()
