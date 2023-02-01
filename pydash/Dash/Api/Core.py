@@ -459,27 +459,14 @@ class ApiCore:
             except:
                 pass
 
-        # Asset paths
-        ryan_personal_packages = [
-            "smartsioux",
-            "rycam",
-            "ensomniac_io",
-            "ensomniac_ai",
-            "freshpath"
-        ]
+        from Dash import PersonalContexts
 
-        # Asset paths
-        andrew_personal_packages = [
-            "simple_paycheck_budget"
-        ]
+        for email in PersonalContexts:
+            if self._asset_path in PersonalContexts[email]["asset_paths"]:
+                strict_notify = True
+                notify_email_list = [email]
 
-        if self._asset_path in ryan_personal_packages:
-            strict_notify = True
-            notify_email_list = ["ryan@ensomniac.com"]
-
-        if self._asset_path in andrew_personal_packages:
-            strict_notify = True
-            notify_email_list = ["stetandrew@gmail.com"]
+                break
 
         try:
             SendEmail(

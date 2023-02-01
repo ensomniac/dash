@@ -67,6 +67,7 @@ class GitHub:
 
         from json2html import json2html
         from Dash.Utils import SendEmail
+        from Dash import PersonalContexts
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
@@ -93,25 +94,11 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
-        # Repo names
-        ryan_personal_repos = [
-            "smartsioux",
-            "rycam",
-            "ensomniac_io",
-            "ensomniac_ai",
-            "freshpath"
-        ]
+        for email in PersonalContexts:
+            if return_data["repository"] in PersonalContexts[email]["repo_names"]:
+                email_list = [email]
 
-        # Repo names
-        andrew_personal_repos = [
-            "simplepaycheckbudget"
-        ]
-
-        if return_data["repository"] in ryan_personal_repos:
-            email_list = ["ryan@ensomniac.com"]
-
-        elif return_data["repository"] in andrew_personal_repos:
-            email_list = ["stetandrew@gmail.com"]
+                break
 
         SendEmail(
             subject=subject,

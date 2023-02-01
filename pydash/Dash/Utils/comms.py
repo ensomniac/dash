@@ -70,7 +70,8 @@ def SendEmail(
 
     if bcc_email_list:
         for email in bcc_email_list:
-            message.add_bcc_recipient(email)
+            if email not in notify_email_list:
+                message.add_bcc_recipient(email)
 
     if reply_to_email:
         message.set_reply_to(reply_to_email, reply_to_name)

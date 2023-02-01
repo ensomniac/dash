@@ -28807,7 +28807,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
-    this.min_height = Dash.Size.ButtonHeight * 5;  // Increase this when any other elements are added that would increase the overall height
+    this.min_height = Dash.Size.ButtonHeight * 5.1;  // Increase this when any other elements are added that would increase the overall height
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     this.PrimitiveTypes = [
         "text",
