@@ -27507,7 +27507,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.middle_html.append(this.middle_pane_slider.html);
     };
     // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later
+    //  by certain elements, so having them appear as public may be confusing later - rename?
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };
@@ -27535,11 +27535,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
         this.canvas.MoveLayerDown(index);
     };
-    this.AddCanvasLayer = function (index) {
+    this.AddCanvasLayer = function (index, primitive_type, primitive_file_data=null) {
         if (!this.canvas) {
             return;
         }
-        this.canvas.AddLayer(index);
+        this.canvas.AddLayer(index, primitive_type, primitive_file_data);
     };
     this.RemoveCanvasLayer = function (index) {
         if (!this.canvas) {
@@ -27673,11 +27673,9 @@ function DashGuiContext2DCanvas (editor) {
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
     this.padding = Dash.Size.Padding * 2;
-    // TODO: flexible, unscaled canvas in the middle of the interface for all elements to be drawn on,
-    //  with bounding box that represents working area based on selected aspect ratio, and canvas shouldn't
-    //  flex smaller than the bounding box (or bounding box and contained elements should shrink when
-    //  the canvas gets too small) - default behavior when an element is clicked should probably be to
-    //  auto-select the layer and be able to manipulate it without having to select the desired layer first
+    // TODO:
+    //  - contained elements should resize with the canvas itself
+    //  - default behavior when an element is clicked should probably be to auto-select the layer in the layers panel
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -27717,17 +27715,17 @@ function DashGuiContext2DCanvas (editor) {
     this.MoveLayerDown = function (index) {
         // TODO: move the provided index down one, and update the other indexes accordingly
     };
-    this.AddLayer = function (index) {
-        // TODO: add new layer (don't need to update any other indexes)
+    this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
+        // TODO: add new layer using primitive (don't need to update any other indexes)
     };
     this.RemoveLayer = function (index) {
         // TODO: layer has been deleted, so remove it from the canvas and update the other indexes accordingly
     };
     this.ToggleLayerHidden = function (index, hidden) {
-        // TODO
+        // TODO: hide/show
     };
     this.ToggleLayerLocked = function (index, locked) {
-        // TODO
+        // TODO: click event on/off
     };
     this.Resize = function (from_event=false) {
         if (!from_event) {
@@ -27783,7 +27781,7 @@ function DashGuiContext2DCanvas (editor) {
             this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
         this.last_aspect_ratio = aspect_ratio;
-        // TODO: elements will need to be resized as well, but that may happen automatically
+        // TODO: elements will need to be resized as well, but that may happen automatically - need to confirm
         if (this.size_initialized) {
             return;
         }
@@ -27879,7 +27877,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
     this.editor = this.toolbar.editor;
-    this.can_edit = this.toolbar.can_edit;  // TODO: propagate
+    this.can_edit = this.toolbar.can_edit;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
     this.setup_styles = function () {
         this.html.css({
@@ -28003,7 +28001,7 @@ function DashGuiContext2DToolbar (editor) {
     this.initialized = false;
     this.html = $("<div></div>");
     this.color = this.editor.color;
-    this.can_edit = this.editor.can_edit;  // TODO: propagate
+    this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
     this.setup_styles = function () {
@@ -28091,29 +28089,48 @@ function DashGuiContext2DToolbar (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DPrimitive (panel) {
-    this.panel = panel;
+function DashGuiContext2DPrimitive (editor, type) {
+    this.editor = editor;
+    this.type = type;
     this.html = $("<div></div>");
-    // TODO: primitives have a pre-defined set of data, such as `x`, `y`, `width`, etc
+    // TODO: all primitives have a pre-defined set of starting data:
+    //  - type: image, text, etc
+    //  - anchor_norm_x: normalized x value for the center point of the element in relation to the canvas
+    //  - anchor_norm_y: normalized y value for the center point of the element in relation to the canvas
+    //  - width_norm: normalized width for the width of the element in relation to the width of the canvas
+    //  - rot_deg: -180 to 180 (or is it -179 to 179?)
     this.setup_styles = function () {
+        // TODO: are these abstractions even necessary? likely not
+        if (this.type === "text") {
+            DashGuiContext2DPrimitiveText.call(this);
+        }
+        else if (this.type === "image") {
+            DashGuiContext2DPrimitiveImage.call(this);
+        }
+        else {
+            console.error("Error: Unhandled primitive type:", this.type);
+            return;
+        }
+        this.initialize();
     };
-    this.setup_styles();
-}
-
-function DashGuiContext2DPrimitiveText (panel) {
-    DashGuiContext2DPrimitive.call(this, panel);
-    this.setup_styles = function () {
+    this.initialize = function () {
         // TODO
     };
     this.setup_styles();
 }
 
-function DashGuiContext2DPrimitiveImage (panel) {
-    DashGuiContext2DPrimitive.call(this, panel);
-    this.setup_styles = function () {
-        // TODO
+function DashGuiContext2DPrimitiveText () {
+    this._setup_styles = function () {
+        // TODO?
     };
-    this.setup_styles();
+    this._setup_styles();
+}
+
+function DashGuiContext2DPrimitiveImage () {
+    this._setup_styles = function () {
+        // TODO?
+    };
+    this._setup_styles();
 }
 
 function DashGuiContext2DEditorPanel (editor) {
@@ -28165,7 +28182,7 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
-        // TODO: re-enable
+        // TODO: re-enable when done
         // if (this.GetSelectedLayer()) {
         //     this.SwitchContentToEditTab();
         // }
@@ -28208,6 +28225,12 @@ function DashGuiContext2DEditorPanel (editor) {
     };
     this.GetSelectedLayer = function () {
         return this.layers_box.GetSelectedLayer();
+    };
+    this.AddLayer = function (primitive_type, primitive_file_data=null) {
+        this.layers_box.AddLayer(primitive_type, primitive_file_data);
+    };
+    this.ImportContext = function (context_data) {
+        this.layers_box.ImportContext(context_data);
     };
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
@@ -28383,6 +28406,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.GetData = function () {
         return this.get_data();
     };
+    this.GetPrimitiveData = function () {
+        return this.get_primitive_data();
+    };
     this.SetData = function (key, value) {
         return this.set_data(key, value);
     };
@@ -28502,6 +28528,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     this.get_data = function () {
         return this.layers.get_data()[this.index] || {};
     };
+    this.get_primitive_data = function () {
+        return (this.get_data()["primitive"] || {});
+    };
     this.setup_styles();
 }
 
@@ -28542,23 +28571,39 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         return false;
     };
-    this.AddLayer = function (_index=null) {
+    this.ImportContext = function (context_data) {
+        console.debug("TEST import context", context_data);
+        // TODO: create new layer(s), not sure how we should handle this yet...
+        //  - this should essentially merge in an existing context to the current one, with existing
+        //    layers and properties etc, and changes to this imported context wouldn't affect the original
+    };
+    this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
         var new_layer = false;
         if (_index === null) {
             _index = this.layers.length;
             new_layer = true;
         }
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type, primitive_file_data);
         this.layers.push(layer);
         this.layers_box.prepend(layer.html);
-        this.editor.AddCanvasLayer(_index);
+        this.editor.AddCanvasLayer(
+            _index,
+            primitive_type || layer.GetPrimitiveData()["type"],
+            primitive_file_data || layer.GetPrimitiveData()["file_data"]
+        );
         if (!new_layer) {
             return;
         }
         if (!("layers" in this.data)) {
             this.data["layers"] = [];
         }
-        this.data["layers"].push({"display_name": "New Layer"});
+        this.data["layers"].push({
+            "display_name": "New Layer",
+            "primitive": {
+                "type": primitive_type,
+                "file_data": primitive_file_data
+            }
+        });
         layer.Select();
         this.save_data();
     };
@@ -28579,6 +28624,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.data["layers"].Pop(index);
         this.editor.RemoveCanvasLayer(index);
+        this.panel.SwitchContentToNewTab();
         this.save_data();
     };
     this.MoveUp = function () {
@@ -28670,7 +28716,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
     this.get_data = function () {
-        // TODO: something like this
+        // TODO: data - something like this
         return this.data["layers"] || [];
     };
 
@@ -28690,7 +28736,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.save_data();
     };
     this.save_data = function () {
-        // TODO: something like this
+        // TODO: data - something like this
         // Dash.Request(
         //     this,
         //     function (response) {
@@ -28717,12 +28763,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var layers = this.get_data();
         if (layers.length) {
             for (var i in layers) {
-                this.AddLayer(i);
+                this.AddLayer("", null, i);
             }
             this.layers.Last().Select();
-        }
-        else {
-            this.AddLayer();
         }
         this.html.append(this.layers_box);
     };
@@ -28917,9 +28960,6 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         // panel when expanded, but I could not get it to work and moved on
         this.add_import_combo();
     };
-    this.InputInFocus = function () {
-        // TODO
-    };
     // Called by DashGuiContext2D when combo options are received
     this.UpdateImportComboOptions = function () {
         if (!this.import_combo) {
@@ -28934,7 +28974,14 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
             if (primitive_type === "text") {
-                this.html.append(this.get_button("New Text Layer", this.on_new_text).html);
+                (function (self, primitive_type) {
+                    self.html.append(self.get_button(
+                        "New Text Layer",
+                        function () {
+                            self.panel.AddLayer(primitive_type);
+                        }
+                    ).html);
+                })(this, primitive_type);
             }
             else if (primitive_type === "image") {
                 this.html.append(this.get_upload_button(primitive_type, "New Image Layer").html);
@@ -28960,37 +29007,53 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         var button = (function (self) {
             return self.get_button(
                 label_text + " (Upload)",
-                function (event, button,c,d,e) {
-                    console.debug("TEST on upload", event, button,c,d,e);
-                    self.on_new_upload(primitive_type);  // TODO
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.panel.AddLayer(primitive_type, response);
                 }
             );
         })(this);
         button.SetFileUploader(
             this.editor.api,
-            {"f": "upload_image"}
+            {"f": "upload_" + primitive_type}
         );
         return button;
     };
     this.add_import_combo = function () {
-        var tool_row = this.content.GetCombo(
-            "Import Another Context",
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            this.on_import.bind(this)
-        );
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                "Import Another Context",
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions["contexts"] ? self.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                function (selected_option) {
+                    if (!selected_option["id"]) {
+                        return;
+                    }
+                    Dash.Request(
+                        self,
+                        function (response) {
+                            if (!Dash.Validate.Response(response)) {
+                                return;
+                            }
+                            if ("error" in response) {
+                                delete response["error"];
+                            }
+                            self.panel.ImportContext(response);
+                        },
+                        self.api,
+                        {
+                            "f": "get_data",
+                            "obj_id": selected_option["id"]
+                        }
+                    );
+                }
+            );
+        })(this);
         this.import_combo = tool_row.elements.Last().combo;
         this.html.append(tool_row.html);
-    };
-    this.on_import = function (selected_option) {
-        console.debug("TEST on import", selected_option);  // TODO
-    };
-    this.on_new_upload = function (primitive_type) {
-        console.debug("TEST on new", primitive_type);  // TODO
-    };
-    this.on_new_text = function () {
-        console.debug("TEST on new text");  // TODO
     };
     this.setup_styles();
 }
@@ -29102,13 +29165,6 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.add_icons = function () {
         (function (self) {
             self.add_icon_button(
-                "new_layer",  // TODO: might not actually want/need this, since the content>new will add layers
-                "add_layer",
-                function () {
-                    self.layers.AddLayer();
-                }
-            );
-            self.add_icon_button(
                 "delete",
                 "trash_alt",
                 function () {
@@ -29201,10 +29257,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.show_no_selected_layer_label();
             return;
         }
-        // Always show general context when a layer is selected
-        this.show_context("general");
-        // TODO: something like this
-        this.show_context((selected_layer["primitive"] || {})["type"]);
+        this.show_context("general");  // Always show general context when a layer is selected
+        this.show_context(selected_layer.GetPrimitiveData()["type"]);
     };
     this.show_no_selected_layer_label = function () {
         if (!this.no_selected_layer_label) {
@@ -29295,6 +29349,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         else if (key === "image") {
             this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
             this.contexts[key]["html"].append(this.get_slider(0.5, key, "brightness", 0.95).html);
+            // TODO: button to download original image
         }
         else {
             console.warn("Warning: Unhandled 'Edit' tab context type:", key);

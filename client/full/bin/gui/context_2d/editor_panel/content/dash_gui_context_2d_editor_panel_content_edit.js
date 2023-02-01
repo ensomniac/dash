@@ -75,11 +75,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return;
         }
 
-        // Always show general context when a layer is selected
-        this.show_context("general");
-
-        // TODO: something like this
-        this.show_context((selected_layer["primitive"] || {})["type"]);
+        this.show_context("general");  // Always show general context when a layer is selected
+        this.show_context(selected_layer.GetPrimitiveData()["type"]);
     };
 
     this.show_no_selected_layer_label = function () {
@@ -198,6 +195,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         else if (key === "image") {
             this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
             this.contexts[key]["html"].append(this.get_slider(0.5, key, "brightness", 0.95).html);
+
+            // TODO: button to download original image
         }
 
         else {

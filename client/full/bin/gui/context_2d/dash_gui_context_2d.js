@@ -96,7 +96,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
 
     // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later
+    //  by certain elements, so having them appear as public may be confusing later - rename?
 
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
@@ -134,12 +134,12 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.canvas.MoveLayerDown(index);
     };
 
-    this.AddCanvasLayer = function (index) {
+    this.AddCanvasLayer = function (index, primitive_type, primitive_file_data=null) {
         if (!this.canvas) {
             return;
         }
 
-        this.canvas.AddLayer(index);
+        this.canvas.AddLayer(index, primitive_type, primitive_file_data);
     };
 
     this.RemoveCanvasLayer = function (index) {

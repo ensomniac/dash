@@ -129,14 +129,6 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.add_icons = function () {
         (function (self) {
             self.add_icon_button(
-                "new_layer",  // TODO: might not actually want/need this, since the content>new will add layers
-                "add_layer",
-                function () {
-                    self.layers.AddLayer();
-                }
-            );
-
-            self.add_icon_button(
                 "delete",
                 "trash_alt",
                 function () {

@@ -12,7 +12,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
     this.html = $("<div></div>");
     this.color = this.toolbar.color;
     this.editor = this.toolbar.editor;
-    this.can_edit = this.toolbar.can_edit;  // TODO: propagate
+    this.can_edit = this.toolbar.can_edit;
     this.size = this.toolbar.min_width - (this.toolbar.padding * 2) - 2;
 
     this.setup_styles = function () {

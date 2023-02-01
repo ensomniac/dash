@@ -23,10 +23,6 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         this.add_import_combo();
     };
 
-    this.InputInFocus = function () {
-        // TODO
-    };
-
     // Called by DashGuiContext2D when combo options are received
     this.UpdateImportComboOptions = function () {
         if (!this.import_combo) {
@@ -43,7 +39,14 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
             if (primitive_type === "text") {
-                this.html.append(this.get_button("New Text Layer", this.on_new_text).html);
+                (function (self, primitive_type) {
+                    self.html.append(self.get_button(
+                        "New Text Layer",
+                        function () {
+                            self.panel.AddLayer(primitive_type);
+                        }
+                    ).html);
+                })(this, primitive_type);
             }
 
             else if (primitive_type === "image") {
@@ -76,46 +79,62 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         var button = (function (self) {
             return self.get_button(
                 label_text + " (Upload)",
-                function (event, button,c,d,e) {
-                    console.debug("TEST on upload", event, button,c,d,e);
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
 
-                    self.on_new_upload(primitive_type);  // TODO
+                    self.panel.AddLayer(primitive_type, response);
                 }
             );
         })(this);
 
         button.SetFileUploader(
             this.editor.api,
-            {"f": "upload_image"}
+            {"f": "upload_" + primitive_type}
         );
 
         return button;
     };
 
     this.add_import_combo = function () {
-        var tool_row = this.content.GetCombo(
-            "Import Another Context",
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            this.on_import.bind(this)
-        );
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                "Import Another Context",
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions["contexts"] ? self.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                function (selected_option) {
+                    if (!selected_option["id"]) {
+                        return;
+                    }
+
+                    Dash.Request(
+                        self,
+                        function (response) {
+                            if (!Dash.Validate.Response(response)) {
+                                return;
+                            }
+
+                            if ("error" in response) {
+                                delete response["error"];
+                            }
+
+                            self.panel.ImportContext(response);
+                        },
+                        self.api,
+                        {
+                            "f": "get_data",
+                            "obj_id": selected_option["id"]
+                        }
+                    );
+                }
+            );
+        })(this);
 
         this.import_combo = tool_row.elements.Last().combo;
 
         this.html.append(tool_row.html);
-    };
-
-    this.on_import = function (selected_option) {
-        console.debug("TEST on import", selected_option);  // TODO
-    };
-
-    this.on_new_upload = function (primitive_type) {
-        console.debug("TEST on new", primitive_type);  // TODO
-    };
-
-    this.on_new_text = function () {
-        console.debug("TEST on new text");  // TODO
     };
 
     this.setup_styles();

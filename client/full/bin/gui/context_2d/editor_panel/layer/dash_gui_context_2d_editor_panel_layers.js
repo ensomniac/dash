@@ -46,7 +46,15 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return false;
     };
 
-    this.AddLayer = function (_index=null) {
+    this.ImportContext = function (context_data) {
+        console.debug("TEST import context", context_data);
+
+        // TODO: create new layer(s), not sure how we should handle this yet...
+        //  - this should essentially merge in an existing context to the current one, with existing
+        //    layers and properties etc, and changes to this imported context wouldn't affect the original
+    };
+
+    this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
         var new_layer = false;
 
         if (_index === null) {
@@ -54,13 +62,17 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             new_layer = true;
         }
 
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type, primitive_file_data);
 
         this.layers.push(layer);
 
         this.layers_box.prepend(layer.html);
 
-        this.editor.AddCanvasLayer(_index);
+        this.editor.AddCanvasLayer(
+            _index,
+            primitive_type || layer.GetPrimitiveData()["type"],
+            primitive_file_data || layer.GetPrimitiveData()["file_data"]
+        );
 
         if (!new_layer) {
             return;
@@ -70,7 +82,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.data["layers"] = [];
         }
 
-        this.data["layers"].push({"display_name": "New Layer"});
+        this.data["layers"].push({
+            "display_name": "New Layer",
+            "primitive": {
+                "type": primitive_type,
+                "file_data": primitive_file_data
+            }
+        });
 
         layer.Select();
 
@@ -101,6 +119,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.data["layers"].Pop(index);
 
         this.editor.RemoveCanvasLayer(index);
+
+        this.panel.SwitchContentToNewTab();
 
         this.save_data();
     };
@@ -229,7 +249,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.get_data = function () {
-        // TODO: something like this
+        // TODO: data - something like this
         return this.data["layers"] || [];
     };
 
@@ -256,7 +276,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.save_data = function () {
-        // TODO: something like this
+        // TODO: data - something like this
         // Dash.Request(
         //     this,
         //     function (response) {
@@ -286,14 +306,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         if (layers.length) {
             for (var i in layers) {
-                this.AddLayer(i);
+                this.AddLayer("", null, i);
             }
 
             this.layers.Last().Select();
-        }
-
-        else {
-            this.AddLayer();
         }
 
         this.html.append(this.layers_box);

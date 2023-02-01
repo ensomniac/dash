@@ -59,7 +59,7 @@ function DashGuiContext2DEditorPanel (editor) {
 
         this.setup_property_box();
 
-        // TODO: re-enable
+        // TODO: re-enable when done
         // if (this.GetSelectedLayer()) {
         //     this.SwitchContentToEditTab();
         // }
@@ -109,6 +109,14 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.GetSelectedLayer = function () {
         return this.layers_box.GetSelectedLayer();
+    };
+
+    this.AddLayer = function (primitive_type, primitive_file_data=null) {
+        this.layers_box.AddLayer(primitive_type, primitive_file_data);
+    };
+
+    this.ImportContext = function (context_data) {
+        this.layers_box.ImportContext(context_data);
     };
 
     this.UpdatePropertyBox = function () {

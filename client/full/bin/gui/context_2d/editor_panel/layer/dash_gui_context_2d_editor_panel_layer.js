@@ -42,6 +42,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         return this.get_data();
     };
 
+    this.GetPrimitiveData = function () {
+        return this.get_primitive_data();
+    };
+
     this.SetData = function (key, value) {
         return this.set_data(key, value);
     };
@@ -199,6 +203,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
     this.get_data = function () {
         return this.layers.get_data()[this.index] || {};
+    };
+
+    this.get_primitive_data = function () {
+        return (this.get_data()["primitive"] || {});
     };
 
     this.setup_styles();
