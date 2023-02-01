@@ -63,8 +63,11 @@ function DashGuiContext2DCanvas (editor) {
         // TODO: move the provided index down one, and update the other indexes accordingly
     };
 
+    // TODO: add new layer using primitive (don't need to update any other indexes)
     this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
-        // TODO: add new layer using primitive (don't need to update any other indexes)
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_type, primitive_file_data);
+
+        this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
     };
 
     this.RemoveLayer = function (index) {

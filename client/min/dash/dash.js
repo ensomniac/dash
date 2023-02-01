@@ -27715,8 +27715,10 @@ function DashGuiContext2DCanvas (editor) {
     this.MoveLayerDown = function (index) {
         // TODO: move the provided index down one, and update the other indexes accordingly
     };
+    // TODO: add new layer using primitive (don't need to update any other indexes)
     this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
-        // TODO: add new layer using primitive (don't need to update any other indexes)
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_type, primitive_file_data);
+        this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
     };
     this.RemoveLayer = function (index) {
         // TODO: layer has been deleted, so remove it from the canvas and update the other indexes accordingly
@@ -28089,10 +28091,14 @@ function DashGuiContext2DToolbar (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DPrimitive (editor, type) {
-    this.editor = editor;
+function DashGuiContext2DPrimitive (canvas, type, file_data=null) {
+    this.canvas = canvas;
     this.type = type;
+    this.file_data = file_data;
     this.html = $("<div></div>");
+    this.color = this.canvas.color;
+    this.editor = this.canvas.editor;
+    this.opposite_color = Dash.Color.GetOpposite(this.color);
     // TODO: all primitives have a pre-defined set of starting data:
     //  - type: image, text, etc
     //  - anchor_norm_x: normalized x value for the center point of the element in relation to the canvas
@@ -28100,6 +28106,21 @@ function DashGuiContext2DPrimitive (editor, type) {
     //  - width_norm: normalized width for the width of the element in relation to the width of the canvas
     //  - rot_deg: -180 to 180 (or is it -179 to 179?)
     this.setup_styles = function () {
+        if (!this.call_style()) {
+            return;
+        }
+        // TODO
+        this.html.css({
+            // Simulate a double border - one for dark backgrounds, one for light
+            "border": "1px solid " + this.color.StrokeDark,
+            "outline": "1px solid " + this.opposite_color.StrokeDark,
+            "outline-offset": "1px",
+            // TODO: TESTING
+            "width": 500,
+            "height": 500
+        });
+    };
+    this.call_style = function () {
         // TODO: are these abstractions even necessary? likely not
         if (this.type === "text") {
             DashGuiContext2DPrimitiveText.call(this);
@@ -28109,12 +28130,9 @@ function DashGuiContext2DPrimitive (editor, type) {
         }
         else {
             console.error("Error: Unhandled primitive type:", this.type);
-            return;
+            return false;
         }
-        this.initialize();
-    };
-    this.initialize = function () {
-        // TODO
+        return true;
     };
     this.setup_styles();
 }
@@ -28182,14 +28200,12 @@ function DashGuiContext2DEditorPanel (editor) {
         this.top_html.css(abs_css);
         this.top_html.append(this.first_pane_slider.html);
         this.setup_property_box();
-        // TODO: re-enable when done
-        // if (this.GetSelectedLayer()) {
-        //     this.SwitchContentToEditTab();
-        // }
-        //
-        // else {
-        //     this.SwitchContentToNewTab();
-        // }
+        if (this.GetSelectedLayer()) {
+            this.SwitchContentToEditTab();
+        }
+        else {
+            this.SwitchContentToNewTab();
+        }
     };
     this.SwitchContentToEditTab = function () {
         if (this.content_box) {

@@ -59,14 +59,13 @@ function DashGuiContext2DEditorPanel (editor) {
 
         this.setup_property_box();
 
-        // TODO: re-enable when done
-        // if (this.GetSelectedLayer()) {
-        //     this.SwitchContentToEditTab();
-        // }
-        //
-        // else {
-        //     this.SwitchContentToNewTab();
-        // }
+        if (this.GetSelectedLayer()) {
+            this.SwitchContentToEditTab();
+        }
+
+        else {
+            this.SwitchContentToNewTab();
+        }
     };
 
     this.SwitchContentToEditTab = function () {
