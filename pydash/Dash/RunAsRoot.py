@@ -85,7 +85,7 @@ class RunAsRoot:
         self.state = json.loads(open(self.cmd_path, "r").read())
         self.state["complete"] = True
         self.state["error"] = True
-        self.state["output"] = f"Failed to complete task after {self.fail_timeout} seconds. Force killed.\n\n{self.state.get('output') or ''}"
+        self.state["output"] = f"Failed to complete task after {self.fail_timeout} seconds. Force killed.\n\n{self.state.get('output') or '(No additional error info)'}"
 
         os.remove(self.cmd_path)
 

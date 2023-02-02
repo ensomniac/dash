@@ -21,7 +21,7 @@ class PollRequests:
 
         self.check_process_running()
 
-        self.fail_timeout = 10  # In seconds
+        self.fail_timeout = 20  # In seconds
         self.checks = 0
 
         self.periodic_check()
@@ -116,6 +116,14 @@ class PollRequests:
         task_state["complete"] = True
         task_state["error"] = True
         task_state["output"] = error
+
+        from Dash.Utils import SendEmail
+
+        SendEmail(
+            subject="RootPoll.fail",
+            msg="Task failed",
+            error=error
+        )
 
         if force_move:
             print(f"FAIL & REMOVE: {task_path}")
