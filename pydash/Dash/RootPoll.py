@@ -21,8 +21,8 @@ class PollRequests:
 
         self.check_process_running()
 
-        self.fail_timeout = 20  # In seconds
         self.checks = 0
+        self.fail_timeout = 20  # In seconds (formerly 10, but git updates were failing for some repos that take a bit longer)
 
         self.periodic_check()
 
