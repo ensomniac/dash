@@ -296,7 +296,7 @@ class ApiCore:
                 self._params[key] = value
 
         try:
-            self.dash_global.RequestData = params
+            self.dash_global.RequestData = self._params
         except:
             pass
 
