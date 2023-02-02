@@ -35445,12 +35445,15 @@ function DashLayoutListRow (list, row_id, height=null) {
             this.html.css({
                 // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
                 // The change only pertains to the row itself, and then each element controls their own cursor behavior.
-                "cursor": this.is_header ? "auto" :
+                "cursor": (
+                    this.is_header ? "auto" :
                     this.is_sublist ? "context-menu" :
-                        default_columns_only ? "pointer" :
-                            this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
-                                this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (this.list.non_expanding_click_cb ? "pointer" : "default") :
-                                    "cell"
+                    default_columns_only ? "pointer" :
+                    this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
+                    this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (
+                        this.list.non_expanding_click_cb ? "pointer" : "default"
+                    ) : "cell"
+                )
             });
         }
     };
@@ -36481,6 +36484,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_backing = null;
     this.last_column_config = null;
     this.last_selected_row_id = "";
+    this.row_clicks_disabled = true;
     this.row_events_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
@@ -36650,6 +36654,12 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.row_events_disabled = true;
         for (var row of this.row_objects) {
             row.FullyDisable();
+        }
+    };
+    this.DisableRowClickEvents = function () {
+        this.row_clicks_disabled = true;
+        for (var row of this.row_objects) {
+            row.column_box.off("click");
         }
     };
     this.select_row = function (row_id="", default_to_first_row=true) {
@@ -36904,7 +36914,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
     // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
-        if (this.row_events_disabled) {
+        if (this.row_events_disabled || this.row_clicks_disabled) {
             return;
         }
         row.column_box.off("click");
@@ -36923,6 +36933,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
         row.RefreshConnections();
+        if (this.row_clicks_disabled) {
+            row.column_box.off("click");
+        }
         this.set_on_row_click(row);
         this.set_hover_preview(row);
     };

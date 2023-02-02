@@ -252,12 +252,15 @@ function DashLayoutListRow (list, row_id, height=null) {
             this.html.css({
                 // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
                 // The change only pertains to the row itself, and then each element controls their own cursor behavior.
-                "cursor": this.is_header ? "auto" :
+                "cursor": (
+                    this.is_header ? "auto" :
                     this.is_sublist ? "context-menu" :
-                        default_columns_only ? "pointer" :
-                            this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
-                                this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (this.list.non_expanding_click_cb ? "pointer" : "default") :
-                                    "cell"
+                    default_columns_only ? "pointer" :
+                    this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
+                    this.list.hasOwnProperty("get_expand_preview") && !this.list.get_expand_preview ? (
+                        this.list.non_expanding_click_cb ? "pointer" : "default"
+                    ) : "cell"
+                )
             });
         }
     };

@@ -146,7 +146,7 @@ class DashLocalStorage:
             "order": []
         }
 
-        store_root = self.GetRecordRoot()
+        store_root = self.GetRecordRoot(from_get_all=True)
 
         if not os.path.exists(store_root):
             return all_data
@@ -440,13 +440,13 @@ class DashLocalStorage:
                     obj_id
                 )
 
-    def GetRecordRoot(self, obj_id=""):
+    def GetRecordRoot(self, obj_id="", from_get_all=False):
         """
         | Example: /var/www/vhosts/oapi.co/dash/local/users/ryan@ensomniac.com/
         | Where 'users' is store_path and 'ryan@ensomniac.com' is obj_id
         """
 
-        if self.store_path == "users":
+        if self.store_path == "users" and not from_get_all:
             if not obj_id:
                 from Dash.Utils import Memory
 
@@ -456,18 +456,16 @@ class DashLocalStorage:
             if not obj_id:
                 raise Exception("An email address is required. Error x8392")
 
-            store_root = os.path.join(
+            return os.path.join(
                 self.dash_context["srv_path_local"],
                 self.store_path,
-                obj_id + "/",  # Email address
-            )
-        else:
-            store_root = os.path.join(
-                self.dash_context["srv_path_local"],
-                self.store_path + "/"
+                obj_id + "/"  # Email address
             )
 
-        return store_root
+        return os.path.join(
+            self.dash_context["srv_path_local"],
+            self.store_path + "/"
+        )
 
     def GetRecordCount(self):
         store_root = self.GetRecordRoot()

@@ -89,12 +89,13 @@ class Collection:
     def SetSortByKey(self, key):
         self._sort_by_key = key
 
-    def GetAll(self):
+    def GetAll(self, filter_params={}):
         self._all = LocalStorage.GetAll(
             self.DashContext,
             self.store_path,
             nested=self.nested,
-            sort_by_key=self._sort_by_key
+            sort_by_key=self._sort_by_key,
+            filter_params=filter_params
         )
 
         return self._all
