@@ -110,9 +110,12 @@ class PollRequests:
             # os.remove(os.path.join(self.request_path, task_id))
 
     def fail(self, task_path, error, force_move=False):
-        # print(">> " + task_path)
+        # print(">> " + task_path) -
 
-        task_state = json.loads(open(task_path, "r").read())
+        try:
+            task_state = json.loads(open(task_path, "r").read())
+        except:
+            raise Exception(f"Failed to read task file: {task_path}")
         task_state["complete"] = True
         task_state["error"] = True
         task_state["output"] = error
