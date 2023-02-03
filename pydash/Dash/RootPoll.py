@@ -115,18 +115,14 @@ class PollRequests:
         try:
             task_state = json.loads(open(task_path, "r").read())
         except:
-            raise Exception(f"Failed to read task file: {task_path}")
+            # We may want to just remove the file in this case, but starting with this for now
+            error = f"Initial error: {error}\nSubsequent error: Failed to read task file, removing it: {task_path}"
+            task_state = {}
+            # force_move = True  # Need this?
+
         task_state["complete"] = True
         task_state["error"] = True
         task_state["output"] = error
-
-        from Dash.Utils import SendEmail
-
-        SendEmail(
-            subject="RootPoll.fail",
-            msg="Task failed",
-            error=error
-        )
 
         if force_move:
             print(f"FAIL & REMOVE: {task_path}")

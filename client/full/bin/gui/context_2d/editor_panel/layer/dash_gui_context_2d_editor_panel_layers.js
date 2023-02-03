@@ -55,6 +55,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
+        var primitive_data;
         var new_layer = false;
 
         if (_index === null) {
@@ -68,11 +69,22 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.layers_box.prepend(layer.html);
 
-        this.editor.AddCanvasLayer(
-            _index,
-            primitive_type || layer.GetPrimitiveData()["type"],
-            primitive_file_data || layer.GetPrimitiveData()["file_data"]
-        );
+        if (new_layer) {
+            primitive_data = {
+                "type": primitive_type,  // image, text, etc
+                "file_data": primitive_file_data,  // data for image, etc
+                "anchor_norm_x": 0.5,  // normalized x value for the center point of the element in relation to the canvas
+                "anchor_norm_y": 0.5,  // normalized y value for the center point of the element in relation to the canvas
+                "width_norm": 0.5,  // normalized width for the width of the element in relation to the width of the canvas
+                "rot_deg": 0  // -180 to 180 (or is it -179 to 179?)
+            };
+        }
+
+        else {
+            primitive_data = layer.GetPrimitiveData();
+        }
+
+        this.editor.AddCanvasLayer(_index, primitive_data);
 
         if (!new_layer) {
             return;
@@ -84,10 +96,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.data["layers"].push({
             "display_name": "New Layer",
-            "primitive": {
-                "type": primitive_type,
-                "file_data": primitive_file_data
-            }
+            "primitive": primitive_data
         });
 
         layer.Select();

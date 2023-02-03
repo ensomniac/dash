@@ -1,6 +1,7 @@
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
 
+    this.active_tool = "";
     this.last_aspect_ratio = null;
     this.html = $("<div></div>");
     this.size_initialized = false;
@@ -39,16 +40,24 @@ function DashGuiContext2DCanvas (editor) {
         this.html.append(this.canvas);
     };
 
+    this.GetActiveTool = function () {
+        return this.active_tool;
+    };
+
     this.SizeInitialized = function () {
         return this.size_initialized;
     };
 
     this.SetTool = function (name, cursor="grab") {
+        this.active_tool = name;
+
         this.canvas.css({
+            // TODO: may make more sense to loop through all primitives
+            //  to set their cursors instead of the whole canvas
             "cursor": cursor
         });
 
-        // TODO: restyle the bounding box or something depending on the tool (name)
+        // TODO: restyle the active layer's bounding box or something depending on the tool (name)
     };
 
     this.SetActiveLayer = function (index) {
@@ -64,8 +73,8 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     // TODO: add new layer using primitive (don't need to update any other indexes)
-    this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
-        var primitive = new DashGuiContext2DPrimitive(this, primitive_type, primitive_file_data);
+    this.AddLayer = function (index, primitive_data) {
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_data);
 
         this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
     };
@@ -80,6 +89,14 @@ function DashGuiContext2DCanvas (editor) {
 
     this.ToggleLayerLocked = function (index, locked) {
         // TODO: click event on/off
+    };
+
+    this.GetHeight = function () {
+        return this.canvas.innerHeight();
+    };
+
+    this.GetWidth = function () {
+        return this.canvas.innerWidth();
     };
 
     this.Resize = function (from_event=false) {

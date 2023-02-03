@@ -134,12 +134,12 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         this.canvas.MoveLayerDown(index);
     };
 
-    this.AddCanvasLayer = function (index, primitive_type, primitive_file_data=null) {
+    this.AddCanvasLayer = function (index, primitive_data) {
         if (!this.canvas) {
             return;
         }
 
-        this.canvas.AddLayer(index, primitive_type, primitive_file_data);
+        this.canvas.AddLayer(index, primitive_data);
     };
 
     this.RemoveCanvasLayer = function (index) {
