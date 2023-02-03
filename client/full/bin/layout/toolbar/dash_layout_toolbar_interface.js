@@ -345,6 +345,10 @@ function DashLayoutToolbarInterface () {
             obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
         }
 
+        if (options["on_autosave"]) {
+            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+        }
+
         this.objects.push(obj);
 
         (function (self, input, obj_index, obj) {
@@ -357,6 +361,17 @@ function DashLayoutToolbarInterface () {
 
             if (obj["on_enter_callback"]) {
                 input.SetOnSubmit(
+                    function () {
+                        self.on_input_submitted(obj_index);
+                    },
+                    self
+                );
+            }
+
+            if (obj["on_autosave_callback"]) {
+                input.EnableAutosave();
+
+                input.SetOnAutosave(
                     function () {
                         self.on_input_submitted(obj_index);
                     },
@@ -379,16 +394,6 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
 
         return input;
-    };
-
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
-        }
-
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
     };
 
     this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {

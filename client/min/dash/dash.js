@@ -31278,6 +31278,7 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.on_change_callback = callback.bind(bind_to);
     };
     this.SetOnAutosave = function (callback, bind_to) {
+        // TODO: Shouldn't this also call this.EnableAutosave by default?
         this.on_autosave_callback = callback.bind(bind_to);
     };
     this.SetOnSubmit = function (callback, bind_to) {
@@ -31285,15 +31286,15 @@ function DashGuiInput (placeholder_text="", color=null) {
     };
     // DEPRECATED
     this.OnChange = function (callback, bind_to) {
-        this.on_change_callback = callback.bind(bind_to);
+        this.SetOnChange(callback, bind_to);
     };
     // DEPRECATED
     this.OnAutosave = function (callback, bind_to) {
-        this.on_autosave_callback = callback.bind(bind_to);
+        this.SetOnAutosave(callback, bind_to);
     };
     // DEPRECATED
     this.OnSubmit = function (callback, bind_to) {
-        this.on_submit_callback = callback.bind(bind_to);
+        this.SetOnSubmit(callback, bind_to);
     };
     this.Focus = function () {
         this.input.trigger("focus");
@@ -36104,8 +36105,8 @@ function DashLayoutListRowElements () {
             if (this.is_header && label) {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
-                    "font-family": "sans_serif_bold",
-                    // "color": this.color.Stroke  // Why was this the default?
+                    "font-family": column_config_data["header_css"]["font-family"] || "sans_serif_bold",
+                    "color": column_config_data["header_css"]["color"] || this.color.Stroke
                 });
             }
             else {
@@ -36124,15 +36125,19 @@ function DashLayoutListRowElements () {
         var input = new Dash.Gui.Input(placeholder_label, color);
         var css = {
             "background": "none",
-            "height": this.height * 0.9,
-            // "margin-top": Dash.Size.Padding * 0.1,  // Why was this added?
+            "height": this.height * (this.header ? 1 : 0.9),
             "box-shadow": "none"
         };
         if (column_config_data["width"]) {
             css["width"] = column_config_data["width"];
         }
         if (this.is_header) {
+            if (placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
             css["border"] = "none";
+            css["line-height"] = this.height + "px";
             if (column_config_data["header_css"]) {
                 css = {
                     ...css,
@@ -36141,7 +36146,12 @@ function DashLayoutListRowElements () {
             }
         }
         else {
+            if (this.is_sublist && placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
             css["border"] = "1px solid " + this.color.Pinstripe;
+            css["margin-top"] = Dash.Size.Padding * 0.1;
             if (column_config_data["css"]) {
                 css = {
                     ...css,
@@ -36153,12 +36163,6 @@ function DashLayoutListRowElements () {
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
-            if (placeholder_label) {
-                input.html.css({
-                    "color": color.Text,
-                    "font-family": "sans_serif_bold"
-                });
-            }
             input.html.text(
                 placeholder_label && column_config_data["options"]["use_placeholder_label_for_header"] ?
                 placeholder_label : column_config_data["display_name"]
@@ -37848,9 +37852,21 @@ function DashLayoutToolbar (binder, color=null) {
         var obj = this.objects[obj_index];
         obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
+    this.on_input_autosaved = function (obj_index) {
+        var obj = this.objects[obj_index];
+        obj["on_autosave_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+    };
     this.on_button_clicked = function (obj_index, data=null) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"], data, this);
+    };
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
+        if (callback) {
+            callback(selected_id, previous_selected_option, this, additional_data);
+        }
+        else {
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+        }
     };
     this.refactor_item_padding = function () {
         // refactor padding, but do it on the next frame since
@@ -38153,6 +38169,9 @@ function DashLayoutToolbarInterface () {
         if (options["on_enter"]) {
             obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
         }
+        if (options["on_autosave"]) {
+            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+        }
         this.objects.push(obj);
         (function (self, input, obj_index, obj) {
             input.SetOnChange(
@@ -38163,6 +38182,15 @@ function DashLayoutToolbarInterface () {
             );
             if (obj["on_enter_callback"]) {
                 input.SetOnSubmit(
+                    function () {
+                        self.on_input_submitted(obj_index);
+                    },
+                    self
+                );
+            }
+            if (obj["on_autosave_callback"]) {
+                input.EnableAutosave();
+                input.SetOnAutosave(
                     function () {
                         self.on_input_submitted(obj_index);
                     },
@@ -38180,14 +38208,6 @@ function DashLayoutToolbarInterface () {
         this.html.append(input.html);
         this.refactor_item_padding();
         return input;
-    };
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
-        }
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
     };
     this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
         var obj_index = this.objects.length;

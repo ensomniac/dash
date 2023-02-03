@@ -168,6 +168,7 @@ function DashGuiInput (placeholder_text="", color=null) {
     };
 
     this.SetOnAutosave = function (callback, bind_to) {
+        // TODO: Shouldn't this also call this.EnableAutosave by default?
         this.on_autosave_callback = callback.bind(bind_to);
     };
 
@@ -177,17 +178,17 @@ function DashGuiInput (placeholder_text="", color=null) {
 
     // DEPRECATED
     this.OnChange = function (callback, bind_to) {
-        this.on_change_callback = callback.bind(bind_to);
+        this.SetOnChange(callback, bind_to);
     };
 
     // DEPRECATED
     this.OnAutosave = function (callback, bind_to) {
-        this.on_autosave_callback = callback.bind(bind_to);
+        this.SetOnAutosave(callback, bind_to);
     };
 
     // DEPRECATED
     this.OnSubmit = function (callback, bind_to) {
-        this.on_submit_callback = callback.bind(bind_to);
+        this.SetOnSubmit(callback, bind_to);
     };
 
     this.Focus = function () {
