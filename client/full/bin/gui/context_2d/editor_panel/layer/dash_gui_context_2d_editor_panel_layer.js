@@ -67,7 +67,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         });
     };
 
-    this.Select = function () {
+    this.Select = function (from_canvas=false) {
         if (this.selected) {
             return;
         }
@@ -81,7 +81,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             "cursor": "auto"
         });
 
-        this.editor.SetCanvasActiveLayer(this.index);
+        if (!from_canvas) {
+            this.editor.SetCanvasActivePrimitive(this.index);
+        }
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
@@ -103,7 +105,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasLayerHidden(this.index, hidden);
+            this.editor.ToggleCanvasPrimitiveHidden(this.index, hidden);
         }
     };
 
@@ -118,7 +120,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasLayerLocked(this.index, locked);
+            this.editor.ToggleCanvasPrimitiveLocked(this.index, locked);
         }
     };
 

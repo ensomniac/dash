@@ -1,6 +1,7 @@
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
 
+    this.primitives = [];
     this.active_tool = "";
     this.last_aspect_ratio = null;
     this.html = $("<div></div>");
@@ -22,7 +23,8 @@ function DashGuiContext2DCanvas (editor) {
             "background": this.color.StrokeDark,
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight,
-            "padding": Dash.Size.Padding * 2
+            "padding": Dash.Size.Padding * 2,
+            "overflow": "hidden"
         });
 
         this.canvas.css({
@@ -34,6 +36,8 @@ function DashGuiContext2DCanvas (editor) {
             "left": "50%",
             "transform": "translate(-50%, -50%)"
         });
+
+        // TODO: clicking in canvas should deselect all, just like clicking in the layers box does
 
         this.canvas.hide();
 
@@ -53,41 +57,47 @@ function DashGuiContext2DCanvas (editor) {
 
         this.canvas.css({
             // TODO: may make more sense to loop through all primitives
-            //  to set their cursors instead of the whole canvas
+            //  to set their cursors instead of the whole canvas?
             "cursor": cursor
         });
 
         // TODO: restyle the active layer's bounding box or something depending on the tool (name)
     };
 
-    this.SetActiveLayer = function (index) {
-        // TODO: change focus to the appropriate layer object
+    this.SetActivePrimitive = function (index) {
+        this.primitives[index].Select();
     };
 
-    this.MoveLayerUp = function (index) {
+    this.MovePrimitiveUp = function (index) {
         // TODO: move the provided index up one, and update the other indexes accordingly
     };
 
-    this.MoveLayerDown = function (index) {
+    this.MovePrimitiveDown = function (index) {
         // TODO: move the provided index down one, and update the other indexes accordingly
     };
 
-    // TODO: add new layer using primitive (don't need to update any other indexes)
-    this.AddLayer = function (index, primitive_data) {
+    this.AddPrimitive = function (index, primitive_data) {
         var primitive = new DashGuiContext2DPrimitive(this, primitive_data);
+
+        this.primitives[index] = primitive;
 
         this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
     };
 
-    this.RemoveLayer = function (index) {
-        // TODO: layer has been deleted, so remove it from the canvas and update the other indexes accordingly
+    this.RemovePrimitive = function (index) {
+        this.primitives[index].html.remove();
+
+        this.primitives.Pop(index);
+
+        // TODO: update the other primitives' indexes accordingly (may actually not need to,
+        //  since indexes are managed externally... subsequent calls might just work as is)
     };
 
-    this.ToggleLayerHidden = function (index, hidden) {
+    this.TogglePrimitiveHidden = function (index, hidden) {
         // TODO: hide/show
     };
 
-    this.ToggleLayerLocked = function (index, locked) {
+    this.TogglePrimitiveLocked = function (index, locked) {
         // TODO: click event on/off
     };
 
@@ -97,6 +107,25 @@ function DashGuiContext2DCanvas (editor) {
 
     this.GetWidth = function () {
         return this.canvas.innerWidth();
+    };
+
+    this.DeselectAllPrimitives = function () {
+        for (var primitive of this.primitives) {
+            primitive.Deselect();
+        }
+    };
+
+    // To be called by primitive
+    this.OnPrimitiveSelected = function (primitive) {
+        for (var i in this.primitives) {
+            if (this.primitives[i] !== primitive) {
+                continue;
+            }
+
+            this.editor.SelectLayer(parseInt(i));
+
+            break;
+        }
     };
 
     this.Resize = function (from_event=false) {
@@ -164,7 +193,7 @@ function DashGuiContext2DCanvas (editor) {
 
         this.last_aspect_ratio = aspect_ratio;
 
-        // TODO: elements will need to be resized as well, but that may happen automatically - need to confirm
+        // TODO: redraw all primitives (width, height, left, top)
 
         if (this.size_initialized) {
             return;

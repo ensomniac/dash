@@ -84,7 +84,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             primitive_data = layer.GetPrimitiveData();
         }
 
-        this.editor.AddCanvasLayer(_index, primitive_data);
+        this.editor.AddCanvasPrimitive(_index, primitive_data);
 
         if (!new_layer) {
             return;
@@ -127,7 +127,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.data["layers"].Pop(index);
 
-        this.editor.RemoveCanvasLayer(index);
+        this.editor.RemoveCanvasPrimitive(index);
 
         this.panel.SwitchContentToNewTab();
 
@@ -196,6 +196,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.toolbar.UpdateIconStates();
     };
 
+    this.Select = function (index, from_canvas=true) {
+        this.layers[index].Select(from_canvas);
+    };
+
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
 
@@ -237,11 +241,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.redraw_layers_box();
 
         if (up) {
-            this.editor.MoveCanvasLayerUp(index);
+            this.editor.MoveCanvasPrimitiveUp(index);
         }
 
         else {
-            this.editor.MoveCanvasLayerDown(index);
+            this.editor.MoveCanvasPrimitiveDown(index);
         }
 
         this.save_data();
@@ -353,6 +357,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self.DeselectLayers();
 
                 self.panel.SwitchContentToNewTab();
+
+                self.editor.DeselectAllCanvasPrimitives();
             });
         })(this);
     };

@@ -2,10 +2,6 @@ function DashGuiContext2DPrimitive (canvas, data) {
     this.canvas = canvas;
     this.data = data;
 
-    this.width_px = 0;
-    this.height_px = 0;
-    this.top_px = null;
-    this.left_px = null;
     this.drag_active = false;
     this.drag_context = null;
     this.html = $("<div></div>");
@@ -13,19 +9,23 @@ function DashGuiContext2DPrimitive (canvas, data) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.width_px = this.canvas.GetWidth() * this.data["width_norm"];
+    this.height_px = this.width_px / this.canvas.editor.GetAspectRatio(true);
+    this.top_px = (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
+    this.left_px = (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
 
     this.setup_styles = function () {
         if (!this.call_style()) {
             return;
         }
 
-        // TODO: position the element in the canvas based on this.data (norms)
-
         this.html.css({
-            // TODO: TESTING
-            "background": "pink",
-            "width": 500,
-            "height": 500
+            "position": "absolute",
+            "top": this.top_px,
+            "left": this.left_px,
+            "width": this.width_px,
+            "height": this.height_px,
+            "background": "pink"  // TODO: TESTING
         });
 
         this.setup_connections();
@@ -38,13 +38,19 @@ function DashGuiContext2DPrimitive (canvas, data) {
         });
     };
 
-    this.select = function () {
+    this.Select = function (from_click=false) {
+        this.canvas.DeselectAllPrimitives();
+
         this.html.css({
             // Simulate a double border - one for dark backgrounds, one for light
-            "border": "1px solid " + this.color.StrokeDark,
+            "border": "1px solid " + this.color.StrokeLight,
             "outline": "1px solid " + this.opposite_color.StrokeDark,
             "outline-offset": "1px"
         });
+
+        if (from_click) {
+            this.canvas.OnPrimitiveSelected(this);
+        }
     };
 
     this.setup_connections = function () {
@@ -74,9 +80,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
 
         this.drag_active = true;
 
-        // TODO: deselect all other primitives
-
-        this.select();
+        this.Select(true);
 
         var active_tool = this.canvas.GetActiveTool();
 

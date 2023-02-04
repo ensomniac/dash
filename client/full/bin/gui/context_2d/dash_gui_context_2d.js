@@ -103,105 +103,105 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
 
     this.SetCanvasTool = function (name, cursor) {
-        if (!this.canvas) {
-            return;
+        if (this.canvas) {
+            this.canvas.SetTool(name, cursor);
         }
-
-        this.canvas.SetTool(name, cursor);
     };
 
-    this.SetCanvasActiveLayer = function (index) {
-        if (!this.canvas) {
-            return;
+    this.SetCanvasActivePrimitive = function (index) {
+        if (this.canvas) {
+            this.canvas.SetActivePrimitive(index);
         }
-
-        this.canvas.SetActiveLayer(index);
     };
 
-    this.MoveCanvasLayerUp = function (index) {
-        if (!this.canvas) {
-            return;
+    this.DeselectAllCanvasPrimitives = function () {
+        if (this.canvas) {
+            this.canvas.DeselectAllPrimitives();
         }
-
-        this.canvas.MoveLayerUp(index);
     };
 
-    this.MoveCanvasLayerDown = function (index) {
-        if (!this.canvas) {
-            return;
+    this.MoveCanvasPrimitiveUp = function (index) {
+        if (this.canvas) {
+            this.canvas.MovePrimitiveUp(index);
         }
-
-        this.canvas.MoveLayerDown(index);
     };
 
-    this.AddCanvasLayer = function (index, primitive_data) {
-        if (!this.canvas) {
-            return;
+    this.MoveCanvasPrimitiveDown = function (index) {
+        if (this.canvas) {
+            this.canvas.MovePrimitiveDown(index);
         }
-
-        this.canvas.AddLayer(index, primitive_data);
     };
 
-    this.RemoveCanvasLayer = function (index) {
-        if (!this.canvas) {
-            return;
+    this.AddCanvasPrimitive = function (index, primitive_data) {
+        if (this.canvas) {
+            this.canvas.AddPrimitive(index, primitive_data);
         }
-
-        this.canvas.RemoveLayer(index);
     };
 
-    this.ToggleCanvasLayerHidden = function (index, hidden) {
-        if (!this.canvas) {
-            return;
+    this.RemoveCanvasPrimitive = function (index) {
+        if (this.canvas) {
+            this.canvas.RemovePrimitive(index);
         }
-
-        this.canvas.ToggleLayerHidden(index, hidden);
     };
 
-    this.ToggleCanvasLayerLocked = function (index, locked) {
-        if (!this.canvas) {
-            return;
+    this.ToggleCanvasPrimitiveHidden = function (index, hidden) {
+        if (this.canvas) {
+            this.canvas.TogglePrimitiveHidden(index, hidden);
         }
+    };
 
-        this.canvas.ToggleLayerLocked(index, locked);
+    this.ToggleCanvasPrimitiveLocked = function (index, locked) {
+        if (this.canvas) {
+            this.canvas.TogglePrimitiveLocked(index, locked);
+        }
+    };
+
+    this.CanvasSizeInitialized = function () {
+        if (this.canvas) {
+            return this.canvas.SizeInitialized();
+        }
+    };
+
+    this.ResizeCanvas = function () {
+        if (this.canvas) {
+            this.canvas.Resize();
+        }
+    };
+
+    this.SelectLayer = function (index, from_canvas=true) {
+        if (this.editor_panel) {
+            this.editor_panel.SelectLayer(index, from_canvas);
+        }
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
     };
 
-    this.GetAspectRatio = function () {
-        if (!this.editor_panel) {
+    this.GetAspectRatio = function (calculated=false) {
+        var aspect;
+
+        if (this.editor_panel) {
+            aspect = this.editor_panel.GetAspectRatio();
+        }
+
+        else {
             var data = this.get_data();
 
-            return [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
+            aspect = [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
         }
 
-        return this.editor_panel.GetAspectRatio();
-    };
-
-    this.CanvasSizeInitialized = function () {
-        if (!this.canvas) {
-            return;
+        if (calculated) {
+            return aspect[0] / aspect[1];
         }
 
-        return this.canvas.SizeInitialized();
-    };
-
-    this.ResizeCanvas = function () {
-        if (!this.canvas) {
-            return;
-        }
-
-        this.canvas.Resize();
+        return aspect;
     };
 
     this.AddToLog = function (message) {
-        if (!this.log_bar) {
-            return;
+        if (this.log_bar) {
+            this.log_bar.Add(message);
         }
-
-        this.log_bar.Add(message);
     };
 
     this.refresh_data = function () {

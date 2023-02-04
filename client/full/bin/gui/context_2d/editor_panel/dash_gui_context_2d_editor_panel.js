@@ -134,6 +134,12 @@ function DashGuiContext2DEditorPanel (editor) {
         this.content_box.UpdateComboOptions();
     };
 
+    this.SelectLayer = function (index, from_canvas=true) {
+        if (this.layers_box) {
+            this.layers_box.Select(index, from_canvas);
+        }
+    };
+
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
     };
