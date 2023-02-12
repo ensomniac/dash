@@ -114,6 +114,12 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
     };
 
+    this.SetCanvasActivePrimitiveProperty = function (key, value, index=null) {
+        if (this.canvas) {
+            this.canvas.SetActivePrimitiveProperty(key, value, index);
+        }
+    };
+
     this.DeselectAllCanvasPrimitives = function () {
         if (this.canvas) {
             this.canvas.DeselectAllPrimitives();
@@ -172,6 +178,14 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         if (this.editor_panel) {
             this.editor_panel.SelectLayer(index, from_canvas);
         }
+    };
+
+    this.DeselectAllLayers = function () {
+        this.editor_panel.layers_box.DeselectLayers();
+
+        this.editor_panel.SwitchContentToNewTab();
+
+        this.DeselectAllCanvasPrimitives();
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {

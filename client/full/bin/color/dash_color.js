@@ -223,11 +223,38 @@ function DashColor (dark_mode_active=false) {
         return cstr;
     };
 
-    // Should tmp_colors point to this.Names instead? This isn't very random
-    this.Random = function (cstr, lighten_rgb) {
-        var tmp_colors = ["red", "blue", "green", "orange"];
+    this.Random = function (include_grayscales=false) {
+        var keys;
 
-        return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
+        if (include_grayscales) {
+            keys = Object.keys(this.Names);
+        }
+
+        else {
+            var grayscale_kws = ["white", "gray", "grey", "black"];
+
+            keys = [];
+
+            for (var key of Object.keys(this.Names)) {
+                var include = true;
+
+                for (var kw of grayscale_kws) {
+                    if (key.includes(kw)) {
+                        include = false;
+
+                        break;
+                    }
+                }
+
+                if (!include) {
+                    continue;
+                }
+
+                keys.push(key);
+            }
+        }
+
+        return keys[Math.floor(keys.length * Math.random())];
     };
 
     this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {

@@ -20204,10 +20204,29 @@ function DashColor (dark_mode_active=false) {
         raise_steps = raise_steps || 1;
         return cstr;
     };
-    // Should tmp_colors point to this.Names instead? This isn't very random
-    this.Random = function (cstr, lighten_rgb) {
-        var tmp_colors = ["red", "blue", "green", "orange"];
-        return tmp_colors[Math.floor(Math.random() * Math.floor(tmp_colors.length))];
+    this.Random = function (include_grayscales=false) {
+        var keys;
+        if (include_grayscales) {
+            keys = Object.keys(this.Names);
+        }
+        else {
+            var grayscale_kws = ["white", "gray", "grey", "black"];
+            keys = [];
+            for (var key of Object.keys(this.Names)) {
+                var include = true;
+                for (var kw of grayscale_kws) {
+                    if (key.includes(kw)) {
+                        include = false;
+                        break;
+                    }
+                }
+                if (!include) {
+                    continue;
+                }
+                keys.push(key);
+            }
+        }
+        return keys[Math.floor(keys.length * Math.random())];
     };
     this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
         return this.GetGradient(90, color_1, color_2, color_3, color_4);
@@ -27521,6 +27540,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             this.canvas.SetActivePrimitive(index);
         }
     };
+    this.SetCanvasActivePrimitiveProperty = function (key, value, index=null) {
+        if (this.canvas) {
+            this.canvas.SetActivePrimitiveProperty(key, value, index);
+        }
+    };
     this.DeselectAllCanvasPrimitives = function () {
         if (this.canvas) {
             this.canvas.DeselectAllPrimitives();
@@ -27570,6 +27594,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         if (this.editor_panel) {
             this.editor_panel.SelectLayer(index, from_canvas);
         }
+    };
+    this.DeselectAllLayers = function () {
+        this.editor_panel.layers_box.DeselectLayers();
+        this.editor_panel.SwitchContentToNewTab();
+        this.DeselectAllCanvasPrimitives();
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
@@ -27680,10 +27709,8 @@ function DashGuiContext2DCanvas (editor) {
     this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
+    this.last_selected_primitive = null;
     this.padding = Dash.Size.Padding * 2;
-    // TODO:
-    //  - contained elements should resize with the canvas itself
-    //  - default behavior when an element is clicked should probably be to auto-select the layer in the layers panel
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -27703,9 +27730,34 @@ function DashGuiContext2DCanvas (editor) {
             "left": "50%",
             "transform": "translate(-50%, -50%)"
         });
-        // TODO: clicking in canvas should deselect all, just like clicking in the layers box does
         this.canvas.hide();
         this.html.append(this.canvas);
+        this.setup_connections();
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mousedown", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStart(e);
+                }
+            });
+            self.html.on("mousemove", function (e) {
+                // Left mouse button is still down (https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons)
+                if (self.last_selected_primitive && e.buttons % 2 !== 0) {
+                    self.last_selected_primitive.OnDrag(e);
+                }
+                e.preventDefault();
+                return false;
+            });
+            self.html.on("mouseup", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStop(e);
+                }
+            });
+            self.canvas.on("click", function () {
+                self.editor.DeselectAllLayers();
+            });
+        })(this);
     };
     this.GetActiveTool = function () {
         return this.active_tool;
@@ -27716,14 +27768,22 @@ function DashGuiContext2DCanvas (editor) {
     this.SetTool = function (name, cursor="grab") {
         this.active_tool = name;
         this.canvas.css({
-            // TODO: may make more sense to loop through all primitives
-            //  to set their cursors instead of the whole canvas?
             "cursor": cursor
         });
-        // TODO: restyle the active layer's bounding box or something depending on the tool (name)
+    };
+    this.SetActivePrimitiveProperty = function (key, value, index=null) {
+        if (index !== null) {
+            this.primitives[index].SetProperty(key, value);
+            return;
+        }
+        if (!this.last_selected_primitive) {
+            return;
+        }
+        this.last_selected_primitive.SetProperty(key, value);
     };
     this.SetActivePrimitive = function (index) {
         this.primitives[index].Select();
+        this.last_selected_primitive = this.primitives[index];
     };
     this.MovePrimitiveUp = function (index) {
         // TODO: move the provided index up one, and update the other indexes accordingly
@@ -27758,9 +27818,11 @@ function DashGuiContext2DCanvas (editor) {
         for (var primitive of this.primitives) {
             primitive.Deselect();
         }
+        this.last_selected_primitive = null;
     };
     // To be called by primitive
     this.OnPrimitiveSelected = function (primitive) {
+        this.last_selected_primitive = primitive;
         for (var i in this.primitives) {
             if (this.primitives[i] !== primitive) {
                 continue;
@@ -27823,7 +27885,9 @@ function DashGuiContext2DCanvas (editor) {
             this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
         this.last_aspect_ratio = aspect_ratio;
-        // TODO: redraw all primitives (width, height, left, top)
+        for (var primitive of this.primitives) {
+            primitive.OnCanvasResize();  // TODO: Confirm this works as expected
+        }
         if (this.size_initialized) {
             return;
         }
@@ -28134,8 +28198,10 @@ function DashGuiContext2DToolbar (editor) {
 function DashGuiContext2DPrimitive (canvas, data) {
     this.canvas = canvas;
     this.data = data;
+    this.selected = false;
     this.drag_active = false;
     this.drag_context = null;
+    this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.editor = this.canvas.editor;
@@ -28155,17 +28221,35 @@ function DashGuiContext2DPrimitive (canvas, data) {
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
-            "background": "pink"  // TODO: TESTING
+            "background": Dash.Color.Random()  // TODO: TESTING
         });
         this.setup_connections();
     };
+    this.SetProperty = function (key, value) {
+        this.data[key] = value;
+        if (key === "opacity") {
+            this.html.css({
+                "opacity": value
+            });
+        }
+    };
+    this.IsSelected = function () {
+        return this.selected;
+    };
     this.Deselect = function () {
+        if (!this.selected) {
+            return;
+        }
         this.html.css({
             "border": "none",
             "outline": "none"
         });
+        this.selected = false;
     };
     this.Select = function (from_click=false) {
+        if (this.selected) {
+            return;
+        }
         this.canvas.DeselectAllPrimitives();
         this.html.css({
             // Simulate a double border - one for dark backgrounds, one for light
@@ -28176,31 +28260,21 @@ function DashGuiContext2DPrimitive (canvas, data) {
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
         }
+        this.selected = true;
     };
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.on("mousedown", function (e) {
-                self.on_drag_start(e);
-            });
-            self.html.on("mousemove", function (e) {
-                self.on_drag(e);
-                e.preventDefault();
-                return false;
-            });
-            self.html.on("mouseup", function (e) {
-                self.on_drag_stop(e);
-            });
-        })(this);
+    this.OnCanvasResize = function () {
+        this.set_scale(null, null, false);
+        this.set_position();
     };
-    this.on_drag_start = function (event) {
+    this.OnDragStart = function (event) {
         if (this.drag_active) {
-            return;  // TODO: do we need to also check if other primitives' drags are active?
+            return;
         }
         this.drag_active = true;
         this.Select(true);
         var active_tool = this.canvas.GetActiveTool();
         this.drag_context = {
-            "scale": active_tool === "scale",  // TODO: implement this like how rotate is implemented, since we're not using the scroll wheel
+            "scale": active_tool === "scale",
             "rotate": active_tool === "rotate",
             "start_rot": this.data["rot_deg"],
             "start_mouse_offset_x": event.offsetX,
@@ -28212,7 +28286,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
             "drag_start": new Date()
         };
     };
-    this.on_drag = function (event) {
+    this.OnDrag = function (event) {
         if (!this.drag_active) {
             return;
         }
@@ -28220,8 +28294,14 @@ function DashGuiContext2DPrimitive (canvas, data) {
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.data["rot_deg"] = this.drag_context["start_rot"] + movement_x;
+            this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
             this.draw_properties();
+        }
+        // Scale bigger / smaller
+        else if (this.drag_context["scale"]) {
+            this.last_width_norm = this.data["width_norm"];
+            this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
+            this.set_scale();
         }
         else {
             this.set_position(
@@ -28233,14 +28313,19 @@ function DashGuiContext2DPrimitive (canvas, data) {
         event.preventDefault();
         return true;
     };
-    this.on_drag_stop = function () {
+    this.OnDragStop = function () {
         if (!this.drag_active) {
             return;
         }
         this.drag_active = false;
-        // TODO
-        // var px_moved = Math.abs(this.drag_context["start_img_px_x"] - this.left_px) + Math.abs(this.drag_context["start_img_px_y"] - this.top_px);
-        // var sec_since = (new Date() - this.drag_context["drag_start"]) / 1000;
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("click", function (e) {
+                self.Select(true);
+                e.stopPropagation();
+            });
+        })(this);
     };
     this.get_offset_norm = function () {
         if (this.left_px == null) {  // This card isn't visible or hasn't been edited
@@ -28262,17 +28347,40 @@ function DashGuiContext2DPrimitive (canvas, data) {
             )
         ];
     };
-    this.set_position = function (left, top) {
-        this.top_px = top;
-        this.left_px = left;
-        this.draw_properties();
+    this.set_position = function (left=null, top=null, draw=true) {
+        this.top_px = top || (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
+        this.left_px = left || (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
+        if (draw) {
+            this.draw_properties();
+        }
         // TODO?
         // if (this.manage_text) {
         //     this.draw_text();
         // }
     };
+    this.set_scale = function (width=null, height=null, draw=true) {
+        this.width_px = width || (this.canvas.GetWidth() * this.data["width_norm"]);
+        this.height_px = height || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+        // Ensure it doesn't get so small that it can't be edited
+        if (this.width_px < 20) {
+            this.width_px = 20;
+            if (this.last_width_norm) {
+                this.data["width_norm"] = this.last_width_norm;
+            }
+        }
+        if (this.height_px < 20) {
+            this.height_px = 20;
+        }
+        if (draw) {
+            this.draw_properties();
+        }
+        // TODO?
+        // if (this.manage_text) {
+        //     this.draw_text();
+        // }
+    };
+    // TODO: are these abstractions even necessary? maybe not
     this.call_style = function () {
-        // TODO: are these abstractions even necessary? likely not
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
@@ -28303,26 +28411,13 @@ function DashGuiContext2DPrimitive (canvas, data) {
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
-        // TODO?
-        // var pointer_events = "none";
-        //
-        // if (this.pointer_events_active) {
-        //     pointer_events = "auto";
-        // }
-        //
-        // var box_shadow = "inset 0px 0px 1px 1px rgba(255, 255, 255, 0.0)";
-        //
-        // if (this.box_highlight_active) {
-        //     box_shadow = "inset 0px 0px 1px 1px rgba(255, 255, 255, 0.5)";
-        // }
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "transform": "rotate(" + this.data["rot_deg"] + "deg)",
-            // "pointer-events": pointer_events,
-            // "box-shadow": box_shadow
+            "opacity": this.data["opacity"],
+            "transform": "rotate(" + this.data["rot_deg"] + "deg)"
         });
     };
     this.setup_styles();
@@ -28787,9 +28882,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.ImportContext = function (context_data) {
         console.debug("TEST import context", context_data);
-        // TODO: create new layer(s), not sure how we should handle this yet...
-        //  - this should essentially merge in an existing context to the current one, with existing
-        //    layers and properties etc, and changes to this imported context wouldn't affect the original
+        // TODO: see trello notes
     };
     this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
         var primitive_data;
@@ -28957,6 +29050,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.data["layers"] = [];
         }
         this.data["layers"][index][key] = value;
+        this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+        this.editor.SetCanvasActivePrimitiveProperty(key, value, index);
         this.save_data();
     };
     this.save_data = function () {
@@ -29013,9 +29108,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.setup_connections = function () {
         (function (self) {
             self.layers_box.on("click", function () {
-                self.DeselectLayers();
-                self.panel.SwitchContentToNewTab();
-                self.editor.DeselectAllCanvasPrimitives();
+                self.editor.DeselectAllLayers();
             });
         })(this);
     };

@@ -10,11 +10,8 @@ function DashGuiContext2DCanvas (editor) {
     this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
+    this.last_selected_primitive = null;
     this.padding = Dash.Size.Padding * 2;
-
-    // TODO:
-    //  - contained elements should resize with the canvas itself
-    //  - default behavior when an element is clicked should probably be to auto-select the layer in the layers panel
 
     this.setup_styles = function () {
         this.html.css({
@@ -37,11 +34,42 @@ function DashGuiContext2DCanvas (editor) {
             "transform": "translate(-50%, -50%)"
         });
 
-        // TODO: clicking in canvas should deselect all, just like clicking in the layers box does
-
         this.canvas.hide();
 
         this.html.append(this.canvas);
+
+        this.setup_connections();
+    };
+
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mousedown", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStart(e);
+                }
+            });
+
+            self.html.on("mousemove", function (e) {
+                // Left mouse button is still down (https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons)
+                if (self.last_selected_primitive && e.buttons % 2 !== 0) {
+                    self.last_selected_primitive.OnDrag(e);
+                }
+
+                e.preventDefault();
+
+                return false;
+            });
+
+            self.html.on("mouseup", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStop(e);
+                }
+            });
+
+            self.canvas.on("click", function () {
+                self.editor.DeselectAllLayers();
+            });
+        })(this);
     };
 
     this.GetActiveTool = function () {
@@ -56,16 +84,28 @@ function DashGuiContext2DCanvas (editor) {
         this.active_tool = name;
 
         this.canvas.css({
-            // TODO: may make more sense to loop through all primitives
-            //  to set their cursors instead of the whole canvas?
             "cursor": cursor
         });
+    };
 
-        // TODO: restyle the active layer's bounding box or something depending on the tool (name)
+    this.SetActivePrimitiveProperty = function (key, value, index=null) {
+        if (index !== null) {
+            this.primitives[index].SetProperty(key, value);
+
+            return;
+        }
+
+        if (!this.last_selected_primitive) {
+            return;
+        }
+
+        this.last_selected_primitive.SetProperty(key, value);
     };
 
     this.SetActivePrimitive = function (index) {
         this.primitives[index].Select();
+
+        this.last_selected_primitive = this.primitives[index];
     };
 
     this.MovePrimitiveUp = function (index) {
@@ -113,10 +153,14 @@ function DashGuiContext2DCanvas (editor) {
         for (var primitive of this.primitives) {
             primitive.Deselect();
         }
+
+        this.last_selected_primitive = null;
     };
 
     // To be called by primitive
     this.OnPrimitiveSelected = function (primitive) {
+        this.last_selected_primitive = primitive;
+
         for (var i in this.primitives) {
             if (this.primitives[i] !== primitive) {
                 continue;
@@ -193,7 +237,9 @@ function DashGuiContext2DCanvas (editor) {
 
         this.last_aspect_ratio = aspect_ratio;
 
-        // TODO: redraw all primitives (width, height, left, top)
+        for (var primitive of this.primitives) {
+            primitive.OnCanvasResize();  // TODO: Confirm this works as expected
+        }
 
         if (this.size_initialized) {
             return;

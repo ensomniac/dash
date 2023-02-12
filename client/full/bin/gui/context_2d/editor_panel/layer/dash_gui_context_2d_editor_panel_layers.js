@@ -49,9 +49,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.ImportContext = function (context_data) {
         console.debug("TEST import context", context_data);
 
-        // TODO: create new layer(s), not sure how we should handle this yet...
-        //  - this should essentially merge in an existing context to the current one, with existing
-        //    layers and properties etc, and changes to this imported context wouldn't affect the original
+        // TODO: see trello notes
     };
 
     this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
@@ -285,6 +283,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.data["layers"][index][key] = value;
 
+        this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+
+        this.editor.SetCanvasActivePrimitiveProperty(key, value, index);
+
         this.save_data();
     };
 
@@ -354,11 +356,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.setup_connections = function () {
         (function (self) {
             self.layers_box.on("click", function () {
-                self.DeselectLayers();
-
-                self.panel.SwitchContentToNewTab();
-
-                self.editor.DeselectAllCanvasPrimitives();
+                self.editor.DeselectAllLayers();
             });
         })(this);
     };

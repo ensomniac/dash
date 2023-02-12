@@ -2,8 +2,10 @@ function DashGuiContext2DPrimitive (canvas, data) {
     this.canvas = canvas;
     this.data = data;
 
+    this.selected = false;
     this.drag_active = false;
     this.drag_context = null;
+    this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.editor = this.canvas.editor;
@@ -25,20 +27,44 @@ function DashGuiContext2DPrimitive (canvas, data) {
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
-            "background": "pink"  // TODO: TESTING
+            "background": Dash.Color.Random()  // TODO: TESTING
         });
 
         this.setup_connections();
     };
 
+    this.SetProperty = function (key, value) {
+        this.data[key] = value;
+
+        if (key === "opacity") {
+            this.html.css({
+                "opacity": value
+            });
+        }
+    };
+
+    this.IsSelected = function () {
+        return this.selected;
+    };
+
     this.Deselect = function () {
+        if (!this.selected) {
+            return;
+        }
+
         this.html.css({
             "border": "none",
             "outline": "none"
         });
+
+        this.selected = false;
     };
 
     this.Select = function (from_click=false) {
+        if (this.selected) {
+            return;
+        }
+
         this.canvas.DeselectAllPrimitives();
 
         this.html.css({
@@ -51,31 +77,18 @@ function DashGuiContext2DPrimitive (canvas, data) {
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
         }
+
+        this.selected = true;
     };
 
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.on("mousedown", function (e) {
-                self.on_drag_start(e);
-            });
-
-            self.html.on("mousemove", function (e) {
-                self.on_drag(e);
-
-                e.preventDefault();
-
-                return false;
-            });
-
-            self.html.on("mouseup", function (e) {
-                self.on_drag_stop(e);
-            });
-        })(this);
+    this.OnCanvasResize = function () {
+        this.set_scale(null, null, false);
+        this.set_position();
     };
 
-    this.on_drag_start = function (event) {
+    this.OnDragStart = function (event) {
         if (this.drag_active) {
-            return;  // TODO: do we need to also check if other primitives' drags are active?
+            return;
         }
 
         this.drag_active = true;
@@ -85,7 +98,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         var active_tool = this.canvas.GetActiveTool();
 
         this.drag_context = {
-            "scale": active_tool === "scale",  // TODO: implement this like how rotate is implemented, since we're not using the scroll wheel
+            "scale": active_tool === "scale",
             "rotate": active_tool === "rotate",
             "start_rot": this.data["rot_deg"],
             "start_mouse_offset_x": event.offsetX,
@@ -98,7 +111,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         };
     };
 
-    this.on_drag = function (event) {
+    this.OnDrag = function (event) {
         if (!this.drag_active) {
             return;
         }
@@ -108,9 +121,18 @@ function DashGuiContext2DPrimitive (canvas, data) {
 
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.data["rot_deg"] = this.drag_context["start_rot"] + movement_x;
+            this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
 
             this.draw_properties();
+        }
+
+        // Scale bigger / smaller
+        else if (this.drag_context["scale"]) {
+            this.last_width_norm = this.data["width_norm"];
+
+            this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
+
+            this.set_scale();
         }
 
         else {
@@ -127,16 +149,22 @@ function DashGuiContext2DPrimitive (canvas, data) {
         return true;
     };
 
-    this.on_drag_stop = function () {
+    this.OnDragStop = function () {
         if (!this.drag_active) {
             return;
         }
 
         this.drag_active = false;
+    };
 
-        // TODO
-        // var px_moved = Math.abs(this.drag_context["start_img_px_x"] - this.left_px) + Math.abs(this.drag_context["start_img_px_y"] - this.top_px);
-        // var sec_since = (new Date() - this.drag_context["drag_start"]) / 1000;
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("click", function (e) {
+                self.Select(true);
+
+                e.stopPropagation();
+            });
+        })(this);
     };
 
     this.get_offset_norm = function () {
@@ -161,11 +189,13 @@ function DashGuiContext2DPrimitive (canvas, data) {
         ];
     };
 
-    this.set_position = function (left, top) {
-        this.top_px = top;
-        this.left_px = left;
+    this.set_position = function (left=null, top=null, draw=true) {
+        this.top_px = top || (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
+        this.left_px = left || (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
 
-        this.draw_properties();
+        if (draw) {
+            this.draw_properties();
+        }
 
         // TODO?
         // if (this.manage_text) {
@@ -173,8 +203,35 @@ function DashGuiContext2DPrimitive (canvas, data) {
         // }
     };
 
+    this.set_scale = function (width=null, height=null, draw=true) {
+        this.width_px = width || (this.canvas.GetWidth() * this.data["width_norm"]);
+        this.height_px = height || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+
+        // Ensure it doesn't get so small that it can't be edited
+        if (this.width_px < 20) {
+            this.width_px = 20;
+
+            if (this.last_width_norm) {
+                this.data["width_norm"] = this.last_width_norm;
+            }
+        }
+
+        if (this.height_px < 20) {
+            this.height_px = 20;
+        }
+
+        if (draw) {
+            this.draw_properties();
+        }
+
+        // TODO?
+        // if (this.manage_text) {
+        //     this.draw_text();
+        // }
+    };
+
+    // TODO: are these abstractions even necessary? maybe not
     this.call_style = function () {
-        // TODO: are these abstractions even necessary? likely not
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
@@ -216,27 +273,13 @@ function DashGuiContext2DPrimitive (canvas, data) {
     this._draw_properties = function () {
         this.draw_properties_pending = false;
 
-        // TODO?
-        // var pointer_events = "none";
-        //
-        // if (this.pointer_events_active) {
-        //     pointer_events = "auto";
-        // }
-        //
-        // var box_shadow = "inset 0px 0px 1px 1px rgba(255, 255, 255, 0.0)";
-        //
-        // if (this.box_highlight_active) {
-        //     box_shadow = "inset 0px 0px 1px 1px rgba(255, 255, 255, 0.5)";
-        // }
-
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "transform": "rotate(" + this.data["rot_deg"] + "deg)",
-            // "pointer-events": pointer_events,
-            // "box-shadow": box_shadow
+            "opacity": this.data["opacity"],
+            "transform": "rotate(" + this.data["rot_deg"] + "deg)"
         });
     };
 
