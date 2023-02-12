@@ -21,7 +21,8 @@ function DashGuiContext2DCanvas (editor) {
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 2,
-            "overflow": "hidden"
+            "overflow": "hidden",
+            "z-index": 1
         });
 
         this.canvas.css({
@@ -31,7 +32,8 @@ function DashGuiContext2DCanvas (editor) {
             "position": "absolute",
             "top": "50%",
             "left": "50%",
-            "transform": "translate(-50%, -50%)"
+            "transform": "translate(-50%, -50%)",
+            "z-index": 2
         });
 
         this.canvas.hide();
@@ -56,8 +58,6 @@ function DashGuiContext2DCanvas (editor) {
                 }
 
                 e.preventDefault();
-
-                return false;
             });
 
             self.html.on("mouseup", function (e) {
@@ -88,7 +88,7 @@ function DashGuiContext2DCanvas (editor) {
         });
     };
 
-    this.SetActivePrimitiveProperty = function (key, value, index=null) {
+    this.SetPrimitiveProperty = function (key, value, index=null) {
         if (index !== null) {
             this.primitives[index].SetProperty(key, value);
 
@@ -108,20 +108,12 @@ function DashGuiContext2DCanvas (editor) {
         this.last_selected_primitive = this.primitives[index];
     };
 
-    this.MovePrimitiveUp = function (index) {
-        // TODO: move the provided index up one, and update the other indexes accordingly
-    };
-
-    this.MovePrimitiveDown = function (index) {
-        // TODO: move the provided index down one, and update the other indexes accordingly
-    };
-
     this.AddPrimitive = function (index, primitive_data) {
-        var primitive = new DashGuiContext2DPrimitive(this, primitive_data);
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_data, index);
 
         this.primitives[index] = primitive;
 
-        this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
+        this.canvas.append(primitive.html);
     };
 
     this.RemovePrimitive = function (index) {
@@ -129,16 +121,15 @@ function DashGuiContext2DCanvas (editor) {
 
         this.primitives.Pop(index);
 
-        // TODO: update the other primitives' indexes accordingly (may actually not need to,
-        //  since indexes are managed externally... subsequent calls might just work as is)
+        this.update_all_primitive_indexes();
     };
 
-    this.TogglePrimitiveHidden = function (index, hidden) {
-        // TODO: hide/show
+    this.MovePrimitiveUp = function (index) {
+        this.move_primitive(index);
     };
 
-    this.TogglePrimitiveLocked = function (index, locked) {
-        // TODO: click event on/off
+    this.MovePrimitiveDown = function (index) {
+        this.move_primitive(index, false);
     };
 
     this.GetHeight = function () {
@@ -238,7 +229,7 @@ function DashGuiContext2DCanvas (editor) {
         this.last_aspect_ratio = aspect_ratio;
 
         for (var primitive of this.primitives) {
-            primitive.OnCanvasResize();  // TODO: Confirm this works as expected
+            primitive.OnCanvasResize();
         }
 
         if (this.size_initialized) {
@@ -250,6 +241,26 @@ function DashGuiContext2DCanvas (editor) {
         this.add_observer();
 
         this.size_initialized = true;
+    };
+
+    this.move_primitive = function (index, up=true) {
+        if (index === null || this.primitives.length < 2 || (up && index === (this.primitives.length - 1)) || (!up && index === 0)) {
+            return;  // This shouldn't happen at this level, but just in case
+        }
+
+        this.primitives.splice(
+            up ? parseInt(index) + 1 : parseInt(index) - 1,
+            0,
+            this.primitives.Pop(index)
+        );
+
+        this.update_all_primitive_indexes();
+    };
+
+    this.update_all_primitive_indexes = function () {
+        for (var i in this.primitives) {
+            this.primitives[i].SetIndex(parseInt(i));
+        }
     };
 
     this.add_observer = function () {

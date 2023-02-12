@@ -114,9 +114,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
     };
 
-    this.SetCanvasActivePrimitiveProperty = function (key, value, index=null) {
+    this.SetCanvasPrimitiveProperty = function (key, value, index=null) {
         if (this.canvas) {
-            this.canvas.SetActivePrimitiveProperty(key, value, index);
+            this.canvas.SetPrimitiveProperty(key, value, index);
         }
     };
 
@@ -147,18 +147,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.RemoveCanvasPrimitive = function (index) {
         if (this.canvas) {
             this.canvas.RemovePrimitive(index);
-        }
-    };
-
-    this.ToggleCanvasPrimitiveHidden = function (index, hidden) {
-        if (this.canvas) {
-            this.canvas.TogglePrimitiveHidden(index, hidden);
-        }
-    };
-
-    this.ToggleCanvasPrimitiveLocked = function (index, locked) {
-        if (this.canvas) {
-            this.canvas.TogglePrimitiveLocked(index, locked);
         }
     };
 

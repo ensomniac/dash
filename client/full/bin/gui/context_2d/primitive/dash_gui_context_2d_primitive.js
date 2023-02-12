@@ -1,8 +1,10 @@
-function DashGuiContext2DPrimitive (canvas, data) {
+function DashGuiContext2DPrimitive (canvas, data, index) {
     this.canvas = canvas;
     this.data = data;
+    this.index = index;
 
     this.selected = false;
+    this.z_index_base = 10;  // Somewhat arbitrary
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
@@ -27,19 +29,47 @@ function DashGuiContext2DPrimitive (canvas, data) {
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
+            "z-index": this.z_index_base + this.index,
+            "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
             "background": Dash.Color.Random()  // TODO: TESTING
         });
+
+        if (this.data["hidden"]) {
+            this.html.hide();
+        }
 
         this.setup_connections();
     };
 
+    this.SetIndex = function (index) {
+        this.index = index;
+
+        this.html.css({
+            "z-index": this.z_index_base + this.index
+        });
+    };
+
     this.SetProperty = function (key, value) {
+        if (this.data[key] === value) {
+            return;
+        }
+
         this.data[key] = value;
 
         if (key === "opacity") {
             this.html.css({
                 "opacity": value
             });
+        }
+
+        else if (key === "hidden") {
+            if (value) {
+                this.html.hide();
+            }
+
+            else {
+                this.html.show();
+            }
         }
     };
 
@@ -61,7 +91,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
     };
 
     this.Select = function (from_click=false) {
-        if (this.selected) {
+        if (this.selected || this.data["locked"]) {
             return;
         }
 
@@ -87,7 +117,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
     };
 
     this.OnDragStart = function (event) {
-        if (this.drag_active) {
+        if (this.drag_active || this.data["locked"]) {
             return;
         }
 
@@ -112,7 +142,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
     };
 
     this.OnDrag = function (event) {
-        if (!this.drag_active) {
+        if (!this.drag_active || this.data["locked"]) {
             return;
         }
 
@@ -150,7 +180,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
     };
 
     this.OnDragStop = function () {
-        if (!this.drag_active) {
+        if (!this.drag_active || this.data["locked"]) {
             return;
         }
 

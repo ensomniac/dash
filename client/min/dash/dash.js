@@ -27540,9 +27540,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             this.canvas.SetActivePrimitive(index);
         }
     };
-    this.SetCanvasActivePrimitiveProperty = function (key, value, index=null) {
+    this.SetCanvasPrimitiveProperty = function (key, value, index=null) {
         if (this.canvas) {
-            this.canvas.SetActivePrimitiveProperty(key, value, index);
+            this.canvas.SetPrimitiveProperty(key, value, index);
         }
     };
     this.DeselectAllCanvasPrimitives = function () {
@@ -27568,16 +27568,6 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.RemoveCanvasPrimitive = function (index) {
         if (this.canvas) {
             this.canvas.RemovePrimitive(index);
-        }
-    };
-    this.ToggleCanvasPrimitiveHidden = function (index, hidden) {
-        if (this.canvas) {
-            this.canvas.TogglePrimitiveHidden(index, hidden);
-        }
-    };
-    this.ToggleCanvasPrimitiveLocked = function (index, locked) {
-        if (this.canvas) {
-            this.canvas.TogglePrimitiveLocked(index, locked);
         }
     };
     this.CanvasSizeInitialized = function () {
@@ -27719,7 +27709,8 @@ function DashGuiContext2DCanvas (editor) {
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 2,
-            "overflow": "hidden"
+            "overflow": "hidden",
+            "z-index": 1
         });
         this.canvas.css({
             "background": this.color.Background,
@@ -27728,7 +27719,8 @@ function DashGuiContext2DCanvas (editor) {
             "position": "absolute",
             "top": "50%",
             "left": "50%",
-            "transform": "translate(-50%, -50%)"
+            "transform": "translate(-50%, -50%)",
+            "z-index": 2
         });
         this.canvas.hide();
         this.html.append(this.canvas);
@@ -27747,7 +27739,6 @@ function DashGuiContext2DCanvas (editor) {
                     self.last_selected_primitive.OnDrag(e);
                 }
                 e.preventDefault();
-                return false;
             });
             self.html.on("mouseup", function (e) {
                 if (self.last_selected_primitive) {
@@ -27771,7 +27762,7 @@ function DashGuiContext2DCanvas (editor) {
             "cursor": cursor
         });
     };
-    this.SetActivePrimitiveProperty = function (key, value, index=null) {
+    this.SetPrimitiveProperty = function (key, value, index=null) {
         if (index !== null) {
             this.primitives[index].SetProperty(key, value);
             return;
@@ -27785,28 +27776,21 @@ function DashGuiContext2DCanvas (editor) {
         this.primitives[index].Select();
         this.last_selected_primitive = this.primitives[index];
     };
-    this.MovePrimitiveUp = function (index) {
-        // TODO: move the provided index up one, and update the other indexes accordingly
-    };
-    this.MovePrimitiveDown = function (index) {
-        // TODO: move the provided index down one, and update the other indexes accordingly
-    };
     this.AddPrimitive = function (index, primitive_data) {
-        var primitive = new DashGuiContext2DPrimitive(this, primitive_data);
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_data, index);
         this.primitives[index] = primitive;
-        this.canvas.append(primitive.html);  // TODO: more involved than this, prob deal with z-index etc
+        this.canvas.append(primitive.html);
     };
     this.RemovePrimitive = function (index) {
         this.primitives[index].html.remove();
         this.primitives.Pop(index);
-        // TODO: update the other primitives' indexes accordingly (may actually not need to,
-        //  since indexes are managed externally... subsequent calls might just work as is)
+        this.update_all_primitive_indexes();
     };
-    this.TogglePrimitiveHidden = function (index, hidden) {
-        // TODO: hide/show
+    this.MovePrimitiveUp = function (index) {
+        this.move_primitive(index);
     };
-    this.TogglePrimitiveLocked = function (index, locked) {
-        // TODO: click event on/off
+    this.MovePrimitiveDown = function (index) {
+        this.move_primitive(index, false);
     };
     this.GetHeight = function () {
         return this.canvas.innerHeight();
@@ -27886,7 +27870,7 @@ function DashGuiContext2DCanvas (editor) {
         }
         this.last_aspect_ratio = aspect_ratio;
         for (var primitive of this.primitives) {
-            primitive.OnCanvasResize();  // TODO: Confirm this works as expected
+            primitive.OnCanvasResize();
         }
         if (this.size_initialized) {
             return;
@@ -27894,6 +27878,22 @@ function DashGuiContext2DCanvas (editor) {
         this.canvas.show();
         this.add_observer();
         this.size_initialized = true;
+    };
+    this.move_primitive = function (index, up=true) {
+        if (index === null || this.primitives.length < 2 || (up && index === (this.primitives.length - 1)) || (!up && index === 0)) {
+            return;  // This shouldn't happen at this level, but just in case
+        }
+        this.primitives.splice(
+            up ? parseInt(index) + 1 : parseInt(index) - 1,
+            0,
+            this.primitives.Pop(index)
+        );
+        this.update_all_primitive_indexes();
+    };
+    this.update_all_primitive_indexes = function () {
+        for (var i in this.primitives) {
+            this.primitives[i].SetIndex(parseInt(i));
+        }
     };
     this.add_observer = function () {
         (function (self) {
@@ -28195,10 +28195,12 @@ function DashGuiContext2DToolbar (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DPrimitive (canvas, data) {
+function DashGuiContext2DPrimitive (canvas, data, index) {
     this.canvas = canvas;
     this.data = data;
+    this.index = index;
     this.selected = false;
+    this.z_index_base = 10;  // Somewhat arbitrary
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
@@ -28221,16 +28223,38 @@ function DashGuiContext2DPrimitive (canvas, data) {
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
+            "z-index": this.z_index_base + this.index,
+            "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
             "background": Dash.Color.Random()  // TODO: TESTING
         });
+        if (this.data["hidden"]) {
+            this.html.hide();
+        }
         this.setup_connections();
     };
+    this.SetIndex = function (index) {
+        this.index = index;
+        this.html.css({
+            "z-index": this.z_index_base + this.index
+        });
+    };
     this.SetProperty = function (key, value) {
+        if (this.data[key] === value) {
+            return;
+        }
         this.data[key] = value;
         if (key === "opacity") {
             this.html.css({
                 "opacity": value
             });
+        }
+        else if (key === "hidden") {
+            if (value) {
+                this.html.hide();
+            }
+            else {
+                this.html.show();
+            }
         }
     };
     this.IsSelected = function () {
@@ -28247,7 +28271,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         this.selected = false;
     };
     this.Select = function (from_click=false) {
-        if (this.selected) {
+        if (this.selected || this.data["locked"]) {
             return;
         }
         this.canvas.DeselectAllPrimitives();
@@ -28267,7 +28291,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         this.set_position();
     };
     this.OnDragStart = function (event) {
-        if (this.drag_active) {
+        if (this.drag_active || this.data["locked"]) {
             return;
         }
         this.drag_active = true;
@@ -28287,7 +28311,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         };
     };
     this.OnDrag = function (event) {
-        if (!this.drag_active) {
+        if (!this.drag_active || this.data["locked"]) {
             return;
         }
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];
@@ -28314,7 +28338,7 @@ function DashGuiContext2DPrimitive (canvas, data) {
         return true;
     };
     this.OnDragStop = function () {
-        if (!this.drag_active) {
+        if (!this.drag_active || this.data["locked"]) {
             return;
         }
         this.drag_active = false;
@@ -28760,7 +28784,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasPrimitiveHidden(this.index, hidden);
+            this.SetData("hidden", hidden);
         }
     };
     this.ToggleLocked = function (locked) {
@@ -28772,7 +28796,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         }
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasPrimitiveLocked(this.index, locked);
+            this.SetData("locked", locked);
         }
     };
     this.RefreshConnections = function () {
@@ -28909,6 +28933,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.editor.AddCanvasPrimitive(_index, primitive_data);
         if (!new_layer) {
+            if (primitive_data["hidden"]) {
+                layer.ToggleHidden(primitive_data["hidden"]);
+            }
+            if (primitive_data["locked"]) {
+                layer.ToggleLocked(primitive_data["locked"]);
+            }
             return;
         }
         if (!("layers" in this.data)) {
@@ -29051,7 +29081,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.data["layers"][index][key] = value;
         this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
-        this.editor.SetCanvasActivePrimitiveProperty(key, value, index);
+        this.editor.SetCanvasPrimitiveProperty(key, value, index);
         this.save_data();
     };
     this.save_data = function () {

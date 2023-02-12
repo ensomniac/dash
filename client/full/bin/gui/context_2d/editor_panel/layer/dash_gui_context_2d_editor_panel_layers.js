@@ -85,6 +85,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.AddCanvasPrimitive(_index, primitive_data);
 
         if (!new_layer) {
+            if (primitive_data["hidden"]) {
+                layer.ToggleHidden(primitive_data["hidden"]);
+            }
+
+            if (primitive_data["locked"]) {
+                layer.ToggleLocked(primitive_data["locked"]);
+            }
+
             return;
         }
 
@@ -285,7 +293,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
 
-        this.editor.SetCanvasActivePrimitiveProperty(key, value, index);
+        this.editor.SetCanvasPrimitiveProperty(key, value, index);
 
         this.save_data();
     };
