@@ -29,6 +29,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.setup_styles = function () {
         this.textarea.css({
             "color": this.color.Text,
+            "font-family": "sans_serif_normal",
             "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "width": "100%",
@@ -91,18 +92,21 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.textarea.prop("readOnly", true);
     };
 
-    this.Unlock = function () {
-        var css = {"color": this.color.Text};
+    this.Unlock = function (restore_style=true) {
+        if (restore_style) {
+            var css = {"color": this.color.Text};
 
-        if (this.textarea.css("border-top") !== "none") {
-            css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            if (this.textarea.css("border-top") !== "none") {
+                css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+
+            else {
+                css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+
+            this.textarea.css(css);
         }
 
-        else {
-            css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
-        }
-
-        this.textarea.css(css);
         this.textarea.prop("readOnly", false);
     };
 

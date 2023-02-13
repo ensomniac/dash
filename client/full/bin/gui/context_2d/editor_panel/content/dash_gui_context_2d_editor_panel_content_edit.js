@@ -8,7 +8,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.panel = this.content.panel;
     this.editor = this.panel.editor;
     this.no_selected_layer_label = null;
-    this.font_name_data_key = "font_name";
     this.can_edit = this.content.can_edit;
 
     this.setup_styles = function () {
@@ -50,7 +49,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.font_combo.Update(
             this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}],
-            this.get_data()[this.font_name_data_key] || "",
+            this.get_data()["font_id"] || "",
             true
         );
     };
@@ -181,9 +180,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                         self.editor.ComboOptions["fonts"] ? self.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
                     ) : [{"id": "", "label_text": "Loading..."}],
                     function (selected_option) {
-                        self.set_data(self.font_name_data_key, selected_option["id"]);
+                        self.set_data("font_id", selected_option["id"]);
                     },
-                    self.get_data()[self.font_name_data_key] || ""
+                    self.get_data()["font_id"] || ""
                 );
             })(this);
 

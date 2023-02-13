@@ -16,7 +16,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
      *                                Required/expected combo option type keys:
-     *                                  - fonts
+     *                                  - fonts (make sure 'url' and 'filename' is included in each option, alongside the usual 'id' and 'label_text')
      *                                  - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')

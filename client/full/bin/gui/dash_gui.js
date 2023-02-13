@@ -21,6 +21,7 @@ function DashGui() {
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
+    this.TextArea                  = DashGuiTextArea;
     this.ToolRow                   = DashGuiToolRow;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {

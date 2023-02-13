@@ -17841,6 +17841,7 @@ function DashGui() {
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
+    this.TextArea                  = DashGuiTextArea;
     this.ToolRow                   = DashGuiToolRow;
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {
@@ -18844,6 +18845,39 @@ function DashUtils () {
     this.animation_frame_iter = 0;
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
+    this.SetDynamicFont = function (html, font_url, font_display_name, font_original_filename, on_load_cb) {
+        var font_name = "";
+        for (var char of (font_display_name + font_original_filename.split(".")[0])) {
+            if (char.toLowerCase() === char.toUpperCase()) {
+                continue;  // Not a letter (FontFace font name can only be letters)
+            }
+            font_name += char;
+        }
+        var font_face = new FontFace(font_name, "url(" + font_url + ")");
+        // Doesn't look like this is actually finding already-loaded fonts, but not a big deal. We should
+        // really be using documents.fonts.check(font_name), but it's failing and I can't get it to work.
+        if (document.fonts.has(font_face)) {
+            html.css({
+                "font-family": font_name
+            });
+            return;
+        }
+        // Create a new font-face dynamically and update the preview to use it
+        (function () {
+            font_face.load().then(function (loaded_font) {
+                document.fonts.add(loaded_font);
+                if (on_load_cb) {
+                    on_load_cb();
+                }
+                html.css({
+                    "font-family": font_name
+                });
+            }).catch(function (error) {
+                alert("Failed to load font for preview\n\nError:\n" + error);
+                console.error(error);
+            });
+        })();
+    };
     this.NormalizeSearchText = function (text="") {
         if (!text) {
             return text;
@@ -23557,6 +23591,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.setup_styles();
 }
 
+function DashGuiTextArea (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
+    // For now, this file is no more than a wrapper when desiring a textarea element outside of mobile.
+    // We can add to or modify this is as needed, or eventually just write this out as its own class.
+    // This actually isn't exclusive to mobile for any reason. It's just the only textarea
+    // element that exists in Dash and was created with the 'Mobile' name because I thought
+    // it was going to be specific to mobile, but that ended up not being the case.
+    DashMobileTextBox.call(this, color, placeholder_text, binder, on_change_cb, delay_change_cb);
+}
+
 function DashGuiLoadDots (size=null, color=null) {
     this.size = size || Dash.Size.RowHeight;
     this.color = color || Dash.Color.Light;
@@ -27462,7 +27505,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
      *                                Required/expected combo option type keys:
-     *                                  - fonts
+     *                                  - fonts (make sure 'url' and 'filename' is included in each option, alongside the usual 'id' and 'label_text')
      *                                  - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
@@ -28199,6 +28242,11 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.canvas = canvas;
     this.data = data;
     this.index = index;
+    this.top_px = 0;
+    this.left_px = 0;
+    this.px_min = 20;
+    this.width_px = 0;
+    this.height_px = 0;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.drag_active = false;
@@ -28209,21 +28257,22 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
-    this.width_px = this.canvas.GetWidth() * this.data["width_norm"];
-    this.height_px = this.width_px / this.canvas.editor.GetAspectRatio(true);
-    this.top_px = (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
-    this.left_px = (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
     this.setup_styles = function () {
         if (!this.call_style()) {
             return;
         }
+        this.set_width_px();
+        this.set_height_px();
+        // After the above two are set
+        this.set_top_px();
+        this.set_left_px();
         this.html.css({
             "position": "absolute",
             "top": this.top_px,
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
-            "z-index": this.z_index_base + this.index,
+            "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
             "background": Dash.Color.Random()  // TODO: TESTING
         });
@@ -28235,7 +28284,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.SetIndex = function (index) {
         this.index = index;
         this.html.css({
-            "z-index": this.z_index_base + this.index
+            "z-index": this.get_z_index
         });
     };
     this.SetProperty = function (key, value) {
@@ -28268,6 +28317,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "border": "none",
             "outline": "none"
         });
+        if (this.data["type"] === "text") {
+            this.text_area.Lock(false);
+        }
         this.selected = false;
     };
     this.Select = function (from_click=false) {
@@ -28283,6 +28335,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         });
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
+        }
+        if (this.data["type"] === "text") {
+            this.text_area.Unlock(false);
         }
         this.selected = true;
     };
@@ -28343,6 +28398,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
         this.drag_active = false;
     };
+    this.get_z_index = function () {
+        return this.z_index_base + this.index;
+    };
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
@@ -28372,8 +28430,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         ];
     };
     this.set_position = function (left=null, top=null, draw=true) {
-        this.top_px = top || (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
-        this.left_px = left || (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
+        this.set_top_px(top);
+        this.set_left_px(left);
         if (draw) {
             this.draw_properties();
         }
@@ -28382,19 +28440,32 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         //     this.draw_text();
         // }
     };
-    this.set_scale = function (width=null, height=null, draw=true) {
-        this.width_px = width || (this.canvas.GetWidth() * this.data["width_norm"]);
-        this.height_px = height || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+    this.set_top_px = function (override=null) {
+        this.top_px = override || ((this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5));
+    };
+    this.set_left_px = function (override=null) {
+        this.left_px = override || ((this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5));
+    };
+    this.set_width_px = function (override=null) {
+        this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
         // Ensure it doesn't get so small that it can't be edited
-        if (this.width_px < 20) {
-            this.width_px = 20;
+        if (this.width_px < this.px_min) {
+            this.width_px = this.px_min;
             if (this.last_width_norm) {
                 this.data["width_norm"] = this.last_width_norm;
             }
         }
-        if (this.height_px < 20) {
-            this.height_px = 20;
+    };
+    this.set_height_px = function (override=null) {
+        this.height_px = override || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+        // Ensure it doesn't get so small that it can't be edited
+        if (this.height_px < this.px_min) {
+            this.height_px = this.px_min;
         }
+    };
+    this.set_scale = function (width=null, height=null, draw=true) {
+        this.set_width_px(width);
+        this.set_height_px(height);
         if (draw) {
             this.draw_properties();
         }
@@ -28403,7 +28474,6 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         //     this.draw_text();
         // }
     };
-    // TODO: are these abstractions even necessary? maybe not
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
@@ -28447,13 +28517,52 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.setup_styles();
 }
 
+/**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveText () {
+    this.text_area = null;
     this._setup_styles = function () {
-        // TODO?
+        this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
+        // TODO:
+        //  - possible to get rid of resize gui and stop it from being able to be resized? maybe an attribute? otherwise prevent default on resize event
+        //  - figure out what size it should be by default (small) and make sure it will resize automatically as text is typed into it
+        this.text_area.textarea.css({
+            "color": this.data["font_color"] || this.color.Text,
+            "border": "none"
+        });
+        this.html.append(this.text_area.html);
+        this.update_font();
+    };
+    this.on_text_change = function (value) {
+        console.debug("TEST on text change", value);
+        // TODO
+    };
+    this.update_font = function () {
+        var font_option = this.get_font_option();
+        if (!font_option || !font_option["url"] || !font_option["filename"]) {
+            return;
+        }
+        Dash.Utils.SetDynamicFont(
+            this.textarea.textarea,
+            font_option["url"],
+            font_option["label_text"],
+            font_option["filename"]
+        );
+    };
+    this.get_font_option = function () {
+        if (!this.data["font_id"] || !this.editor.ComboOptions["fonts"]) {
+            return null;
+        }
+        for (var option of this.editor.ComboOptions["fonts"]) {
+            if (option["id"] === this.data["font_id"]) {
+                return option;
+            }
+        }
+        return null;
     };
     this._setup_styles();
 }
 
+/**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveImage () {
     this._setup_styles = function () {
         // TODO?
@@ -29553,7 +29662,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.panel = this.content.panel;
     this.editor = this.panel.editor;
     this.no_selected_layer_label = null;
-    this.font_name_data_key = "font_name";
     this.can_edit = this.content.can_edit;
     this.setup_styles = function () {
         this.html.css({
@@ -29587,7 +29695,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         this.font_combo.Update(
             this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}],
-            this.get_data()[this.font_name_data_key] || "",
+            this.get_data()["font_id"] || "",
             true
         );
     };
@@ -29686,9 +29794,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                         self.editor.ComboOptions["fonts"] ? self.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
                     ) : [{"id": "", "label_text": "Loading..."}],
                     function (selected_option) {
-                        self.set_data(self.font_name_data_key, selected_option["id"]);
+                        self.set_data("font_id", selected_option["id"]);
                     },
-                    self.get_data()[self.font_name_data_key] || ""
+                    self.get_data()["font_id"] || ""
                 );
             })(this);
             this.font_combo = tool_row.elements.Last().combo;
@@ -38594,6 +38702,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.setup_styles = function () {
         this.textarea.css({
             "color": this.color.Text,
+            "font-family": "sans_serif_normal",
             "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "width": "100%",
@@ -38641,15 +38750,17 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         }
         this.textarea.prop("readOnly", true);
     };
-    this.Unlock = function () {
-        var css = {"color": this.color.Text};
-        if (this.textarea.css("border-top") !== "none") {
-            css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+    this.Unlock = function (restore_style=true) {
+        if (restore_style) {
+            var css = {"color": this.color.Text};
+            if (this.textarea.css("border-top") !== "none") {
+                css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+            else {
+                css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+            this.textarea.css(css);
         }
-        else {
-            css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
-        }
-        this.textarea.css(css);
         this.textarea.prop("readOnly", false);
     };
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {

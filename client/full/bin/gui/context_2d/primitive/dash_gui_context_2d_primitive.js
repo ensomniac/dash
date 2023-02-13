@@ -3,6 +3,11 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.data = data;
     this.index = index;
 
+    this.top_px = 0;
+    this.left_px = 0;
+    this.px_min = 20;
+    this.width_px = 0;
+    this.height_px = 0;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.drag_active = false;
@@ -13,15 +18,18 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
-    this.width_px = this.canvas.GetWidth() * this.data["width_norm"];
-    this.height_px = this.width_px / this.canvas.editor.GetAspectRatio(true);
-    this.top_px = (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
-    this.left_px = (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
 
     this.setup_styles = function () {
         if (!this.call_style()) {
             return;
         }
+
+        this.set_width_px();
+        this.set_height_px();
+
+        // After the above two are set
+        this.set_top_px();
+        this.set_left_px();
 
         this.html.css({
             "position": "absolute",
@@ -29,7 +37,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
-            "z-index": this.z_index_base + this.index,
+            "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
             "background": Dash.Color.Random()  // TODO: TESTING
         });
@@ -45,7 +53,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.index = index;
 
         this.html.css({
-            "z-index": this.z_index_base + this.index
+            "z-index": this.get_z_index
         });
     };
 
@@ -87,6 +95,10 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "outline": "none"
         });
 
+        if (this.data["type"] === "text") {
+            this.text_area.Lock(false);
+        }
+
         this.selected = false;
     };
 
@@ -106,6 +118,10 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
+        }
+
+        if (this.data["type"] === "text") {
+            this.text_area.Unlock(false);
         }
 
         this.selected = true;
@@ -187,6 +203,10 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.drag_active = false;
     };
 
+    this.get_z_index = function () {
+        return this.z_index_base + this.index;
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
@@ -220,8 +240,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     };
 
     this.set_position = function (left=null, top=null, draw=true) {
-        this.top_px = top || (this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5);
-        this.left_px = left || (this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5);
+        this.set_top_px(top);
+        this.set_left_px(left);
 
         if (draw) {
             this.draw_properties();
@@ -233,22 +253,39 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         // }
     };
 
-    this.set_scale = function (width=null, height=null, draw=true) {
-        this.width_px = width || (this.canvas.GetWidth() * this.data["width_norm"]);
-        this.height_px = height || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+    this.set_top_px = function (override=null) {
+        this.top_px = override || ((this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5));
+    };
+
+    this.set_left_px = function (override=null) {
+        this.left_px = override || ((this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5));
+    };
+
+    this.set_width_px = function (override=null) {
+        this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
 
         // Ensure it doesn't get so small that it can't be edited
-        if (this.width_px < 20) {
-            this.width_px = 20;
+        if (this.width_px < this.px_min) {
+            this.width_px = this.px_min;
 
             if (this.last_width_norm) {
                 this.data["width_norm"] = this.last_width_norm;
             }
         }
+    };
 
-        if (this.height_px < 20) {
-            this.height_px = 20;
+    this.set_height_px = function (override=null) {
+        this.height_px = override || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+
+        // Ensure it doesn't get so small that it can't be edited
+        if (this.height_px < this.px_min) {
+            this.height_px = this.px_min;
         }
+    };
+
+    this.set_scale = function (width=null, height=null, draw=true) {
+        this.set_width_px(width);
+        this.set_height_px(height);
 
         if (draw) {
             this.draw_properties();
@@ -260,7 +297,6 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         // }
     };
 
-    // TODO: are these abstractions even necessary? maybe not
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
