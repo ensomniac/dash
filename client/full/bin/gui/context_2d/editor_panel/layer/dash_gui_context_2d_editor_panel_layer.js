@@ -30,6 +30,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         this.RefreshConnections();
     };
 
+    this.SetLabel = function (value) {
+        this.input.SetText(value);
+    };
+
     this.IsSelected = function () {
         return this.selected;
     };

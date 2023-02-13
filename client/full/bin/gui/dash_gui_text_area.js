@@ -6,4 +6,8 @@ function DashGuiTextArea (color=null, placeholder_text="", binder=null, on_chang
     // element that exists in Dash and was created with the 'Mobile' name because I thought
     // it was going to be specific to mobile, but that ended up not being the case.
     DashMobileTextBox.call(this, color, placeholder_text, binder, on_change_cb, delay_change_cb);
+
+    this.textarea.css({
+        "line-height": Dash.Size.RowHeight + "px"
+    });
 }

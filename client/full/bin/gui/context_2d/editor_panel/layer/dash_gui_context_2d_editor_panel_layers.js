@@ -206,6 +206,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[index].Select(from_canvas);
     };
 
+    this.SetProperty = function (key, value, index) {
+        this.set_data(key, value, index);
+
+        if (key === "display_name") {
+            this.layers[index].SetLabel(value);
+        }
+    };
+
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
 

@@ -98,6 +98,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     // TODO: regarding all these public functions, some are intended to only be called
     //  by certain elements, so having them appear as public may be confusing later - rename?
 
+    this.SetEditorPanelLayerProperty = function (key, value, index) {
+        this.editor_panel.SetLayerProperty(key, value, index);
+    };
+
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };

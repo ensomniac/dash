@@ -6,7 +6,7 @@ function DashGuiContext2DPrimitiveText () {
     this._setup_styles = function () {
         var pad = Dash.Size.Padding;
         var width_min = Dash.Size.ColumnWidth + (pad * 2);
-        var height_min = Dash.Size.RowHeight + (pad * 2);
+        var height_min = (Dash.Size.RowHeight * 1.5) + (pad * 2);
 
         if (this.data_is_default()) {
             this.starting_width_override = width_min;
@@ -22,18 +22,19 @@ function DashGuiContext2DPrimitiveText () {
         //  - figure out what size it should be by default (small) and make sure it will resize automatically as text is typed into it
         //  - handle font size
         this.text_area.textarea.css({
-            "color": this.data["font_color"] || this.color.Text,
             "border": "none",
             "height": "100%",
-            "background": "teal"
+            "background": "teal",
+            "min-height": "100%",
+            "max-height": "100%",
+            "resize": "none"
         });
 
         this.text_area.html.css({
             "position": "absolute",
             "inset": pad,
             "width": "calc(100% - " + (pad * 2) + "px)",
-            "height": "calc(100% - " + (pad * 2) + "px)",
-            "background": "pink"
+            "height": "calc(100% - " + (pad * 2) + "px)"
         });
 
         this.text_area.DisableFlash();
@@ -41,27 +42,36 @@ function DashGuiContext2DPrimitiveText () {
         this.html.append(this.text_area.html);
 
         this.update_font();
+        this.update_font_color();
     };
 
     this.on_text_change = function (value) {
-        console.debug("TEST on text change", value);
-
-        // TODO: update the layer name to match the value (anything else?)
+        this.editor.SetEditorPanelLayerProperty("display_name", value.trim(), this.index);
     };
 
     this.update_font = function () {
         var font_option = this.get_font_option();
 
         if (!font_option || !font_option["url"] || !font_option["filename"]) {
+            this.text_area.textarea.css({
+                "font-family": "sans_serif_normal"
+            });
+
             return;
         }
 
         Dash.Utils.SetDynamicFont(
-            this.textarea.textarea,
+            this.text_area.textarea,
             font_option["url"],
             font_option["label_text"],
             font_option["filename"]
         );
+    };
+
+    this.update_font_color = function () {
+        this.text_area.textarea.css({
+            "color": this.data["font_color"] || this.color.Text
+        });
     };
 
     this.get_font_option = function () {

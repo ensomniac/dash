@@ -293,6 +293,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 self.fire_change_cb();
             });
 
+            self.textarea.on("blur", function () {
+                self.fire_change_cb(true);
+            });
+
             self.textarea.on("keydown",function (e) {
                 if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
                     self.last_arrow_navigation_ts = new Date();

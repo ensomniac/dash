@@ -20,6 +20,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.starting_width_override = null;
     this.starting_height_override = null;
     this.draw_properties_pending = false;
+    this.width_px_max = this.canvas.GetWidth() * 2;
+    this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
@@ -68,15 +70,6 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.setup_connections();
     };
 
-    // TODO: hook up externally
-    this.UpdateFont = function () {
-        if (this.data["type"] !== "text") {
-            return;
-        }
-
-        this.update_font();
-    };
-
     this.InputInFocus = function () {
         if (this.data["type"] !== "text") {
             return false;
@@ -113,6 +106,16 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 
             else {
                 this.html.show();
+            }
+        }
+
+        if (this.data["type"] === "text") {
+            if (key === "font_id") {
+                this.update_font();
+            }
+
+            else if (key === "font_color") {
+                this.update_font_color();
             }
         }
     };
@@ -167,6 +170,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.OnCanvasResize = function () {
         this.set_scale(null, null, false);
         this.set_position();
+
+        this.width_px_max = this.canvas.GetWidth() * 2;
+        this.height_px_max = this.canvas.GetHeight() * 2;
     };
 
     this.OnDragStart = function (event) {
@@ -246,7 +252,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 
     this.data_is_default = function () {
         return (
-            this.data["anchor_norm_x"] === 0.5
+               this.data["anchor_norm_x"] === 0.5
             && this.data["anchor_norm_y"] === 0.5
             && this.data["width_norm"]    === 0.5
             && this.data["rot_deg"]       === 0
@@ -324,6 +330,15 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
                 this.data["width_norm"] = this.last_width_norm;
             }
         }
+
+        // Or unreasonably large
+        if (this.width_px > this.width_px_max) {
+            this.width_px = this.width_px_max;
+
+            if (this.last_width_norm) {
+                this.data["width_norm"] = this.last_width_norm;
+            }
+        }
     };
 
     this.set_height_px = function (override=null) {
@@ -332,6 +347,11 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
             this.height_px = this.height_px_min;
+        }
+
+        // Or unreasonably large
+        if (this.height_px > this.height_px_max) {
+            this.height_px = this.height_px_max;
         }
     };
 

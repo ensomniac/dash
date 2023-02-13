@@ -188,6 +188,28 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
             this.font_combo = tool_row.elements.Last().combo;
 
+            // TODO
+            // (function (self) {
+            //     requestAnimationFrame(function () {
+            //         console.debug("TEST", tool_row.html.offset()["top"], tool_row.html[0].offsetTop, self.panel.property_box.html.outerHeight());
+            //
+            //         self.font_combo.html.detach();
+            //
+            //         self.font_combo.html.css({
+            //             "position": "absolute",
+            //
+            //             // TODO
+            //             "top": (
+            //                   tool_row.html[0].offsetTop  // Offset from top of content box
+            //                 + self.panel.property_box.html.outerHeight()  // Editor panel top box height
+            //             ),
+            //             "left": 0
+            //         });
+            //
+            //         self.panel.html.append(self.font_combo.html);
+            //     });
+            // })(this);
+
             this.contexts[key]["html"].append(tool_row.html);
         }
 
