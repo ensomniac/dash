@@ -5,27 +5,46 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 
     this.top_px = 0;
     this.left_px = 0;
-    this.px_min = 20;
     this.width_px = 0;
     this.height_px = 0;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
+    this.width_px_min = 20;
+    this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.editor = this.canvas.editor;
+    this.starting_width_override = null;
+    this.starting_height_override = null;
     this.draw_properties_pending = false;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
+        if (!this.data["file_data"]) {
+            this.data["file_data"] = {};
+        }
+
+        if (this.data["file_data"]["aspect"]) {
+            this.data["aspect"] = this.data["file_data"]["aspect"];
+        }
+
         if (!this.call_style()) {
             return;
         }
 
-        this.set_width_px();
-        this.set_height_px();
+        if (this.starting_width_override) {
+            this.data["width_norm"] = this.starting_width_override / this.canvas.GetWidth();
+
+            if (this.starting_height_override) {
+                this.data["aspect"] = this.starting_width_override / this.starting_height_override;
+            }
+        }
+
+        this.set_width_px(this.starting_width_override);
+        this.set_height_px(this.starting_height_override);
 
         // After the above two are set
         this.set_top_px();
@@ -47,6 +66,23 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
 
         this.setup_connections();
+    };
+
+    // TODO: hook up externally
+    this.UpdateFont = function () {
+        if (this.data["type"] !== "text") {
+            return;
+        }
+
+        this.update_font();
+    };
+
+    this.InputInFocus = function () {
+        if (this.data["type"] !== "text") {
+            return false;
+        }
+
+        return this.text_area.InFocus();
     };
 
     this.SetIndex = function (index) {
@@ -122,6 +158,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 
         if (this.data["type"] === "text") {
             this.text_area.Unlock(false);
+            this.text_area.Focus();
         }
 
         this.selected = true;
@@ -207,12 +244,27 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         return this.z_index_base + this.index;
     };
 
+    this.data_is_default = function () {
+        return (
+            this.data["anchor_norm_x"] === 0.5
+            && this.data["anchor_norm_y"] === 0.5
+            && this.data["width_norm"]    === 0.5
+            && this.data["rot_deg"]       === 0
+        );
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
                 self.Select(true);
 
                 e.stopPropagation();
+            });
+
+            // Without this, if you try to move/rotate/scale/etc this
+            // container while it's not already selected, it won't work
+            self.html.on("mousedown", function () {
+                self.Select(true);
             });
         })(this);
     };
@@ -265,8 +317,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
 
         // Ensure it doesn't get so small that it can't be edited
-        if (this.width_px < this.px_min) {
-            this.width_px = this.px_min;
+        if (this.width_px < this.width_px_min) {
+            this.width_px = this.width_px_min;
 
             if (this.last_width_norm) {
                 this.data["width_norm"] = this.last_width_norm;
@@ -275,11 +327,11 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     };
 
     this.set_height_px = function (override=null) {
-        this.height_px = override || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+        this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
 
         // Ensure it doesn't get so small that it can't be edited
-        if (this.height_px < this.px_min) {
-            this.height_px = this.px_min;
+        if (this.height_px < this.height_px_min) {
+            this.height_px = this.height_px_min;
         }
     };
 

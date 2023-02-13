@@ -27573,6 +27573,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };
+    this.CanvasInputInFocus = function () {
+        return this.canvas.InputInFocus();
+    };
     this.SetCanvasTool = function (name, cursor) {
         if (this.canvas) {
             this.canvas.SetTool(name, cursor);
@@ -27792,6 +27795,14 @@ function DashGuiContext2DCanvas (editor) {
                 self.editor.DeselectAllLayers();
             });
         })(this);
+    };
+    this.InputInFocus = function () {
+        for (var primitive of this.primitives) {
+            if (primitive.InputInFocus()) {
+                return true;
+            }
+        }
+        return false;
     };
     this.GetActiveTool = function () {
         return this.active_tool;
@@ -28226,9 +28237,10 @@ function DashGuiContext2DToolbar (editor) {
                             continue;
                         }
                         // Ignore if typing in an input
-                        if (!self.editor.EditorPanelInputInFocus()) {
-                            tool.Select();
+                        if (self.editor.EditorPanelInputInFocus() || self.editor.CanvasInputInFocus()) {
+                            continue;
                         }
+                        tool.Select();
                         break;
                     }
                 }
@@ -28244,25 +28256,40 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.index = index;
     this.top_px = 0;
     this.left_px = 0;
-    this.px_min = 20;
     this.width_px = 0;
     this.height_px = 0;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
+    this.width_px_min = 20;
+    this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.editor = this.canvas.editor;
+    this.starting_width_override = null;
+    this.starting_height_override = null;
     this.draw_properties_pending = false;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.setup_styles = function () {
+        if (!this.data["file_data"]) {
+            this.data["file_data"] = {};
+        }
+        if (this.data["file_data"]["aspect"]) {
+            this.data["aspect"] = this.data["file_data"]["aspect"];
+        }
         if (!this.call_style()) {
             return;
         }
-        this.set_width_px();
-        this.set_height_px();
+        if (this.starting_width_override) {
+            this.data["width_norm"] = this.starting_width_override / this.canvas.GetWidth();
+            if (this.starting_height_override) {
+                this.data["aspect"] = this.starting_width_override / this.starting_height_override;
+            }
+        }
+        this.set_width_px(this.starting_width_override);
+        this.set_height_px(this.starting_height_override);
         // After the above two are set
         this.set_top_px();
         this.set_left_px();
@@ -28280,6 +28307,19 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             this.html.hide();
         }
         this.setup_connections();
+    };
+    // TODO: hook up externally
+    this.UpdateFont = function () {
+        if (this.data["type"] !== "text") {
+            return;
+        }
+        this.update_font();
+    };
+    this.InputInFocus = function () {
+        if (this.data["type"] !== "text") {
+            return false;
+        }
+        return this.text_area.InFocus();
     };
     this.SetIndex = function (index) {
         this.index = index;
@@ -28338,6 +28378,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
         if (this.data["type"] === "text") {
             this.text_area.Unlock(false);
+            this.text_area.Focus();
         }
         this.selected = true;
     };
@@ -28401,11 +28442,24 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.get_z_index = function () {
         return this.z_index_base + this.index;
     };
+    this.data_is_default = function () {
+        return (
+            this.data["anchor_norm_x"] === 0.5
+            && this.data["anchor_norm_y"] === 0.5
+            && this.data["width_norm"]    === 0.5
+            && this.data["rot_deg"]       === 0
+        );
+    };
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
                 self.Select(true);
                 e.stopPropagation();
+            });
+            // Without this, if you try to move/rotate/scale/etc this
+            // container while it's not already selected, it won't work
+            self.html.on("mousedown", function () {
+                self.Select(true);
             });
         })(this);
     };
@@ -28449,18 +28503,18 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.set_width_px = function (override=null) {
         this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
         // Ensure it doesn't get so small that it can't be edited
-        if (this.width_px < this.px_min) {
-            this.width_px = this.px_min;
+        if (this.width_px < this.width_px_min) {
+            this.width_px = this.width_px_min;
             if (this.last_width_norm) {
                 this.data["width_norm"] = this.last_width_norm;
             }
         }
     };
     this.set_height_px = function (override=null) {
-        this.height_px = override || (this.width_px / this.canvas.editor.GetAspectRatio(true));
+        this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
         // Ensure it doesn't get so small that it can't be edited
-        if (this.height_px < this.px_min) {
-            this.height_px = this.px_min;
+        if (this.height_px < this.height_px_min) {
+            this.height_px = this.height_px_min;
         }
     };
     this.set_scale = function (width=null, height=null, draw=true) {
@@ -28521,20 +28575,40 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 function DashGuiContext2DPrimitiveText () {
     this.text_area = null;
     this._setup_styles = function () {
+        var pad = Dash.Size.Padding;
+        var width_min = Dash.Size.ColumnWidth + (pad * 2);
+        var height_min = Dash.Size.RowHeight + (pad * 2);
+        if (this.data_is_default()) {
+            this.starting_width_override = width_min;
+            this.starting_height_override = height_min;
+        }
+        this.width_px_min = width_min;
+        this.height_px_min = height_min;
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
         // TODO:
         //  - possible to get rid of resize gui and stop it from being able to be resized? maybe an attribute? otherwise prevent default on resize event
         //  - figure out what size it should be by default (small) and make sure it will resize automatically as text is typed into it
+        //  - handle font size
         this.text_area.textarea.css({
             "color": this.data["font_color"] || this.color.Text,
-            "border": "none"
+            "border": "none",
+            "height": "100%",
+            "background": "teal"
         });
+        this.text_area.html.css({
+            "position": "absolute",
+            "inset": pad,
+            "width": "calc(100% - " + (pad * 2) + "px)",
+            "height": "calc(100% - " + (pad * 2) + "px)",
+            "background": "pink"
+        });
+        this.text_area.DisableFlash();
         this.html.append(this.text_area.html);
         this.update_font();
     };
     this.on_text_change = function (value) {
         console.debug("TEST on text change", value);
-        // TODO
+        // TODO: update the layer name to match the value (anything else?)
     };
     this.update_font = function () {
         var font_option = this.get_font_option();
@@ -38682,6 +38756,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.delay_change_cb = delay_change_cb;
     this.label = null;
     this.border_size = 1;
+    this.flash_disabled = false;
     this.last_change_ts = null;
     this.change_timeout = null;
     this.flash_highlight = null;
@@ -38836,10 +38911,19 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "width": width
         });
     };
+    this.InFocus = function () {
+        return $(this.textarea).is(":focus");
+    };
+    this.Focus = function () {
+        this.textarea.trigger("focus");
+    };
     this.DisableAutoSubmit = function () {
         this.submit_override_only = true;
     };
     this.Flash = function () {
+        if (this.flash_disabled) {
+            return;
+        }
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
             this.flash_highlight.css({
@@ -38883,6 +38967,9 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
         this.html.append(this.label);
         return this.label;
+    };
+    this.DisableFlash = function () {
+        this.flash_disabled = true;
     };
     this.setup_connections = function () {
         // Important note:

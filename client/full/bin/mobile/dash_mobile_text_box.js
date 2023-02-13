@@ -7,6 +7,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
     this.label = null;
     this.border_size = 1;
+    this.flash_disabled = false;
     this.last_change_ts = null;
     this.change_timeout = null;
     this.flash_highlight = null;
@@ -198,11 +199,23 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
     };
 
+    this.InFocus = function () {
+        return $(this.textarea).is(":focus");
+    };
+
+    this.Focus = function () {
+        this.textarea.trigger("focus");
+    };
+
     this.DisableAutoSubmit = function () {
         this.submit_override_only = true;
     };
 
     this.Flash = function () {
+        if (this.flash_disabled) {
+            return;
+        }
+
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
 
@@ -255,6 +268,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.html.append(this.label);
 
         return this.label;
+    };
+
+    this.DisableFlash = function () {
+        this.flash_disabled = true;
     };
 
     this.setup_connections = function () {

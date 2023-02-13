@@ -102,6 +102,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         return this.editor_panel.InputInFocus();
     };
 
+    this.CanvasInputInFocus = function () {
+        return this.canvas.InputInFocus();
+    };
+
     this.SetCanvasTool = function (name, cursor) {
         if (this.canvas) {
             this.canvas.SetTool(name, cursor);

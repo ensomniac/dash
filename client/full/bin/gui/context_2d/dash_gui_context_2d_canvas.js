@@ -72,6 +72,16 @@ function DashGuiContext2DCanvas (editor) {
         })(this);
     };
 
+    this.InputInFocus = function () {
+        for (var primitive of this.primitives) {
+            if (primitive.InputInFocus()) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     this.GetActiveTool = function () {
         return this.active_tool;
     };
