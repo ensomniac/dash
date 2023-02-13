@@ -481,12 +481,16 @@ class ApiCore:
 
         # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
         except Exception:
+            from Dash import AdminEmails
             from traceback import format_exc
 
             # Send additional email explaining the failure, likely token refresh issue
             SendEmail(
                 subject="ApiCore.SendEmail Error",
-                msg="Email failed to send, likely due to an token that failed to refresh (see error).",
+                msg=(
+                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
+                    f"likely due to an token that failed to refresh (see error to confirm):"
+                ),
                 error=format_exc()
             )
 
