@@ -68,8 +68,8 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
-    this.SetLayerProperty = function (key, value, index) {
-        this.layers_box.SetProperty(key, value, index);
+    this.SetLayerProperty = function (key, value, index, primitive_previous_value=null) {
+        this.layers_box.SetProperty(key, value, index, primitive_previous_value);
     };
 
     this.SwitchContentToEditTab = function () {

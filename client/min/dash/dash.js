@@ -27573,8 +27573,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
     // TODO: regarding all these public functions, some are intended to only be called
     //  by certain elements, so having them appear as public may be confusing later - rename?
-    this.SetEditorPanelLayerProperty = function (key, value, index) {
-        this.editor_panel.SetLayerProperty(key, value, index);
+    this.SetEditorPanelLayerProperty = function (key, value, index, primitive_previous_value=null) {
+        this.editor_panel.SetLayerProperty(key, value, index, primitive_previous_value);
     };
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
@@ -28309,7 +28309,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "height": this.height_px,
             "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
-            "background": Dash.Color.Random()  // TODO: TESTING
+            "background": Dash.Color.Random()  // TESTING
         });
         if (this.data["hidden"]) {
             this.html.hide();
@@ -28329,14 +28329,22 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         });
     };
     this.SetProperty = function (key, value) {
-        if (this.data[key] === value) {
+        if (this.data[key] === value || key === "display_name") {
             return;
         }
         this.data[key] = value;
         if (key === "opacity") {
-            this.html.css({
-                "opacity": value
-            });
+            if (this.data["type"] === "text") {
+                this.text_area.textarea.css({
+                    "opacity": value
+                });
+            }
+            // TODO: special handling for image
+            else {
+                this.html.css({
+                    "opacity": value
+                });
+            }
         }
         else if (key === "hidden") {
             if (value) {
@@ -28363,8 +28371,10 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             return;
         }
         this.html.css({
-            "border": "none",
-            "outline": "none"
+            // Retain the physical space of the border, just make it invisible
+            // (this prevents the box from appearing to "jitter" when the border is toggled)
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "1px solid rgba(0, 0, 0, 0)"
         });
         if (this.data["type"] === "text") {
             this.text_area.Lock(false);
@@ -28500,10 +28510,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         if (draw) {
             this.draw_properties();
         }
-        // TODO?
-        // if (this.manage_text) {
-        //     this.draw_text();
-        // }
+        if (this.data["type"] === "text") {
+            this.resize_text();
+        }
     };
     this.set_top_px = function (override=null) {
         this.top_px = override || ((this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5));
@@ -28545,10 +28554,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         if (draw) {
             this.draw_properties();
         }
-        // TODO?
-        // if (this.manage_text) {
-        //     this.draw_text();
-        // }
+        if (this.data["type"] === "text") {
+            this.resize_text();
+        }
     };
     this.call_style = function () {
         if (this.data["type"] === "text") {
@@ -28596,10 +28604,13 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
 /**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveText () {
     this.text_area = null;
+    this.last_text_value = null;
+    this.text_border_thickness = 1;
+    this.text_pad = Dash.Size.Padding;
+    this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
     this._setup_styles = function () {
-        var pad = Dash.Size.Padding;
-        var width_min = Dash.Size.ColumnWidth + (pad * 2);
-        var height_min = (Dash.Size.RowHeight * 1.5) + (pad * 2);
+        var width_min = (this.canvas.GetWidth() * 0.9) + (this.text_pad * 2) + this.text_border_comp;
+        var height_min = (Dash.Size.RowHeight * 1.3) + (this.text_pad * 2) + this.text_border_comp;
         if (this.data_is_default()) {
             this.starting_width_override = width_min;
             this.starting_height_override = height_min;
@@ -28607,31 +28618,78 @@ function DashGuiContext2DPrimitiveText () {
         this.width_px_min = width_min;
         this.height_px_min = height_min;
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
-        // TODO:
-        //  - possible to get rid of resize gui and stop it from being able to be resized? maybe an attribute? otherwise prevent default on resize event
-        //  - figure out what size it should be by default (small) and make sure it will resize automatically as text is typed into it
-        //  - handle font size
         this.text_area.textarea.css({
             "border": "none",
             "height": "100%",
-            "background": "teal",
             "min-height": "100%",
             "max-height": "100%",
-            "resize": "none"
+            "resize": "none",
+            "text-align": "center"
         });
+        var calc = "calc(100% - " + ((this.text_pad * 2) + this.text_border_comp) + "px)";
         this.text_area.html.css({
+            "border-radius": Dash.Size.BorderRadius,
             "position": "absolute",
-            "inset": pad,
-            "width": "calc(100% - " + (pad * 2) + "px)",
-            "height": "calc(100% - " + (pad * 2) + "px)"
+            "inset": this.text_pad,
+            "width": calc,
+            "height": calc
         });
         this.text_area.DisableFlash();
+        if (this.data["text_value"]) {
+            this.text_area.SetText(this.data["text_value"]);
+        }
+        (function (self) {
+            self.text_area.textarea.on("focus", function () {
+                self.text_area.html.css({
+                    "border": self.text_border_thickness + "px solid " + self.color.PinstripeDark
+                });
+            });
+            self.text_area.textarea.on("blur", function () {
+                self.text_area.html.css({
+                    // Retain the physical space of the border, just make it invisible
+                    // (this prevents the box from appearing to "jitter" when the border is toggled)
+                    "border": self.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
+                });
+            });
+        })(this);
         this.html.append(this.text_area.html);
+        this.resize_text();
         this.update_font();
         this.update_font_color();
     };
+    this.resize_text = function () {
+        if (!this.height_px && !this.starting_height_override) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.resize_text();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        var size = (
+              (this.height_px || this.starting_height_override)
+            - (this.text_pad * 2)
+            - this.text_border_comp
+            - Dash.Size.Padding
+        );
+        this.text_area.textarea.css({
+            "font-size": size + "px",
+            "line-height": size + "px"
+        });
+    };
     this.on_text_change = function (value) {
-        this.editor.SetEditorPanelLayerProperty("display_name", value.trim(), this.index);
+        value = value.trim();
+        this.editor.SetEditorPanelLayerProperty(
+            "display_name",
+            value,
+            this.index,
+            this.last_text_value || this.data["text_value"]
+        );
+        this.SetProperty("text_value", value);
+        this.last_text_value = value;
     };
     this.update_font = function () {
         var font_option = this.get_font_option();
@@ -28731,8 +28789,8 @@ function DashGuiContext2DEditorPanel (editor) {
             this.SwitchContentToNewTab();
         }
     };
-    this.SetLayerProperty = function (key, value, index) {
-        this.layers_box.SetProperty(key, value, index);
+    this.SetLayerProperty = function (key, value, index, primitive_previous_value=null) {
+        this.layers_box.SetProperty(key, value, index, primitive_previous_value);
     };
     this.SwitchContentToEditTab = function () {
         if (this.content_box) {
@@ -29239,7 +29297,17 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.Select = function (index, from_canvas=true) {
         this.layers[index].Select(from_canvas);
     };
-    this.SetProperty = function (key, value, index) {
+    this.SetProperty = function (key, value, index, primitive_previous_value=null) {
+        if (
+               primitive_previous_value
+            && key === "display_name"
+            && this.data["layers"][index][key]
+            && this.data["layers"][index][key] !== primitive_previous_value
+        ) {
+            // If the layer's name has already been set manually by the user,
+            // then don't auto-set the name based on the primitive's text change
+            return;
+        }
         this.set_data(key, value, index);
         if (key === "display_name") {
             this.layers[index].SetLabel(value);

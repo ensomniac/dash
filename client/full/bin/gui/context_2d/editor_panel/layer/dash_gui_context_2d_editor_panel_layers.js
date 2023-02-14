@@ -206,7 +206,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[index].Select(from_canvas);
     };
 
-    this.SetProperty = function (key, value, index) {
+    this.SetProperty = function (key, value, index, primitive_previous_value=null) {
+        if (
+               primitive_previous_value
+            && key === "display_name"
+            && this.data["layers"][index][key]
+            && this.data["layers"][index][key] !== primitive_previous_value
+        ) {
+            // If the layer's name has already been set manually by the user,
+            // then don't auto-set the name based on the primitive's text change
+            return;
+        }
+
         this.set_data(key, value, index);
 
         if (key === "display_name") {

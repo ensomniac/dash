@@ -60,7 +60,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "height": this.height_px,
             "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
-            "background": Dash.Color.Random()  // TODO: TESTING
+            "background": Dash.Color.Random()  // TESTING
         });
 
         if (this.data["hidden"]) {
@@ -87,16 +87,26 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     };
 
     this.SetProperty = function (key, value) {
-        if (this.data[key] === value) {
+        if (this.data[key] === value || key === "display_name") {
             return;
         }
 
         this.data[key] = value;
 
         if (key === "opacity") {
-            this.html.css({
-                "opacity": value
-            });
+            if (this.data["type"] === "text") {
+                this.text_area.textarea.css({
+                    "opacity": value
+                });
+            }
+
+            // TODO: special handling for image
+
+            else {
+                this.html.css({
+                    "opacity": value
+                });
+            }
         }
 
         else if (key === "hidden") {
@@ -130,8 +140,10 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
 
         this.html.css({
-            "border": "none",
-            "outline": "none"
+            // Retain the physical space of the border, just make it invisible
+            // (this prevents the box from appearing to "jitter" when the border is toggled)
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "1px solid rgba(0, 0, 0, 0)"
         });
 
         if (this.data["type"] === "text") {
@@ -305,10 +317,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             this.draw_properties();
         }
 
-        // TODO?
-        // if (this.manage_text) {
-        //     this.draw_text();
-        // }
+        if (this.data["type"] === "text") {
+            this.resize_text();
+        }
     };
 
     this.set_top_px = function (override=null) {
@@ -363,10 +374,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             this.draw_properties();
         }
 
-        // TODO?
-        // if (this.manage_text) {
-        //     this.draw_text();
-        // }
+        if (this.data["type"] === "text") {
+            this.resize_text();
+        }
     };
 
     this.call_style = function () {
