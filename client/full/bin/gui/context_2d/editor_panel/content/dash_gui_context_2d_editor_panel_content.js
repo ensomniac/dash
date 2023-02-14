@@ -133,6 +133,12 @@ function DashGuiContext2DEditorPanelContent (panel) {
     };
 
     this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
+        if (this.last_instantiated_class && this.last_instantiated_class.font_combo) {
+            // Because of the re-attaching that happens in DashGuiContext2DEditorPanelContentEdit.RepositionFontCombo,
+            // this element has to be manually removed from the editor panel on tab switch
+            this.last_instantiated_class.font_combo.html.remove();
+        }
+
         this.set_inactive_tabs_bg_color(selected_content_data);
 
         this.last_instantiated_class = instantiated_class;

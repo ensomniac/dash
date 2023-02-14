@@ -29477,6 +29477,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.layout.AppendHTML(this.header.html);
     };
     this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
+        if (this.last_instantiated_class && this.last_instantiated_class.font_combo) {
+            // Because of the re-attaching that happens in DashGuiContext2DEditorPanelContentEdit.RepositionFontCombo,
+            // this element has to be manually removed from the editor panel on tab switch
+            this.last_instantiated_class.font_combo.html.remove();
+        }
         this.set_inactive_tabs_bg_color(selected_content_data);
         this.last_instantiated_class = instantiated_class;
     };
@@ -29774,6 +29779,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.content = content;
     this.contexts = {};
     this.font_combo = null;
+    this.font_tool_row = null;
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -29815,6 +29821,25 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.get_data()["font_id"] || "",
             true
         );
+    };
+    // TODO: if the pane sliders in the editor panel are moved up/down, this should be called (low priority)
+    this.RepositionFontCombo = function () {
+        this.font_combo.html.detach();
+        // I couldn't get the combo skirt/rows to appear above the other panels, no matter what I did,
+        // so this basically detaches it and adds it back on top of everything
+        this.font_combo.html.css({
+            "position": "absolute",
+            "top": (
+                this.panel.property_box.html.outerHeight()  // Editor panel top box height
+                + (
+                    this.content.html.outerHeight()  // Editor panel content box height
+                    - this.font_tool_row.html[0].offsetTop  // Offset from top of content box
+                ) - 1
+            ),
+            "left": Dash.Size.Padding * 4.4
+        });
+        this.panel.html.append(this.font_combo.html);
+        // TODO: when the tab is changed, need to remove this element
     };
     this.redraw = function () {
         this.hide_no_selected_layer_label();
@@ -29904,7 +29929,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.contexts[key]["html"].append(this.get_color_picker("font_color", "Color").html);
             // This could be on the same row as the color picker, and actually looks better
             // that way, but some font names will be long, so best this is on its own row
-            var tool_row = (function (self) {
+            this.font_tool_row = (function (self) {
                  return self.content.GetCombo(
                      "Font",
                     self.editor.ComboOptions ? (
@@ -29916,29 +29941,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     self.get_data()["font_id"] || ""
                 );
             })(this);
-            this.font_combo = tool_row.elements.Last().combo;
-            // TODO
-            // (function (self) {
-            //     requestAnimationFrame(function () {
-            //         console.debug("TEST", tool_row.html.offset()["top"], tool_row.html[0].offsetTop, self.panel.property_box.html.outerHeight());
-            //
-            //         self.font_combo.html.detach();
-            //
-            //         self.font_combo.html.css({
-            //             "position": "absolute",
-            //
-            //             // TODO
-            //             "top": (
-            //                   tool_row.html[0].offsetTop  // Offset from top of content box
-            //                 + self.panel.property_box.html.outerHeight()  // Editor panel top box height
-            //             ),
-            //             "left": 0
-            //         });
-            //
-            //         self.panel.html.append(self.font_combo.html);
-            //     });
-            // })(this);
-            this.contexts[key]["html"].append(tool_row.html);
+            this.font_combo = this.font_tool_row.elements.Last().combo;
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.RepositionFontCombo();
+                });
+            })(this);
+            this.contexts[key]["html"].append(this.font_tool_row.html);
         }
         else if (key === "image") {
             this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
