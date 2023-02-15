@@ -29339,7 +29339,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "primitive": primitive_data
         });
         layer.Select();
-        this.save_data();
+        this.save_layers_data();
     };
     this.Delete = function () {
         var index = this.GetSelectedIndex();
@@ -29359,7 +29359,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.data["layers"].Pop(index);
         this.editor.RemoveCanvasPrimitive(index);
         this.panel.SwitchContentToNewTab();
-        this.save_data();
+        this.save_layers_data();
     };
     this.MoveUp = function () {
         this.on_move();
@@ -29459,7 +29459,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         else {
             this.editor.MoveCanvasPrimitiveDown(index);
         }
-        this.save_data();
+        this.save_layers_data();
     };
     this.redraw_layers_box = function () {
         this.layers_box.empty();
@@ -29488,9 +29488,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.data["layers"][index][key] = value;
         this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
         this.editor.SetCanvasPrimitiveProperty(key, value, index);
-        this.save_data();
+        this.save_layers_data();
     };
-    this.save_data = function () {
+    this.save_layers_data = function () {
         // TODO: data - something like this
         // Dash.Request(
         //     this,

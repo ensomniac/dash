@@ -112,7 +112,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         layer.Select();
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.Delete = function () {
@@ -142,7 +142,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.panel.SwitchContentToNewTab();
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.MoveUp = function () {
@@ -278,7 +278,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.editor.MoveCanvasPrimitiveDown(index);
         }
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.redraw_layers_box = function () {
@@ -316,13 +316,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.data["layers"][index][key] = value;
 
         this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
-
         this.editor.SetCanvasPrimitiveProperty(key, value, index);
 
-        this.save_data();
+        this.save_layers_data();
     };
 
-    this.save_data = function () {
+    this.save_layers_data = function () {
         // TODO: data - something like this
         // Dash.Request(
         //     this,
