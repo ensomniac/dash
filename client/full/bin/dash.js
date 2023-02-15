@@ -34,6 +34,7 @@ function Dash () {
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
     this.Math      = new DashMath();
+    this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
     this.Size      = new DashSize(this.IsMobile);
     this.Temp      = new DashTemp();
