@@ -1,6 +1,7 @@
-function DashGuiContext2DEditorPanelLayer (layers, index) {
+function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
     this.layers = layers;
     this.index = index;
+    this.primitive_type = primitive_type;
 
     this.input = null;
     this.selected = false;
@@ -141,11 +142,11 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     };
 
     this.get_display_name = function () {
-        return (this.input.Text().trim() || this.get_data()["display_name"] || "New Layer");
+        return (this.input.Text().trim() || this.get_data()["display_name"] || "New " + primitive_type.Title() + " Layer");
     };
 
     this.add_input = function () {
-        this.input = new Dash.Gui.Input("New Layer", this.color);
+        this.input = new Dash.Gui.Input("New " + primitive_type.Title() + " Layer", this.color);
 
         this.input.html.css({
             "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later

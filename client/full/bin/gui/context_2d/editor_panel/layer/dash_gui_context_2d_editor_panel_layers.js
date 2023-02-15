@@ -61,7 +61,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             new_layer = true;
         }
 
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type, primitive_file_data);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type);
 
         this.layers.push(layer);
 
@@ -100,8 +100,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.data["layers"] = [];
         }
 
+        var filename = primitive_file_data ? (primitive_file_data["orig_filename"] || primitive_file_data["filename"]) : "";
+        var display_name = filename ? filename : "New " + primitive_type.Title() + " Layer";
+
+        layer.SetLabel(display_name);
+
         this.data["layers"].push({
-            "display_name": "New Layer",
+            "display_name": display_name,
             "primitive": primitive_data
         });
 

@@ -28280,6 +28280,9 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
+    console.debug("TEST primitive data", this.data);
+    // TODO: scaling should happen from the center point, rather than the top left
+    //  corner, and/or should also consider the mouse position and scale from there
     this.setup_styles = function () {
         if (!this.data["file_data"]) {
             this.data["file_data"] = {};
@@ -28309,7 +28312,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "height": this.height_px,
             "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
-            "background": Dash.Color.Random()  // TESTING
+            // "background": Dash.Color.Random()  // TESTING
         });
         if (this.data["hidden"]) {
             this.html.hide();
@@ -28325,7 +28328,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.SetIndex = function (index) {
         this.index = index;
         this.html.css({
-            "z-index": this.get_z_index
+            "z-index": this.get_z_index()
         });
     };
     this.SetProperty = function (key, value) {
@@ -28334,17 +28337,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
         this.data[key] = value;
         if (key === "opacity") {
-            if (this.data["type"] === "text") {
-                this.text_area.textarea.css({
-                    "opacity": value
-                });
-            }
-            // TODO: special handling for image
-            else {
-                this.html.css({
-                    "opacity": value
-                });
-            }
+            this.on_opacity_change(value);
         }
         else if (key === "hidden") {
             if (value) {
@@ -28354,14 +28347,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
                 this.html.show();
             }
         }
-        if (this.data["type"] === "text") {
-            if (key === "font_id") {
-                this.update_font();
-            }
-            else if (key === "font_color") {
-                this.update_font_color();
-            }
-        }
+        this.on_set_property(key);
     };
     this.IsSelected = function () {
         return this.selected;
@@ -28459,6 +28445,17 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             return;
         }
         this.drag_active = false;
+    };
+    // Meant to be overridden by member classes
+    this.on_set_property = function () {
+        console.warn("'on_set_property' function override is not defined in member class for type:", this.data["type"]);
+    };
+    // Meant to be overridden by member classes
+    this.on_opacity_change = function (value) {
+        console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        this.html.css({
+            "opacity": value
+        });
     };
     this.get_z_index = function () {
         return this.z_index_base + this.index;
@@ -28558,16 +28555,23 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             this.resize_text();
         }
     };
+    // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
-        else if (this.data["type"] === "image") {
-            DashGuiContext2DPrimitiveImage.call(this);
-        }
         else {
-            console.error("Error: Unhandled primitive type:", this.data["type"]);
-            return false;
+            if (!Dash.Validate.Object(this.data["file_data"])) {
+                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.data["file_data"]);
+                return false;
+            }
+            if (this.data["type"] === "image") {
+                DashGuiContext2DPrimitiveImage.call(this);
+            }
+            else {
+                console.error("Error: Unhandled primitive type:", this.data["type"]);
+                return false;
+            }
         }
         return true;
     };
@@ -28722,13 +28726,53 @@ function DashGuiContext2DPrimitiveText () {
         }
         return null;
     };
+    // Override
+    this.on_set_property = function (key) {
+        if (key === "font_id") {
+            this.update_font();
+        }
+        else if (key === "font_color") {
+            this.update_font_color();
+        }
+    };
+    // Override
+    this.on_opacity_change = function (value) {
+        this.text_area.textarea.css({
+            "opacity": value
+        });
+    };
     this._setup_styles();
 }
 
 /**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveImage () {
+    this.image = null;
     this._setup_styles = function () {
-        // TODO?
+        this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+        this.html.append(this.image);
+        this.update_filter();
+    };
+    this.get_url = function () {
+        return (this.data["file_data"]["thumb_png_url"] || this.data["file_data"]["orig_url"] || "");
+    };
+    this.update_filter = function () {
+        var contrast = "contrast" in this.data ? this.data["contrast"] : 1;
+        var brightness = "brightness" in this.data ? this.data["brightness"] : 1;
+        this.image.css({
+            "filter": "brightness(" + brightness + ") contrast(" + contrast + ")"
+        });
+    };
+    // Override
+    this.on_set_property = function (key) {
+        if (key === "contrast" || key === "brightness") {
+            this.update_filter();
+        }
+    };
+    // Override
+    this.on_opacity_change = function (value) {
+        this.image.css({
+            "opacity": value
+        });
     };
     this._setup_styles();
 }
@@ -28977,9 +29021,10 @@ function DashGuiContext2DEditorPanel (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DEditorPanelLayer (layers, index) {
+function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
     this.layers = layers;
     this.index = index;
+    this.primitive_type = primitive_type;
     this.input = null;
     this.selected = false;
     this.hidden_icon = null;
@@ -29086,10 +29131,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         })(this);
     };
     this.get_display_name = function () {
-        return (this.input.Text().trim() || this.get_data()["display_name"] || "New Layer");
+        return (this.input.Text().trim() || this.get_data()["display_name"] || "New " + primitive_type.Title() + " Layer");
     };
     this.add_input = function () {
-        this.input = new Dash.Gui.Input("New Layer", this.color);
+        this.input = new Dash.Gui.Input("New " + primitive_type.Title() + " Layer", this.color);
         this.input.html.css({
             "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
             "box-shadow": "none",
@@ -29193,7 +29238,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             _index = this.layers.length;
             new_layer = true;
         }
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type, primitive_file_data);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type);
         this.layers.push(layer);
         this.layers_box.prepend(layer.html);
         if (new_layer) {
@@ -29222,8 +29267,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (!("layers" in this.data)) {
             this.data["layers"] = [];
         }
+        var filename = primitive_file_data ? (primitive_file_data["orig_filename"] || primitive_file_data["filename"]) : "";
+        var display_name = filename ? filename : "New " + primitive_type.Title() + " Layer";
+        layer.SetLabel(display_name);
         this.data["layers"].push({
-            "display_name": "New Layer",
+            "display_name": display_name,
             "primitive": primitive_data
         });
         layer.Select();
@@ -29441,6 +29489,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
+    this.num = -1; // TODO: TESTING remove
     this.html = null;
     this.header = null;
     this.layout = null;
@@ -29516,6 +29565,50 @@ function DashGuiContext2DEditorPanelContent (panel) {
         })(this);
         return tool_row;
     };
+    // TODO: When the pane sliders in the editor panel are moved up/down, this should be
+    //  called for all visible floating combos (this.last_instantiated_class.floating_combos)
+    this.FloatCombos = function (instantiated_class) {
+        if (!instantiated_class.floating_combos) {
+            return;
+        }
+        for (var floating_combo of instantiated_class.floating_combos) {
+            var combo = floating_combo["tool_row"].elements.Last().combo;
+            if (!combo) {
+                return;
+            }
+            combo.html.detach();
+            // I couldn't get the combo skirt/rows to appear above the other panels, no matter
+            // what I did, so this basically detaches it and adds it back on top of everything
+            combo.html.css({
+                "position": "absolute",
+                "top": (
+                    this.panel.property_box.html.outerHeight()  // Editor panel top box height
+                    + (
+                          this.html.outerHeight()  // Editor panel content box height
+                        - floating_combo["tool_row"].html[0].offsetTop  // Offset from top of content box
+                    )
+                    - 1  // Bottom border of combo row
+                    + (floating_combo["extra_top"] || 0)  // For some reason, this is needed for some but not all...
+                ),
+                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
+            });
+            this.panel.html.append(combo.html);
+        }
+    };
+    this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
+        if (this.last_instantiated_class && this.last_instantiated_class.floating_combos) {
+            for (var floating_combo of this.last_instantiated_class.floating_combos) {
+                var combo = floating_combo["tool_row"].elements.Last().combo;
+                if (!combo) {
+                    return;
+                }
+                combo.html.remove();
+            }
+            this.last_instantiated_class.floating_combos = [];
+        }
+        this.set_inactive_tabs_bg_color(selected_content_data);
+        this.last_instantiated_class = instantiated_class;
+    };
     this.add_edit_box = function () {
         this.layout.Prepend("Edit", function () {
             return new DashGuiContext2DEditorPanelContentEdit(this);
@@ -29543,15 +29636,6 @@ function DashGuiContext2DEditorPanelContent (panel) {
             "padding-left": Dash.Size.Padding * 0.5
         });
         this.layout.AppendHTML(this.header.html);
-    };
-    this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
-        if (this.last_instantiated_class && this.last_instantiated_class.font_combo) {
-            // Because of the re-attaching that happens in DashGuiContext2DEditorPanelContentEdit.RepositionFontCombo,
-            // this element has to be manually removed from the editor panel on tab switch
-            this.last_instantiated_class.font_combo.html.remove();
-        }
-        this.set_inactive_tabs_bg_color(selected_content_data);
-        this.last_instantiated_class = instantiated_class;
     };
     this.set_header_right_margin = function () {
         var tabs_width = 0;
@@ -29590,6 +29674,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 function DashGuiContext2DEditorPanelContentNew (content) {
     this.content = content;
     this.import_combo = null;
+    this.floating_combos = [];
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -29603,9 +29688,12 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             "overflow-x": "hidden"
         });
         this.draw_types();
-        // I tried everything to get this to sit on top of the layers
-        // panel when expanded, but I could not get it to work and moved on
         this.add_import_combo();
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.content.FloatCombos(self);
+            });
+        })(this);
     };
     // Called by DashGuiContext2D when combo options are received
     this.UpdateImportComboOptions = function () {
@@ -29655,26 +29743,118 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             return self.get_button(
                 label_text + " (Upload)",
                 function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
+                    // TODO: revert to this once data and image uploads are fully set up
+                    // if (!Dash.Validate.Response(response)) {
+                    //     return;
+                    // }
+                    //
+                    // if ("error" in response) {
+                    //     delete response["error"];
+                    // }
+                    //
+                    // self.panel.AddLayer(primitive_type, response);
+                    // TODO: TESTING
+                    if (self.content.num === 3) {
+                        self.content.num = -1;
                     }
-                    self.panel.AddLayer(primitive_type, response);
+                    self.content.num += 1;
+                    self.panel.AddLayer(
+                        primitive_type,
+                        [
+                            {
+                                "exif": {},
+                                "org_format": "png",
+                                "orig_filename": "1x1.png",
+                                "orig_width": 576,
+                                "orig_height": 576,
+                                "orig_aspect": 1.0,
+                                "id": "2023021420135923786",
+                                "uploaded_by": "stetandrew@gmail.com",
+                                "uploaded_on": "2023-02-14T20:13:59.237993",
+                                "parent_folders": [],
+                                "orig_url": "https://realtimecandy.com/local/temp_test/2023021420135923786/2023021420135923786_orig.png",
+                                "thumb_url": "https://realtimecandy.com/local/temp_test/2023021420135923786/2023021420135923786_thb.jpg",
+                                "thumb_sq_url": "",
+                                "thumb_png_url": "https://realtimecandy.com/local/temp_test/2023021420135923786/2023021420135923786_thb.png",
+                                "width": 512,
+                                "height": 512,
+                                "aspect": 1.0
+                            },
+                            {
+                                "exif": {},
+                                "org_format": "png",
+                                "orig_filename": "9x16.png",
+                                "orig_width": 324,
+                                "orig_height": 576,
+                                "orig_aspect": 0.5625,
+                                "id": "2023021420145992778",
+                                "uploaded_by": "stetandrew@gmail.com",
+                                "uploaded_on": "2023-02-14T20:14:59.927136",
+                                "parent_folders": [],
+                                "orig_url": "https://realtimecandy.com/local/temp_test/2023021420145992778/2023021420145992778_orig.png",
+                                "thumb_url": "https://realtimecandy.com/local/temp_test/2023021420145992778/2023021420145992778_thb.jpg",
+                                "thumb_sq_url": "",
+                                "thumb_png_url": "https://realtimecandy.com/local/temp_test/2023021420145992778/2023021420145992778_thb.png",
+                                "width": 288,
+                                "height": 512,
+                                "aspect": 0.5625
+                            },
+                            {
+                                "exif": {},
+                                "org_format": "png",
+                                "orig_filename": "16x9.png",
+                                "orig_width": 1024,
+                                "orig_height": 576,
+                                "orig_aspect": 1.7777777777777777,
+                                "id": "2023021420151289278",
+                                "uploaded_by": "stetandrew@gmail.com",
+                                "uploaded_on": "2023-02-14T20:15:12.892139",
+                                "parent_folders": [],
+                                "orig_url": "https://realtimecandy.com/local/temp_test/2023021420151289278/2023021420151289278_orig.png",
+                                "thumb_url": "https://realtimecandy.com/local/temp_test/2023021420151289278/2023021420151289278_thb.jpg",
+                                "thumb_sq_url": "",
+                                "thumb_png_url": "https://realtimecandy.com/local/temp_test/2023021420151289278/2023021420151289278_thb.png",
+                                "width": 512,
+                                "height": 288,
+                                "aspect": 1.7777777777777777
+                            },
+                            {
+                                "exif": {},
+                                "org_format": "png",
+                                "orig_filename": "transparent.png",
+                                "orig_width": 356,
+                                "orig_height": 357,
+                                "orig_aspect": 0.9971988795518207,
+                                "id": "2023021420163843540",
+                                "uploaded_by": "stetandrew@gmail.com",
+                                "uploaded_on": "2023-02-14T20:16:38.435113",
+                                "parent_folders": [],
+                                "orig_url": "https://realtimecandy.com/local/temp_test/2023021420163843540/2023021420163843540_orig.png",
+                                "thumb_url": "https://realtimecandy.com/local/temp_test/2023021420163843540/2023021420163843540_thb.jpg",
+                                "thumb_sq_url": "",
+                                "thumb_png_url": "https://realtimecandy.com/local/temp_test/2023021420163843540/2023021420163843540_thb.png",
+                                "width": 356,
+                                "height": 357,
+                                "aspect": 0.9971988795518207
+                            }
+                        ][self.content.num]
+                    );
+                    // TODO: TESTING
                 }
             );
         })(this);
-        button.SetFileUploader(
-            this.editor.api,
-            {"f": "upload_" + primitive_type}
-        );
+        // TODO: re-enable once data and image uploads are fully set up
+        // button.SetFileUploader(
+        //     this.editor.api,
+        //     {"f": "upload_" + primitive_type}
+        // );
         return button;
     };
     this.add_import_combo = function () {
-        var tool_row = (function (self) {
-            return self.content.GetCombo(
+        this.import_combo = (function (self) {
+            return self.add_combo(
                 "Import Another Context",
-                self.editor.ComboOptions ? (
-                    self.editor.ComboOptions["contexts"] ? self.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
-                ) : [{"id": "", "label_text": "Loading..."}],
+                "contexts",
                 function (selected_option) {
                     if (!selected_option["id"]) {
                         return;
@@ -29699,8 +29879,21 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 }
             );
         })(this);
-        this.import_combo = tool_row.elements.Last().combo;
+    };
+    this.add_combo = function (label_text, options_key, callback) {
+        var tool_row = this.content.GetCombo(
+            label_text,
+            this.editor.ComboOptions ? (
+                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
+            ) : [{"id": "", "label_text": "Loading..."}],
+            callback
+        );
+        this.floating_combos.push({
+            "tool_row": tool_row,
+            "extra_top": Dash.Size.RowHeight
+        });
         this.html.append(tool_row.html);
+        return tool_row.elements.Last().combo;
     };
     this.setup_styles();
 }
@@ -29847,7 +30040,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.content = content;
     this.contexts = {};
     this.font_combo = null;
-    this.font_tool_row = null;
+    this.floating_combos = [];
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -29865,6 +30058,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.add_context(key);
         }
         this.redraw();
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.content.FloatCombos(self);
+            });
+        })(this);
     };
     this.InputInFocus = function () {
         for (var key in this.contexts) {
@@ -29889,25 +30087,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.get_data()["font_id"] || "",
             true
         );
-    };
-    // TODO: if the pane sliders in the editor panel are moved up/down, this should be called (low priority)
-    this.RepositionFontCombo = function () {
-        this.font_combo.html.detach();
-        // I couldn't get the combo skirt/rows to appear above the other panels, no matter what I did,
-        // so this basically detaches it and adds it back on top of everything
-        this.font_combo.html.css({
-            "position": "absolute",
-            "top": (
-                this.panel.property_box.html.outerHeight()  // Editor panel top box height
-                + (
-                    this.content.html.outerHeight()  // Editor panel content box height
-                    - this.font_tool_row.html[0].offsetTop  // Offset from top of content box
-                ) - 1
-            ),
-            "left": Dash.Size.Padding * 4.4
-        });
-        this.panel.html.append(this.font_combo.html);
-        // TODO: when the tab is changed, need to remove this element
     };
     this.redraw = function () {
         this.hide_no_selected_layer_label();
@@ -29997,35 +30176,52 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.contexts[key]["html"].append(this.get_color_picker("font_color", "Color").html);
             // This could be on the same row as the color picker, and actually looks better
             // that way, but some font names will be long, so best this is on its own row
-            this.font_tool_row = (function (self) {
-                 return self.content.GetCombo(
-                     "Font",
-                    self.editor.ComboOptions ? (
-                        self.editor.ComboOptions["fonts"] ? self.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
-                    ) : [{"id": "", "label_text": "Loading..."}],
-                    function (selected_option) {
-                        self.set_data("font_id", selected_option["id"]);
-                    },
-                    self.get_data()["font_id"] || ""
-                );
-            })(this);
-            this.font_combo = this.font_tool_row.elements.Last().combo;
-            (function (self) {
-                requestAnimationFrame(function () {
-                    self.RepositionFontCombo();
-                });
-            })(this);
-            this.contexts[key]["html"].append(this.font_tool_row.html);
+            this.font_combo = this.add_combo("Font", key, "font_id", "fonts");
         }
         else if (key === "image") {
-            this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
-            this.contexts[key]["html"].append(this.get_slider(0.5, key, "brightness", 0.95).html);
+            this.contexts[key]["html"].append(this.get_slider(
+                1,
+                key,
+                "contrast",
+                1.02,
+                "",
+                0.5,
+                2.0
+            ).html);
+            this.contexts[key]["html"].append(this.get_slider(
+                1,
+                key,
+                "brightness",
+                0.95,
+                "",
+                0.5,
+                2.0
+            ).html);
             // TODO: button to download original image
         }
         else {
             console.warn("Warning: Unhandled 'Edit' tab context type:", key);
         }
         this.contexts[key]["initialized"] = true;
+    };
+    this.add_combo = function (label_text, context_key, data_key, options_key) {
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                label_text,
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                function (selected_option) {
+                    self.set_data(data_key, selected_option["id"]);
+                },
+                self.get_data()[data_key] || ""
+            );
+        })(this);
+        this.floating_combos.push({
+            "tool_row": tool_row
+        });
+        this.contexts[context_key]["html"].append(tool_row.html);
+        return tool_row.elements.Last().combo;
     };
     this.get_color_picker = function (data_key, label_text="") {
         var color_picker = (function (self) {
@@ -30050,7 +30246,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         color_picker.html.css(css);
         return color_picker;
     };
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="") {
+    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0) {
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -30058,13 +30254,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 function (value) {
                     self.set_data(data_key, value);
                 },
-                0.0,
-                1.0,
+                start_range,
+                end_range,
                 self.get_data()[data_key] || default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {
-                self.style_slider(slider, default_value, context_key);
+                self.style_slider(slider, reset_value || default_value, context_key);
             });
             return slider;
         })(this);

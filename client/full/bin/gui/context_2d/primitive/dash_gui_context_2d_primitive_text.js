@@ -149,5 +149,23 @@ function DashGuiContext2DPrimitiveText () {
         return null;
     };
 
+    // Override
+    this.on_set_property = function (key) {
+        if (key === "font_id") {
+            this.update_font();
+        }
+
+        else if (key === "font_color") {
+            this.update_font_color();
+        }
+    };
+
+    // Override
+    this.on_opacity_change = function (value) {
+        this.text_area.textarea.css({
+            "opacity": value
+        });
+    };
+
     this._setup_styles();
 }

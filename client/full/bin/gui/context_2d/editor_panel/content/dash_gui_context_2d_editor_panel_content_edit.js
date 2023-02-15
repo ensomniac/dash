@@ -3,7 +3,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
     this.contexts = {};
     this.font_combo = null;
-    this.font_tool_row = null;
+    this.floating_combos = [];
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -24,6 +24,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.redraw();
+
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.content.FloatCombos(self);
+            });
+        })(this);
     };
 
     this.InputInFocus = function () {
@@ -53,29 +59,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.get_data()["font_id"] || "",
             true
         );
-    };
-
-    // TODO: if the pane sliders in the editor panel are moved up/down, this should be called (low priority)
-    this.RepositionFontCombo = function () {
-        this.font_combo.html.detach();
-
-        // I couldn't get the combo skirt/rows to appear above the other panels, no matter what I did,
-        // so this basically detaches it and adds it back on top of everything
-        this.font_combo.html.css({
-            "position": "absolute",
-            "top": (
-                this.panel.property_box.html.outerHeight()  // Editor panel top box height
-                + (
-                    this.content.html.outerHeight()  // Editor panel content box height
-                    - this.font_tool_row.html[0].offsetTop  // Offset from top of content box
-                ) - 1
-            ),
-            "left": Dash.Size.Padding * 4.4
-        });
-
-        this.panel.html.append(this.font_combo.html);
-
-        // TODO: when the tab is changed, need to remove this element
     };
 
     this.redraw = function () {
@@ -197,33 +180,29 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
             // This could be on the same row as the color picker, and actually looks better
             // that way, but some font names will be long, so best this is on its own row
-            this.font_tool_row = (function (self) {
-                 return self.content.GetCombo(
-                     "Font",
-                    self.editor.ComboOptions ? (
-                        self.editor.ComboOptions["fonts"] ? self.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
-                    ) : [{"id": "", "label_text": "Loading..."}],
-                    function (selected_option) {
-                        self.set_data("font_id", selected_option["id"]);
-                    },
-                    self.get_data()["font_id"] || ""
-                );
-            })(this);
-
-            this.font_combo = this.font_tool_row.elements.Last().combo;
-
-            (function (self) {
-                requestAnimationFrame(function () {
-                    self.RepositionFontCombo();
-                });
-            })(this);
-
-            this.contexts[key]["html"].append(this.font_tool_row.html);
+            this.font_combo = this.add_combo("Font", key, "font_id", "fonts");
         }
 
         else if (key === "image") {
-            this.contexts[key]["html"].append(this.get_slider(0.5, key, "contrast", 1.02).html);
-            this.contexts[key]["html"].append(this.get_slider(0.5, key, "brightness", 0.95).html);
+            this.contexts[key]["html"].append(this.get_slider(
+                1,
+                key,
+                "contrast",
+                1.02,
+                "",
+                0.5,
+                2.0
+            ).html);
+
+            this.contexts[key]["html"].append(this.get_slider(
+                1,
+                key,
+                "brightness",
+                0.95,
+                "",
+                0.5,
+                2.0
+            ).html);
 
             // TODO: button to download original image
         }
@@ -233,6 +212,29 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.contexts[key]["initialized"] = true;
+    };
+
+    this.add_combo = function (label_text, context_key, data_key, options_key) {
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                label_text,
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                function (selected_option) {
+                    self.set_data(data_key, selected_option["id"]);
+                },
+                self.get_data()[data_key] || ""
+            );
+        })(this);
+
+        this.floating_combos.push({
+            "tool_row": tool_row
+        });
+
+        this.contexts[context_key]["html"].append(tool_row.html);
+
+        return tool_row.elements.Last().combo;
     };
 
     this.get_color_picker = function (data_key, label_text="") {
@@ -264,7 +266,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return color_picker;
     };
 
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="") {
+    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0) {
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -272,14 +274,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 function (value) {
                     self.set_data(data_key, value);
                 },
-                0.0,
-                1.0,
+                start_range,
+                end_range,
                 self.get_data()[data_key] || default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
 
             requestAnimationFrame(function () {
-                self.style_slider(slider, default_value, context_key);
+                self.style_slider(slider, reset_value || default_value, context_key);
             });
 
             return slider;

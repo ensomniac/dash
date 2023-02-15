@@ -24,6 +24,11 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
+    console.debug("TEST primitive data", this.data);
+
+    // TODO: scaling should happen from the center point, rather than the top left
+    //  corner, and/or should also consider the mouse position and scale from there
+
     this.setup_styles = function () {
         if (!this.data["file_data"]) {
             this.data["file_data"] = {};
@@ -60,7 +65,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             "height": this.height_px,
             "z-index": this.get_z_index(),
             "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
-            "background": Dash.Color.Random()  // TESTING
+            // "background": Dash.Color.Random()  // TESTING
         });
 
         if (this.data["hidden"]) {
@@ -82,7 +87,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.index = index;
 
         this.html.css({
-            "z-index": this.get_z_index
+            "z-index": this.get_z_index()
         });
     };
 
@@ -94,19 +99,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.data[key] = value;
 
         if (key === "opacity") {
-            if (this.data["type"] === "text") {
-                this.text_area.textarea.css({
-                    "opacity": value
-                });
-            }
-
-            // TODO: special handling for image
-
-            else {
-                this.html.css({
-                    "opacity": value
-                });
-            }
+            this.on_opacity_change(value);
         }
 
         else if (key === "hidden") {
@@ -119,15 +112,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             }
         }
 
-        if (this.data["type"] === "text") {
-            if (key === "font_id") {
-                this.update_font();
-            }
-
-            else if (key === "font_color") {
-                this.update_font_color();
-            }
-        }
+        this.on_set_property(key);
     };
 
     this.IsSelected = function () {
@@ -258,6 +243,20 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.drag_active = false;
     };
 
+    // Meant to be overridden by member classes
+    this.on_set_property = function () {
+        console.warn("'on_set_property' function override is not defined in member class for type:", this.data["type"]);
+    };
+
+    // Meant to be overridden by member classes
+    this.on_opacity_change = function (value) {
+        console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+
+        this.html.css({
+            "opacity": value
+        });
+    };
+
     this.get_z_index = function () {
         return this.z_index_base + this.index;
     };
@@ -379,19 +378,28 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
     };
 
+    // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
 
-        else if (this.data["type"] === "image") {
-            DashGuiContext2DPrimitiveImage.call(this);
-        }
-
         else {
-            console.error("Error: Unhandled primitive type:", this.data["type"]);
+            if (!Dash.Validate.Object(this.data["file_data"])) {
+                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.data["file_data"]);
 
-            return false;
+                return false;
+            }
+
+            if (this.data["type"] === "image") {
+                DashGuiContext2DPrimitiveImage.call(this);
+            }
+
+            else {
+                console.error("Error: Unhandled primitive type:", this.data["type"]);
+
+                return false;
+            }
         }
 
         return true;
