@@ -322,7 +322,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.save_layers_data = function () {
-        // TODO: data - something like this
+        // TODO: Need to save layer data specifically, not using "set_data" - more like, "set_layer_data" or something
         // Dash.Request(
         //     this,
         //     function (response) {
@@ -332,9 +332,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         //     },
         //     this.editor.api,
         //     {
-        //         // If the layers will be stored separately from the main data, then this isn't the right approach
-        //         "f": "set_data",
-        //         "key": "layers",
+        //         "f": "",
+        //         "key": "",
         //         "value": JSON.stringify(this.get_data()["layers"] || [])
         //     }
         // );
