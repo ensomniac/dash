@@ -49,12 +49,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.ImportContext = function (context_data) {
         console.debug("TEST import context", context_data);
 
-        // TODO: create new layer(s), not sure how we should handle this yet...
-        //  - this should essentially merge in an existing context to the current one, with existing
-        //    layers and properties etc, and changes to this imported context wouldn't affect the original
+        // TODO: see trello notes
     };
 
     this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
+        var primitive_data;
         var new_layer = false;
 
         if (_index === null) {
@@ -62,19 +61,38 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             new_layer = true;
         }
 
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type, primitive_file_data);
+        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type);
 
         this.layers.push(layer);
 
         this.layers_box.prepend(layer.html);
 
-        this.editor.AddCanvasLayer(
-            _index,
-            primitive_type || layer.GetPrimitiveData()["type"],
-            primitive_file_data || layer.GetPrimitiveData()["file_data"]
-        );
+        if (new_layer) {
+            primitive_data = {
+                "type": primitive_type,  // image, text, etc
+                "file_data": primitive_file_data,  // data for image, etc
+                "anchor_norm_x": 0.5,  // normalized x value for the center point of the element in relation to the canvas
+                "anchor_norm_y": 0.5,  // normalized y value for the center point of the element in relation to the canvas
+                "width_norm": 0.5,  // normalized width for the width of the element in relation to the width of the canvas
+                "rot_deg": 0  // -180 to 180 (or is it -179 to 179?)
+            };
+        }
+
+        else {
+            primitive_data = layer.GetPrimitiveData();
+        }
+
+        this.editor.AddCanvasPrimitive(_index, primitive_data);
 
         if (!new_layer) {
+            if (primitive_data["hidden"]) {
+                layer.ToggleHidden(primitive_data["hidden"]);
+            }
+
+            if (primitive_data["locked"]) {
+                layer.ToggleLocked(primitive_data["locked"]);
+            }
+
             return;
         }
 
@@ -82,17 +100,19 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.data["layers"] = [];
         }
 
+        var filename = primitive_file_data ? (primitive_file_data["orig_filename"] || primitive_file_data["filename"]) : "";
+        var display_name = filename ? filename : "New " + primitive_type.Title() + " Layer";
+
+        layer.SetLabel(display_name);
+
         this.data["layers"].push({
-            "display_name": "New Layer",
-            "primitive": {
-                "type": primitive_type,
-                "file_data": primitive_file_data
-            }
+            "display_name": display_name,
+            "primitive": primitive_data
         });
 
         layer.Select();
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.Delete = function () {
@@ -118,11 +138,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.data["layers"].Pop(index);
 
-        this.editor.RemoveCanvasLayer(index);
+        this.editor.RemoveCanvasPrimitive(index);
 
         this.panel.SwitchContentToNewTab();
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.MoveUp = function () {
@@ -187,6 +207,29 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.toolbar.UpdateIconStates();
     };
 
+    this.Select = function (index, from_canvas=true) {
+        this.layers[index].Select(from_canvas);
+    };
+
+    this.SetProperty = function (key, value, index, primitive_previous_value=null) {
+        if (
+               primitive_previous_value
+            && key === "display_name"
+            && this.data["layers"][index][key]
+            && this.data["layers"][index][key] !== primitive_previous_value
+        ) {
+            // If the layer's name has already been set manually by the user,
+            // then don't auto-set the name based on the primitive's text change
+            return;
+        }
+
+        this.set_data(key, value, index);
+
+        if (key === "display_name") {
+            this.layers[index].SetLabel(value);
+        }
+    };
+
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
 
@@ -228,14 +271,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.redraw_layers_box();
 
         if (up) {
-            this.editor.MoveCanvasLayerUp(index);
+            this.editor.MoveCanvasPrimitiveUp(index);
         }
 
         else {
-            this.editor.MoveCanvasLayerDown(index);
+            this.editor.MoveCanvasPrimitiveDown(index);
         }
 
-        this.save_data();
+        this.save_layers_data();
     };
 
     this.redraw_layers_box = function () {
@@ -272,11 +315,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.data["layers"][index][key] = value;
 
-        this.save_data();
+        this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+        this.editor.SetCanvasPrimitiveProperty(key, value, index);
+
+        this.save_layers_data();
     };
 
-    this.save_data = function () {
-        // TODO: data - something like this
+    this.save_layers_data = function () {
+        // TODO: Need to save layer data specifically, not using "set_data" - more like, "set_layer_data" or something
         // Dash.Request(
         //     this,
         //     function (response) {
@@ -286,9 +332,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         //     },
         //     this.editor.api,
         //     {
-        //         // If the layers will be stored separately from the main data, then this isn't the right approach
-        //         "f": "set_data",
-        //         "key": "layers",
+        //         "f": "",
+        //         "key": "",
         //         "value": JSON.stringify(this.get_data()["layers"] || [])
         //     }
         // );
@@ -341,9 +386,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.setup_connections = function () {
         (function (self) {
             self.layers_box.on("click", function () {
-                self.DeselectLayers();
-
-                self.panel.SwitchContentToNewTab();
+                self.editor.DeselectAllLayers();
             });
         })(this);
     };

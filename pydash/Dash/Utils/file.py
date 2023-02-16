@@ -13,6 +13,7 @@ from .errors import ClientAlert
 from .model import ModelExtensions
 from Dash.LocalStorage import Read, Write, ConformPermissions
 
+ThumbSize = 512
 VideoExtensions = ["mp4"]
 AudioExtensions = ["mp3", "wav", "ogg"]
 FontExtensions  = ["ttf", "otf", "woff", "woff2"]
@@ -387,10 +388,29 @@ def update_data_with_saved_images(
         file_data, file_root, file_ext, img, dash_context, replace_existing=False,
         include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True
 ):
+    is_jpg = file_ext == "jpg" or file_ext == "jpeg"
+    bigger_than_thumb = img.size[0] > ThumbSize or img.size[1] > ThumbSize
     orig_path = os.path.join(file_root, f"{file_data['id']}{'' if file_ext == 'gif' else '_orig'}.{file_ext}") if include_orig_png else ""
-    thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if include_jpg_thumb else ""
-    thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if include_png_thumb else ""
-    thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg") if include_square_thumb else ""
+
+    # If saving the orig, and the orig image is a jpg, or is already smaller than
+    # ThumbSize, don't save the png thumb, otherwise this ends up wasting space on the server
+    thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if (
+            include_png_thumb and ((bigger_than_thumb and not is_jpg) if include_orig_png else True)
+    ) else ""
+
+    # If saving the orig, and the orig image is already smaller than
+    # ThumbSize and is a jpg/jpeg, don't save the jpg thumb, otherwise
+    # this ends up just being a duplicate and wastes space on the server
+    thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if (
+            include_jpg_thumb and ((bigger_than_thumb if is_jpg else True) if include_orig_png else True)
+    ) else ""
+
+    # If saving the orig, and the orig image is already smaller than
+    # ThumbSize or is not square, and is a jpg/jpeg, don't save the jpg thumb,
+    # otherwise this ends up just being a duplicate and wastes space on the server
+    thumb_square_path = os.path.join(file_root, f"{file_data['id']}_sq_thb.jpg") if (
+        include_square_thumb and ((bigger_than_thumb and img.size[0] != img.size[1] if is_jpg else True) if include_orig_png else True)
+    ) else ""
 
     if replace_existing:
         for path in [orig_path, thumb_path, thumb_square_path, thumb_png_path]:
@@ -451,7 +471,7 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
             file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
 
     elif file_ext in FontExtensions:
-        if file_ext.startswith("woff"):
+        if file_ext.startswith("woff"):  # Unity supports either ttf or otf, so in the case of otf upload, this conversion is not needed
             from fontTools.ttLib.woff2 import decompress
 
             ttf_path = os.path.join(file_root, f"{file_data['id']}.ttf")
@@ -459,7 +479,7 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
             decompress(file_path, ttf_path)
 
             file_data["ttf_url"] = GetURLFromPath(dash_context, ttf_path)
-        else:
+        else:  # Always create a woff version for web
             from fontTools.ttLib.woff2 import compress
 
             woff2_path = os.path.join(file_root, f"{file_data['id']}.woff2")
@@ -564,8 +584,6 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
 def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_png_path=""):
     from PIL.Image import ANTIALIAS
 
-    thumb_size = 512
-
     if orig_path:
         img.save(orig_path)
 
@@ -577,7 +595,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
     if thumb_png_path:
         png_thumb = img.copy()
 
-        png_thumb.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+        png_thumb.thumbnail((ThumbSize, ThumbSize), ANTIALIAS)
 
         # If a file is uploaded as CMYK, it can't be saved as a PNG
         if png_thumb.mode == "CMYK":
@@ -596,8 +614,8 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
         # Convert to RGB AFTER saving the original and PNG thumb, otherwise we lose alpha channel if present
         img = img.convert("RGB")
 
-        if img.size[0] > thumb_size or img.size[1] > thumb_size:
-            img.thumbnail((thumb_size, thumb_size), ANTIALIAS)
+        if img.size[0] > ThumbSize or img.size[1] > ThumbSize:
+            img.thumbnail((ThumbSize, ThumbSize), ANTIALIAS)
 
         if thumb_path:
             img.save(thumb_path, quality=40)
@@ -607,8 +625,8 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
         if thumb_square_path:
             img_square = get_square_image_copy(img)
 
-            if img_square.size[0] > thumb_size or img_square.size[1] > thumb_size:
-                img_square = img_square.resize((thumb_size, thumb_size), ANTIALIAS)
+            if img_square.size[0] > ThumbSize or img_square.size[1] > ThumbSize:
+                img_square = img_square.resize((ThumbSize, ThumbSize), ANTIALIAS)
 
             img_square.save(thumb_square_path, quality=40)
 

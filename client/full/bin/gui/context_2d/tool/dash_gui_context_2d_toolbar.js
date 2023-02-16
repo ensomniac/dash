@@ -101,9 +101,11 @@ function DashGuiContext2DToolbar (editor) {
                         }
 
                         // Ignore if typing in an input
-                        if (!self.editor.EditorPanelInputInFocus()) {
-                            tool.Select();
+                        if (self.editor.EditorPanelInputInFocus() || self.editor.CanvasInputInFocus()) {
+                            continue;
                         }
+
+                        tool.Select();
 
                         break;
                     }

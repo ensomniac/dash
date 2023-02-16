@@ -194,11 +194,17 @@ function DashLayoutToolbarInterface () {
     };
 
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color || this.color);
+    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true) {
+        var header = new Dash.Gui.Header(text, color || this.color, include_start_border);
+
+        if (!include_start_border) {
+            header.label.css({
+                "padding-left": 0
+            });
+        }
 
         header.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": include_start_border ? Dash.Size.Padding * 0.5 : 0,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding,
         });
@@ -243,7 +249,7 @@ function DashLayoutToolbarInterface () {
 
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0
+            "margin-top": 0  // Why is this the default?
         });
 
         label.label.css({
@@ -345,6 +351,10 @@ function DashLayoutToolbarInterface () {
             obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
         }
 
+        if (options["on_autosave"]) {
+            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+        }
+
         this.objects.push(obj);
 
         (function (self, input, obj_index, obj) {
@@ -357,6 +367,17 @@ function DashLayoutToolbarInterface () {
 
             if (obj["on_enter_callback"]) {
                 input.SetOnSubmit(
+                    function () {
+                        self.on_input_submitted(obj_index);
+                    },
+                    self
+                );
+            }
+
+            if (obj["on_autosave_callback"]) {
+                input.EnableAutosave();
+
+                input.SetOnAutosave(
                     function () {
                         self.on_input_submitted(obj_index);
                     },
@@ -379,16 +400,6 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
 
         return input;
-    };
-
-    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
-        if (callback) {
-            callback(selected_id, previous_selected_option, this, additional_data);
-        }
-
-        else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
-        }
     };
 
     this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {

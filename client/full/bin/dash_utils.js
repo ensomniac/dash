@@ -3,6 +3,49 @@ function DashUtils () {
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
 
+    this.SetDynamicFont = function (html, font_url, font_display_name, font_original_filename, on_load_cb) {
+        var font_name = "";
+
+        for (var char of (font_display_name + font_original_filename.split(".")[0])) {
+            if (char.toLowerCase() === char.toUpperCase()) {
+                continue;  // Not a letter (FontFace font name can only be letters)
+            }
+
+            font_name += char;
+        }
+
+        var font_face = new FontFace(font_name, "url(" + font_url + ")");
+
+        // Doesn't look like this is actually finding already-loaded fonts, but not a big deal. We should
+        // really be using documents.fonts.check(font_name), but it's failing and I can't get it to work.
+        if (document.fonts.has(font_face)) {
+            html.css({
+                "font-family": font_name
+            });
+
+            return;
+        }
+
+        // Create a new font-face dynamically and update the preview to use it
+        (function () {
+            font_face.load().then(function (loaded_font) {
+                document.fonts.add(loaded_font);
+
+                if (on_load_cb) {
+                    on_load_cb();
+                }
+
+                html.css({
+                    "font-family": font_name
+                });
+            }).catch(function (error) {
+                alert("Failed to load font for preview\n\nError:\n" + error);
+
+                console.error(error);
+            });
+        })();
+    };
+
     this.NormalizeSearchText = function (text="") {
         if (!text) {
             return text;

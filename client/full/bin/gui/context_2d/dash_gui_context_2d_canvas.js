@@ -1,6 +1,8 @@
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
 
+    this.primitives = [];
+    this.active_tool = "";
     this.last_aspect_ratio = null;
     this.html = $("<div></div>");
     this.size_initialized = false;
@@ -8,11 +10,8 @@ function DashGuiContext2DCanvas (editor) {
     this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
+    this.last_selected_primitive = null;
     this.padding = Dash.Size.Padding * 2;
-
-    // TODO:
-    //  - contained elements should resize with the canvas itself
-    //  - default behavior when an element is clicked should probably be to auto-select the layer in the layers panel
 
     this.setup_styles = function () {
         this.html.css({
@@ -21,7 +20,9 @@ function DashGuiContext2DCanvas (editor) {
             "background": this.color.StrokeDark,
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight,
-            "padding": Dash.Size.Padding * 2
+            "padding": Dash.Size.Padding * 2,
+            "overflow": "hidden",
+            "z-index": 1
         });
 
         this.canvas.css({
@@ -31,12 +32,58 @@ function DashGuiContext2DCanvas (editor) {
             "position": "absolute",
             "top": "50%",
             "left": "50%",
-            "transform": "translate(-50%, -50%)"
+            "transform": "translate(-50%, -50%)",
+            "z-index": 2
         });
 
         this.canvas.hide();
 
         this.html.append(this.canvas);
+
+        this.setup_connections();
+    };
+
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mousedown", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStart(e);
+                }
+            });
+
+            self.html.on("mousemove", function (e) {
+                // Left mouse button is still down (https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons)
+                if (self.last_selected_primitive && e.buttons % 2 !== 0) {
+                    self.last_selected_primitive.OnDrag(e);
+                }
+
+                e.preventDefault();
+            });
+
+            self.html.on("mouseup", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStop(e);
+                }
+            });
+
+            self.canvas.on("click", function () {
+                self.editor.DeselectAllLayers();
+            });
+        })(this);
+    };
+
+    this.InputInFocus = function () {
+        for (var primitive of this.primitives) {
+            if (primitive.InputInFocus()) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    this.GetActiveTool = function () {
+        return this.active_tool;
     };
 
     this.SizeInitialized = function () {
@@ -44,39 +91,86 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.SetTool = function (name, cursor="grab") {
+        this.active_tool = name;
+
         this.canvas.css({
             "cursor": cursor
         });
-
-        // TODO: restyle the bounding box or something depending on the tool (name)
     };
 
-    this.SetActiveLayer = function (index) {
-        // TODO: change focus to the appropriate layer object
+    this.SetPrimitiveProperty = function (key, value, index=null) {
+        if (index !== null) {
+            this.primitives[index].SetProperty(key, value);
+
+            return;
+        }
+
+        if (!this.last_selected_primitive) {
+            return;
+        }
+
+        this.last_selected_primitive.SetProperty(key, value);
     };
 
-    this.MoveLayerUp = function (index) {
-        // TODO: move the provided index up one, and update the other indexes accordingly
+    this.SetActivePrimitive = function (index) {
+        this.primitives[index].Select();
+
+        this.last_selected_primitive = this.primitives[index];
     };
 
-    this.MoveLayerDown = function (index) {
-        // TODO: move the provided index down one, and update the other indexes accordingly
+    this.AddPrimitive = function (index, primitive_data) {
+        var primitive = new DashGuiContext2DPrimitive(this, primitive_data, index);
+
+        this.primitives[index] = primitive;
+
+        this.canvas.append(primitive.html);
     };
 
-    this.AddLayer = function (index, primitive_type, primitive_file_data=null) {
-        // TODO: add new layer using primitive (don't need to update any other indexes)
+    this.RemovePrimitive = function (index) {
+        this.primitives[index].html.remove();
+
+        this.primitives.Pop(index);
+
+        this.update_all_primitive_indexes();
     };
 
-    this.RemoveLayer = function (index) {
-        // TODO: layer has been deleted, so remove it from the canvas and update the other indexes accordingly
+    this.MovePrimitiveUp = function (index) {
+        this.move_primitive(index);
     };
 
-    this.ToggleLayerHidden = function (index, hidden) {
-        // TODO: hide/show
+    this.MovePrimitiveDown = function (index) {
+        this.move_primitive(index, false);
     };
 
-    this.ToggleLayerLocked = function (index, locked) {
-        // TODO: click event on/off
+    this.GetHeight = function () {
+        return this.canvas.innerHeight();
+    };
+
+    this.GetWidth = function () {
+        return this.canvas.innerWidth();
+    };
+
+    this.DeselectAllPrimitives = function () {
+        for (var primitive of this.primitives) {
+            primitive.Deselect();
+        }
+
+        this.last_selected_primitive = null;
+    };
+
+    // To be called by primitive
+    this.OnPrimitiveSelected = function (primitive) {
+        this.last_selected_primitive = primitive;
+
+        for (var i in this.primitives) {
+            if (this.primitives[i] !== primitive) {
+                continue;
+            }
+
+            this.editor.SelectLayer(parseInt(i));
+
+            break;
+        }
     };
 
     this.Resize = function (from_event=false) {
@@ -144,7 +238,9 @@ function DashGuiContext2DCanvas (editor) {
 
         this.last_aspect_ratio = aspect_ratio;
 
-        // TODO: elements will need to be resized as well, but that may happen automatically - need to confirm
+        for (var primitive of this.primitives) {
+            primitive.OnCanvasResize();
+        }
 
         if (this.size_initialized) {
             return;
@@ -155,6 +251,26 @@ function DashGuiContext2DCanvas (editor) {
         this.add_observer();
 
         this.size_initialized = true;
+    };
+
+    this.move_primitive = function (index, up=true) {
+        if (index === null || this.primitives.length < 2 || (up && index === (this.primitives.length - 1)) || (!up && index === 0)) {
+            return;  // This shouldn't happen at this level, but just in case
+        }
+
+        this.primitives.splice(
+            up ? parseInt(index) + 1 : parseInt(index) - 1,
+            0,
+            this.primitives.Pop(index)
+        );
+
+        this.update_all_primitive_indexes();
+    };
+
+    this.update_all_primitive_indexes = function () {
+        for (var i in this.primitives) {
+            this.primitives[i].SetIndex(parseInt(i));
+        }
     };
 
     this.add_observer = function () {

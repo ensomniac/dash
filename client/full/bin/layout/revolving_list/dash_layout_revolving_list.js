@@ -35,6 +35,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.last_column_config = null;
     this.last_selected_row_id = "";
     this.row_events_disabled = false;
+    this.row_clicks_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
@@ -262,6 +263,14 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
         for (var row of this.row_objects) {
             row.FullyDisable();
+        }
+    };
+
+    this.DisableRowClickEvents = function () {
+        this.row_clicks_disabled = true;
+
+        for (var row of this.row_objects) {
+            row.column_box.off("click");
         }
     };
 
@@ -603,7 +612,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
     // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
-        if (this.row_events_disabled) {
+        if (this.row_events_disabled || this.row_clicks_disabled) {
             return;
         }
 
@@ -627,6 +636,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         row.RefreshConnections();
+
+        if (this.row_clicks_disabled) {
+            row.column_box.off("click");
+        }
 
         this.set_on_row_click(row);
         this.set_hover_preview(row);

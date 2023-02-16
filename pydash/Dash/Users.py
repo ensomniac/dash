@@ -48,7 +48,6 @@ class Users:
         from json import dumps
         from random import randint
         from datetime import datetime
-        from Dash.Utils import SendEmail
         from base64 import urlsafe_b64encode
 
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
@@ -99,12 +98,10 @@ class Users:
 
         body_text += "\nOnce signed in, please change your password."
 
-        SendEmail(
+        self.send_email(
             subject=subject,
-            notify_email_list=[email],
             msg=body_text,
-            sender_email=self.dash_context.get("admin_from_email"),
-            sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
+            notify_email_list=[email]
         )
 
         return_data["success"] = True
@@ -452,6 +449,48 @@ class Users:
 
         return return_data
 
+    # Wrapper
+    def send_email(self, subject="", msg="", notify_email_list=[], error=""):
+        from Dash.Utils import SendEmail
+
+        bcc_email_list = []
+        strict_notify = False
+
+        try:
+            asset_path = self.dash_context.get("asset_path")
+            sender_name = (self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
+            sender_email = self.dash_context.get("admin_from_email")
+        except:
+            asset_path = ""
+            sender_name = ""
+            sender_email = ""
+
+        if asset_path:
+            from Dash import PersonalContexts
+
+            for email in PersonalContexts:
+                if asset_path in PersonalContexts[email]["asset_paths"]:
+                    strict_notify = True
+
+                    if notify_email_list:
+                        bcc_email_list.append(email)
+
+                    elif email not in notify_email_list:
+                        notify_email_list.append(email)
+
+                    break
+
+        SendEmail(
+            subject=subject,
+            msg=msg,
+            error=error,
+            notify_email_list=notify_email_list,
+            strict_notify=strict_notify,
+            sender_email=sender_email,
+            sender_name=sender_name,
+            bcc_email_list=bcc_email_list
+        )
+
     def validate_reset(self, email, user_email_domain_bypass_emails=[]):
         # If an email domain has been specified, don't allow any emails outside of that domain to create an account
         if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
@@ -484,11 +523,11 @@ class Users:
         if self.request_params.get(auth_key):
             return
 
-        from Dash.Utils import SendEmail, ClientAlert
+        from Dash.Utils import ClientAlert
 
         link = f"https://{self.dash_context['domain']}/Users?f=reset&email={email}&{auth_key}=true"
 
-        SendEmail(
+        self.send_email(
             subject="Dash Guide - New User Request",
             msg=(
                 f"\n'{email}' has requested to create an account in Dash Guide.\n\n"
@@ -610,16 +649,12 @@ class Users:
                 # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
                 # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
                 if os.path.exists(os.path.join(users_root, user_email, "sessions")):
-                    from Dash.Utils import SendEmail
-
                     team[user_email] = {"error": e}
 
-                    SendEmail(
+                    self.send_email(
                         subject="Dash Error - Users.get_team()",
                         msg=f"Warning: Failed to get user info for {user_email}. If it's not a new user, data may be corrupted.",
-                        error=e,
-                        sender_email=self.dash_context.get("admin_from_email"),
-                        sender_name=(self.dash_context.get("code_copyright_text") or self.dash_context.get("display_name"))
+                        error=e
                     )
 
         return team

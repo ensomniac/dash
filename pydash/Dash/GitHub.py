@@ -67,6 +67,7 @@ class GitHub:
 
         from json2html import json2html
         from Dash.Utils import SendEmail
+        from Dash import PersonalContexts
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
@@ -93,25 +94,11 @@ class GitHub:
         msg += "<br><b>Full Github Payload:</b><br>"
         msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
 
-        # Repo names
-        ryan_personal_repos = [
-            "smartsioux",
-            "rycam",
-            "ensomniac_io",
-            "ensomniac_ai",
-            "freshpath"
-        ]
+        for email in PersonalContexts:
+            if return_data["repository"] in PersonalContexts[email]["repo_names"]:
+                email_list = [email]
 
-        # Repo names
-        andrew_personal_repos = [
-            "simplepaycheckbudget"
-        ]
-
-        if return_data["repository"] in ryan_personal_repos:
-            email_list = ["ryan@ensomniac.com"]
-
-        elif return_data["repository"] in andrew_personal_repos:
-            email_list = ["stetandrew@gmail.com"]
+                break
 
         SendEmail(
             subject=subject,
@@ -133,15 +120,14 @@ class GitHub:
                 path += "/"
 
         cmds = [
-            f"cd {local_git_root}",
-            "git pull",
-            "git clean -f -d",
-            "git reset HEAD .",
-            "git checkout . -f",
-            "git clean -f -d",
-            "git checkout . -f",
-            "git pull",
-            "git status"  # So we can see this in the output field of the email
+            f"cd {local_git_root}; git pull",
+            f"cd {local_git_root}; git clean -f -d",
+            f"cd {local_git_root}; git reset HEAD .",
+            f"cd {local_git_root}; git checkout . -f",
+            f"cd {local_git_root}; git clean -fd",
+            f"cd {local_git_root}; git checkout . -f",
+            f"cd {local_git_root}; git pull",
+            f"cd {local_git_root}; git status"  # So we can see this in the output field of the email
         ]
 
         if local_git_root == dest_path:
@@ -155,7 +141,7 @@ class GitHub:
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
-        # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called
+        # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called.
         return RunAsRoot.Queue(cmds)
 
 

@@ -1,6 +1,7 @@
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
 
+    this.num = -1; // TODO: TESTING remove
     this.html = null;
     this.header = null;
     this.layout = null;
@@ -9,7 +10,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
-    this.min_height = Dash.Size.ButtonHeight * 5;  // Increase this when any other elements are added that would increase the overall height
+    this.min_height = Dash.Size.ButtonHeight * 5.1;  // Increase this when any other elements are added that would increase the overall height
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
 
     this.PrimitiveTypes = [
@@ -95,6 +96,62 @@ function DashGuiContext2DEditorPanelContent (panel) {
         return tool_row;
     };
 
+    // TODO: When the pane sliders in the editor panel are moved up/down, this should be
+    //  called for all visible floating combos (this.last_instantiated_class.floating_combos)
+    this.FloatCombos = function (instantiated_class) {
+        if (!instantiated_class.floating_combos) {
+            return;
+        }
+
+        for (var floating_combo of instantiated_class.floating_combos) {
+            var combo = floating_combo["tool_row"].elements.Last().combo;
+
+            if (!combo) {
+                return;
+            }
+
+            combo.html.detach();
+
+            // I couldn't get the combo skirt/rows to appear above the other panels, no matter
+            // what I did, so this basically detaches it and adds it back on top of everything
+            combo.html.css({
+                "position": "absolute",
+                "top": (
+                    this.panel.property_box.html.outerHeight()  // Editor panel top box height
+                    + (
+                          this.html.outerHeight()  // Editor panel content box height
+                        - floating_combo["tool_row"].html[0].offsetTop  // Offset from top of content box
+                    )
+                    - 1  // Bottom border of combo row
+                    + (floating_combo["extra_top"] || 0)  // For some reason, this is needed for some but not all...
+                ),
+                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
+            });
+
+            this.panel.html.append(combo.html);
+        }
+    };
+
+    this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
+        if (this.last_instantiated_class && this.last_instantiated_class.floating_combos) {
+            for (var floating_combo of this.last_instantiated_class.floating_combos) {
+                var combo = floating_combo["tool_row"].elements.Last().combo;
+
+                if (!combo) {
+                    return;
+                }
+
+                combo.html.remove();
+            }
+
+            this.last_instantiated_class.floating_combos = [];
+        }
+
+        this.set_inactive_tabs_bg_color(selected_content_data);
+
+        this.last_instantiated_class = instantiated_class;
+    };
+
     this.add_edit_box = function () {
         this.layout.Prepend("Edit", function () {
             return new DashGuiContext2DEditorPanelContentEdit(this);
@@ -130,12 +187,6 @@ function DashGuiContext2DEditorPanelContent (panel) {
         });
 
         this.layout.AppendHTML(this.header.html);
-    };
-
-    this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
-        this.set_inactive_tabs_bg_color(selected_content_data);
-
-        this.last_instantiated_class = instantiated_class;
     };
 
     this.set_header_right_margin = function () {

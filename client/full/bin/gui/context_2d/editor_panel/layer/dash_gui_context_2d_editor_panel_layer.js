@@ -1,6 +1,7 @@
-function DashGuiContext2DEditorPanelLayer (layers, index) {
+function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
     this.layers = layers;
     this.index = index;
+    this.primitive_type = primitive_type;
 
     this.input = null;
     this.selected = false;
@@ -28,6 +29,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
         this.add_icon_area();
         this.RefreshConnections();
+    };
+
+    this.SetLabel = function (value) {
+        this.input.SetText(value);
     };
 
     this.IsSelected = function () {
@@ -67,7 +72,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
         });
     };
 
-    this.Select = function () {
+    this.Select = function (from_canvas=false) {
         if (this.selected) {
             return;
         }
@@ -81,7 +86,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
             "cursor": "auto"
         });
 
-        this.editor.SetCanvasActiveLayer(this.index);
+        if (!from_canvas) {
+            this.editor.SetCanvasActivePrimitive(this.index);
+        }
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Selected layer: " + this.get_display_name());
@@ -103,7 +110,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasLayerHidden(this.index, hidden);
+
+            this.SetData("hidden", hidden);
         }
     };
 
@@ -118,7 +126,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
 
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
-            this.editor.ToggleCanvasLayerLocked(this.index, locked);
+
+            this.SetData("locked", locked);
         }
     };
 
@@ -133,11 +142,11 @@ function DashGuiContext2DEditorPanelLayer (layers, index) {
     };
 
     this.get_display_name = function () {
-        return (this.input.Text().trim() || this.get_data()["display_name"] || "New Layer");
+        return (this.input.Text().trim() || this.get_data()["display_name"] || "New " + primitive_type.Title() + " Layer");
     };
 
     this.add_input = function () {
-        this.input = new Dash.Gui.Input("New Layer", this.color);
+        this.input = new Dash.Gui.Input("New " + primitive_type.Title() + " Layer", this.color);
 
         this.input.html.css({
             "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later

@@ -16,7 +16,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
      *                                Required/expected combo option type keys:
-     *                                  - fonts
+     *                                  - fonts (make sure 'url' and 'filename' is included in each option, alongside the usual 'id' and 'label_text')
      *                                  - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
@@ -98,110 +98,120 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     // TODO: regarding all these public functions, some are intended to only be called
     //  by certain elements, so having them appear as public may be confusing later - rename?
 
+    this.SetEditorPanelLayerProperty = function (key, value, index, primitive_previous_value=null) {
+        this.editor_panel.SetLayerProperty(key, value, index, primitive_previous_value);
+    };
+
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
     };
 
+    this.CanvasInputInFocus = function () {
+        return this.canvas.InputInFocus();
+    };
+
     this.SetCanvasTool = function (name, cursor) {
-        if (!this.canvas) {
-            return;
+        if (this.canvas) {
+            this.canvas.SetTool(name, cursor);
         }
-
-        this.canvas.SetTool(name, cursor);
     };
 
-    this.SetCanvasActiveLayer = function (index) {
-        if (!this.canvas) {
-            return;
+    this.SetCanvasActivePrimitive = function (index) {
+        if (this.canvas) {
+            this.canvas.SetActivePrimitive(index);
         }
-
-        this.canvas.SetActiveLayer(index);
     };
 
-    this.MoveCanvasLayerUp = function (index) {
-        if (!this.canvas) {
-            return;
+    this.SetCanvasPrimitiveProperty = function (key, value, index=null) {
+        if (this.canvas) {
+            this.canvas.SetPrimitiveProperty(key, value, index);
         }
-
-        this.canvas.MoveLayerUp(index);
     };
 
-    this.MoveCanvasLayerDown = function (index) {
-        if (!this.canvas) {
-            return;
+    this.DeselectAllCanvasPrimitives = function () {
+        if (this.canvas) {
+            this.canvas.DeselectAllPrimitives();
         }
-
-        this.canvas.MoveLayerDown(index);
     };
 
-    this.AddCanvasLayer = function (index, primitive_type, primitive_file_data=null) {
-        if (!this.canvas) {
-            return;
+    this.MoveCanvasPrimitiveUp = function (index) {
+        if (this.canvas) {
+            this.canvas.MovePrimitiveUp(index);
         }
-
-        this.canvas.AddLayer(index, primitive_type, primitive_file_data);
     };
 
-    this.RemoveCanvasLayer = function (index) {
-        if (!this.canvas) {
-            return;
+    this.MoveCanvasPrimitiveDown = function (index) {
+        if (this.canvas) {
+            this.canvas.MovePrimitiveDown(index);
         }
-
-        this.canvas.RemoveLayer(index);
     };
 
-    this.ToggleCanvasLayerHidden = function (index, hidden) {
-        if (!this.canvas) {
-            return;
+    this.AddCanvasPrimitive = function (index, primitive_data) {
+        if (this.canvas) {
+            this.canvas.AddPrimitive(index, primitive_data);
         }
-
-        this.canvas.ToggleLayerHidden(index, hidden);
     };
 
-    this.ToggleCanvasLayerLocked = function (index, locked) {
-        if (!this.canvas) {
-            return;
+    this.RemoveCanvasPrimitive = function (index) {
+        if (this.canvas) {
+            this.canvas.RemovePrimitive(index);
         }
+    };
 
-        this.canvas.ToggleLayerLocked(index, locked);
+    this.CanvasSizeInitialized = function () {
+        if (this.canvas) {
+            return this.canvas.SizeInitialized();
+        }
+    };
+
+    this.ResizeCanvas = function () {
+        if (this.canvas) {
+            this.canvas.Resize();
+        }
+    };
+
+    this.SelectLayer = function (index, from_canvas=true) {
+        if (this.editor_panel) {
+            this.editor_panel.SelectLayer(index, from_canvas);
+        }
+    };
+
+    this.DeselectAllLayers = function () {
+        this.editor_panel.layers_box.DeselectLayers();
+
+        this.editor_panel.SwitchContentToNewTab();
+
+        this.DeselectAllCanvasPrimitives();
     };
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
     };
 
-    this.GetAspectRatio = function () {
-        if (!this.editor_panel) {
+    this.GetAspectRatio = function (calculated=false) {
+        var aspect;
+
+        if (this.editor_panel) {
+            aspect = this.editor_panel.GetAspectRatio();
+        }
+
+        else {
             var data = this.get_data();
 
-            return [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
+            aspect = [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
         }
 
-        return this.editor_panel.GetAspectRatio();
-    };
-
-    this.CanvasSizeInitialized = function () {
-        if (!this.canvas) {
-            return;
+        if (calculated) {
+            return aspect[0] / aspect[1];
         }
 
-        return this.canvas.SizeInitialized();
-    };
-
-    this.ResizeCanvas = function () {
-        if (!this.canvas) {
-            return;
-        }
-
-        this.canvas.Resize();
+        return aspect;
     };
 
     this.AddToLog = function (message) {
-        if (!this.log_bar) {
-            return;
+        if (this.log_bar) {
+            this.log_bar.Add(message);
         }
-
-        this.log_bar.Add(message);
     };
 
     this.refresh_data = function () {

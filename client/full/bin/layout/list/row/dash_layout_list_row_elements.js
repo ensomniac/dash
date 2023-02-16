@@ -184,8 +184,8 @@ function DashLayoutListRowElements () {
             if (this.is_header && label) {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
-                    "font-family": "sans_serif_bold",
-                    // "color": this.color.Stroke  // Why was this the default?
+                    "font-family": column_config_data["header_css"]["font-family"] || "sans_serif_bold",
+                    "color": column_config_data["header_css"]["color"] || this.color.Stroke
                 });
             }
 
@@ -209,8 +209,7 @@ function DashLayoutListRowElements () {
 
         var css = {
             "background": "none",
-            "height": this.height * 0.9,
-            // "margin-top": Dash.Size.Padding * 0.1,  // Why was this added?
+            "height": this.height * (this.header ? 1 : 0.9),
             "box-shadow": "none"
         };
 
@@ -219,7 +218,13 @@ function DashLayoutListRowElements () {
         }
 
         if (this.is_header) {
+            if (placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+
             css["border"] = "none";
+            css["line-height"] = this.height + "px";
 
             if (column_config_data["header_css"]) {
                 css = {
@@ -230,7 +235,13 @@ function DashLayoutListRowElements () {
         }
 
         else {
+            if (this.is_sublist && placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+
             css["border"] = "1px solid " + this.color.Pinstripe;
+            css["margin-top"] = Dash.Size.Padding * 0.1;
 
             if (column_config_data["css"]) {
                 css = {
@@ -245,13 +256,6 @@ function DashLayoutListRowElements () {
         if (this.is_header || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
-
-            if (placeholder_label) {
-                input.html.css({
-                    "color": color.Text,
-                    "font-family": "sans_serif_bold"
-                });
-            }
 
             input.html.text(
                 placeholder_label && column_config_data["options"]["use_placeholder_label_for_header"] ?

@@ -296,7 +296,7 @@ class ApiCore:
                 self._params[key] = value
 
         try:
-            self.dash_global.RequestData = params
+            self.dash_global.RequestData = self._params
         except:
             pass
 
@@ -459,27 +459,14 @@ class ApiCore:
             except:
                 pass
 
-        # Asset paths
-        ryan_personal_packages = [
-            "smartsioux",
-            "rycam",
-            "ensomniac_io",
-            "ensomniac_ai",
-            "freshpath"
-        ]
+        from Dash import PersonalContexts
 
-        # Asset paths
-        andrew_personal_packages = [
-            "simple_paycheck_budget"
-        ]
+        for email in PersonalContexts:
+            if self._asset_path in PersonalContexts[email]["asset_paths"]:
+                strict_notify = True
+                notify_email_list = [email]
 
-        if self._asset_path in ryan_personal_packages:
-            strict_notify = True
-            notify_email_list = ["ryan@ensomniac.com"]
-
-        if self._asset_path in andrew_personal_packages:
-            strict_notify = True
-            notify_email_list = ["stetandrew@gmail.com"]
+                break
 
         try:
             SendEmail(
@@ -494,12 +481,16 @@ class ApiCore:
 
         # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
         except Exception:
+            from Dash import AdminEmails
             from traceback import format_exc
 
             # Send additional email explaining the failure, likely token refresh issue
             SendEmail(
                 subject="ApiCore.SendEmail Error",
-                msg="Email failed to send, likely due to an token that failed to refresh (see error).",
+                msg=(
+                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
+                    f"likely due to an token that failed to refresh (see error to confirm):"
+                ),
                 error=format_exc()
             )
 

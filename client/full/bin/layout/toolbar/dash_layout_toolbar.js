@@ -42,10 +42,26 @@ function DashLayoutToolbar (binder, color=null) {
         obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
 
+    this.on_input_autosaved = function (obj_index) {
+        var obj = this.objects[obj_index];
+
+        obj["on_autosave_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+    };
+
     this.on_button_clicked = function (obj_index, data=null) {
         var obj = this.objects[obj_index];
 
         obj["callback"](obj["html"], data, this);
+    };
+
+    this.on_combo_updated = function (callback, selected_id, previous_selected_option, additional_data) {
+        if (callback) {
+            callback(selected_id, previous_selected_option, this, additional_data);
+        }
+
+        else {
+            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+        }
     };
 
     this.refactor_item_padding = function () {

@@ -7,6 +7,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
     this.label = null;
     this.border_size = 1;
+    this.flash_disabled = false;
     this.last_change_ts = null;
     this.change_timeout = null;
     this.flash_highlight = null;
@@ -29,6 +30,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
     this.setup_styles = function () {
         this.textarea.css({
             "color": this.color.Text,
+            "font-family": "sans_serif_normal",
             "padding": Dash.Size.Padding * 0.5,
             "box-sizing": "border-box",
             "width": "100%",
@@ -91,18 +93,21 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.textarea.prop("readOnly", true);
     };
 
-    this.Unlock = function () {
-        var css = {"color": this.color.Text};
+    this.Unlock = function (restore_style=true) {
+        if (restore_style) {
+            var css = {"color": this.color.Text};
 
-        if (this.textarea.css("border-top") !== "none") {
-            css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            if (this.textarea.css("border-top") !== "none") {
+                css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+
+            else {
+                css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+            }
+
+            this.textarea.css(css);
         }
 
-        else {
-            css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
-        }
-
-        this.textarea.css(css);
         this.textarea.prop("readOnly", false);
     };
 
@@ -194,11 +199,23 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
     };
 
+    this.InFocus = function () {
+        return $(this.textarea).is(":focus");
+    };
+
+    this.Focus = function () {
+        this.textarea.trigger("focus");
+    };
+
     this.DisableAutoSubmit = function () {
         this.submit_override_only = true;
     };
 
     this.Flash = function () {
+        if (this.flash_disabled) {
+            return;
+        }
+
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
 
@@ -253,6 +270,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         return this.label;
     };
 
+    this.DisableFlash = function () {
+        this.flash_disabled = true;
+    };
+
     this.setup_connections = function () {
         // Important note:
         // When testing on a desktop's mobile view, you can't select the text with the
@@ -270,6 +291,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
             self.textarea.on("paste", function () {
                 self.fire_change_cb();
+            });
+
+            self.textarea.on("blur", function () {
+                self.fire_change_cb(true);
             });
 
             self.textarea.on("keydown",function (e) {

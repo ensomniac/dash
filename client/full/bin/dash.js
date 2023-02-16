@@ -34,6 +34,7 @@ function Dash () {
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
     this.Math      = new DashMath();
+    this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
     this.Size      = new DashSize(this.IsMobile);
     this.Temp      = new DashTemp();
@@ -343,9 +344,28 @@ function Dash () {
         };
     };
 
+    this.extend_date_prototype = function () {
+        // This gets the ISO week number, which is equivalent to calling '.isocalendar().week' on a python datetime object
+        Date.prototype.getWeek = function () {
+            var date = new Date(this.getTime());
+
+            date.setHours(0, 0, 0, 0);
+
+            // Thursday in current week decides the year
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+
+            // January 4 is always in week 1
+            var week1 = new Date(date.getFullYear(), 0, 4);
+
+            // Adjust to Thursday in week 1 and count number of weeks from date to week1
+            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        };
+    };
+
     this.extend_js = function () {
         this.extend_array_prototype();
         this.extend_string_prototype();
+        this.extend_date_prototype();
     };
 
     // Called once when document ready
