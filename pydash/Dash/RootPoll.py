@@ -10,9 +10,9 @@ import json
 from pathlib import Path
 from threading import Timer
 from datetime import datetime
-from traceback import format_exc
 from Dash.Utils import OapiRoot
-from subprocess import check_output
+from traceback import format_exc
+from subprocess import check_output, STDOUT, CalledProcessError
 
 
 class PollRequests:
@@ -48,19 +48,22 @@ class PollRequests:
             sys.exit("Waiting on another process...")
 
     def get_pids(self, script_name):
-        result = check_output(["ps -eaf"], shell=True).decode()
         pids = []
+        result = check_output(["ps -eaf"], shell=True).decode()
 
         try:
             for line in result.split("\n"):
                 if script_name not in line:
                     continue
+
                 if "terminated" in line.lower():
                     continue
+
                 if "PollRequests.py" not in line:
                     continue
 
                 pid = str(line.split()[1].strip())
+
                 pids.append(pid)
         except:
             pass
@@ -138,8 +141,6 @@ class PollRequests:
             open(task_path, "w").write(json.dumps(task_state))
 
     def run_task(self, task_path):
-        from subprocess import check_output
-
         error_occurred = False
         task_state = json.loads(open(task_path, "r").read())
         cmd_type = type(task_state["cmd"])
@@ -147,28 +148,44 @@ class PollRequests:
         if cmd_type is list:
             log_results = []
 
+            # check_output takes a list of commands, but it appears it joins those commands
+            # with a semicolon to run them (though I can't find confirmation), which we don't
+            # want, so we'll fire off an individual call for each command instead
             for command in task_state["cmd"]:
-                # check_output takes a list of commands, but it appears it joins those commands
-                # with a semicolon to run them (though I can't find confirmation), which we don't
-                # want, so we'll fire off an individual call for each command instead
-                log_results.append(check_output([command], shell=True).decode().strip())
+                result = self.run_task_command(command)
+
+                if type(result) is list:
+                    log_results += result
+                else:
+                    log_results.append(result)
 
             log_result = "\n".join(log_results)
 
         elif cmd_type is str:
-            log_result = check_output([task_state["cmd"]], shell=True).decode().strip()
+            log_result = self.run_task_command(task_state["cmd"])
 
         else:
             error_occurred = True
             log_result = f"Invalid command type: {cmd_type}"
 
         task_state = json.loads(open(task_path, "r").read())
+
         task_state["complete"] = True
         task_state["error"] = error_occurred
         task_state["cmd_type"] = str(cmd_type)
         task_state["output"] = log_result
 
         open(task_path, "w").write(json.dumps(task_state))
+
+    def run_task_command(self, command):
+        try:
+            return check_output([command], shell=True, stderr=STDOUT).decode().strip().split("\n")
+
+        except CalledProcessError as e:
+            return [
+                e.output.decode() or e.stdout.decode(),
+                str(e)
+            ]
 
 
 if __name__ == "__main__":
