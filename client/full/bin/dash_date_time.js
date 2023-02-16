@@ -101,10 +101,14 @@ function DashDateTime () {
         return dt_obj;
     };
 
-    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false) {
+    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false, sec_mod=0) {
         var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
         var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
         var secs = Math.floor((end_ms - start_ms) / 1000);
+
+        if (sec_mod !== 0) {
+            secs += sec_mod;
+        }
 
         return this.GetReadableHoursMins(secs, include_secs);
     };
@@ -216,20 +220,17 @@ function DashDateTime () {
         );
     };
 
-    // Get a date object of the start of a given week/year (Sunday)
-    this.GetDateObjectForWeek = function (week_num, year) {
+    // Get a date object of the start of a given week/year (defaults to Sunday, but ISO weeks start on Monday)
+    this.GetDateObjectForWeek = function (week_num, year, start_on_monday=false) {
         var dt_obj = new Date(year, 0, 1 + (week_num - 1) * 7);
 
         dt_obj.setDate((dt_obj.getDay() <= 4 ? (dt_obj.getDate() - dt_obj.getDay() + 1) : (dt_obj.getDate() + 8 - dt_obj.getDay())) - 1);
 
+        if (start_on_monday) {
+            dt_obj.setDate(dt_obj.getDate() + 1);
+        }
+
         return dt_obj;
-    };
-
-    this.GetWeekNum = function (dt_obj) {
-        var jan_first = new Date(dt_obj.getFullYear(),0,1);
-        var days_so_far = Math.floor((dt_obj - jan_first) / 86400000);
-
-        return Math.ceil((dt_obj.getDay() + 1 + days_so_far) / 7);
     };
 
     this.GetDayOrdinalSuffix = function (day_num) {

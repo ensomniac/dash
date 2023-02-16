@@ -17761,9 +17761,23 @@ function Dash () {
             }
         };
     };
+    this.extend_date_prototype = function () {
+        // This gets the ISO week number, which is equivalent to calling '.isocalendar().week' on a python datetime object
+        Date.prototype.getWeek = function () {
+            var date = new Date(this.getTime());
+            date.setHours(0, 0, 0, 0);
+            // Thursday in current week decides the year
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            // January 4 is always in week 1
+            var week1 = new Date(date.getFullYear(), 0, 4);
+            // Adjust to Thursday in week 1 and count number of weeks from date to week1
+            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        };
+    };
     this.extend_js = function () {
         this.extend_array_prototype();
         this.extend_string_prototype();
+        this.extend_date_prototype();
     };
     // Called once when document ready
     this.Initialize = function () {
@@ -19641,10 +19655,13 @@ function DashDateTime () {
         }
         return dt_obj;
     };
-    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false) {
+    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false, sec_mod=0) {
         var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
         var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
         var secs = Math.floor((end_ms - start_ms) / 1000);
+        if (sec_mod !== 0) {
+            secs += sec_mod;
+        }
         return this.GetReadableHoursMins(secs, include_secs);
     };
     this.GetReadableHoursMins = function (secs, include_secs=false) {
@@ -19726,16 +19743,14 @@ function DashDateTime () {
             (new Date().getTimezoneOffset() / 60))  // Ensure the timeago representation is always relevant to the user's timezone
         );
     };
-    // Get a date object of the start of a given week/year (Sunday)
-    this.GetDateObjectForWeek = function (week_num, year) {
+    // Get a date object of the start of a given week/year (defaults to Sunday, but ISO weeks start on Monday)
+    this.GetDateObjectForWeek = function (week_num, year, start_on_monday=false) {
         var dt_obj = new Date(year, 0, 1 + (week_num - 1) * 7);
         dt_obj.setDate((dt_obj.getDay() <= 4 ? (dt_obj.getDate() - dt_obj.getDay() + 1) : (dt_obj.getDate() + 8 - dt_obj.getDay())) - 1);
+        if (start_on_monday) {
+            dt_obj.setDate(dt_obj.getDate() + 1);
+        }
         return dt_obj;
-    };
-    this.GetWeekNum = function (dt_obj) {
-        var jan_first = new Date(dt_obj.getFullYear(),0,1);
-        var days_so_far = Math.floor((dt_obj - jan_first) / 86400000);
-        return Math.ceil((dt_obj.getDay() + 1 + days_so_far) / 7);
     };
     this.GetDayOrdinalSuffix = function (day_num) {
         var j = day_num % 10;
