@@ -24460,12 +24460,13 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
     };
-    this.AddHighlight = function () {
+    this.AddHighlight = function (force_in_container=false) {
+        var height = 3;
         this.highlight.css({
             "background": this.color.AccentGood,
-            "top": "auto",
-            "height": 3,
-            "bottom": -3
+            "top": force_in_container && this.icon_height ? (this.icon_height - height) : "auto",
+            "height": height,
+            "bottom": -height
         });
     };
     this.setup_icon = function () {
@@ -31802,6 +31803,7 @@ function DashGuiIcons (icon) {
         "toggle_on":             new DashGuiIconDefinition(this.icon, "Toggle On", this.weight["regular"], "toggle-on"),
         "toggle_on_light":       new DashGuiIconDefinition(this.icon, "Toggle On (Light)", this.weight["light"], "toggle-on"),
         "toggle_on_solid":       new DashGuiIconDefinition(this.icon, "Toggle On (Solid)", this.weight["solid"], "toggle-on"),
+        "toilet_paper":          new DashGuiIconDefinition(this.icon, "Toilet Paper", this.weight["regular"], "toilet-paper-alt"),
         "tools":                 new DashGuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
         "transferring":          new DashGuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new DashGuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),
@@ -38799,10 +38801,15 @@ function DashLayoutToolbarInterface () {
         return divider_line;
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color || this.color);
+    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true) {
+        var header = new Dash.Gui.Header(text, color || this.color, include_start_border);
+        if (!include_start_border) {
+            header.label.css({
+                "padding-left": 0
+            });
+        }
         header.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": include_start_border ? Dash.Size.Padding * 0.5 : 0,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding,
         });
@@ -38836,7 +38843,7 @@ function DashLayoutToolbarInterface () {
         label.border.remove();
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0
+            "margin-top": 0  // Why is this the default?
         });
         label.label.css({
             "font-family": "sans_serif_normal",

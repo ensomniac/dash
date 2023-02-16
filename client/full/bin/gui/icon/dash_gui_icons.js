@@ -244,6 +244,7 @@ function DashGuiIcons (icon) {
         "toggle_on":             new DashGuiIconDefinition(this.icon, "Toggle On", this.weight["regular"], "toggle-on"),
         "toggle_on_light":       new DashGuiIconDefinition(this.icon, "Toggle On (Light)", this.weight["light"], "toggle-on"),
         "toggle_on_solid":       new DashGuiIconDefinition(this.icon, "Toggle On (Solid)", this.weight["solid"], "toggle-on"),
+        "toilet_paper":          new DashGuiIconDefinition(this.icon, "Toilet Paper", this.weight["regular"], "toilet-paper-alt"),
         "tools":                 new DashGuiIconDefinition(this.icon, "Tools", this.weight["regular"], "tools"),
         "transferring":          new DashGuiIconDefinition(this.icon, "Transferring", this.weight["regular"], "exchange"),
         "trash":                 new DashGuiIconDefinition(this.icon, "Trash", this.weight["regular"], "trash"),

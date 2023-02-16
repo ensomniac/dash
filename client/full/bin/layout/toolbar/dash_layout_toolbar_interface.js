@@ -194,11 +194,17 @@ function DashLayoutToolbarInterface () {
     };
 
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null) {
-        var header = new Dash.Gui.Header(text, color || this.color);
+    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true) {
+        var header = new Dash.Gui.Header(text, color || this.color, include_start_border);
+
+        if (!include_start_border) {
+            header.label.css({
+                "padding-left": 0
+            });
+        }
 
         header.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": include_start_border ? Dash.Size.Padding * 0.5 : 0,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding,
         });
@@ -243,7 +249,7 @@ function DashLayoutToolbarInterface () {
 
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0
+            "margin-top": 0  // Why is this the default?
         });
 
         label.label.css({

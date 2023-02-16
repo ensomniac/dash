@@ -41,12 +41,14 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.html.attr("title", hint);
     };
 
-    this.AddHighlight = function () {
+    this.AddHighlight = function (force_in_container=false) {
+        var height = 3;
+
         this.highlight.css({
             "background": this.color.AccentGood,
-            "top": "auto",
-            "height": 3,
-            "bottom": -3
+            "top": force_in_container && this.icon_height ? (this.icon_height - height) : "auto",
+            "height": height,
+            "bottom": -height
         });
     };
 
