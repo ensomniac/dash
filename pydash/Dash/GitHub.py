@@ -120,15 +120,14 @@ class GitHub:
                 path += "/"
 
         cmds = [
-            f"cd {local_git_root}",
-            "git pull",
-            "git clean -f -d",
-            "git reset HEAD .",
-            "git checkout . -f",
-            "git clean -f -d",
-            "git checkout . -f",
-            "git pull",
-            "git status"  # So we can see this in the output field of the email
+            f"cd {local_git_root}; git pull",
+            f"cd {local_git_root}; git clean -f -d",
+            f"cd {local_git_root}; git reset HEAD .",
+            f"cd {local_git_root}; git checkout . -f",
+            f"cd {local_git_root}; git clean -fd",
+            f"cd {local_git_root}; git checkout . -f",
+            f"cd {local_git_root}; git pull",
+            f"cd {local_git_root}; git status"  # So we can see this in the output field of the email
         ]
 
         if local_git_root == dest_path:
