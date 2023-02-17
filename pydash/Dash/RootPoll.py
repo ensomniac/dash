@@ -146,6 +146,8 @@ class PollRequests:
         cmd_type = type(task_state["cmd"])
 
         if cmd_type is list:
+            from time import sleep
+
             log_result = {}
 
             # check_output takes a list of commands, but it appears it joins those commands
@@ -153,6 +155,11 @@ class PollRequests:
             # want, so we'll fire off an individual call for each command instead
             for command in task_state["cmd"]:
                 log_result[command] = self.run_task_command(command)
+
+                # Some commands are failing due to the index.lock file still existing when they're run,
+                # which leads me to believe the commands are being executed too quickly. Adding a little
+                # delay in between each one should hopefully resolve that (if my suspicion is correct).
+                sleep(0.1)  # Increase by increments of 0.1 if needed
 
         elif cmd_type is str:
             log_result = self.run_task_command(task_state["cmd"])
