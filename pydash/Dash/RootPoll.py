@@ -146,20 +146,13 @@ class PollRequests:
         cmd_type = type(task_state["cmd"])
 
         if cmd_type is list:
-            log_results = []
+            log_result = {}
 
             # check_output takes a list of commands, but it appears it joins those commands
             # with a semicolon to run them (though I can't find confirmation), which we don't
             # want, so we'll fire off an individual call for each command instead
             for command in task_state["cmd"]:
-                result = self.run_task_command(command)
-
-                if type(result) is list:
-                    log_results += result
-                else:
-                    log_results.append(result)
-
-            log_result = "\n".join(log_results)
+                log_result[command] = self.run_task_command(command)
 
         elif cmd_type is str:
             log_result = self.run_task_command(task_state["cmd"])
