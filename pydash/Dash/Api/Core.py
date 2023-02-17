@@ -407,7 +407,7 @@ class ApiCore:
         msg = self.get_msg_for_email(msg)
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
-        self.send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
+        self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
 
     def get_misc_for_email(self, strict_notify, notify_email_list):
         from Dash import PersonalContexts
@@ -506,45 +506,6 @@ class ApiCore:
                 pass
 
         return error or ""
-
-    def send_email(self, subject, notify_email_list, msg, error, strict_notify, sender_name):
-        from Dash.Utils import SendEmail
-
-        try:
-            SendEmail(
-                subject=subject,
-                notify_email_list=notify_email_list,
-                msg=msg,
-                error=error,
-                strict_notify=strict_notify,
-                sender_email=self.DashContext.get("admin_from_email"),
-                sender_name=sender_name
-            )
-
-        # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
-        except Exception:
-            from Dash import AdminEmails
-            from traceback import format_exc
-
-            # Send additional email explaining the failure, likely token refresh issue
-            SendEmail(
-                subject="ApiCore.SendEmail Error",
-                msg=(
-                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
-                    f"likely due to an token that failed to refresh (see error to confirm):"
-                ),
-                error=format_exc()
-            )
-
-            # Send intended email using default from-email to at least ensure we get it
-            SendEmail(
-                subject=subject,
-                notify_email_list=notify_email_list,
-                msg=msg,
-                error=error,
-                strict_notify=strict_notify,
-                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
-            )
 
     # Special cases that are safe to ignore and are ideally handled by raising a ClientAlert, but
     # can't be. and don't have a better place to be handled without breaking other functionality
@@ -651,6 +612,45 @@ class ApiCore:
 
         except:
             self.SetError(format_exception=True)
+
+    def _send_email(self, subject, notify_email_list, msg, error, strict_notify, sender_name):
+        from Dash.Utils import SendEmail
+
+        try:
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_email=self.DashContext.get("admin_from_email"),
+                sender_name=sender_name
+            )
+
+        # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
+        except Exception:
+            from Dash import AdminEmails
+            from traceback import format_exc
+
+            # Send additional email explaining the failure, likely token refresh issue
+            SendEmail(
+                subject="ApiCore.SendEmail Error",
+                msg=(
+                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
+                    f"likely due to an token that failed to refresh (see error to confirm):"
+                ),
+                error=format_exc()
+            )
+
+            # Send intended email using default from-email to at least ensure we get it
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+            )
 
     # DEPRECATED (see comment)
     def Execute(uninstantiated_class_ref):
