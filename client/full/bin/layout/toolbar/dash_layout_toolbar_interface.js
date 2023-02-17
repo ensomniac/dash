@@ -62,7 +62,7 @@ function DashLayoutToolbarInterface () {
         var obj_index = this.objects.length;
         var button = null;
 
-        callback = callback.bind(self.binder);
+        callback = callback.bind(this.binder);
 
         (function (self, obj_index, data) {
             button = new Dash.Gui.IconButton(
