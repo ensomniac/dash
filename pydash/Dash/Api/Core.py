@@ -492,7 +492,7 @@ class ApiCore:
             tb = format_exc()
 
             if tb and str(tb).strip() != "NoneType: None":
-                error += f"<br><br>Full traceback:<br>{tb}"
+                error += f"<br><br><b>Full traceback:</b><br>{tb}"
         except:
             pass
 
@@ -501,7 +501,7 @@ class ApiCore:
             try:
                 from json2html import json2html
 
-                error += f"<br><br>Env:<br>{json2html.convert(json=json.dumps(dict(os.environ), indent=4, sort_keys=True))}"
+                error += f"<br><br><b>Env:</b><br>{json2html.convert(json=json.dumps(dict(os.environ), indent=4, sort_keys=True))}"
             except:
                 pass
 

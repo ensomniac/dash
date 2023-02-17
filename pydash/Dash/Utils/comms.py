@@ -39,7 +39,7 @@ def SendEmail(
         msg = subject
 
     if len(error) and error != "NoneType: None" and error != "None":
-        msg += f"<br><br>Exception/Traceback:<br><br>{error}"
+        msg += f"<br><br><b>Exception/Traceback:</b><br><br>{error}"
 
     if "\n" in msg:
         msg.strip("\n")
