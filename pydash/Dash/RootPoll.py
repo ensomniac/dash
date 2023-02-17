@@ -153,8 +153,8 @@ class PollRequests:
             # check_output takes a list of commands, but it appears it joins those commands
             # with a semicolon to run them (though I can't find confirmation), which we don't
             # want, so we'll fire off an individual call for each command instead
-            for command in task_state["cmd"]:
-                log_result[command] = self.run_task_command(command)
+            for index, command in enumerate(task_state["cmd"]):
+                log_result[f"({index + 1}) {command}"] = self.run_task_command(command)
 
                 # Some commands are failing due to the index.lock file still existing when they're run,
                 # which leads me to believe the commands are being executed too quickly. Adding a little
