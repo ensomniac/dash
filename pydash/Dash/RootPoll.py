@@ -172,7 +172,9 @@ class PollRequests:
 
     def run_task_command(self, command):
         try:
-            return check_output([command], shell=True, stderr=STDOUT).decode().strip().split("\n")
+            output = check_output([command], shell=True, stderr=STDOUT).decode().strip()
+
+            return output.split("\n") if "\n" in output else output
 
         except CalledProcessError as e:
             return [
