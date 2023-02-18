@@ -118,6 +118,7 @@ function DashGuiIcons (icon) {
         "empty":                 new DashGuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
         "empty_folder":          new DashGuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":              new DashGuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
+        "eraser":                new DashGuiIconDefinition(this.icon, "Eraser", this.weight["solid"], "eraser"),
         "exec":                  new DashGuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
         "expand_square":         new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),

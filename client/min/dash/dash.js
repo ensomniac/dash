@@ -31693,6 +31693,7 @@ function DashGuiIcons (icon) {
         "empty":                 new DashGuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
         "empty_folder":          new DashGuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":              new DashGuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
+        "eraser":                new DashGuiIconDefinition(this.icon, "Eraser", this.weight["solid"], "eraser"),
         "exec":                  new DashGuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
         "expand_square":         new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
@@ -37428,6 +37429,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_tag = "_top_header_row";
     this.non_expanding_click_highlight_color = null;
     this.row_html_css = row_options["row_html_css"];
+    this.row_column_box_css = row_options["row_column_box_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
     this.header_background_color = row_options["header_background_color"];
@@ -37716,6 +37718,9 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             else {
                 if (this.row_html_css) {
                     row.html.css(this.row_html_css);
+                }
+                if (this.row_column_box_css) {
+                    row.column_box.css(this.row_column_box_css);
                 }
             }
             // The on-scroll revolving row system used in this style doesn't work when the rows
@@ -38713,10 +38718,9 @@ function DashLayoutToolbarInterface () {
     // TODO: These params are a mess
     this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0, for_uploader=false) {
         var obj_index = this.objects.length;
-        var button = null;
         callback = callback.bind(this.binder);
-        (function (self, obj_index, data) {
-            button = new Dash.Gui.IconButton(
+        var button = (function (self, obj_index, data) {
+            return new Dash.Gui.IconButton(
                 icon_name,
                 for_uploader ? callback : function () {
                     self.on_button_clicked(obj_index, data);
@@ -38725,18 +38729,21 @@ function DashLayoutToolbarInterface () {
                 self.color,
                 {
                     "style": "toolbar",
-                    "container_size": container_size,
+                    "container_size": container_size || self.height,
                     "size_mult": size_mult
                 }
             );
-            self.html.append(button.html);
-            self.objects.push({
-                "html": button,
-                "html_elem": button.html,
-                "callback": callback,
-                "index": obj_index
-            });
         })(this, obj_index, data);
+        button.html.css({
+            "margin-top": 0
+        });
+        this.html.append(button.html);
+        this.objects.push({
+            "html": button,
+            "html_elem": button.html,
+            "callback": callback,
+            "index": obj_index
+        });
         if (size_percent_num) {
             button.SetIconSize(size_percent_num);
         }
