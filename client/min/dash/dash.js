@@ -33817,6 +33817,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.GetCurrentIndex = function () {
         return this.current_index;
     };
+    this.GetCurrentTabData = function () {
+        if (this.current_index === null) {
+            return {};
+        }
+        return this.all_content[this.current_index];
+    };
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
