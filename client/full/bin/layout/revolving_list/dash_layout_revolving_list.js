@@ -42,6 +42,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.header_row_tag = "_top_header_row";
     this.non_expanding_click_highlight_color = null;
     this.row_html_css = row_options["row_html_css"];
+    this.row_column_box_css = row_options["row_column_box_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
     this.header_background_color = row_options["header_background_color"];
@@ -430,6 +431,10 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             else {
                 if (this.row_html_css) {
                     row.html.css(this.row_html_css);
+                }
+
+                if (this.row_column_box_css) {
+                    row.column_box.css(this.row_column_box_css);
                 }
             }
 

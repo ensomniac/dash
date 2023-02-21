@@ -60,12 +60,11 @@ function DashLayoutToolbarInterface () {
     // TODO: These params are a mess
     this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0, for_uploader=false) {
         var obj_index = this.objects.length;
-        var button = null;
 
-        callback = callback.bind(self.binder);
+        callback = callback.bind(this.binder);
 
-        (function (self, obj_index, data) {
-            button = new Dash.Gui.IconButton(
+        var button = (function (self, obj_index, data) {
+            return new Dash.Gui.IconButton(
                 icon_name,
                 for_uploader ? callback : function () {
                     self.on_button_clicked(obj_index, data);
@@ -74,20 +73,24 @@ function DashLayoutToolbarInterface () {
                 self.color,
                 {
                     "style": "toolbar",
-                    "container_size": container_size,
+                    "container_size": container_size || self.height,
                     "size_mult": size_mult
                 }
             );
-
-            self.html.append(button.html);
-
-            self.objects.push({
-                "html": button,
-                "html_elem": button.html,
-                "callback": callback,
-                "index": obj_index
-            });
         })(this, obj_index, data);
+
+        button.html.css({
+            "margin-top": 0
+        });
+
+        this.html.append(button.html);
+
+        this.objects.push({
+            "html": button,
+            "html_elem": button.html,
+            "callback": callback,
+            "index": obj_index
+        });
 
         if (size_percent_num) {
             button.SetIconSize(size_percent_num);

@@ -1,5 +1,5 @@
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true) {
+    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true) {
         var date;
         var dt_obj;
         var timezone;
@@ -15,21 +15,23 @@ function DashDateTime () {
             [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
         }
 
-        if (Dash.Context["ignore_locale_for_readable_dates"]) {
-            date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
-        }
+        if (include_date) {
+            if (Dash.Context["ignore_locale_for_readable_dates"]) {
+                date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
+            }
 
-        else {
-            date = dt_obj.toLocaleDateString();
-        }
+            else {
+                date = dt_obj.toLocaleDateString();
+            }
 
-        if (is_static_date || !include_time) {
-            return date;
+            if (is_static_date || !include_time) {
+                return date;
+            }
         }
 
         var colon_count = 0;
         var time = dt_obj.toLocaleTimeString();
-        var readable = date + " at " + time;
+        var readable = include_date ? (date + " at " + time) : time;
 
         // Get index of seconds
         for (var i in readable) {

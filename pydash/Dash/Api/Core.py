@@ -8,9 +8,7 @@ import sys
 import cgi
 import json
 
-from traceback import format_exc
-from Dash import __name__ as DashName
-from Dash.Utils import GetRandomID, SendEmail, ClientAlert
+from Dash.Utils import GetRandomID
 
 
 class ApiCore:
@@ -30,20 +28,21 @@ class ApiCore:
         self._additional_notify_emails = []
         self._proceeding_with_empty_fs = False
         self._raw_body = None
+        self._missing_return_data_tag = "Missing return data x8765"
 
         try:
             self._fs = cgi.FieldStorage()
         except:
+            from traceback import format_exc
+
             error = format_exc()
 
             if "write() argument must be str, not bytes" in error:
-
                 try:
                     self.process_raw_body_content()
                 except:
                     # Ref: https://bugs.python.org/issue27777
                     raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
-
             else:
                 # Ref: https://bugs.python.org/issue27777
                 raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
@@ -53,6 +52,8 @@ class ApiCore:
         try:
             self._params = self.get_field_storage_data()
         except:
+            from traceback import format_exc
+
             self._params = {}
 
             keys = None
@@ -66,7 +67,7 @@ class ApiCore:
                 "cgi": str(cgi),
                 "keys": keys,
                 "traceback": format_exc(),
-                "self._fs": str(self._fs),
+                "self._fs": str(self._fs)
             }
 
             self.StopExecutionOnError("CGI Form Error")
@@ -172,6 +173,8 @@ class ApiCore:
     @property
     def dash_global(self):
         if not hasattr(self, "_dash_global"):
+            from Dash import __name__ as DashName
+
             self._dash_global = sys.modules[DashName]
 
         return self._dash_global
@@ -345,6 +348,9 @@ class ApiCore:
         if format_exception:
             # This exists as a wrapper so that if we need to raise an exception before self.Run() is
             # called, we can do so without losing the functionality of handling it from self.run().
+
+            from traceback import format_exc
+
             if error:
                 self.SetResponse({"error": f"{error}\n\nTraceback:\n{format_exc()}"})
             else:
@@ -367,7 +373,7 @@ class ApiCore:
             if os.environ and os.environ.get("HTTP_USER_AGENT") and "slackbot" in os.environ["HTTP_USER_AGENT"].lower() and "unknown function" in self._response["error"].lower():
                 pass  # Don't bother sending the email if and old/deprecated endpoint/function was hit by a Slack URL preview
             else:
-                self.SendEmail()
+                self.SendEmail(from_set_response=True)
 
         # Private errors should be deleted after sending the error email, so they're not exposed to the client
         if "_error" in self._response:
@@ -376,71 +382,37 @@ class ApiCore:
         # When using as module, errors get silently ignored, rather than raised - this solves that, but
         # it may be too broad of a solution, so this may need to be adjusted or removed, we'll see
         if self._execute_as_module and self._response.get("error"):
-            raise Exception(self._response["error"])
+            from json import dumps
+
+            raise Exception(f"{self._response['error']}\n\nFull response:\n{dumps(self._response, indent=4, sort_keys=True)}")
 
         return self._response
 
-    # TODO: break this up
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False):
+    def SetDashGlobals(self):
+        if not self._execute_as_module:
+            return
+
+        self.set_dash_globals()
+
+    def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False, from_set_response=False):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
+            return
+
+        error = self.get_error_for_email(error, from_set_response)
+
+        if error is None:
             return
 
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
-        request_details = ""
+        msg = self.get_msg_for_email(msg)
+        sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
-        if self.User:
-            request_details += f"User: {self.User['email']}"
+        self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
 
-        if self.Params:
-            if request_details:
-                request_details += "<br>"
-
-            # Make a copy of self.Params so we don't modify the original, in case the script is continuing
-            params = {k: v for (k, v) in self.Params.items()}
-
-            for key in params:
-                if (
-                    type(params.get(key)) is bytes
-                    or ("bytes" in key and type(params.get(key)) is str)
-                    or str(params.get(key)).startswith("b'")
-                    or (key == "token" and params.get(key))
-                ):
-                    params[key] = "truncated..."
-
-            # Keep this private
-            if "pass" in params:
-                del params["pass"]
-
-            request_details += f"Params:<br>{json.dumps(params, indent=4, sort_keys=True)}<br><br>"
-
-        if not msg:
-            msg = request_details
-        else:
-            msg += f"<br><br>{request_details}"
-
-        if not error and self._response.get("error"):
-            error = self._response["error"]
-
-            # For special cases
-            if self.ignore_error_email(error):
-                return
-
-            if self._response.get("_error"):
-                private_error = self._response["_error"].replace("\n", "<br>")
-
-                error += f"<br><br>Private error:<br>{private_error}"
-
-        try:
-            from traceback import format_exc
-
-            tb = format_exc()
-
-            if tb and str(tb).strip() != "NoneType: None":
-                error += f"<br><br>Full traceback:<br>{tb}"
-        except:
-            pass
+    def get_misc_for_email(self, strict_notify, notify_email_list):
+        from Dash import PersonalContexts
 
         if not strict_notify:
             for email in self._additional_notify_emails:
@@ -452,15 +424,6 @@ class ApiCore:
         if sender_name == "Ensomniac":
             sender_name = "Dash"
 
-        # To assist in tracking down errors with unknown origin
-        if error:
-            try:
-                error += f"<br><br>Env:<br>{json.dumps(dict(os.environ), indent=4, sort_keys=True)}"
-            except:
-                pass
-
-        from Dash import PersonalContexts
-
         for email in PersonalContexts:
             if self._asset_path in PersonalContexts[email]["asset_paths"]:
                 strict_notify = True
@@ -468,49 +431,86 @@ class ApiCore:
 
                 break
 
-        try:
-            SendEmail(
-                subject=subject,
-                notify_email_list=notify_email_list,
-                msg=msg,
-                error=error,
-                strict_notify=strict_notify,
-                sender_email=self.DashContext.get("admin_from_email"),
-                sender_name=sender_name
-            )
+        return sender_name, strict_notify, notify_email_list
 
-        # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
-        except Exception:
-            from Dash import AdminEmails
+    def get_msg_for_email(self, msg):
+        request_details = ""
+
+        if self.User:
+            request_details += f"<b>User:</b> {self.User['email']}"
+
+        if self.Params:
+            if request_details:
+                request_details += "<br><br>"
+
+            # Make a copy of self.Params so we don't modify the original, in case the script is continuing
+            params = {k: v for (k, v) in self.Params.items()}
+
+            for key in params:
+                if (
+                    type(params.get(key)) is bytes  # Bytes
+                    or ("bytes" in key and type(params.get(key)) is str)  # Bytes
+                    or str(params.get(key)).startswith("b'")  # Bytes
+                    or (key == "token" and params.get(key))  # Token
+                    or (key == "payload" and params.get("f") == "webhook" and "head_commit" in params.get(key))  # GitHub webhook payload
+                ):
+                    params[key] = "truncated..."
+
+            # Keep these private
+            for key in ["pass", "password", "pin"]:
+                if key in params:
+                    del params[key]
+
+            if params:
+                from json2html import json2html
+
+                request_details += f"<b>Params:</b><br>{json2html.convert(json=json.dumps(params, indent=4, sort_keys=True))}<br><br>"
+
+        if not msg:
+            return request_details
+
+        msg += f"<br><br><hr><br>{request_details}"
+
+        return msg
+
+    def get_error_for_email(self, error, from_set_response):
+        if not error and self._response.get("error"):
+            if self._response["error"] == self._missing_return_data_tag and not from_set_response:
+                pass  # This function was called outside of this script, before return data was set, and not triggered by an error
+            else:
+                error = self._response["error"]
+
+                if self.ignore_error_email(error):
+                    return None  # For special cases
+
+                if self._response.get("_error"):
+                    private_error = self._response["_error"].replace("\n", "<br>")
+
+                    error += f"<br><br>Private error:<br>{private_error}"
+
+        try:
             from traceback import format_exc
 
-            # Send additional email explaining the failure, likely token refresh issue
-            SendEmail(
-                subject="ApiCore.SendEmail Error",
-                msg=(
-                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
-                    f"likely due to an token that failed to refresh (see error to confirm):"
-                ),
-                error=format_exc()
-            )
+            tb = format_exc()
 
-            # Send intended email using default from-email to at least ensure we get it
-            SendEmail(
-                subject=subject,
-                notify_email_list=notify_email_list,
-                msg=msg,
-                error=error,
-                strict_notify=strict_notify,
-                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
-            )
+            if tb and str(tb).strip() != "NoneType: None":
+                error += f"<br><br><b>Full traceback:</b><br>{tb}"
+        except:
+            pass
 
-    def SetDashGlobals(self):
-        if not self._execute_as_module:
-            return
+        # To assist in tracking down errors with unknown origin
+        if error:
+            try:
+                from json2html import json2html
 
-        self.set_dash_globals()
+                error += f"<br><br><b>Env:</b><br>{json2html.convert(json=json.dumps(dict(os.environ), indent=4, sort_keys=True))}"
+            except:
+                pass
 
-    # Special cases that are safe to ignore but don't have a better place to be handled without breaking other functionality
+        return error or ""
+
+    # Special cases that are safe to ignore and are ideally handled by raising a ClientAlert, but
+    # can't be. and don't have a better place to be handled without breaking other functionality
     def ignore_error_email(self, error):
         ignore = [
             "Incorrect login information",
@@ -596,7 +596,9 @@ class ApiCore:
         print_json(self._response, response_status)
 
     def run(self, f):
-        self._response = {"error": "Missing return data x8765"}
+        from Dash.Utils import ClientAlert
+
+        self._response = {"error": self._missing_return_data_tag}
 
         try:
             f()
@@ -612,6 +614,45 @@ class ApiCore:
 
         except:
             self.SetError(format_exception=True)
+
+    def _send_email(self, subject, notify_email_list, msg, error, strict_notify, sender_name):
+        from Dash.Utils import SendEmail
+
+        try:
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_email=self.DashContext.get("admin_from_email"),
+                sender_name=sender_name
+            )
+
+        # Adding this as a safeguard for now, until we can confirm that the Candy token refresh issue is not an issue
+        except Exception:
+            from Dash import AdminEmails
+            from traceback import format_exc
+
+            # Send additional email explaining the failure, likely token refresh issue
+            SendEmail(
+                subject="ApiCore.SendEmail Error",
+                msg=(
+                    f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
+                    f"likely due to an token that failed to refresh (see error to confirm):"
+                ),
+                error=format_exc()
+            )
+
+            # Send intended email using default from-email to at least ensure we get it
+            SendEmail(
+                subject=subject,
+                notify_email_list=notify_email_list,
+                msg=msg,
+                error=error,
+                strict_notify=strict_notify,
+                sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+            )
 
     # DEPRECATED (see comment)
     def Execute(uninstantiated_class_ref):
@@ -636,19 +677,18 @@ def Execute(uninstantiated_class_ref):
     :param class uninstantiated_class_ref: Any uninstantiated class reference object to test
     """
 
-    error = None
-
     try:
         uninstantiated_class_ref()
 
     except Exception as e:
-        error = {"error": f"{e}\n\nTraceback:\n{format_exc()}"}
+        from traceback import format_exc
+
+        print_json({"error": f"{e}\n\nTraceback:\n{format_exc()}"})
 
     except:
-        error = {"error": format_exc(), "script_execution_failed": True}
+        from traceback import format_exc
 
-    if error is not None:
-        print_json(error)
+        print_json({"error": format_exc(), "script_execution_failed": True})
 
     sys.exit()
 

@@ -123,12 +123,15 @@ class PollRequests:
             task_state = {}
             # force_move = True  # Need this?
 
+        if "initial_task_state" not in task_state:
+            task_state["initial_task_state"] = task_state
+
         task_state["complete"] = True
         task_state["error"] = True
         task_state["output"] = error
 
         if force_move:
-            print(f"FAIL & REMOVE: {task_path}")
+            print(f"FAIL & MOVE: {task_path}")
 
             os.remove(task_path)
 
@@ -143,23 +146,33 @@ class PollRequests:
     def run_task(self, task_path):
         error_occurred = False
         task_state = json.loads(open(task_path, "r").read())
+
+        if not task_state.get("cmd"):
+            self.fail(task_path, "Missing command", force_move=True)
+
+            return
+
         cmd_type = type(task_state["cmd"])
 
         if cmd_type is list:
-            log_results = []
+            from time import sleep
+
+            log_result = {}
 
             # check_output takes a list of commands, but it appears it joins those commands
             # with a semicolon to run them (though I can't find confirmation), which we don't
             # want, so we'll fire off an individual call for each command instead
-            for command in task_state["cmd"]:
-                result = self.run_task_command(command)
+            for index, command in enumerate(task_state["cmd"]):
+                log_result[f"({index + 1}) {command}"] = self.run_task_command(command)
 
-                if type(result) is list:
-                    log_results += result
-                else:
-                    log_results.append(result)
+                task_state["output"] = log_result
 
-            log_result = "\n".join(log_results)
+                open(task_path, "w").write(json.dumps(task_state))
+
+                # Some commands are failing due to the index.lock file still existing when they're run,
+                # which leads me to believe the commands are being executed too quickly. Adding a little
+                # delay in between each one should hopefully resolve that (if my suspicion is correct).
+                sleep(0.1)  # Increase by increments of 0.1 if needed
 
         elif cmd_type is str:
             log_result = self.run_task_command(task_state["cmd"])
@@ -179,7 +192,9 @@ class PollRequests:
 
     def run_task_command(self, command):
         try:
-            return check_output([command], shell=True, stderr=STDOUT).decode().strip().split("\n")
+            output = check_output([command], shell=True, stderr=STDOUT).decode().strip()
+
+            return output.split("\n") if "\n" in output else output
 
         except CalledProcessError as e:
             return [

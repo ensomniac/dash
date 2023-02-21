@@ -192,19 +192,15 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return input_row;
     };
 
-    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null, icon_size=null) {
-        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), null, additional_data);
+    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null, icon_size=null, size_mult=1.0, for_uploader=false) {
+        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), icon_size, additional_data, this.height, size_mult, for_uploader);
 
         button.html.css({
-            "margin-top": Dash.Size.Padding * 0.15
+            "margin-top": 0
         });
 
         if (hover_hint) {
             button.SetHoverHint(hover_hint);
-        }
-
-        if (icon_size) {
-            button.SetIconSize(icon_size);
         }
 
         this.elements.push(button);
@@ -404,12 +400,6 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
         }
 
-        var html_css = {
-            "margin-right": 0,
-            "height": this.height * (transparent ? 0.65 : 0.75),
-            "margin-top": Dash.Size.Padding * (transparent ? 0.25 : 0.15)
-        };
-
         var input = this.toolbar.AddTransparentInput(
             placeholder_text,
             on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
@@ -430,31 +420,40 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         // Hack so that property boxes can update these
         input.data_key = data_key;
 
+        var html_css = {
+            "margin-right": 0,
+            "height": this.height * (transparent ? 0.65 : 0.75),
+            "margin-top": Dash.Size.Padding * (transparent ? 0.25 : 0.15)
+        };
+
+        var input_css = {
+            "top": 0,
+            "height": this.height * (transparent ? 0.8 : 0.85)
+        };
+
         if (transparent) {
             html_css["border-bottom"] = "";
         }
 
         else {
+            html_css["border-radius"] = Dash.Size.BorderRadius;
+            html_css["margin-top"] = Dash.Size.Padding * 0.1;
+            html_css["padding-bottom"] = Dash.Size.Padding * 0.1;
+            html_css["padding-left"] = Dash.Size.Padding * 0.5;
+            html_css["padding-right"] = Dash.Size.Padding * 0.5;
             html_css["border"] = "1px solid " + this.color.PinstripeDark;
+        }
+
+        if (flex) {
+            html_css["flex-grow"] = 2;
+
+            input_css["flex-grow"] = 2;
+            input_css["width"] = "100%";
         }
 
         input.html.css(html_css);
 
-        input.input.css({
-            "top": 0,
-            "height": this.height * (transparent ? 0.8 : 0.85)
-        });
-
-        if (flex) {
-            input.html.css({
-                "flex-grow": 2
-            });
-
-            input.input.css({
-                "flex-grow": 2,
-                "width": "100%"
-            });
-        }
+        input.input.css(input_css);
 
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
 

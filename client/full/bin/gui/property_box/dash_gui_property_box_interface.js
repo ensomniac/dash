@@ -407,7 +407,7 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddLabel = function (text, color=null) {
-        var header = new Dash.Gui.Header(text, color);
+        var header = new Dash.Gui.Header(text, color || this.color);
 
         header.html.css({
             "margin-left": Dash.Size.Padding * 2
@@ -419,7 +419,7 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddText = function (text, color=null) {
-        var label = this.AddLabel(text, false, color);
+        var label = this.AddLabel(text, false, color || this.color);
 
         label.border.remove();
 
@@ -436,6 +436,7 @@ function DashGuiPropertyBoxInterface () {
         return label;
     };
 
+    // TODO: this should've originally been setup to be directly connected to this property box's set_data function
     this.AddCheckbox = function (
         local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null,
         label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
@@ -449,7 +450,7 @@ function DashGuiPropertyBoxInterface () {
         var checkbox = new Dash.Gui.Checkbox(
             local_storage_key,
             default_state,
-            color,
+            color || this.color,
             hover_hint,
             binder,
             callback && highlight_row ? (function (self) {
