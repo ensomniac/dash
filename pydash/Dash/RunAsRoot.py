@@ -26,6 +26,9 @@ class RunAsRoot:
         self.request_path = os.path.join(OapiRoot, "dash", "local", "rar", "active/")  # TODO: Put this path in dash guide
 
     def Queue(self, command):
+        if not command:
+            return {}  # I'd prefer to raise an error, but I'm hesitant to do so
+
         self.task_id = GetRandomID()
         self.cmd = command  # str or list
         self.cmd_path = os.path.join(self.request_path, self.task_id)

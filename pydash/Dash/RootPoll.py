@@ -123,12 +123,15 @@ class PollRequests:
             task_state = {}
             # force_move = True  # Need this?
 
+        if "initial_task_state" not in task_state:
+            task_state["initial_task_state"] = task_state
+
         task_state["complete"] = True
         task_state["error"] = True
         task_state["output"] = error
 
         if force_move:
-            print(f"FAIL & REMOVE: {task_path}")
+            print(f"FAIL & MOVE: {task_path}")
 
             os.remove(task_path)
 
@@ -143,6 +146,12 @@ class PollRequests:
     def run_task(self, task_path):
         error_occurred = False
         task_state = json.loads(open(task_path, "r").read())
+
+        if not task_state.get("cmd"):
+            self.fail(task_path, "Missing command", force_move=True)
+
+            return
+
         cmd_type = type(task_state["cmd"])
 
         if cmd_type is list:

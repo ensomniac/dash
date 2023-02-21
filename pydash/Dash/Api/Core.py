@@ -382,7 +382,9 @@ class ApiCore:
         # When using as module, errors get silently ignored, rather than raised - this solves that, but
         # it may be too broad of a solution, so this may need to be adjusted or removed, we'll see
         if self._execute_as_module and self._response.get("error"):
-            raise Exception(self._response["error"])
+            from json import dumps
+
+            raise Exception(f"{self._response['error']}\n\nFull response:\n{dumps(self._response, indent=4, sort_keys=True)}")
 
         return self._response
 
