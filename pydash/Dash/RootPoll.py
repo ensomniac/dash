@@ -124,7 +124,7 @@ class PollRequests:
             # force_move = True  # Need this?
 
         if "initial_task_state" not in task_state:
-            task_state["initial_task_state"] = task_state
+            task_state["initial_task_state"] = {k: v for k, v in task_state.items()}
 
         task_state["complete"] = True
         task_state["error"] = True
