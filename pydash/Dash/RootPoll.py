@@ -165,6 +165,10 @@ class PollRequests:
             for index, command in enumerate(task_state["cmd"]):
                 log_result[f"({index + 1}) {command}"] = self.run_task_command(command)
 
+                task_state["output"] = log_result
+
+                open(task_path, "w").write(json.dumps(task_state))
+
                 # Some commands are failing due to the index.lock file still existing when they're run,
                 # which leads me to believe the commands are being executed too quickly. Adding a little
                 # delay in between each one should hopefully resolve that (if my suspicion is correct).
