@@ -17,10 +17,12 @@ from Dash.LocalStorage import Read, Write
 class RunAsRoot:
     def __init__(self):
         self.state        = {}
+        self.response     = {}
+        self.last_status  = {}
         self.timestamp    = ""
         self.cmd_path     = None
         self.init_time    = datetime.now()
-        self.fail_timeout = 20  # In seconds (formerly 10, but git updates were failing for some repos that take a bit longer)
+        self.fail_timeout = 60 # In seconds, the duration to monitor task
 
     @property
     def request_path(self):
@@ -39,11 +41,12 @@ class RunAsRoot:
 
         return self._task_id
 
-    def get_task_path(self, task_id):
+    @property
+    def task_path(self):
         return os.path.join(self.request_path, self.task_id)
 
     def get_task_data(self, task_id):
-        return Read(self.get_task_path(self.task_id))
+        return Read(self.task_path)
 
     def Queue(self, command):
         if not command:
@@ -53,7 +56,6 @@ class RunAsRoot:
             "cmd":             command,
             "cmd_result":      None,
             "complete":        False,
-            "output":          None,
             "started":         False,
             "id":              self.task_id,
             "queued_time_iso": self.init_time.isoformat(),
@@ -68,77 +70,90 @@ class RunAsRoot:
             raise Exception("Unhandled command type: " + str(cmd_type))
 
         Write(self.state["cmd_path"], self.state)
-        # open(self.state["cmd_path"], "w").write(json.dumps(self.state))
 
-        self.timestamp = datetime.fromtimestamp(
-            Path(self.state["cmd_path"]).stat().st_mtime
-        )
-
-        response = {}
-        response["check"] = []
-
-        iterations = 0
+        self.response = {}
+        self.response["status_log"]     = []
+        self.response["complete"]       = False
+        self.response["result"]         = None
+        self.response["error"]          = None
 
         while True:
-            task_data = self.get_task_data(self.task_id)
-            response["check"].append(str(task_data))
-            iterations += 1
-            sleep(1.0)
 
-            if iterations > 10:
+            task_complete = self.check_task_status()
+
+            if task_complete:
                 break
 
+            sleep(0.9)
+
+        self.response["result"], self.response["exited_cleanly"] = self.get_final_status()
+
+        return self.response
+
+    @property
+    def uptime(self):
+        init_uptime = datetime.now()-self.init_time
+        return round(init_uptime.total_seconds(), 2)
+
+    def check_task_status(self):
+        if not os.path.exists(self.task_path):
+            # The task has likely completed and is now removed
+            self.response["complete"] = True
+            return True
+
+        if self.uptime >= self.fail_timeout:
+            self.register_timeout_fail()
+            return True
+
+        task_data = self.get_task_data(self.task_id)
+
+        include_update = False
+        if len(self.response["status_log"]) == 0:
+            include_update = True
+        elif self.response["status_log"][-1]["started"] != task_data["started"]:
+            include_update = True
+        elif self.response["status_log"][-1]["complete"] != task_data["complete"]:
+            include_update = True
+
+        if include_update:
+            self.response["status_log"].append({
+                "uptime": self.uptime,
+                "started": task_data["started"],
+                "complete": task_data["complete"],
+            })
+
+        self.last_status = task_data.copy()
+
+        return False
+
+    def register_timeout_fail(self):
+        # Called when this task has ran longer than the timeout
+        # NOTE: It's possible the running task is still running just fine
+        # This may not be a problem, it may just be a long running process
+        # This function does not actually attempt to kill the job, it just
+        # stops checking it and returns the thread so the request can continue
+        self.response["error"] = "Task ran for over " + str(self.uptime)
+        self.response["error"] += " seconds and is no longer being monitored. "
+        self.response["error"] += "However, the task process may still be running."
+
+        self.response["complete"] = True
+
+    def get_final_status(self):
+        final_path = self.task_path.replace("/rar/active/", "/rar/complete/")
+
+        if os.path.exists(final_path) and not os.path.exists(self.task_path):
+            return Read(final_path), True
+        else:
+            return self.last_status, False
 
 
 
-        # self.check_status()
 
-        # while not self.state or not self.state.get("complete"):
-        #     sleep(0.2)
 
-        return response
 
-    def check_status(self):
-        if self.state and self.state.get("complete"):
-            return
 
-        age = int((datetime.now() - self.start_time).total_seconds())
 
-        if age > self.fail_timeout:
-            self.fail()
-            # return # unreachable
 
-        Timer(1.2, self.check_status, []).start()
-
-        timestamp_now = datetime.fromtimestamp(
-            Path(self.cmd_path).stat().st_mtime
-        )
-
-        if self.timestamp == timestamp_now:
-            # The file hasn't changed. Keep waiting
-            return
-
-        # The file has been changed / written to. We can move it and complete
-        self.state = json.loads(open(self.cmd_path, "r").read())
-        self.state["complete"] = True
-
-        os.remove(self.cmd_path)
-
-        open(self.cmd_path.replace("/rar/active/", "/rar/complete/"), "w").write(
-            json.dumps(self.state)
-        )
-
-    def fail(self):
-        self.state = json.loads(open(self.cmd_path, "r").read())
-        self.state["complete"] = True
-        self.state["error"] = True
-        self.state["output"] = f"Failed to complete task after {self.fail_timeout} seconds. Force killed. Details: {self.state.get('output') or '(No additional error info)'}"
-
-        os.remove(self.cmd_path)
-
-        open(self.cmd_path.replace("/rar/active/", "/rar/complete/"), "w").write(
-            json.dumps(self.state)
-        )
 
 
 

@@ -8,7 +8,6 @@ import sys
 import json
 
 from time import sleep
-from pathlib import Path
 from threading import Timer
 from datetime import datetime
 from Dash.Utils import OapiRoot
@@ -16,7 +15,17 @@ from traceback import format_exc
 from subprocess import check_output, STDOUT, CalledProcessError
 from Dash.LocalStorage import Read, Write
 
+############################################################
+#  This code runs on the server every minute via a cron    #
+#  It is responsible for monitoring the state of existing  #
+#  tasks and for starting tasks that have not yet started  #
+############################################################
+
 # Feb 21 2023 Change Notes (for Andrew)
+#
+# + This script now does more of the heavy lifting that RunAsRoot.py used to
+#       do. Instead, RunAsRoot.py is now simplified, and only responsible for
+#       writing the initial task to disk and monitoring the task's progress.
 #
 # + Switched from a 'minute-cron' to a system that can live for longer, to
 #       account for executions that may take long periods of time to run
@@ -28,7 +37,6 @@ from Dash.LocalStorage import Read, Write
 #
 # + ** Added back in a check to see if the command was started, and
 #          starting it ONLY if it hasn't been started :-)
-
 
 class PollRequests:
     def __init__(self):
@@ -59,14 +67,14 @@ class PollRequests:
     @property
     def uptime(self):
         uptime_sec = datetime.now()-self.start_time
-        uptime_sec = uptime_sec.total_seconds()
-        return uptime_sec
+        return uptime_sec.total_seconds()
 
     @property
     def active_requests(self):
         return os.listdir(self.request_path)
 
     def periodic_check(self):
+        # Basic maintenence of the runtime loop
 
         if self.uptime >= self.run_duration_in_minutes*60:
             if self.running_task_ids:
@@ -77,7 +85,42 @@ class PollRequests:
 
         Timer(1, self.periodic_check).start()
 
+        if self.uptime > 60*5:
+            self.send_warning_notification()
+
         self.monitor_active_requests()
+
+    def send_warning_notification(self):
+        if hasattr(self, "_warning_notification_sent"):
+            return
+
+        self._warning_notification_sent = True
+
+        kill_cmd = "sudo kill -9 " + str(os.getpid())
+
+        print("Send warning!")
+        subject = "Warning: Dash.RootPoll has been running for a long time!"
+        body = "Current process run time: " + str(self.uptime) + "<br><br>"
+        body += "RootPoll.py is a cron that is restarted each minute. If an instance "
+        body += "continues running long after a minute, a process that was started is "
+        body += "likely hung for a long time or requiring extra time. Regardless, this "
+        body += "needs to be looked into since a new cron will not start until this is resolved."
+        body += "<br><br>"
+        body += "Killing this process now with '" + kill_cmd + "'"
+
+        from Dash.Utils import SendEmail
+
+        result = SendEmail(
+            subject           = subject,
+            notify_email_list = ["ryan@ensomniac.com"],
+            msg               = body,
+            error             = None,
+            strict_notify     = True,
+            sender_email      = "ryan@ensomniac.com",
+            sender_name       = "Ryan Martin"
+        )
+
+        os.system(kill_cmd)
 
     def monitor_active_requests(self):
 
@@ -161,6 +204,8 @@ class PollRequests:
         return task_data
 
     def terminate_task(self, task_id, fail_msg=None):
+        # self.terminate_task() is called regardless of
+        # whether a task was successful or not
 
         task_data = self.get_task_data(task_id)
         task_data["complete"] = True
@@ -181,7 +226,6 @@ class PollRequests:
 
         if task_id in self.running_task_ids:
             self.running_task_ids.remove(task_id)
-
 
     def run_multiple_tasks(self, task_id):
         print("\trun_multiple_tasks(" + task_id + ")")
@@ -219,56 +263,6 @@ class PollRequests:
             result += " || " + str(e)
 
         return result
-
-
-
-
-
-
-
-
-
-    def _periodic_check(self):
-        # if self.checks >= 20:
-        #     return
-
-        # Timer(3, self.periodic_check).start()
-
-        # self.checks += 1
-
-        # requests = os.listdir(self.request_path)
-
-        # if not requests:
-        #     print("nothing")
-
-        #     return
-
-        # for task_id in requests:
-        #     if task_id.startswith("."):
-        #         continue
-
-        task_path = os.path.join(self.request_path, task_id)
-
-        timestamp_now = datetime.fromtimestamp(
-            Path(task_path).stat().st_mtime
-        )
-
-        age = int((datetime.now() - timestamp_now).total_seconds())
-
-        if age > self.fail_timeout * 2:
-            # Give it slightly more time since it's more likely that the source task will kill it
-            self.fail(task_path, "Task timed out", force_move=True)
-
-            return
-
-        print(f"[{str(age)}] {task_id}")
-
-        try:
-            self.run_task(task_path)
-        except:
-            self.fail(task_path, format_exc())
-
-        # os.remove(os.path.join(self.request_path, task_id))
 
     def check_process_running(self):
         from psutil import Process
@@ -314,108 +308,12 @@ class PollRequests:
 
         return pids
 
-    # def fail(self, task_path, error, force_move=False):
-    #     # print(">> " + task_path) -
-
-    #     try:
-    #         task_state = json.loads(open(task_path, "r").read())
-    #     except:
-    #         # We may want to just remove the file in this case, but starting with this for now
-    #         error = f"Initial error: {error}\nSubsequent error: Failed to read task file, removing it: {task_path}"
-    #         task_state = {}
-    #         # force_move = True  # Need this?
-
-    #     if "initial_task_state" not in task_state:
-    #         task_state["initial_task_state"] = {k: v for k, v in task_state.items()}
-
-    #     task_state["complete"] = True
-    #     task_state["error"] = True
-    #     task_state["output"] = error
-
-    #     if force_move:
-    #         print(f"FAIL & MOVE: {task_path}")
-
-    #         os.remove(task_path)
-
-    #         open(task_path.replace("/rar/active/", "/rar/complete/"), "w").write(
-    #             json.dumps(task_state)
-    #         )
-    #     else:
-    #         print(f"FAIL: {task_path}")
-
-    #         open(task_path, "w").write(json.dumps(task_state))
 
 
 
-
-
-
-
-
-    def run_task(self, task_path):
-        error_occurred = False
-        task_state = json.loads(open(task_path, "r").read())
-
-
-
-        cmd_type = type(task_state["cmd"])
-
-        if cmd_type is list:
-            # from time import sleep
-
-            log_result = {}
-
-            # check_output takes a list of commands, but it appears it joins those commands
-            # with a semicolon to run them (though I can't find confirmation), which we don't
-            # want, so we'll fire off an individual call for each command instead
-            for index, command in enumerate(task_state["cmd"]):
-                log_result[f"({index + 1}) {command}"] = self.run_task_command(command)
-
-                task_state["output"] = log_result
-
-                open(task_path, "w").write(json.dumps(task_state))
-
-                # Some commands are failing due to the index.lock file still existing when they're run,
-                # which leads me to believe the commands are being executed too quickly. Adding a little
-                # delay in between each one should hopefully resolve that (if my suspicion is correct).
-                sleep(0.1)  # Increase by increments of 0.1 if needed
-
-        elif cmd_type is str:
-            log_result = self.run_task_command(task_state["cmd"])
-
-        else:
-            error_occurred = True
-            log_result = f"Invalid command type: {cmd_type}"
-
-
-
-
-
-
-
-
-
-        task_state = json.loads(open(task_path, "r").read())
-
-        task_state["complete"] = True
-        task_state["error"] = error_occurred
-        task_state["cmd_type"] = str(cmd_type)
-        task_state["output"] = log_result
-
-        open(task_path, "w").write(json.dumps(task_state))
-
-    def _run_task_command(self, command):
-        try:
-            output = check_output([command], shell=True, stderr=STDOUT).decode().strip()
-
-            return output.split("\n") if "\n" in output else output
-
-        except CalledProcessError as e:
-            return [
-                e.output.decode() or e.stdout.decode(),
-                str(e)
-            ]
 
 
 if __name__ == "__main__":
     PollRequests()
+
+
