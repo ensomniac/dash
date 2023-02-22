@@ -15,6 +15,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.load_bar = $("<div></div>");
     this.highlight = $("<div></div>");
     this.last_right_label_text = null;
+    this.change_text_color_on_hover = true;
     this.click_highlight = $("<div></div>");
     this.label = $("<div>" + this.label + "</div>");
     this.style = this.options["style"] || "default";
@@ -83,6 +84,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
 
+        if (!this.change_text_color_on_hover) {
+            return;
+        }
+
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.SelectedHover);
         }
@@ -94,6 +99,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
 
     this.on_hover_out = function () {
         this.highlight.stop().animate({"opacity": 0}, 100);
+
+        if (!this.change_text_color_on_hover) {
+            return;
+        }
 
         if (this.is_selected) {
             this.label.css("color", this.color_set.Text.Selected);

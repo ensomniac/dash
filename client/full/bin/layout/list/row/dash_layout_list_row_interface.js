@@ -138,7 +138,7 @@ function DashLayoutListRowInterface () {
                     var value = this.get_data_for_key(combo["column_config_data"], "", true);
 
                     if (value) {
-                        if (this.is_header) {
+                        if (this.is_header || this.is_footer) {
                             // TODO
                         }
 
@@ -174,7 +174,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
-        if (this.is_header) {
+        if (this.is_header || this.is_footer) {
             return;
         }
 
@@ -242,7 +242,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.Collapse = function () {
-        if (!this.is_expanded || this.is_header) {
+        if (!this.is_expanded || this.is_header || this.is_footer) {
             return;
         }
 

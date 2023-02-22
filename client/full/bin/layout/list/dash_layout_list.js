@@ -23,12 +23,15 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.rows = [];
     this.parent_row= null;  // Intended for cases where this is a sublist
     this.header_row = null;
+    this.footer_row = null;
     this.header_row_css = null;
+    this.footer_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
     this.highlight_active_row = false;
     this.sublist_row_tag = "_sublist_row_";
     this.header_row_tag = "_top_header_row";
+    this.footer_row_tag = "_bottom_footer_row";
     this.allow_row_divider_color_change_on_hover = true;
     this.recall_id = "dash_list_" + (this.binder.constructor + "").replace(/[^A-Za-z]/g, "");
     this.recall_id = this.recall_id.slice(0, 100).trim().toLowerCase();
@@ -62,6 +65,25 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         this.add_header_row();
 
         return this.header_row;
+    };
+
+    // This has only been tested with Dash.Layout.RevolvingList, but it
+    // should work as expected in this basic list as well, just unconfirmed
+    this.AddFooterRow = function (html_css, column_box_css) {
+        if (this.footer_row) {
+            console.error("Error: This list already has a footer row, can't add another.");
+
+            return;
+        }
+
+        this.footer_row_css = {
+            "html": html_css,
+            "column_box": column_box_css
+        };
+
+        this.add_footer_row();
+
+        return this.footer_row;
     };
 
     this.AddSubList = function (sublist_name, highlight_color=null, init_list=false) {
@@ -166,7 +188,12 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             this.add_header_row();
         }
 
-        // This step must happen after re-adding the header row above, since we don't track that row
+        // Always keep the footer row, even when clearing the list
+        if (this.footer_row) {
+            this.add_footer_row();
+        }
+
+        // This step must happen after re-adding the header/footer rows above, since we don't track those rows
         this.rows = [];
     };
 
@@ -359,6 +386,25 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
 
         // Always update it by default - can still update later in the code that calls this
         this.header_row.Update();
+    };
+
+    this.add_footer_row = function () {
+        this.footer_row = new DashLayoutListRow(this, this.footer_row_tag);
+
+        if (this.footer_row_css) {
+            if (this.footer_row_css["html"]) {
+                this.footer_row.html.css(this.footer_row_css["html"]);
+            }
+
+            if (this.footer_row_css["column_box"]) {
+                this.footer_row.column_box.css(this.footer_row_css["column_box"]);
+            }
+        }
+
+        this.html.append(this.footer_row.html);
+
+        // Always update it by default - can still update later in the code that calls this
+        this.footer_row.Update();
     };
 
     this.get_sublist = function () {

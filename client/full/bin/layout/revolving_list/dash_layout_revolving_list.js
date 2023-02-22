@@ -1,9 +1,10 @@
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null) {
+function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null, include_footer_row=false) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.include_header_row = include_header_row;
+    this.include_footer_row = include_footer_row;
 
     // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
     this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
@@ -25,6 +26,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.recall_id = "";
     this.row_objects = [];
     this.header_row = null;
+    this.footer_row = null;
     this.expanded_ids = {};
     this.initial_draw = false;
     this.row_count_buffer = 6;
@@ -32,6 +34,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.html = $("<div></div>");
     this.get_expand_preview = null;
     this.header_row_backing = null;
+    this.footer_row_backing = null;
     this.last_column_config = null;
     this.last_selected_row_id = "";
     this.row_events_disabled = false;
@@ -40,12 +43,14 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.non_expanding_click_cb = null;
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
+    this.footer_row_tag = "_bottom_footer_row";
     this.non_expanding_click_highlight_color = null;
     this.row_html_css = row_options["row_html_css"];
     this.row_column_box_css = row_options["row_column_box_css"];
     this.row_highlight_color = row_options["row_highlight_color"];
     this.row_height = row_options["row_height"] || Dash.Size.RowHeight;
     this.header_background_color = row_options["header_background_color"];
+    this.footer_background_color = row_options["footer_background_color"];
 
     // For calculations - ensures the bottom border (1px) of rows are visible (they get overlapped otherwise)
     this.full_row_height = this.row_height + 1;
@@ -62,10 +67,12 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             "position": "absolute",
             "inset": 0,
             "top": this.include_header_row ? this.full_row_height : 0,
+            "bottom": this.include_footer_row ? this.full_row_height : 0,
             "overflow-y": "auto"
         });
 
         this.add_header_row();
+        this.add_footer_row();
 
         this.html.append(this.container);
 
@@ -196,16 +203,31 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             "border": "2px solid " + this.color.StrokeLight
         });
 
-        var header_css = {
-            "border-top-left-radius": Dash.Size.Padding,
-            "border-top-right-radius": Dash.Size.Padding
-        };
+        if (this.include_header_row) {
+            var header_css = {
+                "border-top-left-radius": Dash.Size.Padding,
+                "border-top-right-radius": Dash.Size.Padding
+            };
 
-        this.header_row.html.css(header_css);
+            this.header_row.html.css(header_css);
 
-        this.header_row.column_box.css(header_css);
+            this.header_row.column_box.css(header_css);
 
-        this.header_row_backing.css(header_css);
+            this.header_row_backing.css(header_css);
+        }
+
+        if (this.include_footer_row) {
+            var footer_css = {
+                "border-bottom-left-radius": Dash.Size.Padding,
+                "border-bottom-right-radius": Dash.Size.Padding
+            };
+
+            this.footer_row.html.css(footer_css);
+
+            this.footer_row.column_box.css(footer_css);
+
+            this.footer_row_backing.css(footer_css);
+        }
     };
 
     this.SetRecallID = function (recall_id) {
@@ -273,6 +295,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         for (var row of this.row_objects) {
             row.column_box.off("click");
         }
+    };
+
+    // Not needed in most cases - only needed if manually breaking/altering a particular row's connections
+    this.RefreshRowConnections = function (row) {
+        this.setup_row_connections(row);
     };
 
     this.select_row = function (row_id="", default_to_first_row=true) {
@@ -347,6 +374,35 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.html.append(this.header_row_backing);
     };
 
+    this.add_footer_row = function () {
+        if (!this.include_footer_row) {
+            return;
+        }
+
+        this.footer_row = this.get_new_row(false, false, true);
+
+        if (!this.footer_row_backing) {
+            this.add_footer_row_backing();
+        }
+
+        this.set_footer_scrollbar_offset();
+
+        this.html.append(this.footer_row.html);
+
+        this.footer_row.Update();
+    };
+
+    this.add_footer_row_backing = function () {
+        this.footer_row_backing = this.get_new_row(false, true, false, true);
+
+        this.footer_row_backing.css({
+            "height": this.full_row_height,
+            "background": this.footer_row.column_box.css("background-color")
+        });
+
+        this.html.append(this.footer_row_backing);
+    };
+
     this.create_filler_space = function () {
         var filler_content = "";
 
@@ -370,6 +426,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.container.append(filler_html);
 
         this.set_header_scrollbar_offset();
+        this.set_footer_scrollbar_offset();
     };
 
     this.cleanup_rows = function () {
@@ -387,23 +444,37 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             row.html.detach();
         }
 
-        if (config_changed && this.header_row) {
-            this.header_row.RedrawColumns();
-            this.header_row.Update();
+        if (config_changed) {
+            if (this.header_row) {
+                this.header_row.RedrawColumns();
+                this.header_row.Update();
+            }
+
+            if (this.footer_row) {
+                this.footer_row.RedrawColumns();
+                this.footer_row.Update();
+            }
         }
 
         this.container.empty();
     };
 
-    this.get_new_row = function (header=false, placeholder=false) {
+    this.get_new_row = function (header=false, placeholder=false, footer=false, footer_placeholder=false) {
         var row;
 
         var css = {
             "position": "absolute",
             "left": 0,
-            "top": 0,
             "right": 0
         };
+
+        if (footer || footer_placeholder) {
+            css["bottom"] = 0;
+        }
+
+        else {
+            css["top"] = 0;
+        }
 
         if (placeholder) {
             row = $("<div></div>");
@@ -414,7 +485,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         else {
             row = new DashLayoutListRow(
                 this,
-                header ? this.header_row_tag : "",
+                header ? this.header_row_tag : footer ? this.footer_row_tag : "",
                 this.row_height
             );
 
@@ -424,6 +495,14 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
                 if (this.header_background_color) {
                     row.column_box.css({
                         "background": this.header_background_color
+                    });
+                }
+            }
+
+            else if (footer) {
+                if (this.footer_background_color) {
+                    row.column_box.css({
+                        "background": this.footer_background_color
                     });
                 }
             }
