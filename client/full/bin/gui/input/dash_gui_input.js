@@ -2,6 +2,7 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
     this.color = color || Dash.Color.Light;
 
+    this.locked = false;
     this.autosave = false;
     this.blur_enabled = null;
     this.last_submit_ts = null;
@@ -113,7 +114,35 @@ function DashGuiInput (placeholder_text="", color=null) {
         }
     };
 
+    // Similar to SetLocked(true)
+    this.Disable = function () {
+        if (this.locked) {
+            return;
+        }
+
+        this.SetLocked(true);
+
+        this.html.css({
+            "opacity": 0.5
+        });
+    };
+
+    // Similar to SetLocked(false)
+    this.Enable = function () {
+        if (!this.locked) {
+            return;
+        }
+
+        this.SetLocked(false);
+
+        this.html.css({
+            "opacity": 1
+        });
+    };
+
     this.SetLocked = function (is_locked) {
+        this.locked = is_locked;
+
         if (is_locked) {
             this.input.prop("readOnly", true);
 

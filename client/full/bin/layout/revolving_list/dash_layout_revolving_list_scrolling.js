@@ -209,6 +209,23 @@ function DashLayoutRevolvingListScrolling () {
         });
     };
 
+    // If scrollbar exists in container, shift the footer to the left to compensate and prevent misalignment
+    this.set_footer_scrollbar_offset = function () {
+        if (!this.footer_row) {
+            return;
+        }
+
+        var margin = 0;
+
+        if (Dash.Gui.HasOverflow(this.container)) {
+            margin = Dash.Size.Padding * 1.5;
+        }
+
+        this.footer_row.html.css({
+            "margin-right": margin
+        });
+    };
+
     this.setup_scroll_connections = function () {
         (function (self) {
             self.parent = self.html.parent();

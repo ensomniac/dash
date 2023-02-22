@@ -4,6 +4,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     this.index = parseInt(index);
     this.color = color || list_row.color || Dash.Color.Light;
 
+    this.disabled = false;
     this.html = $("<div></div>");
     this.list = this.list_row.list;
     this.height = this.list_row.height;
@@ -17,6 +18,38 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.list_row.is_header && this.column_config_data["header_css"]) {
             this.html.css(this.column_config_data["header_css"]);
         }
+
+        if (this.list_row.is_footer && this.column_config_data["footer_css"]) {
+            this.html.css(this.column_config_data["footer_css"]);
+        }
+    };
+
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
 
     this.get_css = function () {
@@ -49,7 +82,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
     };
 
     this.get_text_color_css = function (css) {
-        if (!this.list_row.is_header) {
+        if (!this.list_row.is_header && !this.list_row.is_footer) {
             return css;
         }
 
@@ -64,7 +97,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
 
         for (var key in this.column_config_data["css"]) {
-            if (!key.includes("width") && this.list_row.is_header) {
+            if (!key.includes("width") && (this.list_row.is_header || this.list_row.is_footer)) {
                 continue;
             }
 
@@ -156,7 +189,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             );
         }
 
-        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+        if (this.list_row.is_header || this.list_row.is_footer || this.column_config_data["type"] === "label") {
             css["font-family"] = "sans_serif_bold";
         }
 

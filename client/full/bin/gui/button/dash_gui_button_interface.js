@@ -9,6 +9,10 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.DisableHoverTextColorChange = function () {
+        this.change_text_color_on_hover = false;
+    };
+
     this.Text = function () {
         return this.label.text();
     };
