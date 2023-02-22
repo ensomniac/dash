@@ -12,47 +12,91 @@ from pathlib import Path
 from threading import Timer
 from datetime import datetime
 from Dash.Utils import OapiRoot, GetRandomID
-
+from Dash.LocalStorage import Read, Write
 
 class RunAsRoot:
     def __init__(self):
-        self.cmd = None
-        self.state = None
-        self.timestamp = ""
-        self.task_id = None
-        self.cmd_path = None
-        self.start_time = None
+        self.state        = {}
+        self.timestamp    = ""
+        self.cmd_path     = None
+        self.init_time    = datetime.now()
         self.fail_timeout = 20  # In seconds (formerly 10, but git updates were failing for some repos that take a bit longer)
-        self.request_path = os.path.join(OapiRoot, "dash", "local", "rar", "active/")  # TODO: Put this path in dash guide
+
+    @property
+    def request_path(self):
+        return os.path.join(
+            OapiRoot,
+            "dash",
+            "local",
+            "rar",
+            "active/"
+        )
+
+    @property
+    def task_id(self):
+        if not hasattr(self, "_task_id"):
+            self._task_id = GetRandomID()
+
+        return self._task_id
+
+    def get_task_path(self, task_id):
+        return os.path.join(self.request_path, self.task_id)
+
+    def get_task_data(self, task_id):
+        return Read(self.get_task_path(self.task_id))
 
     def Queue(self, command):
         if not command:
-            return {}  # I'd prefer to raise an error, but I'm hesitant to do so
-
-        self.task_id = GetRandomID()
-        self.cmd = command  # str or list
-        self.cmd_path = os.path.join(self.request_path, self.task_id)
-        self.start_time = datetime.now()
+            raise Exception("RunAsRoot.Queue > Missing command directive!")
 
         self.state = {
-            "cmd": self.cmd,
-            "complete": False,
-            "output": None,
-            "id": self.task_id,
+            "cmd":             command,
+            "cmd_result":      None,
+            "complete":        False,
+            "output":          None,
+            "started":         False,
+            "id":              self.task_id,
+            "queued_time_iso": self.init_time.isoformat(),
+            "start_time_iso":  None,
+            "last_poll_iso":   None,
+            "cmd_path":        os.path.join(self.request_path, self.task_id)
         }
 
-        open(self.cmd_path, "w").write(json.dumps(self.state))
+        cmd_type = type(self.state["cmd"])
+
+        if cmd_type not in [list, str]:
+            raise Exception("Unhandled command type: " + str(cmd_type))
+
+        Write(self.state["cmd_path"], self.state)
+        # open(self.state["cmd_path"], "w").write(json.dumps(self.state))
 
         self.timestamp = datetime.fromtimestamp(
-            Path(self.cmd_path).stat().st_mtime
+            Path(self.state["cmd_path"]).stat().st_mtime
         )
 
-        self.check_status()
+        response = {}
+        response["check"] = []
 
-        while not self.state or not self.state.get("complete"):
-            sleep(0.2)
+        iterations = 0
 
-        return self.state
+        while True:
+            task_data = self.get_task_data(self.task_id)
+            response["check"].append(str(task_data))
+            iterations += 1
+            sleep(1.0)
+
+            if iterations > 10:
+                break
+
+
+
+
+        # self.check_status()
+
+        # while not self.state or not self.state.get("complete"):
+        #     sleep(0.2)
+
+        return response
 
     def check_status(self):
         if self.state and self.state.get("complete"):
@@ -97,9 +141,21 @@ class RunAsRoot:
         )
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 def Queue(command):
     return RunAsRoot().Queue(command)
-
 
 if __name__ == "__main__":
     print("Interactive testing...")

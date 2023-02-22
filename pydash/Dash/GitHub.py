@@ -47,11 +47,11 @@ class GitHub:
 
             return return_data
 
-        return_data["payload"] = loads(return_data["payload"])
-        return_data["repository"] = return_data["payload"]["repository"]["name"]
+        return_data["payload"]        = loads(return_data["payload"])
+        return_data["repository"]     = return_data["payload"]["repository"]["name"]
         return_data["sender_details"] = return_data["payload"]["sender"]
-        return_data["sender"] = return_data["sender_details"]["login"]
-        return_data["hook_type"] = "Unknown hook type"
+        return_data["sender"]         = return_data["sender_details"]["login"]
+        return_data["hook_type"]      = "Unknown hook type"
 
         commits = []
 
@@ -140,6 +140,9 @@ class GitHub:
         cmds.append(f"chmod 755 {dest_path} -R")
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
+
+        # TODO: Check to see if there is already a
+        # github command running for this site!
 
         # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called.
         return RunAsRoot.Queue(cmds)
