@@ -17,6 +17,7 @@ class Utils:
     LayersRoot: str
     ToDict: callable
     LayerOrder: list
+    SetProperty: callable
 
     def __init__(self):
         pass
@@ -60,16 +61,23 @@ class Utils:
         from .layer import Layer
 
         for layer_id in self.LayerOrder:
-            layers["data"][layer_id] = Layer(self, layer_id).GetData()
+            layers["data"][layer_id] = Layer(self, layer_id).ToDict()
 
         return layers
 
-    def upload_file(self, file, filename, layer_id, allowable_exts):
+    def add_layer_from_file(self, file, filename, allowable_exts, layer_type):
         self.validate_uploaded_file_ext(filename, allowable_exts)
 
         from .layer import Layer
 
-        return Layer(self, layer_id).UploadFile(file, filename)
+        layer = Layer(self, layer_type=layer_type)
+
+        layer.UploadFile(file, filename)
+
+        return self.add_layer(layer)
+
+    def add_layer(self, layer):
+        return self.SetProperty("layer_order", [*self.LayerOrder, layer.ID])
 
     def validate_uploaded_file_ext(self, filename, allowable_exts):
         ext = filename.split(".")[-1].strip().lower()

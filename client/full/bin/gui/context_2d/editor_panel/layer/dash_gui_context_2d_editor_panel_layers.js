@@ -69,6 +69,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         if (new_layer) {
             primitive_data = {
+                // TODO: file_data is now in the layer data under the 'file' key, update this
                 "type": primitive_type,  // image, text, etc
                 "file_data": primitive_file_data,  // data for image, etc
                 "anchor_norm_x": 0.5,  // normalized x value for the center point of the element in relation to the canvas
@@ -84,6 +85,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.editor.AddCanvasPrimitive(_index, primitive_data);
 
+        // TODO: why would the primitive data hold the hidden/locked keys? Those already exist in the layer and each layer only has one primitive - update this
         if (!new_layer) {
             if (primitive_data["hidden"]) {
                 layer.ToggleHidden(primitive_data["hidden"]);
@@ -112,6 +114,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         layer.Select();
 
+        // TODO: NO - dont update layers here and push that, instead, call an add layer function or something
         this.save_layers_data();
     };
 

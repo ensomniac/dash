@@ -14,7 +14,8 @@ class Interface:
     save: callable
     ToDict: callable
     DashContext: dict
-    upload_file: callable
+    add_layer: callable
+    add_layer_from_file: callable
     validate_uploaded_file_ext: callable
 
     def __init__(self):
@@ -44,12 +45,17 @@ class Interface:
 
         return self.save().ToDict()
 
-    def UploadImage(self, file, filename, layer_id):
+    def AddTextLayer(self):
+        from .layer import Layer
+
+        return self.add_layer(Layer(self, layer_type="text"))
+
+    def AddImageLayer(self, file, filename):
         from Dash.Utils import GetImageExtensions
 
-        return self.upload_file(file, filename, layer_id, GetImageExtensions())
+        return self.add_layer_from_file(file, filename, GetImageExtensions(), "image")
 
-    def UploadVideo(self, file, filename, layer_id):
+    def AddVideoLayer(self, file, filename):
         from Dash.Utils import GetVideoExtensions
 
-        return self.upload_file(file, filename, layer_id, GetVideoExtensions())
+        return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")

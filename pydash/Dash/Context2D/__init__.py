@@ -30,7 +30,7 @@ class Context2D(Utils, Interface, Properties):
         """
         :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
 
-        :return: Sanitized context2D datas
+        :return: Sanitized context2D data
         :rtype: dict
         """
 
@@ -67,9 +67,13 @@ def SetProperties(user_data, context_2d_root, obj_id, props):
     return Context2D(user_data, context_2d_root, obj_id).SetProperties(props)
 
 
-def UploadImage(user_data, context_2d_root, obj_id, dash_context, file, filename, layer_id):
-    return Context2D(user_data, context_2d_root, obj_id, dash_context).UploadImage(file, filename, layer_id)
+def AddTextLayer(user_data, context_2d_root, obj_id):
+    return Context2D(user_data, context_2d_root, obj_id).AddTextLayer()
 
 
-def UploadVideo(user_data, context_2d_root, obj_id, dash_context, file, filename, layer_id):
-    return Context2D(user_data, context_2d_root, obj_id, dash_context).UploadVideo(file, filename, layer_id)
+def AddImageLayer(user_data, context_2d_root, obj_id, dash_context, file, filename):
+    return Context2D(user_data, context_2d_root, obj_id, dash_context).AddImageLayer(file, filename)
+
+
+def AddVideoLayer(user_data, context_2d_root, obj_id, dash_context, file, filename):
+    return Context2D(user_data, context_2d_root, obj_id, dash_context).AddVideoLayer(file, filename)

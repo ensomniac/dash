@@ -8,9 +8,14 @@ import sys
 
 
 class Layer:
-    def __init__(self, context_2d, obj_id):
+    def __init__(self, context_2d, obj_id="", layer_type=""):
         self.context_2d = context_2d
         self.ID = obj_id
+        self.Type = layer_type  # text, image, video, etc
+
+        self.data = {}
+
+        self.load_data()
 
     @property
     def root(self):
@@ -20,40 +25,47 @@ class Layer:
     def data_path(self):
         return os.path.join(self.root, "data.json")
 
-    def GetData(self):
-        if not os.path.exists(self.data_path):
-            return {}
+    def ToDict(self, save=False):
+        """
+        :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
 
-        from Dash.LocalStorage import Read
+        :return: Sanitized layer data
+        :rtype: dict
+        """
 
-        return Read(self.data_path) or {}
+        return {
+            "anchor_norm_x": 0.5,  # normalized x value for the center point of the element in relation to the canvas
+            "anchor_norm_y": 0.5,  # normalized y value for the center point of the element in relation to the canvas
+            "created_by":   self.data.get("created_by") or "",
+            "created_on":   self.data.get("created_on") or "",
+            "display_name": self.data.get("display_name") or f"New {self.Type} Layer",
+            "id":           self.ID,
+            "file":         self.data.get("file") or {},
+            "hidden":       self.data.get("hidden") or False,
+            "locked":       self.data.get("locked") or False,
+            "modified_by":  self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
+            "modified_on":  self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
+            "rot_deg": 0,  # -180 to 180 (or is it -179 to 179?)
+            "type": self.Type,
+            "width_norm": 0.5  # normalized width for the width of the element in relation to the width of the canvas
+        } if self.data else self.data
 
     def SetProperty(self, key, value):
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
-        data = self.GetData()
-
         if not properties:
-            return data
+            return self.ToDict()
 
-        data.update(properties)
+        self.data.update(properties)
 
-        return self.save()
+        return self.save().ToDict()
 
     def UploadFile(self, file, filename):
         from Dash.Utils import UploadFile
 
-        os.makedirs(self.root, exist_ok=True)  # In case it's new
-
-        if not os.path.exists(self.data_path):
-            # TODO:
-            #  - make sure to save new data if new
-            #  - save file data? or get on the fly? probably on the fly is best so we don't have to keep it up to date
-            #  - any saving to do if not new?
-            pass
-
-        file_root = os.path.join(self.root, "file")  # A single layer will only ever have a single file (each upload is its own layer)
+        # A single layer will only ever have a single file (each upload is its own layer)
+        file_root = os.path.join(self.root, "file")
 
         if os.path.exists(file_root):
             from shutil import rmtree
@@ -62,34 +74,42 @@ class Layer:
             # updating the file on a layer, you would just get a new layer when you upload a new file)
             rmtree(file_root)
 
-        # TODO: for images, need to manage it the same way we do for renders, where we save a
-        #  thumb, png in this case, to the server and send the original to s3... right?
-
-        return UploadFile(
-            dash_context=self.context_2d.DashContext,
-            user=self.context_2d.User,
-            file_root=file_root,
-            file_bytes_or_existing_path=file,
-            filename=filename,
-            enforce_unique_filename_key=False,
-            include_jpg_thumb=False
+        return self.SetProperty(
+            "file",
+            UploadFile(
+                dash_context=self.context_2d.DashContext,
+                user=self.context_2d.User,
+                file_root=file_root,
+                file_bytes_or_existing_path=file,
+                filename=filename,
+                enforce_unique_filename_key=False,
+                include_jpg_thumb=False
+            )
         )
 
-    def save(self, data={}):
+    def save(self):
         from Dash.LocalStorage import Write
-
-        if not data:
-            data = self.GetData()
-
-        if not data:
-            data = {
-                "created_by": self.context_2d.User["email"],
-                "created_on": self.context_2d.Now.isoformat(),
-                "id": self.ID
-            }
 
         os.makedirs(self.root, exist_ok=True)
 
-        Write(self.data_path, data)
+        Write(self.data_path, self.ToDict(save=True))
 
-        return data
+        return self
+
+    def load_data(self):
+        if self.ID:  # Existing
+            from Dash.LocalStorage import Read
+
+            self.data = Read(self.data_path) or {}
+
+            return
+
+        from Dash.Utils import GetRandomID
+
+        self.ID = GetRandomID()
+
+        self.data = {  # New
+            "created_by": self.context_2d.User["email"],
+            "created_on": self.context_2d.Now.isoformat(),
+            "id": self.ID
+        }

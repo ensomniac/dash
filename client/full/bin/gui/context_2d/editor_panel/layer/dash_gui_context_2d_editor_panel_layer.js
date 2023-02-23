@@ -111,7 +111,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
 
-            this.SetData("hidden", hidden);
+            this.set_data("hidden", hidden);
         }
     };
 
@@ -127,7 +127,7 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
         if (this.layers.initialized) {
             this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
 
-            this.SetData("locked", locked);
+            this.set_data("locked", locked);
         }
     };
 
