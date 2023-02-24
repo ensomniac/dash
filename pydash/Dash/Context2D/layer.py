@@ -117,12 +117,15 @@ class Layer:
 
     def load_data(self):
         if self.ID:  # Existing
+            if not os.path.exists(self.data_path):
+                raise FileNotFoundError(f"Data path doesn't exist for layer ({self.ID}), this shouldn't happen")
+
             from Dash.LocalStorage import Read
 
             self.data = Read(self.data_path)
             
             if not self.data:
-                raise ValueError("Failed to read data")
+                raise ValueError(f"Failed to read layer data ({self.ID})")
 
             self.Type = self.data["type"]
 
