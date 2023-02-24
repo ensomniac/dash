@@ -8,16 +8,14 @@ function DashGuiContext2DPrimitiveText () {
     this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
 
     this._setup_styles = function () {
-        var width_min = (this.canvas.GetWidth() * 0.9) + (this.text_pad * 2) + this.text_border_comp;
-        var height_min = (Dash.Size.RowHeight * 1.3) + (this.text_pad * 2) + this.text_border_comp;
+        this.width_px_min = (this.canvas.GetWidth() * 0.9) + (this.text_pad * 2) + this.text_border_comp;
+        this.height_px_min = (Dash.Size.RowHeight * 1.3) + (this.text_pad * 2) + this.text_border_comp;
 
         if (this.data_is_default()) {
-            this.starting_width_override = width_min;
-            this.starting_height_override = height_min;
+            this.starting_width_override = this.width_px_min;
+            this.starting_height_override = this.height_px_min;
         }
 
-        this.width_px_min = width_min;
-        this.height_px_min = height_min;
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
 
         this.text_area.textarea.css({
@@ -101,7 +99,7 @@ function DashGuiContext2DPrimitiveText () {
         this.editor.SetEditorPanelLayerProperty(
             "display_name",
             value,
-            this.index,
+            this.data["id"],
             this.last_text_value || this.data["text_value"]
         );
 

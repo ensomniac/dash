@@ -82,7 +82,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.show_context("general");  // Always show general context when a layer is selected
-        this.show_context(selected_layer.GetPrimitiveData()["type"]);
+        this.show_context(selected_layer.GetData()["type"]);
     };
 
     this.show_no_selected_layer_label = function () {

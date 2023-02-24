@@ -35,6 +35,11 @@ class Interface:
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
+        if properties and type(properties) is str:
+            from json import loads
+
+            properties = loads(properties)
+
         if "layers" in properties:  # This should never happen, but just in case
             del properties["layers"]
 

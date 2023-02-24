@@ -46,25 +46,16 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         return this.id;
     };
 
-    this.SetLabel = function (value) {
-        this.input.SetText(value);
-    };
-
     this.IsSelected = function () {
         return this.selected;
     };
 
-    // TODO: can we nix this? what's depending on it?
     this.GetIndex = function () {
         return this.layers.get_data()["order"].indexOf(this.id);
     };
 
     this.GetData = function () {
         return this.get_data();
-    };
-
-    this.GetPrimitiveData = function () {
-        return this.get_primitive_data();
     };
 
     this.SetData = function (key, value) {
@@ -103,7 +94,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         });
 
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.GetIndex());
+            this.editor.SetCanvasActivePrimitive(this.GetID());
         }
 
         if (!this.layers.redrawing) {
@@ -219,15 +210,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     };
 
     this.set_data = function (key, value) {
-        this.layers.set_data(key, value, this.id);
+        this.layers.set_layer_property(key, value, this.id);
     };
 
     this.get_data = function () {
         return this.layers.get_data()["data"][this.id];
-    };
-
-    this.get_primitive_data = function () {  // TODO
-        return (this.get_data()["primitive"] || {});
     };
 
     this.setup_styles();

@@ -82,7 +82,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     };
 
     this.layer_is_selected = function () {
-        return this.layers.GetSelectedIndex() !== null;
+        return this.layers.GetSelectedLayer() !== null;
     };
 
     this.add_icon_button = function (key, icon_name, callback) {
@@ -160,7 +160,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     };
 
     this.get_data = function () {
-        return this.layers.get_data()[this.layers.GetSelectedIndex()] || {};
+        return this.layers.GetSelectedData() || {};
     };
 
     this.setup_styles();

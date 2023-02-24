@@ -8,19 +8,20 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     for function calls. For each context this is used in, make sure to add the correct function names
      *     to the respective API file (which should be utilizing the Dash.Context2D module) as follows:
      *
-     *         - "get_data":           Get data dict for provided object ID
-     *         - "set_property":       Set property with a key/value for provided object ID
-     *         - "set_layer_property": Set layer property with a key/value for provided object ID
-     *         - "add_text_layer":     Add new text layer to provided object ID
-     *         - "add_image_layer":    Add new image layer to provided object ID via image upload
-     *         - "duplicate":          Duplicate the provided object ID as a new context (not tethered to the original) - backend function
-     *                                 should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
-     *         - "get_combo_options":  Get dict with keys for different combo option types, such as "fonts", with values being lists
-     *                                 containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
+     *         - "get_data":             Get data dict for provided object ID
+     *         - "set_property":         Set property with a key/value for provided object ID
+     *         - "set_layer_property":   Set layer property with a key/value for provided object ID
+     *         - "set_layer_properties": Set multiple layer properties with a single dict for provided object ID
+     *         - "add_text_layer":       Add new text layer to provided object ID
+     *         - "add_image_layer":      Add new image layer to provided object ID via image upload
+     *         - "duplicate":            Duplicate the provided object ID as a new context (not tethered to the original) - backend function
+     *                                   should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_combo_options":    Get dict with keys for different combo option types, such as "fonts", with values being lists
+     *                                   containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
-     *                                 Required/expected combo option type keys:
-     *                                   - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
-     *                                   - contexts (all Context2D objects)
+     *                                   Required/expected combo option type keys:
+     *                                     - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
+     *                                     - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -33,10 +34,11 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.color = color || Dash.Color.Light;
     this.can_edit = can_edit;
 
-    this.data = {};
+    this.data = null;
     this.canvas = null;
     this.log_bar = null;
     this.toolbar = null;
+    this.initialized = false;
     this.editor_panel = null;
     this.ComboOptions = null;
     this.on_duplicate_cb = null;
@@ -51,6 +53,127 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         Dash.SetInterval(this, this.refresh_data, 5000);
 
         this.get_combo_options();
+    };
+
+    // TODO: regarding all these public functions, some are intended to only be called
+    //  by certain elements, so having them appear as public may be confusing later - rename?
+
+    this.SetEditorPanelLayerProperty = function (key, value, id, primitive_previous_value=null) {
+        this.editor_panel.SetLayerProperty(key, value, id, primitive_previous_value);
+    };
+
+    this.EditorPanelInputInFocus = function () {
+        return this.editor_panel.InputInFocus();
+    };
+
+    this.CanvasInputInFocus = function () {
+        return this.canvas.InputInFocus();
+    };
+
+    this.SetCanvasTool = function (name, cursor) {
+        if (this.canvas) {
+            this.canvas.SetTool(name, cursor);
+        }
+    };
+
+    this.SetCanvasActivePrimitive = function (id) {
+        if (this.canvas) {
+            this.canvas.SetActivePrimitive(id);
+        }
+    };
+
+    this.UpdateCanvasPrimitive = function (key, value, id="") {
+        if (this.canvas) {
+            this.canvas.UpdatePrimitive(key, value, id);
+        }
+    };
+
+    this.DeselectAllCanvasPrimitives = function () {
+        if (this.canvas) {
+            this.canvas.DeselectAllPrimitives();
+        }
+    };
+
+    this.UpdateCanvasPrimitiveZIndexes = function () {
+        if (this.canvas) {
+            this.canvas.UpdatePrimitiveZIndexes();
+        }
+    };
+
+    this.AddCanvasPrimitive = function (layer) {
+        if (this.canvas) {
+            this.canvas.AddPrimitive(layer);
+        }
+    };
+
+    this.RemoveCanvasPrimitive = function (id) {
+        if (this.canvas) {
+            this.canvas.RemovePrimitive(id);
+        }
+    };
+
+    this.CanvasSizeInitialized = function () {
+        if (this.canvas) {
+            return this.canvas.SizeInitialized();
+        }
+    };
+
+    this.ResizeCanvas = function () {
+        if (this.canvas) {
+            this.canvas.Resize();
+        }
+    };
+
+    this.SelectLayer = function (id, from_canvas=true) {
+        if (this.editor_panel) {
+            this.editor_panel.SelectLayer(id, from_canvas);
+        }
+    };
+
+    this.DeselectAllLayers = function () {
+        this.editor_panel.layers_box.DeselectLayers();
+
+        this.editor_panel.SwitchContentToNewTab();
+
+        this.DeselectAllCanvasPrimitives();
+    };
+
+    this.SetOnDuplicateCallback = function (callback, binder=null) {
+        this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+
+    this.GetAspectRatio = function (calculated=false) {
+        var aspect;
+
+        if (this.editor_panel) {
+            aspect = this.editor_panel.GetAspectRatio();
+        }
+
+        else {
+            var data = this.get_data();
+
+            aspect = [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
+        }
+
+        if (calculated) {
+            return aspect[0] / aspect[1];
+        }
+
+        return aspect;
+    };
+
+    this.AddToLog = function (message) {
+        if (this.log_bar) {
+            this.log_bar.Add(message);
+        }
+    };
+
+    this.initialize = function () {
+        if (this.initialized) {
+            return;
+        }
+
+        this.initialized = true;
 
         this.canvas = new DashGuiContext2DCanvas(this);
         this.log_bar = new DashGuiContext2DLogBar(this);
@@ -96,125 +219,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         });
 
         this.middle_html.append(this.middle_pane_slider.html);
-    };
 
-    // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later - rename?
-
-    this.SetEditorPanelLayerProperty = function (key, value, index, primitive_previous_value=null) {
-        this.editor_panel.SetLayerProperty(key, value, index, primitive_previous_value);
-    };
-
-    this.EditorPanelInputInFocus = function () {
-        return this.editor_panel.InputInFocus();
-    };
-
-    this.CanvasInputInFocus = function () {
-        return this.canvas.InputInFocus();
-    };
-
-    this.SetCanvasTool = function (name, cursor) {
-        if (this.canvas) {
-            this.canvas.SetTool(name, cursor);
-        }
-    };
-
-    this.SetCanvasActivePrimitive = function (index) {
-        if (this.canvas) {
-            this.canvas.SetActivePrimitive(index);
-        }
-    };
-
-    this.SetCanvasPrimitiveProperty = function (key, value, index=null) {
-        if (this.canvas) {
-            this.canvas.SetPrimitiveProperty(key, value, index);
-        }
-    };
-
-    this.DeselectAllCanvasPrimitives = function () {
-        if (this.canvas) {
-            this.canvas.DeselectAllPrimitives();
-        }
-    };
-
-    this.MoveCanvasPrimitiveUp = function (index) {
-        if (this.canvas) {
-            this.canvas.MovePrimitiveUp(index);
-        }
-    };
-
-    this.MoveCanvasPrimitiveDown = function (index) {
-        if (this.canvas) {
-            this.canvas.MovePrimitiveDown(index);
-        }
-    };
-
-    this.AddCanvasPrimitive = function (index, primitive_data) {
-        if (this.canvas) {
-            this.canvas.AddPrimitive(index, primitive_data);
-        }
-    };
-
-    this.RemoveCanvasPrimitive = function (index) {
-        if (this.canvas) {
-            this.canvas.RemovePrimitive(index);
-        }
-    };
-
-    this.CanvasSizeInitialized = function () {
-        if (this.canvas) {
-            return this.canvas.SizeInitialized();
-        }
-    };
-
-    this.ResizeCanvas = function () {
-        if (this.canvas) {
-            this.canvas.Resize();
-        }
-    };
-
-    this.SelectLayer = function (index, from_canvas=true) {
-        if (this.editor_panel) {
-            this.editor_panel.SelectLayer(index, from_canvas);
-        }
-    };
-
-    this.DeselectAllLayers = function () {
-        this.editor_panel.layers_box.DeselectLayers();
-
-        this.editor_panel.SwitchContentToNewTab();
-
-        this.DeselectAllCanvasPrimitives();
-    };
-
-    this.SetOnDuplicateCallback = function (callback, binder=null) {
-        this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
-    };
-
-    this.GetAspectRatio = function (calculated=false) {
-        var aspect;
-
-        if (this.editor_panel) {
-            aspect = this.editor_panel.GetAspectRatio();
-        }
-
-        else {
-            var data = this.get_data();
-
-            aspect = [data["aspect_ratio_w"] || 1, data["aspect_ratio_h"] || 1];
-        }
-
-        if (calculated) {
-            return aspect[0] / aspect[1];
-        }
-
-        return aspect;
-    };
-
-    this.AddToLog = function (message) {
-        if (this.log_bar) {
-            this.log_bar.Add(message);
-        }
+        this.editor_panel.UpdatePropertyBox();
+        this.editor_panel.UpdateContentBoxComboOptions();
     };
 
     this.refresh_data = function () {
@@ -226,11 +233,15 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                         return;
                     }
 
-                    self.data = response || {};
+                    self.data = response;
+
+                    if (self.ComboOptions && !self.initialized) {
+                        self.initialize();
+                    }
 
                     console.log("Context2D data:", self.data);
 
-                    if (self.editor_panel) {
+                    if (self.initialized) {
                         self.editor_panel.UpdatePropertyBox();
                     }
                 },
@@ -258,9 +269,13 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
 
                     self.ComboOptions = response;
 
+                    if (self.data && !self.initialized) {
+                        self.initialize();
+                    }
+
                     console.log("Context2D combo options:", self.ComboOptions);
 
-                    if (self.editor_panel) {
+                    if (self.initialized) {
                         self.editor_panel.UpdateContentBoxComboOptions();
                     }
                 },
@@ -290,6 +305,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     if (!Dash.Validate.Response(response)) {
                         return;
                     }
+
+                    self.data = response;
 
                     // Aspect ratio change logging happens on canvas resize
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {

@@ -70,6 +70,11 @@ class Layer:
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
+        if properties and type(properties) is str:
+            from json import loads
+
+            properties = loads(properties)
+
         if "file" in properties:  # Should never happen, but just in case
             del properties["file"]
 

@@ -1,12 +1,12 @@
-function DashGuiContext2DPrimitive (canvas, data, index) {
+function DashGuiContext2DPrimitive (canvas, layer) {
     this.canvas = canvas;
-    this.data = data;
-    this.index = index;
+    this.layer = layer;
 
     this.top_px = 0;
     this.left_px = 0;
     this.width_px = 0;
     this.height_px = 0;
+    this.aspect = null;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
@@ -16,10 +16,12 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
+    this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
     this.starting_width_override = null;
     this.starting_height_override = null;
     this.draw_properties_pending = false;
+    this.file_data = this.data["file"] || {};
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -30,12 +32,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     //  corner, and/or should also consider the mouse position and scale from there
 
     this.setup_styles = function () {
-        if (!this.data["file_data"]) {
-            this.data["file_data"] = {};
-        }
-
-        if (this.data["file_data"]["aspect"]) {
-            this.data["aspect"] = this.data["file_data"]["aspect"];
+        if (this.file_data["aspect"]) {
+            this.aspect = this.file_data["aspect"];
         }
 
         if (!this.call_style()) {
@@ -46,7 +44,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
             this.data["width_norm"] = this.starting_width_override / this.canvas.GetWidth();
 
             if (this.starting_height_override) {
-                this.data["aspect"] = this.starting_width_override / this.starting_height_override;
+                this.aspect = this.starting_width_override / this.starting_height_override;
             }
         }
 
@@ -58,21 +56,21 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         this.set_left_px();
 
         this.html.css({
+            // "background": Dash.Color.Random(),  // TESTING
             "position": "absolute",
             "top": this.top_px,
             "left": this.left_px,
             "width": this.width_px,
             "height": this.height_px,
             "z-index": this.get_z_index(),
-            "opacity": "opacity" in this.data ? this.data["opacity"] : 1,
-            // "background": Dash.Color.Random()  // TESTING
+            "opacity": this.data["opacity"]
         });
+
+        this.setup_connections();
 
         if (this.data["hidden"]) {
             this.html.hide();
         }
-
-        this.setup_connections();
     };
 
     this.InputInFocus = function () {
@@ -83,15 +81,13 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         return this.text_area.InFocus();
     };
 
-    this.SetIndex = function (index) {
-        this.index = index;
-
+    this.UpdateZIndex = function () {
         this.html.css({
             "z-index": this.get_z_index()
         });
     };
 
-    this.SetProperty = function (key, value) {
+    this.Update = function (key, value) {
         if (this.data[key] === value || key === "display_name") {
             return;
         }
@@ -241,6 +237,28 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
 
         this.drag_active = false;
+
+        this.save_pos_data();
+    };
+
+    this.save_pos_data = function () {
+        Dash.Request(
+            this,
+            function (response) {
+                Dash.Validate.Response(response);
+            },
+            this.editor.api,
+            {
+                "f": "set_layer_properties",
+                "obj_id": this.editor.obj_id,
+                "properties": JSON.stringify({
+                    "anchor_norm_x": this.data["anchor_norm_x"],
+                    "anchor_norm_y": this.data["anchor_norm_y"],
+                    "rot_deg": this.data["rot_deg"],
+                    "width_norm": this.data["width_norm"]
+                })
+            }
+        );
     };
 
     // Meant to be overridden by member classes
@@ -258,7 +276,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     };
 
     this.get_z_index = function () {
-        return this.z_index_base + this.index;
+        return this.z_index_base + this.layer.GetIndex();
     };
 
     this.data_is_default = function () {
@@ -352,7 +370,7 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
     };
 
     this.set_height_px = function (override=null) {
-        this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
+        this.height_px = override || (this.width_px / (this.aspect || this.editor.GetAspectRatio(true)));
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
@@ -385,8 +403,8 @@ function DashGuiContext2DPrimitive (canvas, data, index) {
         }
 
         else {
-            if (!Dash.Validate.Object(this.data["file_data"])) {
-                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.data["file_data"]);
+            if (!Dash.Validate.Object(this.file_data)) {
+                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.file_data);
 
                 return false;
             }

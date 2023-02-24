@@ -12,15 +12,12 @@ function DashGuiContext2DPrimitiveImage () {
     };
 
     this.get_url = function () {
-        return (this.data["file_data"]["thumb_png_url"] || this.data["file_data"]["orig_url"] || "");
+        return (this.file_data["thumb_png_url"] || this.file_data["orig_url"] || "");
     };
 
     this.update_filter = function () {
-        var contrast = "contrast" in this.data ? this.data["contrast"] : 1;
-        var brightness = "brightness" in this.data ? this.data["brightness"] : 1;
-
         this.image.css({
-            "filter": "brightness(" + brightness + ") contrast(" + contrast + ")"
+            "filter": "brightness(" + this.data["brightness"] + ") contrast(" + this.data["contrast"] + ")"
         });
     };
 

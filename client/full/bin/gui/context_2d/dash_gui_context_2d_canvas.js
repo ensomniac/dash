@@ -98,9 +98,9 @@ function DashGuiContext2DCanvas (editor) {
         });
     };
 
-    this.SetPrimitiveProperty = function (key, value, index=null) {
-        if (index !== null) {
-            this.primitives[index].SetProperty(key, value);
+    this.UpdatePrimitive = function (key, value, id="") {
+        if (id) {
+            this.primitives[id].Update(key, value);
 
             return;
         }
@@ -109,37 +109,35 @@ function DashGuiContext2DCanvas (editor) {
             return;
         }
 
-        this.last_selected_primitive.SetProperty(key, value);
+        this.last_selected_primitive.Update(key, value);
     };
 
-    this.SetActivePrimitive = function (index) {
-        this.primitives[index].Select();
+    this.SetActivePrimitive = function (id) {
+        this.primitives[id].Select();
 
-        this.last_selected_primitive = this.primitives[index];
+        this.last_selected_primitive = this.primitives[id];
     };
 
-    this.AddPrimitive = function (index, primitive_data) {
-        var primitive = new DashGuiContext2DPrimitive(this, primitive_data, index);
+    this.AddPrimitive = function (layer) {
+        var id = layer.GetID();
 
-        this.primitives[index] = primitive;
+        if (this.primitives[id]) {
+            return;
+        }
+
+        var primitive = new DashGuiContext2DPrimitive(this, layer);
+
+        this.primitives[id] = primitive;
 
         this.canvas.append(primitive.html);
     };
 
-    this.RemovePrimitive = function (index) {
-        this.primitives[index].html.remove();
+    this.RemovePrimitive = function (id) {
+        this.primitives[id].html.remove();
 
-        this.primitives.Pop(index);
+        delete this.primitives[id];
 
-        this.update_all_primitive_indexes();
-    };
-
-    this.MovePrimitiveUp = function (index) {
-        this.move_primitive(index);
-    };
-
-    this.MovePrimitiveDown = function (index) {
-        this.move_primitive(index, false);
+        this.UpdatePrimitiveZIndexes();
     };
 
     this.GetHeight = function () {
@@ -162,12 +160,12 @@ function DashGuiContext2DCanvas (editor) {
     this.OnPrimitiveSelected = function (primitive) {
         this.last_selected_primitive = primitive;
 
-        for (var i in this.primitives) {
-            if (this.primitives[i] !== primitive) {
+        for (var id in this.primitives) {
+            if (this.primitives[id] !== primitive) {
                 continue;
             }
 
-            this.editor.SelectLayer(parseInt(i));
+            this.editor.SelectLayer(id);
 
             break;
         }
@@ -253,23 +251,9 @@ function DashGuiContext2DCanvas (editor) {
         this.size_initialized = true;
     };
 
-    this.move_primitive = function (index, up=true) {
-        if (index === null || this.primitives.length < 2 || (up && index === (this.primitives.length - 1)) || (!up && index === 0)) {
-            return;  // This shouldn't happen at this level, but just in case
-        }
-
-        this.primitives.splice(
-            up ? parseInt(index) + 1 : parseInt(index) - 1,
-            0,
-            this.primitives.Pop(index)
-        );
-
-        this.update_all_primitive_indexes();
-    };
-
-    this.update_all_primitive_indexes = function () {
-        for (var i in this.primitives) {
-            this.primitives[i].SetIndex(parseInt(i));
+    this.UpdatePrimitiveZIndexes = function () {
+        for (var id in this.primitives) {
+            this.primitives[id].UpdateZIndex();
         }
     };
 

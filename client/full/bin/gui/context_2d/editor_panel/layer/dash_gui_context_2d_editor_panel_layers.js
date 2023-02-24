@@ -52,13 +52,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         // TODO: see trello notes
     };
 
-    // TODO: update external usages and also see if we can nix index reliance altogether
     this.AddLayer = function (id) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
 
         this.layers_box.prepend(this.layers[id].html);
 
-        this.editor.AddCanvasPrimitive(this.layers[id].GetData());  // TODO
+        this.editor.AddCanvasPrimitive(this.layers[id]);
     };
 
     this.Delete = function () {
@@ -68,20 +67,17 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
 
-        var order = [];
+        var order = [...this.get_data()["order"]];
 
-        for (var layer_id of this.get_data()["order"]) {
-            if (layer_id !== id) {
-                order.push(layer_id);
-            }
-        }
+        order.Remove(id);
 
         (function (self) {
-            self.editor.set_data(
-                "layer_order",
+            self.set_layer_order(
                 order,
                 function () {
-                    self.editor.RemoveCanvasPrimitive(id);  // TODO
+                    self.redraw_layers();
+
+                    self.editor.RemoveCanvasPrimitive(id);
 
                     self.panel.SwitchContentToNewTab();
                 }
@@ -98,38 +94,23 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.ToggleHidden = function (hidden) {
-        var id = this.GetSelectedID();
+        var layer = this.GetSelectedLayer();
 
-        if (!id) {
+        if (!layer) {
             return;
         }
 
-        this.set_data("hidden", hidden, id);
-
-        this.layers[id].ToggleHidden(hidden);
+        layer.ToggleHidden(hidden);
     };
 
     this.ToggleLocked = function (locked) {
-        var id = this.GetSelectedID();
+        var layer = this.GetSelectedLayer();
 
-        if (!id) {
+        if (!layer) {
             return;
         }
 
-        this.set_data("locked", locked, id);
-
-        this.layers[index].ToggleLocked(locked);
-    };
-
-    // TODO: can we nix this? what's depending on it?
-    this.GetSelectedIndex = function () {
-        var layer = this.GetSelectedLayer();
-
-        if (layer) {
-            return layer.GetIndex();
-        }
-
-        return null;
+        layer.ToggleLocked(locked);
     };
 
     this.GetSelectedID = function () {
@@ -142,10 +123,20 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return "";
     };
 
+    this.GetSelectedData = function () {
+        var layer = this.GetSelectedLayer();
+
+        if (layer) {
+            return layer.GetData();
+        }
+
+        return null;
+    };
+
     this.GetSelectedLayer = function () {
-        for (var layer of this.layers) {
-            if (layer.IsSelected()) {
-                return layer;
+        for (var id in this.layers) {
+            if (this.layers[id].IsSelected()) {
+                return this.layers[id];
             }
         }
 
@@ -153,8 +144,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.DeselectLayers = function () {
-        for (var layer of this.layers) {
-            layer.Deselect();
+        for (var id in this.layers) {
+            this.layers[id].Deselect();
         }
     };
 
@@ -162,91 +153,53 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.toolbar.UpdateIconStates();
     };
 
-    this.Select = function (index, from_canvas=true) {
-        this.layers[index].Select(from_canvas);
+    this.Select = function (id, from_canvas=true) {
+        this.layers[id].Select(from_canvas);
     };
 
-    // TODO
-    this.SetProperty = function (key, value, index, primitive_previous_value=null) {
-        if (
-               primitive_previous_value
-            && key === "display_name"
-            && this.data["layers"][index][key]  // TODO
-            && this.data["layers"][index][key] !== primitive_previous_value
-        ) {
+    this.SetProperty = function (key, value, id, primitive_previous_value=null) {
+        var current = this.get_data()["data"][id][key];
+
+        if (primitive_previous_value && key === "display_name" && current && current !== primitive_previous_value) {
             // If the layer's name has already been set manually by the user,
             // then don't auto-set the name based on the primitive's text change
             return;
         }
 
-        this.set_data(key, value, index);  // TODO: id not index
-
-        // TODO: Shouldn't be necessary because everything's going to redraw
-        // if (key === "display_name") {
-        //     this.layers[index].SetLabel(value);
-        // }
+        this.set_layer_property(key, value, id);
     };
 
-    // TODO
     this.on_move = function (up=true) {
-        var index = this.GetSelectedIndex();
+        var layer = this.GetSelectedLayer();
 
-        if (index === null || this.layers.length < 2 || (up && index === (this.layers.length - 1)) || (!up && index === 0)) {
+        if (!layer) {
             return;
         }
 
-        var layer = this.layers.Pop(index);
-        var new_index = up ? parseInt(index) + 1 : parseInt(index) - 1;
+        var id = layer.GetID();
+        var index = layer.GetIndex();
+        var order = [...this.get_data()["order"]];
 
-        if (up) {
-            layer.index += 1;  // TODO
+        if (order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
+            return;
         }
 
-        else {
-            layer.index -= 1;
-        }
+        delete this.layers[id];
 
-        for (var other_layer of this.layers) {
-            if (other_layer.index !== new_index) {
-                continue;
-            }
+        order.Remove(id);
 
-            if (up) {
-                other_layer.index -= 1;
-            }
+        order.splice((up ? index + 1 : index - 1), 0, id);
 
-            else {
-                other_layer.index += 1;
-            }
-        }
+        (function (self) {
+            self.set_layer_order(
+                order,
+                function () {
+                    self.redraw_layers();
 
-        var layer_data = this.data["layers"].Pop(index);
-
-        this.layers.splice(new_index, 0, layer);
-
-        this.data["layers"].splice(new_index, 0, layer_data);
-
-        this.redraw_layers_box();
-
-        if (up) {
-            this.editor.MoveCanvasPrimitiveUp(index);
-        }
-
-        else {
-            this.editor.MoveCanvasPrimitiveDown(index);
-        }
-
-        this.save_layers_data();
-    };
-
-    this.redraw_layers_box = function () {
-        this.layers_box.empty();
-
-        for (var layer of this.layers) {
-            this.layers_box.prepend(layer.html);
-
-            layer.RefreshConnections();
-        }
+                    self.editor.UpdateCanvasPrimitiveZIndexes();
+                }
+            );
+        })(this);
     };
 
     this.get_data = function () {
@@ -256,10 +209,15 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.on_data = function (response) {
         this.editor.data = response;
 
-        this.redraw_layers();
+        // TODO: is this necessary when the layer order didn't change?
+        // this.redraw_layers();
     };
 
-    this.set_data = function (key, value, id="") {
+    this.set_layer_order = function (order, callback=null) {
+        this.editor.set_data("layer_order", order, callback);
+    };
+
+    this.set_layer_property = function (key, value, id="") {
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -285,7 +243,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     self.on_data(response);
 
                     self.editor.AddToLog("(" + self.get_data()["data"][id]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
-                    self.editor.SetCanvasPrimitiveProperty(key, value, id);  // TODO
+                    self.editor.UpdateCanvasPrimitive(key, value, id);
                 },
                 self.editor.api,
                 {
@@ -302,7 +260,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.redraw_layers = function () {
         this.redrawing = true;
 
-        this.layers = [];
+        this.layers = {};
 
         this.layers_box.empty();
 
