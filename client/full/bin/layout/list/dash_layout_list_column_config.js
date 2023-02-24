@@ -28,10 +28,12 @@ function DashLayoutListColumnConfig () {
         });
     };
 
-    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false) {
+    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}) {
         this.columns.push({
             "type": "divider",
             "css": css,
+            "header_css": header_css,
+            "footer_css": footer_css,
             "show_for_header": show_for_header,
             "show_for_footer": show_for_footer
         });

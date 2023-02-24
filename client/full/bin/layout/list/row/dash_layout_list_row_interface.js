@@ -125,7 +125,7 @@ function DashLayoutListRowInterface () {
 
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
-                    var new_value = this.get_data_for_key(input["column_config_data"]);
+                    var new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
 
                     if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);

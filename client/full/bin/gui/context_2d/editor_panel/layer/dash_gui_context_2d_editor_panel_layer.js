@@ -54,7 +54,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         return this.selected;
     };
 
-    // TODO: can we nix this? what's depending on it? 
+    // TODO: can we nix this? what's depending on it?
     this.GetIndex = function () {
         return this.layers.get_data()["order"].indexOf(this.id);
     };

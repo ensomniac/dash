@@ -29164,7 +29164,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     this.IsSelected = function () {
         return this.selected;
     };
-    // TODO: can we nix this? what's depending on it? 
+    // TODO: can we nix this? what's depending on it?
     this.GetIndex = function () {
         return this.layers.get_data()["order"].indexOf(this.id);
     };
@@ -36399,10 +36399,12 @@ function DashLayoutListColumnConfig () {
             "footer_only": footer_only
         });
     };
-    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false) {
+    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}) {
         this.columns.push({
             "type": "divider",
             "css": css,
+            "header_css": header_css,
+            "footer_css": footer_css,
             "show_for_header": show_for_header,
             "show_for_footer": show_for_footer
         });
@@ -36824,20 +36826,34 @@ function DashLayoutListRowElements () {
     };
     this.get_divider = function (column_config_data) {
         var divider_line = $("<div></div>");
-        divider_line.css({
+        var css = {
             "background": this.color.AccentGood,
             "width": Dash.Size.Padding * 0.3,
             "margin": "none",
             "flex": "none"
-        });
+        };
         if (column_config_data["css"]) {
-            divider_line.css(column_config_data["css"]);
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+        if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
         }
         if ((this.is_header && !column_config_data["show_for_header"]) || (this.is_footer && !column_config_data["show_for_footer"])) {
-            divider_line.css({
-                "opacity": 0
-            });
+            css["opacity"] = 0;
         }
+        divider_line.css(css);
         return divider_line;
     };
     this.get_combo = function (column_config_data) {
@@ -37180,7 +37196,7 @@ function DashLayoutListRowInterface () {
             }
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
-                    var new_value = this.get_data_for_key(input["column_config_data"]);
+                    var new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
                     if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
                     }

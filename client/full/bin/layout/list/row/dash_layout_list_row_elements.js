@@ -103,22 +103,39 @@ function DashLayoutListRowElements () {
     this.get_divider = function (column_config_data) {
         var divider_line = $("<div></div>");
 
-        divider_line.css({
+        var css = {
             "background": this.color.AccentGood,
             "width": Dash.Size.Padding * 0.3,
             "margin": "none",
             "flex": "none"
-        });
+        };
 
         if (column_config_data["css"]) {
-            divider_line.css(column_config_data["css"]);
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+
+        if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
         }
 
         if ((this.is_header && !column_config_data["show_for_header"]) || (this.is_footer && !column_config_data["show_for_footer"])) {
-            divider_line.css({
-                "opacity": 0
-            });
+            css["opacity"] = 0;
         }
+
+        divider_line.css(css);
 
         return divider_line;
     };
