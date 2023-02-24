@@ -4,20 +4,23 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      * -------------------------
      *
      * IMPORTANT NOTE: <br>
-     *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names for function calls.
-     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *     For consistency across Dash, this takes an API name and object ID, and uses predetermined names
+     *     for function calls. For each context this is used in, make sure to add the correct function names
+     *     to the respective API file (which should be utilizing the Dash.Context2D module) as follows:
      *
-     *         - "get_data":          Get data dict for provided object ID
-     *         - "set_property":      Set property with a key/value for provided object ID
-     *         - "upload_image":      Upload image (for new image layer) to provided object ID
-     *         - "duplicate":         Duplicate the provided object ID as a new context (not tethered to the original) - backend function
-     *                                should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
-     *         - "get_combo_options": Get dict with keys for different combo option types, such as "fonts", with values being lists
-     *                                containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
+     *         - "get_data":           Get data dict for provided object ID
+     *         - "set_property":       Set property with a key/value for provided object ID
+     *         - "set_layer_property": Set layer property with a key/value for provided object ID
+     *         - "add_text_layer":     Add new text layer to provided object ID
+     *         - "add_image_layer":    Add new image layer to provided object ID via image upload
+     *         - "duplicate":          Duplicate the provided object ID as a new context (not tethered to the original) - backend function
+     *                                 should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_combo_options":  Get dict with keys for different combo option types, such as "fonts", with values being lists
+     *                                 containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
-     *                                Required/expected combo option type keys:
-     *                                  - fonts (make sure 'url' and 'filename' is included in each option, alongside the usual 'id' and 'label_text')
-     *                                  - contexts (all Context2D objects)
+     *                                 Required/expected combo option type keys:
+     *                                   - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
+     *                                   - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -271,9 +274,13 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         return this.data;
     };
 
-    this.set_data = function (key, value) {
+    this.set_data = function (key, value, callback=null) {
         if (this.get_data(key) === value) {
             return;
+        }
+
+        if (typeof value === "object") {
+            value = JSON.stringify(value);
         }
 
         (function (self) {
@@ -287,6 +294,10 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     // Aspect ratio change logging happens on canvas resize
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
                         self.AddToLog(key.Title() + " set to: " + value);
+                    }
+
+                    if (callback) {
+                        callback();
                     }
                 },
                 self.api,

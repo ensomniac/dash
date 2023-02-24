@@ -1,11 +1,10 @@
 function DashGuiContext2DEditorPanelLayers (panel) {
     this.panel = panel;
 
-    this.data = {};
-    this.layers = [];
+    this.layers = {};
     this.header = null;
     this.toolbar = null;
-    this.initialized = false;
+    this.redrawing = false;
     this.html = $("<div></div>");
     this.color = this.panel.color;
     this.editor = this.panel.editor;
@@ -23,22 +22,23 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         });
 
         this.add_header();
-        this.add_layers_box();
 
-        this.toolbar = new DashGuiContext2DEditorPanelLayersToolbar(this);
+        this.layers_box.css({
+            "position": "absolute",
+            "inset": 0,
+            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
+            "overflow-y": "auto"
+        });
 
-        this.header.html.append(this.toolbar.html);
+        this.html.append(this.layers_box);
 
-        // TODO: load layers list data
-
+        this.redraw_layers();
         this.setup_connections();
-
-        this.initialized = true;
     };
 
     this.InputInFocus = function () {
-        for (var layer of this.layers) {
-            if (layer.InputInFocus()) {
+        for (var id in this.layers) {
+            if (this.layers[id].InputInFocus()) {
                 return true;
             }
         }
@@ -52,100 +52,41 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         // TODO: see trello notes
     };
 
-    this.AddLayer = function (primitive_type="", primitive_file_data=null, _index=null) {
-        var primitive_data;
-        var new_layer = false;
+    // TODO: update external usages and also see if we can nix index reliance altogether
+    this.AddLayer = function (id) {
+        this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
 
-        if (_index === null) {
-            _index = this.layers.length;
-            new_layer = true;
-        }
+        this.layers_box.prepend(this.layers[id].html);
 
-        var layer = new DashGuiContext2DEditorPanelLayer(this, _index, primitive_type);
-
-        this.layers.push(layer);
-
-        this.layers_box.prepend(layer.html);
-
-        if (new_layer) {
-            primitive_data = {
-                // TODO: file_data is now in the layer data under the 'file' key, update this
-                "type": primitive_type,  // image, text, etc
-                "file_data": primitive_file_data,  // data for image, etc
-                "anchor_norm_x": 0.5,  // normalized x value for the center point of the element in relation to the canvas
-                "anchor_norm_y": 0.5,  // normalized y value for the center point of the element in relation to the canvas
-                "width_norm": 0.5,  // normalized width for the width of the element in relation to the width of the canvas
-                "rot_deg": 0  // -180 to 180 (or is it -179 to 179?)
-            };
-        }
-
-        else {
-            primitive_data = layer.GetPrimitiveData();
-        }
-
-        this.editor.AddCanvasPrimitive(_index, primitive_data);
-
-        // TODO: why would the primitive data hold the hidden/locked keys? Those already exist in the layer and each layer only has one primitive - update this
-        if (!new_layer) {
-            if (primitive_data["hidden"]) {
-                layer.ToggleHidden(primitive_data["hidden"]);
-            }
-
-            if (primitive_data["locked"]) {
-                layer.ToggleLocked(primitive_data["locked"]);
-            }
-
-            return;
-        }
-
-        if (!("layers" in this.data)) {
-            this.data["layers"] = [];
-        }
-
-        var filename = primitive_file_data ? (primitive_file_data["orig_filename"] || primitive_file_data["filename"]) : "";
-        var display_name = filename ? filename : "New " + primitive_type.Title() + " Layer";
-
-        layer.SetLabel(display_name);
-
-        this.data["layers"].push({
-            "display_name": display_name,
-            "primitive": primitive_data
-        });
-
-        layer.Select();
-
-        // TODO: NO - dont update layers here and push that, instead, call an add layer function or something
-        this.save_layers_data();
+        this.editor.AddCanvasPrimitive(this.layers[id].GetData());  // TODO
     };
 
     this.Delete = function () {
-        var index = this.GetSelectedIndex();
+        var id = this.GetSelectedID();
 
-        if (index === null) {
+        if (!id) {
             return;
         }
 
-        var is_top_layer = index === this.layers.length - 1;
+        var order = [];
 
-        this.layers.Pop(index).html.remove();
-
-        if (!is_top_layer) {
-            for (var other_layer of this.layers) {
-                if (other_layer.index <= index) {
-                    continue;
-                }
-
-                other_layer.index -= 1;
+        for (var layer_id of this.get_data()["order"]) {
+            if (layer_id !== id) {
+                order.push(layer_id);
             }
         }
 
-        this.data["layers"].Pop(index);
+        (function (self) {
+            self.editor.set_data(
+                "layer_order",
+                order,
+                function () {
+                    self.editor.RemoveCanvasPrimitive(id);  // TODO
 
-        this.editor.RemoveCanvasPrimitive(index);
-
-        this.panel.SwitchContentToNewTab();
-
-        this.save_layers_data();
+                    self.panel.SwitchContentToNewTab();
+                }
+            );
+        })(this);
     };
 
     this.MoveUp = function () {
@@ -157,29 +98,30 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.ToggleHidden = function (hidden) {
-        var index = this.GetSelectedIndex();
+        var id = this.GetSelectedID();
 
-        if (index === null) {
+        if (!id) {
             return;
         }
 
-        this.set_data("hidden", hidden, index);
+        this.set_data("hidden", hidden, id);
 
-        this.layers[index].ToggleHidden(hidden);
+        this.layers[id].ToggleHidden(hidden);
     };
 
     this.ToggleLocked = function (locked) {
-        var index = this.GetSelectedIndex();
+        var id = this.GetSelectedID();
 
-        if (index === null) {
+        if (!id) {
             return;
         }
 
-        this.set_data("locked", locked, index);
+        this.set_data("locked", locked, id);
 
         this.layers[index].ToggleLocked(locked);
     };
 
+    // TODO: can we nix this? what's depending on it?
     this.GetSelectedIndex = function () {
         var layer = this.GetSelectedLayer();
 
@@ -188,6 +130,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         return null;
+    };
+
+    this.GetSelectedID = function () {
+        var layer = this.GetSelectedLayer();
+
+        if (layer) {
+            return layer.GetID();
+        }
+
+        return "";
     };
 
     this.GetSelectedLayer = function () {
@@ -214,11 +166,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[index].Select(from_canvas);
     };
 
+    // TODO
     this.SetProperty = function (key, value, index, primitive_previous_value=null) {
         if (
                primitive_previous_value
             && key === "display_name"
-            && this.data["layers"][index][key]
+            && this.data["layers"][index][key]  // TODO
             && this.data["layers"][index][key] !== primitive_previous_value
         ) {
             // If the layer's name has already been set manually by the user,
@@ -226,13 +179,15 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
 
-        this.set_data(key, value, index);
+        this.set_data(key, value, index);  // TODO: id not index
 
-        if (key === "display_name") {
-            this.layers[index].SetLabel(value);
-        }
+        // TODO: Shouldn't be necessary because everything's going to redraw
+        // if (key === "display_name") {
+        //     this.layers[index].SetLabel(value);
+        // }
     };
 
+    // TODO
     this.on_move = function (up=true) {
         var index = this.GetSelectedIndex();
 
@@ -244,7 +199,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var new_index = up ? parseInt(index) + 1 : parseInt(index) - 1;
 
         if (up) {
-            layer.index += 1;
+            layer.index += 1;  // TODO
         }
 
         else {
@@ -295,72 +250,67 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.get_data = function () {
-        // TODO: data - something like this
-        return this.data["layers"] || [];
+        return this.editor.data["layers"];
     };
 
+    this.on_data = function (response) {
+        this.editor.data = response;
 
-    this.set_data = function (key, value, index=null) {
-        if (index === null) {
-            index = this.GetSelectedIndex();
+        this.redraw_layers();
+    };
+
+    this.set_data = function (key, value, id="") {
+        if (!id) {
+            id = this.GetSelectedID();
         }
 
-        // Shouldn't happen, unless there are no layers, in which case, this shouldn't have been called
-        if (index === null) {
-            console.error("Failed to get current layer index");
+        if (!id) {  // Shouldn't happen, unless there are no layers, in which case, this shouldn't have been called
+            console.error("Failed to get current layer ID");
 
             return;
         }
 
-        if (!("layers" in this.data)) {
-            this.data["layers"] = [];
+        if (typeof value === "object") {
+            value = JSON.stringify(value);
         }
 
-        this.data["layers"][index][key] = value;
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
 
-        this.editor.AddToLog("(" + this.data["layers"][index]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
-        this.editor.SetCanvasPrimitiveProperty(key, value, index);
+                    self.on_data(response);
 
-        this.save_layers_data();
+                    self.editor.AddToLog("(" + self.get_data()["data"][id]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+                    self.editor.SetCanvasPrimitiveProperty(key, value, id);  // TODO
+                },
+                self.editor.api,
+                {
+                    "f": "set_layer_property",
+                    "obj_id": self.editor.obj_id,
+                    "layer_id": id,
+                    "key": key,
+                    "value": value
+                }
+            );
+        })(this);
     };
 
-    this.save_layers_data = function () {
-        // TODO: Need to save layer data specifically, not using "set_data" - more like, "set_layer_data" or something
-        // Dash.Request(
-        //     this,
-        //     function (response) {
-        //         if (!Dash.Validate.Response(response)) {
-        //             return;
-        //         }
-        //     },
-        //     this.editor.api,
-        //     {
-        //         "f": "",
-        //         "key": "",
-        //         "value": JSON.stringify(this.get_data()["layers"] || [])
-        //     }
-        // );
-    };
+    this.redraw_layers = function () {
+        this.redrawing = true;
 
-    this.add_layers_box = function () {
-        this.layers_box.css({
-            "position": "absolute",
-            "inset": 0,
-            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
-            "overflow-y": "auto"
-        });
+        this.layers = [];
 
-        var layers = this.get_data();
+        this.layers_box.empty();
 
-        if (layers.length) {
-            for (var i in layers) {
-                this.AddLayer("", null, i);
-            }
-
-            this.layers.Last().Select();
+        for (var id of this.get_data()["order"]) {
+            this.AddLayer(id);
         }
 
-        this.html.append(this.layers_box);
+        this.redrawing = false;
     };
 
     this.add_header = function () {
@@ -382,6 +332,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         });
 
         this.header.html.append(new Dash.Gui.GetFlexSpacer());
+
+        this.toolbar = new DashGuiContext2DEditorPanelLayersToolbar(this);
+
+        this.header.html.append(this.toolbar.html);
 
         this.html.append(this.header.html);
     };

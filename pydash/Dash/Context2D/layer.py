@@ -8,10 +8,10 @@ import sys
 
 
 class Layer:
-    def __init__(self, context_2d, obj_id="", layer_type=""):
+    def __init__(self, context_2d, obj_id="", new_layer_type=""):
         self.context_2d = context_2d
         self.ID = obj_id
-        self.Type = layer_type  # text, image, video, etc
+        self.Type = new_layer_type  # text, image, video, etc
 
         self.data = {}
 
@@ -33,27 +33,46 @@ class Layer:
         :rtype: dict
         """
 
-        return {
-            "anchor_norm_x": 0.5,  # normalized x value for the center point of the element in relation to the canvas
-            "anchor_norm_y": 0.5,  # normalized y value for the center point of the element in relation to the canvas
-            "created_by":   self.data.get("created_by") or "",
-            "created_on":   self.data.get("created_on") or "",
-            "display_name": self.data.get("display_name") or f"New {self.Type} Layer",
-            "id":           self.ID,
-            "file":         self.data.get("file") or {},
-            "hidden":       self.data.get("hidden") or False,
-            "locked":       self.data.get("locked") or False,
-            "modified_by":  self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
-            "modified_on":  self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
-            "rot_deg": 0,  # -180 to 180 (or is it -179 to 179?)
-            "type": self.Type,
-            "width_norm": 0.5  # normalized width for the width of the element in relation to the width of the canvas
-        } if self.data else self.data
+        if not self.data:
+            return self.data
+
+        data = {
+            "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized x value for the center point of the element in relation to the canvas
+            "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized y value for the center point of the element in relation to the canvas
+            "created_by":    self.data["created_by"],
+            "created_on":    self.data["created_on"],
+            "display_name":  self.data["display_name"],
+            "id":            self.ID,
+            "hidden":        self.data.get("hidden") or False,
+            "locked":        self.data.get("locked") or False,
+            "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
+            "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
+            "opacity":       self.data["opacity"] if "opacity" in self.data else 1,
+            "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180 (or is it -179 to 179?)
+            "type":          self.Type,
+            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else 0.5  # normalized width for the width of the element in relation to the width of the canvas
+        }
+
+        if self.Type == "text":
+            data["text_value"] = self.data.get("text_value") or ""
+            data["font_id"] = self.data.get("font_id") or ""
+            data["font_color"] = self.data.get("font_color") or ""
+        else:
+            data["file"] = self.data.get("file") or {}
+
+        if self.Type == "image":
+            data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1
+            data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1
+
+        return data
 
     def SetProperty(self, key, value):
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
+        if "file" in properties:  # Should never happen, but just in case
+            del properties["file"]
+
         if not properties:
             return self.ToDict()
 
@@ -74,9 +93,8 @@ class Layer:
             # updating the file on a layer, you would just get a new layer when you upload a new file)
             rmtree(file_root)
 
-        return self.SetProperty(
-            "file",
-            UploadFile(
+        return self.SetProperties({
+            "file": UploadFile(
                 dash_context=self.context_2d.DashContext,
                 user=self.context_2d.User,
                 file_root=file_root,
@@ -84,8 +102,9 @@ class Layer:
                 filename=filename,
                 enforce_unique_filename_key=False,
                 include_jpg_thumb=False
-            )
-        )
+            ),
+            "display_name": filename
+        })
 
     def save(self):
         from Dash.LocalStorage import Write
@@ -100,9 +119,17 @@ class Layer:
         if self.ID:  # Existing
             from Dash.LocalStorage import Read
 
-            self.data = Read(self.data_path) or {}
+            self.data = Read(self.data_path)
+            
+            if not self.data:
+                raise ValueError("Failed to read data")
+
+            self.Type = self.data["type"]
 
             return
+
+        if not self.Type:
+            raise ValueError("Layer type is required")
 
         from Dash.Utils import GetRandomID
 
@@ -111,5 +138,7 @@ class Layer:
         self.data = {  # New
             "created_by": self.context_2d.User["email"],
             "created_on": self.context_2d.Now.isoformat(),
-            "id": self.ID
+            "id": self.ID,
+            "type": self.Type,
+            "display_name": f"New {self.data['type']} Layer"
         }

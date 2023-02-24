@@ -67,6 +67,14 @@ def SetProperties(user_data, context_2d_root, obj_id, props):
     return Context2D(user_data, context_2d_root, obj_id).SetProperties(props)
 
 
+def SetLayerProperty(user_data, context_2d_root, obj_id, layer_id, key, value):
+    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperty(layer_id, key, value)
+
+
+def SetLayerProperties(user_data, context_2d_root, obj_id, layer_id, props):
+    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperties(layer_id, props)
+
+
 def AddTextLayer(user_data, context_2d_root, obj_id):
     return Context2D(user_data, context_2d_root, obj_id).AddTextLayer()
 

@@ -1,7 +1,6 @@
-function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
+function DashGuiContext2DEditorPanelLayer (layers, id) {
     this.layers = layers;
-    this.index = index;
-    this.primitive_type = primitive_type;
+    this.id = id;
 
     this.input = null;
     this.selected = false;
@@ -29,6 +28,22 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
 
         this.add_icon_area();
         this.RefreshConnections();
+
+        var data = this.get_data();
+
+        if (data["hidden"]) {
+            this.ToggleHidden(data["hidden"]);
+        }
+
+        if (data["locked"]) {
+            this.ToggleLocked(data["locked"]);
+        }
+
+        this.Select();
+    };
+
+    this.GetID = function () {
+        return this.id;
     };
 
     this.SetLabel = function (value) {
@@ -39,8 +54,9 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
         return this.selected;
     };
 
+    // TODO: can we nix this? what's depending on it? 
     this.GetIndex = function () {
-        return this.index;
+        return this.layers.get_data()["order"].indexOf(this.id);
     };
 
     this.GetData = function () {
@@ -87,11 +103,11 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
         });
 
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.index);
+            this.editor.SetCanvasActivePrimitive(this.GetIndex());
         }
 
-        if (this.layers.initialized) {
-            this.editor.AddToLog("Selected layer: " + this.get_display_name());
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog("Selected layer: " + this.get_data()["display_name"]);
 
             this.layers.UpdateToolbarIconStates();
         }
@@ -108,8 +124,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
             this.hidden_icon.html.hide();
         }
 
-        if (this.layers.initialized) {
-            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_display_name);
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_data()["display_name"]);
 
             this.set_data("hidden", hidden);
         }
@@ -124,8 +140,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
             this.locked_icon.html.hide();
         }
 
-        if (this.layers.initialized) {
-            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_display_name);
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_data()["display_name"]);
 
             this.set_data("locked", locked);
         }
@@ -141,12 +157,10 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
         })(this);
     };
 
-    this.get_display_name = function () {
-        return (this.input.Text().trim() || this.get_data()["display_name"] || "New " + primitive_type.Title() + " Layer");
-    };
-
     this.add_input = function () {
-        this.input = new Dash.Gui.Input("New " + primitive_type.Title() + " Layer", this.color);
+        var display_name = this.get_data()["display_name"];
+
+        this.input = new Dash.Gui.Input(display_name, this.color);
 
         this.input.html.css({
             "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
@@ -158,10 +172,8 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
             "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
 
-        var value = this.get_data()["display_name"];
-
-        if (value) {
-            this.input.SetText(value);
+        if (display_name) {
+            this.input.SetText(display_name);
         }
 
         if (this.can_edit) {
@@ -207,14 +219,14 @@ function DashGuiContext2DEditorPanelLayer (layers, index, primitive_type="") {
     };
 
     this.set_data = function (key, value) {
-        this.layers.set_data(key, value, this.index);
+        this.layers.set_data(key, value, this.id);
     };
 
     this.get_data = function () {
-        return this.layers.get_data()[this.index] || {};
+        return this.layers.get_data()["data"][this.id];
     };
 
-    this.get_primitive_data = function () {
+    this.get_primitive_data = function () {  // TODO
         return (this.get_data()["primitive"] || {});
     };
 

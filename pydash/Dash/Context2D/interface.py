@@ -41,6 +41,15 @@ class Interface:
         if not properties:
             return self.ToDict()
 
+        if "layer_order" in properties:
+            if type(properties["layer_order"]) is str:
+                from json import loads
+
+                properties["layer_order"] = loads(properties["layer_order"])
+
+            if type(properties["layer_order"]) is not list:
+                raise ValueError(f"Layer order must be a list: {properties['layer_order']}")
+
         self.Data.update(properties)
 
         return self.save().ToDict()
@@ -48,7 +57,7 @@ class Interface:
     def AddTextLayer(self):
         from .layer import Layer
 
-        return self.add_layer(Layer(self, layer_type="text"))
+        return self.add_layer(Layer(self, new_layer_type="text"))
 
     def AddImageLayer(self, file, filename):
         from Dash.Utils import GetImageExtensions
@@ -59,3 +68,17 @@ class Interface:
         from Dash.Utils import GetVideoExtensions
 
         return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")
+
+    def SetLayerProperty(self, layer_id, key, value):
+        from .layer import Layer
+
+        Layer(self, layer_id).SetProperty(key, value)
+
+        return self.ToDict()
+
+    def SetLayerProperties(self, layer_id, properties={}):
+        from .layer import Layer
+
+        Layer(self, layer_id).SetProperties(properties)
+
+        return self.ToDict()

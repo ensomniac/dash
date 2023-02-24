@@ -26,7 +26,10 @@ class Utils:
         if self.ID:  # Existing
             from Dash.LocalStorage import Read
 
-            self.Data = Read(self.DataPath) or {}
+            self.Data = Read(self.DataPath)
+
+            if not self.Data:
+                raise ValueError("Failed to read data")
 
             return
 
@@ -70,7 +73,7 @@ class Utils:
 
         from .layer import Layer
 
-        layer = Layer(self, layer_type=layer_type)
+        layer = Layer(self, new_layer_type=layer_type)
 
         layer.UploadFile(file, filename)
 
