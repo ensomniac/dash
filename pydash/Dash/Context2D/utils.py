@@ -83,6 +83,8 @@ class Utils:
         return self.add_layer(layer)
 
     def add_layer(self, layer):
+        layer.Save()
+
         return self.SetProperty("layer_order", [*self.LayerOrder, layer.ID])
 
     def validate_uploaded_file_ext(self, filename, allowable_exts):

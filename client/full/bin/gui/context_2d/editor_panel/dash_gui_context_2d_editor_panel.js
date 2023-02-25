@@ -68,6 +68,10 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
+    this.OnNewLayer = function (response) {
+        this.layers_box.OnNewLayer(response);
+    };
+
     this.SetLayerProperty = function (key, value, id, primitive_previous_value=null) {
         this.layers_box.SetProperty(key, value, id, primitive_previous_value);
     };

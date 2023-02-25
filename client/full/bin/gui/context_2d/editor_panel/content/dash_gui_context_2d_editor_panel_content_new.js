@@ -43,14 +43,34 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
             if (primitive_type === "text") {
-                (function (self, primitive_type) {
+                (function (self) {
                     self.html.append(self.get_button(
                         "New Text Layer",
-                        function () {
-                            self.panel.AddLayer(primitive_type);
+                        function (event, button) {
+                            button.SetLoading(true);
+                            button.Disable();
+
+                            Dash.Request(
+                                self,
+                                function (response) {
+                                    button.SetLoading(false);
+                                    button.Enable();
+
+                                    if (!Dash.Validate.Response(response)) {
+                                        return;
+                                    }
+
+                                    self.panel.OnNewLayer(response);
+                                },
+                                self.editor.api,
+                                {
+                                    "f": "add_text_layer",
+                                    "obj_id": self.editor.obj_id
+                                }
+                            );
                         }
                     ).html);
-                })(this, primitive_type);
+                })(this);
             }
 
             else if (primitive_type === "image") {

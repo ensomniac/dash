@@ -28194,6 +28194,9 @@ function DashGuiContext2DCanvas (editor) {
         this.last_selected_primitive.Update(key, value);
     };
     this.SetActivePrimitive = function (id) {
+        if (!this.primitives[id]) {
+            return;
+        }
         this.primitives[id].Select();
         this.last_selected_primitive = this.primitives[id];
     };
@@ -28204,6 +28207,7 @@ function DashGuiContext2DCanvas (editor) {
         }
         var primitive = new DashGuiContext2DPrimitive(this, layer);
         this.primitives[id] = primitive;
+        this.SetActivePrimitive(id);
         this.canvas.append(primitive.html);
     };
     this.RemovePrimitive = function (id) {
@@ -28615,6 +28619,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
+    this.drag_state = null;
     this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
@@ -28743,6 +28748,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.drag_active || this.data["locked"]) {
             return;
         }
+        console.debug("TEST drag start");
         this.drag_active = true;
         this.Select(true);
         var active_tool = this.canvas.GetActiveTool();
@@ -28757,6 +28763,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "start_mouse_x": event.clientX,
             "start_mouse_y": event.clientY,
             "drag_start": new Date()
+        };
+        this.drag_state = {
+            "anchor_norm_x": this.data["anchor_norm_x"],
+            "anchor_norm_y": this.data["anchor_norm_y"],
+            "rot_deg": this.data["rot_deg"],
+            "width_norm": this.data["width_norm"]
         };
     };
     this.OnDrag = function (event) {
@@ -28791,9 +28803,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.drag_active = false;
-        this.save_pos_data();
+        console.debug("TEST drag stop");
+        this.save_drag_state();
     };
-    this.save_pos_data = function () {
+    this.save_drag_state = function () {
+        this.drag_state = {
+            "anchor_norm_x": this.data["anchor_norm_x"],
+            "anchor_norm_y": this.data["anchor_norm_y"],
+            "rot_deg": this.data["rot_deg"],
+            "width_norm": this.data["width_norm"]
+        };
+        console.debug("TEST save pos data");
         Dash.Request(
             this,
             function (response) {
@@ -28803,12 +28823,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             {
                 "f": "set_layer_properties",
                 "obj_id": this.editor.obj_id,
-                "properties": JSON.stringify({
-                    "anchor_norm_x": this.data["anchor_norm_x"],
-                    "anchor_norm_y": this.data["anchor_norm_y"],
-                    "rot_deg": this.data["rot_deg"],
-                    "width_norm": this.data["width_norm"]
-                })
+                "layer_id": this.data["id"],
+                "properties": JSON.stringify(this.drag_state)
             }
         );
     };
@@ -29194,6 +29210,9 @@ function DashGuiContext2DEditorPanel (editor) {
         else {
             this.SwitchContentToNewTab();
         }
+    };
+    this.OnNewLayer = function (response) {
+        this.layers_box.OnNewLayer(response);
     };
     this.SetLayerProperty = function (key, value, id, primitive_previous_value=null) {
         this.layers_box.SetProperty(key, value, id, primitive_previous_value);
@@ -29678,6 +29697,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.set_layer_property(key, value, id);
     };
+    this.OnNewLayer = function (response) {
+        this.on_data(response, true);
+    };
     this.on_move = function (up=true) {
         var layer = this.GetSelectedLayer();
         if (!layer) {
@@ -29705,10 +29727,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.get_data = function () {
         return this.editor.data["layers"];
     };
-    this.on_data = function (response) {
+    this.on_data = function (response, redraw=false) {
         this.editor.data = response;
         // TODO: is this necessary when the layer order didn't change?
-        // this.redraw_layers();
+        if (redraw) {
+            this.redraw_layers();
+        }
     };
     this.set_layer_order = function (order, callback=null) {
         this.editor.set_data("layer_order", order, callback);
@@ -30006,14 +30030,31 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
             if (primitive_type === "text") {
-                (function (self, primitive_type) {
+                (function (self) {
                     self.html.append(self.get_button(
                         "New Text Layer",
-                        function () {
-                            self.panel.AddLayer(primitive_type);
+                        function (event, button) {
+                            button.SetLoading(true);
+                            button.Disable();
+                            Dash.Request(
+                                self,
+                                function (response) {
+                                    button.SetLoading(false);
+                                    button.Enable();
+                                    if (!Dash.Validate.Response(response)) {
+                                        return;
+                                    }
+                                    self.panel.OnNewLayer(response);
+                                },
+                                self.editor.api,
+                                {
+                                    "f": "add_text_layer",
+                                    "obj_id": self.editor.obj_id
+                                }
+                            );
                         }
                     ).html);
-                })(this, primitive_type);
+                })(this);
             }
             else if (primitive_type === "image") {
                 this.html.append(this.get_upload_button(primitive_type, "New Image Layer").html);

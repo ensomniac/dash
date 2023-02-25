@@ -41,7 +41,7 @@ class Layer:
             "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized y value for the center point of the element in relation to the canvas
             "created_by":    self.data["created_by"],
             "created_on":    self.data["created_on"],
-            "display_name":  self.data["display_name"],
+            "display_name":  self.data["display_name"] or "NULL",  # TODO: TEST remove this once bug is fixed
             "id":            self.ID,
             "hidden":        self.data.get("hidden") or False,
             "locked":        self.data.get("locked") or False,
@@ -81,9 +81,13 @@ class Layer:
         if not properties:
             return self.ToDict()
 
+        # Enforce types
+        if "display_name" in properties and not properties.get("display_name"):
+            properties["display_name"] = ""
+
         self.data.update(properties)
 
-        return self.save().ToDict()
+        return self.Save().ToDict()
 
     def UploadFile(self, file, filename):
         from Dash.Utils import UploadFile
@@ -111,7 +115,7 @@ class Layer:
             "display_name": filename
         })
 
-    def save(self):
+    def Save(self):
         from Dash.LocalStorage import Write
 
         os.makedirs(self.root, exist_ok=True)
@@ -148,5 +152,5 @@ class Layer:
             "created_on": self.context_2d.Now.isoformat(),
             "id": self.ID,
             "type": self.Type,
-            "display_name": f"New {self.data['type']} Layer"
+            "display_name": f"New {self.Type.title()} Layer"
         }

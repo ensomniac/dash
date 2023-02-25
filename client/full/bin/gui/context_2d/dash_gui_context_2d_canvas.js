@@ -113,6 +113,10 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.SetActivePrimitive = function (id) {
+        if (!this.primitives[id]) {
+            return;
+        }
+
         this.primitives[id].Select();
 
         this.last_selected_primitive = this.primitives[id];
@@ -128,6 +132,8 @@ function DashGuiContext2DCanvas (editor) {
         var primitive = new DashGuiContext2DPrimitive(this, layer);
 
         this.primitives[id] = primitive;
+
+        this.SetActivePrimitive(id);
 
         this.canvas.append(primitive.html);
     };

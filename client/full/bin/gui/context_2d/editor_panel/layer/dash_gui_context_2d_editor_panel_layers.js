@@ -169,6 +169,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.set_layer_property(key, value, id);
     };
 
+    this.OnNewLayer = function (response) {
+        this.on_data(response, true);
+    };
+
     this.on_move = function (up=true) {
         var layer = this.GetSelectedLayer();
 
@@ -206,11 +210,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return this.editor.data["layers"];
     };
 
-    this.on_data = function (response) {
+    this.on_data = function (response, redraw=false) {
         this.editor.data = response;
 
         // TODO: is this necessary when the layer order didn't change?
-        // this.redraw_layers();
+        if (redraw) {
+            this.redraw_layers();
+        }
     };
 
     this.set_layer_order = function (order, callback=null) {

@@ -10,6 +10,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
+    this.drag_state = null;
     this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
@@ -172,6 +173,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.drag_active || this.data["locked"]) {
             return;
         }
+        console.debug("TEST drag start");
 
         this.drag_active = true;
 
@@ -190,6 +192,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "start_mouse_x": event.clientX,
             "start_mouse_y": event.clientY,
             "drag_start": new Date()
+        };
+
+        this.drag_state = {
+            "anchor_norm_x": this.data["anchor_norm_x"],
+            "anchor_norm_y": this.data["anchor_norm_y"],
+            "rot_deg": this.data["rot_deg"],
+            "width_norm": this.data["width_norm"]
         };
     };
 
@@ -238,10 +247,22 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.drag_active = false;
 
-        this.save_pos_data();
+        console.debug("TEST drag stop");
+
+        this.save_drag_state();
     };
 
-    this.save_pos_data = function () {
+    this.save_drag_state = function () {
+
+        this.drag_state = {
+            "anchor_norm_x": this.data["anchor_norm_x"],
+            "anchor_norm_y": this.data["anchor_norm_y"],
+            "rot_deg": this.data["rot_deg"],
+            "width_norm": this.data["width_norm"]
+        };
+
+        console.debug("TEST save pos data");
+
         Dash.Request(
             this,
             function (response) {
@@ -251,12 +272,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             {
                 "f": "set_layer_properties",
                 "obj_id": this.editor.obj_id,
-                "properties": JSON.stringify({
-                    "anchor_norm_x": this.data["anchor_norm_x"],
-                    "anchor_norm_y": this.data["anchor_norm_y"],
-                    "rot_deg": this.data["rot_deg"],
-                    "width_norm": this.data["width_norm"]
-                })
+                "layer_id": this.data["id"],
+                "properties": JSON.stringify(this.drag_state)
             }
         );
     };
