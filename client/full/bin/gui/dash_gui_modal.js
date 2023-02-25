@@ -1,3 +1,5 @@
+/**@member DashGuiPrompt*/
+
 function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
     this.parent_html = parent_html;
     this.width = width;
@@ -269,7 +271,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             "",
             this.color,
             {
-                "z-index": 100000,
+                "z-index": this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000,
                 "background": this.color.BackgroundRaised,
                 "opacity": this.bg_opacity,
                 "height": height
@@ -291,6 +293,15 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             return;
         }
 
+        this._add_esc_shortcut();
+    };
+
+    // Overridden in DashGuiPrompt
+    this.on_esc_pressed = function () {
+        this.Hide();
+    };
+
+    this._add_esc_shortcut = function () {
         (function (self) {
             $(document).on(
                 "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
@@ -306,7 +317,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
                     if (e.key === "Escape") {
                         console.log("(Esc key pressed) Close modal");
 
-                        self.Hide();
+                        self.on_esc_pressed();
                     }
                 }
             );

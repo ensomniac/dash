@@ -97,8 +97,7 @@ function DashGuiFileExplorerGUI () {
             "margin-top": Dash.Size.Padding * 0.25
         });
 
-        this.upload_button.SetIconSize(150);
-        this.upload_button.SetHoverHint("Upload File");
+        this.upload_button.SetIconSize(150).SetHoverHint("Upload File").AddHighlight();
 
         this.html.append(this.upload_button.html);
     };

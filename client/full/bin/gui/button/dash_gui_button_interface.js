@@ -42,6 +42,31 @@ function DashGuiButtonInterface () {
         });
     };
 
+    this.StyleAsBorderButton = function (border_size=1, border_type="solid", border_color="", background="", highlight_color="") {
+        this.html.css({
+            "border": border_size + "px " + border_type + " " + (
+                   border_color
+                || background
+                || this.html.css("background-color")
+                || this.color_set.Background.Base
+            ),
+            "box-sizing": "border-box",
+            "background": background || "none",
+        });
+
+        this.highlight.css({
+            "margin": -border_size,
+            "background": highlight_color || Dash.Color.GetTransparent(
+                this.highlight.css("background-color") || this.color_set.Background.BaseHover,
+                0.75
+            )
+        });
+
+        this.label.css({
+            "margin-top": -border_size
+        });
+    };
+
     this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
         if (!base && !highlight && !load_bar && !click_highlight) {
             this.reset_background_colors();

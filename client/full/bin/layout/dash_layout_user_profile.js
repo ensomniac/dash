@@ -82,12 +82,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "margin-right": Dash.Size.Padding * 0.8
         });
 
-        this.top_right_button.SetIconSize(180);
-
-        this.top_right_button.SetHoverHint(
+        this.top_right_button.SetIconSize(180).AddHighlight().SetHoverHint(
             this.view_mode === "settings" ? "Log Out" :
-                this.view_mode === "preview" ? "Expand" :
-                ""
+            this.view_mode === "preview" ? "Expand" :
+            ""
         );
 
         this.html.append(this.top_right_button.html);

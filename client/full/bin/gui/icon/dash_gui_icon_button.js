@@ -11,34 +11,48 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
+
+        return this;
     };
 
     this.SetIconSize = function (percentage_number) {
         this.icon.SetSize(percentage_number);
 
         this.update_container_size();
+
+        return this;
     };
 
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
+
+        return this;
     };
 
     this.AddIconStroke = function (color="black") {
         this.icon.AddStroke(color);
+
+        return this;
     };
 
     this.MirrorIcon = function () {
         this.icon.Mirror();
+
+        return this;
     };
 
     this.SetIcon = function (icon_name) {
         this.icon_name = icon_name;
 
         this.icon.SetIcon(icon_name);
+
+        return this;
     };
 
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
+
+        return this;
     };
 
     this.AddHighlight = function (force_in_container=false) {
@@ -50,6 +64,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             "height": height,
             "bottom": -height
         });
+
+        return this;
     };
 
     this.setup_icon = function () {

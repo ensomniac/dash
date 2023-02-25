@@ -58,18 +58,24 @@ function DashGuiCheckbox (
         this.icon_color = color;
 
         this.icon_button.SetIconColor(color);
+
+        return this;
     };
 
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
 
         this.icon_button.AddIconShadow(shadow);
+
+        return this;
     };
 
     this.SetIconSize = function (percentage_number) {
         this.icon_size = percentage_number;
 
         this.icon_button.SetIconSize(percentage_number);
+
+        return this;
     };
 
     this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
@@ -205,13 +211,13 @@ function DashGuiCheckbox (
     };
 
     // Should this just be the default?
-    this.AddHighlight = function () {
+    this.AddHighlight = function (bottom=null) {
         this.include_highlight = true;
 
         this.icon_button.AddHighlight();
 
         this.icon_button.highlight.css({
-            "bottom": -(Dash.Size.Padding * 0.5)
+            "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
         });
     };
 

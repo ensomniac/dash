@@ -11,7 +11,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.ButtonHeight
+            "height": this.style === "toolbar" ? Dash.Size.RowHeight : Dash.Size.ButtonHeight
         });
     };
 
@@ -48,7 +48,19 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.disabled = false;
     };
 
-    this.AddButton = function (label_text, callback) {
+    this.Remove = function (button) {
+        button.html.remove();
+
+        this.buttons.Remove(button);
+
+        this.update_spacing();
+    };
+
+    this.GetIndex = function (button) {
+        return this.buttons.indexOf(button);
+    };
+
+    this.AddButton = function (label_text, callback, prepend=false) {
         callback = callback.bind(this.binder);
 
         var button = (function (self, callback) {
@@ -63,14 +75,22 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             );
         })(this, callback);
 
-        this.buttons.push(button);
-
         button.html.css({
             "margin": 0,
             "flex-grow": 1
         });
 
-        this.html.append(button.html);
+        if (prepend) {
+            this.html.prepend(button.html);
+
+            this.buttons.unshift(button);
+        }
+
+        else {
+            this.html.append(button.html);
+
+            this.buttons.push(button);
+        }
 
         this.update_spacing();
 

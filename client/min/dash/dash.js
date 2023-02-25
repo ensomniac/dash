@@ -17853,6 +17853,7 @@ function DashGui() {
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
     this.Modal                     = DashGuiModal;
+    this.Prompt                    = DashGuiPrompt;
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
@@ -19155,6 +19156,199 @@ function DashRegEx () {
     this.ReadableDateTime.toString = function () {
         return "MM/DD/YYYY at HH:MM AM";
     };
+}
+
+function DashGuiPrompt (
+    bound_cb, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
+    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_shortcut=true
+) {
+    /**
+     * DashGuiPrompt
+     * -------------
+     *
+     * This a replacement for `window.confirm`.
+     *
+     * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc), simply call `Show` as a last step.
+     *
+     * @param {function} bound_cb - Once a selection is made, this will receive the selected button index (pre-bound because we have no use for a `binder` param)
+     * @param {number} width - Modal width (passed to `Dash.Gui.Modal`)
+     * @param {number} height - Modal height (passed to `Dash.Gui.Modal`)
+     * @param {string} message - Text to display if a basic message prompt is desired (not using custom HTML via `AddHTML`)
+     * @param {string} header_text - Label text for header
+     * @param {string} continue_text - Label text for default `Continue` button
+     * @param {string} cancel_text - Label text for default `Cancel` button
+     * @param {DashColorSet} color - `DashColorSet` instance (ideally, opposite to the primary color set of the site)
+     * @param {boolean} include_bg - Use impenetrable full-screen background behind modal (passed to `Dash.Gui.Modal`)
+     * @param {number} bg_opacity - Opacity for background (passed to `Dash.Gui.Modal`)
+     * @param {boolean} use_esc_shortcut - Add an `Esc` key shortcut that maps to the default `Cancel` button (applicable only when using the default two buttons)
+     */
+    this.bound_cb = bound_cb;
+    this.message = message;
+    this.header_text = header_text;
+    this.continue_text = continue_text;
+    this.cancel_text = cancel_text;
+    this.use_esc_shortcut = use_esc_shortcut;
+    Dash.Gui.Modal.call(
+        this,
+        color || Dash.Color.Dark,
+        $("body"),  // Window
+        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        include_bg,
+        bg_opacity,
+        false
+    );
+    this.header = null;
+    this.button_bar = null;
+    this.cancel_button = null;
+    this.remove = this.Remove;  // Remap this to not be public
+    this.continue_button = null;
+    this.content_area = $("<div></div>");
+    this.message_css = {
+        "white-space": "pre-line",
+        "color": this.color.StrokeDark,
+        "font-family": "sans_serif_normal"
+    };
+    // Delete inapplicable public functions from Dash.Gui.Modal to keep things clear
+    delete this.Hide;
+    delete this.Remove;
+    delete this.UpdateSize;
+    delete this.SetParentHTML;
+    delete this.IncreaseZIndex;
+    delete this.SetOnCloseCallback;
+    this.setup_styles = function () {
+        this.modal.css({
+            "border-radius": Dash.Size.BorderRadius,
+            "box-sizing": "border-box",
+            "border": "2px solid " + this.color.Background
+        });
+        this.add_header();
+        this.modal.append(this.content_area);
+        this.add_button_bar();
+        if (this.use_esc_shortcut) {
+            this._add_esc_shortcut();
+        }
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.content_area.css({
+                    "position": "absolute",
+                    "inset": 0,
+                    "top": self.header.html.outerHeight(),
+                    "bottom": self.button_bar.html.outerHeight(),
+                    "padding": Dash.Size.Padding * 2,
+                    "overflow": "auto",
+                    "font-size": "105%",
+                    ...self.message_css
+                });
+                if (self.message) {
+                    self.set_message(self.message);
+                }
+            });
+        })(this);
+    };
+    this.AddButton = function (label_text, prepend=false) {
+        var button = (function (self) {
+            return self.button_bar.AddButton(
+                label_text,
+                function (button) {
+                    self.on_selection(self.button_bar.GetIndex(button));
+                },
+                prepend
+            );
+        })(this);
+        button.label.css({
+            "font-family": "sans_serif_bold"
+        });
+        if (prepend) {
+            button.StyleAsBorderButton();
+        }
+        // Shortcut is only applicable when using default two buttons
+        if (this.esc_shortcut_active) {
+            $(document).off("keydown." + this.identifier);
+        }
+        return button;
+    };
+    this.AddHTML = function (html, add_message_css=false) {
+        this.set_message("");  // One or the other
+        if (add_message_css) {
+            html.css({
+                // For some reason, this is required for the text size to match the default message size,
+                // even though that uses 105%. I'm suspicious it's because the message text is being set
+                // directly on the content area itself, which has padding, causing a discrepancy in this case.
+                "font-size": "100%",
+                ...this.message_css
+            });
+        }
+        this.content_area.append(html);
+    };
+    this.SetMessage = function (message) {
+        this.content_area.empty();  // One or the other
+        this.set_message(message);
+    };
+    this.RemoveContinueButton = function () {
+        this.button_bar.Remove(this.continue_button);
+        this.continue_button = null;
+    };
+    this.RemoveCancelButton = function () {
+        this.button_bar.Remove(this.cancel_button);
+        this.cancel_button = null;
+    };
+    this.on_selection = function (index) {
+        // Because there can be more than the two default buttons, returning an
+        // index makes more sense than returning true/false. Even when using only
+        // the two default buttons, you can still treat the response like true and
+        // false, since the values are 0 for cancel (false) and 1 for continue (true).
+        this.bound_cb(index);
+        this.remove();  // Single-use
+    };
+    // Override
+    this.on_esc_pressed = function () {
+        this.on_selection(0);
+    };
+    this.add_header = function () {
+        this.header = new Dash.Gui.Header(this.header_text, this.color);
+        this.header.ReplaceBorderWithIcon("alert_square").SetSize(165);
+        this.header.html.css({
+            "user-select": "none",
+            "pointer-events": "none",
+            "border-top-left-radius": Dash.Size.BorderRadius,
+            "border-top-right-radius": Dash.Size.BorderRadius,
+            "background": this.color.Background,
+            "position": "absolute",
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "padding": Dash.Size.Padding,
+            "margin": 0
+        });
+        this.header.label.css({
+            "font-size": "120%",
+            "padding-left": Dash.Size.Padding * 1.1
+        });
+        this.modal.append(this.header.html);
+    };
+    this.add_button_bar = function () {
+        this.button_bar = new Dash.Gui.ButtonBar(this);
+        this.button_bar.html.css({
+            "background": this.color.Background,
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "bottom": 0,
+            "padding": Dash.Size.Padding
+        });
+        this.continue_button = this.AddButton(this.continue_text);
+        this.cancel_button = this.AddButton(this.cancel_text, true);
+        this.modal.append(this.button_bar.html);
+    };
+    this.set_message = function (message) {
+        if (this.message === message) {
+            return;
+        }
+        this.message = message;
+        this.content_area.text(this.message);
+    };
+    this.setup_styles();
 }
 
 function DashRequest () {
@@ -22071,6 +22265,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.setup_styles();
 }
 
+/**@member DashGuiPrompt*/
 function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
     this.parent_html = parent_html;
     this.width = width;
@@ -22285,7 +22480,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             "",
             this.color,
             {
-                "z-index": 100000,
+                "z-index": this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000,
                 "background": this.color.BackgroundRaised,
                 "opacity": this.bg_opacity,
                 "height": height
@@ -22303,6 +22498,13 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
         if (!this.include_close_button || this.esc_shortcut_active) {
             return;
         }
+        this._add_esc_shortcut();
+    };
+    // Overridden in DashGuiPrompt
+    this.on_esc_pressed = function () {
+        this.Hide();
+    };
+    this._add_esc_shortcut = function () {
         (function (self) {
             $(document).on(
                 "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
@@ -22314,7 +22516,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
                     }
                     if (e.key === "Escape") {
                         console.log("(Esc key pressed) Close modal");
-                        self.Hide();
+                        self.on_esc_pressed();
                     }
                 }
             );
@@ -23049,14 +23251,17 @@ function DashGuiCheckbox (
     this.SetIconColor = function (color) {
         this.icon_color = color;
         this.icon_button.SetIconColor(color);
+        return this;
     };
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
         this.icon_button.AddIconShadow(shadow);
+        return this;
     };
     this.SetIconSize = function (percentage_number) {
         this.icon_size = percentage_number;
         this.icon_button.SetIconSize(percentage_number);
+        return this;
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
         this.able_to_toggle_cb = binder || this.binder ?
@@ -23156,11 +23361,11 @@ function DashGuiCheckbox (
         this.restyle_icon_button();
     };
     // Should this just be the default?
-    this.AddHighlight = function () {
+    this.AddHighlight = function (bottom=null) {
         this.include_highlight = true;
         this.icon_button.AddHighlight();
         this.icon_button.highlight.css({
-            "bottom": -(Dash.Size.Padding * 0.5)
+            "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
         });
     };
     this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
@@ -23464,7 +23669,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             label_border,
             strict_identifier
         );
-        checkbox.SetIconSize(125);
+        checkbox.SetIconSize(125).AddHighlight(0);
         checkbox.html.css({
             "margin-top": 0
         });
@@ -24376,7 +24581,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.ButtonHeight
+            "height": this.style === "toolbar" ? Dash.Size.RowHeight : Dash.Size.ButtonHeight
         });
     };
     this.SetHeight = function (height) {
@@ -24405,7 +24610,15 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         }
         this.disabled = false;
     };
-    this.AddButton = function (label_text, callback) {
+    this.Remove = function (button) {
+        button.html.remove();
+        this.buttons.Remove(button);
+        this.update_spacing();
+    };
+    this.GetIndex = function (button) {
+        return this.buttons.indexOf(button);
+    };
+    this.AddButton = function (label_text, callback, prepend=false) {
         callback = callback.bind(this.binder);
         var button = (function (self, callback) {
             return new Dash.Gui.Button(
@@ -24418,12 +24631,18 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
                 {"style": self.style}
             );
         })(this, callback);
-        this.buttons.push(button);
         button.html.css({
             "margin": 0,
             "flex-grow": 1
         });
-        this.html.append(button.html);
+        if (prepend) {
+            this.html.prepend(button.html);
+            this.buttons.unshift(button);
+        }
+        else {
+            this.html.append(button.html);
+            this.buttons.push(button);
+        }
         this.update_spacing();
         if (this.disabled) {
             button.Disable();
@@ -24462,26 +24681,33 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     DashGuiButton.call(this, "", callback, binder, color, options);
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
+        return this;
     };
     this.SetIconSize = function (percentage_number) {
         this.icon.SetSize(percentage_number);
         this.update_container_size();
+        return this;
     };
     this.AddIconShadow = function (value="0px 0px 0px rgba(0, 0, 0, 0.2)") {
         this.icon.AddShadow(value);
+        return this;
     };
     this.AddIconStroke = function (color="black") {
         this.icon.AddStroke(color);
+        return this;
     };
     this.MirrorIcon = function () {
         this.icon.Mirror();
+        return this;
     };
     this.SetIcon = function (icon_name) {
         this.icon_name = icon_name;
         this.icon.SetIcon(icon_name);
+        return this;
     };
     this.SetHoverHint = function (hint) {
         this.html.attr("title", hint);
+        return this;
     };
     this.AddHighlight = function (force_in_container=false) {
         var height = 3;
@@ -24491,6 +24717,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             "height": height,
             "bottom": -height
         });
+        return this;
     };
     this.setup_icon = function () {
         if (this.style === "toolbar") {
@@ -24595,6 +24822,28 @@ function DashGuiButtonInterface () {
         });
         this.highlight.css({
             "background": this.color.AccentBad
+        });
+    };
+    this.StyleAsBorderButton = function (border_size=1, border_type="solid", border_color="", background="", highlight_color="") {
+        this.html.css({
+            "border": border_size + "px " + border_type + " " + (
+                   border_color
+                || background
+                || this.html.css("background-color")
+                || this.color_set.Background.Base
+            ),
+            "box-sizing": "border-box",
+            "background": background || "none",
+        });
+        this.highlight.css({
+            "margin": -border_size,
+            "background": highlight_color || Dash.Color.GetTransparent(
+                this.highlight.css("background-color") || this.color_set.Background.BaseHover,
+                0.75
+            )
+        });
+        this.label.css({
+            "margin-top": -border_size
         });
     };
     this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
@@ -30734,8 +30983,7 @@ function DashGuiFileExplorerGUI () {
             "margin-right": Dash.Size.Padding * 0.1,
             "margin-top": Dash.Size.Padding * 0.25
         });
-        this.upload_button.SetIconSize(150);
-        this.upload_button.SetHoverHint("Upload File");
+        this.upload_button.SetIconSize(150).SetHoverHint("Upload File").AddHighlight();
         this.html.append(this.upload_button.html);
     };
     this.add_row = function (row_id) {
@@ -31472,6 +31720,7 @@ function DashGuiIcons (icon) {
         "add_square":            new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["regular"], "plus-square"),
         "admin_tools":           new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
+        "alert_square":          new DashGuiIconDefinition(this.icon, "Alert Square", this.weight["regular"], "exclamation-square"),
         "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),
         "analytics":             new DashGuiIconDefinition(this.icon, "Analytics", this.weight["regular"], "analytics"),
         "apple_logo":            new DashGuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
@@ -34443,11 +34692,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "margin-top": Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * 0.8
         });
-        this.top_right_button.SetIconSize(180);
-        this.top_right_button.SetHoverHint(
+        this.top_right_button.SetIconSize(180).AddHighlight().SetHoverHint(
             this.view_mode === "settings" ? "Log Out" :
-                this.view_mode === "preview" ? "Expand" :
-                ""
+            this.view_mode === "preview" ? "Expand" :
+            ""
         );
         this.html.append(this.top_right_button.html);
     };

@@ -222,7 +222,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             strict_identifier
         );
 
-        checkbox.SetIconSize(125);
+        checkbox.SetIconSize(125).AddHighlight(0);
 
         checkbox.html.css({
             "margin-top": 0
