@@ -1,7 +1,6 @@
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
 
-    this.num = -1; // TODO: TESTING remove
     this.html = null;
     this.header = null;
     this.layout = null;

@@ -261,6 +261,10 @@ function DashGuiCheckbox (
         this.disabled = false;
     };
 
+    this.SetLoading = function (loading) {
+        this.icon_button.SetLoading(loading);
+    };
+
     this.redraw = function () {
         this.html.empty();
 

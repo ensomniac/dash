@@ -8,15 +8,13 @@ function DashGuiContext2DPrimitiveText () {
     this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
 
     this._setup_styles = function () {
-        this.width_px_min = (this.canvas.GetWidth() * 0.9) + (this.text_pad * 2) + this.text_border_comp;
-        this.height_px_min = (Dash.Size.RowHeight * 1.3) + (this.text_pad * 2) + this.text_border_comp;
-
-        if (this.data_is_default()) {
-            this.starting_width_override = this.width_px_min;
-            this.starting_height_override = this.height_px_min;
-        }
-
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
+
+        // TODO: This essentially turns the TextArea into an Input, making it redundant,
+        //  but this is for a reason. Eventually, these text primitives should be able to
+        //  handle new lines. Right now, it's put on hold because it complicates the resizing
+        //  etc and it's not a priority. When ready to implement that, remove this line.
+        this.text_area.DisableNewLines();
 
         this.text_area.textarea.css({
             "border": "none",
@@ -67,7 +65,7 @@ function DashGuiContext2DPrimitiveText () {
     };
 
     this.resize_text = function () {
-        if (!this.height_px && !this.starting_height_override) {
+        if (!this.height_px) {
             (function (self) {
                 setTimeout(
                     function () {
@@ -81,7 +79,7 @@ function DashGuiContext2DPrimitiveText () {
         }
 
         var size = (
-              (this.height_px || this.starting_height_override)
+              this.height_px
             - (this.text_pad * 2)
             - this.text_border_comp
             - Dash.Size.Padding
@@ -96,14 +94,13 @@ function DashGuiContext2DPrimitiveText () {
     this.on_text_change = function (value) {
         value = value.trim();
 
-        this.editor.SetEditorPanelLayerProperty(
-            "display_name",
-            value,
-            this.data["id"],
-            this.last_text_value || this.data["text_value"]
-        );
+        if ((this.last_text_value || this.data["text_value"]) === value) {
+            return;
+        }
 
-        this.SetProperty("text_value", value);
+        this.editor.SetEditorPanelLayerProperty("text_value", value, this.data["id"]);
+
+        this.Update("text_value", value);
 
         this.last_text_value = value;
     };
@@ -148,7 +145,7 @@ function DashGuiContext2DPrimitiveText () {
     };
 
     // Override
-    this.on_set_property = function (key) {
+    this.on_update = function (key) {
         if (key === "font_id") {
             this.update_font();
         }

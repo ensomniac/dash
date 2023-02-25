@@ -38,8 +38,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         if (data["locked"]) {
             this.ToggleLocked(data["locked"]);
         }
-
-        this.Select();
     };
 
     this.GetID = function () {
@@ -146,6 +144,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
                 e.stopPropagation();
             });
         })(this);
+    };
+
+    this.UpdateLabel = function () {
+        this.input.SetText(this.get_data()["display_name"] || "");
     };
 
     this.add_input = function () {

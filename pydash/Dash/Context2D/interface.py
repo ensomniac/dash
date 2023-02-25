@@ -14,6 +14,8 @@ class Interface:
     save: callable
     ToDict: callable
     DashContext: dict
+    AspectRatioH: int
+    AspectRatioW: int
     add_layer: callable
     add_layer_from_file: callable
     validate_uploaded_file_ext: callable
@@ -54,6 +56,17 @@ class Interface:
 
             if type(properties["layer_order"]) is not list:
                 raise ValueError(f"Layer order must be a list: {properties['layer_order']}")
+
+        if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
+            from math import gcd
+
+            properties["aspect_ratio_w"] = int(properties.get("aspect_ratio_w") or self.AspectRatioW)
+            properties["aspect_ratio_h"] = int(properties.get("aspect_ratio_h") or self.AspectRatioH)
+
+            divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+
+            properties["aspect_ratio_w"] /= divisor
+            properties["aspect_ratio_h"] /= divisor
 
         self.Data.update(properties)
 

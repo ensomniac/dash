@@ -243,7 +243,7 @@ function DashGuiButtonInterface () {
         this.load_dots.Start();
     };
 
-    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}) {
+    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}, return_button=false) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
 
@@ -274,7 +274,7 @@ function DashGuiButtonInterface () {
                 api,
                 params,
                 function (response) {
-                    self.on_file_upload_response(response);
+                    self.on_file_upload_response(response, return_button);
                 },
                 function () {
                     if (self.on_file_upload_start_callback) {

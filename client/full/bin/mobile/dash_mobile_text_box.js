@@ -129,6 +129,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
 
         this.textarea.css(css);
 
+        this.DisableNewLines(_backup_line_break_replacement);
+    };
+
+    // This is definitely redundant, because you can just use an input instead, but it's useful in some rare scenarios
+    this.DisableNewLines = function (_backup_line_break_replacement=" ") {
         (function (self) {
             self.textarea.on("keydown",function (e) {
                 if (e.key === "Enter") {
@@ -139,7 +144,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             });
         })(this);
 
-        // This shouldn't be necessary since we block the enter key, but just in case
+        // This shouldn't be necessary since we reroute the enter key event above, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
 

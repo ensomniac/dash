@@ -53,14 +53,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                             Dash.Request(
                                 self,
                                 function (response) {
-                                    button.SetLoading(false);
-                                    button.Enable();
-
-                                    if (!Dash.Validate.Response(response)) {
-                                        return;
-                                    }
-
-                                    self.panel.OnNewLayer(response);
+                                    self.on_new_layer(response, button);
                                 },
                                 self.editor.api,
                                 {
@@ -99,27 +92,35 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         return button;
     };
 
+    this.on_new_layer = function (response, button) {
+        if (!Dash.Validate.Response(response)) {
+            button.SetLoading(false);
+            button.Enable();
+
+            return;
+        }
+
+        this.panel.OnNewLayer(response);
+
+        button.SetLoading(false);
+        button.Enable();
+    };
+
     this.get_upload_button = function (primitive_type, label_text) {
-        var button = (function (self) {
-            return self.get_button(
-                label_text + " (Upload)",
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-
-                    if ("error" in response) {
-                        delete response["error"];
-                    }
-
-                    self.panel.AddLayer(primitive_type, response);
-                }
-            );
-        })(this);
+        var button = this.get_button(label_text + " (Upload)", this.on_new_layer);
 
         button.SetFileUploader(
             this.editor.api,
-            {"f": "upload_" + primitive_type}
+            {
+                "f": "add_" + primitive_type + "_layer",
+                "obj_id": this.editor.obj_id
+            },
+            function () {
+                button.SetLoading(true);
+                button.Disable();
+            },
+            {},
+            true
         );
 
         return button;

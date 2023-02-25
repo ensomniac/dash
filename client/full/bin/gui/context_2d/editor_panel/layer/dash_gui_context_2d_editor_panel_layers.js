@@ -32,8 +32,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.html.append(this.layers_box);
 
-        this.redraw_layers();
         this.setup_connections();
+
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.redraw_layers();  // Wait for canvas to be fully drawn first
+            });
+        })(this);
     };
 
     this.InputInFocus = function () {
@@ -52,12 +57,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         // TODO: see trello notes
     };
 
-    this.AddLayer = function (id) {
+    this.AddLayer = function (id, select=true) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
 
         this.layers_box.prepend(this.layers[id].html);
 
-        this.editor.AddCanvasPrimitive(this.layers[id]);
+        if (select) {
+            this.layers[id].Select();
+        }
+
+        this.editor.AddCanvasPrimitive(this.layers[id], select);
     };
 
     this.Delete = function () {
@@ -97,6 +106,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var layer = this.GetSelectedLayer();
 
         if (!layer) {
+            this.toolbar.ReEnableButton("hidden");
+
             return;
         }
 
@@ -107,6 +118,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var layer = this.GetSelectedLayer();
 
         if (!layer) {
+            this.toolbar.ReEnableButton("locked");
+
             return;
         }
 
@@ -157,15 +170,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[id].Select(from_canvas);
     };
 
-    this.SetProperty = function (key, value, id, primitive_previous_value=null) {
-        var current = this.get_data()["data"][id][key];
-
-        if (primitive_previous_value && key === "display_name" && current && current !== primitive_previous_value) {
-            // If the layer's name has already been set manually by the user,
-            // then don't auto-set the name based on the primitive's text change
-            return;
-        }
-
+    this.SetProperty = function (key, value, id) {
         this.set_layer_property(key, value, id);
     };
 
@@ -213,7 +218,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.on_data = function (response, redraw=false) {
         this.editor.data = response;
 
-        // TODO: is this necessary when the layer order didn't change?
         if (redraw) {
             this.redraw_layers();
         }
@@ -231,6 +235,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (!id) {  // Shouldn't happen, unless there are no layers, in which case, this shouldn't have been called
             console.error("Failed to get current layer ID");
 
+            this.toolbar.ReEnableButton(key);
+
             return;
         }
 
@@ -238,18 +244,32 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             value = JSON.stringify(value);
         }
 
+        var log_name = key === "display_name" ? this.get_data()["data"][id]["display_name"] : "";
+
         (function (self) {
             Dash.Request(
                 self,
                 function (response) {
                     if (!Dash.Validate.Response(response)) {
+                        self.toolbar.ReEnableButton(key);
+
                         return;
                     }
 
                     self.on_data(response);
 
-                    self.editor.AddToLog("(" + self.get_data()["data"][id]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+                    if (key === "display_name" || key === "text_value") {
+                        self.layers[id].UpdateLabel();
+                    }
+
+                    self.editor.AddToLog(
+                        "[" + (log_name || self.get_data()["data"][id]["display_name"]) +
+                        "] Set " + "'" + key + "' to '" + value + "'"
+                    );
+
                     self.editor.UpdateCanvasPrimitive(key, value, id);
+
+                    self.toolbar.ReEnableButton(key);
                 },
                 self.editor.api,
                 {
@@ -271,7 +291,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers_box.empty();
 
         for (var id of this.get_data()["order"]) {
-            this.AddLayer(id);
+            this.AddLayer(id, false);
         }
 
         this.redrawing = false;

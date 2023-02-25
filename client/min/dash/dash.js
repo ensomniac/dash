@@ -23398,6 +23398,9 @@ function DashGuiCheckbox (
         });
         this.disabled = false;
     };
+    this.SetLoading = function (loading) {
+        this.icon_button.SetLoading(loading);
+    };
     this.redraw = function () {
         this.html.empty();
         (function (self) {
@@ -24482,7 +24485,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             this.label.css("color", this.color_set.Text.Base);
         }
     };
-    this.on_file_upload_response = function (response) {
+    this.on_file_upload_response = function (response, return_button=false) {
         if (this.file_uploader.html) {
             this.file_uploader.html.remove();
         }
@@ -24490,7 +24493,12 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             this.SetFileUploader(this.file_upload_api, this.file_upload_params);
         }
         if (this.callback && this.bind) {
-            this.callback.bind(this.bind)(response);
+            if (return_button) {
+                this.callback.bind(this.bind)(response, this);
+            }
+            else {
+                this.callback.bind(this.bind)(response);
+            }
         }
     };
     this.on_click = function (event) {
@@ -24984,7 +24992,7 @@ function DashGuiButtonInterface () {
         this.html.append(this.load_dots.html);
         this.load_dots.Start();
     };
-    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}) {
+    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}, return_button=false) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
             if (token) {
@@ -25009,7 +25017,7 @@ function DashGuiButtonInterface () {
                 api,
                 params,
                 function (response) {
-                    self.on_file_upload_response(response);
+                    self.on_file_upload_response(response, return_button);
                 },
                 function () {
                     if (self.on_file_upload_start_callback) {
@@ -27884,8 +27892,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
     // TODO: regarding all these public functions, some are intended to only be called
     //  by certain elements, so having them appear as public may be confusing later - rename?
-    this.SetEditorPanelLayerProperty = function (key, value, id, primitive_previous_value=null) {
-        this.editor_panel.SetLayerProperty(key, value, id, primitive_previous_value);
+    this.SetEditorPanelLayerProperty = function (key, value, id) {
+        this.editor_panel.SetLayerProperty(key, value, id);
     };
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
@@ -27918,9 +27926,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             this.canvas.UpdatePrimitiveZIndexes();
         }
     };
-    this.AddCanvasPrimitive = function (layer) {
+    this.AddCanvasPrimitive = function (layer, select=true) {
         if (this.canvas) {
-            this.canvas.AddPrimitive(layer);
+            this.canvas.AddPrimitive(layer, select);
         }
     };
     this.RemoveCanvasPrimitive = function (id) {
@@ -28084,6 +28092,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
                         self.AddToLog(key.Title() + " set to: " + value);
                     }
+                    self.editor_panel.UpdatePropertyBox();
                     if (callback) {
                         callback();
                     }
@@ -28164,8 +28173,8 @@ function DashGuiContext2DCanvas (editor) {
         })(this);
     };
     this.InputInFocus = function () {
-        for (var primitive of this.primitives) {
-            if (primitive.InputInFocus()) {
+        for (var id in this.primitives) {
+            if (this.primitives[id].InputInFocus()) {
                 return true;
             }
         }
@@ -28200,15 +28209,16 @@ function DashGuiContext2DCanvas (editor) {
         this.primitives[id].Select();
         this.last_selected_primitive = this.primitives[id];
     };
-    this.AddPrimitive = function (layer) {
+    this.AddPrimitive = function (layer, select=true) {
         var id = layer.GetID();
         if (this.primitives[id]) {
             return;
         }
-        var primitive = new DashGuiContext2DPrimitive(this, layer);
-        this.primitives[id] = primitive;
-        this.SetActivePrimitive(id);
-        this.canvas.append(primitive.html);
+        this.primitives[id] = new DashGuiContext2DPrimitive(this, layer);
+        this.canvas.append(this.primitives[id].html);
+        if (select) {
+            this.SetActivePrimitive(id);
+        }
     };
     this.RemovePrimitive = function (id) {
         this.primitives[id].html.remove();
@@ -28222,8 +28232,8 @@ function DashGuiContext2DCanvas (editor) {
         return this.canvas.innerWidth();
     };
     this.DeselectAllPrimitives = function () {
-        for (var primitive of this.primitives) {
-            primitive.Deselect();
+        for (var id in this.primitives) {
+            this.primitives[id].Deselect();
         }
         this.last_selected_primitive = null;
     };
@@ -28292,8 +28302,8 @@ function DashGuiContext2DCanvas (editor) {
             this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
         this.last_aspect_ratio = aspect_ratio;
-        for (var primitive of this.primitives) {
-            primitive.OnCanvasResize();
+        for (var id in this.primitives) {
+            this.primitives[id].OnCanvasResize();
         }
         if (this.size_initialized) {
             return;
@@ -28615,7 +28625,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.left_px = 0;
     this.width_px = 0;
     this.height_px = 0;
-    this.aspect = null;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
@@ -28628,48 +28637,31 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
-    this.starting_width_override = null;
-    this.starting_height_override = null;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
-    console.debug("TEST primitive data", this.data);
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
     this.setup_styles = function () {
-        if (this.file_data["aspect"]) {
-            this.aspect = this.file_data["aspect"];
-        }
         if (!this.call_style()) {
             return;
         }
-        if (this.starting_width_override) {
-            this.data["width_norm"] = this.starting_width_override / this.canvas.GetWidth();
-            if (this.starting_height_override) {
-                this.aspect = this.starting_width_override / this.starting_height_override;
-            }
-        }
-        this.set_width_px(this.starting_width_override);
-        this.set_height_px(this.starting_height_override);
+        this.set_width_px();
+        this.set_height_px();
         // After the above two are set
         this.set_top_px();
         this.set_left_px();
         this.html.css({
-            // "background": Dash.Color.Random(),  // TESTING
             "position": "absolute",
-            "top": this.top_px,
-            "left": this.left_px,
-            "width": this.width_px,
-            "height": this.height_px,
-            "z-index": this.get_z_index(),
-            "opacity": this.data["opacity"]
+            "z-index": this.get_z_index()
         });
-        this.setup_connections();
+        this.draw_properties(true);
         if (this.data["hidden"]) {
             this.html.hide();
         }
+        this.setup_connections();
     };
     this.InputInFocus = function () {
         if (this.data["type"] !== "text") {
@@ -28698,7 +28690,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 this.html.show();
             }
         }
-        this.on_set_property(key);
+        this.on_update(key);
     };
     this.IsSelected = function () {
         return this.selected;
@@ -28748,7 +28740,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.drag_active || this.data["locked"]) {
             return;
         }
-        console.debug("TEST drag start");
         this.drag_active = true;
         this.Select(true);
         var active_tool = this.canvas.GetActiveTool();
@@ -28803,34 +28794,48 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.drag_active = false;
-        console.debug("TEST drag stop");
         this.save_drag_state();
     };
     this.save_drag_state = function () {
+        var modified = false;
+        for (var key in this.drag_state) {
+            if (this.drag_state[key] === this.data[key]) {
+                continue;
+            }
+            modified = true;
+            break;
+        }
+        if (!modified) {
+            return;
+        }
         this.drag_state = {
             "anchor_norm_x": this.data["anchor_norm_x"],
             "anchor_norm_y": this.data["anchor_norm_y"],
             "rot_deg": this.data["rot_deg"],
             "width_norm": this.data["width_norm"]
         };
-        console.debug("TEST save pos data");
-        Dash.Request(
-            this,
-            function (response) {
-                Dash.Validate.Response(response);
-            },
-            this.editor.api,
-            {
-                "f": "set_layer_properties",
-                "obj_id": this.editor.obj_id,
-                "layer_id": this.data["id"],
-                "properties": JSON.stringify(this.drag_state)
-            }
-        );
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.editor.data = response;
+                },
+                self.editor.api,
+                {
+                    "f": "set_layer_properties",
+                    "obj_id": self.editor.obj_id,
+                    "layer_id": self.data["id"],
+                    "properties": JSON.stringify(self.drag_state)
+                }
+            );
+        })(this);
     };
     // Meant to be overridden by member classes
-    this.on_set_property = function () {
-        console.warn("'on_set_property' function override is not defined in member class for type:", this.data["type"]);
+    this.on_update = function () {
+        console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
@@ -28841,14 +28846,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     this.get_z_index = function () {
         return this.z_index_base + this.layer.GetIndex();
-    };
-    this.data_is_default = function () {
-        return (
-               this.data["anchor_norm_x"] === 0.5
-            && this.data["anchor_norm_y"] === 0.5
-            && this.data["width_norm"]    === 0.5
-            && this.data["rot_deg"]       === 0
-        );
     };
     this.setup_connections = function () {
         (function (self) {
@@ -28917,7 +28914,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
     this.set_height_px = function (override=null) {
-        this.height_px = override || (this.width_px / (this.aspect || this.editor.GetAspectRatio(true)));
+        this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
             this.height_px = this.height_px_min;
@@ -28995,13 +28992,12 @@ function DashGuiContext2DPrimitiveText () {
     this.text_pad = Dash.Size.Padding;
     this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
     this._setup_styles = function () {
-        this.width_px_min = (this.canvas.GetWidth() * 0.9) + (this.text_pad * 2) + this.text_border_comp;
-        this.height_px_min = (Dash.Size.RowHeight * 1.3) + (this.text_pad * 2) + this.text_border_comp;
-        if (this.data_is_default()) {
-            this.starting_width_override = this.width_px_min;
-            this.starting_height_override = this.height_px_min;
-        }
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
+        // TODO: This essentially turns the TextArea into an Input, making it redundant,
+        //  but this is for a reason. Eventually, these text primitives should be able to
+        //  handle new lines. Right now, it's put on hold because it complicates the resizing
+        //  etc and it's not a priority. When ready to implement that, remove this line.
+        this.text_area.DisableNewLines();
         this.text_area.textarea.css({
             "border": "none",
             "height": "100%",
@@ -29042,7 +29038,7 @@ function DashGuiContext2DPrimitiveText () {
         this.update_font_color();
     };
     this.resize_text = function () {
-        if (!this.height_px && !this.starting_height_override) {
+        if (!this.height_px) {
             (function (self) {
                 setTimeout(
                     function () {
@@ -29054,7 +29050,7 @@ function DashGuiContext2DPrimitiveText () {
             return;
         }
         var size = (
-              (this.height_px || this.starting_height_override)
+              this.height_px
             - (this.text_pad * 2)
             - this.text_border_comp
             - Dash.Size.Padding
@@ -29066,13 +29062,11 @@ function DashGuiContext2DPrimitiveText () {
     };
     this.on_text_change = function (value) {
         value = value.trim();
-        this.editor.SetEditorPanelLayerProperty(
-            "display_name",
-            value,
-            this.data["id"],
-            this.last_text_value || this.data["text_value"]
-        );
-        this.SetProperty("text_value", value);
+        if ((this.last_text_value || this.data["text_value"]) === value) {
+            return;
+        }
+        this.editor.SetEditorPanelLayerProperty("text_value", value, this.data["id"]);
+        this.Update("text_value", value);
         this.last_text_value = value;
     };
     this.update_font = function () {
@@ -29107,7 +29101,7 @@ function DashGuiContext2DPrimitiveText () {
         return null;
     };
     // Override
-    this.on_set_property = function (key) {
+    this.on_update = function (key) {
         if (key === "font_id") {
             this.update_font();
         }
@@ -29141,7 +29135,7 @@ function DashGuiContext2DPrimitiveImage () {
         });
     };
     // Override
-    this.on_set_property = function (key) {
+    this.on_update = function (key) {
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }
@@ -29214,8 +29208,8 @@ function DashGuiContext2DEditorPanel (editor) {
     this.OnNewLayer = function (response) {
         this.layers_box.OnNewLayer(response);
     };
-    this.SetLayerProperty = function (key, value, id, primitive_previous_value=null) {
-        this.layers_box.SetProperty(key, value, id, primitive_previous_value);
+    this.SetLayerProperty = function (key, value, id) {
+        this.layers_box.SetProperty(key, value, id);
     };
     this.SwitchContentToEditTab = function () {
         if (this.content_box) {
@@ -29434,7 +29428,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         if (data["locked"]) {
             this.ToggleLocked(data["locked"]);
         }
-        this.Select();
     };
     this.GetID = function () {
         return this.id;
@@ -29514,6 +29507,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
                 e.stopPropagation();
             });
         })(this);
+    };
+    this.UpdateLabel = function () {
+        this.input.SetText(this.get_data()["display_name"] || "");
     };
     this.add_input = function () {
         var display_name = this.get_data()["display_name"];
@@ -29597,8 +29593,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "overflow-y": "auto"
         });
         this.html.append(this.layers_box);
-        this.redraw_layers();
         this.setup_connections();
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.redraw_layers();  // Wait for canvas to be fully drawn first
+            });
+        })(this);
     };
     this.InputInFocus = function () {
         for (var id in this.layers) {
@@ -29612,10 +29612,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         console.debug("TEST import context", context_data);
         // TODO: see trello notes
     };
-    this.AddLayer = function (id) {
+    this.AddLayer = function (id, select=true) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
         this.layers_box.prepend(this.layers[id].html);
-        this.editor.AddCanvasPrimitive(this.layers[id]);
+        if (select) {
+            this.layers[id].Select();
+        }
+        this.editor.AddCanvasPrimitive(this.layers[id], select);
     };
     this.Delete = function () {
         var id = this.GetSelectedID();
@@ -29644,6 +29647,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.ToggleHidden = function (hidden) {
         var layer = this.GetSelectedLayer();
         if (!layer) {
+            this.toolbar.ReEnableButton("hidden");
             return;
         }
         layer.ToggleHidden(hidden);
@@ -29651,6 +29655,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.ToggleLocked = function (locked) {
         var layer = this.GetSelectedLayer();
         if (!layer) {
+            this.toolbar.ReEnableButton("locked");
             return;
         }
         layer.ToggleLocked(locked);
@@ -29688,13 +29693,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.Select = function (id, from_canvas=true) {
         this.layers[id].Select(from_canvas);
     };
-    this.SetProperty = function (key, value, id, primitive_previous_value=null) {
-        var current = this.get_data()["data"][id][key];
-        if (primitive_previous_value && key === "display_name" && current && current !== primitive_previous_value) {
-            // If the layer's name has already been set manually by the user,
-            // then don't auto-set the name based on the primitive's text change
-            return;
-        }
+    this.SetProperty = function (key, value, id) {
         this.set_layer_property(key, value, id);
     };
     this.OnNewLayer = function (response) {
@@ -29729,7 +29728,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.on_data = function (response, redraw=false) {
         this.editor.data = response;
-        // TODO: is this necessary when the layer order didn't change?
         if (redraw) {
             this.redraw_layers();
         }
@@ -29743,21 +29741,31 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         if (!id) {  // Shouldn't happen, unless there are no layers, in which case, this shouldn't have been called
             console.error("Failed to get current layer ID");
+            this.toolbar.ReEnableButton(key);
             return;
         }
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
+        var log_name = key === "display_name" ? this.get_data()["data"][id]["display_name"] : "";
         (function (self) {
             Dash.Request(
                 self,
                 function (response) {
                     if (!Dash.Validate.Response(response)) {
+                        self.toolbar.ReEnableButton(key);
                         return;
                     }
                     self.on_data(response);
-                    self.editor.AddToLog("(" + self.get_data()["data"][id]["display_name"] + ") Set " + "'" + key + "' to '" + value + "'");
+                    if (key === "display_name" || key === "text_value") {
+                        self.layers[id].UpdateLabel();
+                    }
+                    self.editor.AddToLog(
+                        "[" + (log_name || self.get_data()["data"][id]["display_name"]) +
+                        "] Set " + "'" + key + "' to '" + value + "'"
+                    );
                     self.editor.UpdateCanvasPrimitive(key, value, id);
+                    self.toolbar.ReEnableButton(key);
                 },
                 self.editor.api,
                 {
@@ -29775,7 +29783,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers = {};
         this.layers_box.empty();
         for (var id of this.get_data()["order"]) {
-            this.AddLayer(id);
+            this.AddLayer(id, false);
         }
         this.redrawing = false;
     };
@@ -29810,7 +29818,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
 function DashGuiContext2DEditorPanelContent (panel) {
     this.panel = panel;
-    this.num = -1; // TODO: TESTING remove
     this.html = null;
     this.header = null;
     this.layout = null;
@@ -30039,12 +30046,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                             Dash.Request(
                                 self,
                                 function (response) {
-                                    button.SetLoading(false);
-                                    button.Enable();
-                                    if (!Dash.Validate.Response(response)) {
-                                        return;
-                                    }
-                                    self.panel.OnNewLayer(response);
+                                    self.on_new_layer(response, button);
                                 },
                                 self.editor.api,
                                 {
@@ -30076,24 +30078,30 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         }
         return button;
     };
+    this.on_new_layer = function (response, button) {
+        if (!Dash.Validate.Response(response)) {
+            button.SetLoading(false);
+            button.Enable();
+            return;
+        }
+        this.panel.OnNewLayer(response);
+        button.SetLoading(false);
+        button.Enable();
+    };
     this.get_upload_button = function (primitive_type, label_text) {
-        var button = (function (self) {
-            return self.get_button(
-                label_text + " (Upload)",
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-                    if ("error" in response) {
-                        delete response["error"];
-                    }
-                    self.panel.AddLayer(primitive_type, response);
-                }
-            );
-        })(this);
+        var button = this.get_button(label_text + " (Upload)", this.on_new_layer);
         button.SetFileUploader(
             this.editor.api,
-            {"f": "upload_" + primitive_type}
+            {
+                "f": "add_" + primitive_type + "_layer",
+                "obj_id": this.editor.obj_id
+            },
+            function () {
+                button.SetLoading(true);
+                button.Disable();
+            },
+            {},
+            true
         );
         return button;
     };
@@ -30176,6 +30184,13 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             }
         }
     };
+    this.ReEnableButton = function (key) {
+        if (!this.icon_buttons[key]) {
+            return;
+        }
+        this.icon_buttons[key].SetLoading(false);
+        this.icon_buttons[key].Enable();
+    };
     this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
@@ -30185,6 +30200,8 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "Toggle " + key.Title(),
                 self,
                 function (checkbox) {
+                    checkbox.SetLoading(true);
+                    checkbox.Disable();
                     if (key === "hidden") {
                         self.layers.ToggleHidden(checkbox.IsChecked());
                     }
@@ -39680,6 +39697,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
         }
         this.textarea.css(css);
+        this.DisableNewLines(_backup_line_break_replacement);
+    };
+    // This is definitely redundant, because you can just use an input instead, but it's useful in some rare scenarios
+    this.DisableNewLines = function (_backup_line_break_replacement=" ") {
         (function (self) {
             self.textarea.on("keydown",function (e) {
                 if (e.key === "Enter") {
@@ -39688,7 +39709,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
                 }
             });
         })(this);
-        // This shouldn't be necessary since we block the enter key, but just in case
+        // This shouldn't be necessary since we reroute the enter key event above, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
     };
     this.SetInputMode = function (mode) {

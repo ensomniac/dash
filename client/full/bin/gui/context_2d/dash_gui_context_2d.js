@@ -58,8 +58,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     // TODO: regarding all these public functions, some are intended to only be called
     //  by certain elements, so having them appear as public may be confusing later - rename?
 
-    this.SetEditorPanelLayerProperty = function (key, value, id, primitive_previous_value=null) {
-        this.editor_panel.SetLayerProperty(key, value, id, primitive_previous_value);
+    this.SetEditorPanelLayerProperty = function (key, value, id) {
+        this.editor_panel.SetLayerProperty(key, value, id);
     };
 
     this.EditorPanelInputInFocus = function () {
@@ -100,9 +100,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
     };
 
-    this.AddCanvasPrimitive = function (layer) {
+    this.AddCanvasPrimitive = function (layer, select=true) {
         if (this.canvas) {
-            this.canvas.AddPrimitive(layer);
+            this.canvas.AddPrimitive(layer, select);
         }
     };
 
@@ -312,6 +312,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
                         self.AddToLog(key.Title() + " set to: " + value);
                     }
+
+                    self.editor_panel.UpdatePropertyBox();
 
                     if (callback) {
                         callback();

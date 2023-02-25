@@ -113,7 +113,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
     };
 
-    this.on_file_upload_response = function (response) {
+    this.on_file_upload_response = function (response, return_button=false) {
         if (this.file_uploader.html) {
             this.file_uploader.html.remove();
         }
@@ -123,7 +123,13 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (this.callback && this.bind) {
-            this.callback.bind(this.bind)(response);
+            if (return_button) {
+                this.callback.bind(this.bind)(response, this);
+            }
+
+            else {
+                this.callback.bind(this.bind)(response);
+            }
         }
     };
 

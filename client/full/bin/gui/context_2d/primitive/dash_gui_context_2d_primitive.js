@@ -6,7 +6,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.left_px = 0;
     this.width_px = 0;
     this.height_px = 0;
-    this.aspect = null;
     this.selected = false;
     this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
@@ -19,59 +18,39 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
-    this.starting_width_override = null;
-    this.starting_height_override = null;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
-    console.debug("TEST primitive data", this.data);
-
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
 
     this.setup_styles = function () {
-        if (this.file_data["aspect"]) {
-            this.aspect = this.file_data["aspect"];
-        }
-
         if (!this.call_style()) {
             return;
         }
 
-        if (this.starting_width_override) {
-            this.data["width_norm"] = this.starting_width_override / this.canvas.GetWidth();
-
-            if (this.starting_height_override) {
-                this.aspect = this.starting_width_override / this.starting_height_override;
-            }
-        }
-
-        this.set_width_px(this.starting_width_override);
-        this.set_height_px(this.starting_height_override);
+        this.set_width_px();
+        this.set_height_px();
 
         // After the above two are set
         this.set_top_px();
         this.set_left_px();
 
         this.html.css({
-            // "background": Dash.Color.Random(),  // TESTING
             "position": "absolute",
-            "top": this.top_px,
-            "left": this.left_px,
-            "width": this.width_px,
-            "height": this.height_px,
-            "z-index": this.get_z_index(),
-            "opacity": this.data["opacity"]
+            "z-index": this.get_z_index()
         });
 
-        this.setup_connections();
+        this.draw_properties(true);
 
         if (this.data["hidden"]) {
             this.html.hide();
         }
+
+        this.setup_connections();
     };
 
     this.InputInFocus = function () {
@@ -109,7 +88,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             }
         }
 
-        this.on_set_property(key);
+        this.on_update(key);
     };
 
     this.IsSelected = function () {
@@ -173,7 +152,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.drag_active || this.data["locked"]) {
             return;
         }
-        console.debug("TEST drag start");
 
         this.drag_active = true;
 
@@ -247,12 +225,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.drag_active = false;
 
-        console.debug("TEST drag stop");
-
         this.save_drag_state();
     };
 
     this.save_drag_state = function () {
+        var modified = false;
+
+        for (var key in this.drag_state) {
+            if (this.drag_state[key] === this.data[key]) {
+                continue;
+            }
+
+            modified = true;
+
+            break;
+        }
+
+        if (!modified) {
+            return;
+        }
 
         this.drag_state = {
             "anchor_norm_x": this.data["anchor_norm_x"],
@@ -261,26 +252,30 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "width_norm": this.data["width_norm"]
         };
 
-        console.debug("TEST save pos data");
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
 
-        Dash.Request(
-            this,
-            function (response) {
-                Dash.Validate.Response(response);
-            },
-            this.editor.api,
-            {
-                "f": "set_layer_properties",
-                "obj_id": this.editor.obj_id,
-                "layer_id": this.data["id"],
-                "properties": JSON.stringify(this.drag_state)
-            }
-        );
+                    self.editor.data = response;
+                },
+                self.editor.api,
+                {
+                    "f": "set_layer_properties",
+                    "obj_id": self.editor.obj_id,
+                    "layer_id": self.data["id"],
+                    "properties": JSON.stringify(self.drag_state)
+                }
+            );
+        })(this);
     };
 
     // Meant to be overridden by member classes
-    this.on_set_property = function () {
-        console.warn("'on_set_property' function override is not defined in member class for type:", this.data["type"]);
+    this.on_update = function () {
+        console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
     };
 
     // Meant to be overridden by member classes
@@ -294,15 +289,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.get_z_index = function () {
         return this.z_index_base + this.layer.GetIndex();
-    };
-
-    this.data_is_default = function () {
-        return (
-               this.data["anchor_norm_x"] === 0.5
-            && this.data["anchor_norm_y"] === 0.5
-            && this.data["width_norm"]    === 0.5
-            && this.data["rot_deg"]       === 0
-        );
     };
 
     this.setup_connections = function () {
@@ -387,7 +373,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.set_height_px = function (override=null) {
-        this.height_px = override || (this.width_px / (this.aspect || this.editor.GetAspectRatio(true)));
+        this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {

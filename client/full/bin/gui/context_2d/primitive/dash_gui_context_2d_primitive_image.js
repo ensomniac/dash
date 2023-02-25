@@ -22,7 +22,7 @@ function DashGuiContext2DPrimitiveImage () {
     };
 
     // Override
-    this.on_set_property = function (key) {
+    this.on_update = function (key) {
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }

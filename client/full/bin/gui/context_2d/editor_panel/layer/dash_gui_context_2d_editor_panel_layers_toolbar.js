@@ -37,6 +37,15 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         }
     };
 
+    this.ReEnableButton = function (key) {
+        if (!this.icon_buttons[key]) {
+            return;
+        }
+
+        this.icon_buttons[key].SetLoading(false);
+        this.icon_buttons[key].Enable();
+    };
+
     this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
@@ -46,6 +55,9 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "Toggle " + key.Title(),
                 self,
                 function (checkbox) {
+                    checkbox.SetLoading(true);
+                    checkbox.Disable();
+
                     if (key === "hidden") {
                         self.layers.ToggleHidden(checkbox.IsChecked());
                     }
