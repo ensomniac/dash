@@ -32,7 +32,8 @@ function DashGuiContext2DPrimitiveText () {
             "position": "absolute",
             "inset": this.text_pad,
             "width": calc,
-            "height": calc
+            "height": calc,
+            "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
         });
 
         this.text_area.DisableFlash();
@@ -44,7 +45,7 @@ function DashGuiContext2DPrimitiveText () {
         (function (self) {
             self.text_area.textarea.on("focus", function () {
                 self.text_area.html.css({
-                    "border": self.text_border_thickness + "px solid " + self.color.PinstripeDark
+                    "border": self.text_border_thickness + "px solid " + (self.data["locked"] ? "rgba(0, 0, 0, 0)" : self.color.PinstripeDark)
                 });
             });
 
@@ -144,6 +145,22 @@ function DashGuiContext2DPrimitiveText () {
         return null;
     };
 
+    this.lock_text_area = function () {
+        this.text_area.Lock(false);
+
+        // this.text_area.textarea.css({
+        //     "border": "none"
+        // });
+    };
+
+    this.unlock_text_area = function () {
+        this.text_area.Unlock(false);
+
+        // this.text_area.textarea.css({
+        //     "border": this.text_area.border_size + "px solid " + this.color.StrokeLight
+        // });
+    };
+
     // Override
     this.on_update = function (key) {
         if (key === "font_id") {
@@ -160,6 +177,17 @@ function DashGuiContext2DPrimitiveText () {
         this.text_area.textarea.css({
             "opacity": value
         });
+    };
+
+    // Override
+    this.on_locked_change = function (locked) {
+        if (locked) {
+            this.lock_text_area();
+        }
+
+        else {
+            this.unlock_text_area();
+        }
     };
 
     this._setup_styles();

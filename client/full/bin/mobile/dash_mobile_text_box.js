@@ -40,7 +40,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             "line-height": (Dash.Size.RowHeight * 0.5) + "px",
             "min-height": Dash.Size.RowHeight * 1.1,
             "border-radius": this.border_radius,
-            "border": this.border_size.toString() + "px solid " + this.color.Stroke
+            "border": this.border_size + "px solid " + this.color.Stroke
         });
 
         this.html.append(this.textarea);
@@ -80,11 +80,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             var css = {"color": text_and_border_color};
 
             if (this.textarea.css("border-top") !== "none") {
-                css["border"] = this.border_size.toString() + "px solid " + text_and_border_color;
+                css["border"] = this.border_size + "px solid " + text_and_border_color;
             }
 
             else {
-                css["border-bottom"] = this.border_size.toString() + "px solid " + text_and_border_color;
+                css["border-bottom"] = this.border_size + "px solid " + text_and_border_color;
             }
 
             this.textarea.css(css);
@@ -98,11 +98,11 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             var css = {"color": this.color.Text};
 
             if (this.textarea.css("border-top") !== "none") {
-                css["border"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+                css["border"] = this.border_size + "px solid " + this.color.Stroke;
             }
 
             else {
-                css["border-bottom"] = this.border_size.toString() + "px solid " + this.color.Stroke;
+                css["border-bottom"] = this.border_size + "px solid " + this.color.Stroke;
             }
 
             this.textarea.css(css);
@@ -225,7 +225,7 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
             this.flash_highlight = $("<div></div>");
 
             this.flash_highlight.css({
-                "border": (this.border_size * 2).toString() + "px solid " + Dash.Color.Mobile.AccentSecondary,
+                "border": (this.border_size * 2) + "px solid " + Dash.Color.Mobile.AccentSecondary,
                 "position": "absolute",
                 "inset": 0,
                 "opacity": 0,

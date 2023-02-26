@@ -71,20 +71,33 @@ class Layer:
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
-        if properties and type(properties) is str:
-            from json import loads
+        from json import loads
 
+        if properties and type(properties) is str:
             properties = loads(properties)
 
-        if "file" in properties:  # Should never happen, but just in case
-            del properties["file"]
+        # Should never happen, but just in case
+        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
+            if key in properties:
+                del properties[key]
 
         if not properties:
             return self.ToDict()
 
-        # Enforce types
-        if "display_name" in properties and not properties.get("display_name"):
-            properties["display_name"] = ""
+        # Enforce str when null
+        for key in ["display_name", "text_value", "font_id", "font_color"]:
+            if key in properties and not properties.get(key):
+                properties[key] = ""
+
+        # Bools
+        for key in ["hidden", "locked"]:
+            if key in properties and type(properties[key]) is not bool:
+                properties[key] = loads(properties[key])
+
+        # Floats
+        for key in ["aspect", "anchor_norm_x", "anchor_norm_y", "opacity", "rot_deg", "width_norm", "contrast", "brightness"]:
+            if key in properties and type(properties[key]) not in [float, int]:
+                properties[key] = float(properties[key])
 
         if "text_value" in properties and "display_name" not in properties:
             if self.data.get("display_name") == self.get_default_display_name() or self.data["text_value"] == self.data["display_name"]:

@@ -21,29 +21,28 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
     this.UpdateIconStates = function () {
         var selected_layer_data = this.get_data();
+        var revert = !Dash.Validate.Object(selected_layer_data);
 
         for (var key in this.icon_toggles) {
-            if (key in selected_layer_data) {
-                if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
-                    this.icon_toggles[key].Toggle(true);
-                }
+            if (revert || !(key in selected_layer_data)) {
+                this.icon_toggles[key].RevertToDefaultState(true, revert);
+
+                continue;
             }
 
-            else {
-                if (this.icon_toggles[key].IsChecked()) {
-                    this.icon_toggles[key].Toggle(true);
-                }
+            if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
+                this.icon_toggles[key].Toggle(true);
             }
         }
     };
 
-    this.ReEnableButton = function (key) {
-        if (!this.icon_buttons[key]) {
+    this.ReEnableToggle = function (key) {
+        if (!this.icon_toggles[key]) {
             return;
         }
 
-        this.icon_buttons[key].SetLoading(false);
-        this.icon_buttons[key].Enable();
+        this.icon_toggles[key].SetLoading(false);
+        this.icon_toggles[key].Enable();
     };
 
     this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
@@ -64,6 +63,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
                     else if (key === "locked") {
                         self.layers.ToggleLocked(checkbox.IsChecked());
+                    }
+
+                    else {
+                        console.error("Unhandled key:", key);
                     }
                 }
             );

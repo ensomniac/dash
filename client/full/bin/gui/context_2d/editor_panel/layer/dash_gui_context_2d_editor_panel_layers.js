@@ -106,7 +106,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var layer = this.GetSelectedLayer();
 
         if (!layer) {
-            this.toolbar.ReEnableButton("hidden");
+            this.toolbar.ReEnableToggle("hidden");
 
             return;
         }
@@ -118,7 +118,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var layer = this.GetSelectedLayer();
 
         if (!layer) {
-            this.toolbar.ReEnableButton("locked");
+            this.toolbar.ReEnableToggle("locked");
 
             return;
         }
@@ -160,6 +160,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         for (var id in this.layers) {
             this.layers[id].Deselect();
         }
+
+        this.UpdateToolbarIconStates();
     };
 
     this.UpdateToolbarIconStates = function () {
@@ -175,7 +177,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.OnNewLayer = function (response) {
-        this.on_data(response, true);
+        this.on_data(response, true, true);
     };
 
     this.on_move = function (up=true) {
@@ -206,6 +208,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     self.redraw_layers();
 
                     self.editor.UpdateCanvasPrimitiveZIndexes();
+
+                    self.layers[id].Select();
                 }
             );
         })(this);
@@ -215,11 +219,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return this.editor.data["layers"];
     };
 
-    this.on_data = function (response, redraw=false) {
+    this.on_data = function (response, redraw=false, select=false) {
         this.editor.data = response;
 
         if (redraw) {
-            this.redraw_layers();
+            this.redraw_layers(select);
         }
     };
 
@@ -235,7 +239,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (!id) {  // Shouldn't happen, unless there are no layers, in which case, this shouldn't have been called
             console.error("Failed to get current layer ID");
 
-            this.toolbar.ReEnableButton(key);
+            this.toolbar.ReEnableToggle(key);
 
             return;
         }
@@ -251,7 +255,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self,
                 function (response) {
                     if (!Dash.Validate.Response(response)) {
-                        self.toolbar.ReEnableButton(key);
+                        self.toolbar.ReEnableToggle(key);
 
                         return;
                     }
@@ -269,7 +273,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
                     self.editor.UpdateCanvasPrimitive(key, value, id);
 
-                    self.toolbar.ReEnableButton(key);
+                    self.toolbar.ReEnableToggle(key);
+
+                    if (value && (key === "hidden" || key === "locked")) {
+                        self.editor.DeselectAllLayers();
+                    }
                 },
                 self.editor.api,
                 {
@@ -283,7 +291,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         })(this);
     };
 
-    this.redraw_layers = function () {
+    this.redraw_layers = function (select=false) {
         this.redrawing = true;
 
         this.layers = {};
@@ -291,7 +299,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers_box.empty();
 
         for (var id of this.get_data()["order"]) {
-            this.AddLayer(id, false);
+            this.AddLayer(id, select);
         }
 
         this.redrawing = false;

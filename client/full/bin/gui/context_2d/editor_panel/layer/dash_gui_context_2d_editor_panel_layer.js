@@ -13,7 +13,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     this.editor = this.layers.editor;
     this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
-    this.icon_color = this.color.PinstripeDark;
+    this.icon_color = this.color.StrokeLight;
 
     this.setup_styles = function () {
         this.html.css({

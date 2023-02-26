@@ -45,9 +45,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
 
         this.draw_properties(true);
+        this.on_opacity_change(this.data["opacity"]);
 
         if (this.data["hidden"]) {
-            this.html.hide();
+            this.on_hidden_change(this.data["hidden"]);
+        }
+
+        if (this.data["locked"]) {
+            this.on_locked_change(this.data["locked"]);
         }
 
         this.setup_connections();
@@ -78,14 +83,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.on_opacity_change(value);
         }
 
-        else if (key === "hidden") {
-            if (value) {
-                this.html.hide();
-            }
+        else if (key === "locked") {
+            this.on_locked_change(value);
+        }
 
-            else {
-                this.html.show();
-            }
+        else if (key === "hidden") {
+            this.on_hidden_change(value);
+        }
+
+        if (!value && (key === "locked" || key === "hidden")) {
+            this.Select();
         }
 
         this.on_update(key);
@@ -108,7 +115,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
 
         if (this.data["type"] === "text") {
-            this.text_area.Lock(false);
+            this.lock_text_area();
         }
 
         this.selected = false;
@@ -133,7 +140,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         if (this.data["type"] === "text") {
-            this.text_area.Unlock(false);
+            this.unlock_text_area();
+
             this.text_area.Focus();
         }
 
@@ -273,9 +281,24 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         })(this);
     };
 
+    this.on_hidden_change = function (hidden) {
+        if (hidden) {
+            this.html.hide();
+        }
+
+        else {
+            this.html.show();
+        }
+    };
+
     // Meant to be overridden by member classes
     this.on_update = function () {
         console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+    };
+
+    // Meant to be overridden by member classes
+    this.on_locked_change = function () {
+        console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
     };
 
     // Meant to be overridden by member classes
@@ -289,22 +312,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.get_z_index = function () {
         return this.z_index_base + this.layer.GetIndex();
-    };
-
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.on("click", function (e) {
-                self.Select(true);
-
-                e.stopPropagation();
-            });
-
-            // Without this, if you try to move/rotate/scale/etc this
-            // container while it's not already selected, it won't work
-            self.html.on("mousedown", function () {
-                self.Select(true);
-            });
-        })(this);
     };
 
     this.get_offset_norm = function () {
@@ -446,6 +453,26 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.draw_properties_pending = true;
     };
 
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("click", function (e) {
+                if (!self.data["locked"]) {
+                    self.Select(true);
+                }
+
+                e.stopPropagation();
+            });
+
+            // Without this, if you try to move/rotate/scale/etc this
+            // container while it's not already selected, it won't work
+            self.html.on("mousedown", function () {
+                if (!self.data["locked"]) {
+                    self.Select(true);
+                }
+            });
+        })(this);
+    };
+
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
@@ -455,7 +482,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "opacity": this.data["opacity"],
             "transform": "rotate(" + this.data["rot_deg"] + "deg)"
         });
     };

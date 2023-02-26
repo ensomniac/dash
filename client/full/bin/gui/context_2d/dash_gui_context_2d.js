@@ -309,7 +309,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     self.data = response;
 
                     // Aspect ratio change logging happens on canvas resize
-                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h") {
+                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
                         self.AddToLog(key.Title() + " set to: " + value);
                     }
 

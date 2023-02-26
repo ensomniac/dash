@@ -160,14 +160,14 @@ function DashGuiCheckbox (
         this.icon_button.html.off("click");
     };
 
-    this.Toggle = function (skip_callback=false) {
+    this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
         if (this.toggle_confirmation_msg) {
             if (!window.confirm(this.toggle_confirmation_msg)) {
                 return;
             }
         }
 
-        if (this.able_to_toggle_cb && !this.able_to_toggle_cb(this)) {
+        if (!ignore_able_to_toggle_check && this.able_to_toggle_cb && !this.able_to_toggle_cb(this)) {
             return;
         }
 
@@ -236,11 +236,13 @@ function DashGuiCheckbox (
 
         this.icon_button.Disable();
 
-        this.label.label.css({
-            "opacity": 0.5,
-            "pointer-events": "none",
-            "user-select": "none"
-        });
+        if (this.label) {
+            this.label.label.css({
+                "opacity": 0.5,
+                "pointer-events": "none",
+                "user-select": "none"
+            });
+        }
 
         this.disabled = true;
     };
@@ -252,17 +254,25 @@ function DashGuiCheckbox (
 
         this.icon_button.Enable();
 
-        this.label.label.css({
-            "opacity": 1,
-            "pointer-events": "auto",
-            "user-select": "auto"
-        });
+        if (this.label) {
+            this.label.label.css({
+                "opacity": 1,
+                "pointer-events": "auto",
+                "user-select": "auto"
+            });
+        }
 
         this.disabled = false;
     };
 
     this.SetLoading = function (loading) {
-        this.icon_button.SetLoading(loading);
+        this.icon_button.SetLoading(loading, 2, false);
+    };
+
+    this.RevertToDefaultState = function (skip_callback=false, ignore_able_to_toggle_check=false) {
+        if (this.IsChecked() !== this.default_state) {
+            this.Toggle(skip_callback, ignore_able_to_toggle_check);
+        }
     };
 
     this.redraw = function () {
