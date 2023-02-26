@@ -22,6 +22,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
             "display": "flex"
         });
 
+        var type_icon = this.get_icon(this.get_type_icon_name());
+
+        type_icon.html.css({
+            "margin-right": Dash.Size.Padding * 0.5
+        });
+
+        this.html.append(type_icon.html);
+
         this.add_input();
 
         this.html.append(Dash.Gui.GetFlexSpacer());
@@ -186,8 +194,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
             "display": "flex"
         });
 
-        this.hidden_icon = new Dash.Gui.Icon(this.color, "hidden", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
-        this.locked_icon = new Dash.Gui.Icon(this.color, "lock", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+        this.hidden_icon = this.get_icon("hidden");
+        this.locked_icon = this.get_icon("lock");
 
         this.locked_icon.html.css({
             "margin-left": Dash.Size.Padding
@@ -205,6 +213,32 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         this.icon_area.append(this.locked_icon.html);
 
         this.html.append(this.icon_area);
+    };
+
+    this.get_icon = function (icon_name) {
+        var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+
+        icon.html.css({
+            "margin-top": Dash.Size.Padding * 0.1
+        });
+
+        return icon;
+    };
+
+    this.get_type_icon_name = function () {
+        var type = this.get_data()["type"];
+
+        var icon_name = (
+              type === "text" ? "font"
+            : type === "image" ? type
+            : "unknown"
+        );
+
+        if (icon_name === "unknown") {
+            console.warn("Unhandled layer type, couldn't get layer icon:", type);
+        }
+
+        return icon_name;
     };
 
     this.on_input_submit = function () {

@@ -6,7 +6,7 @@ function DashGuiContext2DLogBar (editor) {
     this.min_height = null;
     this.html = $("<div></div>");
     this.color = this.editor.color;
-    this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.opposite_color = this.editor.opposite_color;
 
     // This won't be super useful at first, but lays the groundwork for a history/undo system that can come later
 

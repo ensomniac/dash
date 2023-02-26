@@ -132,7 +132,7 @@ class Layer:
                 enforce_unique_filename_key=False,
                 include_jpg_thumb=False
             ),
-            "display_name": filename
+            "display_name": filename.split(".")[0]
         })
 
     def Save(self):

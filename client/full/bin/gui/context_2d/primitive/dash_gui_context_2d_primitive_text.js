@@ -10,21 +10,6 @@ function DashGuiContext2DPrimitiveText () {
     this._setup_styles = function () {
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
 
-        // TODO: This essentially turns the TextArea into an Input, making it redundant,
-        //  but this is for a reason. Eventually, these text primitives should be able to
-        //  handle new lines. Right now, it's put on hold because it complicates the resizing
-        //  etc and it's not a priority. When ready to implement that, remove this line.
-        this.text_area.DisableNewLines();
-
-        this.text_area.textarea.css({
-            "border": "none",
-            "height": "100%",
-            "min-height": "100%",
-            "max-height": "100%",
-            "resize": "none",
-            "text-align": "center"
-        });
-
         var calc = "calc(100% - " + ((this.text_pad * 2) + this.text_border_comp) + "px)";
 
         this.text_area.html.css({
@@ -35,6 +20,21 @@ function DashGuiContext2DPrimitiveText () {
             "height": calc,
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
         });
+
+        this.text_area.textarea.css({
+            "border": "none",
+            "height": "100%",
+            "min-height": "100%",
+            "max-height": "100%",
+            "resize": "none",
+            "text-align": "center"
+        });
+
+        // TODO: This essentially turns the TextArea into an Input, making it redundant,
+        //  but this is for a reason. Eventually, these text primitives should be able to
+        //  handle new lines. Right now, it's put on hold because it complicates the resizing
+        //  etc and it's not a priority. When ready to implement that, remove this line.
+        this.text_area.DisableNewLines();
 
         this.text_area.DisableFlash();
 

@@ -48,6 +48,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.middle_pane_slider = null;
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
+    this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);

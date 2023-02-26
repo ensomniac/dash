@@ -275,8 +275,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
                     self.toolbar.ReEnableToggle(key);
 
-                    if (value && (key === "hidden" || key === "locked")) {
-                        self.editor.DeselectAllLayers();
+                    if (key === "hidden" || key === "locked") {
+                        if (value) {
+                            self.editor.DeselectAllLayers();
+                        }
+
+                        else {
+                            self.panel.RedrawCurrentContentTab();
+                        }
                     }
                 },
                 self.editor.api,

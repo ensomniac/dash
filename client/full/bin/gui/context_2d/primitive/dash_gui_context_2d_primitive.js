@@ -22,7 +22,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.file_data = this.data["file"] || {};
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
-    this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.opposite_color = this.editor.opposite_color;
 
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
@@ -296,9 +296,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
     };
 
-    // Meant to be overridden by member classes
+    // Optionally overridden by member classes
     this.on_locked_change = function () {
-        console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        // Optional override
     };
 
     // Meant to be overridden by member classes

@@ -82,6 +82,12 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
+    this.RedrawCurrentContentTab = function () {
+        if (this.content_box) {
+            this.content_box.RedrawCurrentTab();
+        }
+    };
+
     this.SwitchContentToNewTab = function () {
         if (this.content_box) {
             this.content_box.SwitchToNewTab();

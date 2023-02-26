@@ -23,7 +23,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.add_context(key);
         }
 
-        this.redraw();
+        this.Redraw();
 
         (function (self) {
             requestAnimationFrame(function () {
@@ -61,7 +61,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         );
     };
 
-    this.redraw = function () {
+    this.Redraw = function () {
         this.hide_no_selected_layer_label();
 
         for (var key in this.contexts) {
@@ -73,21 +73,22 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         var selected_layer = this.panel.GetSelectedLayer();
+        var layer_data = selected_layer ? selected_layer.GetData() : {};
 
-        if (!selected_layer) {
+        if (!selected_layer || layer_data["hidden"] || layer_data["locked"]) {
             this.hide_context("general");
-            this.show_no_selected_layer_label();
+            this.show_no_selected_layer_label(layer_data);
 
             return;
         }
 
         this.show_context("general");  // Always show general context when a layer is selected
-        this.show_context(selected_layer.GetData()["type"]);
+        this.show_context(layer_data["type"]);
     };
 
-    this.show_no_selected_layer_label = function () {
+    this.show_no_selected_layer_label = function (layer_data) {
         if (!this.no_selected_layer_label) {
-            this.no_selected_layer_label = $("<div>No Layer Selected</div>");
+            this.no_selected_layer_label = $("<div></div>");
 
             this.no_selected_layer_label.css({
                 "color": this.color.Text,
@@ -102,6 +103,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.html.append(this.no_selected_layer_label);
         }
 
+        this.no_selected_layer_label.text(layer_data["hidden"] ? "Layer Hidden" : layer_data["locked"] ? "Layer Locked" : "No Layer Selected");
         this.no_selected_layer_label.show();
     };
 

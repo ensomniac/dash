@@ -59,6 +59,14 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.layout.LoadIndex(this.new_tab_index);
     };
 
+    this.RedrawCurrentTab = function () {
+        if (!this.last_instantiated_class || !this.last_instantiated_class.hasOwnProperty("Redraw")) {
+            return;
+        }
+
+        this.last_instantiated_class.Redraw();
+    };
+
     this.UpdateComboOptions = function () {
         if (!this.last_instantiated_class) {
             return;

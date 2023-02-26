@@ -27895,6 +27895,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.middle_pane_slider = null;
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
+    this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.setup_styles = function () {
         Dash.SetInterval(this, this.refresh_data, 5000);
         this.get_combo_options();
@@ -28130,56 +28131,54 @@ function DashGuiContext2DCanvas (editor) {
     this.skip_resize_event = false;
     this.color = this.editor.color;
     this.canvas = $("<div></div>");
+    this.border = $("<div></div>");
+    this.top_mask = $("<div></div>");
+    this.left_mask = $("<div></div>");
+    this.right_mask = $("<div></div>");
+    this.bottom_mask = $("<div></div>");
     this.last_selected_primitive = null;
     this.padding = Dash.Size.Padding * 2;
+    this.opposite_color = this.editor.opposite_color;
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.StrokeDark,
+            "background": this.color.Stroke,
             "box-sizing": "border-box",
             "border-bottom": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 2,
             "overflow": "hidden",
             "z-index": 1
         });
-        this.canvas.css({
-            "background": this.color.Background,
-            "width": "calc(100% - " + (this.padding * 2) + "px)",
-            "height": "calc(100% - " + (this.padding * 2) + "px)",
+        var calc = "calc(100% - " + (this.padding * 2) + "px)";
+        var css = {
+            "width": calc,
+            "height": calc,
             "position": "absolute",
             "top": "50%",
             "left": "50%",
-            "transform": "translate(-50%, -50%)",
-            "z-index": 2
+            "transform": "translate(-50%, -50%)"
+        };
+        this.canvas.css({
+            "background": this.color.Background,
+            "z-index": 2,
+            ...css
         });
         this.canvas.hide();
+        this.border.css({
+            "z-index": 1000,
+            "user-select": "none",
+            "pointer-events": "none",
+            ...css,
+            // Simulate a double border - one for dark backgrounds, one for light
+            "border": "1px solid " + this.opposite_color.StrokeDark,
+            "outline": "1px solid " + this.color.StrokeLight,
+            "outline-offset": "1px"
+        });
+        this.border.hide();
         this.html.append(this.canvas);
+        this.html.append(this.border);
         this.setup_connections();
-    };
-    this.setup_connections = function () {
-        (function (self) {
-            self.html.on("mousedown", function (e) {
-                if (self.last_selected_primitive) {
-                    self.last_selected_primitive.OnDragStart(e);
-                }
-            });
-            self.html.on("mousemove", function (e) {
-                // Left mouse button is still down (https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons)
-                if (self.last_selected_primitive && e.buttons % 2 !== 0) {
-                    self.last_selected_primitive.OnDrag(e);
-                }
-                e.preventDefault();
-            });
-            self.html.on("mouseup", function (e) {
-                if (self.last_selected_primitive) {
-                    self.last_selected_primitive.OnDragStop(e);
-                }
-            });
-            self.canvas.on("click", function () {
-                self.editor.DeselectAllLayers();
-            });
-        })(this);
     };
     this.InputInFocus = function () {
         for (var id in this.primitives) {
@@ -28261,6 +28260,7 @@ function DashGuiContext2DCanvas (editor) {
         if (!from_event) {
             this.skip_resize_event = true;
         }
+        var css;
         var aspect_ratio = this.editor.GetAspectRatio();
         var w = aspect_ratio[0];
         var h = aspect_ratio[1];
@@ -28271,42 +28271,44 @@ function DashGuiContext2DCanvas (editor) {
             if (html_width > html_height && (html_width * (h / w)) > html_height) {
                 html_width = html_height * (w / h);
             }
-            this.canvas.css({
+            css = {
                 "width": html_width,
                 "height": html_width * (h / w)
-            });
+            };
         }
         // Vertical aspect
         else if (w < h) {
             if (html_height > html_width && (html_height * (w / h)) > html_width) {
                 html_height = html_width * (h / w);
             }
-            this.canvas.css({
+            css = {
                 "width": html_height * (w / h),
                 "height": html_height
-            });
+            };
         }
         // Square aspect
         else {
             if (html_width > html_height) {
-                this.canvas.css({
+                css = {
                     "width": html_height,
                     "height": html_height
-                });
+                };
             }
             else if (html_width < html_height) {
-                this.canvas.css({
+                css = {
                     "width": html_width,
                     "height": html_width
-                });
+                };
             }
             else {
-                this.canvas.css({
+                css = {
                     "width": html_width,
                     "height": html_height
-                });
+                };
             }
         }
+        this.canvas.css(css);
+        this.border.css(css);
         if (!this.last_aspect_ratio || this.last_aspect_ratio[0] !== w || this.last_aspect_ratio[1] !== h) {
             this.editor.AddToLog("Canvas aspect ratio set to: " + w + "/" + h);
         }
@@ -28315,9 +28317,12 @@ function DashGuiContext2DCanvas (editor) {
             this.primitives[id].OnCanvasResize();
         }
         if (this.size_initialized) {
+            this.set_mask_width_and_height();
             return;
         }
         this.canvas.show();
+        this.border.show();
+        this.setup_masks();
         this.add_observer();
         this.size_initialized = true;
     };
@@ -28345,6 +28350,89 @@ function DashGuiContext2DCanvas (editor) {
             }).observe(self.html[0]);
         })(this);
     };
+    this.setup_masks = function () {
+        var css = {
+            "position": "absolute",
+            "z-index": 1000,
+            "user-select": "none",
+            "pointer-events": "none",
+            "background": this.color.Stroke
+        };
+        this.top_mask.css({
+            ...css,
+            "top": 0
+        });
+        this.left_mask.css({
+            ...css,
+            "top": 0,
+            "left": 0,
+            "bottom": 0
+        });
+        this.right_mask.css({
+            ...css,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+        });
+        this.bottom_mask.css({
+            ...css,
+            "bottom": 0
+        });
+        this.set_mask_width_and_height();
+        this.html.append(this.top_mask);
+        this.html.append(this.left_mask);
+        this.html.append(this.right_mask);
+        this.html.append(this.bottom_mask);
+    };
+    this.set_mask_width_and_height = function () {
+        var [width, height] = this.get_mask_width_and_height();
+        this.top_mask.css({
+            "left": width,
+            "right": width,
+            "height": height
+        });
+        this.left_mask.css({
+            "width": width
+        });
+        this.right_mask.css({
+            "width": width
+        });
+        this.bottom_mask.css({
+            "left": width,
+            "right": width,
+            "height": height
+        });
+    };
+    this.get_mask_width_and_height = function () {
+        return [  // -3 for border/outline and an extra pixel
+            ((this.html.outerWidth() - this.GetWidth()) / 2) - 3,
+            ((this.html.outerHeight() - this.GetHeight()) / 2) - 3
+        ];
+    };
+    this.setup_connections = function () {
+        (function (self) {
+            self.html.on("mousedown", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStart(e);
+                }
+            });
+            self.html.on("mousemove", function (e) {
+                // Left mouse button is still down (https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons)
+                if (self.last_selected_primitive && e.buttons % 2 !== 0) {
+                    self.last_selected_primitive.OnDrag(e);
+                }
+                e.preventDefault();
+            });
+            self.html.on("mouseup", function (e) {
+                if (self.last_selected_primitive) {
+                    self.last_selected_primitive.OnDragStop(e);
+                }
+            });
+            self.canvas.on("click", function () {
+                self.editor.DeselectAllLayers();
+            });
+        })(this);
+    };
     this.setup_styles();
 }
 
@@ -28355,7 +28443,7 @@ function DashGuiContext2DLogBar (editor) {
     this.min_height = null;
     this.html = $("<div></div>");
     this.color = this.editor.color;
-    this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.opposite_color = this.editor.opposite_color;
     // This won't be super useful at first, but lays the groundwork for a history/undo system that can come later
     this.setup_styles = function () {
         this.html.css({
@@ -28650,7 +28738,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.file_data = this.data["file"] || {};
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
-    this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.opposite_color = this.editor.opposite_color;
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
     this.setup_styles = function () {
@@ -28859,9 +28947,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.on_update = function () {
         console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
     };
-    // Meant to be overridden by member classes
+    // Optionally overridden by member classes
     this.on_locked_change = function () {
-        console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        // Optional override
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
@@ -29022,19 +29110,6 @@ function DashGuiContext2DPrimitiveText () {
     this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
     this._setup_styles = function () {
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
-        // TODO: This essentially turns the TextArea into an Input, making it redundant,
-        //  but this is for a reason. Eventually, these text primitives should be able to
-        //  handle new lines. Right now, it's put on hold because it complicates the resizing
-        //  etc and it's not a priority. When ready to implement that, remove this line.
-        this.text_area.DisableNewLines();
-        this.text_area.textarea.css({
-            "border": "none",
-            "height": "100%",
-            "min-height": "100%",
-            "max-height": "100%",
-            "resize": "none",
-            "text-align": "center"
-        });
         var calc = "calc(100% - " + ((this.text_pad * 2) + this.text_border_comp) + "px)";
         this.text_area.html.css({
             "border-radius": Dash.Size.BorderRadius,
@@ -29044,6 +29119,19 @@ function DashGuiContext2DPrimitiveText () {
             "height": calc,
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
         });
+        this.text_area.textarea.css({
+            "border": "none",
+            "height": "100%",
+            "min-height": "100%",
+            "max-height": "100%",
+            "resize": "none",
+            "text-align": "center"
+        });
+        // TODO: This essentially turns the TextArea into an Input, making it redundant,
+        //  but this is for a reason. Eventually, these text primitives should be able to
+        //  handle new lines. Right now, it's put on hold because it complicates the resizing
+        //  etc and it's not a priority. When ready to implement that, remove this line.
+        this.text_area.DisableNewLines();
         this.text_area.DisableFlash();
         if (this.data["text_value"]) {
             this.text_area.SetText(this.data["text_value"]);
@@ -29267,6 +29355,11 @@ function DashGuiContext2DEditorPanel (editor) {
             this.content_box.SwitchToEditTab();
         }
     };
+    this.RedrawCurrentContentTab = function () {
+        if (this.content_box) {
+            this.content_box.RedrawCurrentTab();
+        }
+    };
     this.SwitchContentToNewTab = function () {
         if (this.content_box) {
             this.content_box.SwitchToNewTab();
@@ -29468,6 +29561,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex"
         });
+        var type_icon = this.get_icon(this.get_type_icon_name());
+        type_icon.html.css({
+            "margin-right": Dash.Size.Padding * 0.5
+        });
+        this.html.append(type_icon.html);
         this.add_input();
         this.html.append(Dash.Gui.GetFlexSpacer());
         this.add_icon_area();
@@ -29589,8 +29687,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         this.icon_area.css({
             "display": "flex"
         });
-        this.hidden_icon = new Dash.Gui.Icon(this.color, "hidden", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
-        this.locked_icon = new Dash.Gui.Icon(this.color, "lock", Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+        this.hidden_icon = this.get_icon("hidden");
+        this.locked_icon = this.get_icon("lock");
         this.locked_icon.html.css({
             "margin-left": Dash.Size.Padding
         });
@@ -29603,6 +29701,25 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         this.icon_area.append(this.hidden_icon.html);
         this.icon_area.append(this.locked_icon.html);
         this.html.append(this.icon_area);
+    };
+    this.get_icon = function (icon_name) {
+        var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+        icon.html.css({
+            "margin-top": Dash.Size.Padding * 0.1
+        });
+        return icon;
+    };
+    this.get_type_icon_name = function () {
+        var type = this.get_data()["type"];
+        var icon_name = (
+              type === "text" ? "font"
+            : type === "image" ? type
+            : "unknown"
+        );
+        if (icon_name === "unknown") {
+            console.warn("Unhandled layer type, couldn't get layer icon:", type);
+        }
+        return icon_name;
     };
     this.on_input_submit = function () {
         this.set_data("display_name", this.input.Text().trim());
@@ -29819,8 +29936,13 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     );
                     self.editor.UpdateCanvasPrimitive(key, value, id);
                     self.toolbar.ReEnableToggle(key);
-                    if (value && (key === "hidden" || key === "locked")) {
-                        self.editor.DeselectAllLayers();
+                    if (key === "hidden" || key === "locked") {
+                        if (value) {
+                            self.editor.DeselectAllLayers();
+                        }
+                        else {
+                            self.panel.RedrawCurrentContentTab();
+                        }
                     }
                 },
                 self.editor.api,
@@ -29919,6 +30041,12 @@ function DashGuiContext2DEditorPanelContent (panel) {
     };
     this.SwitchToNewTab = function () {
         this.layout.LoadIndex(this.new_tab_index);
+    };
+    this.RedrawCurrentTab = function () {
+        if (!this.last_instantiated_class || !this.last_instantiated_class.hasOwnProperty("Redraw")) {
+            return;
+        }
+        this.last_instantiated_class.Redraw();
     };
     this.UpdateComboOptions = function () {
         if (!this.last_instantiated_class) {
@@ -30378,7 +30506,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         for (var key of ["general", ...this.content.PrimitiveTypes]) {
             this.add_context(key);
         }
-        this.redraw();
+        this.Redraw();
         (function (self) {
             requestAnimationFrame(function () {
                 self.content.FloatCombos(self);
@@ -30409,7 +30537,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             true
         );
     };
-    this.redraw = function () {
+    this.Redraw = function () {
         this.hide_no_selected_layer_label();
         for (var key in this.contexts) {
             if (key === "general") {
@@ -30418,17 +30546,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.hide_context(key);
         }
         var selected_layer = this.panel.GetSelectedLayer();
-        if (!selected_layer) {
+        var layer_data = selected_layer ? selected_layer.GetData() : {};
+        if (!selected_layer || layer_data["hidden"] || layer_data["locked"]) {
             this.hide_context("general");
-            this.show_no_selected_layer_label();
+            this.show_no_selected_layer_label(layer_data);
             return;
         }
         this.show_context("general");  // Always show general context when a layer is selected
-        this.show_context(selected_layer.GetData()["type"]);
+        this.show_context(layer_data["type"]);
     };
-    this.show_no_selected_layer_label = function () {
+    this.show_no_selected_layer_label = function (layer_data) {
         if (!this.no_selected_layer_label) {
-            this.no_selected_layer_label = $("<div>No Layer Selected</div>");
+            this.no_selected_layer_label = $("<div></div>");
             this.no_selected_layer_label.css({
                 "color": this.color.Text,
                 "font-family": "sans_serif_bold",
@@ -30440,6 +30569,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             });
             this.html.append(this.no_selected_layer_label);
         }
+        this.no_selected_layer_label.text(layer_data["hidden"] ? "Layer Hidden" : layer_data["locked"] ? "Layer Locked" : "No Layer Selected");
         this.no_selected_layer_label.show();
     };
     this.hide_no_selected_layer_label = function () {
@@ -31955,6 +32085,7 @@ function DashGuiIcons (icon) {
         "folder_solid":          new DashGuiIconDefinition(this.icon, "Folder (Solid)", this.weight["solid"], "folder"),
         "folder_tree":           new DashGuiIconDefinition(this.icon, "Folder Tree", this.weight["regular"], "folder-tree"),
         "font":                  new DashGuiIconDefinition(this.icon, "Font", this.weight["regular"], "font"),
+        "font_alt":              new DashGuiIconDefinition(this.icon, "Font", this.weight["regular"], "font-case"),
         "football":              new DashGuiIconDefinition(this.icon, "Football", this.weight["regular"], "football-ball"),
         "gear":                  new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "gears":                 new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
@@ -32053,6 +32184,7 @@ function DashGuiIcons (icon) {
         "tasks":                 new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks"),
         "tasks_alt":             new DashGuiIconDefinition(this.icon, "Tasks", this.weight["regular"], "tasks-alt"),
         "tennis_ball":           new DashGuiIconDefinition(this.icon, "Tennis Ball", this.weight["regular"], "tennis-ball"),
+        "text":                  new DashGuiIconDefinition(this.icon, "Text", this.weight["regular"], "text"),
         "terminal":              new DashGuiIconDefinition(this.icon, "Terminal", this.weight["regular"], "terminal"),
         "ticket":                new DashGuiIconDefinition(this.icon, "Ticket", this.weight["regular"], "ticket-alt"),
         "toggle_off":            new DashGuiIconDefinition(this.icon, "Toggle Off", this.weight["regular"], "toggle-off"),
