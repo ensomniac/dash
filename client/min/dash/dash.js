@@ -17483,9 +17483,15 @@ function Dash () {
     this.html = $("<div></div>");
     this.Context  = DASH_CONTEXT;
     this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
-    // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this...
+    // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
-    this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    this.IsMobile = this.IsMobileiOS || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent);
+    // Not exclusive to mobile, unless you also check for this.IsMobileiOS.
+    // Safari will be present in the userAgent on Apple devices even when using other browsers,
+    // so we have to make sure those other browser names aren't present in the userAgent.
+    this.IsSafari = /Safari/i.test(navigator.userAgent) && !(/Chrome|Firefox|OP/i.test(navigator.userAgent));
+    // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
         window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android
@@ -19101,11 +19107,14 @@ function DashRegEx () {
     this.space = null;
     this.meridiem = null;
     this.readable_date_time = null;
-    // Important: Since regex need to be compiled, don't generate them until they're needed (by using the flow below)
+    // Important:
+    // - Since regex need to be compiled, don't generate them until they're needed (by using the flow below)
+    // - As of 2/27/23, iOS/Safari still don't support regex lookbehinds (?<!). Do not
+    //   use them! Even having them in the code unused will cause the site to not load!
     // MM/DD/YYYY (month and/or day can be 1 or 2 digits each, year can be 2 or 4 digits)
     this.Date = function () {
         if (!this.date) {
-            this.date = /\d{1,2}\/\d{1,2}\/(?<!\d)(\d{2}|\d{4})(?!\d)/;
+            this.date = /((([01])\d)|[1-9])\/((([012])\d)|[1-9]|3[01])\/(((19|20)\d{2})|\d{2}(?!\d))/;
         }
         return this.date;
     };
@@ -21688,6 +21697,7 @@ function DashDocsHelp (color=null) {
         // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
         // prevents pages from loading at all in those contexts. Since I couldn't
         // figure out an alternative, I'm going to disable this for now.
+        // Update: According to ChatGPT, an alternative is: (?:^|[^s])W*
         // text = text.replaceAll(/W*(?<!style)=/g, equals);
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");
@@ -21746,6 +21756,7 @@ function DashDocsHelp (color=null) {
         // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
         // prevents pages from loading at all in those contexts. Since I couldn't
         // figure out an alternative, I'm going to disable this for now.
+        // Update: According to ChatGPT, an alternative is: (?:^|[^s])W*
         // text = text.replaceAll(/W*(?<!style)=/g, equals);
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
         text = text.replaceAll("2]", "<i style='" + style + "color: " + number_color + "'>2</i>]");

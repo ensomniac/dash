@@ -6,10 +6,17 @@ function Dash () {
     this.Context  = DASH_CONTEXT;
     this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
 
-    // TODO: Mozilla officially/explicitly recommends against user agent sniffing, we should probably update this...
+    // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
-    this.IsMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    this.IsMobile = this.IsMobileiOS || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent);
 
+    // Not exclusive to mobile, unless you also check for this.IsMobileiOS.
+    // Safari will be present in the userAgent on Apple devices even when using other browsers,
+    // so we have to make sure those other browser names aren't present in the userAgent.
+    this.IsSafari = /Safari/i.test(navigator.userAgent) && !(/Chrome|Firefox|OP/i.test(navigator.userAgent));
+
+    // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
         window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android

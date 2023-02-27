@@ -156,6 +156,7 @@ function DashDocsHelp (color=null) {
         // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
         // prevents pages from loading at all in those contexts. Since I couldn't
         // figure out an alternative, I'm going to disable this for now.
+        // Update: According to ChatGPT, an alternative is: (?:^|[^s])W*
         // text = text.replaceAll(/W*(?<!style)=/g, equals);
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");
@@ -226,6 +227,7 @@ function DashDocsHelp (color=null) {
         // As of 9/8/22, iOS/Safari don't support regex lookbehind, and keeping this
         // prevents pages from loading at all in those contexts. Since I couldn't
         // figure out an alternative, I'm going to disable this for now.
+        // Update: According to ChatGPT, an alternative is: (?:^|[^s])W*
         // text = text.replaceAll(/W*(?<!style)=/g, equals);
 
         text = text.replaceAll("[1", "[<i style='" + style + "color: " + number_color + "'>1</i>");

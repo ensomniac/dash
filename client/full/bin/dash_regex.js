@@ -5,12 +5,15 @@ function DashRegEx () {
     this.meridiem = null;
     this.readable_date_time = null;
 
-    // Important: Since regex need to be compiled, don't generate them until they're needed (by using the flow below)
+    // Important:
+    // - Since regex need to be compiled, don't generate them until they're needed (by using the flow below)
+    // - As of 2/27/23, iOS/Safari still don't support regex lookbehinds (?<!). Do not
+    //   use them! Even having them in the code unused will cause the site to not load!
 
     // MM/DD/YYYY (month and/or day can be 1 or 2 digits each, year can be 2 or 4 digits)
     this.Date = function () {
         if (!this.date) {
-            this.date = /\d{1,2}\/\d{1,2}\/(?<!\d)(\d{2}|\d{4})(?!\d)/;
+            this.date = /((([01])\d)|[1-9])\/((([012])\d)|[1-9]|3[01])\/(((19|20)\d{2})|\d{2}(?!\d))/;
         }
 
         return this.date;
