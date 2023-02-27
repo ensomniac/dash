@@ -37,7 +37,7 @@ class Layer:
             return self.data
 
         data = {
-            "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1),
+            "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
             "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
             "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
             "created_by":    self.data["created_by"],
@@ -48,7 +48,7 @@ class Layer:
             "locked":        self.data.get("locked") or False,
             "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
-            "opacity":       self.data["opacity"] if "opacity" in self.data else 1,
+            "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
             "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180 (or is it -179 to 179?)
             "type":          self.Type,
             "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (0.9 if self.Type == "text" else 0.5)  # normalized in relation to the width of the canvas
@@ -62,8 +62,8 @@ class Layer:
             data["file"] = self.data.get("file") or {}
 
         if self.Type == "image":
-            data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1
-            data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1
+            data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1.0
+            data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1.0
 
         return data
 

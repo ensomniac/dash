@@ -60,8 +60,8 @@ class Interface:
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
             from math import gcd
 
-            properties["aspect_ratio_w"] = int(properties.get("aspect_ratio_w") or self.AspectRatioW)
-            properties["aspect_ratio_h"] = int(properties.get("aspect_ratio_h") or self.AspectRatioH)
+            properties["aspect_ratio_w"] = float(properties.get("aspect_ratio_w") or self.AspectRatioW)
+            properties["aspect_ratio_h"] = float(properties.get("aspect_ratio_h") or self.AspectRatioH)
 
             divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
 

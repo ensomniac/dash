@@ -24,11 +24,11 @@ class Properties:
 
     @property
     def AspectRatioH(self):
-        return self.Data.get("aspect_ratio_h") or 1
+        return self.Data.get("aspect_ratio_h") or 1.0
 
     @property
     def AspectRatioW(self):
-        return self.Data.get("aspect_ratio_w") or 1
+        return self.Data.get("aspect_ratio_w") or 1.0
 
     @property
     def CreatedBy(self):
