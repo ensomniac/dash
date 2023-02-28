@@ -293,15 +293,6 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             return;
         }
 
-        this._add_esc_shortcut();
-    };
-
-    // Overridden in DashGuiPrompt
-    this.on_esc_pressed = function () {
-        this.Hide();
-    };
-
-    this._add_esc_shortcut = function () {
         (function (self) {
             $(document).on(
                 "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
@@ -317,7 +308,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
                     if (e.key === "Escape") {
                         console.log("(Esc key pressed) Close modal");
 
-                        self.on_esc_pressed();
+                        self.Hide();
                     }
                 }
             );

@@ -211,9 +211,17 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["font-family"] = "sans_serif_italic";
         }
 
-        // Make sure this is preserved if provided
+        // Make sure these are preserved if provided
         if (this.column_config_data["css"] && this.column_config_data["css"]["font-family"]) {
             css["font-family"] = this.column_config_data["css"]["font-family"];
+        }
+
+        else if (this.list_row.is_header && this.column_config_data["header_css"] && this.column_config_data["header_css"]["font-family"]) {
+            css["font-family"] = this.column_config_data["header_css"]["font-family"];
+        }
+
+        else if (this.list_row.is_footer && this.column_config_data["footer_css"] && this.column_config_data["footer_css"]["font-family"]) {
+            css["font-family"] = this.column_config_data["footer_css"]["font-family"];
         }
 
         this.html.css(css);

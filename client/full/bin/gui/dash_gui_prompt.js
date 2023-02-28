@@ -1,6 +1,6 @@
 function DashGuiPrompt (
     bound_cb, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_shortcut=true
+    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
 ) {
     /**
      * DashGuiPrompt
@@ -10,7 +10,8 @@ function DashGuiPrompt (
      *
      * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc), simply call `Show` as a last step.
      *
-     * @param {function} bound_cb - Once a selection is made, this will receive the selected button index (pre-bound because we have no use for a `binder` param)
+     * @param {function} bound_cb - Once a selection is made, this will receive the selected button index
+     *                              (pre-bound because we have no use for a `binder` param)
      * @param {number} width - Modal width (passed to `Dash.Gui.Modal`)
      * @param {number} height - Modal height (passed to `Dash.Gui.Modal`)
      * @param {string} message - Text to display if a basic message prompt is desired (not using custom HTML via `AddHTML`)
@@ -20,7 +21,9 @@ function DashGuiPrompt (
      * @param {DashColorSet} color - `DashColorSet` instance (ideally, opposite to the primary color set of the site)
      * @param {boolean} include_bg - Use impenetrable full-screen background behind modal (passed to `Dash.Gui.Modal`)
      * @param {number} bg_opacity - Opacity for background (passed to `Dash.Gui.Modal`)
-     * @param {boolean} use_esc_shortcut - Add an `Esc` key shortcut that maps to the default `Cancel` button (applicable only when using the default two buttons)
+     * @param {boolean} use_esc_and_enter_shortcuts - Add an `Esc` key shortcut that maps to the default `Cancel` button
+     *                                                and an `Enter` key shortcut that maps to the default `Continue` button
+     *                                                (applicable only when using the default two buttons)
      */
 
     this.bound_cb = bound_cb;
@@ -28,14 +31,14 @@ function DashGuiPrompt (
     this.header_text = header_text;
     this.continue_text = continue_text;
     this.cancel_text = cancel_text;
-    this.use_esc_shortcut = use_esc_shortcut;
+    this.use_esc_and_enter_shortcuts = use_esc_and_enter_shortcuts;
 
     Dash.Gui.Modal.call(
         this,
         color || Dash.Color.Dark,
         $("body"),  // Window
-        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
-        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
+        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
         include_bg,
         bg_opacity,
         false
@@ -46,6 +49,7 @@ function DashGuiPrompt (
     this.cancel_button = null;
     this.remove = this.Remove;  // Remap this to not be public
     this.continue_button = null;
+    this.shortcuts_active = false;
     this.content_area = $("<div></div>");
 
     this.message_css = {
@@ -74,10 +78,7 @@ function DashGuiPrompt (
         this.modal.append(this.content_area);
 
         this.add_button_bar();
-
-        if (this.use_esc_shortcut) {
-            this._add_esc_shortcut();
-        }
+        this.add_shortcuts();
 
         (function (self) {
             requestAnimationFrame(function () {
@@ -119,7 +120,7 @@ function DashGuiPrompt (
         }
 
         // Shortcut is only applicable when using default two buttons
-        if (this.esc_shortcut_active) {
+        if (this.shortcuts_active) {
             $(document).off("keydown." + this.identifier);
         }
 
@@ -168,11 +169,6 @@ function DashGuiPrompt (
         this.bound_cb(index);
 
         this.remove();  // Single-use
-    };
-
-    // Override
-    this.on_esc_pressed = function () {
-        this.on_selection(0);
     };
 
     this.add_header = function () {
@@ -228,6 +224,41 @@ function DashGuiPrompt (
         this.message = message;
 
         this.content_area.text(this.message);
+    };
+
+    this.add_shortcuts = function () {
+        if (!this.use_esc_and_enter_shortcuts) {
+            return;
+        }
+
+        (function (self) {
+            $(document).on(
+                "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+                function (e) {
+                    if (self.modal && !self.modal.is(":visible")) {
+                        $(document).off("keydown." + self.identifier);
+
+                        self.shortcuts_active = false;
+
+                        return;
+                    }
+
+                    if (e.key === "Escape") {
+                        console.log("(Esc key pressed) Cancel");
+
+                        self.on_selection(0);
+                    }
+
+                    else if (e.key === "Enter") {
+                        console.log("(Enter key pressed) Continue");
+
+                        self.on_selection(1);
+                    }
+                }
+            );
+        })(this);
+
+        this.shortcuts_active = true;
     };
 
     this.setup_styles();
