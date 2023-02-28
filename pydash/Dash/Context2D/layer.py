@@ -8,10 +8,14 @@ import sys
 
 
 class Layer:
-    def __init__(self, context_2d, obj_id="", new_layer_type=""):
+    _default_display_name: str
+    _imported_context_data: dict
+
+    def __init__(self, context_2d, obj_id="", new_layer_type="", new_layer_imported_context_id=""):
         self.context_2d = context_2d
         self.ID = obj_id
         self.Type = new_layer_type  # text, image, video, etc
+        self._new_layer_imported_context_id = new_layer_imported_context_id  # When importing another context into a context
 
         self.data = {}
 
@@ -24,6 +28,29 @@ class Layer:
     @property
     def data_path(self):
         return os.path.join(self.root, "data.json")
+
+    @property
+    def imported_context_data(self):
+        if not hasattr(self, "_imported_context_data"):
+            if self.Type == "context":
+                from . import GetData as GetContextData
+
+                self._imported_context_data = GetContextData(
+                    user_data=self.context_2d.User,
+                    context_2d_root=self.context_2d.Context2DRoot,
+                    obj_id=self.get_imported_context_id()
+                )
+            else:
+                self._imported_context_data = {}
+
+        return self._imported_context_data
+
+    @property
+    def default_display_name(self):
+        if not hasattr(self, "_default_display_name"):
+            self._default_display_name = self.imported_context_data["display_name"] if self.Type == "context" else f"New {self.Type.title()} Layer"
+
+        return self._default_display_name
 
     def ToDict(self, save=False):
         """
@@ -44,8 +71,8 @@ class Layer:
             "created_on":    self.data["created_on"],
             "display_name":  self.data["display_name"],
             "id":            self.ID,
-            "hidden":        self.data.get("hidden") or False,
-            "locked":        self.data.get("locked") or False,
+            "hidden":        self.data["hidden"] if "hidden" in self.data else False,
+            "locked":        self.data["locked"] if "locked" in self.data else False,
             "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
             "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
@@ -58,6 +85,23 @@ class Layer:
             data["text_value"] = self.data.get("text_value") or ""
             data["font_id"] = self.data.get("font_id") or ""
             data["font_color"] = self.data.get("font_color") or ""
+
+        elif self.Type == "context":
+            imported_context = self.data.get("imported_context") or {}
+
+            if save:
+                data["imported_context"] = {"id": self.get_imported_context_id()}
+            else:
+                from . import GetData as GetContextData
+
+                data["imported_context"] = self.imported_context_data
+
+            data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
+
+            # These are overrides per layer (in the imported context) - global overrides for all imported
+            # layers, such as rotating all imported layers 45º, is stored at the top level of this layer (self.Data)
+            data["imported_context"]["overrides"] = imported_context.get("overrides") or {}
+
         else:
             data["file"] = self.data.get("file") or {}
 
@@ -67,11 +111,13 @@ class Layer:
 
         return data
 
-    def SetProperty(self, key, value):
-        return self.SetProperties({key: value})
+    def SetProperty(self, key, value, imported_context_layer_id=""):
+        return self.SetProperties({key: value}, imported_context_layer_id)
 
-    def SetProperties(self, properties={}):
+    def SetProperties(self, properties={}, imported_context_layer_id=""):
         from json import loads
+
+        float_keys = ["aspect", "anchor_norm_x", "anchor_norm_y", "opacity", "rot_deg", "width_norm", "contrast", "brightness"]
 
         if properties and type(properties) is str:
             properties = loads(properties)
@@ -90,26 +136,49 @@ class Layer:
                 properties[key] = ""
 
         # Bools
-        for key in ["hidden", "locked"]:
+        for key in ["hidden", "locked", "linked"]:
             if key in properties and type(properties[key]) is not bool:
                 properties[key] = loads(properties[key])
 
         # Floats
-        for key in ["aspect", "anchor_norm_x", "anchor_norm_y", "opacity", "rot_deg", "width_norm", "contrast", "brightness"]:
+        for key in float_keys:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key])
 
         if "text_value" in properties and "display_name" not in properties:
-            if self.data.get("display_name") == self.get_default_display_name() or self.data["text_value"] == self.data["display_name"]:
+            if self.data.get("display_name") == self.default_display_name or self.data["text_value"] == self.data["display_name"]:
                 # If the layer's name has not already been set manually by the user,
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
-        self.data.update(properties)
+        if self.Type == "context":
+            if not imported_context_layer_id:
+                raise ValueError("Imported Context Layer ID is required")
+
+            for key in properties:
+                value = properties[key]
+
+                if key == "linked":
+                    self.data["imported_context"][key] = value
+                else:
+                    if imported_context_layer_id not in self.data["imported_context"]["overrides"]:
+                        self.data["imported_context"]["overrides"][imported_context_layer_id] = {}
+
+                    imported_context_layer_data = self.imported_context_data["layers"]["data"][imported_context_layer_id]
+
+                    if key in float_keys and imported_context_layer_data.get(key):
+                        value -= imported_context_layer_data[key]
+
+                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] = value
+        else:
+            self.data.update(properties)
 
         return self.Save().ToDict()
 
     def UploadFile(self, file, filename):
+        if self.Type == "text" or self.Type == "context":
+            raise ValueError("Can't upload files to 'text' or 'context' layers")  # Should never happen, but just in case
+
         from Dash.Utils import UploadFile
 
         # A single layer will only ever have a single file (each upload is its own layer)
@@ -144,9 +213,6 @@ class Layer:
 
         return self
 
-    def get_default_display_name(self):
-        return f"New {self.Type.title()} Layer"
-
     def load_data(self):
         if self.ID:  # Existing
             if not os.path.exists(self.data_path):
@@ -165,6 +231,9 @@ class Layer:
 
         if not self.Type:
             raise ValueError("Layer type is required")
+        
+        if self.Type == "context" and not self._new_layer_imported_context_id:
+            raise ValueError("Imported Context ID is required")
 
         from Dash.Utils import GetRandomID
 
@@ -175,5 +244,14 @@ class Layer:
             "created_on": self.context_2d.Now.isoformat(),
             "id": self.ID,
             "type": self.Type,
-            "display_name": self.get_default_display_name()
+            "display_name": self.default_display_name
         }
+
+    def get_imported_context_id(self):
+        imported_context = self.data.get("imported_context") or {}
+        imported_context_id = imported_context.get("id") or self._new_layer_imported_context_id
+
+        if not imported_context_id:
+            raise ValueError("Missing Imported Context ID, this shouldn't happen")
+
+        return imported_context_id

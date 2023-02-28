@@ -27885,20 +27885,21 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *     for function calls. For each context this is used in, make sure to add the correct function names
      *     to the respective API file (which should be utilizing the Dash.Context2D module) as follows:
      *
-     *         - "get_data":             Get data dict for provided object ID
-     *         - "set_property":         Set property with a key/value for provided object ID
-     *         - "set_layer_property":   Set layer property with a key/value for provided object ID
-     *         - "set_layer_properties": Set multiple layer properties with a single dict for provided object ID
-     *         - "add_text_layer":       Add new text layer to provided object ID
-     *         - "add_image_layer":      Add new image layer to provided object ID via image upload
-     *         - "duplicate":            Duplicate the provided object ID as a new context (not tethered to the original) - backend function
-     *                                   should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
-     *         - "get_combo_options":    Get dict with keys for different combo option types, such as "fonts", with values being lists
-     *                                   containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
+     *         - "get_data":               Get data dict for provided object ID
+     *         - "set_property":           Set property with a key/value for provided object ID
+     *         - "set_layer_property":     Set layer property with a key/value for provided object ID
+     *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
+     *         - "add_text_layer":         Add new text layer to provided object ID
+     *         - "add_image_layer":        Add new image layer to provided object ID via image upload
+     *         - "import_another_context": Import another context (layers) into provided object ID
+     *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
+     *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
+     *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
-     *                                   Required/expected combo option type keys:
-     *                                     - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
-     *                                     - contexts (all Context2D objects)
+     *                                     Required/expected combo option type keys:
+     *                                       - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
+     *                                       - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
      * @param {string} api - API name for requests
@@ -28229,7 +28230,7 @@ function DashGuiContext2DCanvas (editor) {
         });
     };
     this.UpdatePrimitive = function (key, value, id="") {
-        if (id) {
+        if (id && this.primitives[id]) {
             this.primitives[id].Update(key, value);
             return;
         }
@@ -28257,6 +28258,9 @@ function DashGuiContext2DCanvas (editor) {
         }
     };
     this.RemovePrimitive = function (id) {
+        if (!this.primitives[id]) {
+            return;
+        }
         this.primitives[id].html.remove();
         delete this.primitives[id];
         this.UpdatePrimitiveZIndexes();
@@ -28758,12 +28762,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
+    this.id = this.layer.GetID();
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
+    this.parent_id = this.layer.GetParentID();
+    this.parent_data = this.layer.GetParentData();
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = this.editor.opposite_color;
@@ -28780,7 +28787,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.set_left_px();
         this.html.css({
             "position": "absolute",
-            "z-index": this.get_z_index()
+            "z-index": this.get_z_index(),
+            // Retain the physical space of the border, just make it invisible
+            // (this prevents the box from appearing to "jitter" when the border is toggled)
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "1px solid rgba(0, 0, 0, 0)"
         });
         this.draw_properties(true);
         this.on_opacity_change(this.data["opacity"]);
@@ -28885,12 +28896,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "start_mouse_y": event.clientY,
             "drag_start": new Date()
         };
-        this.drag_state = {
-            "anchor_norm_x": this.data["anchor_norm_x"],
-            "anchor_norm_y": this.data["anchor_norm_y"],
-            "rot_deg": this.data["rot_deg"],
-            "width_norm": this.data["width_norm"]
-        };
+        this.set_drag_state();
     };
     this.OnDrag = function (event) {
         if (!this.drag_active || this.data["locked"]) {
@@ -28905,7 +28911,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            this.last_width_norm = this.data["width_norm"];
+            this.last_width_norm = this.get_drag_state_value("width_norm");
             this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
             this.set_scale();
         }
@@ -28926,6 +28932,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.drag_active = false;
         this.save_drag_state();
     };
+    this.set_drag_state = function () {
+        this.drag_state = {
+            "anchor_norm_x": this.get_drag_state_value("anchor_norm_x"),
+            "anchor_norm_y": this.get_drag_state_value("anchor_norm_y"),
+            "rot_deg": this.get_drag_state_value("rot_deg"),
+            "width_norm": this.get_drag_state_value("width_norm")
+        };
+    };
     this.save_drag_state = function () {
         var modified = false;
         for (var key in this.drag_state) {
@@ -28938,12 +28952,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!modified) {
             return;
         }
-        this.drag_state = {
-            "anchor_norm_x": this.data["anchor_norm_x"],
-            "anchor_norm_y": this.data["anchor_norm_y"],
-            "rot_deg": this.data["rot_deg"],
-            "width_norm": this.data["width_norm"]
+        this.set_drag_state();
+        var params = {
+            "f": "set_layer_properties",
+            "obj_id": this.editor.obj_id,
+            "layer_id": this.parent_id || this.id,
+            "properties": JSON.stringify(this.drag_state)
         };
+        if (this.parent_id) {
+            params["imported_context_layer_id"] = this.id;
+        }
         (function (self) {
             Dash.Request(
                 self,
@@ -28954,14 +28972,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     self.editor.data = response;
                 },
                 self.editor.api,
-                {
-                    "f": "set_layer_properties",
-                    "obj_id": self.editor.obj_id,
-                    "layer_id": self.data["id"],
-                    "properties": JSON.stringify(self.drag_state)
-                }
+                params
             );
         })(this);
+    };
+    this.get_drag_state_value = function (key) {
+        var value = this.data[key];
+        if (!this.parent_id) {
+            return value;
+        }
+        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key];
+        if (!override) {
+            return value;
+        }
+        return value + override;
     };
     this.on_hidden_change = function (hidden) {
         if (hidden) {
@@ -28973,15 +28997,21 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
-        console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        if (this.data["type"] !== "context") {
+            console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        }
     };
-    // Optionally overridden by member classes
+    // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        // Optional override
+        if (this.data["type"] !== "context" && this.data["type"] !== "image") {
+            console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        }
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.data["type"] !== "context") {
+            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        }
         this.html.css({
             "opacity": value
         });
@@ -29026,7 +29056,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.left_px = override || ((this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5));
     };
     this.set_width_px = function (override=null) {
-        this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
+        this.width_px = override || (this.canvas.GetWidth() * this.get_drag_state_value("width_norm"));
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
             this.width_px = this.width_px_min;
@@ -29067,6 +29097,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
+        }
+        else if (this.data["type"] === "context") {
+            DashGuiContext2DPrimitiveContext.call(this);
         }
         else {
             if (!Dash.Validate.Object(this.file_data)) {
@@ -29123,7 +29156,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "transform": "rotate(" + this.data["rot_deg"] + "deg)"
+            "transform": "rotate(" + this.get_drag_state_value("rot_deg") + "deg)"
         });
     };
     this.setup_styles();
@@ -29421,9 +29454,6 @@ function DashGuiContext2DEditorPanel (editor) {
     this.AddLayer = function (primitive_type, primitive_file_data=null) {
         this.layers_box.AddLayer(primitive_type, primitive_file_data);
     };
-    this.ImportContext = function (context_data) {
-        this.layers_box.ImportContext(context_data);
-    };
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
             return;
@@ -29568,9 +29598,38 @@ function DashGuiContext2DEditorPanel (editor) {
     this.setup_styles();
 }
 
-function DashGuiContext2DEditorPanelLayer (layers, id) {
+/**@member DashGuiContext2DPrimitive*/
+function DashGuiContext2DPrimitiveContext () {
+    this._setup_styles = function () {
+        var y = 0;
+        var x = 0;
+        var w = 0;
+        var overrides = this.data["imported_context"]["overrides"];
+        var len = this.data["imported_context"]["layers"]["order"].length || 1;
+        for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+            var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
+            y += layer_data["anchor_norm_y"] + (overrides[layer_id]["anchor_norm_y"] || 0);
+            x += layer_data["anchor_norm_x"] + (overrides[layer_id]["anchor_norm_x"] || 0);
+            if (layer_data["type"] !== "text") {
+                w = Math.max(w, layer_data["width_norm"] + (overrides[layer_id]["width_norm"] || 0));
+            }
+        }
+        y /= len;
+        x /= len;
+        console.debug("TEST prim", y, x, w);
+        // TODO: is this problematic?
+        this.data["anchor_norm_y"] = y;
+        this.data["anchor_norm_x"] = x;
+        this.data["width_norm"] = w || 0.5;
+        this.data["aspect"] = 1.0;
+    };
+    this._setup_styles();
+}
+
+function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.layers = layers;
     this.id = id;
+    this.parent_id = parent_id;
     this.input = null;
     this.selected = false;
     this.hidden_icon = null;
@@ -29589,11 +29648,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex"
         });
-        var type_icon = this.get_icon(this.get_type_icon_name());
-        type_icon.html.css({
-            "margin-right": Dash.Size.Padding * 0.5
-        });
-        this.html.append(type_icon.html);
+        this.add_type_icon();
         this.add_input();
         this.html.append(Dash.Gui.GetFlexSpacer());
         this.add_icon_area();
@@ -29605,9 +29660,15 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         if (data["locked"]) {
             this.ToggleLocked(data["locked"]);
         }
+        if (data["type"] === "context") {
+            console.debug("TEST", data);
+        }
     };
     this.GetID = function () {
         return this.id;
+    };
+    this.GetParentID = function () {
+        return this.parent_id;
     };
     this.IsSelected = function () {
         return this.selected;
@@ -29617,6 +29678,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     };
     this.GetData = function () {
         return this.get_data();
+    };
+    this.GetParentData = function () {
+        return this.get_parent_data();
     };
     this.SetData = function (key, value) {
         return this.set_data(key, value);
@@ -29688,6 +29752,19 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     this.UpdateLabel = function () {
         this.input.SetText(this.get_data()["display_name"] || "");
     };
+    this.add_type_icon = function () {
+        var type_icon = this.get_icon(this.get_type_icon_name());
+        var css = {"margin-right": Dash.Size.Padding * 0.5};
+        if (this.parent_id) {
+            css["margin-left"] = Dash.Size.Padding;
+            css["border-left"] = "1px solid " + this.color.PinstripeDark;
+            type_icon.icon_html.css({
+                "padding-left": Dash.Size.Padding * 0.3
+            });
+        }
+        type_icon.html.css(css);
+        this.html.append(type_icon.html);
+    };
     this.add_input = function () {
         var display_name = this.get_data()["display_name"];
         this.input = new Dash.Gui.Input(display_name, this.color);
@@ -29742,6 +29819,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         var icon_name = (
               type === "text" ? "font"
             : type === "image" ? type
+            : type === "context" ? "project_diagram"
             : "unknown"
         );
         if (icon_name === "unknown") {
@@ -29753,10 +29831,16 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         this.set_data("display_name", this.input.Text().trim());
     };
     this.set_data = function (key, value) {
-        this.layers.set_layer_property(key, value, this.id);
+        this.layers.set_layer_property(key, value, this.id, this.parent_id);
     };
     this.get_data = function () {
-        return this.layers.get_data()["data"][this.id];
+        return this.layers.get_data(this.parent_id)["data"][this.id];
+    };
+    this.get_parent_data = function () {
+        if (!this.parent_id) {
+            return {};
+        }
+        return this.layers.get_data()["data"][this.parent_id];
     };
     this.setup_styles();
 }
@@ -29804,12 +29888,17 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         return false;
     };
-    this.ImportContext = function (context_data) {
-        console.debug("TEST import context", context_data);
-        // TODO: see trello notes
-    };
-    this.AddLayer = function (id, select=true) {
-        this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
+    this.AddLayer = function (id, select=true, parent_id="") {
+        this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id, parent_id);
+        var data = this.layers[id].GetData();
+        if (data["type"] === "context") {
+            var imported_layers = data["imported_context"]["layers"];
+            // TODO: if imported context is this context, then the layer ids will be the same,
+            //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
+            for (var imported_id of imported_layers["order"]) {
+                this.AddLayer(imported_id, select, id);
+            }
+        }
         this.layers_box.prepend(this.layers[id].html);
         if (select) {
             this.layers[id].Select();
@@ -29921,8 +30010,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             );
         })(this);
     };
-    this.get_data = function () {
-        return this.editor.data["layers"];
+    this.get_data = function (parent_id="") {
+        var layers = this.editor.data["layers"];
+        if (parent_id) {
+            return layers["data"][parent_id]["imported_context"]["layers"];
+        }
+        return layers;
     };
     this.on_data = function (response, redraw=false, select=false) {
         this.editor.data = response;
@@ -29933,7 +30026,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.set_layer_order = function (order, callback=null) {
         this.editor.set_data("layer_order", order, callback);
     };
-    this.set_layer_property = function (key, value, id="") {
+    this.set_layer_property = function (key, value, id="", parent_id="") {
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -29946,6 +30039,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             value = JSON.stringify(value);
         }
         var log_name = key === "display_name" ? this.get_data()["data"][id]["display_name"] : "";
+        var params = {
+            "f": "set_layer_property",
+            "obj_id": this.editor.obj_id,
+            "layer_id": parent_id || id,
+            "key": key,
+            "value": value
+        };
+        if (parent_id) {
+            params["imported_context_layer_id"] = id;
+        }
         (function (self) {
             Dash.Request(
                 self,
@@ -29974,13 +30077,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     }
                 },
                 self.editor.api,
-                {
-                    "f": "set_layer_property",
-                    "obj_id": self.editor.obj_id,
-                    "layer_id": id,
-                    "key": key,
-                    "value": value
-                }
+                params
             );
         })(this);
     };
@@ -30290,15 +30387,15 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         }
         return button;
     };
-    this.on_new_layer = function (response, button) {
+    this.on_new_layer = function (response, element) {
         if (!Dash.Validate.Response(response)) {
-            button.SetLoading(false);
-            button.Enable();
+            element.SetLoading(false);
+            element.Enable();
             return;
         }
         this.panel.OnNewLayer(response);
-        button.SetLoading(false);
-        button.Enable();
+        element.SetLoading(false);
+        element.Enable();
     };
     this.get_upload_button = function (primitive_type, label_text) {
         var button = this.get_button(label_text + " (Upload)", this.on_new_layer);
@@ -30326,21 +30423,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                     if (!selected_option["id"]) {
                         return;
                     }
+                    self.import_combo.SetLoading(true, true);
+                    self.import_combo.Disable();
                     Dash.Request(
                         self,
                         function (response) {
-                            if (!Dash.Validate.Response(response)) {
-                                return;
-                            }
-                            if ("error" in response) {
-                                delete response["error"];
-                            }
-                            self.panel.ImportContext(response);
+                            self.on_new_layer(response, self.import_combo);
                         },
-                        self.api,
+                        self.editor.api,
                         {
-                            "f": "get_data",
-                            "obj_id": selected_option["id"]
+                            "f": "import_another_context",
+                            "obj_id": self.editor.obj_id,
+                            "obj_id_to_import": selected_option["id"]
                         }
                     );
                 }
@@ -32173,6 +32267,7 @@ function DashGuiIcons (icon) {
         "portal_editor":         new DashGuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
         "print":                 new DashGuiIconDefinition(this.icon, "Print", this.weight["regular"], "print"),
         "print_alt":             new DashGuiIconDefinition(this.icon, "Print (Alt)", this.weight["solid"], "print"),
+        "project_diagram":       new DashGuiIconDefinition(this.icon, "Project Diagram", this.weight["regular"], "project-diagram"),
         "python_logo":           new DashGuiIconDefinition(this.icon, "Python Logo", this.weight["brand"], "python"),
         "read":                  new DashGuiIconDefinition(this.icon, "Read", this.weight["regular"], "book-reader"),
         "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),

@@ -128,10 +128,6 @@ function DashGuiContext2DEditorPanel (editor) {
         this.layers_box.AddLayer(primitive_type, primitive_file_data);
     };
 
-    this.ImportContext = function (context_data) {
-        this.layers_box.ImportContext(context_data);
-    };
-
     this.UpdatePropertyBox = function () {
         if (!this.property_box) {
             return;

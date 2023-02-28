@@ -1,6 +1,7 @@
-function DashGuiContext2DEditorPanelLayer (layers, id) {
+function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.layers = layers;
     this.id = id;
+    this.parent_id = parent_id;
 
     this.input = null;
     this.selected = false;
@@ -22,14 +23,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
             "display": "flex"
         });
 
-        var type_icon = this.get_icon(this.get_type_icon_name());
-
-        type_icon.html.css({
-            "margin-right": Dash.Size.Padding * 0.5
-        });
-
-        this.html.append(type_icon.html);
-
+        this.add_type_icon();
         this.add_input();
 
         this.html.append(Dash.Gui.GetFlexSpacer());
@@ -46,10 +40,18 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         if (data["locked"]) {
             this.ToggleLocked(data["locked"]);
         }
+
+        if (data["type"] === "context") {
+            console.debug("TEST", data);
+        }
     };
 
     this.GetID = function () {
         return this.id;
+    };
+
+    this.GetParentID = function () {
+        return this.parent_id;
     };
 
     this.IsSelected = function () {
@@ -62,6 +64,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
 
     this.GetData = function () {
         return this.get_data();
+    };
+
+    this.GetParentData = function () {
+        return this.get_parent_data();
     };
 
     this.SetData = function (key, value) {
@@ -158,6 +164,24 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         this.input.SetText(this.get_data()["display_name"] || "");
     };
 
+    this.add_type_icon = function () {
+        var type_icon = this.get_icon(this.get_type_icon_name());
+        var css = {"margin-right": Dash.Size.Padding * 0.5};
+
+        if (this.parent_id) {
+            css["margin-left"] = Dash.Size.Padding;
+            css["border-left"] = "1px solid " + this.color.PinstripeDark;
+
+            type_icon.icon_html.css({
+                "padding-left": Dash.Size.Padding * 0.3
+            });
+        }
+
+        type_icon.html.css(css);
+
+        this.html.append(type_icon.html);
+    };
+
     this.add_input = function () {
         var display_name = this.get_data()["display_name"];
 
@@ -231,6 +255,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
         var icon_name = (
               type === "text" ? "font"
             : type === "image" ? type
+            : type === "context" ? "project_diagram"
             : "unknown"
         );
 
@@ -246,11 +271,19 @@ function DashGuiContext2DEditorPanelLayer (layers, id) {
     };
 
     this.set_data = function (key, value) {
-        this.layers.set_layer_property(key, value, this.id);
+        this.layers.set_layer_property(key, value, this.id, this.parent_id);
     };
 
     this.get_data = function () {
-        return this.layers.get_data()["data"][this.id];
+        return this.layers.get_data(this.parent_id)["data"][this.id];
+    };
+
+    this.get_parent_data = function () {
+        if (!this.parent_id) {
+            return {};
+        }
+
+        return this.layers.get_data()["data"][this.parent_id];
     };
 
     this.setup_styles();

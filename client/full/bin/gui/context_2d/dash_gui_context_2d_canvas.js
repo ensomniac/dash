@@ -97,7 +97,7 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.UpdatePrimitive = function (key, value, id="") {
-        if (id) {
+        if (id && this.primitives[id]) {
             this.primitives[id].Update(key, value);
 
             return;
@@ -137,6 +137,10 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.RemovePrimitive = function (id) {
+        if (!this.primitives[id]) {
+            return;
+        }
+
         this.primitives[id].html.remove();
 
         delete this.primitives[id];

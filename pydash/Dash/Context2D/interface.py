@@ -16,6 +16,7 @@ class Interface:
     DashContext: dict
     AspectRatioH: int
     AspectRatioW: int
+    Context2DRoot: str
     add_layer: callable
     add_layer_from_file: callable
     validate_uploaded_file_ext: callable
@@ -87,16 +88,25 @@ class Interface:
 
         return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")
 
-    def SetLayerProperty(self, layer_id, key, value):
+    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id=""):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperty(key, value)
+        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id)
 
         return self.ToDict()
 
-    def SetLayerProperties(self, layer_id, properties={}):
+    def SetLayerProperties(self, layer_id, properties={}, imported_context_layer_id=""):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperties(properties)
+        Layer(self, layer_id).SetProperties(properties, imported_context_layer_id)
 
         return self.ToDict()
+
+    def ImportAnotherContext(self, obj_id_to_import):
+        from .layer import Layer
+
+        return self.add_layer(Layer(
+            self,
+            new_layer_type="context",
+            new_layer_imported_context_id=obj_id_to_import
+        ))

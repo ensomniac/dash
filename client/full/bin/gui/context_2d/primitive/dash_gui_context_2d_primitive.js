@@ -14,12 +14,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_active = false;
     this.drag_context = null;
     this.last_width_norm = null;
+    this.id = this.layer.GetID();
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
+    this.parent_id = this.layer.GetParentID();
+    this.parent_data = this.layer.GetParentData();
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = this.editor.opposite_color;
@@ -41,7 +44,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.html.css({
             "position": "absolute",
-            "z-index": this.get_z_index()
+            "z-index": this.get_z_index(),
+
+            // Retain the physical space of the border, just make it invisible
+            // (this prevents the box from appearing to "jitter" when the border is toggled)
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "1px solid rgba(0, 0, 0, 0)"
         });
 
         this.draw_properties(true);
@@ -180,12 +188,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "drag_start": new Date()
         };
 
-        this.drag_state = {
-            "anchor_norm_x": this.data["anchor_norm_x"],
-            "anchor_norm_y": this.data["anchor_norm_y"],
-            "rot_deg": this.data["rot_deg"],
-            "width_norm": this.data["width_norm"]
-        };
+        this.set_drag_state();
     };
 
     this.OnDrag = function (event) {
@@ -205,7 +208,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            this.last_width_norm = this.data["width_norm"];
+            this.last_width_norm = this.get_drag_state_value("width_norm");
 
             this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
 
@@ -236,6 +239,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.save_drag_state();
     };
 
+    this.set_drag_state = function () {
+        this.drag_state = {
+            "anchor_norm_x": this.get_drag_state_value("anchor_norm_x"),
+            "anchor_norm_y": this.get_drag_state_value("anchor_norm_y"),
+            "rot_deg": this.get_drag_state_value("rot_deg"),
+            "width_norm": this.get_drag_state_value("width_norm")
+        };
+    };
+
     this.save_drag_state = function () {
         var modified = false;
 
@@ -253,12 +265,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        this.drag_state = {
-            "anchor_norm_x": this.data["anchor_norm_x"],
-            "anchor_norm_y": this.data["anchor_norm_y"],
-            "rot_deg": this.data["rot_deg"],
-            "width_norm": this.data["width_norm"]
+        this.set_drag_state();
+
+        var params = {
+            "f": "set_layer_properties",
+            "obj_id": this.editor.obj_id,
+            "layer_id": this.parent_id || this.id,
+            "properties": JSON.stringify(this.drag_state)
         };
+
+        if (this.parent_id) {
+            params["imported_context_layer_id"] = this.id;
+        }
 
         (function (self) {
             Dash.Request(
@@ -271,14 +289,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     self.editor.data = response;
                 },
                 self.editor.api,
-                {
-                    "f": "set_layer_properties",
-                    "obj_id": self.editor.obj_id,
-                    "layer_id": self.data["id"],
-                    "properties": JSON.stringify(self.drag_state)
-                }
+                params
             );
         })(this);
+    };
+
+    this.get_drag_state_value = function (key) {
+        var value = this.data[key];
+
+        if (!this.parent_id) {
+            return value;
+        }
+
+        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key];
+
+        if (!override) {
+            return value;
+        }
+
+        return value + override;
     };
 
     this.on_hidden_change = function (hidden) {
@@ -293,17 +322,23 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_update = function () {
-        console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        if (this.data["type"] !== "context") {
+            console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        }
     };
 
-    // Optionally overridden by member classes
+    // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        // Optional override
+        if (this.data["type"] !== "context" && this.data["type"] !== "image") {
+            console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        }
     };
 
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.data["type"] !== "context") {
+            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        }
 
         this.html.css({
             "opacity": value
@@ -358,7 +393,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.set_width_px = function (override=null) {
-        this.width_px = override || (this.canvas.GetWidth() * this.data["width_norm"]);
+        this.width_px = override || (this.canvas.GetWidth() * this.get_drag_state_value("width_norm"));
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
@@ -410,6 +445,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.call_style = function () {
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
+        }
+
+        else if (this.data["type"] === "context") {
+            DashGuiContext2DPrimitiveContext.call(this);
         }
 
         else {
@@ -482,7 +521,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "transform": "rotate(" + this.data["rot_deg"] + "deg)"
+            "transform": "rotate(" + this.get_drag_state_value("rot_deg") + "deg)"
         });
     };
 

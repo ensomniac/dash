@@ -51,14 +51,20 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         return false;
     };
 
-    this.ImportContext = function (context_data) {
-        console.debug("TEST import context", context_data);
+    this.AddLayer = function (id, select=true, parent_id="") {
+        this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id, parent_id);
 
-        // TODO: see trello notes
-    };
+        var data = this.layers[id].GetData();
 
-    this.AddLayer = function (id, select=true) {
-        this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id);
+        if (data["type"] === "context") {
+            var imported_layers = data["imported_context"]["layers"];
+
+            // TODO: if imported context is this context, then the layer ids will be the same,
+            //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
+            for (var imported_id of imported_layers["order"]) {
+                this.AddLayer(imported_id, select, id);
+            }
+        }
 
         this.layers_box.prepend(this.layers[id].html);
 
@@ -215,8 +221,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         })(this);
     };
 
-    this.get_data = function () {
-        return this.editor.data["layers"];
+    this.get_data = function (parent_id="") {
+        var layers = this.editor.data["layers"];
+
+        if (parent_id) {
+            return layers["data"][parent_id]["imported_context"]["layers"];
+        }
+
+        return layers;
     };
 
     this.on_data = function (response, redraw=false, select=false) {
@@ -231,7 +243,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.set_data("layer_order", order, callback);
     };
 
-    this.set_layer_property = function (key, value, id="") {
+    this.set_layer_property = function (key, value, id="", parent_id="") {
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -249,6 +261,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         var log_name = key === "display_name" ? this.get_data()["data"][id]["display_name"] : "";
+
+        var params = {
+            "f": "set_layer_property",
+            "obj_id": this.editor.obj_id,
+            "layer_id": parent_id || id,
+            "key": key,
+            "value": value
+        };
+
+        if (parent_id) {
+            params["imported_context_layer_id"] = id;
+        }
 
         (function (self) {
             Dash.Request(
@@ -286,13 +310,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     }
                 },
                 self.editor.api,
-                {
-                    "f": "set_layer_property",
-                    "obj_id": self.editor.obj_id,
-                    "layer_id": id,
-                    "key": key,
-                    "value": value
-                }
+                params
             );
         })(this);
     };

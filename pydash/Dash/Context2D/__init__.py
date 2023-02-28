@@ -67,12 +67,12 @@ def SetProperties(user_data, context_2d_root, obj_id, props):
     return Context2D(user_data, context_2d_root, obj_id).SetProperties(props)
 
 
-def SetLayerProperty(user_data, context_2d_root, obj_id, layer_id, key, value):
-    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperty(layer_id, key, value)
+def SetLayerProperty(user_data, context_2d_root, obj_id, layer_id, key, value, imported_context_layer_id=""):
+    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperty(layer_id, key, value, imported_context_layer_id)
 
 
-def SetLayerProperties(user_data, context_2d_root, obj_id, layer_id, props):
-    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperties(layer_id, props)
+def SetLayerProperties(user_data, context_2d_root, obj_id, layer_id, props, imported_context_layer_id=""):
+    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperties(layer_id, props, imported_context_layer_id)
 
 
 def AddTextLayer(user_data, context_2d_root, obj_id):
@@ -85,3 +85,7 @@ def AddImageLayer(user_data, context_2d_root, obj_id, dash_context, file, filena
 
 def AddVideoLayer(user_data, context_2d_root, obj_id, dash_context, file, filename):
     return Context2D(user_data, context_2d_root, obj_id, dash_context).AddVideoLayer(file, filename)
+
+
+def ImportAnotherContext(user_data, context_2d_root, obj_id, obj_id_to_import):
+    return Context2D(user_data, context_2d_root, obj_id).ImportAnotherContext(obj_id_to_import)

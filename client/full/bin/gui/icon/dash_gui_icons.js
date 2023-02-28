@@ -200,6 +200,7 @@ function DashGuiIcons (icon) {
         "portal_editor":         new DashGuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
         "print":                 new DashGuiIconDefinition(this.icon, "Print", this.weight["regular"], "print"),
         "print_alt":             new DashGuiIconDefinition(this.icon, "Print (Alt)", this.weight["solid"], "print"),
+        "project_diagram":       new DashGuiIconDefinition(this.icon, "Project Diagram", this.weight["regular"], "project-diagram"),
         "python_logo":           new DashGuiIconDefinition(this.icon, "Python Logo", this.weight["brand"], "python"),
         "read":                  new DashGuiIconDefinition(this.icon, "Read", this.weight["regular"], "book-reader"),
         "refresh":               new DashGuiIconDefinition(this.icon, "Refresh", this.weight["regular"], "redo"),

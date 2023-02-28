@@ -25,7 +25,7 @@ class Utils:
     def load_data(self):
         if self.ID:  # Existing
             if not os.path.exists(self.DataPath):
-                raise FileNotFoundError(f"Data path doesn't exist for context ({self.ID}), this shouldn't happen")
+                raise FileNotFoundError(f"Data path ({self.DataPath}) doesn't exist for context ({self.ID}), this shouldn't happen")
 
             from Dash.LocalStorage import Read
 

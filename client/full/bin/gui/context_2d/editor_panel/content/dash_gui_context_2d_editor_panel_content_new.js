@@ -92,18 +92,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         return button;
     };
 
-    this.on_new_layer = function (response, button) {
+    this.on_new_layer = function (response, element) {
         if (!Dash.Validate.Response(response)) {
-            button.SetLoading(false);
-            button.Enable();
+            element.SetLoading(false);
+            element.Enable();
 
             return;
         }
 
         this.panel.OnNewLayer(response);
 
-        button.SetLoading(false);
-        button.Enable();
+        element.SetLoading(false);
+        element.Enable();
     };
 
     this.get_upload_button = function (primitive_type, label_text) {
@@ -136,23 +136,19 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                         return;
                     }
 
+                    self.import_combo.SetLoading(true, true);
+                    self.import_combo.Disable();
+
                     Dash.Request(
                         self,
                         function (response) {
-                            if (!Dash.Validate.Response(response)) {
-                                return;
-                            }
-
-                            if ("error" in response) {
-                                delete response["error"];
-                            }
-
-                            self.panel.ImportContext(response);
+                            self.on_new_layer(response, self.import_combo);
                         },
-                        self.api,
+                        self.editor.api,
                         {
-                            "f": "get_data",
-                            "obj_id": selected_option["id"]
+                            "f": "import_another_context",
+                            "obj_id": self.editor.obj_id,
+                            "obj_id_to_import": selected_option["id"]
                         }
                     );
                 }
