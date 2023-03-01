@@ -81,6 +81,7 @@ function DashGuiIcons (icon) {
         "cdn_tool_video":        new DashGuiIconDefinition(this.icon, "Text Tool", this.weight["regular"], "video"),
         "cell":                  new DashGuiIconDefinition(this.icon, "Cell Phone", this.weight["regular"], "mobile-alt"),
         "checked_box":           new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
+        "checked_box_solid":     new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["solid"], "check-square"),
         "circle_dot":            new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
         "circle_arrow_right":    new DashGuiIconDefinition(this.icon, "Circle Arrow (Right)", this.weight["solid"], "chevron-circle-right"),
         "clipboard":             new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
