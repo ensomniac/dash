@@ -36792,8 +36792,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 "height": this.height,
                 "background": Dash.Color.GetTransparent(Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood, 0.5),
                 "pointer-events": "none",
-                "opacity": 0,
-                "z-index": 10
+                "opacity": 0
             });
             this.column_box.css({
                 "left": Dash.Size.Padding,
