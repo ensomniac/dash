@@ -92,8 +92,6 @@ class Layer:
             if save:
                 data["imported_context"] = {"id": self.get_imported_context_id()}
             else:
-                from . import GetData as GetContextData
-
                 data["imported_context"] = self.imported_context_data
 
             data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
@@ -152,24 +150,31 @@ class Layer:
                 properties["display_name"] = properties["text_value"]
 
         if self.Type == "context":
-            if not imported_context_layer_id:
-                raise ValueError("Imported Context Layer ID is required")
+            state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
 
             for key in properties:
                 value = properties[key]
 
                 if key == "linked":
                     self.data["imported_context"][key] = value
-                else:
-                    if imported_context_layer_id not in self.data["imported_context"]["overrides"]:
-                        self.data["imported_context"]["overrides"][imported_context_layer_id] = {}
 
-                    imported_context_layer_data = self.imported_context_data["layers"]["data"][imported_context_layer_id]
+                    continue
 
-                    if key in float_keys and imported_context_layer_data.get(key):
-                        value -= imported_context_layer_data[key]
+                if key in state_keys and not imported_context_layer_id:
+                    self.data[key] = value
 
-                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] = value
+                    continue
+
+                if not imported_context_layer_id:
+                    raise ValueError("Imported Context Layer ID is required")
+
+                if imported_context_layer_id not in self.data["imported_context"]["overrides"]:
+                    self.data["imported_context"]["overrides"][imported_context_layer_id] = {}
+
+                if key in float_keys and self.imported_context_data["layers"]["data"][imported_context_layer_id].get(key):
+                    value -= self.imported_context_data["layers"]["data"][imported_context_layer_id][key]
+
+                self.data["imported_context"]["overrides"][imported_context_layer_id][key] = value
         else:
             self.data.update(properties)
 

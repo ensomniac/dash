@@ -186,6 +186,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.on_data(response, true, true);
     };
 
+    this.Redraw = function (select=false) {
+        this.redraw_layers(select);
+    };
+
     this.on_move = function (up=true) {
         var layer = this.GetSelectedLayer();
 

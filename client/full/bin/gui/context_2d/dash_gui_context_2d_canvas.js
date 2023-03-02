@@ -136,16 +136,30 @@ function DashGuiContext2DCanvas (editor) {
         }
     };
 
-    this.RemovePrimitive = function (id) {
+    this.RemoveAllPrimitives = function () {
+        for (var id in this.primitives) {
+            this.RemovePrimitive(id);
+        }
+    };
+
+    this.RemovePrimitive = function (id, _update_z_indexes=true) {
         if (!this.primitives[id]) {
             return;
+        }
+
+        if (this.primitives[id].data["type"] === "context") {
+            for (var layer_id of this.primitives[id].data["imported_context"]["layers"]["order"]) {
+                this.RemovePrimitive(layer_id, false);
+            }
         }
 
         this.primitives[id].html.remove();
 
         delete this.primitives[id];
 
-        this.UpdatePrimitiveZIndexes();
+        if (_update_z_indexes) {
+            this.UpdatePrimitiveZIndexes();
+        }
     };
 
     this.GetHeight = function () {

@@ -68,6 +68,10 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
+    this.RedrawLayers = function (select=false) {
+        this.layers_box.Redraw(select);
+    };
+
     this.OnNewLayer = function (response) {
         this.layers_box.OnNewLayer(response);
     };

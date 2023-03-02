@@ -135,6 +135,12 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                     if (!selected_option["id"]) {
                         return;
                     }
+                    
+                    if (selected_option["id"] === self.editor.obj_id) {
+                        alert("Importing a context into itself is not yet supported.");
+
+                        return;
+                    }
 
                     self.import_combo.SetLoading(true, true);
                     self.import_combo.Disable();

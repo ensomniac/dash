@@ -134,6 +134,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
+        if (this.data["type"] === "context" && from_click) {
+            for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+                if (this.canvas.primitives[layer_id] && this.canvas.primitives[layer_id].IsSelected()) {
+                    return;
+                }
+            }
+        }
+
         this.canvas.DeselectAllPrimitives();
 
         this.html.css({
@@ -287,6 +295,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     }
 
                     self.editor.data = response;
+
+                    if (self.data["type"] === "context") {
+                        self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
+
+                        self.editor.RedrawLayers();
+                    }
                 },
                 self.editor.api,
                 params
@@ -301,7 +315,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
 
-        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key];
+        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
+
+        // TODO: Figure out the calculation for the other keys
+        if (key === "rot_deg" && this.parent_data["rot_deg"]) {
+            override += this.parent_data["rot_deg"];
+        }
 
         if (!override) {
             return value;

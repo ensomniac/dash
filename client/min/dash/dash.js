@@ -28017,6 +28017,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
             this.log_bar.Add(message);
         }
     };
+    this.RedrawLayers = function (select=false) {
+        this.editor_panel.RedrawLayers(select)
+    };
     this.initialize = function () {
         if (this.initialized) {
             return;
@@ -28257,13 +28260,25 @@ function DashGuiContext2DCanvas (editor) {
             this.SetActivePrimitive(id);
         }
     };
-    this.RemovePrimitive = function (id) {
+    this.RemoveAllPrimitives = function () {
+        for (var id in this.primitives) {
+            this.RemovePrimitive(id);
+        }
+    };
+    this.RemovePrimitive = function (id, _update_z_indexes=true) {
         if (!this.primitives[id]) {
             return;
         }
+        if (this.primitives[id].data["type"] === "context") {
+            for (var layer_id of this.primitives[id].data["imported_context"]["layers"]["order"]) {
+                this.RemovePrimitive(layer_id, false);
+            }
+        }
         this.primitives[id].html.remove();
         delete this.primitives[id];
-        this.UpdatePrimitiveZIndexes();
+        if (_update_z_indexes) {
+            this.UpdatePrimitiveZIndexes();
+        }
     };
     this.GetHeight = function () {
         return this.canvas.innerHeight();
@@ -28855,6 +28870,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.selected || this.data["locked"]) {
             return;
         }
+        if (this.data["type"] === "context" && from_click) {
+            for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+                if (this.canvas.primitives[layer_id] && this.canvas.primitives[layer_id].IsSelected()) {
+                    return;
+                }
+            }
+        }
         this.canvas.DeselectAllPrimitives();
         this.html.css({
             // Simulate a double border - one for dark backgrounds, one for light
@@ -28970,6 +28992,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
                     self.editor.data = response;
+                    if (self.data["type"] === "context") {
+                        self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
+                        self.editor.RedrawLayers();
+                    }
                 },
                 self.editor.api,
                 params
@@ -28981,7 +29007,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.parent_id) {
             return value;
         }
-        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key];
+        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
+        // TODO: Figure out the calculation for the other keys
+        if (key === "rot_deg" && this.parent_data["rot_deg"]) {
+            override += this.parent_data["rot_deg"];
+        }
         if (!override) {
             return value;
         }
@@ -29405,6 +29435,9 @@ function DashGuiContext2DEditorPanel (editor) {
             this.SwitchContentToNewTab();
         }
     };
+    this.RedrawLayers = function (select=false) {
+        this.layers_box.Redraw(select);
+    };
     this.OnNewLayer = function (response) {
         this.layers_box.OnNewLayer(response);
     };
@@ -29601,23 +29634,23 @@ function DashGuiContext2DEditorPanel (editor) {
 /**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveContext () {
     this._setup_styles = function () {
+        // Get bounding box size to encapsulate all layers
         var y = 0;
         var x = 0;
         var w = 0;
-        var overrides = this.data["imported_context"]["overrides"];
+        var overrides = this.data["imported_context"]["overrides"] || {};
         var len = this.data["imported_context"]["layers"]["order"].length || 1;
         for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
             var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
-            y += layer_data["anchor_norm_y"] + (overrides[layer_id]["anchor_norm_y"] || 0);
-            x += layer_data["anchor_norm_x"] + (overrides[layer_id]["anchor_norm_x"] || 0);
+            y += layer_data["anchor_norm_y"] + ((overrides[layer_id] || {})["anchor_norm_y"] || 0);
+            x += layer_data["anchor_norm_x"] + ((overrides[layer_id] || {})["anchor_norm_x"] || 0);
             if (layer_data["type"] !== "text") {
-                w = Math.max(w, layer_data["width_norm"] + (overrides[layer_id]["width_norm"] || 0));
+                w = Math.max(w, layer_data["width_norm"] + ((overrides[layer_id] || {})["width_norm"] || 0));
             }
         }
         y /= len;
         x /= len;
-        console.debug("TEST prim", y, x, w);
-        // TODO: is this problematic?
+        // TODO: This should probably happen in ToDict on the backend
         this.data["anchor_norm_y"] = y;
         this.data["anchor_norm_x"] = x;
         this.data["width_norm"] = w || 0.5;
@@ -29984,6 +30017,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.OnNewLayer = function (response) {
         this.on_data(response, true, true);
+    };
+    this.Redraw = function (select=false) {
+        this.redraw_layers(select);
     };
     this.on_move = function (up=true) {
         var layer = this.GetSelectedLayer();
@@ -30421,6 +30457,11 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 "contexts",
                 function (selected_option) {
                     if (!selected_option["id"]) {
+                        return;
+                    }
+                    
+                    if (selected_option["id"] === self.editor.obj_id) {
+                        alert("Importing a context into itself is not yet supported.");
                         return;
                     }
                     self.import_combo.SetLoading(true, true);
