@@ -113,7 +113,6 @@ class Layer:
     def SetProperty(self, key, value, imported_context_layer_id=""):
         return self.SetProperties({key: value}, imported_context_layer_id)
 
-    # TODO: break this up
     def SetProperties(self, properties={}, imported_context_layer_id=""):
         from json import loads
 
@@ -152,6 +151,7 @@ class Layer:
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
+        # TODO: break this out
         if self.Type == "context":
             for key in properties:
                 value = properties[key]
@@ -202,23 +202,30 @@ class Layer:
                                 rotation_degrees=(dif if value > self.data[key] else -dif)
                             )
 
-                            for k in anchor_keys:
-                                new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
-
-                                if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
-                                    self.data["imported_context"]["overrides"][layer_id][k] = -new_dif
-                                else:
-                                    self.data["imported_context"]["overrides"][layer_id][k] = new_dif
-
-                        # TODO: calculate the anchor x/y norm adjustment
                         elif key == "width_norm":
-                            pass  # TODO: after getting the new coords, need to change the override to be the dif from base value to new coord
+                            from Dash.Utils import ScaleChildWithParent
+
+                            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = ScaleChildWithParent(
+                                parent_x=self.data["anchor_norm_x"],
+                                parent_y=self.data["anchor_norm_y"],
+                                parent_w=value,
+                                parent_h=(value / self.data["aspect"]),
+                                child_x=current_coords["anchor_norm_x"],
+                                child_y=current_coords["anchor_norm_y"],
+                                scale_factor=(value / self.data[key])
+                            )
+
+                        for k in anchor_keys:
+                            new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
+
+                            if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
+                                self.data["imported_context"]["overrides"][layer_id][k] = -new_dif
+                            else:
+                                self.data["imported_context"]["overrides"][layer_id][k] = new_dif
 
                     self.data[key] = value
 
                     continue
-
-                # TODO: Moving and rotating work - make sure scaling works as expected
 
                 if not imported_context_layer_id:
                     raise ValueError("Imported Context Layer ID is required")

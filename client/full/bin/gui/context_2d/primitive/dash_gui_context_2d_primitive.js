@@ -146,8 +146,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        console.debug("TEST select", from_click, this.data["type"] === "context", this.parent_id);
-
         if (from_click && this.data["type"] === "context") {
             return;
         }
@@ -231,13 +229,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.drag_context["rotate"]) {
             this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
 
-            console.debug("TEST rot", (movement_x + movement_y)); 
-
             this.draw_properties();
         }
 
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
+            [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
+
             this.last_width_norm = this.get_drag_state_value("width_norm");
 
             this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
@@ -303,8 +301,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "layer_id": this.parent_id || this.id,
             "properties": JSON.stringify(
                 this.parent_id || this.data["type"] === "context" ? (
-                      this.drag_context["rotate"] ? {"rot_deg": this.data["rot_deg"]}
-                    : this.drag_context["scale"] ? {"width_norm": this.data["width_norm"]}
+                    this.drag_context["rotate"] ? {
+                        "rot_deg": this.data["rot_deg"]
+                    }
+                    : this.drag_context["scale"] ? {
+                        "width_norm": this.data["width_norm"],
+                        "anchor_norm_x": this.data["anchor_norm_x"],
+                        "anchor_norm_y": this.data["anchor_norm_y"]
+                    }
                     : {
                         "anchor_norm_x": this.data["anchor_norm_x"],
                         "anchor_norm_y": this.data["anchor_norm_y"]
@@ -317,8 +321,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             params["imported_context_layer_id"] = this.id;
         }
 
-        console.debug("TEST params", params);
-
         (function (self) {
             Dash.Request(
                 self,
@@ -329,7 +331,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     self.editor.data = response;
 
-                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for TESTING
+                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for TESTING (maybe keep?)
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
 
                         self.editor.RedrawLayers(true);

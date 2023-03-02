@@ -40,10 +40,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (data["locked"]) {
             this.ToggleLocked(data["locked"]);
         }
-
-        if (data["type"] === "context") {
-            console.debug("TEST", data);
-        }
     };
 
     this.GetID = function () {

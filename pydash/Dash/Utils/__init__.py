@@ -153,6 +153,12 @@ def MovePointAroundCircle(circle_center_x, circle_center_y, point_x, point_y, ro
     return MovePointAroundCircle(circle_center_x, circle_center_y, point_x, point_y, rotation_degrees)
 
 
+def ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_y, scale_factor):
+    from .number import ScaleChildWithParent
+
+    return ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_y, scale_factor)
+
+
 # ------------------------------------------------- STRING --------------------------------------------------
 def FormatTime(datetime_object, time_format=1, tz="utc"):
     from .string import FormatTime
