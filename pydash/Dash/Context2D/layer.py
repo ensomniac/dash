@@ -64,6 +64,7 @@ class Layer:
             return self.data
 
         data = {
+            # If the default values of anchor or width norm keys change, update front end: DashGuiContext2DPrimitive.get_drag_state_value
             "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
             "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
             "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
@@ -115,8 +116,6 @@ class Layer:
     def SetProperties(self, properties={}, imported_context_layer_id=""):
         from json import loads
 
-        float_keys = ["aspect", "anchor_norm_x", "anchor_norm_y", "opacity", "rot_deg", "width_norm", "contrast", "brightness"]
-
         if properties and type(properties) is str:
             properties = loads(properties)
 
@@ -127,6 +126,9 @@ class Layer:
 
         if not properties:
             return self.ToDict()
+
+        state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
+        float_keys = [*state_keys, "aspect", "contrast", "brightness"]
 
         # Enforce str when null
         for key in ["display_name", "text_value", "font_id", "font_color"]:
@@ -150,8 +152,6 @@ class Layer:
                 properties["display_name"] = properties["text_value"]
 
         if self.Type == "context":
-            state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
-
             for key in properties:
                 value = properties[key]
 
@@ -161,7 +161,18 @@ class Layer:
                     continue
 
                 if key in state_keys and not imported_context_layer_id:
+                    dif = value - self.data[key]
+
                     self.data[key] = value
+
+                    for layer_id in self.imported_context_data["layers"]["order"]:
+                        if layer_id not in self.data["imported_context"]["overrides"]:
+                            self.data["imported_context"]["overrides"][layer_id] = {}
+                            
+                        if key not in self.data["imported_context"]["overrides"][layer_id]:
+                            self.data["imported_context"]["overrides"][layer_id][key] = dif
+                        else:
+                            self.data["imported_context"]["overrides"][layer_id][key] += dif
 
                     continue
 

@@ -62,7 +62,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             // TODO: if imported context is this context, then the layer ids will be the same,
             //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
             for (var imported_id of imported_layers["order"]) {
-                this.AddLayer(imported_id, select, id);
+                this.AddLayer(imported_id, false, id);
             }
         }
 

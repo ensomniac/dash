@@ -28018,7 +28018,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         }
     };
     this.RedrawLayers = function (select=false) {
-        this.editor_panel.RedrawLayers(select)
+        this.editor_panel.RedrawLayers(select);
     };
     this.initialize = function () {
         if (this.initialized) {
@@ -28855,12 +28855,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.selected) {
             return;
         }
-        this.html.css({
+        var css = {
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
             "border": "1px solid rgba(0, 0, 0, 0)",
             "outline": "1px solid rgba(0, 0, 0, 0)"
-        });
+        };
+        if (this.data["type"] === "context") {
+            css["pointer-events"] = "none";
+        }
+        this.html.css(css);
         if (this.data["type"] === "text") {
             this.lock_text_area();
         }
@@ -28871,19 +28875,22 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         if (this.data["type"] === "context" && from_click) {
-            for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
-                if (this.canvas.primitives[layer_id] && this.canvas.primitives[layer_id].IsSelected()) {
-                    return;
-                }
-            }
+            return;
+        }
+        if (this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
+            return;
         }
         this.canvas.DeselectAllPrimitives();
-        this.html.css({
+        var css = {
             // Simulate a double border - one for dark backgrounds, one for light
             "border": "1px solid " + this.color.StrokeLight,
             "outline": "1px solid " + this.opposite_color.StrokeDark,
             "outline-offset": "1px"
-        });
+        };
+        if (this.data["type"] === "context") {
+            css["pointer-events"] = "none";
+        }
+        this.html.css(css);
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
         }
@@ -28956,10 +28963,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     this.set_drag_state = function () {
         this.drag_state = {
-            "anchor_norm_x": this.get_drag_state_value("anchor_norm_x"),
-            "anchor_norm_y": this.get_drag_state_value("anchor_norm_y"),
-            "rot_deg": this.get_drag_state_value("rot_deg"),
-            "width_norm": this.get_drag_state_value("width_norm")
+            "anchor_norm_x": this.data["anchor_norm_x"],
+            "anchor_norm_y": this.data["anchor_norm_y"],
+            "rot_deg": this.data["rot_deg"],
+            "width_norm": this.data["width_norm"]
         };
     };
     this.save_drag_state = function () {
@@ -28994,7 +29001,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     self.editor.data = response;
                     if (self.data["type"] === "context") {
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
-                        self.editor.RedrawLayers();
+                        self.editor.RedrawLayers(true);
                     }
                 },
                 self.editor.api,
@@ -29002,19 +29009,44 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             );
         })(this);
     };
-    this.get_drag_state_value = function (key) {
-        var value = this.data[key];
-        if (!this.parent_id) {
+    this.get_drag_state_value = function (key, data=null, parent_data=null) {
+        data = data || this.data;
+        parent_data = parent_data || this.parent_data;
+        var value = data[key];
+        if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
-        var override = (this.parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
-        // TODO: Figure out the calculation for the other keys
-        if (key === "rot_deg" && this.parent_data["rot_deg"]) {
-            override += this.parent_data["rot_deg"];
-        }
+        var override = (parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
+        // if (parent_data[key]) {
+        //     var dif;
+        //
+        //     if (key === "rot_deg") {
+        //         override += parent_data[key];
+        //     }
+        //
+        //     if (key.startsWith("anchor_norm_")) {
+        //         dif = (parent_data[key] - 0.5);  // 0.5 is the default
+        //
+        //         // if (override) {
+        //         //     dif *= 0.5;
+        //         // }
+        //
+        //         override += dif;
+        //     }
+        //
+        //     if (key === "width_norm") {
+        //         dif = (
+        //             (parent_data[key] + (data["type"] === "text" ? 0.4 : 0))  // If text, adjust for the default value difference
+        //             - (data["type"] === "text" ? 0.9 : 0.5)  // 0.9 is default for text, 0.5 for others
+        //         );
+        //
+        //         override += dif;
+        //     }
+        // }
         if (!override) {
             return value;
         }
+        // console.debug("TEST", this.id, key, value, parent_data[key], override);
         return value + override;
     };
     this.on_hidden_change = function (hidden) {
@@ -29050,7 +29082,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return this.z_index_base + this.layer.GetIndex();
     };
     this.get_offset_norm = function () {
-        if (this.left_px == null) {  // This card isn't visible or hasn't been edited
+        if (this.left_px == null) {  // This isn't visible or hasn't been edited
             return [
                 this.data["anchor_norm_x"],
                 this.data["anchor_norm_y"]
@@ -29080,10 +29112,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
     this.set_top_px = function (override=null) {
-        this.top_px = override || ((this.canvas.GetHeight() * this.data["anchor_norm_y"]) - (this.height_px * 0.5));
+        this.top_px = override || ((this.canvas.GetHeight() * this.get_drag_state_value("anchor_norm_y")) - (this.height_px * 0.5));
     };
     this.set_left_px = function (override=null) {
-        this.left_px = override || ((this.canvas.GetWidth() * this.data["anchor_norm_x"]) - (this.width_px * 0.5));
+        this.left_px = override || ((this.canvas.GetWidth() * this.get_drag_state_value("anchor_norm_x")) - (this.width_px * 0.5));
     };
     this.set_width_px = function (override=null) {
         this.width_px = override || (this.canvas.GetWidth() * this.get_drag_state_value("width_norm"));
@@ -29125,11 +29157,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
+        if (this.data["type"] === "context") {
+            // this.calculate_context_bounding_box_size();
+            return true;
+        }
         if (this.data["type"] === "text") {
             DashGuiContext2DPrimitiveText.call(this);
-        }
-        else if (this.data["type"] === "context") {
-            DashGuiContext2DPrimitiveContext.call(this);
         }
         else {
             if (!Dash.Validate.Object(this.file_data)) {
@@ -29145,6 +29178,29 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             }
         }
         return true;
+    };
+    // Not sure if this should happen in ToDict on the backend instead of here, but
+    // that would also mean that we'd need an equivalent of this.get_drag_state_value
+    // on the backend. It's all working as expected here, so I'm leaving it here.
+    this.calculate_context_bounding_box_size = function () {
+        // var y = 0;
+        // var x = 0;
+        var w = 0;
+        // var len = this.data["imported_context"]["layers"]["order"].length || 1;
+        for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+            var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
+            // y += this.get_drag_state_value("anchor_norm_y", layer_data, this.data);
+            // x += this.get_drag_state_value("anchor_norm_x", layer_data, this.data);
+            if (layer_data["type"] !== "text") {
+                w = Math.max(w, this.get_drag_state_value("width_norm", layer_data, this.data));
+            }
+        }
+        // y /= len;
+        // x /= len;
+        // this.data["anchor_norm_y"] = y;
+        // this.data["anchor_norm_x"] = x;
+        this.data["width_norm"] = w || 0.5;
+        // this.data["aspect"] = 1.0;
     };
     this.draw_properties = function (immediate=false) {
         if (immediate) {
@@ -29631,34 +29687,6 @@ function DashGuiContext2DEditorPanel (editor) {
     this.setup_styles();
 }
 
-/**@member DashGuiContext2DPrimitive*/
-function DashGuiContext2DPrimitiveContext () {
-    this._setup_styles = function () {
-        // Get bounding box size to encapsulate all layers
-        var y = 0;
-        var x = 0;
-        var w = 0;
-        var overrides = this.data["imported_context"]["overrides"] || {};
-        var len = this.data["imported_context"]["layers"]["order"].length || 1;
-        for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
-            var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
-            y += layer_data["anchor_norm_y"] + ((overrides[layer_id] || {})["anchor_norm_y"] || 0);
-            x += layer_data["anchor_norm_x"] + ((overrides[layer_id] || {})["anchor_norm_x"] || 0);
-            if (layer_data["type"] !== "text") {
-                w = Math.max(w, layer_data["width_norm"] + ((overrides[layer_id] || {})["width_norm"] || 0));
-            }
-        }
-        y /= len;
-        x /= len;
-        // TODO: This should probably happen in ToDict on the backend
-        this.data["anchor_norm_y"] = y;
-        this.data["anchor_norm_x"] = x;
-        this.data["width_norm"] = w || 0.5;
-        this.data["aspect"] = 1.0;
-    };
-    this._setup_styles();
-}
-
 function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.layers = layers;
     this.id = id;
@@ -29929,7 +29957,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             // TODO: if imported context is this context, then the layer ids will be the same,
             //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
             for (var imported_id of imported_layers["order"]) {
-                this.AddLayer(imported_id, select, id);
+                this.AddLayer(imported_id, false, id);
             }
         }
         this.layers_box.prepend(this.layers[id].html);

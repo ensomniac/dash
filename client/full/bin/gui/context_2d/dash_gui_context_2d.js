@@ -171,7 +171,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     };
 
     this.RedrawLayers = function (select=false) {
-        this.editor_panel.RedrawLayers(select)
+        this.editor_panel.RedrawLayers(select);
     };
 
     this.initialize = function () {
