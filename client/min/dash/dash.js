@@ -28986,11 +28986,21 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "f": "set_layer_properties",
             "obj_id": this.editor.obj_id,
             "layer_id": this.parent_id || this.id,
-            "properties": JSON.stringify(this.drag_state)
+            "properties": JSON.stringify(
+                this.parent_id || this.data["type"] === "context" ? (
+                      this.drag_context["rotate"] ? {"rot_deg": this.data["rot_deg"]}
+                    : this.drag_context["scale"] ? {"width_norm": this.data["width_norm"]}
+                    : {
+                        "anchor_norm_x": this.data["anchor_norm_x"],
+                        "anchor_norm_y": this.data["anchor_norm_y"]
+                    }
+                ) : this.drag_state
+            )
         };
         if (this.parent_id) {
             params["imported_context_layer_id"] = this.id;
         }
+        console.debug("TEST params", params);
         (function (self) {
             Dash.Request(
                 self,
@@ -29017,36 +29027,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
         var override = (parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
-        // if (parent_data[key]) {
-        //     var dif;
-        //
-        //     if (key === "rot_deg") {
-        //         override += parent_data[key];
-        //     }
-        //
-        //     if (key.startsWith("anchor_norm_")) {
-        //         dif = (parent_data[key] - 0.5);  // 0.5 is the default
-        //
-        //         // if (override) {
-        //         //     dif *= 0.5;
-        //         // }
-        //
-        //         override += dif;
-        //     }
-        //
-        //     if (key === "width_norm") {
-        //         dif = (
-        //             (parent_data[key] + (data["type"] === "text" ? 0.4 : 0))  // If text, adjust for the default value difference
-        //             - (data["type"] === "text" ? 0.9 : 0.5)  // 0.9 is default for text, 0.5 for others
-        //         );
-        //
-        //         override += dif;
-        //     }
-        // }
         if (!override) {
             return value;
         }
-        // console.debug("TEST", this.id, key, value, parent_data[key], override);
         return value + override;
     };
     this.on_hidden_change = function (hidden) {
@@ -29182,7 +29165,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Not sure if this should happen in ToDict on the backend instead of here, but
     // that would also mean that we'd need an equivalent of this.get_drag_state_value
     // on the backend. It's all working as expected here, so I'm leaving it here.
-    this.calculate_context_bounding_box_size = function () {
+    this.calculate_context_bounding_box_size = function () {  // TODO: still use this?
         // var y = 0;
         // var x = 0;
         var w = 0;
@@ -29199,7 +29182,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // x /= len;
         // this.data["anchor_norm_y"] = y;
         // this.data["anchor_norm_x"] = x;
-        this.data["width_norm"] = w || 0.5;
+        this.data["width_norm"] = w || 0.5;  // TODO: if still using this, don't actually change this value, use some override attr in this class instead
         // this.data["aspect"] = 1.0;
     };
     this.draw_properties = function (immediate=false) {
