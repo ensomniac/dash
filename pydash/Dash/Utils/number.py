@@ -63,3 +63,15 @@ def InverseLerp(_min, _max, val, unclamped=False):
         t = 0
 
     return t
+
+
+def MovePointAroundCircle(circle_center_x, circle_center_y, point_x, point_y, rotation_degrees):
+    import math
+
+    r = math.hypot(point_x - circle_center_x, point_y - circle_center_y)
+    theta = math.atan2(point_y - circle_center_y, point_x - circle_center_x) + math.radians(rotation_degrees)
+
+    return (
+        circle_center_x + (r * math.cos(theta)),  # Moved point X
+        circle_center_y + (r * math.sin(theta))   # Moved point Y
+    )

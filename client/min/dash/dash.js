@@ -28800,14 +28800,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // After the above two are set
         this.set_top_px();
         this.set_left_px();
-        this.html.css({
+        var css = {
             "position": "absolute",
             "z-index": this.get_z_index(),
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
             "border": "1px solid rgba(0, 0, 0, 0)",
             "outline": "1px solid rgba(0, 0, 0, 0)"
-        });
+        };
+        if (this.data["type"] === "context") {
+            css["pointer-events"] = "none";
+        }
+        this.html.css(css);
         this.draw_properties(true);
         this.on_opacity_change(this.data["opacity"]);
         if (this.data["hidden"]) {
@@ -28874,10 +28878,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.selected || this.data["locked"]) {
             return;
         }
-        if (this.data["type"] === "context" && from_click) {
+        console.debug("TEST select", from_click, this.data["type"] === "context", this.parent_id);
+        if (from_click && this.data["type"] === "context") {
             return;
         }
-        if (this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
+        if (from_click && this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
             return;
         }
         this.canvas.DeselectAllPrimitives();
@@ -28936,6 +28941,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // Rotate left / right
         if (this.drag_context["rotate"]) {
             this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
+            console.debug("TEST rot", (movement_x + movement_y)); 
             this.draw_properties();
         }
         // Scale bigger / smaller
@@ -29009,7 +29015,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
                     self.editor.data = response;
-                    if (self.data["type"] === "context") {
+                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for TESTING
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
                         self.editor.RedrawLayers(true);
                     }

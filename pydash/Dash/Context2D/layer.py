@@ -113,6 +113,7 @@ class Layer:
     def SetProperty(self, key, value, imported_context_layer_id=""):
         return self.SetProperties({key: value}, imported_context_layer_id)
 
+    # TODO: break this up
     def SetProperties(self, properties={}, imported_context_layer_id=""):
         from json import loads
 
@@ -160,6 +161,7 @@ class Layer:
 
                     continue
 
+                # "context"-type layer change, trickle down to all its layers' overrides
                 if key in state_keys and not imported_context_layer_id:
                     dif = abs(value - self.data[key])
 
@@ -174,6 +176,43 @@ class Layer:
                             self.data["imported_context"]["overrides"][layer_id][key] -= dif
                         else:
                             self.data["imported_context"]["overrides"][layer_id][key] += dif
+
+                        if key != "rot_deg" and key != "width_norm":
+                            continue
+
+                        anchor_keys = ["anchor_norm_x", "anchor_norm_y"]
+                        current_coords = {}
+                        new_coords = {}
+
+                        for k in anchor_keys:
+                            if k not in self.data["imported_context"]["overrides"][layer_id]:
+                                self.data["imported_context"]["overrides"][layer_id][k] = 0
+
+                            previous_override = self.data["imported_context"]["overrides"][layer_id][k]
+                            current_coords[k] = self.imported_context_data["layers"]["data"][layer_id][k] + previous_override
+
+                        if key == "rot_deg":
+                            from Dash.Utils import MovePointAroundCircle
+
+                            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = MovePointAroundCircle(
+                                circle_center_x=self.data["anchor_norm_x"],
+                                circle_center_y=self.data["anchor_norm_y"],
+                                point_x=current_coords["anchor_norm_x"],
+                                point_y=current_coords["anchor_norm_y"],
+                                rotation_degrees=(dif if value > self.data[key] else -dif)
+                            )
+
+                            for k in anchor_keys:
+                                new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
+
+                                if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
+                                    self.data["imported_context"]["overrides"][layer_id][k] = -new_dif
+                                else:
+                                    self.data["imported_context"]["overrides"][layer_id][k] = new_dif
+
+                        # TODO: calculate the anchor x/y norm adjustment
+                        elif key == "width_norm":
+                            pass  # TODO: after getting the new coords, need to change the override to be the dif from base value to new coord
 
                     self.data[key] = value
 
