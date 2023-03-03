@@ -17532,7 +17532,7 @@ function Dash () {
     }
     // As of 9/8/22, iOS/Safari don't support regex lookbehind, which is used in DashDocsHelp. For now,
     // going to skip the inclusion of Docs for mobile, because we really don't need it in that case anyway.
-    if (!this.IsMobile) {
+    else {
         this.Docs = {
             Box:  DashDocsBox,
             Help: DashDocsHelp,
@@ -18471,21 +18471,21 @@ function DashUser () {
 }
 
 function DashSize (is_mobile) {
-    this.Padding = 10;
-    this.Stroke = 3;
-    this.RowHeight = 20;
+    this.Stroke = is_mobile ? 6 : 3;
+    this.Padding = is_mobile ? 20 : 10;
+    this.RowHeight = is_mobile ? 40 : 20;
+    this.BorderRadius = is_mobile ? 9 : 3; // For containers
+    this.ColumnWidth = is_mobile ? 300 : 150;
+    this.BorderRadiusInteractive = is_mobile ? 30 : 3; // For interactive elements (buttons, inputs, combos, etc)
     this.ButtonHeight = this.RowHeight + (this.Padding);
-    this.ColumnWidth = 150;
-    this.BorderRadius = 3; // For containers
-    this.BorderRadiusInteractive = 3; // For interactive elements (buttons, inputs, combos, etc)
     if (is_mobile) {
-        this.Padding = 20;
-        this.Stroke = 6;
-        this.RowHeight = 40;
-        this.ButtonHeight = this.RowHeight + (this.Padding);
-        this.ColumnWidth = 300;
-        this.BorderRadius = 9; // For containers
-        this.BorderRadiusInteractive = 30; // For interactive elements (buttons, inputs, combos, etc)
+        // This is special handling for iPhone 13 mini that has "Larger Text" selected for the "Display Zoom" setting (globally-zoomed screen)
+        if (/iPhone/i.test(navigator.userAgent) && window.devicePixelRatio === 3 && window.screen.width === 320 && window.screen.height === 693) {
+            for (var prop_name in this) {
+                this[prop_name] = Math.round(this[prop_name] * 0.9);
+            }
+        }
+        // Add any other special cases here
     }
 }
 
