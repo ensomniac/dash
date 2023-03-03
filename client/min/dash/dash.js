@@ -19252,7 +19252,7 @@ function DashGuiPrompt (
                     ...self.message_css
                 });
                 if (self.message) {
-                    self.set_message(self.message);
+                    self.content_area.text(self.message);
                 }
             });
         })(this);
@@ -41589,8 +41589,8 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
             "text-overflow": "ellipsis",
             "color": "white"
         };
-        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height;
-        label_css["padding-" + (this.left_side_icon ? "right" : "left")] = this.height;
+        label_css["margin-" + (this.left_side_icon ? "left" : "right")] = this.height - (Dash.Size.Padding * 0.5);
+        label_css["padding-" + (this.left_side_icon ? "right" : "left")] = this.height - (Dash.Size.Padding * 0.5);
         this.label.css(label_css);
         this.label.text(this.label_text);
         this.html.append(this.label);

@@ -94,7 +94,7 @@ function DashGuiPrompt (
                 });
 
                 if (self.message) {
-                    self.set_message(self.message);
+                    self.content_area.text(self.message);
                 }
             });
         })(this);
