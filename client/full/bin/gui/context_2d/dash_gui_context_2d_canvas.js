@@ -51,7 +51,7 @@ function DashGuiContext2DCanvas (editor) {
         this.canvas.hide();
 
         this.border.css({
-            "z-index": 1000,
+            "z-index": 999999999,
             "user-select": "none",
             "pointer-events": "none",
             ...css,
@@ -148,7 +148,12 @@ function DashGuiContext2DCanvas (editor) {
         }
 
         if (this.primitives[id].data["type"] === "context") {
-            for (var layer_id of this.primitives[id].data["imported_context"]["layers"]["order"]) {
+            var imported_context = this.primitives[id].data["imported_context"];
+
+            // Do not use this.primitives[id].layer.GetChildrenLayerOrder() here
+            var order = (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+
+            for (var layer_id of order) {
                 this.RemovePrimitive(layer_id, false);
             }
         }
@@ -315,7 +320,7 @@ function DashGuiContext2DCanvas (editor) {
     this.setup_masks = function () {
         var css = {
             "position": "absolute",
-            "z-index": 1000,
+            "z-index": 999999998,
             "user-select": "none",
             "pointer-events": "none",
             "background": this.color.Stroke

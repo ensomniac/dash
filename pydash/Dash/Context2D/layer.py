@@ -97,9 +97,13 @@ class Layer:
 
             data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
 
-            # These are overrides per layer (in the imported context) - global overrides for all imported
-            # layers, such as rotating all imported layers 45º, is stored at the top level of this layer (self.Data)
-            data["imported_context"]["overrides"] = imported_context.get("overrides") or {}
+            # These are overrides per layer (in the imported context)
+            data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}
+
+            # These are overrides per layer (in the imported context)
+            data["imported_context"]["layer_overrides"] = imported_context.get("layer_overrides") or {}
+
+            # Global overrides for all imported layers, such as rotating all imported layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
 
         else:
             data["file"] = self.data.get("file") or {}
@@ -151,8 +155,7 @@ class Layer:
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
-        # TODO: break this out
-        if self.Type == "context":
+        if self.Type == "context":  # TODO: break this out 
             for key in properties:
                 value = properties[key]
 
@@ -161,21 +164,32 @@ class Layer:
 
                     continue
 
+                if key == "layer_order":
+                    if type(value) is str:
+                        value = loads(value)
+
+                    if type(value) is not list:
+                        raise ValueError(f"Layer order must be a list: {value}")
+
+                    self.data["imported_context"]["context_overrides"][key] = value
+
+                    continue
+
                 # "context"-type layer change, trickle down to all its layers' overrides
                 if key in state_keys and not imported_context_layer_id:
                     dif = abs(value - self.data[key])
 
                     for layer_id in self.imported_context_data["layers"]["order"]:
-                        if layer_id not in self.data["imported_context"]["overrides"]:
-                            self.data["imported_context"]["overrides"][layer_id] = {}
+                        if layer_id not in self.data["imported_context"]["layer_overrides"]:
+                            self.data["imported_context"]["layer_overrides"][layer_id] = {}
 
-                        if key not in self.data["imported_context"]["overrides"][layer_id]:
-                            self.data["imported_context"]["overrides"][layer_id][key] = 0
+                        if key not in self.data["imported_context"]["layer_overrides"][layer_id]:
+                            self.data["imported_context"]["layer_overrides"][layer_id][key] = 0
 
                         if value < self.data[key]:
-                            self.data["imported_context"]["overrides"][layer_id][key] -= dif
+                            self.data["imported_context"]["layer_overrides"][layer_id][key] -= dif
                         else:
-                            self.data["imported_context"]["overrides"][layer_id][key] += dif
+                            self.data["imported_context"]["layer_overrides"][layer_id][key] += dif
 
                         if key != "rot_deg" and key != "width_norm":
                             continue
@@ -185,10 +199,10 @@ class Layer:
                         new_coords = {}
 
                         for k in anchor_keys:
-                            if k not in self.data["imported_context"]["overrides"][layer_id]:
-                                self.data["imported_context"]["overrides"][layer_id][k] = 0
+                            if k not in self.data["imported_context"]["layer_overrides"][layer_id]:
+                                self.data["imported_context"]["layer_overrides"][layer_id][k] = 0
 
-                            previous_override = self.data["imported_context"]["overrides"][layer_id][k]
+                            previous_override = self.data["imported_context"]["layer_overrides"][layer_id][k]
                             current_coords[k] = self.imported_context_data["layers"]["data"][layer_id][k] + previous_override
 
                         if key == "rot_deg":
@@ -219,9 +233,9 @@ class Layer:
                             new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
 
                             if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
-                                self.data["imported_context"]["overrides"][layer_id][k] = -new_dif
+                                self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
                             else:
-                                self.data["imported_context"]["overrides"][layer_id][k] = new_dif
+                                self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
 
                     self.data[key] = value
 
@@ -230,26 +244,29 @@ class Layer:
                 if not imported_context_layer_id:
                     raise ValueError("Imported Context Layer ID is required")
 
-                if imported_context_layer_id not in self.data["imported_context"]["overrides"]:
-                    self.data["imported_context"]["overrides"][imported_context_layer_id] = {}
+                if imported_context_layer_id not in self.data["imported_context"]["layer_overrides"]:
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id] = {}
 
-                if key not in self.data["imported_context"]["overrides"][imported_context_layer_id]:
-                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] = 0
+                if key not in self.data["imported_context"]["layer_overrides"][imported_context_layer_id]:
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = 0
 
                 if key == "rot_deg":
-                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] += value
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += value
 
                     continue
 
-                previous_override = self.data["imported_context"]["overrides"][imported_context_layer_id][key]
+                previous_override = self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key]
                 previous_value = self.imported_context_data["layers"]["data"][imported_context_layer_id][key] + previous_override
                 dif = abs(value - previous_value)
 
                 if value < previous_value:
-                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] -= dif
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] -= dif
                 else:
-                    self.data["imported_context"]["overrides"][imported_context_layer_id][key] += dif
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += dif
         else:
+            if key == "layer_order":  # Should never happen, but just in case
+                raise ValueError(f"Invalid key (layer_order) for {self.Type} layer")
+
             self.data.update(properties)
 
         return self.Save().ToDict()

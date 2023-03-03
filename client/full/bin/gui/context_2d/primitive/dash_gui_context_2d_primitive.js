@@ -7,12 +7,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.width_px = 0;
     this.height_px = 0;
     this.selected = false;
-    this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
     this.drag_state = null;
     this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
+    this.z_index_mult = 1000;
+    this.z_index_base = 1010;
     this.last_width_norm = null;
     this.id = this.layer.GetID();
     this.html = $("<div></div>");
@@ -353,7 +354,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
 
-        var override = (parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
+        var override = (parent_data["imported_context"]["layer_overrides"][this.id] || {})[key] || 0;
 
         if (!override) {
             return value;
@@ -398,7 +399,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.get_z_index = function () {
-        return this.z_index_base + this.layer.GetIndex();
+        var index = this.layer.GetIndex();
+
+        if (!this.parent_id) {
+            // Multiply the index by this.z_index_mult so that there's plenty of
+            // room for recursive nested context layers to have recursive sub-indexes
+            return this.z_index_base + (index * this.z_index_mult);
+        }
+
+        var parent_z_index = this.z_index_base + (this.layer.GetParentIndex() * this.z_index_mult);
+
+        // When contexts are imported, bringing in nested layers, and potentially more
+        // nested contexts, those indexes need to fall within the range of the parent's
+        // index (ex: 9000), and the index of the layer before the parent (ex: 8000).
+        return ((parent_z_index - this.z_index_mult) + (index + 1));
     };
 
     this.get_offset_norm = function () {
@@ -533,9 +547,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // var y = 0;
         // var x = 0;
         var w = 0;
-        // var len = this.data["imported_context"]["layers"]["order"].length || 1;
+        var order = this.layer.GetChildrenLayerOrder();
+        // var len = order.length || 1;
 
-        for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+        for (var layer_id of order) {
             var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
 
             // y += this.get_drag_state_value("anchor_norm_y", layer_data, this.data);

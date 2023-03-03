@@ -28115,7 +28115,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
     this.get_data = function () {
         return this.data;
     };
-    this.set_data = function (key, value, callback=null) {
+    this.set_data = function (key, value, callback=null, additional_params={}) {
         if (this.get_data(key) === value) {
             return;
         }
@@ -28144,7 +28144,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     "f": "set_property",
                     "obj_id": self.obj_id,
                     "key": key,
-                    "value": value
+                    "value": value,
+                    ...additional_params
                 }
             );
         })(this);
@@ -28198,7 +28199,7 @@ function DashGuiContext2DCanvas (editor) {
         });
         this.canvas.hide();
         this.border.css({
-            "z-index": 1000,
+            "z-index": 999999999,
             "user-select": "none",
             "pointer-events": "none",
             ...css,
@@ -28270,7 +28271,10 @@ function DashGuiContext2DCanvas (editor) {
             return;
         }
         if (this.primitives[id].data["type"] === "context") {
-            for (var layer_id of this.primitives[id].data["imported_context"]["layers"]["order"]) {
+            var imported_context = this.primitives[id].data["imported_context"];
+            // Do not use this.primitives[id].layer.GetChildrenLayerOrder() here
+            var order = (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+            for (var layer_id of order) {
                 this.RemovePrimitive(layer_id, false);
             }
         }
@@ -28400,7 +28404,7 @@ function DashGuiContext2DCanvas (editor) {
     this.setup_masks = function () {
         var css = {
             "position": "absolute",
-            "z-index": 1000,
+            "z-index": 999999998,
             "user-select": "none",
             "pointer-events": "none",
             "background": this.color.Stroke
@@ -28770,12 +28774,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.width_px = 0;
     this.height_px = 0;
     this.selected = false;
-    this.z_index_base = 10;  // Somewhat arbitrary
     this.width_px_min = 20;
     this.drag_state = null;
     this.height_px_min = 20;
     this.drag_active = false;
     this.drag_context = null;
+    this.z_index_mult = 1000;
+    this.z_index_base = 1010;
     this.last_width_norm = null;
     this.id = this.layer.GetID();
     this.html = $("<div></div>");
@@ -29036,7 +29041,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
-        var override = (parent_data["imported_context"]["overrides"][this.id] || {})[key] || 0;
+        var override = (parent_data["imported_context"]["layer_overrides"][this.id] || {})[key] || 0;
         if (!override) {
             return value;
         }
@@ -29072,7 +29077,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
     this.get_z_index = function () {
-        return this.z_index_base + this.layer.GetIndex();
+        var index = this.layer.GetIndex();
+        if (!this.parent_id) {
+            // Multiply the index by this.z_index_mult so that there's plenty of
+            // room for recursive nested context layers to have recursive sub-indexes
+            return this.z_index_base + (index * this.z_index_mult);
+        }
+        var parent_z_index = this.z_index_base + (this.layer.GetParentIndex() * this.z_index_mult);
+        // When contexts are imported, bringing in nested layers, and potentially more
+        // nested contexts, those indexes need to fall within the range of the parent's
+        // index (ex: 9000), and the index of the layer before the parent (ex: 8000).
+        return ((parent_z_index - this.z_index_mult) + (index + 1));
     };
     this.get_offset_norm = function () {
         if (this.left_px == null) {  // This isn't visible or hasn't been edited
@@ -29179,8 +29194,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // var y = 0;
         // var x = 0;
         var w = 0;
-        // var len = this.data["imported_context"]["layers"]["order"].length || 1;
-        for (var layer_id of this.data["imported_context"]["layers"]["order"]) {
+        var order = this.layer.GetChildrenLayerOrder();
+        // var len = order.length || 1;
+        for (var layer_id of order) {
             var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
             // y += this.get_drag_state_value("anchor_norm_y", layer_data, this.data);
             // x += this.get_drag_state_value("anchor_norm_x", layer_data, this.data);
@@ -29733,6 +29749,26 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.GetParentData = function () {
         return this.get_parent_data();
     };
+    this.GetParentIndex = function () {
+        if (!this.parent_id) {
+            return -1;
+        }
+        return this.layers.layers[this.parent_id].GetIndex();
+    };
+    this.GetParentLayerOrder = function () {
+        if (!this.parent_id) {
+            return [];
+        }
+        var imported_context = this.get_parent_data()["imported_context"];
+        return (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+    };
+    this.GetChildrenLayerOrder = function () {
+        var data = this.get_data();
+        if (data["type"] !== "context") {
+            return [];
+        }
+        return (data["imported_context"]["context_overrides"]["layer_order"] || data["imported_context"]["layers"]["order"]);
+    };
     this.SetData = function (key, value) {
         return this.set_data(key, value);
     };
@@ -29943,10 +29979,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id, parent_id);
         var data = this.layers[id].GetData();
         if (data["type"] === "context") {
-            var imported_layers = data["imported_context"]["layers"];
             // TODO: if imported context is this context, then the layer ids will be the same,
             //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
-            for (var imported_id of imported_layers["order"]) {
+            for (var imported_id of this.layers[id].GetChildrenLayerOrder()) {
                 this.AddLayer(imported_id, false, id);
             }
         }
@@ -29957,21 +29992,35 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.AddCanvasPrimitive(this.layers[id], select);
     };
     this.Delete = function () {
-        var id = this.GetSelectedID();
-        if (!id) {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
             return;
         }
-        var order = [...this.get_data()["order"]];
+        var id = layer.GetID();
+        var parent_id = layer.GetParentID();
+        var parent_layer_order = layer.GetParentLayerOrder();
+        var order = [...(parent_id ? parent_layer_order : this.get_data()["order"])];
         order.Remove(id);
         (function (self) {
-            self.set_layer_order(
-                order,
-                function () {
-                    self.redraw_layers();
-                    self.editor.RemoveCanvasPrimitive(id);
-                    self.panel.SwitchContentToNewTab();
-                }
-            );
+            if (parent_id) {
+                self.set_layer_property(
+                    "layer_order",
+                    order,
+                    id,
+                    parent_id,
+                    function () {
+                        self.on_delete(id);
+                    }
+                );
+            }
+            else {
+                self.set_layer_order(
+                    order,
+                    function () {
+                        self.on_delete(id);
+                    }
+                );
+            }
         })(this);
     };
     this.MoveUp = function () {
@@ -30045,24 +30094,42 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
         var id = layer.GetID();
-        var index = layer.GetIndex();
-        var order = [...this.get_data()["order"]];
-        if (order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
+        var parent_id = layer.GetParentID();
+        var parent_layer_order = layer.GetParentLayerOrder();
+        var order = [...(parent_id ? parent_layer_order : this.get_data()["order"])];
+        var index = parent_id ? parent_layer_order.indexOf(id) : layer.GetIndex();
+        if (index < 0 || order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
             return;
         }
         delete this.layers[id];
         order.Remove(id);
         order.splice((up ? index + 1 : index - 1), 0, id);
         (function (self) {
-            self.set_layer_order(
-                order,
-                function () {
-                    self.redraw_layers();
-                    self.editor.UpdateCanvasPrimitiveZIndexes();
-                    self.layers[id].Select();
-                }
-            );
+            if (parent_id) {
+                self.set_layer_property(
+                    "layer_order",
+                    order,
+                    id,
+                    parent_id,
+                    function () {
+                        self._on_move(id);
+                    }
+                );
+            }
+            else {
+                self.set_layer_order(
+                    order,
+                    function () {
+                        self._on_move(id);
+                    }
+                );
+            }
         })(this);
+    };
+    this.on_delete = function (id) {
+        this.redraw_layers();
+        this.editor.RemoveCanvasPrimitive(id);
+        this.panel.SwitchContentToNewTab();
     };
     this.get_data = function (parent_id="") {
         var layers = this.editor.data["layers"];
@@ -30080,7 +30147,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.set_layer_order = function (order, callback=null) {
         this.editor.set_data("layer_order", order, callback);
     };
-    this.set_layer_property = function (key, value, id="", parent_id="") {
+    this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -30092,7 +30159,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
-        var log_name = key === "display_name" ? this.get_data()["data"][id]["display_name"] : "";
         var params = {
             "f": "set_layer_property",
             "obj_id": this.editor.obj_id,
@@ -30100,7 +30166,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "key": key,
             "value": value
         };
-        if (parent_id) {
+        if (parent_id && key !== "layer_order") {
             params["imported_context_layer_id"] = id;
         }
         (function (self) {
@@ -30115,11 +30181,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     if (key === "display_name" || key === "text_value") {
                         self.layers[id].UpdateLabel();
                     }
-                    self.editor.AddToLog(
-                        "[" + (log_name || self.get_data()["data"][id]["display_name"]) +
-                        "] Set " + "'" + key + "' to '" + value + "'"
-                    );
-                    self.editor.UpdateCanvasPrimitive(key, value, id);
+                    if (key !== "layer_order") {
+                        self.editor.AddToLog("[" + self.get_data()["data"][id]["display_name"] + "] Set " + "'" + key + "' to '" + value + "'");
+                        self.editor.UpdateCanvasPrimitive(key, value, id);
+                    }
                     self.toolbar.ReEnableToggle(key);
                     if (key === "hidden" || key === "locked") {
                         if (value) {
@@ -30128,6 +30193,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         else {
                             self.panel.RedrawCurrentContentTab();
                         }
+                    }
+                    if (callback) {
+                        callback();
                     }
                 },
                 self.editor.api,
@@ -30169,6 +30237,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self.editor.DeselectAllLayers();
             });
         })(this);
+    };
+    this._on_move = function (id) {
+        this.redraw_layers();
+        this.editor.UpdateCanvasPrimitiveZIndexes();
+        this.layers[id].Select();
     };
     this.setup_styles();
 }

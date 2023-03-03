@@ -12,7 +12,9 @@ class Interface:
     Data: dict
     User: dict
     save: callable
+    LayersRoot: str
     ToDict: callable
+    LayerOrder: list
     DashContext: dict
     AspectRatioH: int
     AspectRatioW: int
@@ -38,9 +40,9 @@ class Interface:
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
-        if properties and type(properties) is str:
-            from json import loads
+        from json import loads
 
+        if properties and type(properties) is str:
             properties = loads(properties)
 
         if "layers" in properties:  # This should never happen, but just in case
@@ -51,12 +53,19 @@ class Interface:
 
         if "layer_order" in properties:
             if type(properties["layer_order"]) is str:
-                from json import loads
-
                 properties["layer_order"] = loads(properties["layer_order"])
 
             if type(properties["layer_order"]) is not list:
                 raise ValueError(f"Layer order must be a list: {properties['layer_order']}")
+
+            if len(properties["layer_order"]) < len(self.LayerOrder):  # Deletion
+                from shutil import rmtree
+
+                for layer_id in os.listdir(self.LayersRoot):
+                    if layer_id in properties["layer_order"]:
+                        continue
+
+                    rmtree(os.path.join(self.LayersRoot, layer_id))
 
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
             from math import gcd

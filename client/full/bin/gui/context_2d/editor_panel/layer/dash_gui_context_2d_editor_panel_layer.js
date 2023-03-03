@@ -66,6 +66,34 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         return this.get_parent_data();
     };
 
+    this.GetParentIndex = function () {
+        if (!this.parent_id) {
+            return -1;
+        }
+
+        return this.layers.layers[this.parent_id].GetIndex();
+    };
+
+    this.GetParentLayerOrder = function () {
+        if (!this.parent_id) {
+            return [];
+        }
+
+        var imported_context = this.get_parent_data()["imported_context"];
+
+        return (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+    };
+
+    this.GetChildrenLayerOrder = function () {
+        var data = this.get_data();
+
+        if (data["type"] !== "context") {
+            return [];
+        }
+
+        return (data["imported_context"]["context_overrides"]["layer_order"] || data["imported_context"]["layers"]["order"]);
+    };
+
     this.SetData = function (key, value) {
         return this.set_data(key, value);
     };

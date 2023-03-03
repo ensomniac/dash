@@ -295,7 +295,7 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
         return this.data;
     };
 
-    this.set_data = function (key, value, callback=null) {
+    this.set_data = function (key, value, callback=null, additional_params={}) {
         if (this.get_data(key) === value) {
             return;
         }
@@ -330,7 +330,8 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
                     "f": "set_property",
                     "obj_id": self.obj_id,
                     "key": key,
-                    "value": value
+                    "value": value,
+                    ...additional_params
                 }
             );
         })(this);
