@@ -36556,6 +36556,12 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         for (var row of this.rows) {
             row.Update();
         }
+        if (this.header_row) {
+            this.header_row.Update();
+        }
+        if (this.footer_row) {
+            this.footer_row.Update();
+        }
     };
     this.Clear = function () {
         this.html.empty();
@@ -38443,15 +38449,17 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             this.hide_row(row);
             row.html.detach();
         }
-        if (config_changed) {
-            if (this.header_row) {
+        if (this.header_row) {
+            if (config_changed) {
                 this.header_row.RedrawColumns();
-                this.header_row.Update();
             }
-            if (this.footer_row) {
+            this.header_row.Update();
+        }
+        if (this.footer_row) {
+            if (config_changed) {
                 this.footer_row.RedrawColumns();
-                this.footer_row.Update();
             }
+            this.footer_row.Update();
         }
         this.container.empty();
     };

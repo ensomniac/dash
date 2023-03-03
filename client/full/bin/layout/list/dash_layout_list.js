@@ -178,6 +178,14 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         for (var row of this.rows) {
             row.Update();
         }
+
+        if (this.header_row) {
+            this.header_row.Update();
+        }
+
+        if (this.footer_row) {
+            this.footer_row.Update();
+        }
     };
 
     this.Clear = function () {
