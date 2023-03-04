@@ -142,6 +142,16 @@ function DashGuiContext2DCanvas (editor) {
         }
     };
 
+    this.UpdateAllChildrenPrimitives = function (parent_id, key, value) {
+        for (var id in this.primitives) {
+            if (this.primitives[id].parent_id !== parent_id) {
+                continue;
+            }
+
+            this.primitives[id].Update(key, value);
+        }
+    };
+
     this.RemovePrimitive = function (id, _update_z_indexes=true) {
         if (!this.primitives[id]) {
             return;

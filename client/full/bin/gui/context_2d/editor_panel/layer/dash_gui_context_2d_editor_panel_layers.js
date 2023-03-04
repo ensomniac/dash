@@ -325,7 +325,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     }
 
                     if (key !== "layer_order") {
-                        self.editor.AddToLog("[" + self.get_data()["data"][id]["display_name"] + "] Set " + "'" + key + "' to '" + value + "'");
+                        self.editor.AddToLog("[" + self.get_data(parent_id)["data"][id]["display_name"] + "] Set " + "'" + key + "' to '" + value + "'");
                         self.editor.UpdateCanvasPrimitive(key, value, id);
                     }
 

@@ -18,6 +18,7 @@ class Layer:
         self._new_layer_imported_context_id = new_layer_imported_context_id  # When importing another context into a context
 
         self.data = {}
+        self._new = False
 
         self.load_data()
 
@@ -105,6 +106,41 @@ class Layer:
 
             # Global overrides for all imported layers, such as rotating all imported layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
 
+            if self._new:
+                # When first importing a context, make sure it'll fit in the canvas it's being imported into.
+                # There's a potential weakness in this logic in its current form. I think if another layer is added
+                # to the source context (the one that's been imported) after this initial calculation, that layer
+                # won't match the rest. This would require this to be calculated each time we get this dict, but
+                # that's not as simple as it sounds. There's a lot of complex logic happening when an imported
+                # context is rescaled (affecting all layers in the imported context) and when a single layer within
+                # the imported context is rescaled. Solving this potential issue I've laid out above would require
+                # modifying that complicated code, and I don't have time for that right now, so this will have to do.
+                highest_width_norm = 0
+                layers = self.imported_context_data["layers"]
+
+                for layer_id in layers["order"]:
+                    layer_data = layers["data"][layer_id]
+
+                    if layer_data["type"] == "text":
+                        continue  # Not concerned about text - text's width_norm is 0.9 by default, and that doesn't mean it's all filled
+
+                    width_norm = layers["data"][layer_id]["width_norm"]
+
+                    if width_norm > highest_width_norm:
+                        highest_width_norm = width_norm
+
+                if highest_width_norm > 1:
+                    mult = 1 / highest_width_norm
+
+                    data["width_norm"] = 1
+
+                    for layer_id in layers["order"]:
+                        width_norm = layers["data"][layer_id]["width_norm"]
+                        reduced = width_norm * mult
+
+                        data["imported_context"]["layer_overrides"][layer_id] = {"width_norm": reduced - width_norm}
+                else:
+                    data["width_norm"] = highest_width_norm
         else:
             data["file"] = self.data.get("file") or {}
 
@@ -155,7 +191,7 @@ class Layer:
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
-        if self.Type == "context":  # TODO: break this out 
+        if self.Type == "context":  # TODO: break this out
             for key in properties:
                 value = properties[key]
 
@@ -177,6 +213,11 @@ class Layer:
 
                 # "context"-type layer change, trickle down to all its layers' overrides
                 if key in state_keys and not imported_context_layer_id:
+                    if key == "opacity":
+                        self.data[key] = value
+
+                        continue
+
                     dif = abs(value - self.data[key])
 
                     for layer_id in self.imported_context_data["layers"]["order"]:
@@ -241,6 +282,12 @@ class Layer:
 
                     continue
 
+                # TODO: opacity
+                #  - when a specific layer is set, save that value to the override (mult by parent val),
+                #    and on the front end, mult it by the base value instead of adding - then when the
+                #    parent val is set, set the override to parent * override again - make sure override
+                #    is always between 0 and 1
+
                 if not imported_context_layer_id:
                     raise ValueError("Imported Context Layer ID is required")
 
@@ -252,6 +299,11 @@ class Layer:
 
                 if key == "rot_deg":
                     self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += value
+
+                    continue
+
+                if key == "opacity":
+                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = value
 
                     continue
 
@@ -333,6 +385,7 @@ class Layer:
 
         from Dash.Utils import GetRandomID
 
+        self._new = True
         self.ID = GetRandomID()
 
         self.data = {  # New

@@ -60,7 +60,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.html.css(css);
 
         this.draw_properties(true);
-        this.on_opacity_change(this.data["opacity"]);
+        this.on_opacity_change(this.get_value("opacity"));
 
         if (this.data["hidden"]) {
             this.on_hidden_change(this.data["hidden"]);
@@ -88,14 +88,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.Update = function (key, value) {
-        if (this.data[key] === value || key === "display_name") {
+        if ((key !== "opacity" && this.data[key] === value) || key === "display_name") {
             return;
         }
 
-        this.data[key] = value;
+        this.data = this.layer.GetData();
+        this.parent_data = this.layer.GetParentData();
 
         if (key === "opacity") {
-            this.on_opacity_change(value);
+            this.on_opacity_change(this.get_value(key));
         }
 
         else if (key === "locked") {
@@ -111,6 +112,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         this.on_update(key);
+
+        if (this.data["type"] === "context") {
+            this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
+        }
     };
 
     this.IsSelected = function () {
@@ -237,7 +242,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         else if (this.drag_context["scale"]) {
             [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
 
-            this.last_width_norm = this.get_drag_state_value("width_norm");
+            this.last_width_norm = this.get_value("width_norm");
 
             this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
 
@@ -332,7 +337,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     self.editor.data = response;
 
-                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for TESTING (maybe keep?)
+                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
 
                         self.editor.RedrawLayers(true);
@@ -344,7 +349,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         })(this);
     };
 
-    this.get_drag_state_value = function (key, data=null, parent_data=null) {
+    this.get_value = function (key, data=null, parent_data=null) {
         data = data || this.data;
         parent_data = parent_data || this.parent_data;
 
@@ -355,6 +360,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         var override = (parent_data["imported_context"]["layer_overrides"][this.id] || {})[key] || 0;
+
+        if (key === "opacity") {
+            var parent_opacity = parent_data["opacity"];
+
+            if (override) {
+                return override * parent_opacity;
+            }
+
+            return value * parent_opacity;
+        }
+
 
         if (!override) {
             return value;
@@ -451,15 +467,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.set_top_px = function (override=null) {
-        this.top_px = override || ((this.canvas.GetHeight() * this.get_drag_state_value("anchor_norm_y")) - (this.height_px * 0.5));
+        this.top_px = override || ((this.canvas.GetHeight() * this.get_value("anchor_norm_y")) - (this.height_px * 0.5));
     };
 
     this.set_left_px = function (override=null) {
-        this.left_px = override || ((this.canvas.GetWidth() * this.get_drag_state_value("anchor_norm_x")) - (this.width_px * 0.5));
+        this.left_px = override || ((this.canvas.GetWidth() * this.get_value("anchor_norm_x")) - (this.width_px * 0.5));
     };
 
     this.set_width_px = function (override=null) {
-        this.width_px = override || (this.canvas.GetWidth() * this.get_drag_state_value("width_norm"));
+        this.width_px = override || (this.canvas.GetWidth() * this.get_value("width_norm"));
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
@@ -541,7 +557,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     // Not sure if this should happen in ToDict on the backend instead of here, but
-    // that would also mean that we'd need an equivalent of this.get_drag_state_value
+    // that would also mean that we'd need an equivalent of this.get_value
     // on the backend. It's all working as expected here, so I'm leaving it here.
     this.calculate_context_bounding_box_size = function () {  // TODO: still use this?
         // var y = 0;
@@ -553,11 +569,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         for (var layer_id of order) {
             var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
 
-            // y += this.get_drag_state_value("anchor_norm_y", layer_data, this.data);
-            // x += this.get_drag_state_value("anchor_norm_x", layer_data, this.data);
+            // y += this.get_value("anchor_norm_y", layer_data, this.data);
+            // x += this.get_value("anchor_norm_x", layer_data, this.data);
 
             if (layer_data["type"] !== "text") {
-                w = Math.max(w, this.get_drag_state_value("width_norm", layer_data, this.data));
+                w = Math.max(w, this.get_value("width_norm", layer_data, this.data));
             }
         }
 
@@ -619,7 +635,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "height": this.height_px,
             "left": this.left_px,
             "top": this.top_px,
-            "transform": "rotate(" + this.get_drag_state_value("rot_deg") + "deg)"
+            "transform": "rotate(" + this.get_value("rot_deg") + "deg)"
         });
     };
 

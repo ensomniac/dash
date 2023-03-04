@@ -149,6 +149,33 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return selected_layer.GetData();
     };
 
+    this.get_value = function (key) {
+        var selected_layer = this.panel.GetSelectedLayer();
+
+        if (!selected_layer) {
+            return "";
+        }
+
+        var value = selected_layer.GetData()[key];
+        var parent_data = selected_layer.GetParentData();
+
+        if (!Dash.Validate.Object(parent_data)) {
+            return value;
+        }
+
+        var override = (parent_data["imported_context"]["layer_overrides"][selected_layer.GetID()] || {})[key] || 0;
+
+        if (!override) {
+            return value;
+        }
+
+        if (key === "opacity") {
+            return override;
+        }
+
+        return value + override;
+    };
+
     this.set_data = function (key, value) {
         var selected_layer = this.panel.GetSelectedLayer();
 
@@ -278,7 +305,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                self.get_data()[data_key] || default_value,
+                self.get_value(data_key) || default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
 
@@ -289,6 +316,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return slider;
         })(this);
     };
+
+
 
     this.style_slider = function (slider, default_value, context_key) {
         slider.FireCallbackOnUpInsteadOfMove();
