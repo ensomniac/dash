@@ -19,6 +19,10 @@ class Layer:
 
         self.data = {}
         self._new = False
+        self.bool_keys = ["hidden", "locked", "linked"]
+        self.str_keys = ["display_name", "text_value", "font_id", "font_color"]
+        self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
+        self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness"]
 
         self.load_data()
 
@@ -89,58 +93,8 @@ class Layer:
             data["font_color"] = self.data.get("font_color") or ""
 
         elif self.Type == "context":
-            imported_context = self.data.get("imported_context") or {}
+            data = self.context_to_dict(data, save)
 
-            if save:
-                data["imported_context"] = {"id": self.get_imported_context_id()}
-            else:
-                data["imported_context"] = self.imported_context_data
-
-            data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
-
-            # These are overrides per layer (in the imported context)
-            data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}
-
-            # These are overrides per layer (in the imported context)
-            data["imported_context"]["layer_overrides"] = imported_context.get("layer_overrides") or {}
-
-            # Global overrides for all imported layers, such as rotating all imported layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
-
-            if self._new:
-                # When first importing a context, make sure it'll fit in the canvas it's being imported into.
-                # There's a potential weakness in this logic in its current form. I think if another layer is added
-                # to the source context (the one that's been imported) after this initial calculation, that layer
-                # won't match the rest. This would require this to be calculated each time we get this dict, but
-                # that's not as simple as it sounds. There's a lot of complex logic happening when an imported
-                # context is rescaled (affecting all layers in the imported context) and when a single layer within
-                # the imported context is rescaled. Solving this potential issue I've laid out above would require
-                # modifying that complicated code, and I don't have time for that right now, so this will have to do.
-                highest_width_norm = 0
-                layers = self.imported_context_data["layers"]
-
-                for layer_id in layers["order"]:
-                    layer_data = layers["data"][layer_id]
-
-                    if layer_data["type"] == "text":
-                        continue  # Not concerned about text - text's width_norm is 0.9 by default, and that doesn't mean it's all filled
-
-                    width_norm = layers["data"][layer_id]["width_norm"]
-
-                    if width_norm > highest_width_norm:
-                        highest_width_norm = width_norm
-
-                if highest_width_norm > 1:
-                    mult = 1 / highest_width_norm
-
-                    data["width_norm"] = 1
-
-                    for layer_id in layers["order"]:
-                        width_norm = layers["data"][layer_id]["width_norm"]
-                        reduced = width_norm * mult
-
-                        data["imported_context"]["layer_overrides"][layer_id] = {"width_norm": reduced - width_norm}
-                else:
-                    data["width_norm"] = highest_width_norm
         else:
             data["file"] = self.data.get("file") or {}
 
@@ -167,21 +121,18 @@ class Layer:
         if not properties:
             return self.ToDict()
 
-        state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
-        float_keys = [*state_keys, "aspect", "contrast", "brightness"]
-
         # Enforce str when null
-        for key in ["display_name", "text_value", "font_id", "font_color"]:
+        for key in self.str_keys:
             if key in properties and not properties.get(key):
                 properties[key] = ""
 
         # Bools
-        for key in ["hidden", "locked", "linked"]:
+        for key in self.bool_keys:
             if key in properties and type(properties[key]) is not bool:
                 properties[key] = loads(properties[key])
 
         # Floats
-        for key in float_keys:
+        for key in self.float_keys:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key])
 
@@ -191,130 +142,9 @@ class Layer:
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
-        if self.Type == "context":  # TODO: break this out
+        if self.Type == "context":
             for key in properties:
-                value = properties[key]
-
-                if key == "linked":
-                    self.data["imported_context"][key] = value
-
-                    continue
-
-                if key == "layer_order":
-                    if type(value) is str:
-                        value = loads(value)
-
-                    if type(value) is not list:
-                        raise ValueError(f"Layer order must be a list: {value}")
-
-                    self.data["imported_context"]["context_overrides"][key] = value
-
-                    continue
-
-                # "context"-type layer change, trickle down to all its layers' overrides
-                if key in state_keys and not imported_context_layer_id:
-                    if key == "opacity":
-                        self.data[key] = value
-
-                        continue
-
-                    dif = abs(value - self.data[key])
-
-                    for layer_id in self.imported_context_data["layers"]["order"]:
-                        if layer_id not in self.data["imported_context"]["layer_overrides"]:
-                            self.data["imported_context"]["layer_overrides"][layer_id] = {}
-
-                        if key not in self.data["imported_context"]["layer_overrides"][layer_id]:
-                            self.data["imported_context"]["layer_overrides"][layer_id][key] = 0
-
-                        if value < self.data[key]:
-                            self.data["imported_context"]["layer_overrides"][layer_id][key] -= dif
-                        else:
-                            self.data["imported_context"]["layer_overrides"][layer_id][key] += dif
-
-                        if key != "rot_deg" and key != "width_norm":
-                            continue
-
-                        anchor_keys = ["anchor_norm_x", "anchor_norm_y"]
-                        current_coords = {}
-                        new_coords = {}
-
-                        for k in anchor_keys:
-                            if k not in self.data["imported_context"]["layer_overrides"][layer_id]:
-                                self.data["imported_context"]["layer_overrides"][layer_id][k] = 0
-
-                            previous_override = self.data["imported_context"]["layer_overrides"][layer_id][k]
-                            current_coords[k] = self.imported_context_data["layers"]["data"][layer_id][k] + previous_override
-
-                        if key == "rot_deg":
-                            from Dash.Utils import MovePointAroundCircle
-
-                            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = MovePointAroundCircle(
-                                circle_center_x=self.data["anchor_norm_x"],
-                                circle_center_y=self.data["anchor_norm_y"],
-                                point_x=current_coords["anchor_norm_x"],
-                                point_y=current_coords["anchor_norm_y"],
-                                rotation_degrees=(dif if value > self.data[key] else -dif)
-                            )
-
-                        elif key == "width_norm":
-                            from Dash.Utils import ScaleChildWithParent
-
-                            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = ScaleChildWithParent(
-                                parent_x=self.data["anchor_norm_x"],
-                                parent_y=self.data["anchor_norm_y"],
-                                parent_w=value,
-                                parent_h=(value / self.data["aspect"]),
-                                child_x=current_coords["anchor_norm_x"],
-                                child_y=current_coords["anchor_norm_y"],
-                                scale_factor=(value / self.data[key])
-                            )
-
-                        for k in anchor_keys:
-                            new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
-
-                            if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
-                                self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
-                            else:
-                                self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
-
-                    self.data[key] = value
-
-                    continue
-
-                # TODO: opacity
-                #  - when a specific layer is set, save that value to the override (mult by parent val),
-                #    and on the front end, mult it by the base value instead of adding - then when the
-                #    parent val is set, set the override to parent * override again - make sure override
-                #    is always between 0 and 1
-
-                if not imported_context_layer_id:
-                    raise ValueError("Imported Context Layer ID is required")
-
-                if imported_context_layer_id not in self.data["imported_context"]["layer_overrides"]:
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id] = {}
-
-                if key not in self.data["imported_context"]["layer_overrides"][imported_context_layer_id]:
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = 0
-
-                if key == "rot_deg":
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += value
-
-                    continue
-
-                if key == "opacity":
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = value
-
-                    continue
-
-                previous_override = self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key]
-                previous_value = self.imported_context_data["layers"]["data"][imported_context_layer_id][key] + previous_override
-                dif = abs(value - previous_value)
-
-                if value < previous_value:
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] -= dif
-                else:
-                    self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += dif
+                self.context_set_prop(key, properties[key], imported_context_layer_id)
         else:
             if key == "layer_order":  # Should never happen, but just in case
                 raise ValueError(f"Invalid key (layer_order) for {self.Type} layer")
@@ -404,3 +234,184 @@ class Layer:
             raise ValueError("Missing Imported Context ID, this shouldn't happen")
 
         return imported_context_id
+
+    def context_to_dict(self, data, save):
+        imported_context = self.data.get("imported_context") or {}
+
+        if save:
+            data["imported_context"] = {"id": self.get_imported_context_id()}
+        else:
+            data["imported_context"] = self.imported_context_data
+
+        data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
+
+        # These are overrides per layer (in the imported context)
+        data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}
+
+        # These are overrides per layer (in the imported context)
+        data["imported_context"]["layer_overrides"] = imported_context.get("layer_overrides") or {}
+
+        # Global overrides for all imported layers, such as rotating all imported layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
+
+        if not self._new:
+            return data
+
+        # When first importing a context, make sure it'll fit in the canvas it's being imported into.
+        # There's a potential weakness in this logic in its current form. I think if another layer is added
+        # to the source context (the one that's been imported) after this initial calculation, that layer
+        # won't match the rest. This would require this to be calculated each time we get this dict, but
+        # that's not as simple as it sounds. There's a lot of complex logic happening when an imported
+        # context is rescaled (affecting all layers in the imported context) and when a single layer within
+        # the imported context is rescaled. Solving this potential issue I've laid out above would require
+        # modifying that complicated code, and I don't have time for that right now, so this will have to do.
+        highest_width_norm = 0
+        layers = self.imported_context_data["layers"]
+
+        for layer_id in layers["order"]:
+            layer_data = layers["data"][layer_id]
+
+            if layer_data["type"] == "text":
+                continue  # Not concerned about text - text's width_norm is 0.9 by default, and that doesn't mean it's all filled
+
+            width_norm = layers["data"][layer_id]["width_norm"]
+
+            if width_norm > highest_width_norm:
+                highest_width_norm = width_norm
+
+        if highest_width_norm <= 1:
+            data["width_norm"] = highest_width_norm
+
+            return data
+
+        mult = 1 / highest_width_norm
+
+        data["width_norm"] = 1
+
+        for layer_id in layers["order"]:
+            width_norm = layers["data"][layer_id]["width_norm"]
+            reduced = width_norm * mult
+
+            data["imported_context"]["layer_overrides"][layer_id] = {"width_norm": reduced - width_norm}
+
+        return data
+
+    def context_set_prop(self, key, value, imported_context_layer_id=""):
+        if key == "linked":
+            self.data["imported_context"][key] = value
+
+            return
+
+        if key == "layer_order":
+            if type(value) is str:
+                from json import loads
+
+                value = loads(value)
+
+            if type(value) is not list:
+                raise ValueError(f"Layer order must be a list: {value}")
+
+            self.data["imported_context"]["context_overrides"][key] = value
+
+            return
+
+        # Change to top-level (parent), trickle down to all layers' overrides
+        if key in self.state_keys and not imported_context_layer_id:
+            if key == "opacity":
+                self.data[key] = value
+
+                return
+
+            dif = abs(value - self.data[key])
+
+            for layer_id in self.imported_context_data["layers"]["order"]:
+                self.update_context_children_overrides(key, value, layer_id, dif)
+
+            self.data[key] = value
+
+            return
+
+        if not imported_context_layer_id:
+            raise ValueError("Imported Context Layer ID is required")
+
+        if imported_context_layer_id not in self.data["imported_context"]["layer_overrides"]:
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id] = {}
+
+        if key not in self.data["imported_context"]["layer_overrides"][imported_context_layer_id]:
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = 0
+
+        if key == "rot_deg":
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += value
+
+            return
+
+        if key == "opacity":
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = value
+
+            return
+
+        previous_override = self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key]
+        previous_value = self.imported_context_data["layers"]["data"][imported_context_layer_id][key] + previous_override
+        dif = abs(value - previous_value)
+
+        if value < previous_value:
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] -= dif
+        else:
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += dif
+
+    def update_context_children_overrides(self, key, value, layer_id, dif):
+        if layer_id not in self.data["imported_context"]["layer_overrides"]:
+            self.data["imported_context"]["layer_overrides"][layer_id] = {}
+
+        if key not in self.data["imported_context"]["layer_overrides"][layer_id]:
+            self.data["imported_context"]["layer_overrides"][layer_id][key] = 0
+
+        if value < self.data[key]:
+            self.data["imported_context"]["layer_overrides"][layer_id][key] -= dif
+        else:
+            self.data["imported_context"]["layer_overrides"][layer_id][key] += dif
+
+        if key != "rot_deg" and key != "width_norm":
+            return
+
+        new_coords = {}
+        current_coords = {}
+        anchor_keys = ["anchor_norm_x", "anchor_norm_y"]
+
+        for k in anchor_keys:
+            if k not in self.data["imported_context"]["layer_overrides"][layer_id]:
+                self.data["imported_context"]["layer_overrides"][layer_id][k] = 0
+
+            previous_override = self.data["imported_context"]["layer_overrides"][layer_id][k]
+            current_coords[k] = self.imported_context_data["layers"]["data"][layer_id][k] + previous_override
+
+        if key == "rot_deg":
+            from Dash.Utils import MovePointAroundCircle
+
+            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = MovePointAroundCircle(
+                circle_center_x=self.data["anchor_norm_x"],
+                circle_center_y=self.data["anchor_norm_y"],
+                point_x=current_coords["anchor_norm_x"],
+                point_y=current_coords["anchor_norm_y"],
+                rotation_degrees=(dif if value > self.data[key] else -dif)
+            )
+
+        elif key == "width_norm":
+            from Dash.Utils import ScaleChildWithParent
+
+            new_coords["anchor_norm_x"], new_coords["anchor_norm_y"] = ScaleChildWithParent(
+                parent_x=self.data["anchor_norm_x"],
+                parent_y=self.data["anchor_norm_y"],
+                parent_w=value,
+                parent_h=(value / self.data["aspect"]),
+                child_x=current_coords["anchor_norm_x"],
+                child_y=current_coords["anchor_norm_y"],
+                scale_factor=(value / self.data[key])
+            )
+
+        for k in anchor_keys:
+            new_dif = abs(new_coords[k] - self.imported_context_data["layers"]["data"][layer_id][k])
+
+            if new_coords[k] < self.imported_context_data["layers"]["data"][layer_id][k]:
+                self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
+            else:
+                self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
