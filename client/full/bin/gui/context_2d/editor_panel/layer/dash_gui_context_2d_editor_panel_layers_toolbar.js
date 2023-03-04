@@ -20,17 +20,17 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     };
 
     this.UpdateIconStates = function () {
-        var selected_layer_data = this.get_data();
-        var revert = !Dash.Validate.Object(selected_layer_data);
+        var selected_layer = this.layers.GetSelectedLayer();
+        var revert = !selected_layer;
 
         for (var key in this.icon_toggles) {
-            if (revert || !(key in selected_layer_data)) {
+            if (revert) {
                 this.icon_toggles[key].RevertToDefaultState(true, revert);
 
                 continue;
             }
 
-            if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
+            if (selected_layer.GetValue(key) !== this.icon_toggles[key].IsChecked()) {
                 this.icon_toggles[key].Toggle(true);
             }
         }
@@ -45,11 +45,11 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.icon_toggles[key].Enable();
     };
 
-    this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
+    this.add_icon_toggle = function (selected_layer, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
                 "",
-                key in data ? data[key] : default_state,
+                selected_layer ? selected_layer.GetValue(key, default_state) : default_state,
                 self.color,
                 "Toggle " + key.Title(),
                 self,
@@ -63,6 +63,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
                     else if (key === "locked") {
                         self.layers.ToggleLocked(checkbox.IsChecked());
+                    }
+
+                    else if (key === "linked") {
+                        self.layers.ToggleLinked(checkbox.IsChecked());
                     }
 
                     else {
@@ -168,14 +172,11 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             );
         })(this);
 
-        var selected_layer_data = this.get_data();
+        var selected_layer = this.layers.GetSelectedLayer();
 
-        this.add_icon_toggle(selected_layer_data, "hidden", "visible", "hidden");
-        this.add_icon_toggle(selected_layer_data, "locked", "unlock_alt", "lock");
-    };
-
-    this.get_data = function () {
-        return this.layers.GetSelectedData() || {};
+        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
+        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
 
     this.setup_styles();

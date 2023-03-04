@@ -57,9 +57,24 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var data = this.layers[id].GetData();
 
         if (data["type"] === "context") {
-            // TODO: if imported context is this context, then the layer ids will be the same,
-            //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
+            var imported_layers = this.layers[id].GetData()["imported_context"]["layers"]["data"];
+
+            // TODO: If imported context is *this* context, then the layer ids will be the same,
+            //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
+            //  but as of writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
             for (var imported_id of this.layers[id].GetChildrenLayerOrder()) {
+                if (imported_layers[imported_id]["type"] === "context") {
+                    alert(
+                        "A context has been imported that has its own imported context(s).\n" +
+                        "Importing nested contexts within contexts is complex and not yet supported.\n" +
+                        "The nested context(s) within the imported context will be ignored."
+                    );
+
+                    // TODO: We need to add support for this, it's just very complicated because of the
+                    //  need to handle overrides recursively and I don't have enough time to do it now
+                    continue;
+                }
+
                 this.AddLayer(imported_id, false, id);
             }
         }
@@ -143,6 +158,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         layer.ToggleLocked(locked);
     };
 
+    this.ToggleLinked = function (linked) {
+        var layer = this.GetSelectedLayer();
+
+        if (!layer) {
+            this.toolbar.ReEnableToggle("linked");
+
+            return;
+        }
+
+        layer.ToggleLinked(linked);
+    };
+
     this.GetSelectedID = function () {
         var layer = this.GetSelectedLayer();
 
@@ -151,16 +178,6 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         return "";
-    };
-
-    this.GetSelectedData = function () {
-        var layer = this.GetSelectedLayer();
-
-        if (layer) {
-            return layer.GetData();
-        }
-
-        return null;
     };
 
     this.GetSelectedLayer = function () {
@@ -312,34 +329,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             Dash.Request(
                 self,
                 function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        self.toolbar.ReEnableToggle(key);
-
-                        return;
-                    }
-
-                    self.on_data(response);
-
-                    if (key === "display_name" || key === "text_value") {
-                        self.layers[id].UpdateLabel();
-                    }
-
-                    if (key !== "layer_order") {
-                        self.editor.AddToLog("[" + self.get_data(parent_id)["data"][id]["display_name"] + "] Set " + "'" + key + "' to '" + value + "'");
-                        self.editor.UpdateCanvasPrimitive(key, value, id);
-                    }
-
-                    self.toolbar.ReEnableToggle(key);
-
-                    if (key === "hidden" || key === "locked") {
-                        if (value) {
-                            self.editor.DeselectAllLayers();
-                        }
-
-                        else {
-                            self.panel.RedrawCurrentContentTab();
-                        }
-                    }
+                    self.on_set_layer_property(response, key, value, id, parent_id);
 
                     if (callback) {
                         callback();
@@ -349,6 +339,49 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 params
             );
         })(this);
+    };
+
+    this.on_set_layer_property = function (response, key, value, id, parent_id="") {
+        if (!Dash.Validate.Response(response)) {
+            this.toolbar.ReEnableToggle(key);
+
+            return;
+        }
+
+        this.on_data(response);
+
+        if (key === "display_name" || key === "text_value") {
+            this.layers[id].UpdateLabel();
+        }
+
+        var display_name;
+
+        if (parent_id) {
+            var imported_context = this.editor.data["layers"]["data"][parent_id]["imported_context"];
+
+            display_name = (imported_context["layer_overrides"][id] || {})["display_name"] || imported_context["layers"]["data"][id]["display_name"];
+        }
+
+        else {
+            display_name = this.get_data()["data"][id]["display_name"];
+        }
+
+        if (key !== "layer_order") {
+            this.editor.AddToLog("[" + display_name + "] Set " + "'" + key + "' to '" + value + "'");
+            this.editor.UpdateCanvasPrimitive(key, value, id);
+        }
+
+        this.toolbar.ReEnableToggle(key);
+
+        if (key === "hidden" || key === "locked") {
+            if (value) {
+                this.editor.DeselectAllLayers();
+            }
+
+            else {
+                this.panel.RedrawCurrentContentTab();
+            }
+        }
     };
 
     this.redraw_layers = function (select=false) {

@@ -243,7 +243,11 @@ class Layer:
         else:
             data["imported_context"] = self.imported_context_data
 
-        data["imported_context"]["linked"] = imported_context["linked"] if "linked" in imported_context else True
+            for layer_id in self.imported_context_data["layers"]["data"]:
+                # Add this here because it doesn't belong in the ToDict data for
+                # layers in general, only in this context. Including it makes it
+                # more consistent to parse this against the override on the front end.
+                self.imported_context_data["layers"]["data"][layer_id]["linked"] = True
 
         # These are overrides per layer (in the imported context)
         data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}
@@ -273,6 +277,16 @@ class Layer:
             if layer_data["type"] == "text":
                 continue  # Not concerned about text - text's width_norm is 0.9 by default, and that doesn't mean it's all filled
 
+            if layer_data["type"] == "context":
+                from Dash.Utils import ClientAlert
+
+                # TODO: We need to add support for this, it's just very complicated because of the
+                #  need to handle overrides recursively and I don't have enough time to do it now
+                raise ClientAlert(
+                    "The context you are trying to import has its own imported context(s).\n"
+                    "Importing contexts with nested contexts is complex and not yet supported."
+                )
+
             width_norm = layers["data"][layer_id]["width_norm"]
 
             if width_norm > highest_width_norm:
@@ -296,11 +310,6 @@ class Layer:
         return data
 
     def context_set_prop(self, key, value, imported_context_layer_id=""):
-        if key == "linked":
-            self.data["imported_context"][key] = value
-
-            return
-
         if key == "layer_order":
             if type(value) is str:
                 from json import loads
@@ -330,12 +339,20 @@ class Layer:
 
             return
 
+        # Change to nested layer in parent (imported context)
         if not imported_context_layer_id:
             raise ValueError("Imported Context Layer ID is required")
 
         if imported_context_layer_id not in self.data["imported_context"]["layer_overrides"]:
             self.data["imported_context"]["layer_overrides"][imported_context_layer_id] = {}
 
+        if key in self.str_keys or key in self.bool_keys:
+            self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = value
+
+        elif key in self.float_keys:
+            self.update_context_child_float(key, value, imported_context_layer_id)
+
+    def update_context_child_float(self, key, value, imported_context_layer_id):
         if key not in self.data["imported_context"]["layer_overrides"][imported_context_layer_id]:
             self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = 0
 

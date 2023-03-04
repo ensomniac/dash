@@ -62,12 +62,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.draw_properties(true);
         this.on_opacity_change(this.get_value("opacity"));
 
-        if (this.data["hidden"]) {
-            this.on_hidden_change(this.data["hidden"]);
+        var hidden = this.get_value("hidden");
+        var locked = this.get_value("locked");
+
+        if (hidden) {
+            this.on_hidden_change(hidden);
         }
 
-        if (this.data["locked"]) {
-            this.on_locked_change(this.data["locked"]);
+        if (locked) {
+            this.on_locked_change(locked);
         }
 
         this.setup_connections();
@@ -88,7 +91,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.Update = function (key, value) {
-        if ((key !== "opacity" && this.data[key] === value) || key === "display_name") {
+        if (key === "display_name") {
             return;
         }
 
@@ -105,6 +108,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         else if (key === "hidden") {
             this.on_hidden_change(value);
+        }
+
+        else if (key === "linked" && this.parent_id) {
+            this.on_linked_change(value);
         }
 
         if (!value && (key === "locked" || key === "hidden")) {
@@ -148,7 +155,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.Select = function (from_click=false) {
-        if (this.selected || this.data["locked"]) {
+        if (this.selected || this.get_value("locked")) {
             return;
         }
 
@@ -197,7 +204,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.OnDragStart = function (event) {
-        if (this.drag_active || this.data["locked"]) {
+        if (this.drag_active || this.get_value("locked")) {
             return;
         }
 
@@ -224,7 +231,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.OnDrag = function (event) {
-        if (!this.drag_active || this.data["locked"]) {
+        if (!this.drag_active || this.get_value("locked")) {
             return;
         }
 
@@ -264,7 +271,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.OnDragStop = function () {
-        if (!this.drag_active || this.data["locked"]) {
+        if (!this.drag_active || this.get_value("locked")) {
             return;
         }
 
@@ -359,7 +366,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
 
-        var override = (parent_data["imported_context"]["layer_overrides"][this.id] || {})[key] || 0;
+        var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
+
+        if (key === "hidden" || key === "locked") {
+            return key in layer_overrides ? layer_overrides[key] : value;
+        }
+
+        var override = layer_overrides[key] || 0;
 
         if (key === "opacity") {
             var parent_opacity = parent_data["opacity"];
@@ -387,6 +400,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         else {
             this.html.show();
         }
+    };
+
+    this.on_linked_change = function (linked) {
+        // TODO: this function for update, and probably more
     };
 
     // Meant to be overridden by member classes
@@ -609,7 +626,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
-                if (!self.data["locked"]) {
+                if (!self.get_value("locked")) {
                     self.Select(true);
                 }
 
@@ -619,7 +636,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             self.html.on("mousedown", function () {
-                if (!self.data["locked"]) {
+                if (!self.get_value("locked")) {
                     self.Select(true);
                 }
             });

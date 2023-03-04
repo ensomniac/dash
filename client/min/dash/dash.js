@@ -28827,11 +28827,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.html.css(css);
         this.draw_properties(true);
         this.on_opacity_change(this.get_value("opacity"));
-        if (this.data["hidden"]) {
-            this.on_hidden_change(this.data["hidden"]);
+        var hidden = this.get_value("hidden");
+        var locked = this.get_value("locked");
+        if (hidden) {
+            this.on_hidden_change(hidden);
         }
-        if (this.data["locked"]) {
-            this.on_locked_change(this.data["locked"]);
+        if (locked) {
+            this.on_locked_change(locked);
         }
         this.setup_connections();
     };
@@ -28847,7 +28849,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
     this.Update = function (key, value) {
-        if ((key !== "opacity" && this.data[key] === value) || key === "display_name") {
+        if (key === "display_name") {
             return;
         }
         this.data = this.layer.GetData();
@@ -28860,6 +28862,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         else if (key === "hidden") {
             this.on_hidden_change(value);
+        }
+        else if (key === "linked" && this.parent_id) {
+            this.on_linked_change(value);
         }
         if (!value && (key === "locked" || key === "hidden")) {
             this.Select();
@@ -28892,7 +28897,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.selected = false;
     };
     this.Select = function (from_click=false) {
-        if (this.selected || this.data["locked"]) {
+        if (this.selected || this.get_value("locked")) {
             return;
         }
         if (from_click && this.data["type"] === "context") {
@@ -28928,7 +28933,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.height_px_max = this.canvas.GetHeight() * 2;
     };
     this.OnDragStart = function (event) {
-        if (this.drag_active || this.data["locked"]) {
+        if (this.drag_active || this.get_value("locked")) {
             return;
         }
         this.drag_active = true;
@@ -28949,7 +28954,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.set_drag_state();
     };
     this.OnDrag = function (event) {
-        if (!this.drag_active || this.data["locked"]) {
+        if (!this.drag_active || this.get_value("locked")) {
             return;
         }
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];
@@ -28977,7 +28982,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return true;
     };
     this.OnDragStop = function () {
-        if (!this.drag_active || this.data["locked"]) {
+        if (!this.drag_active || this.get_value("locked")) {
             return;
         }
         this.drag_active = false;
@@ -29053,7 +29058,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
-        var override = (parent_data["imported_context"]["layer_overrides"][this.id] || {})[key] || 0;
+        var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
+        if (key === "hidden" || key === "locked") {
+            return key in layer_overrides ? layer_overrides[key] : value;
+        }
+        var override = layer_overrides[key] || 0;
         if (key === "opacity") {
             var parent_opacity = parent_data["opacity"];
             if (override) {
@@ -29074,6 +29083,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         else {
             this.html.show();
         }
+    };
+    this.on_linked_change = function (linked) {
+        // TODO: this function for update, and probably more
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
@@ -29249,7 +29261,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.setup_connections = function () {
         (function (self) {
             self.html.on("click", function (e) {
-                if (!self.data["locked"]) {
+                if (!self.get_value("locked")) {
                     self.Select(true);
                 }
                 e.stopPropagation();
@@ -29257,7 +29269,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             self.html.on("mousedown", function () {
-                if (!self.data["locked"]) {
+                if (!self.get_value("locked")) {
                     self.Select(true);
                 }
             });
@@ -29480,7 +29492,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
-    this.min_width = Dash.Size.ColumnWidth * 2;
+    this.min_width = Dash.Size.ColumnWidth * 2.25;
     // Update if things are added to the box
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
@@ -29724,6 +29736,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.selected = false;
     this.hidden_icon = null;
     this.locked_icon = null;
+    this.linked_icon = null;
     this.icon_size_mult = 0.8;
     this.html = $("<div></div>");
     this.color = this.layers.color;
@@ -29732,6 +29745,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
     this.icon_color = this.color.StrokeLight;
+    this.child_left_margin = Dash.Size.Padding;
     this.setup_styles = function () {
         this.html.css({
             "padding": Dash.Size.Padding,
@@ -29743,12 +29757,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.append(Dash.Gui.GetFlexSpacer());
         this.add_icon_area();
         this.RefreshConnections();
-        var data = this.get_data();
-        if (data["hidden"]) {
-            this.ToggleHidden(data["hidden"]);
+        var hidden = this.get_value("hidden");
+        var locked = this.get_value("locked");
+        var linked = this.get_value("linked");
+        if (hidden) {
+            this.ToggleHidden(hidden);
         }
-        if (data["locked"]) {
-            this.ToggleLocked(data["locked"]);
+        if (locked) {
+            this.ToggleLocked(locked);
+        }
+        if (!linked) {
+            this.ToggleLinked(linked);
         }
     };
     this.GetID = function () {
@@ -29765,6 +29784,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
     this.GetData = function () {
         return this.get_data();
+    };
+    this.GetValue = function (key, default_value=null) {
+        return this.get_value(key, default_value);
     };
     this.GetParentData = function () {
         return this.get_parent_data();
@@ -29816,10 +29838,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "cursor": "auto"
         });
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.GetID());
+            this.editor.SetCanvasActivePrimitive(this.id);
         }
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Selected layer: " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Selected layer: " + this.get_value("display_name"));
             this.layers.UpdateToolbarIconStates();
         }
         this.panel.SwitchContentToEditTab();
@@ -29832,7 +29854,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.hidden_icon.html.hide();
         }
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_value("display_name"));
             this.set_data("hidden", hidden);
         }
     };
@@ -29844,8 +29866,20 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.locked_icon.html.hide();
         }
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_value("display_name"));
             this.set_data("locked", locked);
+        }
+    };
+    this.ToggleLinked = function (linked) {
+        if (linked) {
+            this.linked_icon.html.hide();
+        }
+        else {
+            this.linked_icon.html.show();
+        }
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog("Layer " + (linked ? "linked" : "unlinked") + ": " + this.get_value("display_name"));
+            this.set_data("linked", linked);
         }
     };
     this.RefreshConnections = function () {
@@ -29857,13 +29891,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         })(this);
     };
     this.UpdateLabel = function () {
-        this.input.SetText(this.get_data()["display_name"] || "");
+        this.input.SetText(this.get_value("display_name"));
     };
     this.add_type_icon = function () {
         var type_icon = this.get_icon(this.get_type_icon_name());
         var css = {"margin-right": Dash.Size.Padding * 0.5};
         if (this.parent_id) {
-            css["margin-left"] = Dash.Size.Padding;
+            css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
             type_icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
@@ -29873,10 +29907,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.append(type_icon.html);
     };
     this.add_input = function () {
-        var display_name = this.get_data()["display_name"];
+        var display_name = this.get_value("display_name");
         this.input = new Dash.Gui.Input(display_name, this.color);
         this.input.html.css({
-            "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
+            // Allow some extra space to easily select the row, as well as showing icon toggles when applicable
+            "width": (Dash.Size.ColumnWidth * 1.25) - (this.parent_id ? this.child_left_margin : 0),  // Match the ends
             "box-shadow": "none",
             "border": "1px solid " + this.color.PinstripeDark
         });
@@ -29901,17 +29936,25 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
         this.hidden_icon = this.get_icon("hidden");
         this.locked_icon = this.get_icon("lock");
+        this.linked_icon = this.get_icon("unlink");
         this.locked_icon.html.css({
             "margin-left": Dash.Size.Padding
         });
-        if (!this.get_data()["hidden"]) {
+        this.linked_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+        if (!this.get_value("hidden")) {
             this.hidden_icon.html.hide();
         }
-        if (!this.get_data()["locked"]) {
+        if (!this.get_value("locked")) {
             this.locked_icon.html.hide();
+        }
+        if (this.get_value("linked")) {
+            this.linked_icon.html.hide();
         }
         this.icon_area.append(this.hidden_icon.html);
         this.icon_area.append(this.locked_icon.html);
+        this.icon_area.append(this.linked_icon.html);
         this.html.append(this.icon_area);
     };
     this.get_icon = function (icon_name) {
@@ -29948,6 +29991,25 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return {};
         }
         return this.layers.get_data()["data"][this.parent_id];
+    };
+    this.get_value = function (key, default_value=null) {
+        if (default_value === null) {
+            default_value = (
+                  key === "display_name" ? ""
+                : key === "hidden" || key === "locked" ? false
+                : key === "linked" ? true
+                : default_value
+            );
+        }
+        var data = this.get_data();
+        var bool = typeof default_value === "boolean";
+        var value = bool ? (key in data ? data[key] : default_value) : (data[key] || default_value);
+        if (!this.parent_id) {
+            return value;
+        }
+        var imported_context = this.get_parent_data()["imported_context"];
+        var layer_overrides = imported_context["layer_overrides"][id] || {};
+        return bool ? (key in layer_overrides ? layer_overrides[key] : value) : (layer_overrides[key] || value);
     };
     this.setup_styles();
 }
@@ -29999,9 +30061,21 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id, parent_id);
         var data = this.layers[id].GetData();
         if (data["type"] === "context") {
-            // TODO: if imported context is this context, then the layer ids will be the same,
-            //  which will be a problem (same applies to primitives, since they also rely on layer IDs)
+            var imported_layers = this.layers[id].GetData()["imported_context"]["layers"]["data"];
+            // TODO: If imported context is *this* context, then the layer ids will be the same,
+            //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
+            //  but as of writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
             for (var imported_id of this.layers[id].GetChildrenLayerOrder()) {
+                if (imported_layers[imported_id]["type"] === "context") {
+                    alert(
+                        "A context has been imported that has its own imported context(s).\n" +
+                        "Importing nested contexts within contexts is complex and not yet supported.\n" +
+                        "The nested context(s) within the imported context will be ignored."
+                    );
+                    // TODO: We need to add support for this, it's just very complicated because of the
+                    //  need to handle overrides recursively and I don't have enough time to do it now
+                    continue;
+                }
                 this.AddLayer(imported_id, false, id);
             }
         }
@@ -30065,19 +30139,20 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         layer.ToggleLocked(locked);
     };
+    this.ToggleLinked = function (linked) {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
+            this.toolbar.ReEnableToggle("linked");
+            return;
+        }
+        layer.ToggleLinked(linked);
+    };
     this.GetSelectedID = function () {
         var layer = this.GetSelectedLayer();
         if (layer) {
             return layer.GetID();
         }
         return "";
-    };
-    this.GetSelectedData = function () {
-        var layer = this.GetSelectedLayer();
-        if (layer) {
-            return layer.GetData();
-        }
-        return null;
     };
     this.GetSelectedLayer = function () {
         for (var id in this.layers) {
@@ -30193,27 +30268,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             Dash.Request(
                 self,
                 function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        self.toolbar.ReEnableToggle(key);
-                        return;
-                    }
-                    self.on_data(response);
-                    if (key === "display_name" || key === "text_value") {
-                        self.layers[id].UpdateLabel();
-                    }
-                    if (key !== "layer_order") {
-                        self.editor.AddToLog("[" + self.get_data(parent_id)["data"][id]["display_name"] + "] Set " + "'" + key + "' to '" + value + "'");
-                        self.editor.UpdateCanvasPrimitive(key, value, id);
-                    }
-                    self.toolbar.ReEnableToggle(key);
-                    if (key === "hidden" || key === "locked") {
-                        if (value) {
-                            self.editor.DeselectAllLayers();
-                        }
-                        else {
-                            self.panel.RedrawCurrentContentTab();
-                        }
-                    }
+                    self.on_set_layer_property(response, key, value, id, parent_id);
                     if (callback) {
                         callback();
                     }
@@ -30222,6 +30277,37 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 params
             );
         })(this);
+    };
+    this.on_set_layer_property = function (response, key, value, id, parent_id="") {
+        if (!Dash.Validate.Response(response)) {
+            this.toolbar.ReEnableToggle(key);
+            return;
+        }
+        this.on_data(response);
+        if (key === "display_name" || key === "text_value") {
+            this.layers[id].UpdateLabel();
+        }
+        var display_name;
+        if (parent_id) {
+            var imported_context = this.editor.data["layers"]["data"][parent_id]["imported_context"];
+            display_name = (imported_context["layer_overrides"][id] || {})["display_name"] || imported_context["layers"]["data"][id]["display_name"];
+        }
+        else {
+            display_name = this.get_data()["data"][id]["display_name"];
+        }
+        if (key !== "layer_order") {
+            this.editor.AddToLog("[" + display_name + "] Set " + "'" + key + "' to '" + value + "'");
+            this.editor.UpdateCanvasPrimitive(key, value, id);
+        }
+        this.toolbar.ReEnableToggle(key);
+        if (key === "hidden" || key === "locked") {
+            if (value) {
+                this.editor.DeselectAllLayers();
+            }
+            else {
+                this.panel.RedrawCurrentContentTab();
+            }
+        }
     };
     this.redraw_layers = function (select=false) {
         this.redrawing = true;
@@ -30628,14 +30714,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.add_icons();
     };
     this.UpdateIconStates = function () {
-        var selected_layer_data = this.get_data();
-        var revert = !Dash.Validate.Object(selected_layer_data);
+        var selected_layer = this.layers.GetSelectedLayer();
+        var revert = !selected_layer;
         for (var key in this.icon_toggles) {
-            if (revert || !(key in selected_layer_data)) {
+            if (revert) {
                 this.icon_toggles[key].RevertToDefaultState(true, revert);
                 continue;
             }
-            if (selected_layer_data[key] !== this.icon_toggles[key].IsChecked()) {
+            if (selected_layer.GetValue(key) !== this.icon_toggles[key].IsChecked()) {
                 this.icon_toggles[key].Toggle(true);
             }
         }
@@ -30647,11 +30733,11 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.icon_toggles[key].SetLoading(false);
         this.icon_toggles[key].Enable();
     };
-    this.add_icon_toggle = function (data, key, true_icon_name, false_icon_name, default_state=false) {
+    this.add_icon_toggle = function (selected_layer, key, true_icon_name, false_icon_name, default_state=false) {
         this.icon_toggles[key] = (function (self) {
             return new Dash.Gui.Checkbox(
                 "",
-                key in data ? data[key] : default_state,
+                selected_layer ? selected_layer.GetValue(key, default_state) : default_state,
                 self.color,
                 "Toggle " + key.Title(),
                 self,
@@ -30663,6 +30749,9 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                     }
                     else if (key === "locked") {
                         self.layers.ToggleLocked(checkbox.IsChecked());
+                    }
+                    else if (key === "linked") {
+                        self.layers.ToggleLinked(checkbox.IsChecked());
                     }
                     else {
                         console.error("Unhandled key:", key);
@@ -30749,12 +30838,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 }
             );
         })(this);
-        var selected_layer_data = this.get_data();
-        this.add_icon_toggle(selected_layer_data, "hidden", "visible", "hidden");
-        this.add_icon_toggle(selected_layer_data, "locked", "unlock_alt", "lock");
-    };
-    this.get_data = function () {
-        return this.layers.GetSelectedData() || {};
+        var selected_layer = this.layers.GetSelectedLayer();
+        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
+        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
     this.setup_styles();
 }

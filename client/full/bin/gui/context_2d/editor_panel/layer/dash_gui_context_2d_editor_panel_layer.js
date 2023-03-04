@@ -7,6 +7,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.selected = false;
     this.hidden_icon = null;
     this.locked_icon = null;
+    this.linked_icon = null;
     this.icon_size_mult = 0.8;
     this.html = $("<div></div>");
     this.color = this.layers.color;
@@ -15,6 +16,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.icon_area = $("<div></div>");
     this.can_edit = this.layers.can_edit;
     this.icon_color = this.color.StrokeLight;
+    this.child_left_margin = Dash.Size.Padding;
 
     this.setup_styles = function () {
         this.html.css({
@@ -31,14 +33,20 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.add_icon_area();
         this.RefreshConnections();
 
-        var data = this.get_data();
+        var hidden = this.get_value("hidden");
+        var locked = this.get_value("locked");
+        var linked = this.get_value("linked");
 
-        if (data["hidden"]) {
-            this.ToggleHidden(data["hidden"]);
+        if (hidden) {
+            this.ToggleHidden(hidden);
         }
 
-        if (data["locked"]) {
-            this.ToggleLocked(data["locked"]);
+        if (locked) {
+            this.ToggleLocked(locked);
+        }
+
+        if (!linked) {
+            this.ToggleLinked(linked);
         }
     };
 
@@ -60,6 +68,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
     this.GetData = function () {
         return this.get_data();
+    };
+
+    this.GetValue = function (key, default_value=null) {
+        return this.get_value(key, default_value);
     };
 
     this.GetParentData = function () {
@@ -130,11 +142,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.GetID());
+            this.editor.SetCanvasActivePrimitive(this.id);
         }
 
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Selected layer: " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Selected layer: " + this.get_value("display_name"));
 
             this.layers.UpdateToolbarIconStates();
         }
@@ -152,7 +164,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Layer " + (hidden ? "hidden" : "shown") + ": " + this.get_value("display_name"));
 
             this.set_data("hidden", hidden);
         }
@@ -168,9 +180,25 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         if (!this.layers.redrawing) {
-            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_data()["display_name"]);
+            this.editor.AddToLog("Layer " + (locked ? "locked" : "unlocked") + ": " + this.get_value("display_name"));
 
             this.set_data("locked", locked);
+        }
+    };
+
+    this.ToggleLinked = function (linked) {
+        if (linked) {
+            this.linked_icon.html.hide();
+        }
+
+        else {
+            this.linked_icon.html.show();
+        }
+
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog("Layer " + (linked ? "linked" : "unlinked") + ": " + this.get_value("display_name"));
+
+            this.set_data("linked", linked);
         }
     };
 
@@ -185,7 +213,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.UpdateLabel = function () {
-        this.input.SetText(this.get_data()["display_name"] || "");
+        this.input.SetText(this.get_value("display_name"));
     };
 
     this.add_type_icon = function () {
@@ -193,7 +221,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var css = {"margin-right": Dash.Size.Padding * 0.5};
 
         if (this.parent_id) {
-            css["margin-left"] = Dash.Size.Padding;
+            css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
 
             type_icon.icon_html.css({
@@ -207,12 +235,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.add_input = function () {
-        var display_name = this.get_data()["display_name"];
+        var display_name = this.get_value("display_name");
 
         this.input = new Dash.Gui.Input(display_name, this.color);
 
         this.input.html.css({
-            "width": Dash.Size.ColumnWidth * 1.25,  // Allow some extra space to easily select the row, as well as add other elements later
+            // Allow some extra space to easily select the row, as well as showing icon toggles when applicable
+            "width": (Dash.Size.ColumnWidth * 1.25) - (this.parent_id ? this.child_left_margin : 0),  // Match the ends
             "box-shadow": "none",
             "border": "1px solid " + this.color.PinstripeDark
         });
@@ -244,21 +273,31 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         this.hidden_icon = this.get_icon("hidden");
         this.locked_icon = this.get_icon("lock");
+        this.linked_icon = this.get_icon("unlink");
 
         this.locked_icon.html.css({
             "margin-left": Dash.Size.Padding
         });
 
-        if (!this.get_data()["hidden"]) {
+        this.linked_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+
+        if (!this.get_value("hidden")) {
             this.hidden_icon.html.hide();
         }
 
-        if (!this.get_data()["locked"]) {
+        if (!this.get_value("locked")) {
             this.locked_icon.html.hide();
+        }
+
+        if (this.get_value("linked")) {
+            this.linked_icon.html.hide();
         }
 
         this.icon_area.append(this.hidden_icon.html);
         this.icon_area.append(this.locked_icon.html);
+        this.icon_area.append(this.linked_icon.html);
 
         this.html.append(this.icon_area);
     };
@@ -308,6 +347,30 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         return this.layers.get_data()["data"][this.parent_id];
+    };
+
+    this.get_value = function (key, default_value=null) {
+        if (default_value === null) {
+            default_value = (
+                  key === "display_name" ? ""
+                : key === "hidden" || key === "locked" ? false
+                : key === "linked" ? true
+                : default_value
+            );
+        }
+
+        var data = this.get_data();
+        var bool = typeof default_value === "boolean";
+        var value = bool ? (key in data ? data[key] : default_value) : (data[key] || default_value);
+
+        if (!this.parent_id) {
+            return value;
+        }
+
+        var imported_context = this.get_parent_data()["imported_context"];
+        var layer_overrides = imported_context["layer_overrides"][id] || {};
+
+        return bool ? (key in layer_overrides ? layer_overrides[key] : value) : (layer_overrides[key] || value);
     };
 
     this.setup_styles();
