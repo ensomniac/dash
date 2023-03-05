@@ -36,12 +36,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        this.set_width_px();
-        this.set_height_px();
-
-        // After the above two are set
-        this.set_top_px();
-        this.set_left_px();
+        this.set_init(false);
 
         var css = {
             "position": "absolute",
@@ -111,7 +106,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         else if (key === "linked" && this.parent_id) {
-            this.on_linked_change(value);
+            this.on_linked_change();
         }
 
         if (!value && (key === "locked" || key === "hidden")) {
@@ -366,9 +361,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
 
+        if (key !== "linked" && !this.get_value("linked")) {
+            return value;
+        }
+
         var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
 
-        if (key === "hidden" || key === "locked") {
+        if (key === "hidden" || key === "locked" || key === "linked") {
             return key in layer_overrides ? layer_overrides[key] : value;
         }
 
@@ -392,6 +391,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return value + override;
     };
 
+    this.set_init = function (draw=true) {
+        this.set_width_px();
+        this.set_height_px();
+
+        // After the above two are set
+        this.set_top_px();
+        this.set_left_px();
+
+        if (draw) {
+            this.draw_properties(true);
+        }
+    };
+
     this.on_hidden_change = function (hidden) {
         if (hidden) {
             this.html.hide();
@@ -402,8 +414,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
 
-    this.on_linked_change = function (linked) {
-        // TODO: this function for update, and probably more
+    this.on_linked_change = function () {
+        this.set_init();  // Redraw - anything else?
     };
 
     // Meant to be overridden by member classes

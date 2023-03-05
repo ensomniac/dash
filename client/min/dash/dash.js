@@ -28280,8 +28280,9 @@ function DashGuiContext2DCanvas (editor) {
         }
         if (this.primitives[id].data["type"] === "context") {
             var imported_context = this.primitives[id].data["imported_context"];
+            var default_order = imported_context["layers"]["order"];
             // Do not use this.primitives[id].layer.GetChildrenLayerOrder() here
-            var order = (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+            var order = !this.primitives[id].get_value("linked") ? default_order : (imported_context["context_overrides"]["layer_order"] || default_order);
             for (var layer_id of order) {
                 this.RemovePrimitive(layer_id, false);
             }
@@ -28808,11 +28809,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.call_style()) {
             return;
         }
-        this.set_width_px();
-        this.set_height_px();
-        // After the above two are set
-        this.set_top_px();
-        this.set_left_px();
+        this.set_init(false);
         var css = {
             "position": "absolute",
             "z-index": this.get_z_index(),
@@ -28864,7 +28861,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.on_hidden_change(value);
         }
         else if (key === "linked" && this.parent_id) {
-            this.on_linked_change(value);
+            this.on_linked_change();
         }
         if (!value && (key === "locked" || key === "hidden")) {
             this.Select();
@@ -29058,8 +29055,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
+        if (key !== "linked" && !this.get_value("linked")) {
+            return value;
+        }
         var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
-        if (key === "hidden" || key === "locked") {
+        if (key === "hidden" || key === "locked" || key === "linked") {
             return key in layer_overrides ? layer_overrides[key] : value;
         }
         var override = layer_overrides[key] || 0;
@@ -29076,6 +29076,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         return value + override;
     };
+    this.set_init = function (draw=true) {
+        this.set_width_px();
+        this.set_height_px();
+        // After the above two are set
+        this.set_top_px();
+        this.set_left_px();
+        if (draw) {
+            this.draw_properties(true);
+        }
+    };
     this.on_hidden_change = function (hidden) {
         if (hidden) {
             this.html.hide();
@@ -29084,8 +29094,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.html.show();
         }
     };
-    this.on_linked_change = function (linked) {
-        // TODO: this function for update, and probably more
+    this.on_linked_change = function () {
+        this.set_init();  // Redraw - anything else?
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
@@ -29802,14 +29812,16 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return [];
         }
         var imported_context = this.get_parent_data()["imported_context"];
-        return (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+        var default_order = imported_context["layers"]["order"];
+        return (!this.get_value("linked") ? default_order : (imported_context["context_overrides"]["layer_order"] || default_order));
     };
     this.GetChildrenLayerOrder = function () {
         var data = this.get_data();
         if (data["type"] !== "context") {
             return [];
         }
-        return (data["imported_context"]["context_overrides"]["layer_order"] || data["imported_context"]["layers"]["order"]);
+        var default_order = data["imported_context"]["layers"]["order"];
+        return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
     this.SetData = function (key, value) {
         return this.set_data(key, value);
@@ -29879,7 +29891,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
         if (!this.layers.redrawing) {
             this.editor.AddToLog("Layer " + (linked ? "linked" : "unlinked") + ": " + this.get_value("display_name"));
-            this.set_data("linked", linked);
+            (function (self) {
+                self.set_data(
+                    "linked",
+                    linked,
+                    function () {
+                        self.ToggleHidden(self.get_value("hidden"));
+                        self.ToggleLocked(self.get_value("locked"));
+                        self.UpdateLabel();
+                    }
+                );
+            })(this);
         }
     };
     this.RefreshConnections = function () {
@@ -29980,8 +30002,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.on_input_submit = function () {
         this.set_data("display_name", this.input.Text().trim());
     };
-    this.set_data = function (key, value) {
-        this.layers.set_layer_property(key, value, this.id, this.parent_id);
+    this.set_data = function (key, value, callback=null) {
+        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback);
     };
     this.get_data = function () {
         return this.layers.get_data(this.parent_id)["data"][this.id];
@@ -30005,6 +30027,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var bool = typeof default_value === "boolean";
         var value = bool ? (key in data ? data[key] : default_value) : (data[key] || default_value);
         if (!this.parent_id) {
+            return value;
+        }
+        if (key !== "linked" && !this.get_value("linked")) {
             return value;
         }
         var imported_context = this.get_parent_data()["imported_context"];
@@ -30290,7 +30315,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var display_name;
         if (parent_id) {
             var imported_context = this.editor.data["layers"]["data"][parent_id]["imported_context"];
-            display_name = (imported_context["layer_overrides"][id] || {})["display_name"] || imported_context["layers"]["data"][id]["display_name"];
+            var overrides = imported_context["layer_overrides"][id] || {};
+            var layer_data = imported_context["layers"]["data"][id];
+            var linked = "linked" in overrides ? overrides["linked"] : layer_data["linked"];
+            display_name = linked ? (overrides["display_name"] || layer_data["display_name"]) : layer_data["display_name"];
         }
         else {
             display_name = this.get_data()["data"][id]["display_name"];
@@ -30716,10 +30744,17 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.UpdateIconStates = function () {
         var selected_layer = this.layers.GetSelectedLayer();
         var revert = !selected_layer;
+        var parent_id = selected_layer ? selected_layer.GetParentID() : "";
         for (var key in this.icon_toggles) {
             if (revert) {
                 this.icon_toggles[key].RevertToDefaultState(true, revert);
                 continue;
+            }
+            if (!parent_id && key === "linked") {
+                this.icon_toggles[key].Disable();
+            }
+            else {
+                this.icon_toggles[key].Enable();
             }
             if (selected_layer.GetValue(key) !== this.icon_toggles[key].IsChecked()) {
                 this.icon_toggles[key].Toggle(true);
@@ -30971,6 +31006,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var value = selected_layer.GetData()[key];
         var parent_data = selected_layer.GetParentData();
         if (!Dash.Validate.Object(parent_data)) {
+            return value;
+        }
+        if (key !== "linked" && !this.get_value("linked")) {
             return value;
         }
         var override = (parent_data["imported_context"]["layer_overrides"][selected_layer.GetID()] || {})[key] || 0;

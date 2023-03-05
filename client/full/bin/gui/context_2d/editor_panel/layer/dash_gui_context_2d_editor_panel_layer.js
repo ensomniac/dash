@@ -92,8 +92,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         var imported_context = this.get_parent_data()["imported_context"];
+        var default_order = imported_context["layers"]["order"];
 
-        return (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+        return (!this.get_value("linked") ? default_order : (imported_context["context_overrides"]["layer_order"] || default_order));
     };
 
     this.GetChildrenLayerOrder = function () {
@@ -103,7 +104,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return [];
         }
 
-        return (data["imported_context"]["context_overrides"]["layer_order"] || data["imported_context"]["layers"]["order"]);
+        var default_order = data["imported_context"]["layers"]["order"];
+
+        return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
 
     this.SetData = function (key, value) {
@@ -198,7 +201,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (!this.layers.redrawing) {
             this.editor.AddToLog("Layer " + (linked ? "linked" : "unlinked") + ": " + this.get_value("display_name"));
 
-            this.set_data("linked", linked);
+            (function (self) {
+                self.set_data(
+                    "linked",
+                    linked,
+                    function () {
+                        self.ToggleHidden(self.get_value("hidden"));
+                        self.ToggleLocked(self.get_value("locked"));
+                        self.UpdateLabel();
+                    }
+                );
+            })(this);
         }
     };
 
@@ -333,8 +346,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.set_data("display_name", this.input.Text().trim());
     };
 
-    this.set_data = function (key, value) {
-        this.layers.set_layer_property(key, value, this.id, this.parent_id);
+    this.set_data = function (key, value, callback=null) {
+        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback);
     };
 
     this.get_data = function () {
@@ -364,6 +377,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var value = bool ? (key in data ? data[key] : default_value) : (data[key] || default_value);
 
         if (!this.parent_id) {
+            return value;
+        }
+
+        if (key !== "linked" && !this.get_value("linked")) {
             return value;
         }
 

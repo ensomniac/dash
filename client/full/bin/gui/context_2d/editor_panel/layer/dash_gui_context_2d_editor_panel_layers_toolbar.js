@@ -22,12 +22,21 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.UpdateIconStates = function () {
         var selected_layer = this.layers.GetSelectedLayer();
         var revert = !selected_layer;
+        var parent_id = selected_layer ? selected_layer.GetParentID() : "";
 
         for (var key in this.icon_toggles) {
             if (revert) {
                 this.icon_toggles[key].RevertToDefaultState(true, revert);
 
                 continue;
+            }
+
+            if (!parent_id && key === "linked") {
+                this.icon_toggles[key].Disable();
+            }
+
+            else {
+                this.icon_toggles[key].Enable();
             }
 
             if (selected_layer.GetValue(key) !== this.icon_toggles[key].IsChecked()) {

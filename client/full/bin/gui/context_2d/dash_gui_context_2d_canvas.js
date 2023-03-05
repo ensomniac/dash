@@ -159,9 +159,10 @@ function DashGuiContext2DCanvas (editor) {
 
         if (this.primitives[id].data["type"] === "context") {
             var imported_context = this.primitives[id].data["imported_context"];
+            var default_order = imported_context["layers"]["order"];
 
             // Do not use this.primitives[id].layer.GetChildrenLayerOrder() here
-            var order = (imported_context["context_overrides"]["layer_order"] || imported_context["layers"]["order"]);
+            var order = !this.primitives[id].get_value("linked") ? default_order : (imported_context["context_overrides"]["layer_order"] || default_order);
 
             for (var layer_id of order) {
                 this.RemovePrimitive(layer_id, false);

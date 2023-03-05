@@ -358,8 +358,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         if (parent_id) {
             var imported_context = this.editor.data["layers"]["data"][parent_id]["imported_context"];
+            var overrides = imported_context["layer_overrides"][id] || {};
+            var layer_data = imported_context["layers"]["data"][id];
+            var linked = "linked" in overrides ? overrides["linked"] : layer_data["linked"];
 
-            display_name = (imported_context["layer_overrides"][id] || {})["display_name"] || imported_context["layers"]["data"][id]["display_name"];
+            display_name = linked ? (overrides["display_name"] || layer_data["display_name"]) : layer_data["display_name"];
         }
 
         else {

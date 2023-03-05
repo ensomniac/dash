@@ -163,6 +163,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return value;
         }
 
+        if (key !== "linked" && !this.get_value("linked")) {
+            return value;
+        }
+
         var override = (parent_data["imported_context"]["layer_overrides"][selected_layer.GetID()] || {})[key] || 0;
 
         if (!override) {

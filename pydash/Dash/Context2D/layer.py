@@ -333,7 +333,10 @@ class Layer:
             dif = abs(value - self.data[key])
 
             for layer_id in self.imported_context_data["layers"]["order"]:
-                self.update_context_children_overrides(key, value, layer_id, dif)
+                if not self.is_linked(layer_id):
+                    return  # Don't update overrides
+
+                self.update_context_children_state_overrides(key, value, layer_id, dif)
 
             self.data[key] = value
 
@@ -342,6 +345,9 @@ class Layer:
         # Change to nested layer in parent (imported context)
         if not imported_context_layer_id:
             raise ValueError("Imported Context Layer ID is required")
+
+        if key != "linked" and not self.is_linked(imported_context_layer_id):
+            return  # Don't update overrides
 
         if imported_context_layer_id not in self.data["imported_context"]["layer_overrides"]:
             self.data["imported_context"]["layer_overrides"][imported_context_layer_id] = {}
@@ -352,7 +358,15 @@ class Layer:
         elif key in self.float_keys:
             self.update_context_child_float(key, value, imported_context_layer_id)
 
+    def is_linked(self, imported_context_layer_id):
+        overrides = self.data["imported_context"]["layer_overrides"].get(imported_context_layer_id) or {}
+
+        return overrides["linked"] if "linked" in overrides else self.imported_context_data["layers"]["data"][imported_context_layer_id]["linked"]
+
     def update_context_child_float(self, key, value, imported_context_layer_id):
+        if not self.is_linked(imported_context_layer_id):
+            return  # Don't update overrides
+
         if key not in self.data["imported_context"]["layer_overrides"][imported_context_layer_id]:
             self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] = 0
 
@@ -375,7 +389,10 @@ class Layer:
         else:
             self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key] += dif
 
-    def update_context_children_overrides(self, key, value, layer_id, dif):
+    def update_context_children_state_overrides(self, key, value, layer_id, dif):
+        if not self.is_linked(layer_id):
+            return  # Don't update overrides
+
         if layer_id not in self.data["imported_context"]["layer_overrides"]:
             self.data["imported_context"]["layer_overrides"][layer_id] = {}
 
