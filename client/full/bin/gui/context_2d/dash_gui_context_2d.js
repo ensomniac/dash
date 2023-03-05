@@ -1,4 +1,4 @@
-function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
+function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     /**
      * Context2D editor element.
      * -------------------------
@@ -25,9 +25,9 @@ function DashGuiContext2D (obj_id, api, can_edit=true, color=null) {
      *                                       - contexts (all Context2D objects)
      *
      * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
-     * @param {string} api - API name for requests
-     * @param {boolean} can_edit - Determines whether buttons, inputs, etc will be disabled
-     * @param {DashColorSet} color - DashColorSet instance
+     * @param {boolean} can_edit - Determines whether buttons, inputs, etc will be disabled (default=true)
+     * @param {DashColorSet} color - DashColorSet instance (default=null)
+     * @param {string} api - API name for requests (default="Context2D")
      */
 
     this.obj_id = obj_id;
