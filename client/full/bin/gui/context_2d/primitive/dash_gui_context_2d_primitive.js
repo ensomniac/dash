@@ -559,6 +559,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (draw) {
             this.draw_properties();
+
+            if (this.type === "image") {
+                this.redraw_canvas_placeholder();
+            }
         }
 
         if (this.type === "text") {
