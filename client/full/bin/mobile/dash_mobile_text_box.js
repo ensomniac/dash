@@ -48,6 +48,10 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         this.setup_connections();
     };
 
+    this.AutoFocus = function () {
+        this.textarea.attr("autofocus", "autofocus");
+    };
+
     // Deliberately setting null as the default so that an empty string can be supplied
     this.GetText = function (line_break_replacement=null) {
         if (line_break_replacement === null && this.line_break_replacement !== null) {

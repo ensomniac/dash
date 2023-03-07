@@ -19,7 +19,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "overflow-x": "hidden"
         });
 
-        for (var key of ["general", ...this.content.PrimitiveTypes]) {
+        var key;
+
+        for (key of ["general", ...this.content.PrimitiveTypes]) {
+            this.add_context(key);
+        }
+
+        for (key in this.content.edit_tab_custom_context_cbs) {
             this.add_context(key);
         }
 
@@ -195,7 +201,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "html": $("<div></div>"),
             "visible": false,
             "initialized": false,
-            "inputs": []  // Any inputs that get added to these contexts need to be added to this list
+            "inputs": []  // Any inputs that get added to these contexts need to be added to this list for external checks
         };
 
         this.contexts[key]["html"].hide();
@@ -203,23 +209,29 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.html.append(this.contexts[key]["html"]);
     };
 
-    this.initialize_context = function (key) {
-        if (key === "general") {
-            this.contexts[key]["html"].append(this.get_slider(1, key, "opacity", 1.05).html);
+    this.initialize_context = function (context_key) {
+        if (context_key === "general") {
+            this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
         }
 
-        else if (key === "text") {
-            this.contexts[key]["html"].append(this.get_color_picker("font_color", "Color").html);
+        else if (context_key === "text") {
+            this.contexts[context_key]["html"].append(this.get_color_picker("font_color", "Color").html);
 
             // This could be on the same row as the color picker, and actually looks better
             // that way, but some font names will be long, so best this is on its own row
-            this.font_combo = this.add_combo("Font", key, "font_id", "fonts");
+            this.contexts[context_key]["html"].append(this.get_combo(
+                this.editor.ComboOptions ? (
+                    this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                "font_id",
+                "Font"
+            ).html);
         }
 
-        else if (key === "image") {
-            this.contexts[key]["html"].append(this.get_slider(
+        else if (context_key === "image") {
+            this.contexts[context_key]["html"].append(this.get_slider(
                 1,
-                key,
+                context_key,
                 "contrast",
                 1.02,
                 "",
@@ -227,9 +239,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 2.0
             ).html);
 
-            this.contexts[key]["html"].append(this.get_slider(
+            this.contexts[context_key]["html"].append(this.get_slider(
                 1,
-                key,
+                context_key,
                 "brightness",
                 0.95,
                 "",
@@ -240,20 +252,36 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             // TODO: button to download original image
         }
 
-        else {
-            console.warn("Warning: Unhandled 'Edit' tab context type:", key);
+        else if (context_key in this.content.edit_tab_custom_context_cbs) {
+            this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
 
-        this.contexts[key]["initialized"] = true;
+        else {
+            console.warn("Warning: Unhandled 'Edit' tab context type:", context_key);
+        }
+
+        if (context_key in this.content.edit_tab_custom_element_configs) {
+            for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
+                if (element_config["callback"]) {
+                    this.contexts[context_key]["html"].append(element_config["callback"]());
+                }
+
+                else {
+                    var element = this[element_config["function_name"]](...element_config["function_params"]);
+
+                    this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+                }
+            }
+        }
+
+        this.contexts[context_key]["initialized"] = true;
     };
 
-    this.add_combo = function (label_text, context_key, data_key, options_key) {
+    this.get_combo = function (options, data_key, label_text="") {
         var tool_row = (function (self) {
             return self.content.GetCombo(
-                label_text,
-                self.editor.ComboOptions ? (
-                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
-                ) : [{"id": "", "label_text": "Loading..."}],
+                label_text || data_key.Title(),
+                options,
                 function (selected_option) {
                     self.set_data(data_key, selected_option["id"]);
                 },
@@ -265,9 +293,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "tool_row": tool_row
         });
 
-        this.contexts[context_key]["html"].append(tool_row.html);
+        if (data_key === "font_id") {
+            this.font_combo = tool_row.elements.Last().combo;
+        }
 
-        return tool_row.elements.Last().combo;
+        return tool_row;
     };
 
     this.get_color_picker = function (data_key, label_text="") {
@@ -320,8 +350,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return slider;
         })(this);
     };
-
-
 
     this.style_slider = function (slider, default_value, context_key) {
         slider.FireCallbackOnUpInsteadOfMove();

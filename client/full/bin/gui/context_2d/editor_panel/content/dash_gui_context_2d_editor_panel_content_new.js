@@ -172,8 +172,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         );
 
         this.floating_combos.push({
-            "tool_row": tool_row,
-            "extra_top": Dash.Size.RowHeight
+            "tool_row": tool_row
         });
 
         this.html.append(tool_row.html);

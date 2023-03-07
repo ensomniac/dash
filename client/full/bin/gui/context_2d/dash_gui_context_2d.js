@@ -47,6 +47,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.left_pane_slider = null;
     this.right_pane_slider = null;
     this.middle_pane_slider = null;
+    this.min_height_extensions = {};
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -172,6 +173,59 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
 
     this.RedrawLayers = function (select=false) {
         this.editor_panel.RedrawLayers(select);
+    };
+
+    // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
+    this.ExtendEditorPanelContentPanelMinHeight = function (number) {
+        this.min_height_extensions["editor_panel_content_panel"] = number;
+    };
+
+    this.AddCustomElementToEditorPanelContentEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToEditorPanelContentEditTab(
+                            context_key,
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.editor_panel.AddCustomElementToContentEditTab(
+            context_key,
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+
+    this.AddCustomContextToEditorPanelContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomContextToEditorPanelContentEditTab(context_key, callback_that_returns_html, binder);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.editor_panel.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
     };
 
     this.initialize = function () {

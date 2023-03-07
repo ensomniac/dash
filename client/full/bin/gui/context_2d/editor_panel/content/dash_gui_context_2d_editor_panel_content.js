@@ -9,8 +9,12 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
-    this.min_height = Dash.Size.ButtonHeight * 5.1;  // Increase this when any other elements are added that would increase the overall height
+    this.edit_tab_custom_context_cbs = {};
+    this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
+
+    // Increase this when any other elements are added that would increase the overall height
+    this.min_height = Dash.Size.ButtonHeight * 5.1 + (this.panel.editor.min_height_extensions["editor_panel_content_panel"] || 0);
 
     this.PrimitiveTypes = [
         "text",
@@ -110,33 +114,61 @@ function DashGuiContext2DEditorPanelContent (panel) {
             return;
         }
 
+        // I couldn't get the combo skirt/rows to appear above the other panels, no matter
+        // what I did, so this basically detaches it and adds it back on top of everything
+
         for (var floating_combo of instantiated_class.floating_combos) {
             var combo = floating_combo["tool_row"].elements.Last().combo;
 
             if (!combo) {
-                return;
+                continue;
             }
 
             combo.html.detach();
 
-            // I couldn't get the combo skirt/rows to appear above the other panels, no matter
-            // what I did, so this basically detaches it and adds it back on top of everything
             combo.html.css({
                 "position": "absolute",
                 "top": (
                     this.panel.property_box.html.outerHeight()  // Editor panel top box height
-                    + (
-                          this.html.outerHeight()  // Editor panel content box height
-                        - floating_combo["tool_row"].html[0].offsetTop  // Offset from top of content box
-                    )
-                    - 1  // Bottom border of combo row
-                    + (floating_combo["extra_top"] || 0)  // For some reason, this is needed for some but not all...
+                    + Dash.Size.ButtonHeight  // Tabs height
+                    + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
+                    + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
+                    + 1  // Bottom border of tabs
                 ),
                 "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
             });
 
             this.panel.html.append(combo.html);
         }
+    };
+
+    this.AddCustomElementToEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+            console.error(
+                "AddCustomElementToEditTab requires either 'built_in_function_name' " +
+                "or 'callback_that_returns_html' to be provided (and not both)."
+            );
+
+            return;
+        }
+
+        if (!(context_key in this.edit_tab_custom_element_configs)) {
+            this.edit_tab_custom_element_configs[context_key] = [];
+        }
+
+        this.edit_tab_custom_element_configs[context_key].push({
+            "function_name": built_in_function_name,
+            "function_params": built_in_function_params,
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        });
+    };
+
+    this.AddCustomContextToEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        this.edit_tab_custom_context_cbs[context_key] = (
+            binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        );
     };
 
     this.on_tab_changed = function (selected_content_data, instantiated_class=null) {

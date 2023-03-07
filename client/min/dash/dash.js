@@ -27922,6 +27922,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.left_pane_slider = null;
     this.right_pane_slider = null;
     this.middle_pane_slider = null;
+    this.min_height_extensions = {};
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -28019,6 +28020,52 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     };
     this.RedrawLayers = function (select=false) {
         this.editor_panel.RedrawLayers(select);
+    };
+    // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
+    this.ExtendEditorPanelContentPanelMinHeight = function (number) {
+        this.min_height_extensions["editor_panel_content_panel"] = number;
+    };
+    this.AddCustomElementToEditorPanelContentEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToEditorPanelContentEditTab(
+                            context_key,
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.editor_panel.AddCustomElementToContentEditTab(
+            context_key,
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+    this.AddCustomContextToEditorPanelContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomContextToEditorPanelContentEditTab(context_key, callback_that_returns_html, binder);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.editor_panel.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
     };
     this.initialize = function () {
         if (this.initialized) {
@@ -29503,7 +29550,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2.25;
-    // Update if things are added to the box
+    // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
         (Dash.Size.RowHeight * 4) +  // Rows and toolbar-style-buttons
@@ -29527,6 +29574,7 @@ function DashGuiContext2DEditorPanel (editor) {
         this.html.css({
             "box-sizing": "border-box",
             "border-left": "1px solid " + this.color.StrokeLight,
+            "overflow-x": "hidden",
             ...abs_css
         });
         this.html.append(this.second_pane_slider.html);
@@ -29610,6 +29658,48 @@ function DashGuiContext2DEditorPanel (editor) {
         if (this.layers_box) {
             this.layers_box.Select(id, from_canvas);
         }
+    };
+    this.AddCustomElementToContentEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToContentEditTab(
+                            context_key,
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.content_box.AddCustomElementToEditTab(
+            context_key,
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+    this.AddCustomContextToContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.content_box.AddCustomContextToEditTab(context_key, callback_that_returns_html, binder);
     };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
@@ -30390,8 +30480,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
-    this.min_height = Dash.Size.ButtonHeight * 5.1;  // Increase this when any other elements are added that would increase the overall height
+    this.edit_tab_custom_context_cbs = {};
+    this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
+    // Increase this when any other elements are added that would increase the overall height
+    this.min_height = Dash.Size.ButtonHeight * 5.1 + (this.panel.editor.min_height_extensions["editor_panel_content_panel"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -30469,29 +30562,51 @@ function DashGuiContext2DEditorPanelContent (panel) {
         if (!instantiated_class.floating_combos) {
             return;
         }
+        // I couldn't get the combo skirt/rows to appear above the other panels, no matter
+        // what I did, so this basically detaches it and adds it back on top of everything
         for (var floating_combo of instantiated_class.floating_combos) {
             var combo = floating_combo["tool_row"].elements.Last().combo;
             if (!combo) {
-                return;
+                continue;
             }
             combo.html.detach();
-            // I couldn't get the combo skirt/rows to appear above the other panels, no matter
-            // what I did, so this basically detaches it and adds it back on top of everything
             combo.html.css({
                 "position": "absolute",
                 "top": (
                     this.panel.property_box.html.outerHeight()  // Editor panel top box height
-                    + (
-                          this.html.outerHeight()  // Editor panel content box height
-                        - floating_combo["tool_row"].html[0].offsetTop  // Offset from top of content box
-                    )
-                    - 1  // Bottom border of combo row
-                    + (floating_combo["extra_top"] || 0)  // For some reason, this is needed for some but not all...
+                    + Dash.Size.ButtonHeight  // Tabs height
+                    + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
+                    + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
+                    + 1  // Bottom border of tabs
                 ),
                 "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
             });
             this.panel.html.append(combo.html);
         }
+    };
+    this.AddCustomElementToEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+            console.error(
+                "AddCustomElementToEditTab requires either 'built_in_function_name' " +
+                "or 'callback_that_returns_html' to be provided (and not both)."
+            );
+            return;
+        }
+        if (!(context_key in this.edit_tab_custom_element_configs)) {
+            this.edit_tab_custom_element_configs[context_key] = [];
+        }
+        this.edit_tab_custom_element_configs[context_key].push({
+            "function_name": built_in_function_name,
+            "function_params": built_in_function_params,
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        });
+    };
+    this.AddCustomContextToEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        this.edit_tab_custom_context_cbs[context_key] = (
+            binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        );
     };
     this.on_tab_changed = function (selected_content_data, instantiated_class=null) {
         if (this.last_instantiated_class && this.last_instantiated_class.floating_combos) {
@@ -30716,8 +30831,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             callback
         );
         this.floating_combos.push({
-            "tool_row": tool_row,
-            "extra_top": Dash.Size.RowHeight
+            "tool_row": tool_row
         });
         this.html.append(tool_row.html);
         return tool_row.elements.Last().combo;
@@ -30899,7 +31013,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "padding": Dash.Size.Padding,
             "overflow-x": "hidden"
         });
-        for (var key of ["general", ...this.content.PrimitiveTypes]) {
+        var key;
+        for (key of ["general", ...this.content.PrimitiveTypes]) {
+            this.add_context(key);
+        }
+        for (key in this.content.edit_tab_custom_context_cbs) {
             this.add_context(key);
         }
         this.Redraw();
@@ -31032,34 +31150,40 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "html": $("<div></div>"),
             "visible": false,
             "initialized": false,
-            "inputs": []  // Any inputs that get added to these contexts need to be added to this list
+            "inputs": []  // Any inputs that get added to these contexts need to be added to this list for external checks
         };
         this.contexts[key]["html"].hide();
         this.html.append(this.contexts[key]["html"]);
     };
-    this.initialize_context = function (key) {
-        if (key === "general") {
-            this.contexts[key]["html"].append(this.get_slider(1, key, "opacity", 1.05).html);
+    this.initialize_context = function (context_key) {
+        if (context_key === "general") {
+            this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
         }
-        else if (key === "text") {
-            this.contexts[key]["html"].append(this.get_color_picker("font_color", "Color").html);
+        else if (context_key === "text") {
+            this.contexts[context_key]["html"].append(this.get_color_picker("font_color", "Color").html);
             // This could be on the same row as the color picker, and actually looks better
             // that way, but some font names will be long, so best this is on its own row
-            this.font_combo = this.add_combo("Font", key, "font_id", "fonts");
+            this.contexts[context_key]["html"].append(this.get_combo(
+                this.editor.ComboOptions ? (
+                    this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                "font_id",
+                "Font"
+            ).html);
         }
-        else if (key === "image") {
-            this.contexts[key]["html"].append(this.get_slider(
+        else if (context_key === "image") {
+            this.contexts[context_key]["html"].append(this.get_slider(
                 1,
-                key,
+                context_key,
                 "contrast",
                 1.02,
                 "",
                 0.5,
                 2.0
             ).html);
-            this.contexts[key]["html"].append(this.get_slider(
+            this.contexts[context_key]["html"].append(this.get_slider(
                 1,
-                key,
+                context_key,
                 "brightness",
                 0.95,
                 "",
@@ -31068,18 +31192,30 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             ).html);
             // TODO: button to download original image
         }
-        else {
-            console.warn("Warning: Unhandled 'Edit' tab context type:", key);
+        else if (context_key in this.content.edit_tab_custom_context_cbs) {
+            this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
-        this.contexts[key]["initialized"] = true;
+        else {
+            console.warn("Warning: Unhandled 'Edit' tab context type:", context_key);
+        }
+        if (context_key in this.content.edit_tab_custom_element_configs) {
+            for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
+                if (element_config["callback"]) {
+                    this.contexts[context_key]["html"].append(element_config["callback"]());
+                }
+                else {
+                    var element = this[element_config["function_name"]](...element_config["function_params"]);
+                    this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+                }
+            }
+        }
+        this.contexts[context_key]["initialized"] = true;
     };
-    this.add_combo = function (label_text, context_key, data_key, options_key) {
+    this.get_combo = function (options, data_key, label_text="") {
         var tool_row = (function (self) {
             return self.content.GetCombo(
-                label_text,
-                self.editor.ComboOptions ? (
-                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
-                ) : [{"id": "", "label_text": "Loading..."}],
+                label_text || data_key.Title(),
+                options,
                 function (selected_option) {
                     self.set_data(data_key, selected_option["id"]);
                 },
@@ -31089,8 +31225,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.floating_combos.push({
             "tool_row": tool_row
         });
-        this.contexts[context_key]["html"].append(tool_row.html);
-        return tool_row.elements.Last().combo;
+        if (data_key === "font_id") {
+            this.font_combo = tool_row.elements.Last().combo;
+        }
+        return tool_row;
     };
     this.get_color_picker = function (data_key, label_text="") {
         var color_picker = (function (self) {
@@ -31134,7 +31272,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return slider;
         })(this);
     };
-
     this.style_slider = function (slider, default_value, context_key) {
         slider.FireCallbackOnUpInsteadOfMove();
         slider.SetMaxValueLabelLength(5);
@@ -40259,6 +40396,9 @@ function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_cha
         });
         this.html.append(this.textarea);
         this.setup_connections();
+    };
+    this.AutoFocus = function () {
+        this.textarea.attr("autofocus", "autofocus");
     };
     // Deliberately setting null as the default so that an empty string can be supplied
     this.GetText = function (line_break_replacement=null) {

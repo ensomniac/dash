@@ -17,7 +17,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.can_edit = this.editor.can_edit;
     this.min_width = Dash.Size.ColumnWidth * 2.25;
 
-    // Update if things are added to the box
+    // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
         (Dash.Size.RowHeight * 4) +  // Rows and toolbar-style-buttons
@@ -46,6 +46,7 @@ function DashGuiContext2DEditorPanel (editor) {
         this.html.css({
             "box-sizing": "border-box",
             "border-left": "1px solid " + this.color.StrokeLight,
+            "overflow-x": "hidden",
             ...abs_css
         });
 
@@ -152,6 +153,54 @@ function DashGuiContext2DEditorPanel (editor) {
         if (this.layers_box) {
             this.layers_box.Select(id, from_canvas);
         }
+    };
+
+    this.AddCustomElementToContentEditTab = function (
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToContentEditTab(
+                            context_key,
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.content_box.AddCustomElementToEditTab(
+            context_key,
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+
+    this.AddCustomContextToContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.content_box.AddCustomContextToEditTab(context_key, callback_that_returns_html, binder);
     };
 
     this.get_top_html_size = function () {
