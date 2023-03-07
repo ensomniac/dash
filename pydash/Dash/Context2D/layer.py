@@ -19,10 +19,10 @@ class Layer:
 
         self.data = {}
         self._new = False
-        self.bool_keys = ["hidden", "locked", "linked"]
-        self.str_keys = ["display_name", "text_value", "font_id", "font_color"]
-        self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity"]
-        self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness"]
+        self.bool_keys = ["hidden", "locked", "linked", *self.context_2d.LayerExtraBoolKeys]
+        self.str_keys = ["display_name", "text_value", "font_id", "font_color", *self.context_2d.LayerExtraStrKeys]
+        self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity", *self.context_2d.LayerExtraStateKeys]
+        self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness", *self.context_2d.LayerExtraFloatKeys]
 
         self.load_data()
 
@@ -45,6 +45,16 @@ class Layer:
                     context_2d_root=self.context_2d.Context2DRoot,
                     obj_id=self.get_imported_context_id()
                 )
+
+                for layer_id in self._imported_context_data["layers"]["data"]:
+                    # Add this here because it doesn't belong in the ToDict data for
+                    # layers in general, only in this context. Including it makes it
+                    # more consistent to parse this against the override on the front end.
+                    self._imported_context_data["layers"]["data"][layer_id]["linked"] = True
+
+                # This is a function that is meant to be overridden to use for custom modifications
+                # to this imported context data for abstractions and extensions of this code.
+                self._imported_context_data = self.context_2d.OnLayerImportedContextData(self._imported_context_data)
             else:
                 self._imported_context_data = {}
 
@@ -82,9 +92,9 @@ class Layer:
             "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
             "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
-            "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180 (or is it -179 to 179?)
+            "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180
             "type":          self.Type,
-            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (0.9 if self.Type == "text" else 0.5)  # normalized in relation to the width of the canvas
+            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (0.9 if self.Type == "text" else 0.5)  # normalized in relation to the canvas
         }
 
         if self.Type == "text":
@@ -101,6 +111,10 @@ class Layer:
         if self.Type == "image":
             data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1.0
             data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1.0
+
+        # This is a function that is meant to be overridden to use for custom modifications
+        # to this returned data for abstractions and extensions of this code.
+        data = self.context_2d.OnLayerToDict(self, data)
 
         return data
 
@@ -242,12 +256,6 @@ class Layer:
             data["imported_context"] = {"id": self.get_imported_context_id()}
         else:
             data["imported_context"] = self.imported_context_data
-
-            for layer_id in self.imported_context_data["layers"]["data"]:
-                # Add this here because it doesn't belong in the ToDict data for
-                # layers in general, only in this context. Including it makes it
-                # more consistent to parse this against the override on the front end.
-                self.imported_context_data["layers"]["data"][layer_id]["linked"] = True
 
         # These are overrides per layer (in the imported context)
         data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}

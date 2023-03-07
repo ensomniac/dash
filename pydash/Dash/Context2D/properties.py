@@ -20,6 +20,12 @@ class Properties:
 
         self.Data = {}
 
+        # Intended to be added to whenever this class is abstracted or expanded upon.
+        self.LayerExtraStrKeys = []
+        self.LayerExtraBoolKeys = []
+        self.LayerExtraStateKeys = []
+        self.LayerExtraFloatKeys = []
+
     # -------------------------------FIELDS-------------------------------------
 
     @property

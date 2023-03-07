@@ -59,7 +59,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return divider;
     };
 
-    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}) {
+    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}, add_highlight=true) {
         if (!label_text.endsWith(":")) {
             label_text += ":";
         }
@@ -73,25 +73,27 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
         container.css(css);
 
-        var highlight = $("<div></div>");
+        if (add_highlight) {
+            var highlight = $("<div></div>");
 
-        highlight.css({
-            "position": "absolute",
-            "inset": 0,
-            "background": this.color.AccentGood,
-            "border-radius": Dash.Size.BorderRadius,
-            "opacity": 0
-        });
+            highlight.css({
+                "position": "absolute",
+                "inset": 0,
+                "background": this.color.AccentGood,
+                "border-radius": Dash.Size.BorderRadius,
+                "opacity": 0
+            });
 
-        container.on("mouseenter", function () {
-            highlight.stop().animate({"opacity": 0.5}, 50);
-        });
+            container.on("mouseenter", function () {
+                highlight.stop().animate({"opacity": 0.5}, 50);
+            });
 
-        container.on("mouseleave", function () {
-            highlight.stop().animate({"opacity": 0}, 250);
-        });
+            container.on("mouseleave", function () {
+                highlight.stop().animate({"opacity": 0}, 250);
+            });
 
-        container.append(highlight);
+            container.append(highlight);
+        }
 
         var label = this.AddLabel(label_text, Dash.Size.Padding * 0.5, "", null, false);
 

@@ -26,30 +26,6 @@ class Context2D(Utils, Interface, Properties):
 
         self.load_data()
 
-    def ToDict(self, save=False):
-        """
-        :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
-
-        :return: Sanitized context2D data
-        :rtype: dict
-        """
-
-        return {
-            "aspect_ratio_h":                    self.AspectRatioH,
-            "aspect_ratio_w":                    self.AspectRatioW,
-            "created_by":                        self.CreatedBy,
-            "created_on":                        self.CreatedOn,
-            "display_name":                      self.DisplayName,
-            "id":                                self.ID,
-
-            # We don't want to save the "layers" key, since we store the layers separately, but we need to
-            # save the "layer_order" to be able to populate the "layers" when serving this dict (not saving)
-            "layer_order" if save else "layers": self.LayerOrder if save else self.Layers,
-
-            "modified_by":                       self.User["email"] if save else self.ModifiedBy,
-            "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn
-        } if self.Data else self.Data
-
 
 def GetData(user_data, context_2d_root, obj_id):
     return Context2D(user_data, context_2d_root, obj_id).ToDict()

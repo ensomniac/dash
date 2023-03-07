@@ -100,7 +100,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 default_value,
                 callback,
                 {},
-                {"read_only": !self.can_edit}
+                {"read_only": !self.can_edit},
+                false
             );
         })(this);
 
