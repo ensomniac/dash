@@ -28027,6 +28027,32 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.ExtendEditorPanelContentPanelMinHeight = function (number) {
         this.min_height_extensions["editor_panel_content_panel"] = number;
     };
+    this.AddCustomElementToEditorPanelContentNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToEditorPanelContentNewTab(
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    1
+                );
+            })(this);
+            return;
+        }
+        this.editor_panel.AddCustomElementToContentNewTab(
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
     this.AddCustomElementToEditorPanelContentEditTab = function (
         context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
     ) {
@@ -29508,7 +29534,27 @@ function DashGuiContext2DPrimitiveText () {
 function DashGuiContext2DPrimitiveImage () {
     this.image = null;
     this._setup_styles = function () {
-        this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+        if (this.file_data["placeholder"]) {
+            this.image = $("<div>Placeholder Image</div>");
+            this.image.css({
+                "background": this.opposite_color.BackgroundRaised,
+                "box-sizing": "border-box",
+                "color": this.opposite_color.Text,
+                "text-align": "center",
+                "vertical-align": "middle",
+                "font-family": "sans_serif_bold",
+                "font-size": "125%",
+                "width": "100%",
+                "height": "100%",
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "text-shadow": "0px 0px 5px " + this.opposite_color.Background
+            });
+        }
+        else {
+            this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+        }
         this.html.append(this.image);
         this.update_filter();
     };
@@ -29660,6 +29706,32 @@ function DashGuiContext2DEditorPanel (editor) {
         if (this.layers_box) {
             this.layers_box.Select(id, from_canvas);
         }
+    };
+    this.AddCustomElementToContentNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToContentNewTab(
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    1
+                );
+            })(this);
+            return;
+        }
+        this.content_box.AddCustomElementToNewTab(
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
     };
     this.AddCustomElementToContentEditTab = function (
         context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
@@ -30477,12 +30549,14 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.html = null;
     this.header = null;
     this.layout = null;
+    this.floating_combos = [];
     this.new_tab_index = null;
     this.edit_tab_index = null;
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
     this.edit_tab_custom_context_cbs = {};
+    this.new_tab_custom_element_configs = [];
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
@@ -30567,8 +30641,13 @@ function DashGuiContext2DEditorPanelContent (panel) {
         }
         // I couldn't get the combo skirt/rows to appear above the other panels, no matter
         // what I did, so this basically detaches it and adds it back on top of everything
+        var combo;
+        for (combo of this.floating_combos) {
+            combo.html.remove();
+        }
+        this.floating_combos = [];
         for (var floating_combo of instantiated_class.floating_combos) {
-            var combo = floating_combo["tool_row"].elements.Last().combo;
+            combo = floating_combo["tool_row"].elements.Last().combo;
             if (!combo) {
                 continue;
             }
@@ -30585,7 +30664,24 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
             });
             this.panel.html.append(combo.html);
+            this.floating_combos.push(combo);
         }
+    };
+    this.AddCustomElementToNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+            console.error(
+                "AddCustomElementToNewTab requires either 'built_in_function_name' " +
+                "or 'callback_that_returns_html' to be provided (and not both)."
+            );
+            return;
+        }
+        this.new_tab_custom_element_configs.push({
+            "function_name": built_in_function_name,
+            "function_params": built_in_function_params,
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        });
     };
     this.AddCustomElementToEditTab = function (
         context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
@@ -30619,6 +30715,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
                     return;
                 }
                 combo.html.remove();
+                if (this.floating_combos.includes(combo)) {
+                    this.floating_combos.Remove(combo);
+                }
             }
             this.last_instantiated_class.floating_combos = [];
         }
@@ -30703,11 +30802,13 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             "padding": Dash.Size.Padding,
             "overflow-x": "hidden"
         });
-        this.draw_types();
-        this.add_import_combo();
         (function (self) {
             requestAnimationFrame(function () {
-                self.content.FloatCombos(self);
+                self.draw_types();
+                self.add_import_combo();
+                requestAnimationFrame(function () {
+                    self.content.FloatCombos(self);
+                });
             });
         })(this);
     };
@@ -30751,6 +30852,15 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             }
             else {
                 console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+            }
+        }
+        for (var element_config of this.content.new_tab_custom_element_configs) {
+            if (element_config["callback"]) {
+                this.html.append(element_config["callback"]());
+            }
+            else {
+                var element = this[element_config["function_name"]](...element_config["function_params"]);
+                this.html.append(element.hasOwnProperty("html") ? element.html : element);
             }
         }
     };

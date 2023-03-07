@@ -180,6 +180,35 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         this.min_height_extensions["editor_panel_content_panel"] = number;
     };
 
+    this.AddCustomElementToEditorPanelContentNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.editor_panel) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToEditorPanelContentNewTab(
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    1
+                );
+            })(this);
+
+            return;
+        }
+
+        this.editor_panel.AddCustomElementToContentNewTab(
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+
     this.AddCustomElementToEditorPanelContentEditTab = function (
         context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
     ) {

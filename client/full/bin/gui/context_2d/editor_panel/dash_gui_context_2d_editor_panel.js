@@ -155,6 +155,35 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
+    this.AddCustomElementToContentNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if (!this.content_box) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddCustomElementToContentNewTab(
+                            built_in_function_name,
+                            built_in_function_params,
+                            callback_that_returns_html,
+                            binder
+                        );
+                    },
+                    1
+                );
+            })(this);
+
+            return;
+        }
+
+        this.content_box.AddCustomElementToNewTab(
+            built_in_function_name,
+            built_in_function_params,
+            callback_that_returns_html,
+            binder
+        );
+    };
+
     this.AddCustomElementToContentEditTab = function (
         context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
     ) {

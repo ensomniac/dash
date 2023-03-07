@@ -4,7 +4,29 @@ function DashGuiContext2DPrimitiveImage () {
     this.image = null;
 
     this._setup_styles = function () {
-        this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+        if (this.file_data["placeholder"]) {
+            this.image = $("<div>Placeholder Image</div>");
+
+            this.image.css({
+                "background": this.opposite_color.BackgroundRaised,
+                "box-sizing": "border-box",
+                "color": this.opposite_color.Text,
+                "text-align": "center",
+                "vertical-align": "middle",
+                "font-family": "sans_serif_bold",
+                "font-size": "125%",
+                "width": "100%",
+                "height": "100%",
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "text-shadow": "0px 0px 5px " + this.opposite_color.Background
+            });
+        }
+
+        else {
+            this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+        }
 
         this.html.append(this.image);
 

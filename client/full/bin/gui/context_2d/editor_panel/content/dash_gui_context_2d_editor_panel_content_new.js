@@ -17,12 +17,14 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             "overflow-x": "hidden"
         });
 
-        this.draw_types();
-        this.add_import_combo();
-
         (function (self) {
             requestAnimationFrame(function () {
-                self.content.FloatCombos(self);
+                self.draw_types();
+                self.add_import_combo();
+
+                requestAnimationFrame(function () {
+                    self.content.FloatCombos(self);
+                });
             });
         })(this);
     };
@@ -72,6 +74,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
 
             else {
                 console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+            }
+        }
+
+        for (var element_config of this.content.new_tab_custom_element_configs) {
+            if (element_config["callback"]) {
+                this.html.append(element_config["callback"]());
+            }
+
+            else {
+                var element = this[element_config["function_name"]](...element_config["function_params"]);
+
+                this.html.append(element.hasOwnProperty("html") ? element.html : element);
             }
         }
     };

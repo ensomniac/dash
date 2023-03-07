@@ -4,12 +4,14 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.html = null;
     this.header = null;
     this.layout = null;
+    this.floating_combos = [];
     this.new_tab_index = null;
     this.edit_tab_index = null;
     this.color = this.panel.color;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
     this.edit_tab_custom_context_cbs = {};
+    this.new_tab_custom_element_configs = [];
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
 
@@ -118,8 +120,16 @@ function DashGuiContext2DEditorPanelContent (panel) {
         // I couldn't get the combo skirt/rows to appear above the other panels, no matter
         // what I did, so this basically detaches it and adds it back on top of everything
 
+        var combo;
+
+        for (combo of this.floating_combos) {
+            combo.html.remove();
+        }
+
+        this.floating_combos = [];
+
         for (var floating_combo of instantiated_class.floating_combos) {
-            var combo = floating_combo["tool_row"].elements.Last().combo;
+            combo = floating_combo["tool_row"].elements.Last().combo;
 
             if (!combo) {
                 continue;
@@ -140,7 +150,28 @@ function DashGuiContext2DEditorPanelContent (panel) {
             });
 
             this.panel.html.append(combo.html);
+
+            this.floating_combos.push(combo);
         }
+    };
+
+    this.AddCustomElementToNewTab = function (
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+    ) {
+        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+            console.error(
+                "AddCustomElementToNewTab requires either 'built_in_function_name' " +
+                "or 'callback_that_returns_html' to be provided (and not both)."
+            );
+
+            return;
+        }
+
+        this.new_tab_custom_element_configs.push({
+            "function_name": built_in_function_name,
+            "function_params": built_in_function_params,
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+        });
     };
 
     this.AddCustomElementToEditTab = function (
@@ -182,6 +213,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 }
 
                 combo.html.remove();
+
+                if (this.floating_combos.includes(combo)) {
+                    this.floating_combos.Remove(combo);
+                }
             }
 
             this.last_instantiated_class.floating_combos = [];
