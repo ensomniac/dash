@@ -150,6 +150,11 @@ class Interface:
         return data
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to for custom property handling of layer properties for abstractions.
+    def OnLayerSetProperties(self, layer, properties={}, imported_context_layer_id=""):  # noqa
+        return properties
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to customize the imported context data for abstractions.
     def OnLayerImportedContextData(self, data):
         return data

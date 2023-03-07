@@ -15,7 +15,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
     this.last_width_norm = null;
-    this.id = this.layer.GetID();
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
@@ -27,6 +26,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = this.editor.opposite_color;
+    this.id = this.data["id"];
+    this.type = this.data["type"] || "";
 
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
@@ -48,7 +49,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "outline": "1px solid rgba(0, 0, 0, 0)"
         };
 
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
 
@@ -72,7 +73,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.InputInFocus = function () {
-        if (this.data["type"] !== "text") {
+        if (this.type !== "text") {
             return false;
         }
 
@@ -115,7 +116,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.on_update(key);
 
-        if (this.data["type"] === "context") {
+        this.canvas.OnPrimitiveUpdated(this, key, value);
+
+        if (this.type === "context") {
             this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
         }
     };
@@ -136,13 +139,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "outline": "1px solid rgba(0, 0, 0, 0)"
         };
 
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
 
         this.html.css(css);
 
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.lock_text_area();
         }
 
@@ -154,7 +157,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        if (from_click && this.data["type"] === "context") {
+        if (from_click && this.type === "context") {
             return;
         }
 
@@ -171,7 +174,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "outline-offset": "1px"
         };
 
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
 
@@ -181,7 +184,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.canvas.OnPrimitiveSelected(this);
         }
 
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.unlock_text_area();
 
             this.text_area.Focus();
@@ -308,7 +311,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "obj_id": this.editor.obj_id,
             "layer_id": this.parent_id || this.id,
             "properties": JSON.stringify(
-                this.parent_id || this.data["type"] === "context" ? (
+                this.parent_id || this.type === "context" ? (
                     this.drag_context["rotate"] ? {
                         "rot_deg": this.data["rot_deg"]
                     }
@@ -339,7 +342,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     self.editor.data = response;
 
-                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
+                    if (self.type === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
 
                         self.editor.RedrawLayers(true);
@@ -367,28 +370,39 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
 
-        if (key === "hidden" || key === "locked" || key === "linked") {
-            return key in layer_overrides ? layer_overrides[key] : value;
+        // Strings
+        if (parent_data["str_keys"].includes(key)) {
+            return layer_overrides[key] || value;
         }
 
-        var override = layer_overrides[key] || 0;
+        // Bools
+        if (parent_data["bool_keys"].includes(key)) {
+            return (key in layer_overrides ? layer_overrides[key] : value);
+        }
 
-        if (key === "opacity") {
-            var parent_opacity = parent_data["opacity"];
+        // Floats
+        if (parent_data["float_keys"].includes(key)) {
+            var override = layer_overrides[key] || 0;
 
-            if (override) {
-                return override * parent_opacity;
+            if (key === "opacity") {
+                var parent_opacity = parent_data["opacity"];
+
+                if (override) {
+                    return override * parent_opacity;
+                }
+
+                return value * parent_opacity;
             }
 
-            return value * parent_opacity;
+
+            if (!override) {
+                return value;
+            }
+
+            return value + override;
         }
 
-
-        if (!override) {
-            return value;
-        }
-
-        return value + override;
+        return value;
     };
 
     this.set_init = function (draw=true) {
@@ -420,22 +434,22 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_update = function () {
-        if (this.data["type"] !== "context") {
-            console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context") {
+            console.warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.data["type"] !== "context" && this.data["type"] !== "image") {
-            console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context" && this.type !== "image") {
+            console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        if (this.data["type"] !== "context") {
-            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context") {
+            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
 
         this.html.css({
@@ -490,7 +504,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.draw_properties();
         }
 
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.resize_text();
         }
     };
@@ -547,20 +561,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.draw_properties();
         }
 
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.resize_text();
         }
     };
 
     // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
-        if (this.data["type"] === "context") {
-            // this.calculate_context_bounding_box_size();
-
+        if (this.type === "context") {
             return true;
         }
 
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
 
@@ -571,48 +583,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 return false;
             }
 
-            if (this.data["type"] === "image") {
+            if (this.type === "image") {
                 DashGuiContext2DPrimitiveImage.call(this);
             }
 
             else {
-                console.error("Error: Unhandled primitive type:", this.data["type"]);
+                console.error("Error: Unhandled primitive type:", this.type);
 
                 return false;
             }
         }
 
         return true;
-    };
-
-    // Not sure if this should happen in ToDict on the backend instead of here, but
-    // that would also mean that we'd need an equivalent of this.get_value
-    // on the backend. It's all working as expected here, so I'm leaving it here.
-    this.calculate_context_bounding_box_size = function () {  // TODO: still use this?
-        // var y = 0;
-        // var x = 0;
-        var w = 0;
-        var order = this.layer.GetChildrenLayerOrder();
-        // var len = order.length || 1;
-
-        for (var layer_id of order) {
-            var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
-
-            // y += this.get_value("anchor_norm_y", layer_data, this.data);
-            // x += this.get_value("anchor_norm_x", layer_data, this.data);
-
-            if (layer_data["type"] !== "text") {
-                w = Math.max(w, this.get_value("width_norm", layer_data, this.data));
-            }
-        }
-
-        // y /= len;
-        // x /= len;
-
-        // this.data["anchor_norm_y"] = y;
-        // this.data["anchor_norm_x"] = x;
-        this.data["width_norm"] = w || 0.5;  // TODO: if still using this, don't actually change this value, use some override attr in this class instead
-        // this.data["aspect"] = 1.0;
     };
 
     this.draw_properties = function (immediate=false) {

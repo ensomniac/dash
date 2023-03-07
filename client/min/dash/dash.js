@@ -28069,6 +28069,21 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         }
         this.editor_panel.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
     };
+    // Intended for use by abstractions/extensions of this code
+    this.SetCanvasOnPrimitiveUpdated = function (callback, binder=null) {
+        if (!this.canvas) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SetCanvasOnPrimitiveUpdated(callback, binder);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        this.canvas.OnPrimitiveUpdated = binder ? callback.bind(binder) : callback;
+    };
     this.initialize = function () {
         if (this.initialized) {
             return;
@@ -28439,6 +28454,9 @@ function DashGuiContext2DCanvas (editor) {
         for (var id in this.primitives) {
             this.primitives[id].UpdateZIndex();
         }
+    };
+    this.OnPrimitiveUpdated = function (primitive, key, value) {
+        // Intended to be overwritten by abstractions/extensions of this code
     };
     this.add_observer = function () {
         (function (self) {
@@ -28840,7 +28858,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
     this.last_width_norm = null;
-    this.id = this.layer.GetID();
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
@@ -28852,6 +28869,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.width_px_max = this.canvas.GetWidth() * 2;
     this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = this.editor.opposite_color;
+    this.id = this.data["id"];
+    this.type = this.data["type"] || "";
     // TODO: scaling should happen from the center point, rather than the top left
     //  corner, and/or should also consider the mouse position and scale from there
     this.setup_styles = function () {
@@ -28867,7 +28886,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "border": "1px solid rgba(0, 0, 0, 0)",
             "outline": "1px solid rgba(0, 0, 0, 0)"
         };
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
@@ -28884,7 +28903,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.setup_connections();
     };
     this.InputInFocus = function () {
-        if (this.data["type"] !== "text") {
+        if (this.type !== "text") {
             return false;
         }
         return this.text_area.InFocus();
@@ -28916,7 +28935,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.Select();
         }
         this.on_update(key);
-        if (this.data["type"] === "context") {
+        this.canvas.OnPrimitiveUpdated(this, key, value);
+        if (this.type === "context") {
             this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
         }
     };
@@ -28933,11 +28953,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "border": "1px solid rgba(0, 0, 0, 0)",
             "outline": "1px solid rgba(0, 0, 0, 0)"
         };
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.lock_text_area();
         }
         this.selected = false;
@@ -28946,7 +28966,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.selected || this.get_value("locked")) {
             return;
         }
-        if (from_click && this.data["type"] === "context") {
+        if (from_click && this.type === "context") {
             return;
         }
         if (from_click && this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
@@ -28959,14 +28979,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "outline": "1px solid " + this.opposite_color.StrokeDark,
             "outline-offset": "1px"
         };
-        if (this.data["type"] === "context") {
+        if (this.type === "context") {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
         if (from_click) {
             this.canvas.OnPrimitiveSelected(this);
         }
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.unlock_text_area();
             this.text_area.Focus();
         }
@@ -29060,7 +29080,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "obj_id": this.editor.obj_id,
             "layer_id": this.parent_id || this.id,
             "properties": JSON.stringify(
-                this.parent_id || this.data["type"] === "context" ? (
+                this.parent_id || this.type === "context" ? (
                     this.drag_context["rotate"] ? {
                         "rot_deg": this.data["rot_deg"]
                     }
@@ -29087,7 +29107,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
                     self.editor.data = response;
-                    if (self.data["type"] === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
+                    if (self.type === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
                         self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
                         self.editor.RedrawLayers(true);
                     }
@@ -29108,22 +29128,31 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return value;
         }
         var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
-        if (key === "hidden" || key === "locked" || key === "linked") {
-            return key in layer_overrides ? layer_overrides[key] : value;
+        // Strings
+        if (parent_data["str_keys"].includes(key)) {
+            return layer_overrides[key] || value;
         }
-        var override = layer_overrides[key] || 0;
-        if (key === "opacity") {
-            var parent_opacity = parent_data["opacity"];
-            if (override) {
-                return override * parent_opacity;
+        // Bools
+        if (parent_data["bool_keys"].includes(key)) {
+            return (key in layer_overrides ? layer_overrides[key] : value);
+        }
+        // Floats
+        if (parent_data["float_keys"].includes(key)) {
+            var override = layer_overrides[key] || 0;
+            if (key === "opacity") {
+                var parent_opacity = parent_data["opacity"];
+                if (override) {
+                    return override * parent_opacity;
+                }
+                return value * parent_opacity;
             }
-            return value * parent_opacity;
-        }
 
-        if (!override) {
-            return value;
+            if (!override) {
+                return value;
+            }
+            return value + override;
         }
-        return value + override;
+        return value;
     };
     this.set_init = function (draw=true) {
         this.set_width_px();
@@ -29148,20 +29177,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
-        if (this.data["type"] !== "context") {
-            console.warn("'on_update' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context") {
+            console.warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.data["type"] !== "context" && this.data["type"] !== "image") {
-            console.warn("'on_locked_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context" && this.type !== "image") {
+            console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        if (this.data["type"] !== "context") {
-            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.data["type"]);
+        if (this.type !== "context") {
+            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
         this.html.css({
             "opacity": value
@@ -29206,7 +29235,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (draw) {
             this.draw_properties();
         }
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.resize_text();
         }
     };
@@ -29250,17 +29279,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (draw) {
             this.draw_properties();
         }
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             this.resize_text();
         }
     };
     // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
-        if (this.data["type"] === "context") {
-            // this.calculate_context_bounding_box_size();
+        if (this.type === "context") {
             return true;
         }
-        if (this.data["type"] === "text") {
+        if (this.type === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
         else {
@@ -29268,39 +29296,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.file_data);
                 return false;
             }
-            if (this.data["type"] === "image") {
+            if (this.type === "image") {
                 DashGuiContext2DPrimitiveImage.call(this);
             }
             else {
-                console.error("Error: Unhandled primitive type:", this.data["type"]);
+                console.error("Error: Unhandled primitive type:", this.type);
                 return false;
             }
         }
         return true;
-    };
-    // Not sure if this should happen in ToDict on the backend instead of here, but
-    // that would also mean that we'd need an equivalent of this.get_value
-    // on the backend. It's all working as expected here, so I'm leaving it here.
-    this.calculate_context_bounding_box_size = function () {  // TODO: still use this?
-        // var y = 0;
-        // var x = 0;
-        var w = 0;
-        var order = this.layer.GetChildrenLayerOrder();
-        // var len = order.length || 1;
-        for (var layer_id of order) {
-            var layer_data = this.data["imported_context"]["layers"]["data"][layer_id];
-            // y += this.get_value("anchor_norm_y", layer_data, this.data);
-            // x += this.get_value("anchor_norm_x", layer_data, this.data);
-            if (layer_data["type"] !== "text") {
-                w = Math.max(w, this.get_value("width_norm", layer_data, this.data));
-            }
-        }
-        // y /= len;
-        // x /= len;
-        // this.data["anchor_norm_y"] = y;
-        // this.data["anchor_norm_x"] = x;
-        this.data["width_norm"] = w || 0.5;  // TODO: if still using this, don't actually change this value, use some override attr in this class instead
-        // this.data["aspect"] = 1.0;
     };
     this.draw_properties = function (immediate=false) {
         if (immediate) {
@@ -29380,13 +29384,14 @@ function DashGuiContext2DPrimitiveText () {
         //  etc and it's not a priority. When ready to implement that, remove this line.
         this.text_area.DisableNewLines();
         this.text_area.DisableFlash();
-        if (this.data["text_value"]) {
-            this.text_area.SetText(this.data["text_value"]);
+        var text_value = this.get_value("text_value");
+        if (text_value) {
+            this.text_area.SetText(text_value);
         }
         (function (self) {
             self.text_area.textarea.on("focus", function () {
                 self.text_area.html.css({
-                    "border": self.text_border_thickness + "px solid " + (self.data["locked"] ? "rgba(0, 0, 0, 0)" : self.color.PinstripeDark)
+                    "border": self.text_border_thickness + "px solid " + (self.get_value("locked") ? "rgba(0, 0, 0, 0)" : self.color.PinstripeDark)
                 });
             });
             self.text_area.textarea.on("blur", function () {
@@ -29427,10 +29432,10 @@ function DashGuiContext2DPrimitiveText () {
     };
     this.on_text_change = function (value) {
         value = value.trim();
-        if ((this.last_text_value || this.data["text_value"]) === value) {
+        if (this.last_text_value || this.get_value("text_value") === value) {
             return;
         }
-        this.editor.SetEditorPanelLayerProperty("text_value", value, this.data["id"]);
+        this.editor.SetEditorPanelLayerProperty("text_value", value, this.id);
         this.Update("text_value", value);
         this.last_text_value = value;
     };
@@ -29451,15 +29456,16 @@ function DashGuiContext2DPrimitiveText () {
     };
     this.update_font_color = function () {
         this.text_area.textarea.css({
-            "color": this.data["font_color"] || this.color.Text
+            "color": this.get_value("font_color") || this.color.Text
         });
     };
     this.get_font_option = function () {
-        if (!this.data["font_id"] || !this.editor.ComboOptions["fonts"]) {
+        var font_id = this.get_value("font_id");
+        if (!font_id || !this.editor.ComboOptions["fonts"]) {
             return null;
         }
         for (var option of this.editor.ComboOptions["fonts"]) {
-            if (option["id"] === this.data["font_id"]) {
+            if (option["id"] === font_id) {
                 return option;
             }
         }
@@ -29467,15 +29473,9 @@ function DashGuiContext2DPrimitiveText () {
     };
     this.lock_text_area = function () {
         this.text_area.Lock(false);
-        // this.text_area.textarea.css({
-        //     "border": "none"
-        // });
     };
     this.unlock_text_area = function () {
         this.text_area.Unlock(false);
-        // this.text_area.textarea.css({
-        //     "border": this.text_area.border_size + "px solid " + this.color.StrokeLight
-        // });
     };
     // Override
     this.on_update = function (key) {
@@ -29517,7 +29517,7 @@ function DashGuiContext2DPrimitiveImage () {
     };
     this.update_filter = function () {
         this.image.css({
-            "filter": "brightness(" + this.data["brightness"] + ") contrast(" + this.data["contrast"] + ")"
+            "filter": "brightness(" + this.get_value("brightness") + ") contrast(" + this.get_value("contrast") + ")"
         });
     };
     // Override

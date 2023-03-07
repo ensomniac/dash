@@ -38,14 +38,16 @@ function DashGuiContext2DPrimitiveText () {
 
         this.text_area.DisableFlash();
 
-        if (this.data["text_value"]) {
-            this.text_area.SetText(this.data["text_value"]);
+        var text_value = this.get_value("text_value");
+
+        if (text_value) {
+            this.text_area.SetText(text_value);
         }
 
         (function (self) {
             self.text_area.textarea.on("focus", function () {
                 self.text_area.html.css({
-                    "border": self.text_border_thickness + "px solid " + (self.data["locked"] ? "rgba(0, 0, 0, 0)" : self.color.PinstripeDark)
+                    "border": self.text_border_thickness + "px solid " + (self.get_value("locked") ? "rgba(0, 0, 0, 0)" : self.color.PinstripeDark)
                 });
             });
 
@@ -95,11 +97,11 @@ function DashGuiContext2DPrimitiveText () {
     this.on_text_change = function (value) {
         value = value.trim();
 
-        if ((this.last_text_value || this.data["text_value"]) === value) {
+        if (this.last_text_value || this.get_value("text_value") === value) {
             return;
         }
 
-        this.editor.SetEditorPanelLayerProperty("text_value", value, this.data["id"]);
+        this.editor.SetEditorPanelLayerProperty("text_value", value, this.id);
 
         this.Update("text_value", value);
 
@@ -127,17 +129,19 @@ function DashGuiContext2DPrimitiveText () {
 
     this.update_font_color = function () {
         this.text_area.textarea.css({
-            "color": this.data["font_color"] || this.color.Text
+            "color": this.get_value("font_color") || this.color.Text
         });
     };
 
     this.get_font_option = function () {
-        if (!this.data["font_id"] || !this.editor.ComboOptions["fonts"]) {
+        var font_id = this.get_value("font_id");
+
+        if (!font_id || !this.editor.ComboOptions["fonts"]) {
             return null;
         }
 
         for (var option of this.editor.ComboOptions["fonts"]) {
-            if (option["id"] === this.data["font_id"]) {
+            if (option["id"] === font_id) {
                 return option;
             }
         }
@@ -147,18 +151,10 @@ function DashGuiContext2DPrimitiveText () {
 
     this.lock_text_area = function () {
         this.text_area.Lock(false);
-
-        // this.text_area.textarea.css({
-        //     "border": "none"
-        // });
     };
 
     this.unlock_text_area = function () {
         this.text_area.Unlock(false);
-
-        // this.text_area.textarea.css({
-        //     "border": this.text_area.border_size + "px solid " + this.color.StrokeLight
-        // });
     };
 
     // Override

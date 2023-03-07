@@ -17,7 +17,7 @@ function DashGuiContext2DPrimitiveImage () {
 
     this.update_filter = function () {
         this.image.css({
-            "filter": "brightness(" + this.data["brightness"] + ") contrast(" + this.data["contrast"] + ")"
+            "filter": "brightness(" + this.get_value("brightness") + ") contrast(" + this.get_value("contrast") + ")"
         });
     };
 

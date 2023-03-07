@@ -228,6 +228,24 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         this.editor_panel.AddCustomContextToContentEditTab(context_key, callback_that_returns_html, binder);
     };
 
+    // Intended for use by abstractions/extensions of this code
+    this.SetCanvasOnPrimitiveUpdated = function (callback, binder=null) {
+        if (!this.canvas) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.SetCanvasOnPrimitiveUpdated(callback, binder);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        this.canvas.OnPrimitiveUpdated = binder ? callback.bind(binder) : callback;
+    };
+
     this.initialize = function () {
         if (this.initialized) {
             return;

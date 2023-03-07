@@ -305,6 +305,10 @@ function DashGuiContext2DCanvas (editor) {
         }
     };
 
+    this.OnPrimitiveUpdated = function (primitive, key, value) {
+        // Intended to be overwritten by abstractions/extensions of this code
+    };
+
     this.add_observer = function () {
         (function (self) {
             new ResizeObserver(function () {

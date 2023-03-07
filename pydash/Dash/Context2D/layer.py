@@ -156,12 +156,15 @@ class Layer:
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
+        properties = self.context_2d.OnLayerSetProperties(self, properties, imported_context_layer_id)
+
         if self.Type == "context":
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
         else:
-            if key == "layer_order":  # Should never happen, but just in case
-                raise ValueError(f"Invalid key (layer_order) for {self.Type} layer")
+            for key in properties:
+                if key == "layer_order":  # Should never happen, but just in case
+                    del properties[key]
 
             self.data.update(properties)
 
@@ -256,6 +259,10 @@ class Layer:
             data["imported_context"] = {"id": self.get_imported_context_id()}
         else:
             data["imported_context"] = self.imported_context_data
+
+            data["str_keys"] = self.str_keys
+            data["bool_keys"] = self.bool_keys
+            data["float_keys"] = self.float_keys
 
         # These are overrides per layer (in the imported context)
         data["imported_context"]["context_overrides"] = imported_context.get("context_overrides") or {}
