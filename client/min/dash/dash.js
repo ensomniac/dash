@@ -27920,6 +27920,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.editor_panel = null;
     this.ComboOptions = null;
     this.on_duplicate_cb = null;
+    this.loading_overlay = null;
     this.html = $("<div></div>");
     this.left_pane_slider = null;
     this.right_pane_slider = null;
@@ -27929,6 +27930,11 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.middle_html = $("<div></div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0
+        });
+        this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
         Dash.SetInterval(this, this.refresh_data, 5000);
         this.get_combo_options();
     };
@@ -28151,6 +28157,8 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         this.middle_html.append(this.middle_pane_slider.html);
         this.editor_panel.UpdatePropertyBox();
         this.editor_panel.UpdateContentBoxComboOptions();
+        this.loading_overlay.Stop();
+        this.loading_overlay.Hide();
     };
     this.refresh_data = function () {
         (function (self) {

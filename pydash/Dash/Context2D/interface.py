@@ -11,8 +11,15 @@ class Interface:
     ID: str
     Data: dict
     User: dict
+    Layers: dict
+    Now: callable
+    CreatedBy: str
+    CreatedOn: str
     save: callable
+    ModifiedBy: str
+    ModifiedOn: str
     LayersRoot: str
+    DisplayName: str
     ToDict: callable
     LayerOrder: list
     DashContext: dict
@@ -92,10 +99,18 @@ class Interface:
                     rmtree(os.path.join(self.LayersRoot, layer_id))
 
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
-            from math import gcd
-
             properties["aspect_ratio_w"] = float(properties.get("aspect_ratio_w") or self.AspectRatioW)
             properties["aspect_ratio_h"] = float(properties.get("aspect_ratio_h") or self.AspectRatioH)
+
+            for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+                if not properties[key].is_integer():
+                    from Dash.Utils import ClientAlert
+
+                    raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+
+                properties[key] = int(properties[key])
+
+            from math import gcd
 
             divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
 
