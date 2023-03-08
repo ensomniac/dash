@@ -4,6 +4,14 @@ function DashGuiContext2DPrimitiveImage () {
     this.image = null;
 
     this._setup_styles = function () {
+        this.redraw_image();
+    };
+
+    this.redraw_image = function () {
+        if (this.image) {
+            this.image.remove();
+        }
+
         if (this.file_data["placeholder"]) {
             if (!this.height_px) {
                 (function (self) {
@@ -43,10 +51,6 @@ function DashGuiContext2DPrimitiveImage () {
     this.redraw_canvas_placeholder = function () {
         if (!this.file_data["placeholder"]) {
             return;
-        }
-
-        if (this.image) {
-            this.image.remove();
         }
 
         var canvas = $("<canvas></canvas>");

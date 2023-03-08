@@ -195,8 +195,12 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     // To be called by primitive
-    this.OnPrimitiveSelected = function (primitive) {
+    this.OnPrimitiveSelected = function (primitive, select_layer=false) {
         this.last_selected_primitive = primitive;
+
+        if (!select_layer) {
+            return;
+        }
 
         for (var id in this.primitives) {
             if (this.primitives[id] !== primitive) {

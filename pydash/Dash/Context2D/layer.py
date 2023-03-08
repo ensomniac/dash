@@ -117,7 +117,7 @@ class Layer:
 
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.
-        data = self.context_2d.OnLayerToDict(self, data)
+        data = self.context_2d.OnLayerToDict(self, data, save)
 
         return data
 
@@ -189,18 +189,27 @@ class Layer:
             # updating the file on a layer, you would just get a new layer when you upload a new file)
             rmtree(file_root)
 
-        return self.SetProperties({
-            "file": UploadFile(
-                dash_context=self.context_2d.DashContext,
-                user=self.context_2d.User,
-                file_root=file_root,
-                file_bytes_or_existing_path=file,
-                filename=filename,
-                enforce_unique_filename_key=False,
-                include_jpg_thumb=False
-            ),
+        file_data = UploadFile(
+            dash_context=self.context_2d.DashContext,
+            user=self.context_2d.User,
+            file_root=file_root,
+            file_bytes_or_existing_path=file,
+            filename=filename,
+            enforce_unique_filename_key=False,
+            include_jpg_thumb=False
+        )
+
+        properties = {
+            "file": file_data,
             "display_name": filename.split(".")[0]
-        })
+        }
+
+        aspect = file_data.get("aspect") or file_data.get("orig_aspect")
+
+        if aspect:
+            properties["aspect"] = aspect
+
+        return self.SetProperties(properties)
 
     def Save(self):
         from Dash.LocalStorage import Write

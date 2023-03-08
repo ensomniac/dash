@@ -15,13 +15,14 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
-    this.min_width = (Dash.Size.ColumnWidth * 2.25)  + (this.editor.min_width_extensions["editor_panel"] || 0);
+    this.min_width = (Dash.Size.ColumnWidth * 2.25) + (this.editor.min_width_extensions["editor_panel"] || 0);
 
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
-         Dash.Size.ButtonHeight   +  // Header
-        (Dash.Size.RowHeight * 4) +  // Rows and toolbar-style-buttons
-        (Dash.Size.Padding   * 2.5)  // Top, bottom, and button padding
+           Dash.Size.ButtonHeight      // Header
+        + (Dash.Size.RowHeight * 4)    // Rows and toolbar-style-buttons
+        + (Dash.Size.Padding   * 2.5)  // Top, bottom, and button padding
+        + (this.editor.min_height_extensions["editor_panel_property_box"] || 0)
     );
 
     // Wrappers
@@ -250,6 +251,39 @@ function DashGuiContext2DEditorPanel (editor) {
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
 
+        this.add_property_box_header();
+
+        this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
+        this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
+
+        this.add_aspect_tool_row();
+
+        if (this.editor.editor_panel_property_box_custom_fields_cb) {
+            this.editor.editor_panel_property_box_custom_fields_cb(this);
+        }
+
+        this.add_property_box_button_bar();
+    };
+
+    this.add_property_box_button_bar = function () {
+        var button_bar = this.property_box.AddButtonBar("toolbar");
+
+        if (!this.can_edit) {
+            button_bar.Disable();
+        }
+
+        button_bar.html.css({
+            "height": "fit-content",
+            "margin-top": Dash.Size.Padding,
+            "margin-left": Dash.Size.Padding
+        });
+
+        button_bar.AddButton("Duplicate Context", this.duplicate_context);
+
+        this.button_bars.push(button_bar);
+    };
+
+    this.add_property_box_header = function () {
         var header = this.property_box.AddHeader(
             this.get_data()["display_name"] || "Properties",
             "display_name"
@@ -285,27 +319,6 @@ function DashGuiContext2DEditorPanel (editor) {
             "padding-bottom": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
-
-        this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
-        this.property_box.AddInput("display_name", "Display Name", "", null, this.can_edit).RemoveSaveButton();
-
-        this.add_aspect_tool_row();
-
-        var button_bar = this.property_box.AddButtonBar("toolbar");
-
-        if (!this.can_edit) {
-            button_bar.Disable();
-        }
-
-        button_bar.html.css({
-            "height": "fit-content",
-            "margin-top": Dash.Size.Padding,
-            "margin-left": Dash.Size.Padding
-        });
-
-        button_bar.AddButton("Duplicate Context", this.duplicate_context);
-
-        this.button_bars.push(button_bar);
     };
 
     this.duplicate_context = function () {

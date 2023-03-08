@@ -7,6 +7,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.width_px = 0;
     this.height_px = 0;
     this.selected = false;
+    this.width_px_max = 0;
+    this.height_px_max = 0;
     this.width_px_min = 20;
     this.drag_state = null;
     this.height_px_min = 20;
@@ -23,8 +25,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.file_data = this.data["file"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
-    this.width_px_max = this.canvas.GetWidth() * 2;
-    this.height_px_max = this.canvas.GetHeight() * 2;
     this.opposite_color = this.editor.opposite_color;
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
@@ -33,6 +33,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     //  corner, and/or should also consider the mouse position and scale from there
 
     this.setup_styles = function () {
+        this.set_max();
+
         if (!this.call_style()) {
             return;
         }
@@ -92,6 +94,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         this.data = this.layer.GetData();
+        this.file_data = this.data["file"] || {};
         this.parent_data = this.layer.GetParentData();
 
         if (key === "opacity") {
@@ -180,9 +183,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.html.css(css);
 
-        if (from_click) {
-            this.canvas.OnPrimitiveSelected(this);
-        }
+        this.canvas.OnPrimitiveSelected(this, from_click);
 
         if (this.type === "text") {
             this.unlock_text_area();
@@ -195,9 +196,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.OnCanvasResize = function () {
         this.set_scale(null, null, false);
         this.set_position();
-
-        this.width_px_max = this.canvas.GetWidth() * 2;
-        this.height_px_max = this.canvas.GetHeight() * 2;
+        this.set_max();
     };
 
     this.OnDragStart = function (event) {
@@ -275,6 +274,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.drag_active = false;
 
         this.save_drag_state();
+    };
+
+    this.set_max = function () {
+        var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
+
+        this.width_px_max = max * 2;
+        this.height_px_max = max * 2;
     };
 
     this.set_drag_state = function () {
@@ -560,7 +566,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.draw_properties();
 
             if (this.type === "image") {
-                this.redraw_canvas_placeholder();
+                this.redraw_image();
             }
         }
 

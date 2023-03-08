@@ -276,7 +276,7 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
-        var indent_px = Dash.Size.Padding * 2;
+        var indent_px = options["indent_px"] || (Dash.Size.Padding * 2);
         var indent_row = false;
 
         if (this.num_headers > 0) {

@@ -41,7 +41,10 @@ class Interface:
         :rtype: dict
         """
 
-        return {
+        if not self.Data:
+            return self.Data
+
+        data = {
             "aspect_ratio_h":                    self.AspectRatioH,
             "aspect_ratio_w":                    self.AspectRatioW,
             "created_by":                        self.CreatedBy,
@@ -55,7 +58,13 @@ class Interface:
 
             "modified_by":                       self.User["email"] if save else self.ModifiedBy,
             "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn
-        } if self.Data else self.Data
+        }
+
+        # This is a function that is meant to be overridden to use for custom modifications
+        # to this returned data for abstractions and extensions of this code.
+        data = self.OnToDict(data)
+
+        return data
 
     def Duplicate(self):
         from Dash.LocalStorage import Duplicate
@@ -175,9 +184,16 @@ class Interface:
             new_layer_imported_context_id=obj_id_to_import
         ))
 
+    # --------------------------------- OVERRIDES ---------------------------------
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to customize the returned context data for abstractions.
+    def OnToDict(self, data):
+        return data
+
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to customize the returned layer data for abstractions.
-    def OnLayerToDict(self, layer, data):  # noqa
+    def OnLayerToDict(self, layer, data, save=False):  # noqa
         return data
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.

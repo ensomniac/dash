@@ -30,12 +30,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.Redraw();
-
-        (function (self) {
-            requestAnimationFrame(function () {
-                self.content.FloatCombos(self);
-            });
-        })(this);
     };
 
     this.InputInFocus = function () {
@@ -90,6 +84,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.show_context("general");  // Always show general context when a layer is selected
         this.show_context(layer_data["type"]);
+
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.content.FloatCombos(self);
+            });
+        })(this);
     };
 
     this.show_no_selected_layer_label = function (layer_data) {
@@ -249,7 +249,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 2.0
             ).html);
 
-            // TODO: button to download original image
+            // TODO:
+            //  - saturation slider
+            //  - button to download original image
         }
 
         else if (context_key in this.content.edit_tab_custom_context_cbs) {

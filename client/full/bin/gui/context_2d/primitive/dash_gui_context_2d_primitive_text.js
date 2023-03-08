@@ -19,7 +19,8 @@ function DashGuiContext2DPrimitiveText () {
             "width": calc,
             "height": calc,
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
-            "overflow": "visible"
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
 
         this.text_area.textarea.css({
@@ -29,7 +30,8 @@ function DashGuiContext2DPrimitiveText () {
             "max-height": "100%",
             "resize": "none",
             "text-align": "center",
-            "overflow": "visible"
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
         });
 
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
@@ -73,6 +75,10 @@ function DashGuiContext2DPrimitiveText () {
         }
     };
 
+    // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
+    //  the font sizes "correctly" but the alignment varies between canvas sizes. For example, if
+    //  the canvas aspect is 9x16 and the alignment of the text looks correct on a small screen, the
+    //  same alignment looks different on a bigger screen, even though the aspect and norms are the same.
     this.resize_text = function () {
         if (!this.height_px) {
             (function (self) {
@@ -107,7 +113,7 @@ function DashGuiContext2DPrimitiveText () {
     this.on_text_change = function (value) {
         value = value.trim();
 
-        if (this.last_text_value || this.get_value("text_value") === value) {
+        if (this.last_text_value === value || this.get_value("text_value") === value) {
             return;
         }
 

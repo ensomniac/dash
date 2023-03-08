@@ -53,6 +53,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.min_height_extensions = {};
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
+    this.editor_panel_property_box_custom_fields_cb = null;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
@@ -186,13 +187,23 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     };
 
     // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
-    this.ExtendEditorPanelContentPanelMinHeight = function (number) {
-        this.min_height_extensions["editor_panel_content_panel"] = number;
+    this.ExtendEditorPanelContentBoxMinHeight = function (number) {
+        this.min_height_extensions["editor_panel_content_box"] = number;
+    };
+
+    // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
+    this.ExtendEditorPanelPropertyBoxMinHeight = function (number) {
+        this.min_height_extensions["editor_panel_property_box"] = number;
     };
 
     // This is useful when custom elements added to the panels are extra wide.
     this.ExtendEditorPanelPanelMinWidth = function (number) {
         this.min_width_extensions["editor_panel"] = number;
+    };
+
+    // Use this to add custom fields to the main property box
+    this.SetEditorPanelPropertyBoxCustomFieldsCallback = function (callback, binder=null) {
+        this.editor_panel_property_box_custom_fields_cb = binder ? callback.bind(binder) : callback;
     };
 
     this.AddCustomElementToEditorPanelContentNewTab = function (
