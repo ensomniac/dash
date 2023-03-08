@@ -326,7 +326,9 @@ def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_rat
     img = get_pil_image_object(file_bytes_or_existing_path, filename)
 
     if target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
-        raise Exception(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
 
     img_format = img.format.lower()
 
