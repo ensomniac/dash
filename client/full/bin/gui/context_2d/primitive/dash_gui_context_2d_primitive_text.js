@@ -18,7 +18,8 @@ function DashGuiContext2DPrimitiveText () {
             "inset": this.text_pad,
             "width": calc,
             "height": calc,
-            "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
+            "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
+            "overflow": "visible"
         });
 
         this.text_area.textarea.css({
@@ -27,7 +28,8 @@ function DashGuiContext2DPrimitiveText () {
             "min-height": "100%",
             "max-height": "100%",
             "resize": "none",
-            "text-align": "center"
+            "text-align": "center",
+            "overflow": "visible"
         });
 
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
@@ -65,6 +67,10 @@ function DashGuiContext2DPrimitiveText () {
         this.resize_text();
         this.update_font();
         this.update_font_color();
+
+        if (this.get_value("placeholder")) {
+            this.lock_text_area();
+        }
     };
 
     this.resize_text = function () {
@@ -87,6 +93,10 @@ function DashGuiContext2DPrimitiveText () {
             - this.text_border_comp
             - Dash.Size.Padding
         );
+
+        if (size < Dash.Size.Padding) {
+            size += Dash.Size.Padding;
+        }
 
         this.text_area.textarea.css({
             "font-size": size + "px",
@@ -154,7 +164,19 @@ function DashGuiContext2DPrimitiveText () {
     };
 
     this.unlock_text_area = function () {
+        if (this.get_value("placeholder")) {
+            return;
+        }
+
         this.text_area.Unlock(false);
+    };
+
+    this.focus_text_area = function () {
+        if (this.get_value("placeholder")) {
+            return;
+        }
+
+        this.text_area.Focus();
     };
 
     // Override

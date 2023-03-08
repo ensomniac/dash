@@ -19,7 +19,7 @@ class Layer:
 
         self.data = {}
         self._new = False
-        self.bool_keys = ["hidden", "locked", "linked", *self.context_2d.LayerExtraBoolKeys]
+        self.bool_keys = ["hidden", "locked", "linked", "placeholder", *self.context_2d.LayerExtraBoolKeys]
         self.str_keys = ["display_name", "text_value", "font_id", "font_color", *self.context_2d.LayerExtraStrKeys]
         self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity", *self.context_2d.LayerExtraStateKeys]
         self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness", *self.context_2d.LayerExtraFloatKeys]
@@ -94,7 +94,10 @@ class Layer:
             "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
             "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180
             "type":          self.Type,
-            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (0.9 if self.Type == "text" else 0.5)  # normalized in relation to the canvas
+            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
+                # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution
+                (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9) if self.Type == "text" else 0.5
+            )
         }
 
         if self.Type == "text":

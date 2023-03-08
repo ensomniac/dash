@@ -186,8 +186,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (this.type === "text") {
             this.unlock_text_area();
-
-            this.text_area.Focus();
+            this.focus_text_area();
         }
 
         this.selected = true;

@@ -51,6 +51,10 @@ def SetLayerProperties(user_data, context_2d_root, obj_id, layer_id, props, impo
     return Context2D(user_data, context_2d_root, obj_id).SetLayerProperties(layer_id, props, imported_context_layer_id)
 
 
+def DuplicateLayer(user_data, context_2d_root, obj_id, dash_context, layer_id):
+    return Context2D(user_data, context_2d_root, obj_id, dash_context).DuplicateLayer(layer_id)
+
+
 def AddTextLayer(user_data, context_2d_root, obj_id):
     return Context2D(user_data, context_2d_root, obj_id).AddTextLayer()
 

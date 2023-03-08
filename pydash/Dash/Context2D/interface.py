@@ -62,9 +62,25 @@ class Interface:
 
         return Duplicate(
             dash_context=self.DashContext,
-            store_path="vdb_context_2d",
+            store_path=self.Context2DRoot.replace(self.DashContext["srv_path_local"], "").strip("/"),
             id_to_duplicate=self.ID,
             nested=True
+        )
+
+    def DuplicateLayer(self, layer_id):
+        from Dash.LocalStorage import Duplicate
+
+        return self.SetProperty(
+            "layer_order",
+            [
+                *self.LayerOrder,
+                Duplicate(
+                    dash_context=self.DashContext,
+                    store_path=self.LayersRoot.replace(self.DashContext["srv_path_local"], "").strip("/"),
+                    id_to_duplicate=layer_id,
+                    nested=True
+                )["id"]
+            ]
         )
 
     def SetProperty(self, key, value):

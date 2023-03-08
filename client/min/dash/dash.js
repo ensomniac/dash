@@ -27896,6 +27896,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
      *         - "import_another_context": Import another context (layers) into provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
      *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
@@ -27925,6 +27926,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.left_pane_slider = null;
     this.right_pane_slider = null;
     this.middle_pane_slider = null;
+    this.min_width_extensions = {};
     this.min_height_extensions = {};
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
@@ -28032,6 +28034,10 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
     this.ExtendEditorPanelContentPanelMinHeight = function (number) {
         this.min_height_extensions["editor_panel_content_panel"] = number;
+    };
+    // This is useful when custom elements added to the panels are extra wide.
+    this.ExtendEditorPanelPanelMinWidth = function (number) {
+        this.min_width_extensions["editor_panel"] = number;
     };
     this.AddCustomElementToEditorPanelContentNewTab = function (
         built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
@@ -29022,7 +29028,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         if (this.type === "text") {
             this.unlock_text_area();
-            this.text_area.Focus();
+            this.focus_text_area();
         }
         this.selected = true;
     };
@@ -29405,7 +29411,8 @@ function DashGuiContext2DPrimitiveText () {
             "inset": this.text_pad,
             "width": calc,
             "height": calc,
-            "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)"
+            "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
+            "overflow": "visible"
         });
         this.text_area.textarea.css({
             "border": "none",
@@ -29413,7 +29420,8 @@ function DashGuiContext2DPrimitiveText () {
             "min-height": "100%",
             "max-height": "100%",
             "resize": "none",
-            "text-align": "center"
+            "text-align": "center",
+            "overflow": "visible"
         });
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
         //  but this is for a reason. Eventually, these text primitives should be able to
@@ -29443,6 +29451,9 @@ function DashGuiContext2DPrimitiveText () {
         this.resize_text();
         this.update_font();
         this.update_font_color();
+        if (this.get_value("placeholder")) {
+            this.lock_text_area();
+        }
     };
     this.resize_text = function () {
         if (!this.height_px) {
@@ -29462,6 +29473,9 @@ function DashGuiContext2DPrimitiveText () {
             - this.text_border_comp
             - Dash.Size.Padding
         );
+        if (size < Dash.Size.Padding) {
+            size += Dash.Size.Padding;
+        }
         this.text_area.textarea.css({
             "font-size": size + "px",
             "line-height": size + "px"
@@ -29512,7 +29526,16 @@ function DashGuiContext2DPrimitiveText () {
         this.text_area.Lock(false);
     };
     this.unlock_text_area = function () {
+        if (this.get_value("placeholder")) {
+            return;
+        }
         this.text_area.Unlock(false);
+    };
+    this.focus_text_area = function () {
+        if (this.get_value("placeholder")) {
+            return;
+        }
+        this.text_area.Focus();
     };
     // Override
     this.on_update = function (key) {
@@ -29713,7 +29736,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
-    this.min_width = Dash.Size.ColumnWidth * 2.25;
+    this.min_width = (Dash.Size.ColumnWidth * 2.25)  + (this.editor.min_width_extensions["editor_panel"] || 0);
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
          Dash.Size.ButtonHeight   +  // Header
@@ -30390,6 +30413,29 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.editor.AddCanvasPrimitive(this.layers[id], select);
     };
+    this.Duplicate = function () {
+        var id = this.GetSelectedID();
+        if (!id) {
+            return;
+        }
+        (function (self) {
+            Dash.Request(
+                this,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.OnNewLayer(response);
+                },
+                self.editor.api,
+                {
+                    "f": "duplicate_layer",
+                    "obj_id": self.editor.obj_id,
+                    "layer_id": id
+                }
+            );
+        })(this);
+    };
     this.Delete = function () {
         var layer = this.GetSelectedLayer();
         if (!layer) {
@@ -30676,7 +30722,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = Dash.Size.ButtonHeight * 5.1 + (this.panel.editor.min_height_extensions["editor_panel_content_panel"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 5.1) + (this.panel.editor.min_height_extensions["editor_panel_content_panel"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -31194,6 +31240,13 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     };
     this.add_icons = function () {
         (function (self) {
+            self.add_icon_button(
+                "duplicate",
+                "clone",
+                function () {
+                    self.layers.Duplicate();
+                }
+            );
             self.add_icon_button(
                 "delete",
                 "trash_alt",

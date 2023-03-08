@@ -157,6 +157,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.add_icons = function () {
         (function (self) {
             self.add_icon_button(
+                "duplicate",
+                "clone",
+                function () {
+                    self.layers.Duplicate();
+                }
+            );
+
+            self.add_icon_button(
                 "delete",
                 "trash_alt",
                 function () {

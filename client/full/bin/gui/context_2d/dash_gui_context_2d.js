@@ -17,6 +17,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
      *         - "import_another_context": Import another context (layers) into provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
+     *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
      *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
@@ -48,6 +49,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     this.left_pane_slider = null;
     this.right_pane_slider = null;
     this.middle_pane_slider = null;
+    this.min_width_extensions = {};
     this.min_height_extensions = {};
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
@@ -186,6 +188,11 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
     // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
     this.ExtendEditorPanelContentPanelMinHeight = function (number) {
         this.min_height_extensions["editor_panel_content_panel"] = number;
+    };
+
+    // This is useful when custom elements added to the panels are extra wide.
+    this.ExtendEditorPanelPanelMinWidth = function (number) {
+        this.min_width_extensions["editor_panel"] = number;
     };
 
     this.AddCustomElementToEditorPanelContentNewTab = function (

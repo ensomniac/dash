@@ -88,6 +88,33 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.AddCanvasPrimitive(this.layers[id], select);
     };
 
+    this.Duplicate = function () {
+        var id = this.GetSelectedID();
+
+        if (!id) {
+            return;
+        }
+
+        (function (self) {
+            Dash.Request(
+                this,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+
+                    self.OnNewLayer(response);
+                },
+                self.editor.api,
+                {
+                    "f": "duplicate_layer",
+                    "obj_id": self.editor.obj_id,
+                    "layer_id": id
+                }
+            );
+        })(this);
+    };
+
     this.Delete = function () {
         var layer = this.GetSelectedLayer();
 
