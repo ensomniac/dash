@@ -120,6 +120,12 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         }
     };
 
+    this.RemoveAllCanvasPrimitives = function () {
+        if (this.canvas) {
+            this.canvas.RemoveAllPrimitives();
+        }
+    };
+
     this.RemoveCanvasPrimitive = function (id) {
         if (this.canvas) {
             this.canvas.RemovePrimitive(id);
@@ -182,8 +188,8 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
         }
     };
 
-    this.RedrawLayers = function (select=false) {
-        this.editor_panel.RedrawLayers(select);
+    this.RedrawLayers = function (select=false, redraw_primitives=false) {
+        this.editor_panel.RedrawLayers(select, redraw_primitives);
     };
 
     // This is useful when adding custom elements. Replicate this pattern for other panels as needed.

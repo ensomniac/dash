@@ -241,8 +241,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.on_data(response, true, true);
     };
 
-    this.Redraw = function (select=false) {
-        this.redraw_layers(select);
+    this.Redraw = function (select=false, redraw_primitives=false) {
+        this.redraw_layers(select, redraw_primitives);
     };
 
     this.on_move = function (up=true) {
@@ -414,8 +414,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
 
-    this.redraw_layers = function (select=false) {
+    this.redraw_layers = function (select=false, redraw_primitives=false) {
         this.redrawing = true;
+
+        if (redraw_primitives) {
+            this.editor.RemoveAllCanvasPrimitives();
+        }
 
         this.layers = {};
 

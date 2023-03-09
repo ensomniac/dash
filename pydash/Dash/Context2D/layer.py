@@ -38,15 +38,23 @@ class Layer:
     def imported_context_data(self):
         if not hasattr(self, "_imported_context_data"):
             if self.Type == "context":
-                from . import GetData as GetContextData
+                from . import Context2D
 
-                self._imported_context_data = GetContextData(
+                context_2d = Context2D(
                     user_data=self.context_2d.User,
                     context_2d_root=self.context_2d.Context2DRoot,
-                    obj_id=self.get_imported_context_id()
+                    obj_id=self.get_imported_context_id(),
+                    dash_context=self.context_2d.DashContext
                 )
 
+                self._imported_context_data = self.context_2d.OnToDict(context_2d.ToDict())
+
                 for layer_id in self._imported_context_data["layers"]["data"]:
+                    self._imported_context_data["layers"]["data"][layer_id] = self.context_2d.OnLayerToDict(
+                        layer=Layer(context_2d, layer_id),
+                        data=self._imported_context_data["layers"]["data"][layer_id]
+                    )
+
                     # Add this here because it doesn't belong in the ToDict data for
                     # layers in general, only in this context. Including it makes it
                     # more consistent to parse this against the override on the front end.

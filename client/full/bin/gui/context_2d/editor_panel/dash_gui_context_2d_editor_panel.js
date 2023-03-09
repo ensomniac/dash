@@ -70,8 +70,8 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
 
-    this.RedrawLayers = function (select=false) {
-        this.layers_box.Redraw(select);
+    this.RedrawLayers = function (select=false, redraw_primitives=false) {
+        this.layers_box.Redraw(select, redraw_primitives);
     };
 
     this.OnNewLayer = function (response) {

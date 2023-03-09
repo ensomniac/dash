@@ -175,6 +175,7 @@ class Interface:
 
         return self.ToDict()
 
+    # TODO: When importing context with different aspect ratio, need to recalculate norms so everything is still positioned properly - how?
     def ImportAnotherContext(self, obj_id_to_import):
         from .layer import Layer
 

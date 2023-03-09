@@ -336,6 +336,9 @@ function DashGuiContext2DCanvas (editor) {
         })(this);
     };
 
+    // TODO: The addition of these masks has broken the ability to click on the canvas to deselect
+    //  all layers. Even if I get the click event of the mask to pass-through, it triggers this.html's
+    //  click event, not this.canvas's click event, which will not work as expected (and doesn't make sense).
     this.setup_masks = function () {
         var css = {
             "position": "absolute",

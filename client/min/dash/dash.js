@@ -27982,6 +27982,11 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
             this.canvas.AddPrimitive(layer, select);
         }
     };
+    this.RemoveAllCanvasPrimitives = function () {
+        if (this.canvas) {
+            this.canvas.RemoveAllPrimitives();
+        }
+    };
     this.RemoveCanvasPrimitive = function (id) {
         if (this.canvas) {
             this.canvas.RemovePrimitive(id);
@@ -28029,8 +28034,8 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D") {
             this.log_bar.Add(message);
         }
     };
-    this.RedrawLayers = function (select=false) {
-        this.editor_panel.RedrawLayers(select);
+    this.RedrawLayers = function (select=false, redraw_primitives=false) {
+        this.editor_panel.RedrawLayers(select, redraw_primitives);
     };
     // This is useful when adding custom elements. Replicate this pattern for other panels as needed.
     this.ExtendEditorPanelContentBoxMinHeight = function (number) {
@@ -28529,6 +28534,9 @@ function DashGuiContext2DCanvas (editor) {
             }).observe(self.html[0]);
         })(this);
     };
+    // TODO: The addition of these masks has broken the ability to click on the canvas to deselect
+    //  all layers. Even if I get the click event of the mask to pass-through, it triggers this.html's
+    //  click event, not this.canvas's click event, which will not work as expected (and doesn't make sense).
     this.setup_masks = function () {
         var css = {
             "position": "absolute",
@@ -29803,8 +29811,8 @@ function DashGuiContext2DEditorPanel (editor) {
             this.SwitchContentToNewTab();
         }
     };
-    this.RedrawLayers = function (select=false) {
-        this.layers_box.Redraw(select);
+    this.RedrawLayers = function (select=false, redraw_primitives=false) {
+        this.layers_box.Redraw(select, redraw_primitives);
     };
     this.OnNewLayer = function (response) {
         this.layers_box.OnNewLayer(response);
@@ -30566,8 +30574,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.OnNewLayer = function (response) {
         this.on_data(response, true, true);
     };
-    this.Redraw = function (select=false) {
-        this.redraw_layers(select);
+    this.Redraw = function (select=false, redraw_primitives=false) {
+        this.redraw_layers(select, redraw_primitives);
     };
     this.on_move = function (up=true) {
         var layer = this.GetSelectedLayer();
@@ -30698,8 +30706,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             }
         }
     };
-    this.redraw_layers = function (select=false) {
+    this.redraw_layers = function (select=false, redraw_primitives=false) {
         this.redrawing = true;
+        if (redraw_primitives) {
+            this.editor.RemoveAllCanvasPrimitives();
+        }
         this.layers = {};
         this.layers_box.empty();
         for (var id of this.get_data()["order"]) {
