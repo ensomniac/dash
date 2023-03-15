@@ -7,6 +7,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
 
     this.label = null;
+    this.disabled = false;
     // this.option_rows = [];
     this.clear_button = null;
     this.html = $("<div></div>");
@@ -188,6 +189,37 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.html.append(this.clear_button.html);
 
         return this.clear_button;
+    };
+
+    // There might be a better way to do this for a datalist element, but
+    // this is a quick thing for now since I have limited time
+    // - maybe update later, maybe not a big deal
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
 
     this.set_width = function (width, set_input=false, min_width=null, max_width=null) {

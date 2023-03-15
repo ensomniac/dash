@@ -41509,6 +41509,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.on_submit_cb = binder && on_submit_cb ? on_submit_cb.bind(binder) : on_submit_cb;
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.label = null;
+    this.disabled = false;
     // this.option_rows = [];
     this.clear_button = null;
     this.html = $("<div></div>");
@@ -41650,6 +41651,31 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.set_width("calc(100% - " + (Dash.Size.Padding * 1.4) + "px)");
         this.html.append(this.clear_button.html);
         return this.clear_button;
+    };
+    // There might be a better way to do this for a datalist element, but
+    // this is a quick thing for now since I have limited time
+    // - maybe update later, maybe not a big deal
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
     this.set_width = function (width, set_input=false, min_width=null, max_width=null) {
         var css = {
@@ -42837,6 +42863,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.icon_name = icon_name;
     this.label_text = label_text;
     this.callback = callback;
+    this.disabled = false;
     this.highlighted = false;
     this.click_active = false;
     this.upload_button = null;
@@ -42958,6 +42985,28 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             });
         }
         this.highlighted = highlighted;
+    };
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
     this.setup_connections = function () {
         (function (self) {

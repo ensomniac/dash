@@ -4,6 +4,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.label_text = label_text;
     this.callback = callback;
 
+    this.disabled = false;
     this.highlighted = false;
     this.click_active = false;
     this.upload_button = null;
@@ -151,6 +152,34 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         }
 
         this.highlighted = highlighted;
+    };
+
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
 
     this.setup_connections = function () {
