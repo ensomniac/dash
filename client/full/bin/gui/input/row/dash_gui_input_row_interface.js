@@ -5,6 +5,10 @@ function DashGuiInputRowInterface () {
         return (this.input && this.input.InFocus());
     };
 
+    this.Focus = function () {
+        this.input.Focus();
+    };
+
     this.DisableAutosave = function () {
         this.input.DisableAutosave();
     };
