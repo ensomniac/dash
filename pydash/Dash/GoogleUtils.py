@@ -6,6 +6,27 @@
 import os
 import sys
 
+from googleapiclient.errors import HttpError
+
+
+def ParseHTTPError(http_error):
+    """
+    Attempt to decode Google's "unprintable" error (googleapiclient.errors.HttpError).
+    """
+
+    try:
+        raise Exception(
+            f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
+            f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'  # noqa
+        )
+    except:
+        try:
+            raise Exception(
+                f'<HttpError {http_error.resp.status} when requesting {http_error.uri}. Details: "{http_error.error_details}">'
+            )
+        except:
+            raise Exception(str(http_error))
+
 
 class GUtils:
     def __init__(self, user_email=""):
@@ -175,28 +196,49 @@ class _DriveUtils:
 
             file = MediaFileUpload(file_path)
 
-        return self.Client.files().create(
-            supportsAllDrives=in_shared_drive,
-            fields=fields or self.Fields,
-            body=params,
-            media_body=file
-        ).execute()
+        try:
+            return self.Client.files().create(
+                supportsAllDrives=in_shared_drive,
+                fields=fields or self.Fields,
+                body=params,
+                media_body=file
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
+        except Exception as e:
+            raise Exception(e)
 
     def DeleteFile(self, file_id, in_shared_drive=False, fields=""):
-        return self.Client.files().delete(
-            supportsAllDrives=in_shared_drive,
-            fields=fields or self.Fields,
-            fileId=file_id
-        ).execute()
+        try:
+            return self.Client.files().delete(
+                supportsAllDrives=in_shared_drive,
+                fields=fields or self.Fields,
+                fileId=file_id
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
+        except Exception as e:
+            raise Exception(e)
 
     def MoveFile(self, file_id, old_parent_id, new_parent_id, in_shared_drive=False, fields=""):
-        return self.Client.files().update(
-            supportsAllDrives=in_shared_drive,
-            fields=fields or self.Fields,
-            fileId=file_id,
-            removeParents=old_parent_id,
-            addParents=new_parent_id
-        ).execute()
+        try:
+            return self.Client.files().update(
+                supportsAllDrives=in_shared_drive,
+                fields=fields or self.Fields,
+                fileId=file_id,
+                removeParents=old_parent_id,
+                addParents=new_parent_id
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
+        except Exception as e:
+            raise Exception(e)
 
     def UpdateFileByKeys(self, file_id, params, fields="", in_shared_drive=False):
         """
@@ -213,12 +255,19 @@ class _DriveUtils:
         :rtype: dict
         """
 
-        return self.Client.files().update(
-            supportsAllDrives=in_shared_drive,
-            fields=fields or self.Fields,
-            fileId=file_id,
-            body=params
-        ).execute()
+        try:
+            return self.Client.files().update(
+                supportsAllDrives=in_shared_drive,
+                fields=fields or self.Fields,
+                fileId=file_id,
+                body=params
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
+        except Exception as e:
+            raise Exception(e)
 
     def GetFileDataByID(self, file_id, in_shared_drive=False, fields_override=""):
         """
@@ -240,7 +289,7 @@ class _DriveUtils:
                 supportsAllDrives=in_shared_drive
             ).execute()
         except:
-            return None
+            return None  # Why is this not being handled?
 
     def GetFileDataByName(self, filename, drive_id, parent_id="", is_folder=False, fields="", extra_query="", raise_duplicates=True, in_shared_drive=False):
         """

@@ -19821,14 +19821,17 @@ function DashDateTime () {
                 date = [dt_obj.getMonth() + 1, dt_obj.getDate(), dt_obj.getFullYear()].join("/");
             }
             else {
-                date = dt_obj.toLocaleDateString();
+                // The above "ignore_locale_for_readable_dates" was implemented as a quick addition at
+                // an earlier date, that I wanted to later add to DashContext, but I'm now of the
+                // opinion that en-US should be enforced globally to ensure our code works as expected.
+                date = dt_obj.toLocaleDateString("en-US");
             }
             if (is_static_date || !include_time) {
                 return date;
             }
         }
         var colon_count = 0;
-        var time = dt_obj.toLocaleTimeString();
+        var time = dt_obj.toLocaleTimeString("en-US");
         var readable = include_date ? (date + " at " + time) : time;
         // Get index of seconds
         for (var i in readable) {
@@ -27128,14 +27131,14 @@ function DashGuiComboSearch () {
     };
     this.on_search_text_changed = function () {
         this.search_results = [];
-        var search = this.search_input.Text().toLocaleLowerCase();
+        var search = this.search_input.Text().toLocaleLowerCase("en-US");
         if (search.length === 0) {
             this.manage_search_list(this.show_rows_on_empty_search);
             return;
         }
         for (var i in this.option_list) {
             var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
-            var opt = label.toLocaleLowerCase();
+            var opt = label.toLocaleLowerCase("en-US");
             if (search.length < 3) {
                 // For a short search, only match the beginning
                 if (opt.startsWith(search)) {

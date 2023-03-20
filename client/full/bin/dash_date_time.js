@@ -21,7 +21,10 @@ function DashDateTime () {
             }
 
             else {
-                date = dt_obj.toLocaleDateString();
+                // The above "ignore_locale_for_readable_dates" was implemented as a quick addition at
+                // an earlier date, that I wanted to later add to DashContext, but I'm now of the
+                // opinion that en-US should be enforced globally to ensure our code works as expected.
+                date = dt_obj.toLocaleDateString("en-US");
             }
 
             if (is_static_date || !include_time) {
@@ -30,7 +33,7 @@ function DashDateTime () {
         }
 
         var colon_count = 0;
-        var time = dt_obj.toLocaleTimeString();
+        var time = dt_obj.toLocaleTimeString("en-US");
         var readable = include_date ? (date + " at " + time) : time;
 
         // Get index of seconds

@@ -132,7 +132,7 @@ function DashGuiComboSearch () {
     this.on_search_text_changed = function () {
         this.search_results = [];
 
-        var search = this.search_input.Text().toLocaleLowerCase();
+        var search = this.search_input.Text().toLocaleLowerCase("en-US");
 
         if (search.length === 0) {
             this.manage_search_list(this.show_rows_on_empty_search);
@@ -142,7 +142,7 @@ function DashGuiComboSearch () {
 
         for (var i in this.option_list) {
             var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
-            var opt = label.toLocaleLowerCase();
+            var opt = label.toLocaleLowerCase("en-US");
 
             if (search.length < 3) {
                 // For a short search, only match the beginning
