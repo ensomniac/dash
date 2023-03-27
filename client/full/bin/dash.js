@@ -4,7 +4,7 @@ function Dash () {
     this.html = $("<div></div>");
 
     this.Context  = DASH_CONTEXT;
-    this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
+    this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
 
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
