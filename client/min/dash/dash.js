@@ -29096,7 +29096,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         else if (this.drag_context["scale"]) {
             [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
             this.last_width_norm = this.get_value("width_norm");
-            this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
+            this.data["width_norm"] += ((movement_x - movement_y) * 0.00005);
             this.set_scale();
         }
         else {

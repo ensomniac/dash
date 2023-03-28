@@ -247,7 +247,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
             this.last_width_norm = this.get_value("width_norm");
 
-            this.data["width_norm"] += ((movement_x - movement_y) * 0.0001);
+            this.data["width_norm"] += ((movement_x - movement_y) * 0.00005);
 
             this.set_scale();
         }
