@@ -226,6 +226,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 "font_id",
                 "Font"
             ).html);
+
+            this.contexts[context_key]["html"].append(this.get_combo(
+                [
+                    {"id": "", "label_text": "Center"},
+                    {"id": "left", "label_text": "Left"},
+                    {"id": "right", "label_text": "Right"}
+                ],
+                "text_alignment",
+                "Alignment"
+            ).html);
         }
 
         else if (context_key === "image") {

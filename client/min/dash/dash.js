@@ -29477,7 +29477,6 @@ function DashGuiContext2DPrimitiveText () {
             "min-height": "100%",
             "max-height": "100%",
             "resize": "none",
-            "text-align": "center",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
         });
@@ -29509,6 +29508,7 @@ function DashGuiContext2DPrimitiveText () {
         this.resize_text();
         this.update_font();
         this.update_font_color();
+        this.update_text_alignment();
         if (this.get_value("placeholder")) {
             this.lock_text_area();
         }
@@ -29551,6 +29551,11 @@ function DashGuiContext2DPrimitiveText () {
         this.editor.SetEditorPanelLayerProperty("text_value", value, this.id);
         this.Update("text_value", value);
         this.last_text_value = value;
+    };
+    this.update_text_alignment = function () {
+        this.text_area.textarea.css({
+            "text-align": this.get_value("text_alignment") || "center"
+        });
     };
     this.update_font = function () {
         var font_option = this.get_font_option();
@@ -29606,6 +29611,9 @@ function DashGuiContext2DPrimitiveText () {
         }
         else if (key === "font_color") {
             this.update_font_color();
+        }
+        else if (key === "text_alignment") {
+            this.update_text_alignment();
         }
     };
     // Override
@@ -30105,7 +30113,7 @@ function DashGuiContext2DEditorPanel (editor) {
             "margin-left": Dash.Size.Padding
         });
         button_bar.AddButton("Duplicate Context", this.duplicate_context);
-        button_bar.AddButton("Fit To Canvas", this.fit_layer_to_canvas);
+        button_bar.AddButton("Fit Layer To Canvas", this.fit_layer_to_canvas);
         this.button_bars.push(button_bar);
     };
     this.fit_layer_to_canvas = function () {
@@ -30907,7 +30915,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 5.1) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 5.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -30965,7 +30973,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
         var tool_row = new Dash.Gui.ToolRow(this);
         tool_row.html.css({
             "margin-left": 0,
-            "margin-bottom": Dash.Size.Padding
+            "margin-bottom": 0
         });
         (function (self) {
             tool_row.AddComboRow(
@@ -31636,6 +31644,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 ) : [{"id": "", "label_text": "Loading..."}],
                 "font_id",
                 "Font"
+            ).html);
+            this.contexts[context_key]["html"].append(this.get_combo(
+                [
+                    {"id": "", "label_text": "Center"},
+                    {"id": "left", "label_text": "Left"},
+                    {"id": "right", "label_text": "Right"}
+                ],
+                "text_alignment",
+                "Alignment"
             ).html);
         }
         else if (context_key === "image") {
@@ -32992,6 +33009,9 @@ function DashGuiIcons (icon) {
         "alert":                 new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
         "alert_square":          new DashGuiIconDefinition(this.icon, "Alert Square", this.weight["regular"], "exclamation-square"),
         "alert_triangle":        new DashGuiIconDefinition(this.icon, "Alert Triangle", this.weight["solid"], "exclamation-triangle"),
+        "align_left":            new DashGuiIconDefinition(this.icon, "Align Left", this.weight["regular"], "align-left"),
+        "align_right":           new DashGuiIconDefinition(this.icon, "Align Right", this.weight["regular"], "align-right"),
+        "align_center":          new DashGuiIconDefinition(this.icon, "Align Center", this.weight["regular"], "align-center"),
         "analytics":             new DashGuiIconDefinition(this.icon, "Analytics", this.weight["regular"], "analytics"),
         "apple_logo":            new DashGuiIconDefinition(this.icon, "Apple Logo", this.weight["brand"], "apple"),
         "archive":               new DashGuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),

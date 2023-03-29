@@ -110,6 +110,7 @@ class Layer:
 
         if self.Type == "text":
             data["text_value"] = self.data.get("text_value") or ""
+            data["text_alignment"] = self.data.get("text_alignment") or ""
             data["font_id"] = self.data.get("font_id") or ""
             data["font_color"] = self.data.get("font_color") or ""
 

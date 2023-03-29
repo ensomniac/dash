@@ -29,7 +29,6 @@ function DashGuiContext2DPrimitiveText () {
             "min-height": "100%",
             "max-height": "100%",
             "resize": "none",
-            "text-align": "center",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
         });
@@ -69,6 +68,7 @@ function DashGuiContext2DPrimitiveText () {
         this.resize_text();
         this.update_font();
         this.update_font_color();
+        this.update_text_alignment();
 
         if (this.get_value("placeholder")) {
             this.lock_text_area();
@@ -122,6 +122,12 @@ function DashGuiContext2DPrimitiveText () {
         this.Update("text_value", value);
 
         this.last_text_value = value;
+    };
+
+    this.update_text_alignment = function () {
+        this.text_area.textarea.css({
+            "text-align": this.get_value("text_alignment") || "center"
+        });
     };
 
     this.update_font = function () {
@@ -193,6 +199,10 @@ function DashGuiContext2DPrimitiveText () {
 
         else if (key === "font_color") {
             this.update_font_color();
+        }
+
+        else if (key === "text_alignment") {
+            this.update_text_alignment();
         }
     };
 

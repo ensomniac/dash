@@ -396,7 +396,7 @@ function DashGuiContext2DEditorPanel (editor) {
         });
 
         button_bar.AddButton("Duplicate Context", this.duplicate_context);
-        button_bar.AddButton("Fit To Canvas", this.fit_layer_to_canvas);
+        button_bar.AddButton("Fit Layer To Canvas", this.fit_layer_to_canvas);
 
         this.button_bars.push(button_bar);
     };

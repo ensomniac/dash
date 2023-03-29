@@ -16,7 +16,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
 
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 5.1) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 5.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
 
     this.PrimitiveTypes = [
         "text",
@@ -92,7 +92,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
         tool_row.html.css({
             "margin-left": 0,
-            "margin-bottom": Dash.Size.Padding
+            "margin-bottom": 0
         });
 
         (function (self) {
