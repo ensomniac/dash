@@ -30105,7 +30105,22 @@ function DashGuiContext2DEditorPanel (editor) {
             "margin-left": Dash.Size.Padding
         });
         button_bar.AddButton("Duplicate Context", this.duplicate_context);
+        button_bar.AddButton("Fit To Canvas", this.fit_layer_to_canvas);
         this.button_bars.push(button_bar);
+    };
+    this.fit_layer_to_canvas = function () {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
+            alert("No layer selected");
+            return;
+        }
+        var primitive = this.editor.canvas.primitives[layer.GetID()];
+        primitive.on_rotate(0);
+        primitive.on_scale(1);
+        primitive.data["anchor_norm_x"] = 0.5;
+        primitive.data["anchor_norm_y"] = 0.5;
+        primitive.set_position();
+        primitive.save_drag_state(true);
     };
     this.add_property_box_header = function () {
         var header = this.property_box.AddHeader(
