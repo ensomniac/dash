@@ -22855,7 +22855,18 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             this.reset_button.Disable();
         }
     };
-    // TODO: this.Enable
+    this.Enable = function () {
+        this.slider.css({
+            "user-select": "auto",
+            "pointer-events": "auto"
+        });
+        if (this.value_label_editable) {
+            this.value_label.SetLocked(false);
+        }
+        if (this.reset_button) {
+            this.reset_button.Enable();
+        }
+    };
     this.make_value_label_editable = function () {
         this.value_label.remove();
         this.value_label = new Dash.Gui.Input("", this.color);
@@ -23843,7 +23854,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
         placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
-        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true, allow_update=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -23871,7 +23882,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             input.label = label;
         }
         // Hack so that property boxes can update these
-        input.data_key = data_key;
+        if (allow_update) {
+            input.data_key = data_key;
+        }
         var html_css = {
             "margin-right": 0,
             "height": this.height * (transparent ? 0.65 : 0.75),
@@ -28727,6 +28740,9 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
             "background": this.color.PinstripeDark
         });
         this.editor.SetCanvasTool(this.icon_name, this.cursor);
+        if (this.editor.editor_panel) {
+            this.editor.editor_panel.UpdatePropertyBoxToolSlider(this.icon_name);
+        }
         if (this.toolbar.initialized) {
             this.editor.AddToLog("Selected tool: " + this.hover_hint);
         }
@@ -29089,15 +29105,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
-            this.draw_properties();
+            this.on_rotate(this.drag_context["start_rot"] + (movement_x + movement_y));
         }
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
-            this.last_width_norm = this.get_value("width_norm");
-            this.data["width_norm"] += ((movement_x - movement_y) * 0.00005);
-            this.set_scale();
+            this.on_scale(this.data["width_norm"] + ((movement_x - movement_y) * 0.00005));
         }
         else {
             this.set_position(
@@ -29116,6 +29128,22 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.drag_active = false;
         this.save_drag_state();
     };
+    this.on_rotate = function (rot_deg, force_save=false) {
+        this.data["rot_deg"] = rot_deg;
+        this.draw_properties();
+        if (force_save) {
+            this.save_drag_state(true);
+        }
+    };
+    this.on_scale = function (width_norm, force_save=false) {
+        [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
+        this.last_width_norm = this.get_value("width_norm");
+        this.data["width_norm"] = width_norm;
+        this.set_scale();
+        if (force_save) {
+            this.save_drag_state(true);
+        }
+    };
     this.set_max = function () {
         var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
         this.width_px_max = max * 2;
@@ -29129,14 +29157,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "width_norm": this.data["width_norm"]
         };
     };
-    this.save_drag_state = function () {
-        var modified = false;
-        for (var key in this.drag_state) {
-            if (this.drag_state[key] === this.data[key]) {
-                continue;
+    this.save_drag_state = function (modified=false) {
+        if (!modified) {
+            for (var key in this.drag_state) {
+                if (this.drag_state[key] === this.data[key]) {
+                    continue;
+                }
+                modified = true;
+                break;
             }
-            modified = true;
-            break;
         }
         if (!modified) {
             return;
@@ -29771,13 +29800,14 @@ function DashGuiContext2DEditorPanel (editor) {
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
+    this.tool_value_tool_row = null;
     this.can_edit = this.editor.can_edit;
     this.min_width = (Dash.Size.ColumnWidth * 2.25) + (this.editor.min_width_extensions["editor_panel"] || 0);
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
-           Dash.Size.ButtonHeight      // Header
-        + (Dash.Size.RowHeight * 4)    // Rows and toolbar-style-buttons
-        + (Dash.Size.Padding   * 2.5)  // Top, bottom, and button padding
+           Dash.Size.ButtonHeight        // Header
+        + (Dash.Size.RowHeight * 5)      // Rows and toolbar-style-buttons
+        + (Dash.Size.Padding   * 2.5)    // Top, bottom, and button padding
         + (this.editor.min_height_extensions["editor_panel_property_box"] || 0)
     );
     // Wrappers
@@ -29951,6 +29981,87 @@ function DashGuiContext2DEditorPanel (editor) {
         }
         this.content_box.AddCustomContextToEditTab(context_key, callback_that_returns_html, binder);
     };
+    this.UpdatePropertyBoxToolSlider = function (active_tool="", layer=null) {
+        if (!active_tool) {
+            active_tool = this.editor.canvas.GetActiveTool();
+        }
+        if (!layer) {
+            layer = this.GetSelectedLayer();
+        }
+        var active = layer && active_tool;
+        this.tool_value_tool_row.elements = [];
+        this.tool_value_tool_row.html.empty();
+        var label = this.tool_value_tool_row.AddLabel(
+            active ? (active_tool === "move" ? "X" : active_tool.Title()) + ":" : "Tool:",
+            null,
+            null,
+            null,
+            false
+        );
+        label.label.css({
+            "padding-left": 0
+        });
+        var data_key = (
+              active_tool === "move"   ? "anchor_norm_x"
+            : active_tool === "rotate" ? "rot_deg"
+            : active_tool === "scale"  ? "width_norm"
+            : ""
+        );
+        if (!active || !data_key) {
+            if (!data_key) {
+                console.warn("Warning: Unhandled tool:", active_tool);
+            }
+            return;
+        }
+        this.add_tool_value_tool_row_input(layer, data_key);
+        if (active_tool !== "move") {
+            return;
+        }
+        this.add_tool_value_tool_row_input(layer, "anchor_norm_y", "Y:");
+    };
+    this.add_tool_value_tool_row_input = function (layer, data_key, label_text="") {
+        var input = (function (self) {
+            return self.tool_value_tool_row.AddInput(
+                "",
+                data_key,
+                null,
+                true,
+                function (value) {
+                    self.on_tool_value_tool_row_input_changed(layer, data_key, value);
+                },
+                null,
+                self.can_edit,
+                Boolean(label_text),
+                label_text,
+                true,
+                false,
+                false
+            );
+        })(this);
+        input.SetText(layer.GetData()[data_key]);
+    };
+    this.on_tool_value_tool_row_input_changed = function (layer, key, value) {
+        if (!(value.LTrim("-").replace(".", "").IsDigit())) {
+            alert("Value must be a number");
+            return;
+        }
+        if (layer.GetData()["locked"]) {
+            alert("Layer is locked");
+            return;
+        }
+        var primitive = this.editor.canvas.primitives[layer.GetID()];
+        if (key === "rot_deg") {
+            primitive.on_rotate(value, true);
+        }
+        else if (key === "width_norm") {
+            primitive.on_scale(value, true);
+        }
+        else if (key.startsWith("anchor_norm_")) {
+            primitive.data[key] = value;
+            primitive.set_position();
+            primitive.save_drag_state(true);
+        }
+    };
     this.get_top_html_size = function () {
         return (this.content_box.min_height + this.property_box_height + this.first_pane_slider.divider_size);
     };
@@ -29973,7 +30084,15 @@ function DashGuiContext2DEditorPanel (editor) {
         if (this.editor.editor_panel_property_box_custom_fields_cb) {
             this.editor.editor_panel_property_box_custom_fields_cb(this);
         }
+        this.add_tool_value_tool_row();
         this.add_property_box_button_bar();
+    };
+    this.add_tool_value_tool_row = function () {
+        this.tool_value_tool_row = this.property_box.AddToolRow();
+        var label = this.tool_value_tool_row.AddLabel("Tool:", null, null, null, false);
+        label.label.css({
+            "padding-left": 0
+        });
     };
     this.add_property_box_button_bar = function () {
         var button_bar = this.property_box.AddButtonBar("toolbar");
@@ -30204,6 +30323,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (!this.layers.redrawing) {
             this.editor.AddToLog("Selected layer: " + this.get_value("display_name"));
             this.layers.UpdateToolbarIconStates();
+            this.panel.UpdatePropertyBoxToolSlider("", this);
         }
         this.panel.SwitchContentToEditTab();
     };
@@ -30564,6 +30684,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.layers[id].Deselect();
         }
         this.UpdateToolbarIconStates();
+        this.panel.UpdatePropertyBoxToolSlider();
     };
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
@@ -34347,7 +34468,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                         console.log("(Currently being edited) Skipping update for " + element.data_key);
                         continue;
                     }
-                    element.SetText(this.get_update_value(element.data_key));
+                    if (element.data_key) {
+                        element.SetText(this.get_update_value(element.data_key));
+                    }
                 }
                 // Add more as needed
             }

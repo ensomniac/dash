@@ -236,20 +236,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.data["rot_deg"] = this.drag_context["start_rot"] + (movement_x + movement_y);
-
-            this.draw_properties();
+            this.on_rotate(this.drag_context["start_rot"] + (movement_x + movement_y));
         }
 
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
-
-            this.last_width_norm = this.get_value("width_norm");
-
-            this.data["width_norm"] += ((movement_x - movement_y) * 0.00005);
-
-            this.set_scale();
+            this.on_scale(this.data["width_norm"] + ((movement_x - movement_y) * 0.00005));
         }
 
         else {
@@ -276,6 +268,30 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.save_drag_state();
     };
 
+    this.on_rotate = function (rot_deg, force_save=false) {
+        this.data["rot_deg"] = rot_deg;
+
+        this.draw_properties();
+
+        if (force_save) {
+            this.save_drag_state(true);
+        }
+    };
+
+    this.on_scale = function (width_norm, force_save=false) {
+        [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
+
+        this.last_width_norm = this.get_value("width_norm");
+
+        this.data["width_norm"] = width_norm;
+
+        this.set_scale();
+
+        if (force_save) {
+            this.save_drag_state(true);
+        }
+    };
+
     this.set_max = function () {
         var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
 
@@ -292,17 +308,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         };
     };
 
-    this.save_drag_state = function () {
-        var modified = false;
+    this.save_drag_state = function (modified=false) {
+        if (!modified) {
+            for (var key in this.drag_state) {
+                if (this.drag_state[key] === this.data[key]) {
+                    continue;
+                }
 
-        for (var key in this.drag_state) {
-            if (this.drag_state[key] === this.data[key]) {
-                continue;
+                modified = true;
+
+                break;
             }
-
-            modified = true;
-
-            break;
         }
 
         if (!modified) {

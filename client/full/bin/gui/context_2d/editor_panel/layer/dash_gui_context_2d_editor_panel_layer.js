@@ -152,6 +152,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.editor.AddToLog("Selected layer: " + this.get_value("display_name"));
 
             this.layers.UpdateToolbarIconStates();
+
+            this.panel.UpdatePropertyBoxToolSlider("", this);
         }
 
         this.panel.SwitchContentToEditTab();

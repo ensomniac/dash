@@ -107,7 +107,9 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
                         continue;
                     }
 
-                    element.SetText(this.get_update_value(element.data_key));
+                    if (element.data_key) {
+                        element.SetText(this.get_update_value(element.data_key));
+                    }
                 }
 
                 // Add more as needed

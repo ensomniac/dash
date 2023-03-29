@@ -352,7 +352,20 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         }
     };
 
-    // TODO: this.Enable
+    this.Enable = function () {
+        this.slider.css({
+            "user-select": "auto",
+            "pointer-events": "auto"
+        });
+
+        if (this.value_label_editable) {
+            this.value_label.SetLocked(false);
+        }
+
+        if (this.reset_button) {
+            this.reset_button.Enable();
+        }
+    };
 
     this.make_value_label_editable = function () {
         this.value_label.remove();

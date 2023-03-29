@@ -223,6 +223,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         this.UpdateToolbarIconStates();
+
+        this.panel.UpdatePropertyBoxToolSlider();
     };
 
     this.UpdateToolbarIconStates = function () {

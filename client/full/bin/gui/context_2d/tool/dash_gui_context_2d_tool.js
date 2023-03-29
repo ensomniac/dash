@@ -57,6 +57,10 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
 
         this.editor.SetCanvasTool(this.icon_name, this.cursor);
 
+        if (this.editor.editor_panel) {
+            this.editor.editor_panel.UpdatePropertyBoxToolSlider(this.icon_name);
+        }
+
         if (this.toolbar.initialized) {
             this.editor.AddToLog("Selected tool: " + this.hover_hint);
         }
