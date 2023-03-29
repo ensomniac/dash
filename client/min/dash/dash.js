@@ -29657,7 +29657,7 @@ function DashGuiContext2DPrimitiveImage () {
         this.update_filter();
     };
     this.get_url = function () {
-        return (this.file_data["thumb_png_url"] || this.file_data["orig_url"] || "");
+        return (this.file_data["orig_url"] || this.file_data["thumb_png_url"] || "");
     };
     this.update_filter = function () {
         this.image.css({
