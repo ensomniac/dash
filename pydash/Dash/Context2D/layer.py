@@ -121,6 +121,7 @@ class Layer:
             data["file"] = self.data.get("file") or {}
 
         if self.Type == "image":
+            data["tint_color"] = self.data.get("tint_color") or ""
             data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1.0
             data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1.0
 

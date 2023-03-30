@@ -29609,12 +29609,10 @@ function DashGuiContext2DPrimitiveText () {
         if (key === "font_id") {
             this.update_font();
         }
-        else if (key === "font_color") {
-            this.update_font_color();
-        }
         else if (key === "text_alignment") {
             this.update_text_alignment();
         }
+        this.update_font_color();
     };
     // Override
     this.on_opacity_change = function (value) {
@@ -29663,9 +29661,28 @@ function DashGuiContext2DPrimitiveImage () {
             this.html.append(this.image);
         }
         this.update_filter();
+        this.update_tint_color();
     };
     this.get_url = function () {
         return (this.file_data["orig_url"] || this.file_data["thumb_png_url"] || "");
+    };
+    this.update_tint_color = function () {
+        var tint_color = this.get_value("tint_color");
+        if (!tint_color) {
+            this.image.css({
+                "mask": "",
+                "background-color": "",
+                "background-blend-mode": ""
+            });
+            return;
+        }
+        this.image.css({
+            "mask-image": "url(" + this.get_url() + ")",
+            "mask-mode": "alpha",
+            "mask-size": "contain",
+            "background-color": tint_color,
+            "background-blend-mode": "overlay"
+        });
     };
     this.update_filter = function () {
         this.image.css({
@@ -29772,6 +29789,7 @@ function DashGuiContext2DPrimitiveImage () {
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }
+        this.update_tint_color();
     };
     // Override
     this.on_opacity_change = function (value) {
@@ -30915,7 +30933,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 5.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 5.8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -31656,27 +31674,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             ).html);
         }
         else if (context_key === "image") {
-            this.contexts[context_key]["html"].append(this.get_slider(
-                1,
-                context_key,
-                "contrast",
-                1.02,
-                "",
-                0.5,
-                2.0
-            ).html);
-            this.contexts[context_key]["html"].append(this.get_slider(
-                1,
-                context_key,
-                "brightness",
-                0.95,
-                "",
-                0.5,
-                2.0
-            ).html);
-            // TODO:
-            //  - saturation slider
-            //  - button to download original image
+            this.initialize_image_context(context_key);
         }
         else if (context_key in this.content.edit_tab_custom_context_cbs) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
@@ -31696,6 +31694,53 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
         }
         this.contexts[context_key]["initialized"] = true;
+    };
+    this.initialize_image_context = function (context_key) {
+        this.contexts[context_key]["html"].append(this.get_slider(
+            1,
+            context_key,
+            "contrast",
+            1.02,
+            "",
+            0.5,
+            2.0
+        ).html);
+        this.contexts[context_key]["html"].append(this.get_slider(
+            1,
+            context_key,
+            "brightness",
+            0.95,
+            "",
+            0.5,
+            2.0
+        ).html);
+        // TODO: saturation slider
+        var color_container = $("<div></div>");
+        color_container.css({
+            "display": "flex"
+        });
+        color_container.append(this.get_color_picker("tint_color", "Tint Color").html);
+        var button = (function (self) {
+            return new Dash.Gui.IconButton(
+                "close_square",
+                function () {
+                    self.set_data("tint_color", "");
+                },
+                self,
+                self.color,
+                {
+                    "container_size": Dash.Size.ButtonHeight,
+                    "size_mult": 0.5
+                }
+            );
+        })(this);
+        button.SetIconColor(this.color.AccentBad);
+        button.html.css({
+            "padding-top": Dash.Size.Padding * 0.1
+        });
+        color_container.append(button.html);
+        this.contexts[context_key]["html"].append(color_container);
+        // TODO: button to download original image
     };
     this.get_combo = function (options, data_key, label_text="") {
         var tool_row = (function (self) {

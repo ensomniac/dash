@@ -36,10 +36,33 @@ function DashGuiContext2DPrimitiveImage () {
         }
 
         this.update_filter();
+        this.update_tint_color();
     };
 
     this.get_url = function () {
         return (this.file_data["orig_url"] || this.file_data["thumb_png_url"] || "");
+    };
+
+    this.update_tint_color = function () {
+        var tint_color = this.get_value("tint_color");
+
+        if (!tint_color) {
+            this.image.css({
+                "mask": "",
+                "background-color": "",
+                "background-blend-mode": ""
+            });
+
+            return;
+        }
+
+        this.image.css({
+            "mask-image": "url(" + this.get_url() + ")",
+            "mask-mode": "alpha",
+            "mask-size": "contain",
+            "background-color": tint_color,
+            "background-blend-mode": "overlay"
+        });
     };
 
     this.update_filter = function () {
@@ -171,6 +194,8 @@ function DashGuiContext2DPrimitiveImage () {
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }
+
+        this.update_tint_color();
     };
 
     // Override

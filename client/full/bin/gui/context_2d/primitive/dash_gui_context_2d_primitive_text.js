@@ -197,13 +197,11 @@ function DashGuiContext2DPrimitiveText () {
             this.update_font();
         }
 
-        else if (key === "font_color") {
-            this.update_font_color();
-        }
-
         else if (key === "text_alignment") {
             this.update_text_alignment();
         }
+
+        this.update_font_color();
     };
 
     // Override
