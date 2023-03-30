@@ -28337,7 +28337,6 @@ function DashGuiContext2DCanvas (editor) {
             "user-select": "none",
             "pointer-events": "none",
             ...css,
-            // Simulate a double border - one for dark backgrounds, one for light
             "border": "1px solid " + this.opposite_color.StrokeDark,
             "outline": "1px solid " + this.color.StrokeLight,
             "outline-offset": "1px"
@@ -28938,16 +28937,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_context = null;
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
+    this.debounce_timer = null;
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
+    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
+    this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
     // TODO: scaling should happen from the center point, rather than the top left
@@ -28963,8 +28965,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "z-index": this.get_z_index(),
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
-            "border": "1px solid rgba(0, 0, 0, 0)",
-            "outline": "1px solid rgba(0, 0, 0, 0)"
+            "border": "1px solid rgba(0, 0, 0, 0)"
         };
         if (this.type === "context") {
             css["pointer-events"] = "none";
@@ -28974,11 +28975,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.on_opacity_change(this.get_value("opacity"));
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
+        var contained = this.get_value("contained");
         if (hidden) {
             this.on_hidden_change(hidden);
         }
         if (locked) {
             this.on_locked_change(locked);
+        }
+        if (!contained) {
+            this.on_contained_change(contained);
         }
         this.setup_connections();
     };
@@ -29009,6 +29014,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         else if (key === "hidden") {
             this.on_hidden_change(value);
         }
+        else if (key === "contained") {
+            this.on_contained_change(value);
+        }
         else if (key === "linked" && this.parent_id) {
             this.on_linked_change();
         }
@@ -29031,8 +29039,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var css = {
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
-            "border": "1px solid rgba(0, 0, 0, 0)",
-            "outline": "1px solid rgba(0, 0, 0, 0)"
+            "border": "1px solid rgba(0, 0, 0, 0)"
         };
         if (this.type === "context") {
             css["pointer-events"] = "none";
@@ -29044,7 +29051,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.selected = false;
     };
     this.Select = function (from_click=false) {
-        if (this.selected || this.get_value("locked")) {
+        if (this.selected) {
             return;
         }
         if (from_click && this.type === "context") {
@@ -29054,20 +29061,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.canvas.DeselectAllPrimitives();
-        var css = {
-            // Simulate a double border - one for dark backgrounds, one for light
-            "border": "1px solid " + this.color.StrokeLight,
-            "outline": "1px solid " + this.opposite_color.StrokeDark,
-            "outline-offset": "1px"
-        };
+        var css = {"border": "1px solid " + this.highlight_color};
         if (this.type === "context") {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
-        this.canvas.OnPrimitiveSelected(this, from_click);
-        if (this.type === "text") {
-            this.unlock_text_area();
-            this.focus_text_area();
+        if (!this.get_value("locked")) {
+            this.canvas.OnPrimitiveSelected(this, from_click);
+            if (this.type === "text") {
+                this.unlock_text_area();
+                this.focus_text_area();
+            }
         }
         this.selected = true;
     };
@@ -29101,6 +29105,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.drag_active || this.get_value("locked")) {
             return;
         }
+        if (this.selected) {
+            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
+        }
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
         // Rotate left / right
@@ -29126,6 +29133,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.drag_active = false;
+        if (this.selected) {
+            this.html.css({"border": "1px solid " + this.highlight_color});
+        }
         this.save_drag_state();
     };
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -29260,16 +29270,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.draw_properties(true);
         }
     };
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.html.hide();
-        }
-        else {
-            this.html.show();
-        }
-    };
     this.on_linked_change = function () {
         this.set_init();  // Redraw - anything else?
+    };
+    // Meant to be overridden by member classes
+    this.on_hidden_change = function (hidden) {
+        if (this.type !== "context") {
+            console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+            if (hidden) {
+                this.html.hide();
+            }
+            else {
+                this.html.show();
+            }
+        }
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
@@ -29291,6 +29305,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.html.css({
             "opacity": value
         });
+    };
+    this.on_contained_change = function (value) {
+        // TODO: If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
+        //  underneath the canvas' masks, and the inverse if not contained. I'm not sure this is possible
+        //  though, because raising this above the canvas' masks would also raise it above all other
+        //  layers, breaking the layer stacking order. There's no way to make both work that I can think of...
     };
     this.get_z_index = function () {
         var index = this.layer.GetIndex();
@@ -29629,6 +29649,15 @@ function DashGuiContext2DPrimitiveText () {
             this.unlock_text_area();
         }
     };
+    // Override
+    this.on_hidden_change = function (hidden) {
+        if (hidden) {
+            this.text_area.html.hide();
+        }
+        else {
+            this.text_area.html.show();
+        }
+    };
     this._setup_styles();
 }
 
@@ -29696,8 +29725,7 @@ function DashGuiContext2DPrimitiveImage () {
         var canvas = $("<canvas></canvas>");
         canvas.css({
             "box-sizing": "border-box",
-            "border": "1px solid " + this.color.Text,
-            "outline": "1px solid " + this.opposite_color.Text
+            "border": "1px solid " + this.highlight_color
         });
         // Don't set these with .css(), it's different
         canvas.attr("width", this.width_px);
@@ -29807,6 +29835,15 @@ function DashGuiContext2DPrimitiveImage () {
         this.image.css({
             "opacity": value
         });
+    };
+    // Override
+    this.on_hidden_change = function (hidden) {
+        if (hidden) {
+            this.image.hide();
+        }
+        else {
+            this.image.show();
+        }
     };
     this._setup_styles();
 }
@@ -30257,6 +30294,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.locked_icon = null;
     this.linked_icon = null;
     this.icon_size_mult = 0.8;
+    this.contained_icon = null;
     this.html = $("<div></div>");
     this.color = this.layers.color;
     this.panel = this.layers.panel;
@@ -30269,7 +30307,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.css({
             "padding": Dash.Size.Padding,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
-            "display": "flex"
+            "display": "flex",
+            "cursor": "pointer"
         });
         this.add_type_icon();
         this.add_input();
@@ -30279,6 +30318,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
         var linked = this.get_value("linked");
+        var contained = this.get_value("contained");
         if (hidden) {
             this.ToggleHidden(hidden);
         }
@@ -30287,6 +30327,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
         if (!linked) {
             this.ToggleLinked(linked);
+        }
+        if (!contained) {
+            this.ToggleContained(contained);
         }
     };
     this.GetID = function () {
@@ -30414,11 +30457,51 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             })(this);
         }
     };
+    this.ToggleContained = function (contained) {
+        if (contained) {
+            this.contained_icon.html.hide();
+        }
+        else {
+            this.contained_icon.html.show();
+        }
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog(
+                "Layer " + (
+                    contained ? "contained" : "no longer contained"
+                ) + " (within canvas): " + this.get_value("display_name")
+            );
+            (function (self) {
+                self.set_data("contained", contained);
+            })(this);
+        }
+    };
     this.RefreshConnections = function () {
         (function (self) {
             self.html.on("click", function (e) {
                 self.Select();
                 e.stopPropagation();
+            });
+            self.html.on("mouseenter", function () {
+                var primitive = self.editor.canvas.primitives[self.id];
+                if (!primitive.selected) {
+                    primitive.html.css({"border": "1px solid " + primitive.hover_color});
+                }
+                if (!self.selected) {
+                    self.html.css({
+                        "background": self.color.Pinstripe
+                    });
+                }
+            });
+            self.html.on("mouseleave", function () {
+                var primitive = self.editor.canvas.primitives[self.id];
+                if (!primitive.selected) {
+                    primitive.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});
+                }
+                if (!self.selected) {
+                    self.html.css({
+                        "background": "none"
+                    });
+                }
             });
         })(this);
     };
@@ -30468,8 +30551,15 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
         this.hidden_icon = this.get_icon("hidden");
         this.locked_icon = this.get_icon("lock");
+        this.contained_icon = this.get_icon("box_open");
         this.linked_icon = this.get_icon("unlink");
+        this.hidden_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
         this.locked_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+        this.contained_icon.html.css({
             "margin-left": Dash.Size.Padding
         });
         this.linked_icon.html.css({
@@ -30484,15 +30574,20 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (this.get_value("linked")) {
             this.linked_icon.html.hide();
         }
+        if (this.get_value("contained")) {
+            this.contained_icon.html.hide();
+        }
         this.icon_area.append(this.hidden_icon.html);
         this.icon_area.append(this.locked_icon.html);
+        this.icon_area.append(this.contained_icon.html);
         this.icon_area.append(this.linked_icon.html);
         this.html.append(this.icon_area);
     };
     this.get_icon = function (icon_name) {
         var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
         icon.html.css({
-            "margin-top": Dash.Size.Padding * 0.1
+            "margin-top": Dash.Size.Padding * 0.1,
+            "cursor": "default"
         });
         return icon;
     };
@@ -30696,6 +30791,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
         layer.ToggleLocked(locked);
+    };
+    this.ToggleContained = function (contained) {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
+            this.toolbar.ReEnableToggle("contained");
+            return;
+        }
+        layer.ToggleContained(contained);
     };
     this.ToggleLinked = function (linked) {
         var layer = this.GetSelectedLayer();
@@ -31385,6 +31488,9 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                     else if (key === "locked") {
                         self.layers.ToggleLocked(checkbox.IsChecked());
                     }
+                    else if (key === "contained") {
+                        self.layers.ToggleContained(checkbox.IsChecked());
+                    }
                     else if (key === "linked") {
                         self.layers.ToggleLinked(checkbox.IsChecked());
                     }
@@ -31483,6 +31589,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var selected_layer = this.layers.GetSelectedLayer();
         this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
         this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
     this.setup_styles();

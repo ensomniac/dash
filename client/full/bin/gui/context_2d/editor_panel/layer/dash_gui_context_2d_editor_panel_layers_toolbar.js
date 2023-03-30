@@ -74,6 +74,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                         self.layers.ToggleLocked(checkbox.IsChecked());
                     }
 
+                    else if (key === "contained") {
+                        self.layers.ToggleContained(checkbox.IsChecked());
+                    }
+
                     else if (key === "linked") {
                         self.layers.ToggleLinked(checkbox.IsChecked());
                     }
@@ -193,6 +197,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
         this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
         this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
 

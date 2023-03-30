@@ -9,6 +9,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.locked_icon = null;
     this.linked_icon = null;
     this.icon_size_mult = 0.8;
+    this.contained_icon = null;
     this.html = $("<div></div>");
     this.color = this.layers.color;
     this.panel = this.layers.panel;
@@ -22,7 +23,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.css({
             "padding": Dash.Size.Padding,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
-            "display": "flex"
+            "display": "flex",
+            "cursor": "pointer"
         });
 
         this.add_type_icon();
@@ -36,6 +38,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
         var linked = this.get_value("linked");
+        var contained = this.get_value("contained");
 
         if (hidden) {
             this.ToggleHidden(hidden);
@@ -47,6 +50,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         if (!linked) {
             this.ToggleLinked(linked);
+        }
+
+        if (!contained) {
+            this.ToggleContained(contained);
         }
     };
 
@@ -217,12 +224,62 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
     };
 
+    this.ToggleContained = function (contained) {
+        if (contained) {
+            this.contained_icon.html.hide();
+        }
+
+        else {
+            this.contained_icon.html.show();
+        }
+
+        if (!this.layers.redrawing) {
+            this.editor.AddToLog(
+                "Layer " + (
+                    contained ? "contained" : "no longer contained"
+                ) + " (within canvas): " + this.get_value("display_name")
+            );
+
+            (function (self) {
+                self.set_data("contained", contained);
+            })(this);
+        }
+    };
+
     this.RefreshConnections = function () {
         (function (self) {
             self.html.on("click", function (e) {
                 self.Select();
 
                 e.stopPropagation();
+            });
+
+            self.html.on("mouseenter", function () {
+                var primitive = self.editor.canvas.primitives[self.id];
+
+                if (!primitive.selected) {
+                    primitive.html.css({"border": "1px solid " + primitive.hover_color});
+                }
+
+                if (!self.selected) {
+                    self.html.css({
+                        "background": self.color.Pinstripe
+                    });
+                }
+            });
+
+            self.html.on("mouseleave", function () {
+                var primitive = self.editor.canvas.primitives[self.id];
+
+                if (!primitive.selected) {
+                    primitive.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});
+                }
+
+                if (!self.selected) {
+                    self.html.css({
+                        "background": "none"
+                    });
+                }
             });
         })(this);
     };
@@ -288,9 +345,18 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         this.hidden_icon = this.get_icon("hidden");
         this.locked_icon = this.get_icon("lock");
+        this.contained_icon = this.get_icon("box_open");
         this.linked_icon = this.get_icon("unlink");
 
+        this.hidden_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+
         this.locked_icon.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+
+        this.contained_icon.html.css({
             "margin-left": Dash.Size.Padding
         });
 
@@ -310,8 +376,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.linked_icon.html.hide();
         }
 
+        if (this.get_value("contained")) {
+            this.contained_icon.html.hide();
+        }
+
         this.icon_area.append(this.hidden_icon.html);
         this.icon_area.append(this.locked_icon.html);
+        this.icon_area.append(this.contained_icon.html);
         this.icon_area.append(this.linked_icon.html);
 
         this.html.append(this.icon_area);
@@ -321,7 +392,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
 
         icon.html.css({
-            "margin-top": Dash.Size.Padding * 0.1
+            "margin-top": Dash.Size.Padding * 0.1,
+            "cursor": "default"
         });
 
         return icon;

@@ -80,8 +80,7 @@ function DashGuiContext2DPrimitiveImage () {
 
         canvas.css({
             "box-sizing": "border-box",
-            "border": "1px solid " + this.color.Text,
-            "outline": "1px solid " + this.opposite_color.Text
+            "border": "1px solid " + this.highlight_color
         });
 
         // Don't set these with .css(), it's different
@@ -216,6 +215,17 @@ function DashGuiContext2DPrimitiveImage () {
         this.image.css({
             "opacity": value
         });
+    };
+
+    // Override
+    this.on_hidden_change = function (hidden) {
+        if (hidden) {
+            this.image.hide();
+        }
+
+        else {
+            this.image.show();
+        }
     };
 
     this._setup_styles();

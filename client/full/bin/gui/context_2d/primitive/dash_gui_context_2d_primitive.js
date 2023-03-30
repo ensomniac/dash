@@ -16,16 +16,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_context = null;
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
+    this.debounce_timer = null;
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
+    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
+    this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
+
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
 
@@ -47,8 +51,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
-            "border": "1px solid rgba(0, 0, 0, 0)",
-            "outline": "1px solid rgba(0, 0, 0, 0)"
+            "border": "1px solid rgba(0, 0, 0, 0)"
         };
 
         if (this.type === "context") {
@@ -62,6 +65,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
+        var contained = this.get_value("contained");
 
         if (hidden) {
             this.on_hidden_change(hidden);
@@ -69,6 +73,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (locked) {
             this.on_locked_change(locked);
+        }
+
+        if (!contained) {
+            this.on_contained_change(contained);
         }
 
         this.setup_connections();
@@ -109,6 +117,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.on_hidden_change(value);
         }
 
+        else if (key === "contained") {
+            this.on_contained_change(value);
+        }
+
         else if (key === "linked" && this.parent_id) {
             this.on_linked_change();
         }
@@ -138,8 +150,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var css = {
             // Retain the physical space of the border, just make it invisible
             // (this prevents the box from appearing to "jitter" when the border is toggled)
-            "border": "1px solid rgba(0, 0, 0, 0)",
-            "outline": "1px solid rgba(0, 0, 0, 0)"
+            "border": "1px solid rgba(0, 0, 0, 0)"
         };
 
         if (this.type === "context") {
@@ -156,7 +167,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.Select = function (from_click=false) {
-        if (this.selected || this.get_value("locked")) {
+        if (this.selected) {
             return;
         }
 
@@ -170,12 +181,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.canvas.DeselectAllPrimitives();
 
-        var css = {
-            // Simulate a double border - one for dark backgrounds, one for light
-            "border": "1px solid " + this.color.StrokeLight,
-            "outline": "1px solid " + this.opposite_color.StrokeDark,
-            "outline-offset": "1px"
-        };
+        var css = {"border": "1px solid " + this.highlight_color};
 
         if (this.type === "context") {
             css["pointer-events"] = "none";
@@ -183,11 +189,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.html.css(css);
 
-        this.canvas.OnPrimitiveSelected(this, from_click);
+        if (!this.get_value("locked")) {
+            this.canvas.OnPrimitiveSelected(this, from_click);
 
-        if (this.type === "text") {
-            this.unlock_text_area();
-            this.focus_text_area();
+            if (this.type === "text") {
+                this.unlock_text_area();
+                this.focus_text_area();
+            }
         }
 
         this.selected = true;
@@ -231,6 +239,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
+        if (this.selected) {
+            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
+        }
+
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
 
@@ -264,6 +276,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         this.drag_active = false;
+
+        if (this.selected) {
+            this.html.css({"border": "1px solid " + this.highlight_color});
+        }
 
         this.save_drag_state();
     };
@@ -439,18 +455,23 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
 
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.html.hide();
-        }
-
-        else {
-            this.html.show();
-        }
-    };
-
     this.on_linked_change = function () {
         this.set_init();  // Redraw - anything else?
+    };
+
+    // Meant to be overridden by member classes
+    this.on_hidden_change = function (hidden) {
+        if (this.type !== "context") {
+            console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+
+            if (hidden) {
+                this.html.hide();
+            }
+
+            else {
+                this.html.show();
+            }
+        }
     };
 
     // Meant to be overridden by member classes
@@ -476,6 +497,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.html.css({
             "opacity": value
         });
+    };
+
+    this.on_contained_change = function (value) {
+        // TODO: If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
+        //  underneath the canvas' masks, and the inverse if not contained. I'm not sure this is possible
+        //  though, because raising this above the canvas' masks would also raise it above all other
+        //  layers, breaking the layer stacking order. There's no way to make both work that I can think of...
     };
 
     this.get_z_index = function () {

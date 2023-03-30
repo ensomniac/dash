@@ -19,8 +19,8 @@ class Layer:
 
         self.data = {}
         self._new = False
-        self.bool_keys = ["hidden", "locked", "linked", "placeholder", *self.context_2d.LayerExtraBoolKeys]
-        self.str_keys = ["display_name", "text_value", "font_id", "font_color", *self.context_2d.LayerExtraStrKeys]
+        self.bool_keys = ["hidden", "locked", "linked", "contained", "placeholder", *self.context_2d.LayerExtraBoolKeys]
+        self.str_keys = ["display_name", "text_value", "text_alignment", "font_id", "font_color", "tint_color", *self.context_2d.LayerExtraStrKeys]
         self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity", *self.context_2d.LayerExtraStateKeys]
         self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness", *self.context_2d.LayerExtraFloatKeys]
 
@@ -88,14 +88,15 @@ class Layer:
 
         data = {
             # If the default values of anchor or width norm keys change, update front end: DashGuiContext2DPrimitive.get_drag_state_value
-            "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
             "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
             "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
+            "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
+            "contained":     self.data["contained"] if "contained" in self.data else True,
             "created_by":    self.data["created_by"],
             "created_on":    self.data["created_on"],
             "display_name":  self.data["display_name"],
-            "id":            self.ID,
             "hidden":        self.data["hidden"] if "hidden" in self.data else False,
+            "id":            self.ID,
             "locked":        self.data["locked"] if "locked" in self.data else False,
             "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),

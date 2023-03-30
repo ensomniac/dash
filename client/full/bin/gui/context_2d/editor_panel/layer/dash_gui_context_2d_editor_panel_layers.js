@@ -185,6 +185,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         layer.ToggleLocked(locked);
     };
 
+    this.ToggleContained = function (contained) {
+        var layer = this.GetSelectedLayer();
+
+        if (!layer) {
+            this.toolbar.ReEnableToggle("contained");
+
+            return;
+        }
+
+        layer.ToggleContained(contained);
+    };
+
     this.ToggleLinked = function (linked) {
         var layer = this.GetSelectedLayer();
 

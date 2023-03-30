@@ -55,8 +55,6 @@ function DashGuiContext2DCanvas (editor) {
             "user-select": "none",
             "pointer-events": "none",
             ...css,
-
-            // Simulate a double border - one for dark backgrounds, one for light
             "border": "1px solid " + this.opposite_color.StrokeDark,
             "outline": "1px solid " + this.color.StrokeLight,
             "outline-offset": "1px"
