@@ -73,6 +73,15 @@ function DashGuiContext2DPrimitiveText () {
         if (this.get_value("placeholder")) {
             this.lock_text_area();
         }
+
+        else if (!this.editor.can_edit) {
+            this.lock_text_area();
+
+            this.text_area.html.css({
+                "user-select": "none",
+                "pointer-events": "none"
+            });
+        }
     };
 
     // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),

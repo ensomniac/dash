@@ -18,8 +18,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.can_edit = this.layers.can_edit;
     this.icon_color = this.color.StrokeLight;
     this.child_left_margin = Dash.Size.Padding;
+    this.preview_mode = this.layers.preview_mode;
 
     this.setup_styles = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
         this.html.css({
             "padding": Dash.Size.Padding,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
@@ -248,11 +253,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
     this.RefreshConnections = function () {
         (function (self) {
-            self.html.on("click", function (e) {
-                self.Select();
+            if (self.can_edit) {
+                self.html.on("click", function (e) {
+                    self.Select();
 
-                e.stopPropagation();
-            });
+                    e.stopPropagation();
+                });
+            }
 
             self.html.on("mouseenter", function () {
                 var primitive = self.editor.canvas.primitives[self.id];

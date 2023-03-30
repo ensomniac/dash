@@ -410,6 +410,10 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.setup_connections = function () {
+        if (!this.editor.can_edit) {
+            return;
+        }
+
         (function (self) {
             self.html.on("mousedown", function (e) {
                 if (self.last_selected_primitive) {

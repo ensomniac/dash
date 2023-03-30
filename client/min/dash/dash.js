@@ -27930,7 +27930,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.obj_id = obj_id;
     this.api = api;
     this.color = color || Dash.Color.Light;
-    this.can_edit = can_edit;
+    this.can_edit = preview_mode ? false : can_edit;
     this.preview_mode = preview_mode;
     this.extra_request_params = extra_request_params;
     this.data = null;
@@ -27953,12 +27953,17 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.editor_panel_property_box_custom_fields_cb = null;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.setup_styles = function () {
-        this.html.css({
+        var css = {
             "position": "absolute",
             "inset": 0
-        });
+        };
+        if (this.preview_mode) {
+            css["user-select"] = "none";
+            css["pointer-events"] = "none";
+        }
+        this.html.css(css);
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
-        Dash.SetInterval(this, this.refresh_data, 5000);
+        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 15000 : 5000);
         this.get_combo_options();
     };
     // TODO: regarding all these public functions, some are intended to only be called
@@ -28161,42 +28166,53 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
             return;
         }
         this.initialized = true;
-        this.canvas = new DashGuiContext2DCanvas(this);
-        this.log_bar = new DashGuiContext2DLogBar(this);
-        this.toolbar = new DashGuiContext2DToolbar(this);
-        this.editor_panel = new DashGuiContext2DEditorPanel(this);
-        this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
-        this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
-        this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
         var abs_css = {
             "position": "absolute",
             "inset": 0
         };
-        this.right_pane_slider.SetPaneContentA(this.left_html);
-        this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
         this.html.css({
             "box-sizing": "border-box",
             "background": this.color.Pinstripe,
             "border": "2px solid " + this.color.StrokeLight,
             ...abs_css
         });
-        this.html.append(this.right_pane_slider.html);
-        this.left_pane_slider.SetPaneContentA(this.toolbar.html);
-        this.left_pane_slider.SetPaneContentB(this.middle_html);
-        this.left_html.css({
-            "border-right": "1px solid " + this.color.StrokeLight,
-            ...abs_css
-        });
-        this.left_html.append(this.left_pane_slider.html);
-        this.middle_pane_slider.SetPaneContentA(this.canvas.html);
-        this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
-        this.middle_html.css({
-            "border-left": "1px solid " + this.color.StrokeLight,
-            ...abs_css
-        });
-        this.middle_html.append(this.middle_pane_slider.html);
-        this.editor_panel.UpdatePropertyBox();
-        this.editor_panel.UpdateContentBoxComboOptions();
+        this.canvas = new DashGuiContext2DCanvas(this);
+        if (this.preview_mode) {
+            new DashGuiContext2DEditorPanel(this);  // Instantiate only, don't store it
+            this.html.append(this.canvas.html);
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.ResizeCanvas();
+                });
+            })(this);
+        }
+        else {
+            this.log_bar = new DashGuiContext2DLogBar(this);
+            this.toolbar = new DashGuiContext2DToolbar(this);
+            this.editor_panel = new DashGuiContext2DEditorPanel(this);
+            this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
+            this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
+            this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
+            this.right_pane_slider.SetPaneContentA(this.left_html);
+            this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
+            this.html.append(this.right_pane_slider.html);
+            this.left_pane_slider.SetPaneContentA(this.toolbar.html);
+            this.left_pane_slider.SetPaneContentB(this.middle_html);
+            this.left_html.css({
+                "border-right": "1px solid " + this.color.StrokeLight,
+                ...abs_css
+            });
+            this.left_html.append(this.left_pane_slider.html);
+            this.middle_pane_slider.SetPaneContentA(this.canvas.html);
+            this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
+            this.middle_html.css({
+                "border-left": "1px solid " + this.color.StrokeLight,
+                ...abs_css
+            });
+            this.middle_html.append(this.middle_pane_slider.html);
+            this.editor_panel.UpdatePropertyBox();
+            this.editor_panel.UpdateContentBoxComboOptions();
+        }
         this.loading_overlay.Stop();
         this.loading_overlay.Hide();
     };
@@ -28213,7 +28229,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                         self.initialize();
                     }
                     console.log("Context2D data:", self.data);
-                    if (self.initialized) {
+                    if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdatePropertyBox();
                     }
                 },
@@ -28242,7 +28258,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                         self.initialize();
                     }
                     console.log("Context2D combo options:", self.ComboOptions);
-                    if (self.initialized) {
+                    if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdateContentBoxComboOptions();
                     }
                 },
@@ -28273,7 +28289,9 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                     if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
                         self.AddToLog(key.Title() + " set to: " + value);
                     }
-                    self.editor_panel.UpdatePropertyBox();
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdatePropertyBox();
+                    }
                     if (callback) {
                         callback();
                     }
@@ -28617,6 +28635,9 @@ function DashGuiContext2DCanvas (editor) {
         ];
     };
     this.setup_connections = function () {
+        if (!this.editor.can_edit) {
+            return;
+        }
         (function (self) {
             self.html.on("mousedown", function (e) {
                 if (self.last_selected_primitive) {
@@ -29446,6 +29467,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.draw_properties_pending = true;
     };
     this.setup_connections = function () {
+        if (!this.editor.can_edit) {
+            return;
+        }
         (function (self) {
             self.html.on("click", function (e) {
                 if (!self.get_value("locked")) {
@@ -29536,6 +29560,13 @@ function DashGuiContext2DPrimitiveText () {
         this.update_text_alignment();
         if (this.get_value("placeholder")) {
             this.lock_text_area();
+        }
+        else if (!this.editor.can_edit) {
+            this.lock_text_area();
+            this.text_area.html.css({
+                "user-select": "none",
+                "pointer-events": "none"
+            });
         }
     };
     // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
@@ -29730,7 +29761,9 @@ function DashGuiContext2DPrimitiveImage () {
         var canvas = $("<canvas></canvas>");
         canvas.css({
             "box-sizing": "border-box",
-            "border": "1px solid " + this.highlight_color
+            "border": "1px solid " + this.color.StrokeDark,
+            "outline": "1px solid " + this.opposite_color.StrokeLight,
+            "outline-offset": "1px"
         });
         // Don't set these with .css(), it's different
         canvas.attr("width", this.width_px);
@@ -29865,11 +29898,12 @@ function DashGuiContext2DEditorPanel (editor) {
     this.first_pane_slider = null;
     this.color = this.editor.color;
     this.second_pane_slider = null;
+    this.tool_value_tool_row = null;
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
-    this.tool_value_tool_row = null;
     this.can_edit = this.editor.can_edit;
+    this.preview_mode = this.editor.preview_mode;
     this.min_width = (Dash.Size.ColumnWidth * 2.25) + (this.editor.min_width_extensions["editor_panel"] || 0);
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
@@ -29882,15 +29916,19 @@ function DashGuiContext2DEditorPanel (editor) {
     this.get_data = this.editor.get_data.bind(this.editor);
     this.set_data = this.editor.set_data.bind(this.editor);
     this.setup_styles = function () {
+        if (this.preview_mode) {
+            new DashGuiContext2DEditorPanelLayers(this);  // Instantiate only, don't store it
+            return;
+        }
+        var abs_css = {
+            "position": "absolute",
+            "inset": 0
+        };
         this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
         this.content_box = new DashGuiContext2DEditorPanelContent(this);
         this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
         this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
         this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
-        var abs_css = {
-            "position": "absolute",
-            "inset": 0
-        };
         this.second_pane_slider.SetPaneContentA(this.top_html);
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
         this.html.css({
@@ -30308,7 +30346,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.can_edit = this.layers.can_edit;
     this.icon_color = this.color.StrokeLight;
     this.child_left_margin = Dash.Size.Padding;
+    this.preview_mode = this.layers.preview_mode;
     this.setup_styles = function () {
+        if (this.preview_mode) {
+            return;
+        }
         this.html.css({
             "padding": Dash.Size.Padding,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
@@ -30482,10 +30524,12 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
     this.RefreshConnections = function () {
         (function (self) {
-            self.html.on("click", function (e) {
-                self.Select();
-                e.stopPropagation();
-            });
+            if (self.can_edit) {
+                self.html.on("click", function (e) {
+                    self.Select();
+                    e.stopPropagation();
+                });
+            }
             self.html.on("mouseenter", function () {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
@@ -30660,24 +30704,27 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.editor = this.panel.editor;
     this.layers_box = $("<div></div>");
     this.can_edit = this.panel.can_edit;
+    this.preview_mode = this.panel.preview_mode;
     this.setup_styles = function () {
-        this.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "padding": Dash.Size.Padding,
-            "padding-top": Dash.Size.Padding * 0.5,
-            "box-sizing": "border-box",
-            "border-top": "1px solid " + this.color.StrokeLight
-        });
-        this.add_header();
-        this.layers_box.css({
-            "position": "absolute",
-            "inset": 0,
-            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
-            "overflow-y": "auto"
-        });
-        this.html.append(this.layers_box);
-        this.setup_connections();
+        if (!this.preview_mode) {
+            this.html.css({
+                "position": "absolute",
+                "inset": 0,
+                "padding": Dash.Size.Padding,
+                "padding-top": Dash.Size.Padding * 0.5,
+                "box-sizing": "border-box",
+                "border-top": "1px solid " + this.color.StrokeLight
+            });
+            this.add_header();
+            this.layers_box.css({
+                "position": "absolute",
+                "inset": 0,
+                "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
+                "overflow-y": "auto"
+            });
+            this.html.append(this.layers_box);
+            this.setup_connections();
+        }
         (function (self) {
             requestAnimationFrame(function () {
                 self.redraw_layers();  // Wait for canvas to be fully drawn first
@@ -30696,7 +30743,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[id] = new DashGuiContext2DEditorPanelLayer(this, id, parent_id);
         var data = this.layers[id].GetData();
         if (data["type"] === "context") {
-            var imported_layers = this.layers[id].GetData()["imported_context"]["layers"]["data"];
+            var imported_layers = data["imported_context"]["layers"]["data"];
             // TODO: If imported context is *this* context, then the layer ids will be the same,
             //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
             //  but as of writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
@@ -30714,11 +30761,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 this.AddLayer(imported_id, false, id);
             }
         }
-        this.layers_box.prepend(this.layers[id].html);
-        if (select) {
-            this.layers[id].Select();
+        if (!this.preview_mode) {
+            this.layers_box.prepend(this.layers[id].html);
+            if (select) {
+                this.layers[id].Select();
+            }
         }
-        this.editor.AddCanvasPrimitive(this.layers[id], select);
+        this.editor.AddCanvasPrimitive(
+            this.layers[id],
+            this.preview_mode ? false : select
+        );
     };
     this.Duplicate = function () {
         var id = this.GetSelectedID();
@@ -31521,6 +31573,9 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         }
         else {
             this.icon_toggles[key].SetReadOnly();
+            this.icon_toggles[key].html.css({
+                "opacity": 0.5
+            });
         }
         this.html.append(this.icon_toggles[key].html);
     };

@@ -36,7 +36,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.obj_id = obj_id;
     this.api = api;
     this.color = color || Dash.Color.Light;
-    this.can_edit = can_edit;
+    this.can_edit = preview_mode ? false : can_edit;
     this.preview_mode = preview_mode;
     this.extra_request_params = extra_request_params;
 
@@ -61,14 +61,21 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
-        this.html.css({
+        var css = {
             "position": "absolute",
             "inset": 0
-        });
+        };
+
+        if (this.preview_mode) {
+            css["user-select"] = "none";
+            css["pointer-events"] = "none";
+        }
+
+        this.html.css(css);
 
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
 
-        Dash.SetInterval(this, this.refresh_data, 5000);
+        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 15000 : 5000);
 
         this.get_combo_options();
     };
@@ -318,21 +325,10 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
 
         this.initialized = true;
 
-        this.canvas = new DashGuiContext2DCanvas(this);
-        this.log_bar = new DashGuiContext2DLogBar(this);
-        this.toolbar = new DashGuiContext2DToolbar(this);
-        this.editor_panel = new DashGuiContext2DEditorPanel(this);
-        this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
-        this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
-        this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
-
         var abs_css = {
             "position": "absolute",
             "inset": 0
         };
-
-        this.right_pane_slider.SetPaneContentA(this.left_html);
-        this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
 
         this.html.css({
             "box-sizing": "border-box",
@@ -341,30 +337,56 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
             ...abs_css
         });
 
-        this.html.append(this.right_pane_slider.html);
+        this.canvas = new DashGuiContext2DCanvas(this);
 
-        this.left_pane_slider.SetPaneContentA(this.toolbar.html);
-        this.left_pane_slider.SetPaneContentB(this.middle_html);
+        if (this.preview_mode) {
+            new DashGuiContext2DEditorPanel(this);  // Instantiate only, don't store it
 
-        this.left_html.css({
-            "border-right": "1px solid " + this.color.StrokeLight,
-            ...abs_css
-        });
+            this.html.append(this.canvas.html);
 
-        this.left_html.append(this.left_pane_slider.html);
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.ResizeCanvas();
+                });
+            })(this);
+        }
 
-        this.middle_pane_slider.SetPaneContentA(this.canvas.html);
-        this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
+        else {
+            this.log_bar = new DashGuiContext2DLogBar(this);
+            this.toolbar = new DashGuiContext2DToolbar(this);
+            this.editor_panel = new DashGuiContext2DEditorPanel(this);
+            this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
+            this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
+            this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
 
-        this.middle_html.css({
-            "border-left": "1px solid " + this.color.StrokeLight,
-            ...abs_css
-        });
+            this.right_pane_slider.SetPaneContentA(this.left_html);
+            this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
 
-        this.middle_html.append(this.middle_pane_slider.html);
+            this.html.append(this.right_pane_slider.html);
 
-        this.editor_panel.UpdatePropertyBox();
-        this.editor_panel.UpdateContentBoxComboOptions();
+            this.left_pane_slider.SetPaneContentA(this.toolbar.html);
+            this.left_pane_slider.SetPaneContentB(this.middle_html);
+
+            this.left_html.css({
+                "border-right": "1px solid " + this.color.StrokeLight,
+                ...abs_css
+            });
+
+            this.left_html.append(this.left_pane_slider.html);
+
+            this.middle_pane_slider.SetPaneContentA(this.canvas.html);
+            this.middle_pane_slider.SetPaneContentB(this.log_bar.html);
+
+            this.middle_html.css({
+                "border-left": "1px solid " + this.color.StrokeLight,
+                ...abs_css
+            });
+
+            this.middle_html.append(this.middle_pane_slider.html);
+
+            this.editor_panel.UpdatePropertyBox();
+            this.editor_panel.UpdateContentBoxComboOptions();
+        }
 
         this.loading_overlay.Stop();
         this.loading_overlay.Hide();
@@ -387,7 +409,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
 
                     console.log("Context2D data:", self.data);
 
-                    if (self.initialized) {
+                    if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdatePropertyBox();
                     }
                 },
@@ -422,7 +444,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
 
                     console.log("Context2D combo options:", self.ComboOptions);
 
-                    if (self.initialized) {
+                    if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdateContentBoxComboOptions();
                     }
                 },
@@ -460,7 +482,9 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                         self.AddToLog(key.Title() + " set to: " + value);
                     }
 
-                    self.editor_panel.UpdatePropertyBox();
+                    if (self.editor_panel) {
+                        self.editor_panel.UpdatePropertyBox();
+                    }
 
                     if (callback) {
                         callback();

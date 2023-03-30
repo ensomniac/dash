@@ -10,29 +10,32 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.editor = this.panel.editor;
     this.layers_box = $("<div></div>");
     this.can_edit = this.panel.can_edit;
+    this.preview_mode = this.panel.preview_mode;
 
     this.setup_styles = function () {
-        this.html.css({
-            "position": "absolute",
-            "inset": 0,
-            "padding": Dash.Size.Padding,
-            "padding-top": Dash.Size.Padding * 0.5,
-            "box-sizing": "border-box",
-            "border-top": "1px solid " + this.color.StrokeLight
-        });
+        if (!this.preview_mode) {
+            this.html.css({
+                "position": "absolute",
+                "inset": 0,
+                "padding": Dash.Size.Padding,
+                "padding-top": Dash.Size.Padding * 0.5,
+                "box-sizing": "border-box",
+                "border-top": "1px solid " + this.color.StrokeLight
+            });
 
-        this.add_header();
+            this.add_header();
 
-        this.layers_box.css({
-            "position": "absolute",
-            "inset": 0,
-            "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
-            "overflow-y": "auto"
-        });
+            this.layers_box.css({
+                "position": "absolute",
+                "inset": 0,
+                "top": Dash.Size.ButtonHeight + (Dash.Size.Padding * 0.5),
+                "overflow-y": "auto"
+            });
 
-        this.html.append(this.layers_box);
+            this.html.append(this.layers_box);
 
-        this.setup_connections();
+            this.setup_connections();
+        }
 
         (function (self) {
             requestAnimationFrame(function () {
@@ -57,7 +60,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var data = this.layers[id].GetData();
 
         if (data["type"] === "context") {
-            var imported_layers = this.layers[id].GetData()["imported_context"]["layers"]["data"];
+            var imported_layers = data["imported_context"]["layers"]["data"];
 
             // TODO: If imported context is *this* context, then the layer ids will be the same,
             //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
@@ -79,13 +82,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             }
         }
 
-        this.layers_box.prepend(this.layers[id].html);
+        if (!this.preview_mode) {
+            this.layers_box.prepend(this.layers[id].html);
 
-        if (select) {
-            this.layers[id].Select();
+            if (select) {
+                this.layers[id].Select();
+            }
         }
 
-        this.editor.AddCanvasPrimitive(this.layers[id], select);
+        this.editor.AddCanvasPrimitive(
+            this.layers[id],
+            this.preview_mode ? false : select
+        );
     };
 
     this.Duplicate = function () {

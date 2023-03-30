@@ -671,6 +671,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.setup_connections = function () {
+        if (!this.editor.can_edit) {
+            return;
+        }
+
         (function (self) {
             self.html.on("click", function (e) {
                 if (!self.get_value("locked")) {

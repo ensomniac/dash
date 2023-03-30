@@ -108,6 +108,10 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
         else {
             this.icon_toggles[key].SetReadOnly();
+
+            this.icon_toggles[key].html.css({
+                "opacity": 0.5
+            });
         }
 
         this.html.append(this.icon_toggles[key].html);

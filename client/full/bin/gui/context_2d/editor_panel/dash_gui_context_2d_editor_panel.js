@@ -11,11 +11,12 @@ function DashGuiContext2DEditorPanel (editor) {
     this.first_pane_slider = null;
     this.color = this.editor.color;
     this.second_pane_slider = null;
+    this.tool_value_tool_row = null;
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
     this.obj_id = this.editor.obj_id;
-    this.tool_value_tool_row = null;
     this.can_edit = this.editor.can_edit;
+    this.preview_mode = this.editor.preview_mode;
     this.min_width = (Dash.Size.ColumnWidth * 2.25) + (this.editor.min_width_extensions["editor_panel"] || 0);
 
     // Update if things are added to the box that would increase the overall height
@@ -31,16 +32,22 @@ function DashGuiContext2DEditorPanel (editor) {
     this.set_data = this.editor.set_data.bind(this.editor);
 
     this.setup_styles = function () {
-        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
-        this.content_box = new DashGuiContext2DEditorPanelContent(this);
-        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
-        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
-        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+        if (this.preview_mode) {
+            new DashGuiContext2DEditorPanelLayers(this);  // Instantiate only, don't store it
+
+            return;
+        }
 
         var abs_css = {
             "position": "absolute",
             "inset": 0
         };
+
+        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
+        this.content_box = new DashGuiContext2DEditorPanelContent(this);
+        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
+        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
+        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
 
         this.second_pane_slider.SetPaneContentA(this.top_html);
         this.second_pane_slider.SetPaneContentB(this.layers_box.html);
