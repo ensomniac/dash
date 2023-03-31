@@ -207,7 +207,8 @@ class Layer:
             file_bytes_or_existing_path=file,
             filename=filename,
             enforce_unique_filename_key=False,
-            include_jpg_thumb=False
+            include_jpg_thumb=False,
+            min_size=1024
         )
 
         properties = {

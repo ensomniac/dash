@@ -24,7 +24,7 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 def Upload(
         dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
         existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None,
-        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True
+        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True, min_size=0
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -64,7 +64,8 @@ def Upload(
         img, file_data = get_image_with_data(
             file_bytes_or_existing_path,
             existing_data_for_update.get("orig_filename") or filename,
-            target_aspect_ratio
+            target_aspect_ratio,
+            min_size
         )
     else:
         img = None
@@ -322,8 +323,13 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None):
+def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None, min_size=0):
     img = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+    if min_size and img.size[0] < min_size and img.size[1] < min_size:
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(f"Image is too small. Make sure either the width or height is at least {min_size}.")
 
     if target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
         from Dash.Utils import ClientAlert
