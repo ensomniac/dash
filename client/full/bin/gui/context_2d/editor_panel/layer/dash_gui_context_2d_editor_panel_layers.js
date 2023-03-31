@@ -403,6 +403,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.layers[id].UpdateLabel();
         }
 
+        else if (key === "tint_color") {
+            this.layers[id].UpdateTintColor();
+        }
+
         var display_name;
 
         if (parent_id) {
@@ -427,7 +431,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         if (key === "hidden" || key === "locked") {
             if (value) {
-                this.editor.DeselectAllLayers();
+                if (key === "locked") {
+                    this.editor.DeselectAllLayers();
+                }
             }
 
             else {

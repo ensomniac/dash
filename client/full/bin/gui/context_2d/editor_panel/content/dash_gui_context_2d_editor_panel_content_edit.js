@@ -215,27 +215,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         else if (context_key === "text") {
-            this.contexts[context_key]["html"].append(this.get_color_picker("font_color", "Color").html);
-
-            // This could be on the same row as the color picker, and actually looks better
-            // that way, but some font names will be long, so best this is on its own row
-            this.contexts[context_key]["html"].append(this.get_combo(
-                this.editor.ComboOptions ? (
-                    this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
-                ) : [{"id": "", "label_text": "Loading..."}],
-                "font_id",
-                "Font"
-            ).html);
-
-            this.contexts[context_key]["html"].append(this.get_combo(
-                [
-                    {"id": "", "label_text": "Center"},
-                    {"id": "left", "label_text": "Left"},
-                    {"id": "right", "label_text": "Right"}
-                ],
-                "text_alignment",
-                "Alignment"
-            ).html);
+            this.initialize_text_context(context_key);
         }
 
         else if (context_key === "image") {
@@ -265,6 +245,65 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.contexts[context_key]["initialized"] = true;
+    };
+
+    this.initialize_text_context = function (context_key) {
+        var color_picker = this.get_color_picker("font_color", "Color");
+        var container = $("<div></div>");
+
+        container.css({
+            "display": "flex"
+        });
+
+        container.append(color_picker.html);
+
+        var checkbox = (function (self) {
+            return new Dash.Gui.Checkbox(
+                "",
+                self.get_data()["text_caps"] || false,
+                self.color,
+                "Toggle",
+                self,
+                function (checkbox) {
+                    self.set_data("text_caps", checkbox.IsChecked());
+                },
+                "ALL-CAPS:"
+            );
+        })(this);
+
+        checkbox.html.css({
+            "margin-top": Dash.Size.Padding * 0.6,
+            "margin-left": Dash.Size.Padding
+        });
+
+        checkbox.label.label.css({
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+        });
+
+        container.append(checkbox.html);
+
+        this.contexts[context_key]["html"].append(container);
+
+        // This could be on the same row as the color picker, and actually looks better
+        // that way, but some font names will be long, so best this is on its own row
+        this.contexts[context_key]["html"].append(this.get_combo(
+            this.editor.ComboOptions ? (
+                this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+            ) : [{"id": "", "label_text": "Loading..."}],
+            "font_id",
+            "Font"
+        ).html);
+
+        this.contexts[context_key]["html"].append(this.get_combo(
+            [
+                {"id": "", "label_text": "Center"},
+                {"id": "left", "label_text": "Left"},
+                {"id": "right", "label_text": "Right"}
+            ],
+            "text_alignment",
+            "Alignment"
+        ).html);
     };
 
     this.initialize_image_context = function (context_key) {
@@ -322,8 +361,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         color_container.append(button.html);
 
         this.contexts[context_key]["html"].append(color_container);
-
-        // TODO: button to download original image
     };
 
     this.get_combo = function (options, data_key, label_text="") {
@@ -365,6 +402,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.get_data()[data_key] || "#000000"
             );
         })(this);
+
+        color_picker.label.css({
+            "top": -Dash.Size.Padding * 0.6
+        });
 
         var css = {"margin-bottom": Dash.Size.Padding};
 

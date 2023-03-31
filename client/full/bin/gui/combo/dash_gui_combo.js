@@ -30,6 +30,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.gravity_width_override = null;
+    this.gravity_value_override = null;
     this.gravity_height_override = null;
     this.previous_selected_option = null;
     this.show_rows_on_empty_search = true;
@@ -485,7 +486,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 this.gravity_vertical = Math.abs(gravity);
 
                 this.rows.css({
-                    "top": gravity + this.list_offset_vertical
+                    "top": this.gravity_value_override || (gravity + this.list_offset_vertical)
                 });
 
                 offset_added = true;
@@ -505,7 +506,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     this.gravity_horizontal = Math.abs(gravity);
 
                     this.rows.css({
-                        "left": gravity
+                        "left": this.gravity_value_override || gravity
                     });
                 }
             }

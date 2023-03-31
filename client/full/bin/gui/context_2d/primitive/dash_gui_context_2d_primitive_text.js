@@ -44,7 +44,7 @@ function DashGuiContext2DPrimitiveText () {
         var text_value = this.get_value("text_value");
 
         if (text_value) {
-            this.text_area.SetText(text_value);
+            this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
         }
 
         (function (self) {
@@ -208,6 +208,12 @@ function DashGuiContext2DPrimitiveText () {
 
         else if (key === "text_alignment") {
             this.update_text_alignment();
+        }
+
+        else if (key === "text_caps") {
+            var text_value = this.get_value("text_value");
+
+            this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
         }
 
         this.update_font_color();

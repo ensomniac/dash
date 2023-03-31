@@ -23,6 +23,15 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var selected_layer = this.layers.GetSelectedLayer();
         var revert = !selected_layer;
         var parent_id = selected_layer ? selected_layer.GetParentID() : "";
+        var type = selected_layer ? selected_layer.GetData()["type"] : null;
+
+        if (type === "image") {
+            this.icon_buttons["download"].Enable();
+        }
+
+        else {
+            this.icon_buttons["download"].Disable();
+        }
 
         for (var key in this.icon_toggles) {
             if (revert) {
@@ -165,6 +174,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.add_icons = function () {
         (function (self) {
             self.add_icon_button(
+                "download",
+                "download",
+                function () {
+                    // self.layers.Download();
+                }
+            );
+
+            self.add_icon_button(
                 "duplicate",
                 "clone",
                 function () {
@@ -198,6 +215,8 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         })(this);
 
         var selected_layer = this.layers.GetSelectedLayer();
+
+        this.icon_buttons["download"].Disable();
 
         this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");

@@ -10,6 +10,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.linked_icon = null;
     this.icon_size_mult = 0.8;
     this.contained_icon = null;
+    this.color_border_size = 3;
     this.html = $("<div></div>");
     this.color = this.layers.color;
     this.panel = this.layers.panel;
@@ -26,12 +27,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         this.html.css({
-            "padding": Dash.Size.Padding,
+            "padding": Dash.Size.Padding - this.color_border_size,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
-            "cursor": "pointer"
+            "cursor": "pointer",
+            "box-sizing": "border-box"
         });
 
+        this.UpdateTintColor();
         this.add_type_icon();
         this.add_input();
 
@@ -293,6 +296,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
     this.UpdateLabel = function () {
         this.input.SetText(this.get_value("display_name"));
+    };
+
+    this.UpdateTintColor = function () {
+        var tint_color = this.get_value("tint_color");
+
+        this.html.css({
+            "border-left": this.color_border_size + "px solid " + (tint_color || "rgba(0, 0, 0, 0)")
+        });
     };
 
     this.add_type_icon = function () {

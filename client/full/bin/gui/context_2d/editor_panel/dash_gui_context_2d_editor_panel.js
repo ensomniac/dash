@@ -17,7 +17,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
     this.preview_mode = this.editor.preview_mode;
-    this.min_width = (Dash.Size.ColumnWidth * 2.25) + (this.editor.min_width_extensions["editor_panel"] || 0);
+    this.min_width = (Dash.Size.ColumnWidth * 2.4) + (this.editor.min_width_extensions["editor_panel"] || 0);
 
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = (
