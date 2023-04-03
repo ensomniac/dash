@@ -19,10 +19,45 @@ class Layer:
 
         self.data = {}
         self._new = False
-        self.bool_keys = ["hidden", "locked", "linked", "contained", "placeholder", "text_caps", *self.context_2d.LayerExtraBoolKeys]
-        self.str_keys = ["display_name", "text_value", "text_alignment", "font_id", "font_color", "tint_color", *self.context_2d.LayerExtraStrKeys]
-        self.state_keys = ["anchor_norm_x", "anchor_norm_y", "width_norm", "rot_deg", "opacity", *self.context_2d.LayerExtraStateKeys]
-        self.float_keys = [*self.state_keys, "aspect", "contrast", "brightness", *self.context_2d.LayerExtraFloatKeys]
+
+        self.bool_keys = [
+            "hidden",
+            "locked",
+            "linked",
+            "contained",
+            "placeholder",
+            "text_caps",
+            *self.context_2d.LayerExtraBoolKeys
+        ]
+
+        self.str_keys = [
+            "display_name",
+            "text_value",
+            "text_alignment",
+            "font_id",
+            "font_color",
+            "tint_color",
+            "stroke_color",
+            *self.context_2d.LayerExtraStrKeys
+        ]
+
+        self.state_keys = [
+            "anchor_norm_x",
+            "anchor_norm_y",
+            "width_norm",
+            "rot_deg",
+            "opacity",
+            *self.context_2d.LayerExtraStateKeys
+        ]
+
+        self.float_keys = [
+            *self.state_keys,
+            "aspect",
+            "contrast",
+            "brightness",
+            "stroke_thickness",
+            *self.context_2d.LayerExtraFloatKeys
+        ]
 
         self.load_data()
 
@@ -110,12 +145,16 @@ class Layer:
         }
 
         if self.Type == "text":
-            data["text_alignment"] = self.data.get("text_alignment") or ""
-            data["text_caps"] = self.data["text_caps"] if "text_caps" in self.data else False
-            data["text_value"] = self.data.get("text_value") or ""
-            data["font_color"] = self.data.get("font_color") or ""
-            data["font_id"] = self.data.get("font_id") or ""
-            data["tint_color"] = self.data.get("tint_color") or ""
+            data.update({
+                "text_alignment": self.data.get("text_alignment") or "",
+                "text_caps": self.data["text_caps"] if "text_caps" in self.data else False,
+                "text_value": self.data.get("text_value") or "",
+                "font_color": self.data.get("font_color") or "",
+                "font_id": self.data.get("font_id") or "",
+                "tint_color": self.data.get("tint_color") or "",
+                "stroke_color": self.data.get("stroke_color") or "",
+                "stroke_thickness": self.data.get("stroke_thickness") or 0
+            })
 
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
@@ -124,9 +163,11 @@ class Layer:
             data["file"] = self.data.get("file") or {}
 
         if self.Type == "image":
-            data["brightness"] = self.data["brightness"] if "brightness" in self.data else 1.0
-            data["contrast"] = self.data["contrast"] if "contrast" in self.data else 1.0
-            data["tint_color"] = self.data.get("tint_color") or ""
+            data.update({
+                "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
+                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
+                "tint_color": self.data.get("tint_color") or ""
+            })
 
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.

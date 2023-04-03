@@ -82,6 +82,12 @@ function DashGuiContext2DPrimitiveText () {
                 "pointer-events": "none"
             });
         }
+
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.update_stroke();
+            });
+        })(this);
     };
 
     // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
@@ -164,6 +170,16 @@ function DashGuiContext2DPrimitiveText () {
         });
     };
 
+    this.update_stroke = function () {
+        var thickness = this.get_value("stroke_thickness");
+        var text_height = this.text_area.textarea.height() - Dash.Size.Padding;
+        var size_px = Math.round((text_height * thickness) * 0.1);
+
+        this.text_area.textarea.css({
+            "text-stroke": thickness ? (size_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+        });
+    };
+
     this.get_font_option = function () {
         var font_id = this.get_value("font_id");
 
@@ -216,6 +232,7 @@ function DashGuiContext2DPrimitiveText () {
             this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
         }
 
+        this.update_stroke();
         this.update_font_color();
     };
 

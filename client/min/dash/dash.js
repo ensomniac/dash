@@ -17991,12 +17991,25 @@ function DashGui() {
             "label": $("<label for='colorpicker'>" + label_text + "</label>"),
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
-        color_picker.label.css({
+        var line_break = label_text.includes("\n");
+        var label_css = {
             "font-family": "sans_serif_bold",
             "font-size": "80%",
             "color": dash_color.Text || "black",
-            "top": -Dash.Size.Padding * 0.5
-        });
+            "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
+        };
+        if (line_break) {
+            label_css = {
+                ...label_css,
+                "white-space": "pre",
+                "height": Dash.Size.ButtonHeight,
+                "display": "block",
+                "float": "left",
+                "text-align": "right",
+                "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+            };
+        }
+        color_picker.label.css(label_css);
         color_picker.input.css({
             "height": Dash.Size.ButtonHeight,
             "margin-left": Dash.Size.Padding * 0.5,
@@ -29572,6 +29585,11 @@ function DashGuiContext2DPrimitiveText () {
                 "pointer-events": "none"
             });
         }
+        (function (self) {
+            requestAnimationFrame(function () {
+                self.update_stroke();
+            });
+        })(this);
     };
     // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
     //  the font sizes "correctly" but the alignment varies between canvas sizes. For example, if
@@ -29637,6 +29655,14 @@ function DashGuiContext2DPrimitiveText () {
             "color": this.get_value("font_color") || this.color.Text
         });
     };
+    this.update_stroke = function () {
+        var thickness = this.get_value("stroke_thickness");
+        var text_height = this.text_area.textarea.height() - Dash.Size.Padding;
+        var size_px = Math.round((text_height * thickness) * 0.1);
+        this.text_area.textarea.css({
+            "text-stroke": thickness ? (size_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+        });
+    };
     this.get_font_option = function () {
         var font_id = this.get_value("font_id");
         if (!font_id || !this.editor.ComboOptions["fonts"]) {
@@ -29676,6 +29702,7 @@ function DashGuiContext2DPrimitiveText () {
             var text_value = this.get_value("text_value");
             this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
         }
+        this.update_stroke();
         this.update_font_color();
     };
     // Override
@@ -31115,7 +31142,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 5.8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 6.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -31882,12 +31909,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["initialized"] = true;
     };
     this.initialize_text_context = function (context_key) {
-        var color_picker = this.get_color_picker("font_color", "Color");
+        this.contexts[context_key]["html"].append(this.get_slider(0, context_key, "stroke_thickness", 0.735).html);
+        var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
+        var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");
         var container = $("<div></div>");
         container.css({
             "display": "flex"
         });
-        container.append(color_picker.html);
+        stroke_color_picker.label.css({
+            "margin-left": Dash.Size.Padding
+        });
+        container.append(font_color_picker.html);
+        container.append(stroke_color_picker.html);
         var checkbox = (function (self) {
             return new Dash.Gui.Checkbox(
                 "",
@@ -32010,9 +32043,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.get_data()[data_key] || "#000000"
             );
         })(this);
-        color_picker.label.css({
-            "top": -Dash.Size.Padding * 0.6
-        });
+        if (!(label_text.includes("\n"))) {
+            color_picker.label.css({
+                "top": -Dash.Size.Padding * 0.6
+            });
+        }
         var css = {"margin-bottom": Dash.Size.Padding};
         if (!this.can_edit) {
             css["user-select"] = "none";

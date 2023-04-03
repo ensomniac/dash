@@ -248,14 +248,22 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_text_context = function (context_key) {
-        var color_picker = this.get_color_picker("font_color", "Color");
+        this.contexts[context_key]["html"].append(this.get_slider(0, context_key, "stroke_thickness", 0.735).html);
+
+        var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
+        var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");
         var container = $("<div></div>");
 
         container.css({
             "display": "flex"
         });
 
-        container.append(color_picker.html);
+        stroke_color_picker.label.css({
+            "margin-left": Dash.Size.Padding
+        });
+
+        container.append(font_color_picker.html);
+        container.append(stroke_color_picker.html);
 
         var checkbox = (function (self) {
             return new Dash.Gui.Checkbox(
@@ -403,9 +411,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
         })(this);
 
-        color_picker.label.css({
-            "top": -Dash.Size.Padding * 0.6
-        });
+        if (!(label_text.includes("\n"))) {
+            color_picker.label.css({
+                "top": -Dash.Size.Padding * 0.6
+            });
+        }
 
         var css = {"margin-bottom": Dash.Size.Padding};
 

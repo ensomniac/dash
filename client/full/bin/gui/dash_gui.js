@@ -187,12 +187,28 @@ function DashGui() {
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
 
-        color_picker.label.css({
+        var line_break = label_text.includes("\n");
+
+        var label_css = {
             "font-family": "sans_serif_bold",
             "font-size": "80%",
             "color": dash_color.Text || "black",
-            "top": -Dash.Size.Padding * 0.5
-        });
+            "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
+        };
+
+        if (line_break) {
+            label_css = {
+                ...label_css,
+                "white-space": "pre",
+                "height": Dash.Size.ButtonHeight,
+                "display": "block",
+                "float": "left",
+                "text-align": "right",
+                "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+            };
+        }
+
+        color_picker.label.css(label_css);
 
         color_picker.input.css({
             "height": Dash.Size.ButtonHeight,
