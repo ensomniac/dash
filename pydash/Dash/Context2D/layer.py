@@ -126,6 +126,7 @@ class Layer:
             "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
             "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
             "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
+            "blend_mode":    self.data.get("blend_mode") or "",
             "contained":     self.data["contained"] if "contained" in self.data else True,
             "created_by":    self.data["created_by"],
             "created_on":    self.data["created_on"],
@@ -137,6 +138,7 @@ class Layer:
             "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
             "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
             "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180
+            "tint_color":    self.data.get("tint_color") or "",
             "type":          self.Type,
             "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
                 # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution
@@ -152,7 +154,6 @@ class Layer:
                 "font_color": self.data.get("font_color") or "",
                 "font_id": self.data.get("font_id") or "",
                 "font_url": self.data.get("font_url") or "",
-                "tint_color": self.data.get("tint_color") or "",
                 "stroke_color": self.data.get("stroke_color") or "",
                 "stroke_thickness": self.data.get("stroke_thickness") or 0
             })
@@ -166,8 +167,7 @@ class Layer:
         if self.Type == "image":
             data.update({
                 "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
-                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
-                "tint_color": self.data.get("tint_color") or ""
+                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0
             })
 
         # This is a function that is meant to be overridden to use for custom modifications

@@ -31216,7 +31216,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 6.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 6.8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
@@ -31977,7 +31977,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
     this.initialize_context = function (context_key) {
         if (context_key === "general") {
-            this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
+            this.initialize_general_context(context_key);
         }
         else if (context_key === "text") {
             this.initialize_text_context(context_key);
@@ -32003,6 +32003,27 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
         }
         this.contexts[context_key]["initialized"] = true;
+    };
+    this.initialize_general_context = function (context_key) {
+        var combo_tool_row = this.get_combo(
+            [
+                {"id": "", "label_text": "Normal"},
+                {"id": "multiply", "label_text": "Multiply"},
+                {"id": "additive", "label_text": "Additive"}
+            ],
+            "blend_mode",
+            "*Blend Mode"
+        );
+        combo_tool_row.html.css({
+            "margin-bottom": Dash.Size.Padding
+        });
+        var combo_label = combo_tool_row.elements[0];
+        combo_label.html.css({
+            "cursor": "help"
+        });
+        combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
+        this.contexts[context_key]["html"].append(combo_tool_row.html);
+        this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
     };
     this.initialize_text_context = function (context_key) {
         this.contexts[context_key]["html"].append(this.get_slider(0, context_key, "stroke_thickness", 0.735).html);
@@ -32152,7 +32173,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         color_picker.html.css(css);
         return color_picker;
     };
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0) {
+    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -32168,6 +32189,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             requestAnimationFrame(function () {
                 self.style_slider(slider, reset_value || default_value, context_key);
             });
+            if (hover_text) {
+                slider.label.attr("title", hover_text);
+            }
             return slider;
         })(this);
     };

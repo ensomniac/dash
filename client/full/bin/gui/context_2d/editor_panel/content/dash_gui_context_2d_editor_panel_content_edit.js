@@ -211,7 +211,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
     this.initialize_context = function (context_key) {
         if (context_key === "general") {
-            this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
+            this.initialize_general_context(context_key);
         }
 
         else if (context_key === "text") {
@@ -245,6 +245,33 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.contexts[context_key]["initialized"] = true;
+    };
+
+    this.initialize_general_context = function (context_key) {
+        var combo_tool_row = this.get_combo(
+            [
+                {"id": "", "label_text": "Normal"},
+                {"id": "multiply", "label_text": "Multiply"},
+                {"id": "additive", "label_text": "Additive"}
+            ],
+            "blend_mode",
+            "*Blend Mode"
+        );
+
+        combo_tool_row.html.css({
+            "margin-bottom": Dash.Size.Padding
+        });
+
+        var combo_label = combo_tool_row.elements[0];
+
+        combo_label.html.css({
+            "cursor": "help"
+        });
+
+        combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
+
+        this.contexts[context_key]["html"].append(combo_tool_row.html);
+        this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
     };
 
     this.initialize_text_context = function (context_key) {
@@ -429,7 +456,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return color_picker;
     };
 
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0) {
+    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -446,6 +473,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             requestAnimationFrame(function () {
                 self.style_slider(slider, reset_value || default_value, context_key);
             });
+
+            if (hover_text) {
+                slider.label.attr("title", hover_text);
+            }
 
             return slider;
         })(this);
