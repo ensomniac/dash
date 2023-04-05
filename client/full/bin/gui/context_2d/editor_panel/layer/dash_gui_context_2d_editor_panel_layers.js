@@ -373,13 +373,39 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         var params = {
-            "f": "set_layer_property",
             "obj_id": this.editor.obj_id,
             "layer_id": parent_id || id,
-            "key": key,
-            "value": value,
             ...this.editor.extra_request_params
         };
+
+        if (key === "font_id") {
+            var font_url = "";
+
+            if (value) {
+                for (var option of this.editor.ComboOptions["fonts"]) {
+                    if (option["id"] !== value) {
+                        continue;
+                    }
+
+                    font_url = option["url"];
+
+                    break;
+                }
+            }
+
+            params["f"] = "set_layer_properties";
+
+            params["properties"] = JSON.stringify({
+                "font_id": value,
+                "font_url": font_url
+            });
+        }
+
+        else {
+            params["f"] = "set_layer_property";
+            params["key"] = key;
+            params["value"] = value;
+        }
 
         if (parent_id && key !== "layer_order") {
             params["imported_context_layer_id"] = id;

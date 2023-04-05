@@ -151,6 +151,7 @@ class Layer:
                 "text_value": self.data.get("text_value") or "",
                 "font_color": self.data.get("font_color") or "",
                 "font_id": self.data.get("font_id") or "",
+                "font_url": self.data.get("font_url") or "",
                 "tint_color": self.data.get("tint_color") or "",
                 "stroke_color": self.data.get("stroke_color") or "",
                 "stroke_thickness": self.data.get("stroke_thickness") or 0
