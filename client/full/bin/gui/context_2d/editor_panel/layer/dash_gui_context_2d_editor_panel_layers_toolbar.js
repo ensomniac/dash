@@ -6,6 +6,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.icon_toggles = {};
     this.html = $("<div></div>");
     this.color = this.layers.color;
+    this.editor = this.layers.editor;
     this.can_edit = this.layers.can_edit;
 
     // Skipping folders/grouping in V1 of this system, as it's nice to
@@ -16,7 +17,8 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             "display": "flex"
         });
 
-        this.add_icons();
+        this.add_icon_buttons();
+        this.add_icon_toggles();
     };
 
     this.UpdateIconStates = function () {
@@ -25,12 +27,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var parent_id = selected_layer ? selected_layer.GetParentID() : "";
         var type = selected_layer ? selected_layer.GetData()["type"] : null;
 
-        if (type === "image") {
-            this.icon_buttons["download"].Enable();
-        }
+        if (this.icon_buttons["download"]) {
+            if (type === "image") {
+                this.icon_buttons["download"].Enable();
+            }
 
-        else {
-            this.icon_buttons["download"].Disable();
+            else {
+                this.icon_buttons["download"].Disable();
+            }
         }
 
         for (var key in this.icon_toggles) {
@@ -171,7 +175,20 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         });
     };
 
-    this.add_icons = function () {
+    this.add_icon_toggles = function () {
+        var selected_layer = this.layers.GetSelectedLayer();
+
+        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
+        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
+        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
+    };
+
+    this.add_icon_buttons = function () {
+        if (this.editor.override_mode) {
+            return;
+        }
+
         (function (self) {
             self.add_icon_button(
                 "download",
@@ -214,14 +231,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             );
         })(this);
 
-        var selected_layer = this.layers.GetSelectedLayer();
-
         this.icon_buttons["download"].Disable();
-
-        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
-        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
-        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
-        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
 
     this.setup_styles();

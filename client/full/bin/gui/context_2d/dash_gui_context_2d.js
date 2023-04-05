@@ -1,4 +1,4 @@
-function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, extra_request_params={}) {
+function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -30,6 +30,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
      * @param {DashColorSet} color - DashColorSet instance (default=null)
      * @param {string} api - API name for requests (default="Context2D")
      * @param {boolean} preview_mode - When enabled, only shows a read-only "preview" of the context, hiding all the gui/tools (default=false)
+     * @param {boolean} override_mode - When enabled, hides some gui/tools (default=false)
      * @param {Object} extra_request_params - Extra params to send on requests (default={})
      */
 
@@ -38,6 +39,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.color = color || Dash.Color.Light;
     this.can_edit = preview_mode ? false : can_edit;
     this.preview_mode = preview_mode;
+    this.override_mode = override_mode;
     this.extra_request_params = extra_request_params;
 
     this.data = null;
@@ -355,9 +357,28 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
             this.log_bar = new DashGuiContext2DLogBar(this);
             this.toolbar = new DashGuiContext2DToolbar(this);
             this.editor_panel = new DashGuiContext2DEditorPanel(this);
-            this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
-            this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
-            this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
+
+            this.middle_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                true,
+                this.log_bar.min_height,
+                "dash_gui_context_2d_middle" + (this.override_mode ? "_override" : "")
+            );
+
+            this.left_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                false,
+                this.toolbar.min_width,
+                "dash_gui_context_2d_left" + (this.override_mode ? "_override" : ""),
+                true
+            );
+
+            this.right_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                false,
+                this.editor_panel.min_width,
+                "dash_gui_context_2d_right" + (this.override_mode ? "_override" : "")
+            );
 
             this.right_pane_slider.SetPaneContentA(this.left_html);
             this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
@@ -459,6 +480,11 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     };
 
     this.set_data = function (key, value, callback=null, additional_params={}) {
+        // Should never happen, but just in case
+        if (this.preview_mode) {
+            return;
+        }
+
         if (this.get_data(key) === value) {
             return;
         }
@@ -496,6 +522,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                     "obj_id": self.obj_id,
                     "key": key,
                     "value": value,
+                    ...self.extra_request_params,
                     ...additional_params
                 }
             );

@@ -298,6 +298,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.input.SetText(this.get_value("display_name"));
     };
 
+    // TODO: this currently only happens when the layer is drawn,
+    //  but needs to also be called when the tint color changes
     this.UpdateTintColor = function () {
         var tint_color = this.get_value("tint_color");
 

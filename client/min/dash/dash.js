@@ -27910,7 +27910,7 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, extra_request_params={}) {
+function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -27942,6 +27942,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
      * @param {DashColorSet} color - DashColorSet instance (default=null)
      * @param {string} api - API name for requests (default="Context2D")
      * @param {boolean} preview_mode - When enabled, only shows a read-only "preview" of the context, hiding all the gui/tools (default=false)
+     * @param {boolean} override_mode - When enabled, hides some gui/tools (default=false)
      * @param {Object} extra_request_params - Extra params to send on requests (default={})
      */
     this.obj_id = obj_id;
@@ -27949,6 +27950,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.color = color || Dash.Color.Light;
     this.can_edit = preview_mode ? false : can_edit;
     this.preview_mode = preview_mode;
+    this.override_mode = override_mode;
     this.extra_request_params = extra_request_params;
     this.data = null;
     this.canvas = null;
@@ -28207,9 +28209,25 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
             this.log_bar = new DashGuiContext2DLogBar(this);
             this.toolbar = new DashGuiContext2DToolbar(this);
             this.editor_panel = new DashGuiContext2DEditorPanel(this);
-            this.middle_pane_slider = new Dash.Layout.PaneSlider(this, true, this.log_bar.min_height, "dash_gui_context_2d_middle");
-            this.left_pane_slider = new Dash.Layout.PaneSlider(this, false, this.toolbar.min_width, "dash_gui_context_2d_left", true);
-            this.right_pane_slider = new Dash.Layout.PaneSlider(this, false, this.editor_panel.min_width, "dash_gui_context_2d_right");
+            this.middle_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                true,
+                this.log_bar.min_height,
+                "dash_gui_context_2d_middle" + (this.override_mode ? "_override" : "")
+            );
+            this.left_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                false,
+                this.toolbar.min_width,
+                "dash_gui_context_2d_left" + (this.override_mode ? "_override" : ""),
+                true
+            );
+            this.right_pane_slider = new Dash.Layout.PaneSlider(
+                this,
+                false,
+                this.editor_panel.min_width,
+                "dash_gui_context_2d_right" + (this.override_mode ? "_override" : "")
+            );
             this.right_pane_slider.SetPaneContentA(this.left_html);
             this.right_pane_slider.SetPaneContentB(this.editor_panel.html);
             this.html.append(this.right_pane_slider.html);
@@ -28288,6 +28306,10 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         return this.data;
     };
     this.set_data = function (key, value, callback=null, additional_params={}) {
+        // Should never happen, but just in case
+        if (this.preview_mode) {
+            return;
+        }
         if (this.get_data(key) === value) {
             return;
         }
@@ -28319,6 +28341,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                     "obj_id": self.obj_id,
                     "key": key,
                     "value": value,
+                    ...self.extra_request_params,
                     ...additional_params
                 }
             );
@@ -29224,6 +29247,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.set_drag_state();
+        // Should never happen, but just in case
+        if (this.editor.preview_mode) {
+            return;
+        }
         var params = {
             "f": "set_layer_properties",
             "obj_id": this.editor.obj_id,
@@ -29243,7 +29270,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         "anchor_norm_y": this.data["anchor_norm_y"]
                     }
                 ) : this.drag_state
-            )
+            ),
+            ...this.editor.extra_request_params
         };
         if (this.parent_id) {
             params["imported_context_layer_id"] = this.id;
@@ -29959,25 +29987,33 @@ function DashGuiContext2DEditorPanel (editor) {
             "position": "absolute",
             "inset": 0
         };
-        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
-        this.content_box = new DashGuiContext2DEditorPanelContent(this);
-        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
-        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
-        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
-        this.second_pane_slider.SetPaneContentA(this.top_html);
-        this.second_pane_slider.SetPaneContentB(this.layers_box.html);
         this.html.css({
             "box-sizing": "border-box",
             "border-left": "1px solid " + this.color.StrokeLight,
             "overflow-x": "hidden",
             ...abs_css
         });
-        this.html.append(this.second_pane_slider.html);
-        this.first_pane_slider.SetPaneContentA(this.property_box.html);
-        this.first_pane_slider.SetPaneContentB(this.content_box.html);
-        this.top_html.css(abs_css);
-        this.top_html.append(this.first_pane_slider.html);
-        this.setup_property_box();
+        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
+        this.content_box = new DashGuiContext2DEditorPanelContent(this);
+        if (this.editor.override_mode) {
+            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.content_box.min_height, "dash_gui_context_2d_editor_panel_first_override_mode", true);
+            this.first_pane_slider.SetPaneContentA(this.content_box.html);
+            this.first_pane_slider.SetPaneContentB(this.layers_box.html);
+            this.html.append(this.first_pane_slider.html);
+        }
+        else {
+            this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
+            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
+            this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+            this.second_pane_slider.SetPaneContentA(this.top_html);
+            this.second_pane_slider.SetPaneContentB(this.layers_box.html);
+            this.html.append(this.second_pane_slider.html);
+            this.first_pane_slider.SetPaneContentA(this.property_box.html);
+            this.first_pane_slider.SetPaneContentB(this.content_box.html);
+            this.top_html.css(abs_css);
+            this.top_html.append(this.first_pane_slider.html);
+            this.setup_property_box();
+        }
         if (this.GetSelectedLayer()) {
             this.SwitchContentToEditTab();
         }
@@ -30038,13 +30074,13 @@ function DashGuiContext2DEditorPanel (editor) {
         this.layers_box.AddLayer(primitive_type, primitive_file_data);
     };
     this.UpdatePropertyBox = function () {
+        if (!this.editor.CanvasSizeInitialized()) {
+            this.editor.ResizeCanvas();
+        }
         if (!this.property_box) {
             return;
         }
         this.property_box.Update();
-        if (!this.editor.CanvasSizeInitialized()) {
-            this.editor.ResizeCanvas();
-        }
     };
     this.UpdateContentBoxComboOptions = function () {
         this.content_box.UpdateComboOptions();
@@ -30123,6 +30159,9 @@ function DashGuiContext2DEditorPanel (editor) {
         this.content_box.AddCustomContextToEditTab(context_key, callback_that_returns_html, binder);
     };
     this.UpdatePropertyBoxToolSlider = function (active_tool="", layer=null) {
+        if (!this.property_box) {
+            return;
+        }
         if (!active_tool) {
             active_tool = this.editor.canvas.GetActiveTool();
         }
@@ -30297,6 +30336,10 @@ function DashGuiContext2DEditorPanel (editor) {
         });
     };
     this.duplicate_context = function () {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode || this.editor.override_mode) {
+            return;
+        }
         if (!window.confirm("Duplicate this context?\n\n(Duplicates are not tethered to the original)")) {
             return;
         }
@@ -30595,6 +30638,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.UpdateLabel = function () {
         this.input.SetText(this.get_value("display_name"));
     };
+    // TODO: this currently only happens when the layer is drawn,
+    //  but needs to also be called when the tint color changes
     this.UpdateTintColor = function () {
         var tint_color = this.get_value("tint_color");
         this.html.css({
@@ -30817,6 +30862,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         );
     };
     this.Duplicate = function () {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode || this.editor.override_mode) {
+            return;
+        }
         var id = this.GetSelectedID();
         if (!id) {
             return;
@@ -31006,6 +31055,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.set_data("layer_order", order, callback);
     };
     this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode) {
+            return;
+        }
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -31022,7 +31075,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "obj_id": this.editor.obj_id,
             "layer_id": parent_id || id,
             "key": key,
-            "value": value
+            "value": value,
+            ...this.editor.extra_request_params
         };
         if (parent_id && key !== "layer_order") {
             params["imported_context_layer_id"] = id;
@@ -31135,6 +31189,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.new_tab_index = null;
     this.edit_tab_index = null;
     this.color = this.panel.color;
+    this.editor = this.panel.editor;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
     this.edit_tab_custom_context_cbs = {};
@@ -31162,7 +31217,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
         this.add_header();
-        this.add_new_box();
+        if (!this.editor.override_mode) {
+            this.add_new_box();
+        }
         this.add_edit_box();
         this.set_header_right_margin();
     };
@@ -31177,6 +31234,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.layout.LoadIndex(this.edit_tab_index);
     };
     this.SwitchToNewTab = function () {
+        if (this.editor.override_mode) {
+            return;  // No New tab
+        }
         this.layout.LoadIndex(this.new_tab_index);
     };
     this.RedrawCurrentTab = function () {
@@ -31237,7 +31297,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
             combo.html.css({
                 "position": "absolute",
                 "top": (
-                    this.panel.property_box.html.outerHeight()  // Editor panel top box height
+                    (this.editor.override_mode ? 0 : this.panel.property_box.html.outerHeight())  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
                     + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
                     + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
@@ -31412,6 +31472,10 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                     self.html.append(self.get_button(
                         "New Text Layer",
                         function (event, button) {
+                            // Should never happen, but just in case
+                            if (self.editor.preview_mode || self.editor.override_mode) {
+                                return;
+                            }
                             button.SetLoading(true);
                             button.Disable();
                             Dash.Request(
@@ -31491,6 +31555,10 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 "Import Another Context",
                 "contexts",
                 function (selected_option) {
+                    // Should never happen, but just in case
+                    if (self.editor.preview_mode || self.editor.override_mode) {
+                        return;
+                    }
                     if (!selected_option["id"]) {
                         return;
                     }
@@ -31541,6 +31609,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
     this.icon_toggles = {};
     this.html = $("<div></div>");
     this.color = this.layers.color;
+    this.editor = this.layers.editor;
     this.can_edit = this.layers.can_edit;
     // Skipping folders/grouping in V1 of this system, as it's nice to
     // have but not necessary and can come later when it's needed/desired
@@ -31548,18 +31617,21 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         this.html.css({
             "display": "flex"
         });
-        this.add_icons();
+        this.add_icon_buttons();
+        this.add_icon_toggles();
     };
     this.UpdateIconStates = function () {
         var selected_layer = this.layers.GetSelectedLayer();
         var revert = !selected_layer;
         var parent_id = selected_layer ? selected_layer.GetParentID() : "";
         var type = selected_layer ? selected_layer.GetData()["type"] : null;
-        if (type === "image") {
-            this.icon_buttons["download"].Enable();
-        }
-        else {
-            this.icon_buttons["download"].Disable();
+        if (this.icon_buttons["download"]) {
+            if (type === "image") {
+                this.icon_buttons["download"].Enable();
+            }
+            else {
+                this.icon_buttons["download"].Disable();
+            }
         }
         for (var key in this.icon_toggles) {
             if (revert) {
@@ -31671,7 +31743,17 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
             });
         });
     };
-    this.add_icons = function () {
+    this.add_icon_toggles = function () {
+        var selected_layer = this.layers.GetSelectedLayer();
+        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
+        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
+        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
+        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
+    };
+    this.add_icon_buttons = function () {
+        if (this.editor.override_mode) {
+            return;
+        }
         (function (self) {
             self.add_icon_button(
                 "download",
@@ -31709,12 +31791,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 }
             );
         })(this);
-        var selected_layer = this.layers.GetSelectedLayer();
         this.icon_buttons["download"].Disable();
-        this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
-        this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
-        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
-        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
     this.setup_styles();
 }

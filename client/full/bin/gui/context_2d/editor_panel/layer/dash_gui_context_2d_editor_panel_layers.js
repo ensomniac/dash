@@ -97,6 +97,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.Duplicate = function () {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode || this.editor.override_mode) {
+            return;
+        }
+
         var id = this.GetSelectedID();
 
         if (!id) {
@@ -346,6 +351,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
 
     this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode) {
+            return;
+        }
+
         if (!id) {
             id = this.GetSelectedID();
         }
@@ -367,7 +377,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             "obj_id": this.editor.obj_id,
             "layer_id": parent_id || id,
             "key": key,
-            "value": value
+            "value": value,
+            ...this.editor.extra_request_params
         };
 
         if (parent_id && key !== "layer_order") {

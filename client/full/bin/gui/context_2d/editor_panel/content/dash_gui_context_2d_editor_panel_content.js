@@ -8,6 +8,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.new_tab_index = null;
     this.edit_tab_index = null;
     this.color = this.panel.color;
+    this.editor = this.panel.editor;
     this.last_instantiated_class = null;
     this.can_edit = this.panel.can_edit;
     this.edit_tab_custom_context_cbs = {};
@@ -42,7 +43,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
         });
 
         this.add_header();
-        this.add_new_box();
+
+        if (!this.editor.override_mode) {
+            this.add_new_box();
+        }
+
         this.add_edit_box();
         this.set_header_right_margin();
     };
@@ -62,6 +67,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
     };
 
     this.SwitchToNewTab = function () {
+        if (this.editor.override_mode) {
+            return;  // No New tab
+        }
+
         this.layout.LoadIndex(this.new_tab_index);
     };
 
@@ -140,7 +149,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
             combo.html.css({
                 "position": "absolute",
                 "top": (
-                    this.panel.property_box.html.outerHeight()  // Editor panel top box height
+                    (this.editor.override_mode ? 0 : this.panel.property_box.html.outerHeight())  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
                     + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
                     + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box

@@ -43,15 +43,6 @@ function DashGuiContext2DEditorPanel (editor) {
             "inset": 0
         };
 
-        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
-        this.content_box = new DashGuiContext2DEditorPanelContent(this);
-        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
-        this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
-        this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
-
-        this.second_pane_slider.SetPaneContentA(this.top_html);
-        this.second_pane_slider.SetPaneContentB(this.layers_box.html);
-
         this.html.css({
             "box-sizing": "border-box",
             "border-left": "1px solid " + this.color.StrokeLight,
@@ -59,15 +50,36 @@ function DashGuiContext2DEditorPanel (editor) {
             ...abs_css
         });
 
-        this.html.append(this.second_pane_slider.html);
+        this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
+        this.content_box = new DashGuiContext2DEditorPanelContent(this);
 
-        this.first_pane_slider.SetPaneContentA(this.property_box.html);
-        this.first_pane_slider.SetPaneContentB(this.content_box.html);
+        if (this.editor.override_mode) {
+            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.content_box.min_height, "dash_gui_context_2d_editor_panel_first_override_mode", true);
 
-        this.top_html.css(abs_css);
-        this.top_html.append(this.first_pane_slider.html);
+            this.first_pane_slider.SetPaneContentA(this.content_box.html);
+            this.first_pane_slider.SetPaneContentB(this.layers_box.html);
 
-        this.setup_property_box();
+            this.html.append(this.first_pane_slider.html);
+        }
+
+        else {
+            this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
+            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
+            this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+
+            this.second_pane_slider.SetPaneContentA(this.top_html);
+            this.second_pane_slider.SetPaneContentB(this.layers_box.html);
+
+            this.html.append(this.second_pane_slider.html);
+
+            this.first_pane_slider.SetPaneContentA(this.property_box.html);
+            this.first_pane_slider.SetPaneContentB(this.content_box.html);
+
+            this.top_html.css(abs_css);
+            this.top_html.append(this.first_pane_slider.html);
+
+            this.setup_property_box();
+        }
 
         if (this.GetSelectedLayer()) {
             this.SwitchContentToEditTab();
@@ -143,15 +155,15 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.UpdatePropertyBox = function () {
+        if (!this.editor.CanvasSizeInitialized()) {
+            this.editor.ResizeCanvas();
+        }
+
         if (!this.property_box) {
             return;
         }
 
         this.property_box.Update();
-
-        if (!this.editor.CanvasSizeInitialized()) {
-            this.editor.ResizeCanvas();
-        }
     };
 
     this.UpdateContentBoxComboOptions = function () {
@@ -242,6 +254,10 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.UpdatePropertyBoxToolSlider = function (active_tool="", layer=null) {
+        if (!this.property_box) {
+            return;
+        }
+
         if (!active_tool) {
             active_tool = this.editor.canvas.GetActiveTool();
         }
@@ -468,6 +484,11 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.duplicate_context = function () {
+        // Should never happen, but just in case
+        if (this.editor.preview_mode || this.editor.override_mode) {
+            return;
+        }
+
         if (!window.confirm("Duplicate this context?\n\n(Duplicates are not tethered to the original)")) {
             return;
         }

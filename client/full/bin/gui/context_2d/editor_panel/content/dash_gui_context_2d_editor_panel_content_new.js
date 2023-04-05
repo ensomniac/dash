@@ -49,6 +49,11 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                     self.html.append(self.get_button(
                         "New Text Layer",
                         function (event, button) {
+                            // Should never happen, but just in case
+                            if (self.editor.preview_mode || self.editor.override_mode) {
+                                return;
+                            }
+
                             button.SetLoading(true);
                             button.Disable();
 
@@ -146,6 +151,11 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 "Import Another Context",
                 "contexts",
                 function (selected_option) {
+                    // Should never happen, but just in case
+                    if (self.editor.preview_mode || self.editor.override_mode) {
+                        return;
+                    }
+
                     if (!selected_option["id"]) {
                         return;
                     }

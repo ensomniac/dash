@@ -343,6 +343,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.set_drag_state();
 
+        // Should never happen, but just in case
+        if (this.editor.preview_mode) {
+            return;
+        }
+
         var params = {
             "f": "set_layer_properties",
             "obj_id": this.editor.obj_id,
@@ -362,7 +367,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         "anchor_norm_y": this.data["anchor_norm_y"]
                     }
                 ) : this.drag_state
-            )
+            ),
+            ...this.editor.extra_request_params
         };
 
         if (this.parent_id) {
