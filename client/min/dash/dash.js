@@ -29558,29 +29558,27 @@ function DashGuiContext2DPrimitiveText () {
     this.text_area = null;
     this.last_text_value = null;
     this.text_border_thickness = 1;
-    this.text_pad = Dash.Size.Padding;
-    this.text_border_comp = this.text_border_thickness * 2;  // Compensation for border
     this._setup_styles = function () {
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
-        var calc = "calc(100% - " + ((this.text_pad * 2) + this.text_border_comp) + "px)";
         this.text_area.html.css({
             "border-radius": Dash.Size.BorderRadius,
             "position": "absolute",
-            "inset": this.text_pad,
-            "width": calc,
-            "height": calc,
+            "inset": 0,
+            "width": "100%",
+            "height": "100%",
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "overflow": "visible",
+            "text-overflow": "visible"
         });
         this.text_area.textarea.css({
             "border": "none",
-            "height": "100%",
-            "min-height": "100%",
-            "max-height": "100%",
+            "height": "fit-content",
+            "min-height": "",
+            "max-height": "",
             "resize": "none",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "padding": 0,
+            "overflow": "visible",
+            "text-overflow": "visible"
         });
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
         //  but this is for a reason. Eventually, these text primitives should be able to
@@ -29643,16 +29641,18 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
-        var size = (
-              this.height_px
-            - (this.text_pad * 2)
-            - this.text_border_comp
-            - Dash.Size.Padding
-        );
-        if (size < Dash.Size.Padding) {
-            size += Dash.Size.Padding;
+        var size = this.height_px;
+        var font_option = this.get_font_option();
+        if (font_option && font_option["override_scale_mult"] !== 1.0) {
+            size *= font_option["override_scale_mult"];
         }
+        // this.text_area.html.css({
+        //     "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
+        //     "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0
+        // });
         this.text_area.textarea.css({
+            "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
+            "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0,
             "font-size": size + "px",
             "line-height": size + "px"
         });
@@ -31224,7 +31224,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 6.8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 7.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "image"
