@@ -29479,6 +29479,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         if (this.type === "text") {
             this.resize_text();
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.update_stroke();
+                });
+            })(this);
         }
     };
     // Each type should have its own file which is called as a member of this file
@@ -29559,12 +29564,13 @@ function DashGuiContext2DPrimitiveText () {
     this.last_text_value = null;
     this.text_border_thickness = 1;
     this._setup_styles = function () {
+        this.html.css({
+            "display": "flex"
+        });
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
         this.text_area.html.css({
             "border-radius": Dash.Size.BorderRadius,
-            "position": "absolute",
-            "inset": 0,
-            "width": "100%",
+            "width": "fit-content",
             "height": "100%",
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
             "overflow": "visible",
@@ -29572,7 +29578,7 @@ function DashGuiContext2DPrimitiveText () {
         });
         this.text_area.textarea.css({
             "border": "none",
-            "width": "100%",
+            "width": "fit-content",
             "height": "fit-content",
             "min-height": "",
             "max-height": "",
@@ -29649,10 +29655,6 @@ function DashGuiContext2DPrimitiveText () {
         if (font_option && font_option["override_scale_mult"] !== 1.0) {
             size *= font_option["override_scale_mult"];
         }
-        // this.text_area.html.css({
-        //     "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
-        //     "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0
-        // });
         this.text_area.textarea.css({
             "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
             "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0,
@@ -29670,8 +29672,12 @@ function DashGuiContext2DPrimitiveText () {
         this.last_text_value = value;
     };
     this.update_text_alignment = function () {
+        var alignment = this.get_value("text_alignment") || "center";
+        this.html.css({
+            "justify-content": alignment
+        });
         this.text_area.textarea.css({
-            "text-align": this.get_value("text_alignment") || "center"
+            "text-align": alignment
         });
     };
     this.update_font = function () {
