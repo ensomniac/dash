@@ -16,18 +16,21 @@ function DashGuiContext2DPrimitiveText () {
             "height": "100%",
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
             "overflow": "visible",
-            "text-overflow": "visible"
+            "text-overflow": "ellipsis"
         });
 
         this.text_area.textarea.css({
             "border": "none",
+            "width": "fit-content",
             "height": "fit-content",
             "min-height": "",
             "max-height": "",
+            "min-width": "",
+            "max-width": "",
             "resize": "none",
             "padding": 0,
             "overflow": "visible",
-            "text-overflow": "visible"
+            "text-overflow": "ellipsis"
         });
 
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
