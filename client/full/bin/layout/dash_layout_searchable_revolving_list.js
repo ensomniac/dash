@@ -19,7 +19,16 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     this.setup_styles = function () {
         var column_config = new Dash.Layout.List.ColumnConfig();
 
-        column_config.AddFlexText(this.label_key, "", 0.25, this.label_css);
+        column_config.AddFlexText(
+            this.label_key,
+            "",
+            0.25,
+            {
+                "text-overflow": "ellipsis",
+                "overflow": "hidden",
+                ...this.label_css
+            }
+        );
 
         this.list = new DashLayoutRevolvingList(
             this,

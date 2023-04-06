@@ -19972,6 +19972,9 @@ function DashDateTime () {
             // Ignore
         }
         value = value.toString();
+        if (value.length > 30) {
+            return false;
+        }
         var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(value);
         if (!test) {
             test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
@@ -40178,7 +40181,16 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     this.label_key = "display_name";
     this.setup_styles = function () {
         var column_config = new Dash.Layout.List.ColumnConfig();
-        column_config.AddFlexText(this.label_key, "", 0.25, this.label_css);
+        column_config.AddFlexText(
+            this.label_key,
+            "",
+            0.25,
+            {
+                "text-overflow": "ellipsis",
+                "overflow": "hidden",
+                ...this.label_css
+            }
+        );
         this.list = new DashLayoutRevolvingList(
             this,
             column_config,

@@ -206,6 +206,10 @@ function DashDateTime () {
 
         value = value.toString();
 
+        if (value.length > 30) {
+            return false;
+        }
+
         var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(value);
 
         if (!test) {
