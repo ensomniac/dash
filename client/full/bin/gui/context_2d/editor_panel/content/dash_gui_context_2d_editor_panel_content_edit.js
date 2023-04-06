@@ -275,7 +275,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_text_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(0, context_key, "stroke_thickness", 0.735).html);
+        this.contexts[context_key]["html"].append(this.get_slider(
+            0,
+            context_key,
+            "stroke_thickness",
+            0.735,
+            "",
+            0,
+            0.1
+
+        ).html);
 
         var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
         var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");

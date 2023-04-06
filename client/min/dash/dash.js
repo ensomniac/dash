@@ -29572,7 +29572,7 @@ function DashGuiContext2DPrimitiveText () {
         });
         this.text_area.textarea.css({
             "border": "none",
-            "width": "fit-content",
+            "width": "100%",
             "height": "fit-content",
             "min-height": "",
             "max-height": "",
@@ -29695,9 +29695,19 @@ function DashGuiContext2DPrimitiveText () {
         });
     };
     this.update_stroke = function () {
-        var thickness = this.get_value("stroke_thickness");
-        var text_height = this.text_area.textarea.height() - Dash.Size.Padding;
-        var size_px = Math.round((text_height * thickness) * 0.1);
+        if (!this.height_px) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_stroke();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        var thickness = this.get_value("stroke_thickness") || 0;
+        var size_px = (this.height_px * thickness);
         this.text_area.textarea.css({
             "text-stroke": thickness ? (size_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
         });
@@ -32037,7 +32047,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
     };
     this.initialize_text_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(0, context_key, "stroke_thickness", 0.735).html);
+        this.contexts[context_key]["html"].append(this.get_slider(
+            0,
+            context_key,
+            "stroke_thickness",
+            0.735,
+            "",
+            0,
+            0.1
+        ).html);
         var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
         var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");
         var container = $("<div></div>");
