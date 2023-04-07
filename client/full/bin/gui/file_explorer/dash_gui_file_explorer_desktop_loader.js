@@ -97,7 +97,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             return;
         }
 
-        console.log("Signal sent:", response["sent"]);
+        console.log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
 
         if (!response["msg"]) {
             return;
