@@ -711,12 +711,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this._draw_properties = function () {
         this.draw_properties_pending = false;
 
+        console.debug("TEST transform");
+
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
-            "left": this.left_px,
-            "top": this.top_px,
-            "transform": "rotate(" + this.get_value("rot_deg") + "deg)"
+            "transform": (
+                "rotate(" + this.get_value("rot_deg") + "deg) " +
+                "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+            )
         });
     };
 

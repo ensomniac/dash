@@ -29547,12 +29547,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
+        console.debug("TEST transform");
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
-            "left": this.left_px,
-            "top": this.top_px,
-            "transform": "rotate(" + this.get_value("rot_deg") + "deg)"
+            "transform": (
+                "rotate(" + this.get_value("rot_deg") + "deg) " +
+                "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+            )
         });
     };
     this.setup_styles();
@@ -33390,7 +33392,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         if (!Dash.Validate.Response(response)) {
             return;
         }
-        console.log("Signal sent:", response["sent"]);
+        console.log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
         if (!response["msg"]) {
             return;
         }
