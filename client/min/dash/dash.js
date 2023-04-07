@@ -29689,10 +29689,12 @@ function DashGuiContext2DPrimitiveText () {
         if (font_option && font_option["override_scale_mult"] !== 1.0) {
             size *= font_option["override_scale_mult"];
         }
+        // This makes sure we keep the text within the bounding box, as opposed to the stroke extending outside it
+        var stroke_px = size * (this.get_value("stroke_thickness") || 0);
         this.text_area.textarea.css({
             "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
             "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0,
-            "font-size": size + "px",
+            "font-size": (size - stroke_px) + "px",
             "line-height": size + "px"
         });
     };
@@ -29798,6 +29800,9 @@ function DashGuiContext2DPrimitiveText () {
             var text_value = this.get_value("text_value");
             this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
             this.update_textarea_width(false);
+        }
+        else if (key === "stroke_thickness") {
+            this.resize_text();
         }
         this.update_stroke();
         this.update_font_color();
