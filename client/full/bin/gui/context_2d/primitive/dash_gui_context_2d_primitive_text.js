@@ -4,10 +4,13 @@ function DashGuiContext2DPrimitiveText () {
     this.text_area = null;
     this.last_text_value = null;
     this.text_border_thickness = 1;
+    this.using_scroll_width = false;
+    this.textarea_width_timer = null;
 
     this._setup_styles = function () {
         this.html.css({
-            "display": "flex"
+            "display": "flex",
+            "overflow": "visible"
         });
 
         this.text_area = new Dash.Gui.TextArea(this.color, "", this, this.on_text_change, true);
@@ -17,22 +20,21 @@ function DashGuiContext2DPrimitiveText () {
             "width": "fit-content",
             "height": "100%",
             "border": this.text_border_thickness + "px solid rgba(0, 0, 0, 0)",
-            "overflow": "visible",
-            "text-overflow": "ellipsis"
+            "overflow": "visible"
         });
 
         this.text_area.textarea.css({
             "border": "none",
             "width": "fit-content",
             "height": "fit-content",
+            "white-space": "nowrap",
             "min-height": "",
             "max-height": "",
             "min-width": "",
             "max-width": "",
             "resize": "none",
             "padding": 0,
-            "overflow": "visible",
-            "text-overflow": "ellipsis"
+            "overflow": "visible"
         });
 
         // TODO: This essentially turns the TextArea into an Input, making it redundant,
@@ -90,6 +92,48 @@ function DashGuiContext2DPrimitiveText () {
                 self.update_stroke();
             });
         })(this);
+
+        this.update_textarea_width();
+    };
+
+    this.update_textarea_width = function (skip_if_no_scroll_width=true, retry=true) {
+        (function (self) {
+            if (self.textarea_width_timer) {
+                clearTimeout(self.textarea_width_timer);
+            }
+
+            self.textarea_width_timer = setTimeout(
+                function () {
+                    var html = self.text_area.textarea[0];
+                    var has_overflow = html.offsetWidth < html.scrollWidth;
+
+                    if (!has_overflow && retry) {
+                        self.update_textarea_width(skip_if_no_scroll_width, false);
+
+                        return;
+                    }
+
+                    var scroll_width = has_overflow ? (html.scrollWidth + 1) : 0;
+
+                    if (scroll_width) {
+                        self.using_scroll_width = true;
+                    }
+
+                    else {
+                        if (skip_if_no_scroll_width && self.using_scroll_width) {
+                            return;
+                        }
+
+                        self.using_scroll_width = false;
+                    }
+
+                    self.text_area.textarea.css({
+                        "width": scroll_width ? (scroll_width + "px") : "fit-content"
+                    });
+                },
+                300
+            );
+        })(this);
     };
 
     // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
@@ -137,6 +181,8 @@ function DashGuiContext2DPrimitiveText () {
         this.Update("text_value", value);
 
         this.last_text_value = value;
+
+        this.update_textarea_width(false);
     };
 
     this.update_text_alignment = function () {
@@ -149,6 +195,8 @@ function DashGuiContext2DPrimitiveText () {
         this.text_area.textarea.css({
             "text-align": alignment
         });
+
+        this.update_textarea_width(false);
     };
 
     this.update_font = function () {
@@ -162,12 +210,17 @@ function DashGuiContext2DPrimitiveText () {
             return;
         }
 
-        Dash.Utils.SetDynamicFont(
-            this.text_area.textarea,
-            font_option["url"],
-            font_option["label_text"],
-            font_option["filename"]
-        );
+        (function (self) {
+            Dash.Utils.SetDynamicFont(
+                self.text_area.textarea,
+                font_option["url"],
+                font_option["label_text"],
+                font_option["filename"],
+                function () {
+                    self.update_textarea_width();
+                }
+            );
+        })(this);
     };
 
     this.update_font_color = function () {
@@ -248,6 +301,8 @@ function DashGuiContext2DPrimitiveText () {
             var text_value = this.get_value("text_value");
 
             this.text_area.SetText(this.get_value("text_caps") ? text_value.toUpperCase() : text_value);
+
+            this.update_textarea_width(false);
         }
 
         this.update_stroke();

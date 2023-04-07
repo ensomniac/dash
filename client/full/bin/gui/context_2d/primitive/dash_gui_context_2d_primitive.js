@@ -8,15 +8,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.height_px = 0;
     this.selected = false;
     this.width_px_max = 0;
+    this.width_px_min = 5;
     this.height_px_max = 0;
-    this.width_px_min = 20;
     this.drag_state = null;
-    this.height_px_min = 20;
+    this.height_px_min = 5;
     this.drag_active = false;
     this.drag_context = null;
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
-    this.debounce_timer = null;
     this.last_width_norm = null;
     this.html = $("<div></div>");
     this.color = this.canvas.color;
@@ -628,6 +627,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     self.update_stroke();
                 });
             })(this);
+
+            this.update_textarea_width();
         }
     };
 
