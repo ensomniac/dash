@@ -27958,6 +27958,9 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
     this.color = color || Dash.Color.Light;
     this.can_edit = preview_mode ? false : can_edit;
     this.preview_mode = preview_mode;
+    // As of writing, any changes made in this mode will have to be explicitly
+    // handled on the backend by the custom abstraction of Dash.Context2D. In
+    // the future, this can be baked into the core code if it makes sense to do so.
     this.override_mode = override_mode;
     this.extra_request_params = extra_request_params;
     this.data = null;
@@ -29258,26 +29261,34 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.editor.preview_mode) {
             return;
         }
+        var properties = (
+            this.parent_id || this.type === "context" ? (
+                this.drag_context["rotate"] ? {
+                    "rot_deg": this.data["rot_deg"]
+                }
+                : this.drag_context["scale"] ? {
+                    "width_norm": this.data["width_norm"],
+                    "anchor_norm_x": this.data["anchor_norm_x"],
+                    "anchor_norm_y": this.data["anchor_norm_y"]
+                }
+                : {
+                    "anchor_norm_x": this.data["anchor_norm_x"],
+                    "anchor_norm_y": this.data["anchor_norm_y"]
+                }
+            ) : this.drag_state
+        );
+        if (this.editor.override_mode) {
+            var renamed = {};
+            for (var k in properties) {
+                renamed[k + "_override"] = properties[k];
+            }
+            properties = renamed;
+        }
         var params = {
             "f": "set_layer_properties",
             "obj_id": this.editor.obj_id,
             "layer_id": this.parent_id || this.id,
-            "properties": JSON.stringify(
-                this.parent_id || this.type === "context" ? (
-                    this.drag_context["rotate"] ? {
-                        "rot_deg": this.data["rot_deg"]
-                    }
-                    : this.drag_context["scale"] ? {
-                        "width_norm": this.data["width_norm"],
-                        "anchor_norm_x": this.data["anchor_norm_x"],
-                        "anchor_norm_y": this.data["anchor_norm_y"]
-                    }
-                    : {
-                        "anchor_norm_x": this.data["anchor_norm_x"],
-                        "anchor_norm_y": this.data["anchor_norm_y"]
-                    }
-                ) : this.drag_state
-            ),
+            "properties": JSON.stringify(properties),
             ...this.editor.extra_request_params
         };
         if (this.parent_id) {
@@ -29547,7 +29558,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
-        console.debug("TEST transform");
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
@@ -31175,6 +31185,18 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         if (parent_id && key !== "layer_order") {
             params["imported_context_layer_id"] = id;
+        }
+        if (this.editor.override_mode) {
+            if (params["properties"]) {
+                var renamed = {};
+                for (var k in params["properties"]) {
+                    renamed[k + "_override"] = params["properties"][k];
+                }
+                params["properties"] = renamed;
+            }
+            if (params["key"]) {
+                params["key"] += "_override";
+            }
         }
         (function (self) {
             Dash.Request(

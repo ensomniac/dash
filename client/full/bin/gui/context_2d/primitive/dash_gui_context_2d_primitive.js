@@ -347,26 +347,38 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
+        var properties = (
+            this.parent_id || this.type === "context" ? (
+                this.drag_context["rotate"] ? {
+                    "rot_deg": this.data["rot_deg"]
+                }
+                : this.drag_context["scale"] ? {
+                    "width_norm": this.data["width_norm"],
+                    "anchor_norm_x": this.data["anchor_norm_x"],
+                    "anchor_norm_y": this.data["anchor_norm_y"]
+                }
+                : {
+                    "anchor_norm_x": this.data["anchor_norm_x"],
+                    "anchor_norm_y": this.data["anchor_norm_y"]
+                }
+            ) : this.drag_state
+        );
+
+        if (this.editor.override_mode) {
+            var renamed = {};
+
+            for (var k in properties) {
+                renamed[k + "_override"] = properties[k];
+            }
+
+            properties = renamed;
+        }
+
         var params = {
             "f": "set_layer_properties",
             "obj_id": this.editor.obj_id,
             "layer_id": this.parent_id || this.id,
-            "properties": JSON.stringify(
-                this.parent_id || this.type === "context" ? (
-                    this.drag_context["rotate"] ? {
-                        "rot_deg": this.data["rot_deg"]
-                    }
-                    : this.drag_context["scale"] ? {
-                        "width_norm": this.data["width_norm"],
-                        "anchor_norm_x": this.data["anchor_norm_x"],
-                        "anchor_norm_y": this.data["anchor_norm_y"]
-                    }
-                    : {
-                        "anchor_norm_x": this.data["anchor_norm_x"],
-                        "anchor_norm_y": this.data["anchor_norm_y"]
-                    }
-                ) : this.drag_state
-            ),
+            "properties": JSON.stringify(properties),
             ...this.editor.extra_request_params
         };
 
@@ -710,8 +722,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
-
-        console.debug("TEST transform");
 
         this.html.css({
             "width": this.width_px,

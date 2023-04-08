@@ -180,10 +180,57 @@ class Layer:
         return self.SetProperties({key: value}, imported_context_layer_id)
 
     def SetProperties(self, properties={}, imported_context_layer_id=""):
+        properties = self.ParseProperties(properties, imported_context_layer_id)
+
+        if not properties:
+            return self.ToDict()
+
+        if self.Type == "context":
+            for key in properties:
+                self.context_set_prop(key, properties[key], imported_context_layer_id)
+        else:
+            for key in properties:
+                if key == "layer_order":  # Should never happen, but just in case
+                    del properties[key]
+
+            self.data.update(properties)
+
+        return self.Save().ToDict()
+
+    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True):
         from json import loads
 
         if properties and type(properties) is str:
             properties = loads(properties)
+
+        if not properties:
+            return properties
+
+        if for_overrides:
+            from copy import deepcopy
+
+            old = deepcopy(properties)
+            properties = {}
+
+            for key in old:
+                if not key.endswith("_override"):
+                    raise ValueError(
+                        "'for_overrides' mode expects an overrides dict, where all keys end in '_override'"
+                    )
+
+                # Reformat the dict to not have "_override" keys
+                # so we can parse the properties as normal
+                properties[key.replace("_override", "")] = old[key]
+        else:
+            for key in properties:
+                if key.endswith("_override"):
+                    from Dash.Utils import ClientAlert
+
+                    raise ClientAlert(
+                        "As of writing, any overrides will have to be explicitly handled by "
+                        "the custom abstraction of Dash.Context2D. In the future, this "
+                        "can be baked into the core code if it makes sense to do so."
+                    )
 
         # Should never happen, but just in case
         for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
@@ -191,7 +238,7 @@ class Layer:
                 del properties[key]
 
         if not properties:
-            return self.ToDict()
+            return properties
 
         # Enforce str when null
         for key in self.str_keys:
@@ -216,17 +263,17 @@ class Layer:
 
         properties = self.context_2d.OnLayerSetProperties(self, properties, imported_context_layer_id)
 
-        if self.Type == "context":
-            for key in properties:
-                self.context_set_prop(key, properties[key], imported_context_layer_id)
-        else:
-            for key in properties:
-                if key == "layer_order":  # Should never happen, but just in case
-                    del properties[key]
+        if for_overrides and retain_override_tag:
+            from copy import deepcopy
 
-            self.data.update(properties)
+            old = deepcopy(properties)
+            properties = {}
 
-        return self.Save().ToDict()
+            for key in old:
+                # Re-add the "_override" tag to each key
+                properties[f"{key}_override"] = old[key]
+
+        return properties
 
     def UploadFile(self, file, filename):
         if self.Type == "text" or self.Type == "context":

@@ -411,6 +411,22 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             params["imported_context_layer_id"] = id;
         }
 
+        if (this.editor.override_mode) {
+            if (params["properties"]) {
+                var renamed = {};
+
+                for (var k in params["properties"]) {
+                    renamed[k + "_override"] = params["properties"][k];
+                }
+
+                params["properties"] = renamed;
+            }
+
+            if (params["key"]) {
+                params["key"] += "_override";
+            }
+        }
+
         (function (self) {
             Dash.Request(
                 self,
