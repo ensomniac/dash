@@ -206,7 +206,7 @@ function DashDateTime () {
 
         value = value.toString();
 
-        if (value.length > 30) {
+        if (value.length > 36) {
             return false;
         }
 

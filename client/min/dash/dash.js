@@ -19972,7 +19972,7 @@ function DashDateTime () {
             // Ignore
         }
         value = value.toString();
-        if (value.length > 30) {
+        if (value.length > 36) {
             return false;
         }
         var test = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}/.test(value);
