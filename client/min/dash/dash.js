@@ -32232,6 +32232,27 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         color_container.append(button.html);
         this.contexts[context_key]["html"].append(color_container);
     };
+    this.get_input = function (data_key, label_text="") {
+        if (!label_text) {
+            label_text = data_key.Title();
+        }
+        return (function (self) {
+            var input =  new Dash.Gui.InputRow(
+                label_text,
+                self.get_data()[data_key] || "",
+                label_text,
+                "",
+                function (input) {
+                    self.set_data(data_key, input.Text());
+                },
+                self,
+                self.color,
+                data_key
+            );
+            input.RemoveSaveButton();
+            return input;
+        })(this);
+    };
     this.get_combo = function (options, data_key, label_text="") {
         var tool_row = (function (self) {
             return self.content.GetCombo(
