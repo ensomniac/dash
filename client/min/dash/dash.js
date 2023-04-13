@@ -29166,7 +29166,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.drag_context = {
             "scale": active_tool === "scale",
             "rotate": active_tool === "rotate",
-            "start_rot": this.data["rot_deg"],
+            "start_rot": parseFloat(this.data["rot_deg"]),
             "start_mouse_offset_x": event.offsetX,
             "start_mouse_offset_y": event.offsetY,
             "start_img_px_x": this.left_px,
@@ -29215,7 +29215,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.save_drag_state();
     };
     this.on_rotate = function (rot_deg, force_save=false) {
-        this.data["rot_deg"] = rot_deg;
+        this.data["rot_deg"] = parseFloat(rot_deg);
         this.draw_properties();
         if (force_save) {
             this.save_drag_state(true);
@@ -29224,7 +29224,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.on_scale = function (width_norm, force_save=false) {
         [this.data["anchor_norm_x"], this.data["anchor_norm_y"]] = this.get_offset_norm();
         this.last_width_norm = this.get_value("width_norm");
-        this.data["width_norm"] = width_norm;
+        this.data["width_norm"] = parseFloat(width_norm);
         this.set_scale();
         if (force_save) {
             this.save_drag_state(true);
@@ -29316,6 +29316,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         data = data || this.data;
         parent_data = parent_data || this.parent_data;
         var value = data[key];
+        if (key.endsWith("_norm")) {
+            value = parseFloat(value);
+        }
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
@@ -29325,7 +29328,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var layer_overrides = parent_data["imported_context"]["layer_overrides"][this.id] || {};
         // Strings
         if (parent_data["str_keys"].includes(key)) {
-            return layer_overrides[key] || value;
+            return (layer_overrides[key] || value).toString();
         }
         // Bools
         if (parent_data["bool_keys"].includes(key)) {
@@ -29333,7 +29336,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         // Floats
         if (parent_data["float_keys"].includes(key)) {
-            var override = layer_overrides[key] || 0;
+            value = parseFloat(value);
+            var override = parseFloat(layer_overrides[key] || 0);
             if (key === "opacity") {
                 var parent_opacity = parent_data["opacity"];
                 if (override) {
@@ -29417,8 +29421,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.get_offset_norm = function () {
         if (this.left_px == null) {  // This isn't visible or hasn't been edited
             return [
-                this.data["anchor_norm_x"],
-                this.data["anchor_norm_y"]
+                parseFloat(this.data["anchor_norm_x"]),
+                parseFloat(this.data["anchor_norm_y"])
             ];
         }
         return [
@@ -29451,19 +29455,21 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.left_px = override || ((this.canvas.GetWidth() * this.get_value("anchor_norm_x")) - (this.width_px * 0.5));
     };
     this.set_width_px = function (override=null) {
+        var capped = false;
         this.width_px = override || (this.canvas.GetWidth() * this.get_value("width_norm"));
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
             this.width_px = this.width_px_min;
-            if (this.last_width_norm) {
-                this.data["width_norm"] = this.last_width_norm;
-            }
+            capped = true;
         }
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
             this.width_px = this.width_px_max;
+            capped = true;
+        }
+        if (capped) {
             if (this.last_width_norm) {
-                this.data["width_norm"] = this.last_width_norm;
+                this.data["width_norm"] = parseFloat(this.last_width_norm);
             }
         }
     };
@@ -29561,9 +29567,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
+            "top": this.top_px,
+            "left": this.left_px,
             "transform": (
-                "rotate(" + this.get_value("rot_deg") + "deg) " +
-                "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+                  "rotate(" + this.get_value("rot_deg") + "deg) "
+                // TODO: This doesn't work as expected when images are rotated
+                // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });
     };
