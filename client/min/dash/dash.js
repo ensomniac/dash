@@ -38547,7 +38547,10 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    this.AddIconButton = function (icon_name, binder, callback, hover_text="", size_mult=1, width_mult=0.25, css={}, header_css={}, footer_css={}) {
+    this.AddIconButton = function (
+        icon_name, binder, callback, hover_text="", size_mult=1, width_mult=0.25,
+        css={}, header_css={}, footer_css={}, icon_color=null
+    ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
@@ -38563,6 +38566,7 @@ function DashLayoutListColumnConfig () {
                     "callback": callback,
                     "binder": binder,
                     "color": binder.color || Dash.Color.Light,
+                    "icon_color": icon_color,
                     "hover_text": hover_text,
                     "options": {
                         "size_mult": size_mult
@@ -39158,6 +39162,9 @@ function DashLayoutListRowElements () {
         }
         if (column_config_data["options"]["hover_text"]) {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        }
+        if (column_config_data["options"]["icon_color"]) {
+            icon_button.SetIconColor(column_config_data["options"]["icon_color"]);
         }
         return icon_button;
     };

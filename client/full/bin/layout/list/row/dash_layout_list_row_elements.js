@@ -386,6 +386,10 @@ function DashLayoutListRowElements () {
             icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
         }
 
+        if (column_config_data["options"]["icon_color"]) {
+            icon_button.SetIconColor(column_config_data["options"]["icon_color"]);
+        }
+
         return icon_button;
     };
 
