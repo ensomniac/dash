@@ -35,6 +35,8 @@ function DashGuiComboSearch () {
                 }
             );
         })(this);
+
+        this.search_set_up = true;
     };
 
     this.activate_search = function () {

@@ -20,6 +20,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.gravity_vertical = 0;
     this.skirt_overrides = {};  // See draw_click_skirt on usage
     this.is_searchable = false;
+    this.search_set_up = false;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;

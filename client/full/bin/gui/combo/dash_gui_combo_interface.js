@@ -69,6 +69,10 @@ function DashGuiComboInterface () {
     };
 
     this.EnableSearchSelection = function () {
+        if (this.search_set_up) {
+            return;
+        }
+
         DashGuiComboSearch.call(this);
 
         this.setup_search_selection();
