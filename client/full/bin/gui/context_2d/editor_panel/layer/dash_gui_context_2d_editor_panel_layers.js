@@ -62,9 +62,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (data["type"] === "context") {
             var imported_layers = data["imported_context"]["layers"]["data"];
 
-            // TODO: If imported context is *this* context, then the layer ids will be the same,
-            //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
-            //  but as of writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
+            // If imported context is *this* context, then the layer ids will be the same, which will
+            // be a problem (same applies to primitives, since they also rely on layer IDs), but as of
+            // writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
             for (var imported_id of this.layers[id].GetChildrenLayerOrder()) {
                 if (imported_layers[imported_id]["type"] === "context") {
                     alert(
@@ -73,8 +73,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         "The nested context(s) within the imported context will be ignored."
                     );
 
-                    // TODO: We need to add support for this, it's just very complicated because of the
-                    //  need to handle overrides recursively and I don't have enough time to do it now
+                    // We probably need to add support for this, it's just very complicated because of
+                    // the need to handle overrides recursively and it's not needed/important for now
                     continue;
                 }
 

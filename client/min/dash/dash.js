@@ -18734,8 +18734,11 @@ function DashFile () {
         }
         return this.GetPlaceholderPreview(color, filename);
     };
-    this.set_preview_size = function (html, width, height=null) {
-        var css = {"width": width};
+    this.set_preview_size = function (html, width=null, height=null) {
+        var css = {};
+        if (width) {
+            css["width"] = width;
+        }
         if (height) {
             css["height"] = height;
         }
@@ -18804,7 +18807,7 @@ function DashFile () {
             "background": color.Background,
             "color": color.Text
         });
-        (function (self) {
+        (function () {
             $.get(
                 url,
                 function (data) {
@@ -18823,7 +18826,7 @@ function DashFile () {
                     html.append(table);
                 }
             );
-        })(this);
+        })();
         return this.set_preview_size(html, height, "100%");
     };
     // Basic version
@@ -18857,15 +18860,14 @@ function DashFile () {
     // video tag exists in the DOM solves that problem. If the source (URL) is updated
     // while the video is not in view, this problem may reappear. This isn't perfect.
     this.check_if_video_exists_in_dom = function (html, height, square=false, controls=true) {
-        var in_dom = $.contains(document, html[0]);
         (function (self) {
             setTimeout(
                 function () {
-                    if (!in_dom) {
+                    if (!($.contains(document, html[0]))) {
                         self.check_if_video_exists_in_dom(html, height, square, controls);
                         return;
                     }
-                    self.set_preview_size(html, height, square ? height : null);
+                    self.set_preview_size(html, square ? height : null, height);
                     if (controls) {
                         html.attr("controls", true);
                     }
@@ -28001,8 +28003,6 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 15000 : 5000);
         this.get_combo_options();
     };
-    // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later - rename?
     this.SetEditorPanelLayerProperty = function (key, value, id) {
         this.editor_panel.SetLayerProperty(key, value, id);
     };
@@ -28628,9 +28628,6 @@ function DashGuiContext2DCanvas (editor) {
             }).observe(self.html[0]);
         })(this);
     };
-    // TODO: The addition of these masks has broken the ability to click on the canvas to deselect
-    //  all layers. Even if I get the click event of the mask to pass-through, it triggers this.html's
-    //  click event, not this.canvas's click event, which will not work as expected (and doesn't make sense).
     this.setup_masks = function () {
         var css = {
             "position": "absolute",
@@ -29033,8 +29030,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
-    // TODO: scaling should happen from the center point, rather than the top left
-    //  corner, and/or should also consider the mouse position and scale from there
     this.setup_styles = function () {
         this.set_max();
         if (!this.call_style()) {
@@ -29307,8 +29302,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
                     self.editor.data = response;
-                    if (self.type === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
-                        self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
+                    // Is there a lighter way to achieve the same thing? maybe via Update()?
+                    if (self.type === "context" || self.parent_id) {
+                        self.canvas.RemoveAllPrimitives();
                         self.editor.RedrawLayers(true);
                     }
                 },
@@ -29405,10 +29401,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
     this.on_contained_change = function (value) {
-        // TODO: If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
-        //  underneath the canvas' masks, and the inverse if not contained. I'm not sure this is possible
-        //  though, because raising this above the canvas' masks would also raise it above all other
-        //  layers, breaking the layer stacking order. There's no way to make both work that I can think of...
+        // If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
+        // underneath the canvas' masks, and the inverse if not contained. I'm not sure if this is possible
+        // though, because raising this above the canvas' masks would also raise it above all other
+        // layers, breaking the layer stacking order. There's no way to make both work that I can think of...
     };
     this.get_z_index = function () {
         var index = this.layer.GetIndex();
@@ -29576,7 +29572,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "left": this.left_px,
             "transform": (
                   "rotate(" + this.get_value("rot_deg") + "deg) "
-                // TODO: This doesn't work as expected when images are rotated
+                // This was added as an alternative to setting "top" and "left",
+                // but it causes a complete breakage when images are rotated
                 // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });
@@ -29617,10 +29614,10 @@ function DashGuiContext2DPrimitiveText () {
             "padding": 0,
             "overflow": "visible"
         });
-        // TODO: This essentially turns the TextArea into an Input, making it redundant,
-        //  but this is for a reason. Eventually, these text primitives should be able to
-        //  handle new lines. Right now, it's put on hold because it complicates the resizing
-        //  etc and it's not a priority. When ready to implement that, remove this line.
+        // This essentially turns the TextArea into an Input, making it redundant,
+        // but this is for a reason. Eventually, these text primitives should be able to
+        // handle new lines. Right now, it's put on hold because it complicates the resizing
+        // etc and it's not a priority. When ready to implement that, remove this line.
         this.text_area.DisableNewLines();
         this.text_area.DisableFlash();
         var text_value = this.get_value("text_value");
@@ -29694,10 +29691,6 @@ function DashGuiContext2DPrimitiveText () {
             );
         })(this);
     };
-    // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
-    //  the font sizes "correctly" but the alignment varies between canvas sizes. For example, if
-    //  the canvas aspect is 9x16 and the alignment of the text looks correct on a small screen, the
-    //  same alignment looks different on a bigger screen, even though the aspect and norms are the same.
     this.resize_text = function () {
         if (!this.height_px) {
             (function (self) {
@@ -30738,8 +30731,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.UpdateLabel = function () {
         this.input.SetText(this.get_value("display_name"));
     };
-    // TODO: this currently only happens when the layer is drawn,
-    //  but needs to also be called when the tint color changes
     this.UpdateTintColor = function () {
         var tint_color = this.get_value("tint_color");
         this.html.css({
@@ -30933,9 +30924,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var data = this.layers[id].GetData();
         if (data["type"] === "context") {
             var imported_layers = data["imported_context"]["layers"]["data"];
-            // TODO: If imported context is *this* context, then the layer ids will be the same,
-            //  which will be a problem (same applies to primitives, since they also rely on layer IDs),
-            //  but as of writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
+            // If imported context is *this* context, then the layer ids will be the same, which will
+            // be a problem (same applies to primitives, since they also rely on layer IDs), but as of
+            // writing, importing a context into itself is disabled in DashGuiContext2DEditorPanelContentNew
             for (var imported_id of this.layers[id].GetChildrenLayerOrder()) {
                 if (imported_layers[imported_id]["type"] === "context") {
                     alert(
@@ -30943,8 +30934,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         "Importing nested contexts within contexts is complex and not yet supported.\n" +
                         "The nested context(s) within the imported context will be ignored."
                     );
-                    // TODO: We need to add support for this, it's just very complicated because of the
-                    //  need to handle overrides recursively and I don't have enough time to do it now
+                    // We probably need to add support for this, it's just very complicated because of
+                    // the need to handle overrides recursively and it's not needed/important for now
                     continue;
                 }
                 this.AddLayer(imported_id, false, id);
@@ -31406,8 +31397,6 @@ function DashGuiContext2DEditorPanelContent (panel) {
         })(this);
         return tool_row;
     };
-    // TODO: When the pane sliders in the editor panel are moved up/down, this should be
-    //  called for all visible floating combos (this.last_instantiated_class.floating_combos)
     this.FloatCombos = function (instantiated_class) {
         if (!instantiated_class.floating_combos) {
             return;
@@ -32221,7 +32210,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.5,
             2.0
         ).html);
-        // TODO: saturation slider
         var color_container = $("<div></div>");
         color_container.css({
             "display": "flex"

@@ -87,9 +87,6 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         this.get_combo_options();
     };
 
-    // TODO: regarding all these public functions, some are intended to only be called
-    //  by certain elements, so having them appear as public may be confusing later - rename?
-
     this.SetEditorPanelLayerProperty = function (key, value, id) {
         this.editor_panel.SetLayerProperty(key, value, id);
     };

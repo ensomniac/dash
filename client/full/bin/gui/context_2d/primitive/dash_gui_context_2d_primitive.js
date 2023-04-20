@@ -32,9 +32,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
 
-    // TODO: scaling should happen from the center point, rather than the top left
-    //  corner, and/or should also consider the mouse position and scale from there
-
     this.setup_styles = function () {
         this.set_max();
 
@@ -396,8 +393,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     self.editor.data = response;
 
-                    if (self.type === "context" || self.parent_id) {  // TODO: parent_id condition is just for testing (maybe)
-                        self.canvas.RemoveAllPrimitives();  // TODO: is there a lighter way to achieve the same thing? maybe via Update()?
+                    // Is there a lighter way to achieve the same thing? maybe via Update()?
+                    if (self.type === "context" || self.parent_id) {
+                        self.canvas.RemoveAllPrimitives();
 
                         self.editor.RedrawLayers(true);
                     }
@@ -523,10 +521,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.on_contained_change = function (value) {
-        // TODO: If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
-        //  underneath the canvas' masks, and the inverse if not contained. I'm not sure this is possible
-        //  though, because raising this above the canvas' masks would also raise it above all other
-        //  layers, breaking the layer stacking order. There's no way to make both work that I can think of...
+        // If contained, it's not allowed to extend past the canvas' bounds and needs to be faded
+        // underneath the canvas' masks, and the inverse if not contained. I'm not sure if this is possible
+        // though, because raising this above the canvas' masks would also raise it above all other
+        // layers, breaking the layer stacking order. There's no way to make both work that I can think of...
     };
 
     this.get_z_index = function () {
@@ -741,7 +739,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "transform": (
                   "rotate(" + this.get_value("rot_deg") + "deg) "
 
-                // TODO: This doesn't work as expected when images are rotated
+                // This was added as an alternative to setting "top" and "left",
+                // but it causes a complete breakage when images are rotated
                 // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });

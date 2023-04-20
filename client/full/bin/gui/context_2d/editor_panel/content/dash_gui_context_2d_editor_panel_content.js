@@ -119,8 +119,6 @@ function DashGuiContext2DEditorPanelContent (panel) {
         return tool_row;
     };
 
-    // TODO: When the pane sliders in the editor panel are moved up/down, this should be
-    //  called for all visible floating combos (this.last_instantiated_class.floating_combos)
     this.FloatCombos = function (instantiated_class) {
         if (!instantiated_class.floating_combos) {
             return;

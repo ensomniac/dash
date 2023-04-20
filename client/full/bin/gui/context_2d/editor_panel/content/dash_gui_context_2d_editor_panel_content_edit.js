@@ -373,8 +373,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         ).html);
 
-        // TODO: saturation slider
-
         var color_container = $("<div></div>");
 
         color_container.css({

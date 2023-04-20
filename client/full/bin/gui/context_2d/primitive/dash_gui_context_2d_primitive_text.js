@@ -37,10 +37,10 @@ function DashGuiContext2DPrimitiveText () {
             "overflow": "visible"
         });
 
-        // TODO: This essentially turns the TextArea into an Input, making it redundant,
-        //  but this is for a reason. Eventually, these text primitives should be able to
-        //  handle new lines. Right now, it's put on hold because it complicates the resizing
-        //  etc and it's not a priority. When ready to implement that, remove this line.
+        // This essentially turns the TextArea into an Input, making it redundant,
+        // but this is for a reason. Eventually, these text primitives should be able to
+        // handle new lines. Right now, it's put on hold because it complicates the resizing
+        // etc and it's not a priority. When ready to implement that, remove this line.
         this.text_area.DisableNewLines();
 
         this.text_area.DisableFlash();
@@ -136,10 +136,6 @@ function DashGuiContext2DPrimitiveText () {
         })(this);
     };
 
-    // TODO: This needs to be tightened up. When the canvas is different sizes (but same aspect),
-    //  the font sizes "correctly" but the alignment varies between canvas sizes. For example, if
-    //  the canvas aspect is 9x16 and the alignment of the text looks correct on a small screen, the
-    //  same alignment looks different on a bigger screen, even though the aspect and norms are the same.
     this.resize_text = function () {
         if (!this.height_px) {
             (function (self) {

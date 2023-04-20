@@ -110,8 +110,12 @@ function DashFile () {
         return this.GetPlaceholderPreview(color, filename);
     };
 
-    this.set_preview_size = function (html, width, height=null) {
-        var css = {"width": width};
+    this.set_preview_size = function (html, width=null, height=null) {
+        var css = {};
+
+        if (width) {
+            css["width"] = width;
+        }
 
         if (height) {
             css["height"] = height;
@@ -203,7 +207,7 @@ function DashFile () {
             "color": color.Text
         });
 
-        (function (self) {
+        (function () {
             $.get(
                 url,
                 function (data) {
@@ -227,7 +231,7 @@ function DashFile () {
                     html.append(table);
                 }
             );
-        })(this);
+        })();
 
         return this.set_preview_size(html, height, "100%");
     };
@@ -272,18 +276,16 @@ function DashFile () {
     // video tag exists in the DOM solves that problem. If the source (URL) is updated
     // while the video is not in view, this problem may reappear. This isn't perfect.
     this.check_if_video_exists_in_dom = function (html, height, square=false, controls=true) {
-        var in_dom = $.contains(document, html[0]);
-
         (function (self) {
             setTimeout(
                 function () {
-                    if (!in_dom) {
+                    if (!($.contains(document, html[0]))) {
                         self.check_if_video_exists_in_dom(html, height, square, controls);
 
                         return;
                     }
 
-                    self.set_preview_size(html, height, square ? height : null);
+                    self.set_preview_size(html, square ? height : null, height);
 
                     if (controls) {
                         html.attr("controls", true);
