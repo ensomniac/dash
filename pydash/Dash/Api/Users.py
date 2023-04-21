@@ -74,10 +74,12 @@ class ApiUsers:
     def get_all(self):
         from Dash.LocalStorage import Read
 
+        self.ParseParam("sort_by_last_name", bool, False)
+
         sorted_users = []
         pairs_to_sort = []
         response = {"users": []}
-        users_root = os.path.join(self.DashContext["srv_path_local"], "users/")
+        users_root = os.path.join(self.DashContext["srv_path_local"], "users")
 
         for email in os.listdir(users_root):
             email = email.lower()  # TODO: This needs to be sanitized upon account creation
@@ -108,7 +110,10 @@ class ApiUsers:
 
             user_data = self.conform_user_data(user_data)
 
-            pairs_to_sort.append([user_data.get("first_name") or user_data.get("email"), user_data.get("id")])
+            if self.Params["sort_by_last_name"]:
+                pairs_to_sort.append([user_data.get("last_name"), user_data.get("first_name"), user_data.get("email"), user_data.get("id")])
+            else:
+                pairs_to_sort.append([user_data.get("first_name") or user_data.get("email"), user_data.get("id")])
 
             response["users"].append(user_data)
 
@@ -116,7 +121,7 @@ class ApiUsers:
 
         for pair in pairs_to_sort:
             for user in response["users"]:
-                if pair[1] != user.get("id"):
+                if pair[-1] != user.get("id"):
                     continue
 
                 sorted_users.append(user)
