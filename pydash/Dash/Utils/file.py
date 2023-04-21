@@ -141,6 +141,53 @@ def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspe
     )
 
 
+def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_aspect_ratio=False):
+    error = ""
+    temp = False
+    valid = True
+    video_aspect_ratio = None
+
+    if type(video_bytes_or_existing_path) is not bytes:
+        if type(video_bytes_or_existing_path) is not str:
+            raise Exception("Param 'video_bytes_or_existing_path' must be either bytes or string")
+
+        if not os.path.exists(video_bytes_or_existing_path):
+            raise Exception("When param 'video_bytes_or_existing_path' is a string, it must be an existing path")
+
+        path = video_bytes_or_existing_path
+    else:
+        from .number import GetRandomID
+        from Dash.LocalStorage import Write
+
+        temp = True
+        path = f"/var/tmp/dash_video_aspect_validation_{GetRandomID()}"
+
+        Write(path, video_bytes_or_existing_path)
+
+    try:
+        from videoprops import get_video_properties
+
+        props = get_video_properties(path)
+        video_aspect_ratio = props["width"] / props["height"]
+
+        if abs(video_aspect_ratio - target_aspect_ratio) > 0.01:
+            valid = False
+
+    except Exception as e:
+        error = str(e)
+
+    if temp and os.path.exists(path):
+        os.remove(path)
+
+    if error:
+        raise Exception(error)
+
+    if return_video_aspect_ratio:
+        return valid, video_aspect_ratio
+
+    return valid
+
+
 def GetURLFromPath(dash_context, server_file_path, add_anti_caching_id=False):
     url = f"https://{os.path.join(dash_context['domain'], server_file_path.replace(dash_context['srv_path_http_root'], ''))}"
 
