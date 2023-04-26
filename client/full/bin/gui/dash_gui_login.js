@@ -51,13 +51,15 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 
         if (Dash.IsMobile) {
             this.setup_mobile_sizing();
-        } else {
+        }
+
+        else {
             this.setup_desktop_sizing();
         }
 
         this.email_input.SetText(Dash.Local.Get("email") || "");
-        this.show_login_box();
 
+        this.show_login_box();
     };
 
     this.Submit = function () {

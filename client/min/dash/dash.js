@@ -19108,11 +19108,20 @@ function DashLocal (context) {
         }
         return localStorage.setItem(key, value);
     };
-    this.Get = function (key) {
+    // If bool_default is provided, the value will be
+    // parsed as a bool and default to the value provided
+    this.Get = function (key, bool_default=null) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        return localStorage.getItem(key);
+        var value = localStorage.getItem(key);
+        if (bool_default === true) {
+            return ["true", true, null, ""].includes(value);
+        }
+        if (bool_default === false) {
+            return ["true", true].includes(value);
+        }
+        return value;
     };
 }
 
@@ -22142,7 +22151,8 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
         this.button_bar.append(this.login_button.html);
         if (Dash.IsMobile) {
             this.setup_mobile_sizing();
-        } else {
+        }
+        else {
             this.setup_desktop_sizing();
         }
         this.email_input.SetText(Dash.Local.Get("email") || "");
@@ -23567,14 +23577,7 @@ function DashGuiCheckbox (
         if (!this.local_storage_key) {
             return this.default_state;
         }
-        var local = Dash.Local.Get(this.local_storage_key);
-        if (["true", true].includes(local)) {
-            return true;
-        }
-        if (["false", false].includes(local)) {
-            return false;
-        }
-        return this.default_state;
+        return Dash.Local.Get(this.local_storage_key, this.default_state);
     };
     this.setup_styles();
 }

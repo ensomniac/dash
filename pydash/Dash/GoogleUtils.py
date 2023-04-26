@@ -207,6 +207,20 @@ class _DriveUtils:
         except HttpError as http_error:
             ParseHTTPError(http_error)
 
+        except UnicodeEncodeError as e:
+            if file_path:
+                file_ext = file_path.lower().strip().split(".")[-1]
+
+                if file_ext and file_ext in [
+                    # Add to this as more come up
+                    "eml"
+                ]:
+                    from Dash.Utils import ClientAlert
+
+                    raise ClientAlert(f"'.{file_ext}' files cannot be uploaded due to encoding restrictions of the Google API")
+
+            raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason)
+
         except Exception as e:
             raise Exception(e)
 

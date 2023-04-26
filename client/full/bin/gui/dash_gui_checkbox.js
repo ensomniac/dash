@@ -393,17 +393,7 @@ function DashGuiCheckbox (
             return this.default_state;
         }
 
-        var local = Dash.Local.Get(this.local_storage_key);
-
-        if (["true", true].includes(local)) {
-            return true;
-        }
-
-        if (["false", false].includes(local)) {
-            return false;
-        }
-
-        return this.default_state;
+        return Dash.Local.Get(this.local_storage_key, this.default_state);
     };
 
     this.setup_styles();
