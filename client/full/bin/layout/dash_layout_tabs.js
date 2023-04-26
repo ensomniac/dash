@@ -96,6 +96,20 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         return this.all_content[this.current_index];
     };
 
+    this.GetIndexByTabName = function (name) {
+        for (var i in this.all_content) {
+            var content = this.all_content[i];
+
+            if (content["label_text"] === name) {
+                return i;
+            }
+        }
+
+        console.warn("Warning: Failed to find index by tab name for:", name);
+
+        return 0;
+    };
+
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
@@ -233,6 +247,8 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                 index
             );
         }
+
+        return inst_class;
     };
 
     this.AddHTML = function (html, remove_on_tab_change=false) {
