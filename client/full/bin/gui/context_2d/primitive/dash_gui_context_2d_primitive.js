@@ -737,13 +737,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "top": this.top_px,
             "left": this.left_px,
             "transform": (
-                  "rotate(" + this.get_value("rot_deg") + "deg) "
+                "rotate(" + this.get_value("rot_deg") + "deg) "
 
                 // This was added as an alternative to setting "top" and "left",
                 // but it causes a complete breakage when images are rotated
                 // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });
+
+        if (this.type === "image") {
+            this.on_opacity_change(this.get_value("opacity"));
+        }
     };
 
     this.setup_styles();
