@@ -81,8 +81,8 @@ function DashGuiContext2DPrimitiveImage () {
         canvas.css({
             "box-sizing": "border-box",
             "border": "1px solid " + this.color.StrokeDark,
-            "outline": "1px solid " + this.opposite_color.StrokeLight,
-            "outline-offset": "1px"
+            // "outline": "1px solid " + this.opposite_color.StrokeLight,
+            // "outline-offset": "1px"
         });
 
         // Don't set these with .css(), it's different

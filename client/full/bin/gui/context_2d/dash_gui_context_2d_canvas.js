@@ -56,8 +56,8 @@ function DashGuiContext2DCanvas (editor) {
             "pointer-events": "none",
             ...css,
             "border": "1px solid " + this.opposite_color.StrokeDark,
-            "outline": "1px solid " + this.color.StrokeLight,
-            "outline-offset": "1px"
+            // "outline": "1px solid " + this.color.StrokeLight,
+            // "outline-offset": "1px"
         });
 
         this.border.hide();
@@ -400,9 +400,9 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.get_mask_width_and_height = function () {
-        return [  // -3 for border/outline and an extra pixel
-            ((this.html.outerWidth() - this.GetWidth()) / 2) - 3,
-            ((this.html.outerHeight() - this.GetHeight()) / 2) - 3
+        return [  // -2 for border and an extra pixel
+            ((this.html.outerWidth() - this.GetWidth()) / 2) - 2,
+            ((this.html.outerHeight() - this.GetHeight()) / 2) - 2
         ];
     };
 
@@ -433,7 +433,7 @@ function DashGuiContext2DCanvas (editor) {
                 }
             });
 
-            self.canvas.on("click", function () {
+            self.html.on("click", function () {
                 self.editor.DeselectAllLayers();
             });
         })(this);

@@ -137,6 +137,12 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return;
         }
 
+        var primitive = this.editor.canvas.primitives[self.id];
+
+        if (primitive && primitive.drag_active) {
+            return;
+        }
+
         this.selected = false;
 
         this.html.css({

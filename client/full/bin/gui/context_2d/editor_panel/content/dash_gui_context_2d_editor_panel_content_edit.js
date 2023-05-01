@@ -75,7 +75,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var selected_layer = this.panel.GetSelectedLayer();
         var layer_data = selected_layer ? selected_layer.GetData() : {};
 
-        if (!selected_layer || layer_data["hidden"] || layer_data["locked"]) {
+        if (!selected_layer) {
             this.hide_context("general");
             this.show_no_selected_layer_label(layer_data);
 
@@ -89,6 +89,24 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             requestAnimationFrame(function () {
                 self.content.FloatCombos(self);
             });
+
+            var disabled = layer_data["hidden"] || layer_data["locked"];
+
+            for (var key in self.contexts) {
+                var context = self.contexts[key];
+
+                if (!context["visible"]) {
+                    continue;
+                }
+
+                for (var element of context["all_elements"]) {
+                    (element.html || element).css({
+                        "opacity": disabled ? 0.5 : 1,
+                        "user-select": disabled ? "none" : "auto",
+                        "pointer-events": disabled ? "none" : "auto"
+                    });
+                }
+            }
         })(this);
     };
 
@@ -201,7 +219,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "html": $("<div></div>"),
             "visible": false,
             "initialized": false,
-            "inputs": []  // Any inputs that get added to these contexts need to be added to this list for external checks
+            "inputs": [],  // Any inputs that get added to these contexts need to be added to this list for external checks
+            "all_elements": []
         };
 
         this.contexts[key]["html"].hide();
@@ -233,7 +252,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
                 if (element_config["callback"]) {
-                    this.contexts[context_key]["html"].append(element_config["callback"]());
+                    var html = element_config["callback"]();
+
+                    this.contexts[context_key]["html"].append(html);
+
+                    this.contexts[context_key]["all_elements"].push(html);
                 }
 
                 else {
@@ -249,6 +272,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
     this.initialize_general_context = function (context_key) {
         var combo_tool_row = this.get_combo(
+            context_key,
             [
                 {"id": "", "label_text": "Normal"},
                 {"id": "multiply", "label_text": "Multiply"},
@@ -272,12 +296,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
 
+        var slider = this.get_slider(1, context_key, "opacity", 1.05);
+
         this.contexts[context_key]["html"].append(combo_tool_row.html);
-        this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
+        this.contexts[context_key]["html"].append(slider.html);
     };
 
     this.initialize_text_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(
+        var slider = this.get_slider(
             0,
             context_key,
             "stroke_thickness",
@@ -286,10 +312,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0,
             0.1
 
-        ).html);
+        );
 
-        var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
-        var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");
+        var font_color_picker = this.get_color_picker(context_key, "font_color", "Font\nColor");
+        var stroke_color_picker = this.get_color_picker(context_key, "stroke_color", "Stroke\nColor");
         var container = $("<div></div>");
 
         container.css({
@@ -303,17 +329,50 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         container.append(font_color_picker.html);
         container.append(stroke_color_picker.html);
 
+        var checkbox = this.get_checkbox(context_key, "text_caps", "ALL-CAPS:");
+
+        container.append(checkbox.html);
+
+        // This could be on the same row as the color picker, and actually looks better
+        // that way, but some font names will be long, so best this is on its own row
+        var font_combo_tool_row = this.get_combo(
+            context_key,
+            this.editor.ComboOptions ? (
+                this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+            ) : [{"id": "", "label_text": "Loading..."}],
+            "font_id",
+            "Font"
+        );
+
+        var alignment_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Center"},
+                {"id": "left", "label_text": "Left"},
+                {"id": "right", "label_text": "Right"}
+            ],
+            "text_alignment",
+            "Alignment"
+        );
+
+        this.contexts[context_key]["html"].append(slider.html);
+        this.contexts[context_key]["html"].append(container);
+        this.contexts[context_key]["html"].append(font_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(alignment_combo_tool_row.html);
+    };
+
+    this.get_checkbox = function (context_key, data_key, label_text) {
         var checkbox = (function (self) {
             return new Dash.Gui.Checkbox(
                 "",
-                self.get_data()["text_caps"] || false,
+                self.get_data()[data_key] || false,
                 self.color,
                 "Toggle",
                 self,
                 function (checkbox) {
-                    self.set_data("text_caps", checkbox.IsChecked());
+                    self.set_data(data_key, checkbox.IsChecked());
                 },
-                "ALL-CAPS:"
+                label_text
             );
         })(this);
 
@@ -324,36 +383,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         checkbox.label.label.css({
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": "80%"
         });
 
-        container.append(checkbox.html);
+        this.contexts[context_key]["all_elements"].push(checkbox);
 
-        this.contexts[context_key]["html"].append(container);
-
-        // This could be on the same row as the color picker, and actually looks better
-        // that way, but some font names will be long, so best this is on its own row
-        this.contexts[context_key]["html"].append(this.get_combo(
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            "font_id",
-            "Font"
-        ).html);
-
-        this.contexts[context_key]["html"].append(this.get_combo(
-            [
-                {"id": "", "label_text": "Center"},
-                {"id": "left", "label_text": "Left"},
-                {"id": "right", "label_text": "Right"}
-            ],
-            "text_alignment",
-            "Alignment"
-        ).html);
+        return checkbox;
     };
 
     this.initialize_image_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(
+        var contrast_slider = this.get_slider(
             1,
             context_key,
             "contrast",
@@ -361,9 +400,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0.5,
             2.0
-        ).html);
+        );
 
-        this.contexts[context_key]["html"].append(this.get_slider(
+        var brightness_slider = this.get_slider(
             1,
             context_key,
             "brightness",
@@ -371,7 +410,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0.5,
             2.0
-        ).html);
+        );
 
         var color_container = $("<div></div>");
 
@@ -379,13 +418,25 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "display": "flex"
         });
 
-        color_container.append(this.get_color_picker("tint_color", "Tint Color").html);
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
 
-        var button = (function (self) {
+        color_container.append(color_picker.html);
+
+        var icon_button = this.get_icon_button(context_key, "tint_color", "close_square", this.color.AccentBad);
+
+        color_container.append(icon_button.html);
+
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
+        this.contexts[context_key]["html"].append(color_container);
+    };
+
+    this.get_icon_button = function (context_key, data_key, icon_name, icon_color="") {
+        var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
-                "close_square",
+                icon_name,
                 function () {
-                    self.set_data("tint_color", "");
+                    self.set_data(data_key, "");
                 },
                 self,
                 self.color,
@@ -396,18 +447,20 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
         })(this);
 
-        button.SetIconColor(this.color.AccentBad);
+        if (icon_color) {
+            icon_button.SetIconColor(icon_color);
+        }
 
-        button.html.css({
+        icon_button.html.css({
             "padding-top": Dash.Size.Padding * 0.1
         });
 
-        color_container.append(button.html);
+        this.contexts[context_key]["all_elements"].push(icon_button);
 
-        this.contexts[context_key]["html"].append(color_container);
+        return icon_button;
     };
 
-    this.get_input = function (data_key, label_text="") {
+    this.get_input = function (context_key, data_key, label_text="") {
         if (!label_text) {
             label_text = data_key.Title();
         }
@@ -428,11 +481,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
             input.RemoveSaveButton();
 
+            self.contexts[context_key]["all_elements"].push(input);
+
             return input;
         })(this);
     };
 
-    this.get_combo = function (options, data_key, label_text="") {
+    this.get_combo = function (context_key, options, data_key, label_text="") {
         var tool_row = (function (self) {
             return self.content.GetCombo(
                 label_text || data_key.Title(),
@@ -452,10 +507,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.font_combo = tool_row.elements.Last().combo;
         }
 
+        this.contexts[context_key]["all_elements"].push(tool_row.elements[0]);
+        this.contexts[context_key]["all_elements"].push(tool_row.elements[1]);
+
         return tool_row;
     };
 
-    this.get_color_picker = function (data_key, label_text="") {
+    this.get_color_picker = function (context_key, data_key, label_text="") {
         var color_picker = (function (self) {
             return Dash.Gui.GetColorPicker(
                 self,
@@ -487,6 +545,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         color_picker.html.css(css);
 
+        this.contexts[context_key]["all_elements"].push(color_picker);
+
         return color_picker;
     };
 
@@ -511,6 +571,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             if (hover_text) {
                 slider.label.attr("title", hover_text);
             }
+
+            self.contexts[context_key]["all_elements"].push(slider);
 
             return slider;
         })(this);

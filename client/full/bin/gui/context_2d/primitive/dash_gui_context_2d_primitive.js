@@ -139,7 +139,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.Deselect = function () {
-        if (!this.selected) {
+        if (!this.selected || this.drag_active) {
             return;
         }
 
@@ -185,13 +185,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.html.css(css);
 
-        if (!this.get_value("locked")) {
-            this.canvas.OnPrimitiveSelected(this, from_click);
+        this.canvas.OnPrimitiveSelected(this, from_click);
 
-            if (this.type === "text") {
-                this.unlock_text_area();
-                this.focus_text_area();
-            }
+        if (!this.get_value("locked") && this.type === "text") {
+            this.unlock_text_area();
+            this.focus_text_area();
         }
 
         this.selected = true;
@@ -244,12 +242,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.on_rotate(this.drag_context["start_rot"] + (movement_x + movement_y));
+            this.on_rotate(this.drag_context["start_rot"] + (movement_x + (-movement_y)));  // Invert y value
         }
 
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            this.on_scale(this.data["width_norm"] + ((movement_x - movement_y) * 0.00005));
+            // Only take input from one axis at a time, so use the greater one
+            var movement = Math.abs(movement_x) >= Math.abs(movement_y) ? movement_x : -movement_y;  // Invert y value if using y
+
+            this.on_scale(this.data["width_norm"] + (movement * 0.00005));
         }
 
         else {
@@ -710,9 +711,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         (function (self) {
             self.html.on("click", function (e) {
-                if (!self.get_value("locked")) {
-                    self.Select(true);
-                }
+                self.Select(true);
 
                 e.stopPropagation();
             });
@@ -720,9 +719,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             self.html.on("mousedown", function () {
-                if (!self.get_value("locked")) {
-                    self.Select(true);
-                }
+                self.Select(true);
             });
         })(this);
     };

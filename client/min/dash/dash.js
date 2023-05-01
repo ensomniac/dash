@@ -28420,8 +28420,8 @@ function DashGuiContext2DCanvas (editor) {
             "pointer-events": "none",
             ...css,
             "border": "1px solid " + this.opposite_color.StrokeDark,
-            "outline": "1px solid " + this.color.StrokeLight,
-            "outline-offset": "1px"
+            // "outline": "1px solid " + this.color.StrokeLight,
+            // "outline-offset": "1px"
         });
         this.border.hide();
         this.html.append(this.canvas);
@@ -28685,9 +28685,9 @@ function DashGuiContext2DCanvas (editor) {
         });
     };
     this.get_mask_width_and_height = function () {
-        return [  // -3 for border/outline and an extra pixel
-            ((this.html.outerWidth() - this.GetWidth()) / 2) - 3,
-            ((this.html.outerHeight() - this.GetHeight()) / 2) - 3
+        return [  // -2 for border and an extra pixel
+            ((this.html.outerWidth() - this.GetWidth()) / 2) - 2,
+            ((this.html.outerHeight() - this.GetHeight()) / 2) - 2
         ];
     };
     this.setup_connections = function () {
@@ -28712,7 +28712,7 @@ function DashGuiContext2DCanvas (editor) {
                     self.last_selected_primitive.OnDragStop(e);
                 }
             });
-            self.canvas.on("click", function () {
+            self.html.on("click", function () {
                 self.editor.DeselectAllLayers();
             });
         })(this);
@@ -29112,7 +29112,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return this.selected;
     };
     this.Deselect = function () {
-        if (!this.selected) {
+        if (!this.selected || this.drag_active) {
             return;
         }
         var css = {
@@ -29145,12 +29145,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
-        if (!this.get_value("locked")) {
-            this.canvas.OnPrimitiveSelected(this, from_click);
-            if (this.type === "text") {
-                this.unlock_text_area();
-                this.focus_text_area();
-            }
+        this.canvas.OnPrimitiveSelected(this, from_click);
+        if (!this.get_value("locked") && this.type === "text") {
+            this.unlock_text_area();
+            this.focus_text_area();
         }
         this.selected = true;
     };
@@ -29191,11 +29189,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
         // Rotate left / right
         if (this.drag_context["rotate"]) {
-            this.on_rotate(this.drag_context["start_rot"] + (movement_x + movement_y));
+            this.on_rotate(this.drag_context["start_rot"] + (movement_x + (-movement_y)));  // Invert y value
         }
         // Scale bigger / smaller
         else if (this.drag_context["scale"]) {
-            this.on_scale(this.data["width_norm"] + ((movement_x - movement_y) * 0.00005));
+            // Only take input from one axis at a time, so use the greater one
+            var movement = Math.abs(movement_x) >= Math.abs(movement_y) ? movement_x : -movement_y;  // Invert y value if using y
+            this.on_scale(this.data["width_norm"] + (movement * 0.00005));
         }
         else {
             this.set_position(
@@ -29551,17 +29551,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         (function (self) {
             self.html.on("click", function (e) {
-                if (!self.get_value("locked")) {
-                    self.Select(true);
-                }
+                self.Select(true);
                 e.stopPropagation();
             });
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             self.html.on("mousedown", function () {
-                if (!self.get_value("locked")) {
-                    self.Select(true);
-                }
+                self.Select(true);
             });
         })(this);
     };
@@ -29924,8 +29920,8 @@ function DashGuiContext2DPrimitiveImage () {
         canvas.css({
             "box-sizing": "border-box",
             "border": "1px solid " + this.color.StrokeDark,
-            "outline": "1px solid " + this.opposite_color.StrokeLight,
-            "outline-offset": "1px"
+            // "outline": "1px solid " + this.opposite_color.StrokeLight,
+            // "outline-offset": "1px"
         });
         // Don't set these with .css(), it's different
         canvas.attr("width", this.width_px);
@@ -30612,6 +30608,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (!this.selected) {
             return;
         }
+        var primitive = this.editor.canvas.primitives[self.id];
+        if (primitive && primitive.drag_active) {
+            return;
+        }
         this.selected = false;
         this.html.css({
             "background": "",
@@ -31154,6 +31154,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
         // Should never happen, but just in case
         if (this.editor.preview_mode) {
+            console.debug("TEST return2");
             return;
         }
         if (!id) {
@@ -31209,10 +31210,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 params["key"] += "_override";
             }
         }
+        console.debug("TEST set", key, value, params);
         (function (self) {
             Dash.Request(
                 self,
                 function (response) {
+                    console.debug("TEST on response", response);
                     self.on_set_layer_property(response, key, value, id, parent_id);
                     if (callback) {
                         callback();
@@ -31252,14 +31255,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.toolbar.ReEnableToggle(key);
         if (key === "hidden" || key === "locked") {
-            if (value) {
-                if (key === "locked") {
-                    this.editor.DeselectAllLayers();
-                }
-            }
-            else {
-                this.panel.RedrawCurrentContentTab();
-            }
+            this.panel.RedrawCurrentContentTab();
         }
     };
     this.redraw_layers = function (select=false, redraw_primitives=false) {
@@ -31983,7 +31979,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         var selected_layer = this.panel.GetSelectedLayer();
         var layer_data = selected_layer ? selected_layer.GetData() : {};
-        if (!selected_layer || layer_data["hidden"] || layer_data["locked"]) {
+        if (!selected_layer) {
             this.hide_context("general");
             this.show_no_selected_layer_label(layer_data);
             return;
@@ -31994,6 +31990,20 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             requestAnimationFrame(function () {
                 self.content.FloatCombos(self);
             });
+            var disabled = layer_data["hidden"] || layer_data["locked"];
+            for (var key in self.contexts) {
+                var context = self.contexts[key];
+                if (!context["visible"]) {
+                    continue;
+                }
+                for (var element of context["all_elements"]) {
+                    (element.html || element).css({
+                        "opacity": disabled ? 0.5 : 1,
+                        "user-select": disabled ? "none" : "auto",
+                        "pointer-events": disabled ? "none" : "auto"
+                    });
+                }
+            }
         })(this);
     };
     this.show_no_selected_layer_label = function (layer_data) {
@@ -32068,6 +32078,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.set_data = function (key, value) {
         var selected_layer = this.panel.GetSelectedLayer();
         if (!selected_layer) {
+            console.debug("TEST return1");
             return;
         }
         selected_layer.SetData(key, value);
@@ -32077,7 +32088,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "html": $("<div></div>"),
             "visible": false,
             "initialized": false,
-            "inputs": []  // Any inputs that get added to these contexts need to be added to this list for external checks
+            "inputs": [],  // Any inputs that get added to these contexts need to be added to this list for external checks
+            "all_elements": []
         };
         this.contexts[key]["html"].hide();
         this.html.append(this.contexts[key]["html"]);
@@ -32101,7 +32113,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
                 if (element_config["callback"]) {
-                    this.contexts[context_key]["html"].append(element_config["callback"]());
+                    var html = element_config["callback"]();
+                    this.contexts[context_key]["html"].append(html);
+                    this.contexts[context_key]["all_elements"].push(html);
                 }
                 else {
                     var element = this[element_config["function_name"]](...element_config["function_params"]);
@@ -32113,6 +32127,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
     this.initialize_general_context = function (context_key) {
         var combo_tool_row = this.get_combo(
+            context_key,
             [
                 {"id": "", "label_text": "Normal"},
                 {"id": "multiply", "label_text": "Multiply"},
@@ -32131,11 +32146,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "cursor": "help"
         });
         combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
+        var slider = this.get_slider(1, context_key, "opacity", 1.05);
         this.contexts[context_key]["html"].append(combo_tool_row.html);
-        this.contexts[context_key]["html"].append(this.get_slider(1, context_key, "opacity", 1.05).html);
+        this.contexts[context_key]["html"].append(slider.html);
     };
     this.initialize_text_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(
+        var slider = this.get_slider(
             0,
             context_key,
             "stroke_thickness",
@@ -32143,9 +32159,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0,
             0.1
-        ).html);
-        var font_color_picker = this.get_color_picker("font_color", "Font\nColor");
-        var stroke_color_picker = this.get_color_picker("stroke_color", "Stroke\nColor");
+        );
+        var font_color_picker = this.get_color_picker(context_key, "font_color", "Font\nColor");
+        var stroke_color_picker = this.get_color_picker(context_key, "stroke_color", "Stroke\nColor");
         var container = $("<div></div>");
         container.css({
             "display": "flex"
@@ -32155,17 +32171,45 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
         container.append(font_color_picker.html);
         container.append(stroke_color_picker.html);
+        var checkbox = this.get_checkbox(context_key, "text_caps", "ALL-CAPS:");
+        container.append(checkbox.html);
+        // This could be on the same row as the color picker, and actually looks better
+        // that way, but some font names will be long, so best this is on its own row
+        var font_combo_tool_row = this.get_combo(
+            context_key,
+            this.editor.ComboOptions ? (
+                this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
+            ) : [{"id": "", "label_text": "Loading..."}],
+            "font_id",
+            "Font"
+        );
+        var alignment_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Center"},
+                {"id": "left", "label_text": "Left"},
+                {"id": "right", "label_text": "Right"}
+            ],
+            "text_alignment",
+            "Alignment"
+        );
+        this.contexts[context_key]["html"].append(slider.html);
+        this.contexts[context_key]["html"].append(container);
+        this.contexts[context_key]["html"].append(font_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(alignment_combo_tool_row.html);
+    };
+    this.get_checkbox = function (context_key, data_key, label_text) {
         var checkbox = (function (self) {
             return new Dash.Gui.Checkbox(
                 "",
-                self.get_data()["text_caps"] || false,
+                self.get_data()[data_key] || false,
                 self.color,
                 "Toggle",
                 self,
                 function (checkbox) {
-                    self.set_data("text_caps", checkbox.IsChecked());
+                    self.set_data(data_key, checkbox.IsChecked());
                 },
-                "ALL-CAPS:"
+                label_text
             );
         })(this);
         checkbox.html.css({
@@ -32174,31 +32218,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
         checkbox.label.label.css({
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": "80%"
         });
-        container.append(checkbox.html);
-        this.contexts[context_key]["html"].append(container);
-        // This could be on the same row as the color picker, and actually looks better
-        // that way, but some font names will be long, so best this is on its own row
-        this.contexts[context_key]["html"].append(this.get_combo(
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["fonts"] ? this.editor.ComboOptions["fonts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            "font_id",
-            "Font"
-        ).html);
-        this.contexts[context_key]["html"].append(this.get_combo(
-            [
-                {"id": "", "label_text": "Center"},
-                {"id": "left", "label_text": "Left"},
-                {"id": "right", "label_text": "Right"}
-            ],
-            "text_alignment",
-            "Alignment"
-        ).html);
+        this.contexts[context_key]["all_elements"].push(checkbox);
+        return checkbox;
     };
     this.initialize_image_context = function (context_key) {
-        this.contexts[context_key]["html"].append(this.get_slider(
+        var contrast_slider = this.get_slider(
             1,
             context_key,
             "contrast",
@@ -32206,8 +32232,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0.5,
             2.0
-        ).html);
-        this.contexts[context_key]["html"].append(this.get_slider(
+        );
+        var brightness_slider = this.get_slider(
             1,
             context_key,
             "brightness",
@@ -32215,17 +32241,25 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0.5,
             2.0
-        ).html);
+        );
         var color_container = $("<div></div>");
         color_container.css({
             "display": "flex"
         });
-        color_container.append(this.get_color_picker("tint_color", "Tint Color").html);
-        var button = (function (self) {
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+        color_container.append(color_picker.html);
+        var icon_button = this.get_icon_button(context_key, "tint_color", "close_square", this.color.AccentBad);
+        color_container.append(icon_button.html);
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
+        this.contexts[context_key]["html"].append(color_container);
+    };
+    this.get_icon_button = function (context_key, data_key, icon_name, icon_color="") {
+        var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
-                "close_square",
+                icon_name,
                 function () {
-                    self.set_data("tint_color", "");
+                    self.set_data(data_key, "");
                 },
                 self,
                 self.color,
@@ -32235,14 +32269,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 }
             );
         })(this);
-        button.SetIconColor(this.color.AccentBad);
-        button.html.css({
+        if (icon_color) {
+            icon_button.SetIconColor(icon_color);
+        }
+        icon_button.html.css({
             "padding-top": Dash.Size.Padding * 0.1
         });
-        color_container.append(button.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.contexts[context_key]["all_elements"].push(icon_button);
+        return icon_button;
     };
-    this.get_input = function (data_key, label_text="") {
+    this.get_input = function (context_key, data_key, label_text="") {
         if (!label_text) {
             label_text = data_key.Title();
         }
@@ -32260,10 +32296,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 data_key
             );
             input.RemoveSaveButton();
+            self.contexts[context_key]["all_elements"].push(input);
             return input;
         })(this);
     };
-    this.get_combo = function (options, data_key, label_text="") {
+    this.get_combo = function (context_key, options, data_key, label_text="") {
         var tool_row = (function (self) {
             return self.content.GetCombo(
                 label_text || data_key.Title(),
@@ -32280,9 +32317,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (data_key === "font_id") {
             this.font_combo = tool_row.elements.Last().combo;
         }
+        this.contexts[context_key]["all_elements"].push(tool_row.elements[0]);
+        this.contexts[context_key]["all_elements"].push(tool_row.elements[1]);
         return tool_row;
     };
-    this.get_color_picker = function (data_key, label_text="") {
+    this.get_color_picker = function (context_key, data_key, label_text="") {
         var color_picker = (function (self) {
             return Dash.Gui.GetColorPicker(
                 self,
@@ -32290,6 +32329,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     if (!color_val) {
                         return;
                     }
+                    console.debug("TEST", data_key, color_val);
                     self.set_data(data_key, color_val);
                 },
                 (label_text || data_key.Title()) + ":",
@@ -32308,6 +32348,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             css["pointer-events"] = "none";
         }
         color_picker.html.css(css);
+        this.contexts[context_key]["all_elements"].push(color_picker);
         return color_picker;
     };
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
@@ -32329,6 +32370,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             if (hover_text) {
                 slider.label.attr("title", hover_text);
             }
+            self.contexts[context_key]["all_elements"].push(slider);
             return slider;
         })(this);
     };
