@@ -65,9 +65,15 @@ function DashGuiContext2DPrimitiveImage () {
         });
     };
 
-    this.update_filter = function () {
+    this.update_filter = function (brightness=null, contrast=null) {
         this.image.css({
-            "filter": "brightness(" + this.get_value("brightness") + ") contrast(" + this.get_value("contrast") + ")"
+            "filter": (
+                "brightness(" + (
+                    brightness === null ? this.get_value("brightness") : brightness
+                ) + ") contrast(" + (
+                    contrast === null ? this.get_value("contrast") : contrast
+                ) + ")"
+            )
         });
     };
 

@@ -29551,6 +29551,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         (function (self) {
             self.html.on("click", function (e) {
+                // if (self.check_if_transparent_click(e)) {
+                //     return;
+                // }
                 self.Select(true);
                 e.stopPropagation();
             });
@@ -29561,6 +29564,33 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             });
         })(this);
     };
+    // TODO
+    // this.check_if_transparent_click = function (event) { 
+    //     if (this.type !== "image") {
+    //         return false;
+    //     }
+    //
+    //     var x = event.offsetX;
+    //     var y = event.offsetY;
+    //     var ctx = $("<canvas></canvas>")[0].getContext("2d");
+    //
+    //     ctx.drawImage(this.html[0], x, y, 1, 1, 0, 0, 1, 1);
+    //
+    //     if (ctx.getImageData(0, 0, 1, 1).data[3] === 0) {
+    //         var next_element = $(document.elementFromPoint(x, y));
+    //
+    //         if (next_element === this.html) {
+    //             next_element = $(document.elementFromPoint(x, y));
+    //         }
+    //
+    //         next_element.trigger("click");
+    //         console.debug("TEST hit", next_element);
+    //
+    //         return true;
+    //     }
+    //
+    //     return false;
+    // };
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
@@ -29907,9 +29937,15 @@ function DashGuiContext2DPrimitiveImage () {
             "background-blend-mode": "overlay"
         });
     };
-    this.update_filter = function () {
+    this.update_filter = function (brightness=null, contrast=null) {
         this.image.css({
-            "filter": "brightness(" + this.get_value("brightness") + ") contrast(" + this.get_value("contrast") + ")"
+            "filter": (
+                "brightness(" + (
+                    brightness === null ? this.get_value("brightness") : brightness
+                ) + ") contrast(" + (
+                    contrast === null ? this.get_value("contrast") : contrast
+                ) + ")"
+            )
         });
     };
     this.redraw_canvas_placeholder = function () {
@@ -30713,7 +30749,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             self.html.on("mouseenter", function () {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
-                    primitive.html.css({"border": "1px solid " + primitive.hover_color});
+                    var css = {"border": "1px solid " + primitive.hover_color};
+                    if (primitive.hasOwnProperty("update_filter")) {
+                        primitive.update_filter((primitive.get_value("brightness") || 1.0) + 0.1);
+                    }
+                    else {
+                        css["filter"] = "brightness(" + ((self.get_value("brightness") || 1.0) + 0.1) + ")";
+                    }
+                    primitive.html.css(css);
                 }
                 if (!self.selected) {
                     self.html.css({
@@ -30724,7 +30767,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             self.html.on("mouseleave", function () {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
-                    primitive.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});
+                    primitive.html.css({
+                        "border": "1px solid rgba(0, 0, 0, 0)"
+                    });
+                    var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
+                    if (primitive.hasOwnProperty("update_filter")) {
+                        primitive.update_filter(primitive.get_value("brightness"));
+                    }
+                    else {
+                        css["filter"] = "brightness(" + (self.get_value("brightness") || 1.0) + ")";
+                    }
+                    primitive.html.css(css);
                 }
                 if (!self.selected) {
                     self.html.css({
@@ -30778,6 +30831,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         else {
             this.input.SetLocked(true);
         }
+        (function (self) {
+            self.input.html.attr(
+                "title",
+                function () {
+                    return self.get_value("display_name") || "";
+                }
+            );
+        })(this);
         this.html.append(this.input.html);
     };
     this.add_icon_area = function () {

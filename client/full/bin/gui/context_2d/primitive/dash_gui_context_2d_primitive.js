@@ -711,6 +711,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         (function (self) {
             self.html.on("click", function (e) {
+                // if (self.check_if_transparent_click(e)) {
+                //     return;
+                // }
+
                 self.Select(true);
 
                 e.stopPropagation();
@@ -723,6 +727,34 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             });
         })(this);
     };
+
+    // TODO
+    // this.check_if_transparent_click = function (event) { 
+    //     if (this.type !== "image") {
+    //         return false;
+    //     }
+    //
+    //     var x = event.offsetX;
+    //     var y = event.offsetY;
+    //     var ctx = $("<canvas></canvas>")[0].getContext("2d");
+    //
+    //     ctx.drawImage(this.html[0], x, y, 1, 1, 0, 0, 1, 1);
+    //
+    //     if (ctx.getImageData(0, 0, 1, 1).data[3] === 0) {
+    //         var next_element = $(document.elementFromPoint(x, y));
+    //
+    //         if (next_element === this.html) {
+    //             next_element = $(document.elementFromPoint(x, y));
+    //         }
+    //
+    //         next_element.trigger("click");
+    //         console.debug("TEST hit", next_element);
+    //
+    //         return true;
+    //     }
+    //
+    //     return false;
+    // };
 
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {

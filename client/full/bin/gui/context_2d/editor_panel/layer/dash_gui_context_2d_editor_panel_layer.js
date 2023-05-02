@@ -274,7 +274,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
 
                 if (!primitive.selected) {
-                    primitive.html.css({"border": "1px solid " + primitive.hover_color});
+                    var css = {"border": "1px solid " + primitive.hover_color};
+
+                    if (primitive.hasOwnProperty("update_filter")) {
+                        primitive.update_filter((primitive.get_value("brightness") || 1.0) + 0.1);
+                    }
+
+                    else {
+                        css["filter"] = "brightness(" + ((self.get_value("brightness") || 1.0) + 0.1) + ")";
+                    }
+
+                    primitive.html.css(css);
                 }
 
                 if (!self.selected) {
@@ -288,7 +298,21 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
 
                 if (!primitive.selected) {
-                    primitive.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});
+                    primitive.html.css({
+                        "border": "1px solid rgba(0, 0, 0, 0)"
+                    });
+
+                    var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
+
+                    if (primitive.hasOwnProperty("update_filter")) {
+                        primitive.update_filter(primitive.get_value("brightness"));
+                    }
+
+                    else {
+                        css["filter"] = "brightness(" + (self.get_value("brightness") || 1.0) + ")";
+                    }
+
+                    primitive.html.css(css);
                 }
 
                 if (!self.selected) {
@@ -358,6 +382,15 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         else {
             this.input.SetLocked(true);
         }
+
+        (function (self) {
+            self.input.html.attr(
+                "title",
+                function () {
+                    return self.get_value("display_name") || "";
+                }
+            );
+        })(this);
 
         this.html.append(this.input.html);
     };
