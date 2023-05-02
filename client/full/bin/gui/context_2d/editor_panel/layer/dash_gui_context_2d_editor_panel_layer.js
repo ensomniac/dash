@@ -124,8 +124,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
 
-    this.SetData = function (key, value) {
-        return this.set_data(key, value);
+    this.SetData = function (key, value, callback=null) {
+        return this.set_data(key, value, callback);
     };
 
     this.InputInFocus = function () {

@@ -30598,8 +30598,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var default_order = data["imported_context"]["layers"]["order"];
         return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
-    this.SetData = function (key, value) {
-        return this.set_data(key, value);
+    this.SetData = function (key, value, callback=null) {
+        return this.set_data(key, value, callback);
     };
     this.InputInFocus = function () {
         return this.input.InFocus();
@@ -32075,12 +32075,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         return value + override;
     };
-    this.set_data = function (key, value) {
+    this.set_data = function (key, value, callback=null) {
         var selected_layer = this.panel.GetSelectedLayer();
         if (!selected_layer) {
             return;
         }
-        selected_layer.SetData(key, value);
+        selected_layer.SetData(key, value, callback);
     };
     this.add_context = function (key) {
         this.contexts[key] = {
@@ -32249,19 +32249,25 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
         color_container.append(color_picker.html);
-        var icon_button = this.get_clear_button(context_key, "tint_color");
+        var icon_button = this.get_clear_button(
+            context_key,
+            "tint_color",
+            function () {
+                color_picker.input.val("#000000");
+            }
+        );
         color_picker.clear_button = icon_button;
         color_container.append(icon_button.html);
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
     };
-    this.get_clear_button = function (context_key, data_key, icon_name="close_square", icon_color="") {
+    this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {
         var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
                 icon_name,
                 function () {
-                    self.set_data(data_key, "");
+                    self.set_data(data_key, "", callback);
                 },
                 self,
                 self.color,
@@ -32307,10 +32313,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 label_text || data_key.Title(),
                 options,
                 function (selected_option) {
-                    if (extra_cb) {
-                        extra_cb(selected_option, self);
-                    }
-                    self.set_data(data_key, selected_option["id"]);
+                    self.set_data(
+                        data_key,
+                        selected_option["id"],
+                        extra_cb ? function () {
+                            extra_cb(selected_option, self);
+                        } : null
+                    );
                 },
                 starting_value
             );

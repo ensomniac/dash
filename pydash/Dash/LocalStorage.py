@@ -151,6 +151,8 @@ class DashLocalStorage:
         if not os.path.exists(store_root):
             return all_data
 
+        missing = []
+
         for obj_id in os.listdir(store_root):
             if str(obj_id).startswith("."):
                 continue
@@ -163,16 +165,7 @@ class DashLocalStorage:
             except Exception as e:
                 if "does not exist" in str(e):
                     if not obj_id.startswith("_"):
-                        from Dash.Utils import SendEmail
-
-                        SendEmail(
-                            subject="Dash.LocalStorage.GetAll",
-                            msg=(
-                                f"Warning:\nA folder was identified as missing its data.json file. This typically happens "
-                                "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
-                            ),
-                            error=str(e)
-                        )
+                        missing.append(obj_id)
 
                     continue
                 else:
@@ -195,6 +188,19 @@ class DashLocalStorage:
 
             if not exclude:
                 all_data["data"][obj_id] = data
+
+        if missing:
+            from Dash.Utils import SendEmail
+
+            SendEmail(
+                subject="Dash.LocalStorage.GetAll",
+                msg=(
+                    "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens "
+                    "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
+                    "Alternatively, a request to get the data may have happened at the same moment it was deleted."
+                    f"\n\n" + "\n".join(missing)
+                )
+            )
 
         if self.sort_by_key:
             all_data["order"] = self.get_dict_order_by_sort_key(all_data["data"])
