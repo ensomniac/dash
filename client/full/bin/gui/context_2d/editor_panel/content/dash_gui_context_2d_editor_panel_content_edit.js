@@ -3,6 +3,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
     this.contexts = {};
     this.font_combo = null;
+    this.redrawing = false;
     this.floating_combos = [];
     this.html = $("<div></div>");
     this.color = this.content.color;
@@ -62,6 +63,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.Redraw = function () {
+        this.redrawing = true;
+
         this.hide_no_selected_layer_label();
 
         for (var key in this.contexts) {
@@ -107,6 +110,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     });
                 }
             }
+
+            self.redrawing = false;
         })(this);
     };
 
@@ -271,6 +276,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_general_context = function (context_key) {
+        var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+
         var combo_tool_row = this.get_combo(
             context_key,
             [
@@ -298,6 +305,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         var slider = this.get_slider(1, context_key, "opacity", 1.05);
 
+        this.contexts[context_key]["html"].append(input.html);
         this.contexts[context_key]["html"].append(combo_tool_row.html);
         this.contexts[context_key]["html"].append(slider.html);
     };
@@ -422,7 +430,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         color_container.append(color_picker.html);
 
-        var icon_button = this.get_icon_button(context_key, "tint_color", "close_square", this.color.AccentBad);
+        var icon_button = this.get_clear_button(context_key, "tint_color");
+
+        color_picker.clear_button = icon_button;
 
         color_container.append(icon_button.html);
 
@@ -431,7 +441,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(color_container);
     };
 
-    this.get_icon_button = function (context_key, data_key, icon_name, icon_color="") {
+    this.get_clear_button = function (context_key, data_key, icon_name="close_square", icon_color="") {
         var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
                 icon_name,
@@ -447,9 +457,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
         })(this);
 
-        if (icon_color) {
-            icon_button.SetIconColor(icon_color);
-        }
+        icon_button.SetIconColor(icon_color || this.color.AccentBad);
 
         icon_button.html.css({
             "padding-top": Dash.Size.Padding * 0.1
@@ -487,15 +495,21 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         })(this);
     };
 
-    this.get_combo = function (context_key, options, data_key, label_text="") {
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null) {
+        var starting_value = this.get_data()[data_key] || "";
+
         var tool_row = (function (self) {
             return self.content.GetCombo(
                 label_text || data_key.Title(),
                 options,
                 function (selected_option) {
+                    if (extra_cb) {
+                        extra_cb(selected_option, self);
+                    }
+
                     self.set_data(data_key, selected_option["id"]);
                 },
-                self.get_data()[data_key] || ""
+                starting_value
             );
         })(this);
 
@@ -509,6 +523,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.contexts[context_key]["all_elements"].push(tool_row.elements[0]);
         this.contexts[context_key]["all_elements"].push(tool_row.elements[1]);
+
+        if (on_draw) {
+            this._on_draw(on_draw, [starting_value, this]);
+        }
 
         return tool_row;
     };
@@ -618,6 +636,23 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
 
         this.contexts[context_key]["inputs"].push(slider.value_label);
+    };
+
+    this._on_draw = function (callback, params) {
+        if (this.redrawing) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self._on_draw(callback, params);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        callback(...params);
     };
 
     this.setup_styles();
