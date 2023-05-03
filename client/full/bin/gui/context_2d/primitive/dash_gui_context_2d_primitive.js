@@ -17,7 +17,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
     this.last_width_norm = null;
-    this.html = $("<div></div>");
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
@@ -27,6 +26,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
+    this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
 
     this.id = this.data["id"];
@@ -162,7 +162,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.selected = false;
     };
 
-    this.Select = function (from_click=false) {
+    this.Select = function (from_click=false, border=true) {
         if (this.selected) {
             return;
         }
@@ -177,7 +177,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.canvas.DeselectAllPrimitives();
 
-        var css = {"border": "1px solid " + this.highlight_color};
+        var css = border ? {"border": "1px solid " + this.highlight_color} : {};
 
         if (this.type === "context") {
             css["pointer-events"] = "none";
@@ -710,51 +710,121 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         (function (self) {
-            self.html.on("click", function (e) {
-                // if (self.check_if_transparent_click(e)) {
-                //     return;
-                // }
+            self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_check=false) {
+                if (!_skip_check && self.check_if_transparent("click", _event_override || event, _previous_layer_index)) {
+                    self.Deselect();
+
+                    return;
+                }
 
                 self.Select(true);
 
-                e.stopPropagation();
+                event.stopPropagation();
             });
 
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
+            // TODO: This does not pass through the transparent part of
+            //  and image like the click event does, because it's very
+            //  complicated and I've spent enough time for now on getting
+            //  the click pass-through to work, so need to leave it for now.
             self.html.on("mousedown", function () {
-                self.Select(true);
+                self.Select(true, false);
             });
         })(this);
     };
 
-    // TODO
-    // this.check_if_transparent_click = function (event) { 
-    //     if (this.type !== "image") {
-    //         return false;
-    //     }
-    //
-    //     var x = event.offsetX;
-    //     var y = event.offsetY;
-    //     var ctx = $("<canvas></canvas>")[0].getContext("2d");
-    //
-    //     ctx.drawImage(this.html[0], x, y, 1, 1, 0, 0, 1, 1);
-    //
-    //     if (ctx.getImageData(0, 0, 1, 1).data[3] === 0) {
-    //         var next_element = $(document.elementFromPoint(x, y));
-    //
-    //         if (next_element === this.html) {
-    //             next_element = $(document.elementFromPoint(x, y));
-    //         }
-    //
-    //         next_element.trigger("click");
-    //         console.debug("TEST hit", next_element);
-    //
-    //         return true;
-    //     }
-    //
-    //     return false;
-    // };
+    this.check_if_transparent = function (type, event, previous_layer_index=null) {
+        if (this.type !== "image") {
+            return false;
+        }
+
+        var url = this.get_url();
+
+        if (!url || !url.toLowerCase().endsWith(".png")) {
+            return false;
+        }
+
+        var img = new Image();
+        var canvas = $("<canvas></canvas>");
+        var ctx = canvas[0].getContext("2d");
+
+        canvas.css({
+            "position": "absolute",
+            "inset": 0,
+            "width": this.width_px,
+            "height": this.height_px
+        });
+
+        canvas.attr("width", this.width_px);
+        canvas.attr("height", this.height_px);
+
+        img.src = url;
+        img.crossOrigin = "Anonymous";
+
+        (function (self) {
+            img.onload = function () {
+                var img_data = null;
+                var next_layer = null;
+                var layer_index = null;
+
+                ctx.drawImage(img, 0, 0, self.width_px, self.height_px);
+
+                try {
+                    img_data = ctx.getImageData(event.offsetX, event.offsetY, 1, 1).data;
+                }
+
+                catch {
+                    // Pass
+                }
+
+                // Check if clicked pixel is transparent
+                if (img_data && img_data[3] === 0) {
+                    var elements = document.elementsFromPoint(event.clientX, event.clientY);
+
+                    for (var i in elements) {
+                        if (previous_layer_index !== null && parseInt(i) <= previous_layer_index) {
+                            continue;
+                        }
+
+                        var element = elements[i];
+                        var parent = $(element).parent()[0];
+
+                        if (parent === self.html[0] || element === self.html[0]) {
+                            continue;
+                        }
+
+                        if (element === self.canvas.html[0] || parent === self.canvas.html[0]) {
+                            break;
+                        }
+
+                        if ($(element).attr("class") !== "DashGuiContext2DPrimitive") {
+                            continue;
+                        }
+
+                        next_layer = element;
+                        layer_index = parseInt(i);
+
+                        break;
+                    }
+                }
+
+                if (next_layer) {
+                    // Click the next layer
+                    $(next_layer).trigger(type, [event, layer_index]);
+                }
+
+                else {
+                    // Re-trigger the click without checking for transparency
+                    self.html.trigger(type, [event, null, true]);
+                }
+
+                return true;
+            };
+        })(this);
+
+        return false;
+    };
 
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
