@@ -35,12 +35,12 @@ function DashGuiContext2DPrimitiveMedia () {
                     this.get_url(),
                     "100%",
                     "100%"
-                ) : this.type === "video" ? Dash.File.GetVideoPreview(  // TODO: tweak if needed
+                ) : this.type === "video" ? Dash.File.GetVideoPreview(
                     this.get_url(),
                     "100%",
                     true,
                     false,
-                    this.get_value("locked")
+                    !this.get_value("locked")
                 ) : $("<div></div>")
             );
 
@@ -52,7 +52,13 @@ function DashGuiContext2DPrimitiveMedia () {
     };
 
     this.get_url = function () {
-        return (this.file_data["url"] || this.file_data["orig_url"] || this.file_data["thumb_png_url"] || this.file_data["thumb_jpg_url"] || "");
+        return (
+               this.file_data["url"]
+            || this.file_data["orig_url"]
+            || this.file_data["thumb_png_url"]
+            || this.file_data["thumb_jpg_url"]
+            || ""
+        );
     };
 
     this.update_tint_color = function () {

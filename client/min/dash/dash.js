@@ -29183,6 +29183,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.drag_active || this.get_value("locked")) {
             return;
         }
+        if (this.type === "video" && !this.media[0].paused) {
+            this.media[0].pause();
+        }
         if (this.selected) {
             this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
         }
@@ -29961,12 +29964,12 @@ function DashGuiContext2DPrimitiveMedia () {
                     this.get_url(),
                     "100%",
                     "100%"
-                ) : this.type === "video" ? Dash.File.GetVideoPreview(  // TODO: tweak if needed
+                ) : this.type === "video" ? Dash.File.GetVideoPreview(
                     this.get_url(),
                     "100%",
                     true,
                     false,
-                    this.get_value("locked")
+                    !this.get_value("locked")
                 ) : $("<div></div>")
             );
             this.html.append(this.media);
@@ -29975,7 +29978,13 @@ function DashGuiContext2DPrimitiveMedia () {
         this.update_tint_color();
     };
     this.get_url = function () {
-        return (this.file_data["url"] || this.file_data["orig_url"] || this.file_data["thumb_png_url"] || this.file_data["thumb_jpg_url"] || "");
+        return (
+               this.file_data["url"]
+            || this.file_data["orig_url"]
+            || this.file_data["thumb_png_url"]
+            || this.file_data["thumb_jpg_url"]
+            || ""
+        );
     };
     this.update_tint_color = function () {
         var tint_color = this.get_value("tint_color");
@@ -31149,6 +31158,33 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             }
         })(this);
     };
+    this.Download = function (callback=null) {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
+            if (callback) {
+                callback();
+            }
+            alert("Can't download, no selected layer found");
+            return;
+        }
+        var data = layer.GetData()["file"];
+        if (!data) {
+            if (callback) {
+                callback();
+            }
+            alert("Can't download, selected layer data not found");
+            return;
+        }
+        var url = (data["url"] || data["orig_url"] || data["thumb_png_url"] || data["thumb_jpg_url"] || "");
+        if (!url) {
+            if (callback) {
+                callback();
+            }
+            alert("Can't download, url not found");
+            return;
+        }
+        Dash.Gui.OpenFileURLDownloadDialog(url, "", callback);
+    };
     this.MoveUp = function () {
         this.on_move();
     };
@@ -32016,7 +32052,12 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "download",
                 "download",
                 function () {
-                    // self.layers.Download();
+                    self.icon_buttons["download"].Disable();
+                    self.icon_buttons["download"].SetLoading(true);
+                    self.layers.Download(function () {
+                        self.icon_buttons["download"].SetLoading(false);
+                        self.icon_buttons["download"].Enable();
+                    });
                 }
             );
             self.add_icon_button(

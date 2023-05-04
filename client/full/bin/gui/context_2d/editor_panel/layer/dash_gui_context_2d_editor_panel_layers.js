@@ -166,6 +166,46 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         })(this);
     };
 
+    this.Download = function (callback=null) {
+        var layer = this.GetSelectedLayer();
+
+        if (!layer) {
+            if (callback) {
+                callback();
+            }
+
+            alert("Can't download, no selected layer found");
+
+            return;
+        }
+
+        var data = layer.GetData()["file"];
+
+        if (!data) {
+            if (callback) {
+                callback();
+            }
+
+            alert("Can't download, selected layer data not found");
+
+            return;
+        }
+
+        var url = (data["url"] || data["orig_url"] || data["thumb_png_url"] || data["thumb_jpg_url"] || "");
+
+        if (!url) {
+            if (callback) {
+                callback();
+            }
+
+            alert("Can't download, url not found");
+
+            return;
+        }
+
+        Dash.Gui.OpenFileURLDownloadDialog(url, "", callback);
+    };
+
     this.MoveUp = function () {
         this.on_move();
     };

@@ -194,7 +194,13 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "download",
                 "download",
                 function () {
-                    // self.layers.Download();
+                    self.icon_buttons["download"].Disable();
+                    self.icon_buttons["download"].SetLoading(true);
+
+                    self.layers.Download(function () {
+                        self.icon_buttons["download"].SetLoading(false);
+                        self.icon_buttons["download"].Enable();
+                    });
                 }
             );
 

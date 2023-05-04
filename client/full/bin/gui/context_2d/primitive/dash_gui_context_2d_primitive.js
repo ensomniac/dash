@@ -233,6 +233,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
+        if (this.type === "video" && !this.media[0].paused) {
+            this.media[0].pause();
+        }
+
         if (this.selected) {
             this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
         }
