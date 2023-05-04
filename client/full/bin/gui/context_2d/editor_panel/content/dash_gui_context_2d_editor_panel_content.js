@@ -21,7 +21,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
     this.PrimitiveTypes = [
         "text",
-        "image"
+        "image",
+        "video"
         // Add to this list as support for more primitives are added
     ];
 

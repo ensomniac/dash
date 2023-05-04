@@ -1,15 +1,15 @@
 /**@member DashGuiContext2DPrimitive*/
 
-function DashGuiContext2DPrimitiveImage () {
-    this.image = null;
+function DashGuiContext2DPrimitiveMedia () {
+    this.media = null;
 
     this._setup_styles = function () {
-        this.redraw_image();
+        this.redraw_media();
     };
 
-    this.redraw_image = function () {
-        if (this.image) {
-            this.image.remove();
+    this.redraw_media = function () {
+        if (this.media) {
+            this.media.remove();
         }
 
         if (this.file_data["placeholder"]) {
@@ -30,9 +30,21 @@ function DashGuiContext2DPrimitiveImage () {
         }
 
         else {
-            this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
+            this.media = (
+                this.type === "image" ? Dash.File.GetImagePreview(
+                    this.get_url(),
+                    "100%",
+                    "100%"
+                ) : this.type === "video" ? Dash.File.GetVideoPreview(  // TODO: tweak if needed
+                    this.get_url(),
+                    "100%",
+                    true,
+                    false,
+                    this.get_value("locked")
+                ) : $("<div></div>")
+            );
 
-            this.html.append(this.image);
+            this.html.append(this.media);
         }
 
         this.update_filter();
@@ -40,14 +52,14 @@ function DashGuiContext2DPrimitiveImage () {
     };
 
     this.get_url = function () {
-        return (this.file_data["orig_url"] || this.file_data["thumb_png_url"] || "");
+        return (this.file_data["url"] || this.file_data["orig_url"] || this.file_data["thumb_png_url"] || this.file_data["thumb_jpg_url"] || "");
     };
 
     this.update_tint_color = function () {
         var tint_color = this.get_value("tint_color");
 
         if (!tint_color) {
-            this.image.css({
+            this.media.css({
                 "mask": "",
                 "background-color": "",
                 "background-blend-mode": ""
@@ -56,7 +68,7 @@ function DashGuiContext2DPrimitiveImage () {
             return;
         }
 
-        this.image.css({
+        this.media.css({
             "mask-image": "url(" + this.get_url() + ")",
             "mask-mode": "alpha",
             "mask-size": "contain",
@@ -66,7 +78,7 @@ function DashGuiContext2DPrimitiveImage () {
     };
 
     this.update_filter = function (brightness=null, contrast=null) {
-        this.image.css({
+        this.media.css({
             "filter": (
                 "brightness(" + (
                     brightness === null ? this.get_value("brightness") : brightness
@@ -110,9 +122,9 @@ function DashGuiContext2DPrimitiveImage () {
         this.draw_canvas_lines(ctx);
         this.add_text_to_center_of_canvas(ctx);
 
-        this.image = canvas;
+        this.media = canvas;
 
-        this.html.append(this.image);
+        this.html.append(this.media);
     };
 
     this.draw_canvas_lines = function (ctx) {
@@ -207,7 +219,7 @@ function DashGuiContext2DPrimitiveImage () {
 
     // Override
     this.on_opacity_change = function (value) {
-        if (!this.image) {
+        if (!this.media) {
             (function (self) {
                 setTimeout(
                     function () {
@@ -220,7 +232,7 @@ function DashGuiContext2DPrimitiveImage () {
             return;
         }
 
-        this.image.css({
+        this.media.css({
             "opacity": value
         });
     };
@@ -228,11 +240,26 @@ function DashGuiContext2DPrimitiveImage () {
     // Override
     this.on_hidden_change = function (hidden) {
         if (hidden) {
-            this.image.hide();
+            this.media.hide();
         }
 
         else {
-            this.image.show();
+            this.media.show();
+        }
+    };
+
+    // Override
+    this.on_locked_change = function (locked) {
+        if (this.type !== "video") {
+            return;
+        }
+
+        try {
+            this.media.attr("controls", locked);
+        }
+
+        catch {
+            // Pass
         }
     };
 

@@ -27944,6 +27944,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
      *         - "add_image_layer":        Add new image layer to provided object ID via image upload
+     *         - "add_video_layer":        Add new video layer to provided object ID via video upload
      *         - "import_another_context": Import another context (layers) into provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
@@ -29390,7 +29391,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.type !== "context" && this.type !== "image") {
+        if (this.type !== "context") {
             console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
@@ -29493,8 +29494,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.set_height_px(height);
         if (draw) {
             this.draw_properties();
-            if (this.type === "image") {
-                this.redraw_image();
+            if (["image", "video"].includes(this.type)) {
+                this.redraw_media();
             }
         }
         if (this.type === "text") {
@@ -29517,11 +29518,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         else {
             if (!Dash.Validate.Object(this.file_data)) {
-                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.file_data);
+                console.error("Error: Missing file data (required for file-based primitives like images, videos, etc):", this.file_data);
                 return false;
             }
-            if (this.type === "image") {
-                DashGuiContext2DPrimitiveImage.call(this);
+            if (["image", "video"].includes(this.type)) {
+                DashGuiContext2DPrimitiveMedia.call(this);
             }
             else {
                 console.error("Error: Unhandled primitive type:", this.type);
@@ -29551,7 +29552,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         (function (self) {
             self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_check=false) {
-                if (!_skip_check && self.check_if_transparent("click", _event_override || event, _previous_layer_index)) {
+                if (!_skip_check && self.check_if_transparent_image_pixel("click", _event_override || event, _previous_layer_index)) {
                     self.Deselect();
                     return;
                 }
@@ -29569,7 +29570,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             });
         })(this);
     };
-    this.check_if_transparent = function (type, event, previous_layer_index=null) {
+    this.check_if_transparent_image_pixel = function (type, event, previous_layer_index=null) {
         if (this.type !== "image") {
             return false;
         }
@@ -29649,13 +29650,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "transform": (
                 "rotate(" + this.get_value("rot_deg") + "deg) "
                 // This was added as an alternative to setting "top" and "left",
-                // but it causes a complete breakage when images are rotated
+                // but it causes a complete breakage when media is rotated
                 // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });
-        if (this.type === "image") {
-            this.on_opacity_change(this.get_value("opacity"));
-        }
+        this.on_opacity_change(this.get_value("opacity"));
     };
     this.setup_styles();
 }
@@ -29933,14 +29932,14 @@ function DashGuiContext2DPrimitiveText () {
 }
 
 /**@member DashGuiContext2DPrimitive*/
-function DashGuiContext2DPrimitiveImage () {
-    this.image = null;
+function DashGuiContext2DPrimitiveMedia () {
+    this.media = null;
     this._setup_styles = function () {
-        this.redraw_image();
+        this.redraw_media();
     };
-    this.redraw_image = function () {
-        if (this.image) {
-            this.image.remove();
+    this.redraw_media = function () {
+        if (this.media) {
+            this.media.remove();
         }
         if (this.file_data["placeholder"]) {
             if (!this.height_px) {
@@ -29957,26 +29956,38 @@ function DashGuiContext2DPrimitiveImage () {
             this.redraw_canvas_placeholder();
         }
         else {
-            this.image = Dash.File.GetImagePreview(this.get_url(), "100%", "100%");
-            this.html.append(this.image);
+            this.media = (
+                this.type === "image" ? Dash.File.GetImagePreview(
+                    this.get_url(),
+                    "100%",
+                    "100%"
+                ) : this.type === "video" ? Dash.File.GetVideoPreview(  // TODO: tweak if needed
+                    this.get_url(),
+                    "100%",
+                    true,
+                    false,
+                    this.get_value("locked")
+                ) : $("<div></div>")
+            );
+            this.html.append(this.media);
         }
         this.update_filter();
         this.update_tint_color();
     };
     this.get_url = function () {
-        return (this.file_data["orig_url"] || this.file_data["thumb_png_url"] || "");
+        return (this.file_data["url"] || this.file_data["orig_url"] || this.file_data["thumb_png_url"] || this.file_data["thumb_jpg_url"] || "");
     };
     this.update_tint_color = function () {
         var tint_color = this.get_value("tint_color");
         if (!tint_color) {
-            this.image.css({
+            this.media.css({
                 "mask": "",
                 "background-color": "",
                 "background-blend-mode": ""
             });
             return;
         }
-        this.image.css({
+        this.media.css({
             "mask-image": "url(" + this.get_url() + ")",
             "mask-mode": "alpha",
             "mask-size": "contain",
@@ -29985,7 +29996,7 @@ function DashGuiContext2DPrimitiveImage () {
         });
     };
     this.update_filter = function (brightness=null, contrast=null) {
-        this.image.css({
+        this.media.css({
             "filter": (
                 "brightness(" + (
                     brightness === null ? this.get_value("brightness") : brightness
@@ -30019,8 +30030,8 @@ function DashGuiContext2DPrimitiveImage () {
         ctx.strokeStyle = this.opposite_color.Text;
         this.draw_canvas_lines(ctx);
         this.add_text_to_center_of_canvas(ctx);
-        this.image = canvas;
-        this.html.append(this.image);
+        this.media = canvas;
+        this.html.append(this.media);
     };
     this.draw_canvas_lines = function (ctx) {
         // Bottom left corner to top right corner
@@ -30100,7 +30111,7 @@ function DashGuiContext2DPrimitiveImage () {
     };
     // Override
     this.on_opacity_change = function (value) {
-        if (!this.image) {
+        if (!this.media) {
             (function (self) {
                 setTimeout(
                     function () {
@@ -30111,17 +30122,29 @@ function DashGuiContext2DPrimitiveImage () {
             })(this);
             return;
         }
-        this.image.css({
+        this.media.css({
             "opacity": value
         });
     };
     // Override
     this.on_hidden_change = function (hidden) {
         if (hidden) {
-            this.image.hide();
+            this.media.hide();
         }
         else {
-            this.image.show();
+            this.media.show();
+        }
+    };
+    // Override
+    this.on_locked_change = function (locked) {
+        if (this.type !== "video") {
+            return;
+        }
+        try {
+            this.media.attr("controls", locked);
+        }
+        catch {
+            // Pass
         }
     };
     this._setup_styles();
@@ -30939,6 +30962,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var icon_name = (
               type === "text" ? "font"
             : type === "image" ? type
+            : type === "video" ? "film"
             : type === "context" ? "project_diagram"
             : "unknown"
         );
@@ -31429,7 +31453,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.min_height = (Dash.Size.ButtonHeight * 8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
-        "image"
+        "image",
+        "video"
         // Add to this list as support for more primitives are added
     ];
     this.setup_styles = function () {
@@ -31673,11 +31698,16 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         });
         (function (self) {
             requestAnimationFrame(function () {
-                self.draw_types();
-                self.add_import_combo();
-                requestAnimationFrame(function () {
-                    self.content.FloatCombos(self);
-                });
+                setTimeout(
+                    function () {
+                        self.draw_types();
+                        self.add_import_combo();
+                        requestAnimationFrame(function () {
+                            self.content.FloatCombos(self);
+                        });
+                    },
+                    100
+                );
             });
         })(this);
     };
@@ -31720,8 +31750,8 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                     ).html);
                 })(this);
             }
-            else if (primitive_type === "image") {
-                this.html.append(this.get_upload_button(primitive_type, "New Image Layer").html);
+            else if (["image", "video"].includes(primitive_type)) {
+                this.html.append(this.get_upload_button(primitive_type, "New " + primitive_type.Title() + " Layer").html);
             }
             else {
                 console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
@@ -31853,7 +31883,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var parent_id = selected_layer ? selected_layer.GetParentID() : "";
         var type = selected_layer ? selected_layer.GetData()["type"] : null;
         if (this.icon_buttons["download"]) {
-            if (type === "image") {
+            if (type === "image" || type === "video") {
                 this.icon_buttons["download"].Enable();
             }
             else {
@@ -32211,6 +32241,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         else if (context_key === "image") {
             this.initialize_image_context(context_key);
         }
+        else if (context_key === "video") {
+            this.initialize_video_context(context_key);
+        }
         else if (context_key in this.content.edit_tab_custom_context_cbs) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
@@ -32331,6 +32364,54 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
         this.contexts[context_key]["all_elements"].push(checkbox);
         return checkbox;
+    };
+    // TODO
+    this.initialize_video_context = function (context_key) {
+        // var contrast_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "contrast",
+        //     1.02,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var brightness_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "brightness",
+        //     0.95,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var color_container = $("<div></div>");
+        //
+        // color_container.css({
+        //     "display": "flex"
+        // });
+        //
+        // var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+        //
+        // color_container.append(color_picker.html);
+        //
+        // var icon_button = this.get_clear_button(
+        //     context_key,
+        //     "tint_color",
+        //     function () {
+        //         color_picker.input.val("#000000");
+        //     }
+        // );
+        //
+        // color_picker.clear_button = icon_button;
+        //
+        // color_container.append(icon_button.html);
+        //
+        // this.contexts[context_key]["html"].append(contrast_slider.html);
+        // this.contexts[context_key]["html"].append(brightness_slider.html);
+        // this.contexts[context_key]["html"].append(color_container);
     };
     this.initialize_image_context = function (context_key) {
         var contrast_slider = this.get_slider(

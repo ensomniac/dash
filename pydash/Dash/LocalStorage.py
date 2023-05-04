@@ -157,15 +157,17 @@ class DashLocalStorage:
             if str(obj_id).startswith("."):
                 continue
 
+            record_path = self.GetRecordPath(obj_id)
+
             try:
-                data = self.GetData(obj_id)
+                data = self.GetData(obj_id, record_path=record_path)
 
             # In this context, if there's a failure, it can break an entire portal, so if a folder exists but
             # is simply missing its data.json, we can safely skip it and send a warning email instead of failing
             except Exception as e:
                 if "does not exist" in str(e):
                     if not obj_id.startswith("_"):
-                        missing.append(obj_id)
+                        missing.append(f"{obj_id}: {record_path}")
 
                     continue
                 else:
@@ -196,9 +198,9 @@ class DashLocalStorage:
                 subject="Dash.LocalStorage.GetAll",
                 msg=(
                     "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens "
-                    "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed."
+                    "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
                     "Alternatively, a request to get the data may have happened at the same moment it was deleted."
-                    f"\n\n" + "\n".join(missing)
+                    f"\n\n" + "\n- ".join(missing)
                 )
             )
 

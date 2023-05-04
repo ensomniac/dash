@@ -505,7 +505,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.type !== "context" && this.type !== "image") {
+        if (this.type !== "context") {
             console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
@@ -635,8 +635,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (draw) {
             this.draw_properties();
 
-            if (this.type === "image") {
-                this.redraw_image();
+            if (["image", "video"].includes(this.type)) {
+                this.redraw_media();
             }
         }
 
@@ -665,13 +665,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         else {
             if (!Dash.Validate.Object(this.file_data)) {
-                console.error("Error: Missing file data (required for file-based primitives like images, etc):", this.file_data);
+                console.error("Error: Missing file data (required for file-based primitives like images, videos, etc):", this.file_data);
 
                 return false;
             }
 
-            if (this.type === "image") {
-                DashGuiContext2DPrimitiveImage.call(this);
+            if (["image", "video"].includes(this.type)) {
+                DashGuiContext2DPrimitiveMedia.call(this);
             }
 
             else {
@@ -711,7 +711,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         (function (self) {
             self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_check=false) {
-                if (!_skip_check && self.check_if_transparent("click", _event_override || event, _previous_layer_index)) {
+                if (!_skip_check && self.check_if_transparent_image_pixel("click", _event_override || event, _previous_layer_index)) {
                     self.Deselect();
 
                     return;
@@ -734,7 +734,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         })(this);
     };
 
-    this.check_if_transparent = function (type, event, previous_layer_index=null) {
+    this.check_if_transparent_image_pixel = function (type, event, previous_layer_index=null) {
         if (this.type !== "image") {
             return false;
         }
@@ -839,14 +839,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 "rotate(" + this.get_value("rot_deg") + "deg) "
 
                 // This was added as an alternative to setting "top" and "left",
-                // but it causes a complete breakage when images are rotated
+                // but it causes a complete breakage when media is rotated
                 // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
             )
         });
 
-        if (this.type === "image") {
-            this.on_opacity_change(this.get_value("opacity"));
-        }
+        this.on_opacity_change(this.get_value("opacity"));
     };
 
     this.setup_styles();

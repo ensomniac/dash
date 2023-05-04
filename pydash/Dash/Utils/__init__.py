@@ -56,10 +56,10 @@ def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspe
     return ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio)
 
 
-def ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_aspect_ratio=False):
+def ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details=False):
     from .file import ValidateVideoAspectRatio
 
-    return ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_aspect_ratio)
+    return ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details)
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):

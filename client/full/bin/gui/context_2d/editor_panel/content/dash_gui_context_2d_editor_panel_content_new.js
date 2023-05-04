@@ -19,12 +19,17 @@ function DashGuiContext2DEditorPanelContentNew (content) {
 
         (function (self) {
             requestAnimationFrame(function () {
-                self.draw_types();
-                self.add_import_combo();
+                setTimeout(
+                    function () {
+                        self.draw_types();
+                        self.add_import_combo();
 
-                requestAnimationFrame(function () {
-                    self.content.FloatCombos(self);
-                });
+                        requestAnimationFrame(function () {
+                            self.content.FloatCombos(self);
+                        });
+                    },
+                    100
+                );
             });
         })(this);
     };
@@ -73,8 +78,8 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 })(this);
             }
 
-            else if (primitive_type === "image") {
-                this.html.append(this.get_upload_button(primitive_type, "New Image Layer").html);
+            else if (["image", "video"].includes(primitive_type)) {
+                this.html.append(this.get_upload_button(primitive_type, "New " + primitive_type.Title() + " Layer").html);
             }
 
             else {

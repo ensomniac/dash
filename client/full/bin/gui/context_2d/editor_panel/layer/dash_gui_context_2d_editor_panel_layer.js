@@ -462,6 +462,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var icon_name = (
               type === "text" ? "font"
             : type === "image" ? type
+            : type === "video" ? "film"
             : type === "context" ? "project_diagram"
             : "unknown"
         );

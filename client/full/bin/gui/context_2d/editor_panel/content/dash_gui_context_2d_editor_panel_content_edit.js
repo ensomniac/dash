@@ -246,6 +246,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.initialize_image_context(context_key);
         }
 
+        else if (context_key === "video") {
+            this.initialize_video_context(context_key);
+        }
+
         else if (context_key in this.content.edit_tab_custom_context_cbs) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
@@ -397,6 +401,55 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["all_elements"].push(checkbox);
 
         return checkbox;
+    };
+
+    // TODO
+    this.initialize_video_context = function (context_key) {
+        // var contrast_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "contrast",
+        //     1.02,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var brightness_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "brightness",
+        //     0.95,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var color_container = $("<div></div>");
+        //
+        // color_container.css({
+        //     "display": "flex"
+        // });
+        //
+        // var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+        //
+        // color_container.append(color_picker.html);
+        //
+        // var icon_button = this.get_clear_button(
+        //     context_key,
+        //     "tint_color",
+        //     function () {
+        //         color_picker.input.val("#000000");
+        //     }
+        // );
+        //
+        // color_picker.clear_button = icon_button;
+        //
+        // color_container.append(icon_button.html);
+        //
+        // this.contexts[context_key]["html"].append(contrast_slider.html);
+        // this.contexts[context_key]["html"].append(brightness_slider.html);
+        // this.contexts[context_key]["html"].append(color_container);
     };
 
     this.initialize_image_context = function (context_key) {

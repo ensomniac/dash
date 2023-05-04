@@ -141,11 +141,11 @@ def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspe
     )
 
 
-def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_aspect_ratio=False):
+def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_details=False):
     error = ""
     temp = False
     valid = True
-    video_aspect_ratio = None
+    video_details = {}
 
     if type(video_bytes_or_existing_path) is not bytes:
         if type(video_bytes_or_existing_path) is not str:
@@ -165,12 +165,9 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
         Write(path, video_bytes_or_existing_path)
 
     try:
-        from videoprops import get_video_properties
+        video_details = get_video_details(path)
 
-        props = get_video_properties(path)
-        video_aspect_ratio = props["width"] / props["height"]
-
-        if abs(video_aspect_ratio - target_aspect_ratio) > 0.01:
+        if abs(video_details["aspect"] - target_aspect_ratio) > 0.01:
             valid = False
 
     except Exception as e:
@@ -182,8 +179,8 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
     if error:
         raise Exception(error)
 
-    if return_video_aspect_ratio:
-        return valid, video_aspect_ratio
+    if return_video_details:
+        return valid, video_details
 
     return valid
 
@@ -547,9 +544,31 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
         pass  # TODO: convert to mp3 if not already, or something along those lines
 
     elif file_ext in VideoExtensions:
-        pass  # TODO: create some sort of compressed version or something?
+        try:
+            file_data.update(get_video_details(file_path))
+
+        except Exception as e:
+            from Dash.Utils import SendDebugEmail
+
+            SendDebugEmail(f"Failed to get video details for file: {file_path}\nException: {e}")
+
+        # TODO: create some sort of compressed version or something?
 
     return file_data
+
+
+def get_video_details(path):
+    from videoprops import get_video_properties
+
+    props = get_video_properties(path)
+
+    # The props object above has way more stuff than we need, but
+    # we can update this down the line with more fields as needed
+    return {
+        "width": props["width"],
+        "height": props["height"],
+        "aspect": props["width"] / props["height"]
+    }
 
 
 def update_filename_based_on_matches(filename, matches=[]):

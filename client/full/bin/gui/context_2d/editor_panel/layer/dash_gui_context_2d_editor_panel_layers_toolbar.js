@@ -28,7 +28,7 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var type = selected_layer ? selected_layer.GetData()["type"] : null;
 
         if (this.icon_buttons["download"]) {
-            if (type === "image") {
+            if (type === "image" || type === "video") {
                 this.icon_buttons["download"].Enable();
             }
 
