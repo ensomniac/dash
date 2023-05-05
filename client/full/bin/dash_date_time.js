@@ -106,19 +106,18 @@ function DashDateTime () {
         return dt_obj;
     };
 
-    this.GetDifferenceSec = function (start_iso, end_iso) {
-        var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
-        var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
+    this.GetDifferenceSec = function (start_iso_or_dt, end_iso_or_dt) {
+        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(start_iso_or_dt)).getTime();
+        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(end_iso_or_dt)).getTime();
 
         return Math.floor((end_ms - start_ms) / 1000);
     };
 
-    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false, sec_mod=0) {
-        var secs = this.GetDifferenceSec(start_iso, end_iso)
+    this.GetReadableDifference = function (start_iso_or_dt, end_iso_or_dt, include_secs=false, sec_mod=0) {
+        var secs = this.GetDifferenceSec(start_iso_or_dt, end_iso_or_dt);
 
         if (sec_mod !== 0) {
             secs += sec_mod;
-
         }
 
         return this.GetReadableHoursMins(secs, include_secs);

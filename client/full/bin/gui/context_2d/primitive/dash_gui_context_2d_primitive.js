@@ -237,8 +237,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.media[0].pause();
         }
 
-        if (this.selected) {
-            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
+        if (this.selected && !(this.type === "video" && this.drag_context["scale"])) {
+            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging (except when scaling a video)
         }
 
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];

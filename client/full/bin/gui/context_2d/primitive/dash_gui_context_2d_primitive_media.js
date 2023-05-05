@@ -49,6 +49,17 @@ function DashGuiContext2DPrimitiveMedia () {
 
         this.update_filter();
         this.update_tint_color();
+
+        if (this.type === "video") {
+            console.debug("TEST video", this.file_data);
+            this.media.off("click");
+
+            // Restrict playback to the play button alone (disable playback from clicking
+            // anywhere on the video, since that interferes with the other click/drag events)
+            this.media.on("click", function (e) {
+                e.preventDefault();
+            });
+        }
     };
 
     this.get_url = function () {

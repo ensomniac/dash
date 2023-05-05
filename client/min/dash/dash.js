@@ -19911,13 +19911,13 @@ function DashDateTime () {
         }
         return dt_obj;
     };
-    this.GetDifferenceSec = function (start_iso, end_iso) {
-        var start_ms = Dash.DateTime.GetDateObjectFromISO(start_iso).getTime();
-        var end_ms = Dash.DateTime.GetDateObjectFromISO(end_iso).getTime();
+    this.GetDifferenceSec = function (start_iso_or_dt, end_iso_or_dt) {
+        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(start_iso_or_dt)).getTime();
+        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(end_iso_or_dt)).getTime();
         return Math.floor((end_ms - start_ms) / 1000);
     };
-    this.GetReadableDifference = function (start_iso, end_iso, include_secs=false, sec_mod=0) {
-        var secs = this.GetDifferenceSec(start_iso, end_iso)
+    this.GetReadableDifference = function (start_iso_or_dt, end_iso_or_dt, include_secs=false, sec_mod=0) {
+        var secs = this.GetDifferenceSec(start_iso_or_dt, end_iso_or_dt);
         if (sec_mod !== 0) {
             secs += sec_mod;
         }
@@ -29186,8 +29186,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "video" && !this.media[0].paused) {
             this.media[0].pause();
         }
-        if (this.selected) {
-            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging
+        if (this.selected && !(this.type === "video" && this.drag_context["scale"])) {
+            this.html.css({"border": "1px solid rgba(0, 0, 0, 0)"});  // Hide border when dragging (except when scaling a video)
         }
         var movement_x = event.clientX - this.drag_context["start_mouse_x"];
         var movement_y = event.clientY - this.drag_context["start_mouse_y"];
@@ -29976,6 +29976,15 @@ function DashGuiContext2DPrimitiveMedia () {
         }
         this.update_filter();
         this.update_tint_color();
+        if (this.type === "video") {
+            console.debug("TEST video", this.file_data);
+            this.media.off("click");
+            // Restrict playback to the play button alone (disable playback from clicking
+            // anywhere on the video, since that interferes with the other click/drag events)
+            this.media.on("click", function (e) {
+                e.preventDefault();
+            });
+        }
     };
     this.get_url = function () {
         return (
