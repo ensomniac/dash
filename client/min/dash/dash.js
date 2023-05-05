@@ -30013,6 +30013,8 @@ function DashGuiContext2DPrimitiveMedia () {
             "mask-image": "url(" + this.get_url() + ")",
             "mask-mode": "alpha",
             "mask-size": "contain",
+            "mask-repeat": "no-repeat",
+            "mask-position": "center center",
             "background-color": tint_color,
             "background-blend-mode": "overlay"
         });
