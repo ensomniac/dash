@@ -158,17 +158,27 @@ class Layer:
                 "stroke_thickness": self.data.get("stroke_thickness") or 0
             })
 
+        elif self.Type == "color":
+            data.update({
+                "aspect_ratio_w": self.data.get("aspect_ratio_w") or 1.0,
+                "aspect_ratio_h": self.data.get("aspect_ratio_h") or 1.0,
+                "gradient_direction": self.data.get("gradient_direction") or ""
+            })
+
+            for num in [1, 2, 3]:
+                data[f"color_{num}"] = self.data.get(f"color_{num}") or ""
+
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
 
-        else:
-            data["file"] = self.data.get("file") or {}
-
-        if self.Type == "image":
+        elif self.Type == "image":
             data.update({
                 "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
                 "contrast": self.data["contrast"] if "contrast" in self.data else 1.0
             })
+
+        if self.Type in ["image", "video"]:
+            data["file"] = self.data.get("file") or {}
 
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.
@@ -189,9 +199,28 @@ class Layer:
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
         else:
-            for key in properties:
-                if key == "layer_order":  # Should never happen, but just in case
-                    del properties[key]
+            if "layer_order" in properties:
+                del properties["layer_order"]  # Should never happen, but just in case
+
+            if self.Type == "color" and ("aspect_ratio_w" in properties or "aspect_ratio_h" in properties):
+                for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+                    properties[key] = float(properties.get(key) or self.data[key])
+
+                    if not properties[key].is_integer():
+                        from Dash.Utils import ClientAlert
+
+                        raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+
+                    properties[key] = int(properties[key])
+
+                from math import gcd
+
+                divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+
+                properties["aspect_ratio_w"] /= divisor
+                properties["aspect_ratio_h"] /= divisor
+
+                properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
 
             self.data.update(properties)
 

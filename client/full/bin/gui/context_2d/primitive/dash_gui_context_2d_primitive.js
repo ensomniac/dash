@@ -676,7 +676,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             DashGuiContext2DPrimitiveText.call(this);
         }
 
-        else {
+        else if (this.type === "color") {
+            DashGuiContext2DPrimitiveColor.call(this);
+        }
+
+        else {  // Media types
             if (!Dash.Validate.Object(this.file_data)) {
                 console.error("Error: Missing file data (required for file-based primitives like images, videos, etc):", this.file_data);
 

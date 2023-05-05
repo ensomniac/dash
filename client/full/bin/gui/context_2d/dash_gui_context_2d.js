@@ -13,6 +13,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
      *         - "set_layer_property":     Set layer property with a key/value for provided object ID
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
+     *         - "add_color_layer":        Add new color layer to provided object ID
      *         - "add_image_layer":        Add new image layer to provided object ID via image upload
      *         - "add_video_layer":        Add new video layer to provided object ID via video upload
      *         - "import_another_context": Import another context (layers) into provided object ID

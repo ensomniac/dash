@@ -181,34 +181,39 @@ function DashGui() {
 
         callback = callback.bind(binder);
 
+        var include_label = label_text && label_text.replace(":", "") !== "none";
+
         var color_picker = {
             "html": $("<div></div>"),
-            "label": $("<label for='colorpicker'>" + label_text + "</label>"),
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
 
-        var line_break = label_text.includes("\n");
+        if (include_label) {
+            color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
 
-        var label_css = {
-            "font-family": "sans_serif_bold",
-            "font-size": "80%",
-            "color": dash_color.Text || "black",
-            "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
-        };
+            var line_break = label_text.includes("\n");
 
-        if (line_break) {
-            label_css = {
-                ...label_css,
-                "white-space": "pre",
-                "height": Dash.Size.ButtonHeight,
-                "display": "block",
-                "float": "left",
-                "text-align": "right",
-                "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+            var label_css = {
+                "font-family": "sans_serif_bold",
+                "font-size": "80%",
+                "color": dash_color.Text || "black",
+                "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
             };
-        }
 
-        color_picker.label.css(label_css);
+            if (line_break) {
+                label_css = {
+                    ...label_css,
+                    "white-space": "pre",
+                    "height": Dash.Size.ButtonHeight,
+                    "display": "block",
+                    "float": "left",
+                    "text-align": "right",
+                    "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+                };
+            }
+
+            color_picker.label.css(label_css);
+        }
 
         color_picker.input.css({
             "height": Dash.Size.ButtonHeight,
@@ -219,7 +224,10 @@ function DashGui() {
             "border-radius": Dash.Size.Padding * 0.3
         });
 
-        color_picker.html.append(color_picker.label);
+        if (include_label) {
+            color_picker.html.append(color_picker.label);
+        }
+
         color_picker.html.append(color_picker.input);
 
         (function (input, callback) {

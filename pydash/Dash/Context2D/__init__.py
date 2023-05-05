@@ -59,6 +59,10 @@ def AddTextLayer(user_data, context_2d_root, obj_id):
     return Context2D(user_data, context_2d_root, obj_id).AddTextLayer()
 
 
+def AddColorLayer(user_data, context_2d_root, obj_id):
+    return Context2D(user_data, context_2d_root, obj_id).AddColorLayer()
+
+
 def AddImageLayer(user_data, context_2d_root, obj_id, dash_context, file, filename):
     return Context2D(user_data, context_2d_root, obj_id, dash_context).AddImageLayer(file, filename)
 

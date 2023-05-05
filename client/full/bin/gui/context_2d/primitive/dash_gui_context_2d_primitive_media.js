@@ -2,6 +2,7 @@
 
 function DashGuiContext2DPrimitiveMedia () {
     this.media = null;
+    this.video_tint = null;
 
     this._setup_styles = function () {
         this.redraw_media();
@@ -74,25 +75,59 @@ function DashGuiContext2DPrimitiveMedia () {
     this.update_tint_color = function () {
         var tint_color = this.get_value("tint_color");
 
-        if (!tint_color) {
-            this.media.css({
-                "mask": "",
-                "background-color": "",
-                "background-blend-mode": ""
-            });
+        if (this.type === "image") {
+            if (!tint_color) {
+                this.media.css({
+                    "mask": "",
+                    "background-color": "",
+                    "background-blend-mode": ""
+                });
 
-            return;
+                return;
+            }
+
+            this.media.css({
+                "mask-image": "url(" + this.get_url() + ")",
+                "mask-mode": "alpha",
+                "mask-size": "contain",
+                "mask-repeat": "no-repeat",
+                "mask-position": "center center",
+                "background-color": tint_color,
+                "background-blend-mode": "overlay"
+            });
         }
 
-        this.media.css({
-            "mask-image": "url(" + this.get_url() + ")",
-            "mask-mode": "alpha",
-            "mask-size": "contain",
-            "mask-repeat": "no-repeat",
-            "mask-position": "center center",
-            "background-color": tint_color,
-            "background-blend-mode": "overlay"
-        });
+        else if (this.type === "video") {
+            if (!tint_color) {
+                if (this.video_tint) {
+                    this.video_tint.hide();
+                }
+
+                return;
+            }
+
+            if (this.video_tint) {
+                this.video_tint.detach();
+            }
+
+            else {
+                this.video_tint = $("<div></div>");
+
+                this.video_tint.css({
+                    "position": "absolute",
+                    "inset": 0,
+                    "opacity": 0.25,
+                    "pointer-events": "none",
+                    "user-select": "none"
+                });
+            }
+
+            this.html.append(this.video_tint);
+
+            this.video_tint.css({
+                "background": tint_color
+            });
+        }
     };
 
     this.update_filter = function (brightness=null, contrast=null) {

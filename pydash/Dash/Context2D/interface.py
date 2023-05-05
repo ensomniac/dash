@@ -124,10 +124,9 @@ class Interface:
                     rmtree(os.path.join(self.LayersRoot, layer_id))
 
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
-            properties["aspect_ratio_w"] = float(properties.get("aspect_ratio_w") or self.AspectRatioW)
-            properties["aspect_ratio_h"] = float(properties.get("aspect_ratio_h") or self.AspectRatioH)
-
             for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+                properties[key] = float(properties.get(key) or self.AspectRatioW)
+
                 if not properties[key].is_integer():
                     from Dash.Utils import ClientAlert
 
@@ -150,6 +149,11 @@ class Interface:
         from .layer import Layer
 
         return self.add_layer(Layer(self, new_layer_type="text"))
+
+    def AddColorLayer(self):
+        from .layer import Layer
+
+        return self.add_layer(Layer(self, new_layer_type="color"))
 
     def AddImageLayer(self, file, filename):
         from Dash.Utils import GetImageExtensions

@@ -17986,30 +17986,33 @@ function DashGui() {
             dash_color = Dash.Color.Light;
         }
         callback = callback.bind(binder);
+        var include_label = label_text && label_text.replace(":", "") !== "none";
         var color_picker = {
             "html": $("<div></div>"),
-            "label": $("<label for='colorpicker'>" + label_text + "</label>"),
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
-        var line_break = label_text.includes("\n");
-        var label_css = {
-            "font-family": "sans_serif_bold",
-            "font-size": "80%",
-            "color": dash_color.Text || "black",
-            "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
-        };
-        if (line_break) {
-            label_css = {
-                ...label_css,
-                "white-space": "pre",
-                "height": Dash.Size.ButtonHeight,
-                "display": "block",
-                "float": "left",
-                "text-align": "right",
-                "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+        if (include_label) {
+            color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
+            var line_break = label_text.includes("\n");
+            var label_css = {
+                "font-family": "sans_serif_bold",
+                "font-size": "80%",
+                "color": dash_color.Text || "black",
+                "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
             };
+            if (line_break) {
+                label_css = {
+                    ...label_css,
+                    "white-space": "pre",
+                    "height": Dash.Size.ButtonHeight,
+                    "display": "block",
+                    "float": "left",
+                    "text-align": "right",
+                    "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+                };
+            }
+            color_picker.label.css(label_css);
         }
-        color_picker.label.css(label_css);
         color_picker.input.css({
             "height": Dash.Size.ButtonHeight,
             "margin-left": Dash.Size.Padding * 0.5,
@@ -18018,7 +18021,9 @@ function DashGui() {
             "border": "1px solid " + dash_color.StrokeLight,
             "border-radius": Dash.Size.Padding * 0.3
         });
-        color_picker.html.append(color_picker.label);
+        if (include_label) {
+            color_picker.html.append(color_picker.label);
+        }
         color_picker.html.append(color_picker.input);
         (function (input, callback) {
             input.on("change", function () {
@@ -27943,6 +27948,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
      *         - "set_layer_property":     Set layer property with a key/value for provided object ID
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
+     *         - "add_color_layer":        Add new color layer to provided object ID
      *         - "add_image_layer":        Add new image layer to provided object ID via image upload
      *         - "add_video_layer":        Add new video layer to provided object ID via video upload
      *         - "import_another_context": Import another context (layers) into provided object ID
@@ -29524,7 +29530,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "text") {
             DashGuiContext2DPrimitiveText.call(this);
         }
-        else {
+        else if (this.type === "color") {
+            DashGuiContext2DPrimitiveColor.call(this);
+        }
+        else {  // Media types
             if (!Dash.Validate.Object(this.file_data)) {
                 console.error("Error: Missing file data (required for file-based primitives like images, videos, etc):", this.file_data);
                 return false;
@@ -29940,8 +29949,36 @@ function DashGuiContext2DPrimitiveText () {
 }
 
 /**@member DashGuiContext2DPrimitive*/
+function DashGuiContext2DPrimitiveColor () {
+    this.color = null;
+    this._setup_styles = function () {
+        // TODO
+    };
+    // Override
+    this.on_update = function (key) {
+        if (key.startsWith("aspect")) {
+            this.set_init();
+        }
+    };
+    // Override
+    this.on_opacity_change = function (value) {
+        // TODO?
+    };
+    // Override
+    this.on_locked_change = function (locked) {
+        // TODO?
+    };
+    // Override
+    this.on_hidden_change = function (hidden) {
+        // TODO?
+    };
+    this._setup_styles();
+}
+
+/**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveMedia () {
     this.media = null;
+    this.video_tint = null;
     this._setup_styles = function () {
         this.redraw_media();
     };
@@ -30001,23 +30038,50 @@ function DashGuiContext2DPrimitiveMedia () {
     };
     this.update_tint_color = function () {
         var tint_color = this.get_value("tint_color");
-        if (!tint_color) {
+        if (this.type === "image") {
+            if (!tint_color) {
+                this.media.css({
+                    "mask": "",
+                    "background-color": "",
+                    "background-blend-mode": ""
+                });
+                return;
+            }
             this.media.css({
-                "mask": "",
-                "background-color": "",
-                "background-blend-mode": ""
+                "mask-image": "url(" + this.get_url() + ")",
+                "mask-mode": "alpha",
+                "mask-size": "contain",
+                "mask-repeat": "no-repeat",
+                "mask-position": "center center",
+                "background-color": tint_color,
+                "background-blend-mode": "overlay"
             });
-            return;
         }
-        this.media.css({
-            "mask-image": "url(" + this.get_url() + ")",
-            "mask-mode": "alpha",
-            "mask-size": "contain",
-            "mask-repeat": "no-repeat",
-            "mask-position": "center center",
-            "background-color": tint_color,
-            "background-blend-mode": "overlay"
-        });
+        else if (this.type === "video") {
+            if (!tint_color) {
+                if (this.video_tint) {
+                    this.video_tint.hide();
+                }
+                return;
+            }
+            if (this.video_tint) {
+                this.video_tint.detach();
+            }
+            else {
+                this.video_tint = $("<div></div>");
+                this.video_tint.css({
+                    "position": "absolute",
+                    "inset": 0,
+                    "opacity": 0.25,
+                    "pointer-events": "none",
+                    "user-select": "none"
+                });
+            }
+            this.html.append(this.video_tint);
+            this.video_tint.css({
+                "background": tint_color
+            });
+        }
     };
     this.update_filter = function (brightness=null, contrast=null) {
         this.media.css({
@@ -30987,6 +31051,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
               type === "text" ? "font"
             : type === "image" ? type
             : type === "video" ? "film"
+            : type === "color" ? "color_palette"
             : type === "context" ? "project_diagram"
             : "unknown"
         );
@@ -31504,6 +31569,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.min_height = (Dash.Size.ButtonHeight * 8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
+        "color",
         "image",
         "video"
         // Add to this list as support for more primitives are added
@@ -31775,10 +31841,10 @@ function DashGuiContext2DEditorPanelContentNew (content) {
     };
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
-            if (primitive_type === "text") {
-                (function (self) {
+            if (["text", "color"].includes(primitive_type)) {
+                (function (self, primitive_type) {
                     self.html.append(self.get_button(
-                        "New Text Layer",
+                        "New " + primitive_type.Title() + " Layer",
                         function (event, button) {
                             // Should never happen, but just in case
                             if (self.editor.preview_mode || self.editor.override_mode) {
@@ -31793,13 +31859,13 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                                 },
                                 self.editor.api,
                                 {
-                                    "f": "add_text_layer",
+                                    "f": "add_" + primitive_type + "_layer",
                                     "obj_id": self.editor.obj_id
                                 }
                             );
                         }
                     ).html);
-                })(this);
+                })(this, primitive_type);
             }
             else if (["image", "video"].includes(primitive_type)) {
                 this.html.append(this.get_upload_button(primitive_type, "New " + primitive_type.Title() + " Layer").html);
@@ -32300,6 +32366,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         else if (context_key === "video") {
             this.initialize_video_context(context_key);
         }
+        else if (context_key === "color") {
+            this.initialize_color_context(context_key);
+        }
         else if (context_key in this.content.edit_tab_custom_context_cbs) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
@@ -32321,6 +32390,117 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         this.contexts[context_key]["initialized"] = true;
     };
+    this.initialize_color_context = function (context_key) {
+        this.add_aspect_tool_row(context_key);
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "to_right", "label_text": "Left to Right"},
+                {"id": "to_left", "label_text": "Right to Left"},
+                {"id": "to_bottom", "label_text": "Top to Bottom"},
+                {"id": "to_top", "label_text": "Bottom to Top"}
+            ],
+            "gradient_direction",
+            "*Gradient Direction",
+            null,
+            null,
+            "Only applies when using more than one color"
+        );
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
+        var label = $("<div>Color(s):</div>");
+        var colors_container = $("<div></div>");
+        var picker_container = $("<div></div>");
+        colors_container.css({
+            "display": "flex",
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+        label.css({
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.Text,
+            "margin-top": Dash.Size.Padding * 0.9
+        });
+        colors_container.append(label);
+        colors_container.append(picker_container);
+        for (var num of [1, 2, 3]) {
+            var color_picker = this.get_color_picker(context_key, "color_" + num, "none");
+            color_picker.html.css({
+                "display": "flex",
+                "margin-bottom": Dash.Size.Padding * 0.5
+            });
+            var icon_button = (function (self, color_picker) {
+                return self.get_clear_button(
+                    context_key,
+                    "color_" + num,
+                    function () {
+                        color_picker.input.val("#000000");
+                    }
+                );
+            })(this, color_picker);
+            color_picker.clear_button = icon_button;
+            color_picker.html.append(icon_button.html);
+            picker_container.append(color_picker.html);
+        }
+        this.contexts[context_key]["html"].append(colors_container);
+    };
+    
+    this.add_aspect_tool_row = function (context_key) {
+        var tool_row = new Dash.Gui.ToolRow(this, this.get_data);
+        tool_row.html.css({
+            "margin-left": 0,
+            "margin-bottom": 0
+        });
+        var w_input = this.add_aspect_tool_row_input(context_key, "w", tool_row);
+        this.contexts[context_key]["all_elements"].push(w_input);
+        if (w_input.label) {
+            this.contexts[context_key]["all_elements"].push(w_input.label);
+        }
+        var label = tool_row.AddLabel("x", Dash.Size.Padding * 0.7, null, null, false);
+        label.label.css({
+            "padding-left": 0
+        });
+        this.contexts[context_key]["all_elements"].push(label);
+        var h_input = this.add_aspect_tool_row_input(context_key, "h", tool_row);
+        this.contexts[context_key]["all_elements"].push(h_input);
+        if (h_input.label) {
+            this.contexts[context_key]["all_elements"].push(h_input.label);
+        }
+        this.contexts[context_key]["html"].append(tool_row.html);
+    };
+    this.add_aspect_tool_row_input = function (context_key, aspect_letter, tool_row) {
+        if (!("aspect_inputs" in this.contexts[context_key])) {
+            this.contexts[context_key]["aspect_inputs"] = {};
+        }
+        this.contexts[context_key]["aspect_inputs"][aspect_letter] = (function (self) {
+            return tool_row.AddInput(
+                aspect_letter.Title(),
+                "aspect_ratio_" + aspect_letter,
+                Dash.Size.ColumnWidth * 0.25,
+                false,
+                function (value, input, additional_data) {
+                    if (isNaN(value)) {
+                        alert("Aspect ratio values must be numbers");
+                        return;
+                    }
+                    self.set_data(additional_data["data_key"], value);
+                },
+                null,
+                self.can_edit,
+                aspect_letter === "w",
+                aspect_letter === "w" ? "Aspect Ratio:" : "",
+                false,
+                false
+            );
+        })(this);
+        this.contexts[context_key]["aspect_inputs"][aspect_letter].html.css({
+            "background": this.color.Background
+        });
+        this.contexts[context_key]["aspect_inputs"][aspect_letter].input.css({
+            "text-align": "center"
+        });
+        return this.contexts[context_key]["aspect_inputs"][aspect_letter];
+    };
     this.initialize_general_context = function (context_key) {
         var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
         var combo_tool_row = this.get_combo(
@@ -32333,16 +32513,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 {"id": "color", "label_text": "Color"}
             ],
             "blend_mode",
-            "*Blend Mode"
+            "*Blend Mode",
+            null,
+            null,
+            "Blend Mode cannot be visualized in this editor"
         );
         combo_tool_row.html.css({
             "margin-bottom": Dash.Size.Padding
         });
-        var combo_label = combo_tool_row.elements[0];
-        combo_label.html.css({
-            "cursor": "help"
-        });
-        combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
         var slider = this.get_slider(1, context_key, "opacity", 1.05);
         this.contexts[context_key]["html"].append(input.html);
         this.contexts[context_key]["html"].append(combo_tool_row.html);
@@ -32421,53 +32599,23 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["all_elements"].push(checkbox);
         return checkbox;
     };
-    // TODO
     this.initialize_video_context = function (context_key) {
-        // var contrast_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "contrast",
-        //     1.02,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var brightness_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "brightness",
-        //     0.95,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var color_container = $("<div></div>");
-        //
-        // color_container.css({
-        //     "display": "flex"
-        // });
-        //
-        // var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-        //
-        // color_container.append(color_picker.html);
-        //
-        // var icon_button = this.get_clear_button(
-        //     context_key,
-        //     "tint_color",
-        //     function () {
-        //         color_picker.input.val("#000000");
-        //     }
-        // );
-        //
-        // color_picker.clear_button = icon_button;
-        //
-        // color_container.append(icon_button.html);
-        //
-        // this.contexts[context_key]["html"].append(contrast_slider.html);
-        // this.contexts[context_key]["html"].append(brightness_slider.html);
-        // this.contexts[context_key]["html"].append(color_container);
+        var color_container = $("<div></div>");
+        color_container.css({
+            "display": "flex"
+        });
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+        color_container.append(color_picker.html);
+        var icon_button = this.get_clear_button(
+            context_key,
+            "tint_color",
+            function () {
+                color_picker.input.val("#000000");
+            }
+        );
+        color_picker.clear_button = icon_button;
+        color_container.append(icon_button.html);
+        this.contexts[context_key]["html"].append(color_container);
     };
     this.initialize_image_context = function (context_key) {
         var contrast_slider = this.get_slider(
@@ -32551,7 +32699,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return input;
         })(this);
     };
-    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null) {
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="") {
         var starting_value = this.get_data()[data_key] || "";
         var tool_row = (function (self) {
             return self.content.GetCombo(
@@ -32580,6 +32728,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (on_draw) {
             this._on_draw(on_draw, [starting_value, this]);
         }
+        if (hover_text) {
+            var combo_label = tool_row.elements[0];
+            combo_label.html.css({
+                "cursor": "help"
+            });
+            combo_label.html.attr("title", hover_text);
+        }
         return tool_row;
     };
     this.get_color_picker = function (context_key, data_key, label_text="") {
@@ -32597,10 +32752,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.get_data()[data_key] || "#000000"
             );
         })(this);
-        if (!(label_text.includes("\n"))) {
-            color_picker.label.css({
-                "top": -Dash.Size.Padding * 0.6
-            });
+        if (color_picker.label) {
+            if (!(label_text.includes("\n"))) {
+                color_picker.label.css({
+                    "top": -Dash.Size.Padding * 0.6
+                });
+            }
         }
         var css = {"margin-bottom": Dash.Size.Padding};
         if (!this.can_edit) {

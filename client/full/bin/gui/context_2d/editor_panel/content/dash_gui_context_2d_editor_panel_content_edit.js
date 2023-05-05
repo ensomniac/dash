@@ -250,6 +250,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.initialize_video_context(context_key);
         }
 
+        else if (context_key === "color") {
+            this.initialize_color_context(context_key);
+        }
+
         else if (context_key in this.content.edit_tab_custom_context_cbs) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
@@ -279,6 +283,149 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["initialized"] = true;
     };
 
+    this.initialize_color_context = function (context_key) {
+        this.add_aspect_tool_row(context_key);
+
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "to_right", "label_text": "Left to Right"},
+                {"id": "to_left", "label_text": "Right to Left"},
+                {"id": "to_bottom", "label_text": "Top to Bottom"},
+                {"id": "to_top", "label_text": "Bottom to Top"}
+            ],
+            "gradient_direction",
+            "*Gradient Direction",
+            null,
+            null,
+            "Only applies when using more than one color"
+        );
+
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
+
+        var label = $("<div>Color(s):</div>");
+        var colors_container = $("<div></div>");
+        var picker_container = $("<div></div>");
+
+        colors_container.css({
+            "display": "flex",
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+
+        label.css({
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.Text,
+            "margin-top": Dash.Size.Padding * 0.9
+        });
+
+        colors_container.append(label);
+        colors_container.append(picker_container);
+
+        for (var num of [1, 2, 3]) {
+            var color_picker = this.get_color_picker(context_key, "color_" + num, "none");
+
+            color_picker.html.css({
+                "display": "flex",
+                "margin-bottom": Dash.Size.Padding * 0.5
+            });
+
+            var icon_button = (function (self, color_picker) {
+                return self.get_clear_button(
+                    context_key,
+                    "color_" + num,
+                    function () {
+                        color_picker.input.val("#000000");
+                    }
+                );
+            })(this, color_picker);
+
+            color_picker.clear_button = icon_button;
+
+            color_picker.html.append(icon_button.html);
+
+            picker_container.append(color_picker.html);
+        }
+
+        this.contexts[context_key]["html"].append(colors_container);
+    };
+    
+    this.add_aspect_tool_row = function (context_key) {
+        var tool_row = new Dash.Gui.ToolRow(this, this.get_data);
+
+        tool_row.html.css({
+            "margin-left": 0,
+            "margin-bottom": 0
+        });
+
+        var w_input = this.add_aspect_tool_row_input(context_key, "w", tool_row);
+
+        this.contexts[context_key]["all_elements"].push(w_input);
+
+        if (w_input.label) {
+            this.contexts[context_key]["all_elements"].push(w_input.label);
+        }
+
+        var label = tool_row.AddLabel("x", Dash.Size.Padding * 0.7, null, null, false);
+
+        label.label.css({
+            "padding-left": 0
+        });
+
+        this.contexts[context_key]["all_elements"].push(label);
+
+        var h_input = this.add_aspect_tool_row_input(context_key, "h", tool_row);
+
+        this.contexts[context_key]["all_elements"].push(h_input);
+
+        if (h_input.label) {
+            this.contexts[context_key]["all_elements"].push(h_input.label);
+        }
+
+        this.contexts[context_key]["html"].append(tool_row.html);
+    };
+
+    this.add_aspect_tool_row_input = function (context_key, aspect_letter, tool_row) {
+        if (!("aspect_inputs" in this.contexts[context_key])) {
+            this.contexts[context_key]["aspect_inputs"] = {};
+        }
+
+        this.contexts[context_key]["aspect_inputs"][aspect_letter] = (function (self) {
+            return tool_row.AddInput(
+                aspect_letter.Title(),
+                "aspect_ratio_" + aspect_letter,
+                Dash.Size.ColumnWidth * 0.25,
+                false,
+                function (value, input, additional_data) {
+                    if (isNaN(value)) {
+                        alert("Aspect ratio values must be numbers");
+
+                        return;
+                    }
+
+                    self.set_data(additional_data["data_key"], value);
+                },
+                null,
+                self.can_edit,
+                aspect_letter === "w",
+                aspect_letter === "w" ? "Aspect Ratio:" : "",
+                false,
+                false
+            );
+        })(this);
+
+        this.contexts[context_key]["aspect_inputs"][aspect_letter].html.css({
+            "background": this.color.Background
+        });
+
+        this.contexts[context_key]["aspect_inputs"][aspect_letter].input.css({
+            "text-align": "center"
+        });
+
+        return this.contexts[context_key]["aspect_inputs"][aspect_letter];
+    };
+
     this.initialize_general_context = function (context_key) {
         var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
 
@@ -292,20 +439,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 {"id": "color", "label_text": "Color"}
             ],
             "blend_mode",
-            "*Blend Mode"
+            "*Blend Mode",
+            null,
+            null,
+            "Blend Mode cannot be visualized in this editor"
         );
 
         combo_tool_row.html.css({
             "margin-bottom": Dash.Size.Padding
         });
-
-        var combo_label = combo_tool_row.elements[0];
-
-        combo_label.html.css({
-            "cursor": "help"
-        });
-
-        combo_label.html.attr("title", "Blend Mode cannot be visualized in this editor");
 
         var slider = this.get_slider(1, context_key, "opacity", 1.05);
 
@@ -403,53 +545,30 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return checkbox;
     };
 
-    // TODO
     this.initialize_video_context = function (context_key) {
-        // var contrast_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "contrast",
-        //     1.02,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var brightness_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "brightness",
-        //     0.95,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var color_container = $("<div></div>");
-        //
-        // color_container.css({
-        //     "display": "flex"
-        // });
-        //
-        // var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-        //
-        // color_container.append(color_picker.html);
-        //
-        // var icon_button = this.get_clear_button(
-        //     context_key,
-        //     "tint_color",
-        //     function () {
-        //         color_picker.input.val("#000000");
-        //     }
-        // );
-        //
-        // color_picker.clear_button = icon_button;
-        //
-        // color_container.append(icon_button.html);
-        //
-        // this.contexts[context_key]["html"].append(contrast_slider.html);
-        // this.contexts[context_key]["html"].append(brightness_slider.html);
-        // this.contexts[context_key]["html"].append(color_container);
+        var color_container = $("<div></div>");
+
+        color_container.css({
+            "display": "flex"
+        });
+
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+
+        color_container.append(color_picker.html);
+
+        var icon_button = this.get_clear_button(
+            context_key,
+            "tint_color",
+            function () {
+                color_picker.input.val("#000000");
+            }
+        );
+
+        color_picker.clear_button = icon_button;
+
+        color_container.append(icon_button.html);
+
+        this.contexts[context_key]["html"].append(color_container);
     };
 
     this.initialize_image_context = function (context_key) {
@@ -554,7 +673,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         })(this);
     };
 
-    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null) {
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="") {
         var starting_value = this.get_data()[data_key] || "";
 
         var tool_row = (function (self) {
@@ -589,6 +708,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this._on_draw(on_draw, [starting_value, this]);
         }
 
+        if (hover_text) {
+            var combo_label = tool_row.elements[0];
+
+            combo_label.html.css({
+                "cursor": "help"
+            });
+
+            combo_label.html.attr("title", hover_text);
+        }
+
         return tool_row;
     };
 
@@ -609,10 +738,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
         })(this);
 
-        if (!(label_text.includes("\n"))) {
-            color_picker.label.css({
-                "top": -Dash.Size.Padding * 0.6
-            });
+        if (color_picker.label) {
+            if (!(label_text.includes("\n"))) {
+                color_picker.label.css({
+                    "top": -Dash.Size.Padding * 0.6
+                });
+            }
         }
 
         var css = {"margin-bottom": Dash.Size.Padding};

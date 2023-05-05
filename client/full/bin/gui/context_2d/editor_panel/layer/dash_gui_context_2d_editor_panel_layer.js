@@ -463,6 +463,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
               type === "text" ? "font"
             : type === "image" ? type
             : type === "video" ? "film"
+            : type === "color" ? "color_palette"
             : type === "context" ? "project_diagram"
             : "unknown"
         );

@@ -49,10 +49,10 @@ function DashGuiContext2DEditorPanelContentNew (content) {
 
     this.draw_types = function () {
         for (var primitive_type of this.content.PrimitiveTypes) {
-            if (primitive_type === "text") {
-                (function (self) {
+            if (["text", "color"].includes(primitive_type)) {
+                (function (self, primitive_type) {
                     self.html.append(self.get_button(
-                        "New Text Layer",
+                        "New " + primitive_type.Title() + " Layer",
                         function (event, button) {
                             // Should never happen, but just in case
                             if (self.editor.preview_mode || self.editor.override_mode) {
@@ -69,13 +69,13 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                                 },
                                 self.editor.api,
                                 {
-                                    "f": "add_text_layer",
+                                    "f": "add_" + primitive_type + "_layer",
                                     "obj_id": self.editor.obj_id
                                 }
                             );
                         }
                     ).html);
-                })(this);
+                })(this, primitive_type);
             }
 
             else if (["image", "video"].includes(primitive_type)) {
