@@ -51,7 +51,6 @@ function DashGuiContext2DPrimitiveMedia () {
         this.update_tint_color();
 
         if (this.type === "video") {
-            console.debug("TEST video", this.file_data);
             this.media.off("click");
 
             // Restrict playback to the play button alone (disable playback from clicking

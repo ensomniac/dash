@@ -312,8 +312,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.set_max = function () {
         var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
 
-        this.width_px_max = max * 2;
-        this.height_px_max = max * 2;
+        // Text gets special handling since it has an extra-wide container
+        this.width_px_max = max * (this.type === "text" ? 8 : 2);
+        this.height_px_max = max * (this.type === "text" ? 1 : 2);
     };
 
     this.set_drag_state = function () {
@@ -601,12 +602,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.width_px < this.width_px_min) {
             this.width_px = this.width_px_min;
 
+            console.warn("Warning: Minimum width reached");
+
             capped = true;
         }
 
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
             this.width_px = this.width_px_max;
+
+            console.warn("Warning: Maximum width reached");
 
             capped = true;
         }
@@ -624,11 +629,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
             this.height_px = this.height_px_min;
+
+            console.warn("Warning: Minimum height reached");
         }
 
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
             this.height_px = this.height_px_max;
+
+            console.warn("Warning: Maximum height reached");
         }
     };
 
