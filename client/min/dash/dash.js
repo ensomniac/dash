@@ -18929,8 +18929,8 @@ function DashUtils () {
     };
     this.GetDeepCopy = function (obj) {
         if (!Dash.Validate.Object(obj)) {
-            console.warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
-            return null;
+            console.warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
+            return obj;
         }
         return JSON.parse(JSON.stringify(obj));
     };
@@ -29401,7 +29401,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.type !== "context") {
+        if (!(["context", "color"]).includes(this.type)) {
             console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
@@ -29950,8 +29950,23 @@ function DashGuiContext2DPrimitiveText () {
 
 /**@member DashGuiContext2DPrimitive*/
 function DashGuiContext2DPrimitiveColor () {
-    this.color = null;
+    this.color = $("<div></div>");
     this._setup_styles = function () {
+        this.color.css({
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+        this.update_colors();
+    };
+    this.update_colors = function () {
+        var colors = [];
+        for (var num of [1, 2, 3]) {
+            var color = this.get_value("color_" + num);
+            if (color) {
+                colors.push(color);
+            }
+        }
+        console.debug("TEST", colors);
         // TODO
     };
     // Override
@@ -29959,18 +29974,27 @@ function DashGuiContext2DPrimitiveColor () {
         if (key.startsWith("aspect")) {
             this.set_init();
         }
+        if (key.startsWith("color_")) {
+            this.update_colors();
+        }
+        if (key === "gradient_direction") {
+            // TODO
+        }
     };
     // Override
     this.on_opacity_change = function (value) {
-        // TODO?
-    };
-    // Override
-    this.on_locked_change = function (locked) {
-        // TODO?
+        this.color.css({
+            "opacity": value
+        });
     };
     // Override
     this.on_hidden_change = function (hidden) {
-        // TODO?
+        if (hidden) {
+            this.color.hide();
+        }
+        else {
+            this.color.show();
+        }
     };
     this._setup_styles();
 }

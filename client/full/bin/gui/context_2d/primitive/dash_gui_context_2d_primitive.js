@@ -510,7 +510,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (this.type !== "context") {
+        if (!(["context", "color"]).includes(this.type)) {
             console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
