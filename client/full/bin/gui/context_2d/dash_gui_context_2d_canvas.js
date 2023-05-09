@@ -16,8 +16,8 @@ function DashGuiContext2DCanvas (editor) {
     this.right_mask = $("<div></div>");
     this.bottom_mask = $("<div></div>");
     this.last_selected_primitive = null;
-    this.padding = Dash.Size.Padding * 2;
     this.opposite_color = this.editor.opposite_color;
+    this.padding = this.editor.preview_mode ? 0 : (Dash.Size.Padding * 2);
 
     this.setup_styles = function () {
         this.html.css({
@@ -25,8 +25,8 @@ function DashGuiContext2DCanvas (editor) {
             "inset": 0,
             "background": this.color.Stroke,
             "box-sizing": "border-box",
-            "border-bottom": "1px solid " + this.color.StrokeLight,
-            "padding": Dash.Size.Padding * 2,
+            "border-bottom": this.editor.preview_mode ? "" : ("1px solid " + this.color.StrokeLight),
+            "padding": this.padding,
             "overflow": "hidden",
             "z-index": 1
         });
@@ -56,8 +56,6 @@ function DashGuiContext2DCanvas (editor) {
             "pointer-events": "none",
             ...css,
             "border": "1px solid " + this.opposite_color.StrokeDark,
-            // "outline": "1px solid " + this.color.StrokeLight,
-            // "outline-offset": "1px"
         });
 
         this.border.hide();
@@ -293,7 +291,9 @@ function DashGuiContext2DCanvas (editor) {
 
         this.canvas.show();
 
-        this.border.show();
+        if (!this.editor.preview_mode) {
+            this.border.show();
+        }
 
         this.setup_masks();
         this.add_observer();
@@ -335,6 +335,10 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.setup_masks = function () {
+        if (this.editor.preview_mode) {
+            return;
+        }
+
         var css = {
             "position": "absolute",
             "z-index": 999999998,

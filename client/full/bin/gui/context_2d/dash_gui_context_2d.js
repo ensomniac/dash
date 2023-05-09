@@ -339,7 +339,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         this.html.css({
             "box-sizing": "border-box",
             "background": this.color.Pinstripe,
-            "border": "2px solid " + this.color.StrokeLight,
+            "border": this.preview_mode ? "" : ("2px solid " + this.color.StrokeLight),
             ...abs_css
         });
 

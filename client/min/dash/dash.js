@@ -28218,7 +28218,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         this.html.css({
             "box-sizing": "border-box",
             "background": this.color.Pinstripe,
-            "border": "2px solid " + this.color.StrokeLight,
+            "border": this.preview_mode ? "" : ("2px solid " + this.color.StrokeLight),
             ...abs_css
         });
         this.canvas = new DashGuiContext2DCanvas(this);
@@ -28393,16 +28393,16 @@ function DashGuiContext2DCanvas (editor) {
     this.right_mask = $("<div></div>");
     this.bottom_mask = $("<div></div>");
     this.last_selected_primitive = null;
-    this.padding = Dash.Size.Padding * 2;
     this.opposite_color = this.editor.opposite_color;
+    this.padding = this.editor.preview_mode ? 0 : (Dash.Size.Padding * 2);
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
             "inset": 0,
             "background": this.color.Stroke,
             "box-sizing": "border-box",
-            "border-bottom": "1px solid " + this.color.StrokeLight,
-            "padding": Dash.Size.Padding * 2,
+            "border-bottom": this.editor.preview_mode ? "" : ("1px solid " + this.color.StrokeLight),
+            "padding": this.padding,
             "overflow": "hidden",
             "z-index": 1
         });
@@ -28427,8 +28427,6 @@ function DashGuiContext2DCanvas (editor) {
             "pointer-events": "none",
             ...css,
             "border": "1px solid " + this.opposite_color.StrokeDark,
-            // "outline": "1px solid " + this.color.StrokeLight,
-            // "outline-offset": "1px"
         });
         this.border.hide();
         this.html.append(this.canvas);
@@ -28606,7 +28604,9 @@ function DashGuiContext2DCanvas (editor) {
             return;
         }
         this.canvas.show();
-        this.border.show();
+        if (!this.editor.preview_mode) {
+            this.border.show();
+        }
         this.setup_masks();
         this.add_observer();
         this.size_initialized = true;
@@ -28639,6 +28639,9 @@ function DashGuiContext2DCanvas (editor) {
         })(this);
     };
     this.setup_masks = function () {
+        if (this.editor.preview_mode) {
+            return;
+        }
         var css = {
             "position": "absolute",
             "z-index": 999999998,
@@ -32593,7 +32596,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(slider.html);
     };
     this.initialize_text_context = function (context_key) {
-        var slider = this.get_slider(
+        var thickness_slider = this.get_slider(
             0,
             context_key,
             "stroke_thickness",
@@ -32635,7 +32638,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "text_alignment",
             "Alignment"
         );
-        this.contexts[context_key]["html"].append(slider.html);
+        this.contexts[context_key]["html"].append(thickness_slider.html);
         this.contexts[context_key]["html"].append(container);
         this.contexts[context_key]["html"].append(font_combo_tool_row.html);
         this.contexts[context_key]["html"].append(alignment_combo_tool_row.html);

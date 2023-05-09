@@ -478,7 +478,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_text_context = function (context_key) {
-        var slider = this.get_slider(
+        var thickness_slider = this.get_slider(
             0,
             context_key,
             "stroke_thickness",
@@ -486,7 +486,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "",
             0,
             0.1
-
         );
 
         var font_color_picker = this.get_color_picker(context_key, "font_color", "Font\nColor");
@@ -530,7 +529,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "Alignment"
         );
 
-        this.contexts[context_key]["html"].append(slider.html);
+        this.contexts[context_key]["html"].append(thickness_slider.html);
         this.contexts[context_key]["html"].append(container);
         this.contexts[context_key]["html"].append(font_combo_tool_row.html);
         this.contexts[context_key]["html"].append(alignment_combo_tool_row.html);
