@@ -29954,31 +29954,57 @@ function DashGuiContext2DPrimitiveColor () {
     this._setup_styles = function () {
         this.color.css({
             "pointer-events": "none",
-            "user-select": "none"
+            "user-select": "none",
+            "position": "absolute",
+            "inset": 0
         });
+        this.html.append(this.color);
         this.update_colors();
     };
     this.update_colors = function () {
         var colors = [];
         for (var num of [1, 2, 3]) {
-            var color = this.get_value("color_" + num);
-            if (color) {
-                colors.push(color);
+            var key = "color_" + num;
+            var color = this.get_value(key);
+            if (!color) {
+                continue;
             }
+            var opacity = this.get_value(key + "_opacity");
+            if (opacity && (opacity === 0 || opacity < 1)) {
+                color = Dash.Color.GetTransparent(color, opacity);
+            }
+            colors.push(color);
         }
-        console.debug("TEST", colors);
-        // TODO
+        if (!colors.length) {
+            this.color.css({
+                "background": ""
+            });
+            return;
+        }
+        if (colors.length === 1) {
+            this.color.css({
+                "background": colors[0]
+            });
+            return;
+        }
+        this.color.css({
+            // https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+            "background": (
+                  "linear-gradient("
+                + this.get_value("gradient_direction").replaceAll("_", " ")
+                + ", "
+                + colors.join(", ")
+                + ")"
+            )
+        });
     };
     // Override
     this.on_update = function (key) {
         if (key.startsWith("aspect")) {
             this.set_init();
         }
-        if (key.startsWith("color_")) {
+        if (key.startsWith("color_") || key === "gradient_direction") {
             this.update_colors();
-        }
-        if (key === "gradient_direction") {
-            // TODO
         }
     };
     // Override
@@ -32419,11 +32445,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var gradient_direction_combo_tool_row = this.get_combo(
             context_key,
             [
-                {"id": "", "label_text": "Not Selected"},
-                {"id": "to_right", "label_text": "Left to Right"},
+                {"id": "to_right", "label_text": "Left to Right"},  // Default to this
                 {"id": "to_left", "label_text": "Right to Left"},
                 {"id": "to_bottom", "label_text": "Top to Bottom"},
-                {"id": "to_top", "label_text": "Bottom to Top"}
+                {"id": "to_top", "label_text": "Bottom to Top"},
+                {"id": "to_right_top", "label_text": "Bottom Left to Top Right"},
+                {"id": "to_right_bottom", "label_text": "Top Left to Bottom Right"},
+                {"id": "to_left_top", "label_text": "Bottom Right to Top Left"},
+                {"id": "to_left_bottom", "label_text": "Top Right to Bottom Left"}
             ],
             "gradient_direction",
             "*Gradient Direction",
@@ -32448,7 +32477,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         colors_container.append(label);
         colors_container.append(picker_container);
         for (var num of [1, 2, 3]) {
-            var color_picker = this.get_color_picker(context_key, "color_" + num, "none");
+            var data_key = "color_" + num;
+            var color_picker = this.get_color_picker(context_key, data_key, "none");
             color_picker.html.css({
                 "display": "flex",
                 "margin-bottom": Dash.Size.Padding * 0.5
@@ -32464,6 +32494,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             })(this, color_picker);
             color_picker.clear_button = icon_button;
             color_picker.html.append(icon_button.html);
+            var opacity_slider = this.get_slider(1, context_key, data_key + "_opacity", 0.6, "Opacity");
+            opacity_slider.html.css({
+                "margin-top": Dash.Size.Padding * 0.6
+            });
+            (function (opacity_slider) {
+                requestAnimationFrame(function () {
+                    opacity_slider.html.css({
+                        "margin-bottom": 0
+                    });
+                });
+            })(opacity_slider);
+            color_picker.html.append(opacity_slider.html);
             picker_container.append(color_picker.html);
         }
         this.contexts[context_key]["html"].append(colors_container);

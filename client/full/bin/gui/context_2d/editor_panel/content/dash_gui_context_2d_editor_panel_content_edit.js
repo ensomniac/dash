@@ -289,11 +289,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var gradient_direction_combo_tool_row = this.get_combo(
             context_key,
             [
-                {"id": "", "label_text": "Not Selected"},
-                {"id": "to_right", "label_text": "Left to Right"},
+                {"id": "to_right", "label_text": "Left to Right"},  // Default to this
                 {"id": "to_left", "label_text": "Right to Left"},
                 {"id": "to_bottom", "label_text": "Top to Bottom"},
-                {"id": "to_top", "label_text": "Bottom to Top"}
+                {"id": "to_top", "label_text": "Bottom to Top"},
+
+                {"id": "to_right_top", "label_text": "Bottom Left to Top Right"},
+                {"id": "to_right_bottom", "label_text": "Top Left to Bottom Right"},
+                {"id": "to_left_top", "label_text": "Bottom Right to Top Left"},
+                {"id": "to_left_bottom", "label_text": "Top Right to Bottom Left"}
             ],
             "gradient_direction",
             "*Gradient Direction",
@@ -324,7 +328,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         colors_container.append(picker_container);
 
         for (var num of [1, 2, 3]) {
-            var color_picker = this.get_color_picker(context_key, "color_" + num, "none");
+            var data_key = "color_" + num;
+            var color_picker = this.get_color_picker(context_key, data_key, "none");
 
             color_picker.html.css({
                 "display": "flex",
@@ -344,6 +349,22 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             color_picker.clear_button = icon_button;
 
             color_picker.html.append(icon_button.html);
+
+            var opacity_slider = this.get_slider(1, context_key, data_key + "_opacity", 0.6, "Opacity");
+
+            opacity_slider.html.css({
+                "margin-top": Dash.Size.Padding * 0.6
+            });
+
+            (function (opacity_slider) {
+                requestAnimationFrame(function () {
+                    opacity_slider.html.css({
+                        "margin-bottom": 0
+                    });
+                });
+            })(opacity_slider);
+
+            color_picker.html.append(opacity_slider.html);
 
             picker_container.append(color_picker.html);
         }

@@ -162,11 +162,12 @@ class Layer:
             data.update({
                 "aspect_ratio_w": self.data.get("aspect_ratio_w") or 1.0,
                 "aspect_ratio_h": self.data.get("aspect_ratio_h") or 1.0,
-                "gradient_direction": self.data.get("gradient_direction") or ""
+                "gradient_direction": self.data.get("gradient_direction") or "to_right"
             })
 
             for num in [1, 2, 3]:
                 data[f"color_{num}"] = self.data.get(f"color_{num}") or ""
+                data[f"color_{num}_opacity"] = self.data[f"color_{num}_opacity"] if f"color_{num}_opacity" in self.data else 1.0
 
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
