@@ -39007,7 +39007,7 @@ function DashLayoutListColumnConfig () {
     };
     this.AddCombo = function (
         label_text, combo_options, binder, callback, data_key="", width_mult=null,
-        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}
+        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text=""
     ) {
         this.AddColumn(
             label_text,
@@ -39020,6 +39020,7 @@ function DashLayoutListColumnConfig () {
                     "label_text": label_text,
                     "callback": callback,
                     "binder": binder,
+                    "hover_text": hover_text,
                     "combo_options": combo_options,
                     "is_user_list": is_user_list,
                     "multi_select": multi_select
@@ -39502,6 +39503,10 @@ function DashLayoutListRowElements () {
                 };
             }
         }
+        if (read_only && column_config_data["options"]["hover_text"]) {
+            css["cursor"] = "help";
+            combo.html.attr("title", column_config_data["options"]["hover_text"]);
+        }
         combo.html.css(css);
         combo.label.css({
             "height": this.height,
@@ -39529,14 +39534,17 @@ function DashLayoutListRowElements () {
                     "opacity": 0
                 });
             }
-            this.prevent_events_for_placeholder(combo.html);
+            this.prevent_events_for_placeholder(
+                combo.html,
+                column_config_data["options"]["hover_text"]
+            );
         }
         return combo;
     };
     this.get_input = function (column_config_data) {
         var color = column_config_data["options"]["color"] || this.color;
         var placeholder_label = column_config_data["options"]["placeholder_label"] || "";
-        var input = new Dash.Gui.Input(placeholder_label, color);
+        var input = new Dash.Gui.Input(placeholder_label === "none" ? "" : placeholder_label, color);
         var css = {
             "background": "none",
             "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
@@ -39683,10 +39691,12 @@ function DashLayoutListRowElements () {
         }
         return copy_button;
     };
-    this.prevent_events_for_placeholder = function (html) {
-        html.css({
-            "pointer-events": "none"
-        });
+    this.prevent_events_for_placeholder = function (html, click_only=false) {
+        if (!click_only) {
+            html.css({
+                "pointer-events": "none"
+            });
+        }
         html.off("click");
     };
 }

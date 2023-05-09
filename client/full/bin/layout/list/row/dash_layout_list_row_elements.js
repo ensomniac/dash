@@ -204,6 +204,12 @@ function DashLayoutListRowElements () {
             }
         }
 
+        if (read_only && column_config_data["options"]["hover_text"]) {
+            css["cursor"] = "help";
+
+            combo.html.attr("title", column_config_data["options"]["hover_text"]);
+        }
+
         combo.html.css(css);
 
         combo.label.css({
@@ -236,7 +242,10 @@ function DashLayoutListRowElements () {
                 });
             }
 
-            this.prevent_events_for_placeholder(combo.html);
+            this.prevent_events_for_placeholder(
+                combo.html,
+                column_config_data["options"]["hover_text"]
+            );
         }
 
         return combo;
@@ -245,7 +254,7 @@ function DashLayoutListRowElements () {
     this.get_input = function (column_config_data) {
         var color = column_config_data["options"]["color"] || this.color;
         var placeholder_label = column_config_data["options"]["placeholder_label"] || "";
-        var input = new Dash.Gui.Input(placeholder_label, color);
+        var input = new Dash.Gui.Input(placeholder_label === "none" ? "" : placeholder_label, color);
 
         var css = {
             "background": "none",
@@ -434,10 +443,12 @@ function DashLayoutListRowElements () {
         return copy_button;
     };
 
-    this.prevent_events_for_placeholder = function (html) {
-        html.css({
-            "pointer-events": "none"
-        });
+    this.prevent_events_for_placeholder = function (html, click_only=false) {
+        if (!click_only) {
+            html.css({
+                "pointer-events": "none"
+            });
+        }
 
         html.off("click");
     };

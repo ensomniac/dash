@@ -57,7 +57,7 @@ function DashLayoutListColumnConfig () {
 
     this.AddCombo = function (
         label_text, combo_options, binder, callback, data_key="", width_mult=null,
-        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}
+        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text=""
     ) {
         this.AddColumn(
             label_text,
@@ -70,6 +70,7 @@ function DashLayoutListColumnConfig () {
                     "label_text": label_text,
                     "callback": callback,
                     "binder": binder,
+                    "hover_text": hover_text,
                     "combo_options": combo_options,
                     "is_user_list": is_user_list,
                     "multi_select": multi_select
