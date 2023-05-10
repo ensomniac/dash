@@ -31,7 +31,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
-            "box-sizing": "border-box"
+            "box-sizing": "border-box",
+            "opacity": this.can_edit ? 1 : 0.5
         });
 
         this.UpdateTintColor();

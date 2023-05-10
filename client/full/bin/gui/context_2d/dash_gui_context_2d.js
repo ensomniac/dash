@@ -1,4 +1,6 @@
-function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}) {
+function DashGuiContext2D (
+    obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
+) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -84,7 +86,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
 
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
 
-        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 15000 : 5000);
+        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 30000 : 5000);
 
         this.get_combo_options();
     };
@@ -448,7 +450,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         })(this);
     };
 
-    this.get_combo_options = function () {
+    this.get_combo_options = function (extra_params={}, callback=null) {
         (function (self) {
             Dash.Request(
                 self,
@@ -472,9 +474,16 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                     if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdateContentBoxComboOptions();
                     }
+
+                    if (callback) {
+                        callback();
+                    }
                 },
                 self.api,
-                {"f": "get_combo_options"}
+                {
+                    "f": "get_combo_options",
+                    ...extra_params
+                }
             );
         })(this);
     };

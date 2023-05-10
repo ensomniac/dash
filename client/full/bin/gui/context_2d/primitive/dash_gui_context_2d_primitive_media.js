@@ -263,6 +263,19 @@ function DashGuiContext2DPrimitiveMedia () {
 
     // Override
     this.on_update = function (key) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_update(key);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }
@@ -292,6 +305,19 @@ function DashGuiContext2DPrimitiveMedia () {
 
     // Override
     this.on_hidden_change = function (hidden) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_hidden_change(hidden);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
         if (hidden) {
             this.media.hide();
         }
@@ -304,6 +330,19 @@ function DashGuiContext2DPrimitiveMedia () {
     // Override
     this.on_locked_change = function (locked) {
         if (this.type !== "video") {
+            return;
+        }
+
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_locked_change(locked);
+                    },
+                    10
+                );
+            })(this);
+
             return;
         }
 

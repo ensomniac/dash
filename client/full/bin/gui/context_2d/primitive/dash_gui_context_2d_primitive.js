@@ -602,7 +602,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.width_px < this.width_px_min) {
             this.width_px = this.width_px_min;
 
-            console.warn("Warning: Minimum width reached");
+            // console.warn("Warning: Minimum width reached");
 
             capped = true;
         }
@@ -611,7 +611,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.width_px > this.width_px_max) {
             this.width_px = this.width_px_max;
 
-            console.warn("Warning: Maximum width reached");
+            // console.warn("Warning: Maximum width reached");
 
             capped = true;
         }
@@ -630,14 +630,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.height_px < this.height_px_min) {
             this.height_px = this.height_px_min;
 
-            console.warn("Warning: Minimum height reached");
+            // console.warn("Warning: Minimum height reached");
         }
 
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
             this.height_px = this.height_px_max;
 
-            console.warn("Warning: Maximum height reached");
+            // console.warn("Warning: Maximum height reached");
         }
     };
 

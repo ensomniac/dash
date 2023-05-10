@@ -27933,7 +27933,9 @@ function DashGuiComboStyleDefault () {
     };
 }
 
-function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}) {
+function DashGuiContext2D (
+    obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
+) {
     /**
      * Context2D editor element.
      * -------------------------
@@ -28010,7 +28012,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
         }
         this.html.css(css);
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
-        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 15000 : 5000);
+        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 30000 : 5000);
         this.get_combo_options();
     };
     this.SetEditorPanelLayerProperty = function (key, value, id) {
@@ -28303,7 +28305,7 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
             );
         })(this);
     };
-    this.get_combo_options = function () {
+    this.get_combo_options = function (extra_params={}, callback=null) {
         (function (self) {
             Dash.Request(
                 self,
@@ -28322,9 +28324,15 @@ function DashGuiContext2D (obj_id, can_edit=true, color=null, api="Context2D", p
                     if (self.initialized && self.editor_panel && !self.preview_mode) {
                         self.editor_panel.UpdateContentBoxComboOptions();
                     }
+                    if (callback) {
+                        callback();
+                    }
                 },
                 self.api,
-                {"f": "get_combo_options"}
+                {
+                    "f": "get_combo_options",
+                    ...extra_params
+                }
             );
         })(this);
     };
@@ -29478,13 +29486,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
             this.width_px = this.width_px_min;
-            console.warn("Warning: Minimum width reached");
+            // console.warn("Warning: Minimum width reached");
             capped = true;
         }
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
             this.width_px = this.width_px_max;
-            console.warn("Warning: Maximum width reached");
+            // console.warn("Warning: Maximum width reached");
             capped = true;
         }
         if (capped) {
@@ -29498,12 +29506,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
             this.height_px = this.height_px_min;
-            console.warn("Warning: Minimum height reached");
+            // console.warn("Warning: Minimum height reached");
         }
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
             this.height_px = this.height_px_max;
-            console.warn("Warning: Maximum height reached");
+            // console.warn("Warning: Maximum height reached");
         }
     };
     this.set_scale = function (width=null, height=null, draw=true) {
@@ -30245,6 +30253,17 @@ function DashGuiContext2DPrimitiveMedia () {
     // };
     // Override
     this.on_update = function (key) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_update(key);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
         if (key === "contrast" || key === "brightness") {
             this.update_filter();
         }
@@ -30269,6 +30288,17 @@ function DashGuiContext2DPrimitiveMedia () {
     };
     // Override
     this.on_hidden_change = function (hidden) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_hidden_change(hidden);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
         if (hidden) {
             this.media.hide();
         }
@@ -30279,6 +30309,17 @@ function DashGuiContext2DPrimitiveMedia () {
     // Override
     this.on_locked_change = function (locked) {
         if (this.type !== "video") {
+            return;
+        }
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_locked_change(locked);
+                    },
+                    10
+                );
+            })(this);
             return;
         }
         try {
@@ -30777,7 +30818,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
-            "box-sizing": "border-box"
+            "box-sizing": "border-box",
+            "opacity": this.can_edit ? 1 : 0.5
         });
         this.UpdateTintColor();
         this.add_type_icon();
