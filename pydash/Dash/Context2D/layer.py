@@ -25,28 +25,34 @@ class Layer:
             "locked",
             "linked",
             "contained",
-            "placeholder",
             "text_caps",
+            "fade_global",
+            "placeholder",
             *self.context_2d.LayerExtraBoolKeys
         ]
 
         self.str_keys = [
-            "display_name",
-            "text_value",
-            "text_alignment",
+            "color_1",
+            "color_2",
+            "color_3",
             "font_id",
+            "text_value",
             "font_color",
             "tint_color",
+            "display_name",
             "stroke_color",
+            "text_alignment",
+            "fade_direction",
+            "gradient_direction",
             *self.context_2d.LayerExtraStrKeys
         ]
 
         self.state_keys = [
+            "opacity",
+            "rot_deg",
+            "width_norm",
             "anchor_norm_x",
             "anchor_norm_y",
-            "width_norm",
-            "rot_deg",
-            "opacity",
             *self.context_2d.LayerExtraStateKeys
         ]
 
@@ -55,6 +61,13 @@ class Layer:
             "aspect",
             "contrast",
             "brightness",
+            "fade_norm_end",
+            "aspect_ratio_w",
+            "aspect_ratio_h",
+            "fade_norm_start",
+            "color_1_opacity",
+            "color_2_opacity",
+            "color_3_opacity",
             "stroke_thickness",
             *self.context_2d.LayerExtraFloatKeys
         ]
@@ -123,24 +136,28 @@ class Layer:
 
         data = {
             # If the default values of anchor or width norm keys change, update front end: DashGuiContext2DPrimitive.get_drag_state_value
-            "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
-            "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
-            "aspect":        self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
-            "blend_mode":    self.data.get("blend_mode") or "",
-            "contained":     self.data["contained"] if "contained" in self.data else True,
-            "created_by":    self.data["created_by"],
-            "created_on":    self.data["created_on"],
-            "display_name":  self.data["display_name"],
-            "hidden":        self.data["hidden"] if "hidden" in self.data else False,
-            "id":            self.ID,
-            "locked":        self.data["locked"] if "locked" in self.data else False,
-            "modified_by":   self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
-            "modified_on":   self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
-            "opacity":       self.data["opacity"] if "opacity" in self.data else 1.0,
-            "rot_deg":       self.data.get("rot_deg") or 0,  # -180 to 180
-            "tint_color":    self.data.get("tint_color") or "",
-            "type":          self.Type,
-            "width_norm":    self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
+            "anchor_norm_x":   self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
+            "anchor_norm_y":   self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
+            "aspect":          self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
+            "blend_mode":      self.data.get("blend_mode") or "",
+            "contained":       self.data["contained"] if "contained" in self.data else True,
+            "created_by":      self.data["created_by"],
+            "created_on":      self.data["created_on"],
+            "display_name":    self.data["display_name"],
+            "fade_direction":  self.data.get("fade_direction") or "",
+            "fade_global":     self.data["fade_global"] if "fade_global" in self.data else False,
+            "fade_norm_end":   self.data["fade_norm_end"] if "fade_norm_end" in self.data else 1.0,
+            "fade_norm_start": self.data["fade_norm_start"] if "fade_norm_start" in self.data else 0.5,
+            "hidden":          self.data["hidden"] if "hidden" in self.data else False,
+            "id":              self.ID,
+            "locked":          self.data["locked"] if "locked" in self.data else False,
+            "modified_by":     self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
+            "modified_on":     self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
+            "opacity":         self.data["opacity"] if "opacity" in self.data else 1.0,
+            "rot_deg":         self.data.get("rot_deg") or 0,  # -180 to 180
+            "tint_color":      self.data.get("tint_color") or "",
+            "type":            self.Type,
+            "width_norm":      self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
                 # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution
                 (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9) if self.Type == "text" else 0.5
             )

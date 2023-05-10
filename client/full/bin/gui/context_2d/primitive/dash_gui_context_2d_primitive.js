@@ -62,6 +62,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
         var contained = this.get_value("contained");
+        var fade_direction = this.get_value("fade_direction");
 
         if (hidden) {
             this.on_hidden_change(hidden);
@@ -73,6 +74,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (!contained) {
             this.on_contained_change(contained);
+        }
+
+        if (fade_direction) {
+            this.update_fade();
         }
 
         this.setup_connections();
@@ -119,6 +124,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         else if (key === "linked" && this.parent_id) {
             this.on_linked_change();
+        }
+
+        else if (key.startsWith("fade_")) {
+            this.update_fade();
         }
 
         if (!value && (key === "locked" || key === "hidden")) {
@@ -285,22 +294,59 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.save_drag_state();
     };
 
-    // TODO
-    this.update_fade_mask = function () {
-        var start_norm = this.get_value("fade_mask_start_norm") || 0.4;  // TODO: TEST
-        var end_norm = this.get_value("fade_mask_end_norm") || 0.6;  // TODO: TEST
-        var direction = this.get_value("fade_mask_direction") || "to_bottom";  // TODO: TEST
+    this.update_fade = function () {
+        var direction = this.get_value("fade_direction");
+        var norm_start = this.get_value("fade_norm_start");
+        var norm_end = this.get_value("fade_norm_end");
+
+        if (this.get_value("fade_global")) {
+            if (direction === "to_bottom" || direction === "to_top") {
+                var canvas_height = this.canvas.GetHeight();
+                var top_norm = ((canvas_height * norm_start) - this.top_px) / this.height_px;
+                var bottom_norm = ((canvas_height * norm_end) - this.top_px) / this.height_px;
+
+                if (direction === "to_bottom") {
+                    norm_start = top_norm;
+                    norm_end = bottom_norm;
+                }
+
+                else if (direction === "to_top") {
+                    norm_start = bottom_norm;
+                    norm_end = top_norm;
+                }
+            }
+
+            else if (direction === "to_right" || direction === "to_left") {
+                var canvas_width = this.canvas.GetWidth();
+                var left_norm = ((canvas_width * norm_start) - this.left_px) / this.width_px;
+                var right_norm = ((canvas_width * norm_end) - this.left_px) / this.width_px;
+
+                if (direction === "to_right") {
+                    norm_start = left_norm;
+                    norm_end = right_norm;
+                }
+
+                else if (direction === "to_left") {
+                    norm_start = right_norm;
+                    norm_end = left_norm;
+                }
+            }
+
+            else {
+                console.warn("Warning: Unhandled global fade direction:", direction);
+            }
+        }
 
         this.html.css({
-            "mask-image": (
+            "mask-image": direction ? (
                 "linear-gradient("
                 + direction.replaceAll("_", " ")
                 + ", rgba(255, 255, 255, 1.0) "
-                + (start_norm * 100)
+                + (norm_start * 100)
                 + "%, rgba(255, 255, 255, 0.0) "
-                + (end_norm * 100)
+                + (norm_end * 100)
                 + "%)"
-            )
+            ) : "none"
         });
     };
 
@@ -881,6 +927,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
 
         this.on_opacity_change(this.get_value("opacity"));
+        this.update_fade();
     };
 
     this.setup_styles();

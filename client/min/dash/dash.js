@@ -29073,6 +29073,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var hidden = this.get_value("hidden");
         var locked = this.get_value("locked");
         var contained = this.get_value("contained");
+        var fade_direction = this.get_value("fade_direction");
         if (hidden) {
             this.on_hidden_change(hidden);
         }
@@ -29081,6 +29082,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         if (!contained) {
             this.on_contained_change(contained);
+        }
+        if (fade_direction) {
+            this.update_fade();
         }
         this.setup_connections();
     };
@@ -29116,6 +29120,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         else if (key === "linked" && this.parent_id) {
             this.on_linked_change();
+        }
+        else if (key.startsWith("fade_")) {
+            this.update_fade();
         }
         if (!value && (key === "locked" || key === "hidden")) {
             this.Select();
@@ -29238,21 +29245,51 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         this.save_drag_state();
     };
-    // TODO
-    this.update_fade_mask = function () {
-        var start_norm = this.get_value("fade_mask_start_norm") || 0.4;  // TODO: TEST
-        var end_norm = this.get_value("fade_mask_end_norm") || 0.6;  // TODO: TEST
-        var direction = this.get_value("fade_mask_direction") || "to_bottom";  // TODO: TEST
+    this.update_fade = function () {
+        var direction = this.get_value("fade_direction");
+        var norm_start = this.get_value("fade_norm_start");
+        var norm_end = this.get_value("fade_norm_end");
+        if (this.get_value("fade_global")) {
+            if (direction === "to_bottom" || direction === "to_top") {
+                var canvas_height = this.canvas.GetHeight();
+                var top_norm = ((canvas_height * norm_start) - this.top_px) / this.height_px;
+                var bottom_norm = ((canvas_height * norm_end) - this.top_px) / this.height_px;
+                if (direction === "to_bottom") {
+                    norm_start = top_norm;
+                    norm_end = bottom_norm;
+                }
+                else if (direction === "to_top") {
+                    norm_start = bottom_norm;
+                    norm_end = top_norm;
+                }
+            }
+            else if (direction === "to_right" || direction === "to_left") {
+                var canvas_width = this.canvas.GetWidth();
+                var left_norm = ((canvas_width * norm_start) - this.left_px) / this.width_px;
+                var right_norm = ((canvas_width * norm_end) - this.left_px) / this.width_px;
+                if (direction === "to_right") {
+                    norm_start = left_norm;
+                    norm_end = right_norm;
+                }
+                else if (direction === "to_left") {
+                    norm_start = right_norm;
+                    norm_end = left_norm;
+                }
+            }
+            else {
+                console.warn("Warning: Unhandled global fade direction:", direction);
+            }
+        }
         this.html.css({
-            "mask-image": (
+            "mask-image": direction ? (
                 "linear-gradient("
                 + direction.replaceAll("_", " ")
                 + ", rgba(255, 255, 255, 1.0) "
-                + (start_norm * 100)
+                + (norm_start * 100)
                 + "%, rgba(255, 255, 255, 0.0) "
-                + (end_norm * 100)
+                + (norm_end * 100)
                 + "%)"
-            )
+            ) : "none"
         });
     };
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -29700,6 +29737,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             )
         });
         this.on_opacity_change(this.get_value("opacity"));
+        this.update_fade();
     };
     this.setup_styles();
 }
@@ -31678,7 +31716,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 8) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 9.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -32579,7 +32617,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-left": 0,
             "margin-bottom": 0
         });
-        var w_input = this.add_aspect_tool_row_input(context_key, "w", tool_row);
+        var w_input = this.add_numeric_tool_row_input(context_key, "aspect_ratio_w", tool_row, "aspect_inputs", "W", "Aspect Ratio:");
         this.contexts[context_key]["all_elements"].push(w_input);
         if (w_input.label) {
             this.contexts[context_key]["all_elements"].push(w_input.label);
@@ -32589,49 +32627,141 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "padding-left": 0
         });
         this.contexts[context_key]["all_elements"].push(label);
-        var h_input = this.add_aspect_tool_row_input(context_key, "h", tool_row);
+        var h_input = this.add_numeric_tool_row_input(context_key, "aspect_ratio_h", tool_row, "aspect_inputs", "H");
         this.contexts[context_key]["all_elements"].push(h_input);
         if (h_input.label) {
             this.contexts[context_key]["all_elements"].push(h_input.label);
         }
         this.contexts[context_key]["html"].append(tool_row.html);
     };
-    this.add_aspect_tool_row_input = function (context_key, aspect_letter, tool_row) {
-        if (!("aspect_inputs" in this.contexts[context_key])) {
-            this.contexts[context_key]["aspect_inputs"] = {};
+    this.add_fade_tool_row = function (context_key) {
+        var tool_row = new Dash.Gui.ToolRow(this, this.get_data);
+        tool_row.html.css({
+            "margin-left": 0,
+            "margin-bottom": 0
+        });
+        var start_input = this.add_numeric_tool_row_input(
+            context_key,
+            "fade_norm_start",
+            tool_row,
+            "fade_inputs",
+            "Start",
+            "Fade Start:",
+            0,
+            1
+        );
+        this.contexts[context_key]["all_elements"].push(start_input);
+        if (start_input.label) {
+            this.contexts[context_key]["all_elements"].push(start_input.label);
         }
-        this.contexts[context_key]["aspect_inputs"][aspect_letter] = (function (self) {
+        var end_input = this.add_numeric_tool_row_input(
+            context_key,
+            "fade_norm_end",
+            tool_row,
+            "fade_inputs",
+            "End",
+            "Fade End:",
+            0,
+            1
+        );
+        this.contexts[context_key]["all_elements"].push(end_input);
+        if (end_input.label) {
+            this.contexts[context_key]["all_elements"].push(end_input.label);
+        }
+        // var checkbox = (function (self) {
+        //     return new Dash.Gui.Checkbox(
+        //         "",
+        //         self.get_data()[data_key] || false,
+        //         self.color,
+        //         "Toggle",
+        //         self,
+        //         function (checkbox) {
+        //             self.set_data(data_key, checkbox.IsChecked());
+        //         },
+        //         label_text
+        //     );
+        // })(this);
+        //
+        // checkbox.html.css({
+        //     "margin-top": Dash.Size.Padding * 0.6,
+        //     "margin-left": Dash.Size.Padding
+        // });
+        //
+        // checkbox.label.label.css({
+        //     "font-family": "sans_serif_bold",
+        //     "font-size": "80%"
+        // });
+        //
+        this.contexts[context_key]["fade_checkbox"] = (function (self) {
+            return tool_row.AddCheckbox(
+                "Global:",
+                self.get_data()["fade_global"] || false,
+                function (checkbox) {
+                    self.set_data("fade_global", checkbox.IsChecked());
+                },
+                "",
+                "Toggle",
+                null,
+                false,
+                true
+            );
+        })(this);
+        this.contexts[context_key]["all_elements"].push(this.contexts[context_key]["fade_checkbox"]);
+        this.contexts[context_key]["html"].append(tool_row.html);
+        if (!this.get_value("fade_direction")) {
+            (function (self) {
+                requestAnimationFrame(function () {
+                    start_input.Disable();
+                    end_input.Disable();
+                    self.contexts[context_key]["fade_checkbox"].Disable();
+                });
+            })(this);
+        }
+    };
+    this.add_numeric_tool_row_input = function (context_key, data_key, tool_row, inputs_key, placeholder="", label_text="", min=null, max=null) {
+        if (!(inputs_key in this.contexts[context_key])) {
+            this.contexts[context_key][inputs_key] = {};
+        }
+        this.contexts[context_key][inputs_key][data_key] = (function (self) {
             return tool_row.AddInput(
-                aspect_letter.Title(),
-                "aspect_ratio_" + aspect_letter,
+                placeholder || data_key.Title(),
+                data_key,
                 Dash.Size.ColumnWidth * 0.25,
                 false,
                 function (value, input, additional_data) {
                     if (isNaN(value)) {
-                        alert("Aspect ratio values must be numbers");
+                        alert("Values must be numbers");
+                        return;
+                    }
+                    if (min !== null && value < min) {
+                        alert("Value must be at least " + min);
+                        return;
+                    }
+                    if (max !== null && value > max) {
+                        alert("Value cannot exceed " + max);
                         return;
                     }
                     self.set_data(additional_data["data_key"], value);
                 },
                 null,
                 self.can_edit,
-                aspect_letter === "w",
-                aspect_letter === "w" ? "Aspect Ratio:" : "",
+                Boolean(label_text),
+                label_text,
                 false,
                 false
             );
         })(this);
-        this.contexts[context_key]["aspect_inputs"][aspect_letter].html.css({
+        this.contexts[context_key][inputs_key][data_key].html.css({
             "background": this.color.Background
         });
-        this.contexts[context_key]["aspect_inputs"][aspect_letter].input.css({
+        this.contexts[context_key][inputs_key][data_key].input.css({
             "text-align": "center"
         });
-        return this.contexts[context_key]["aspect_inputs"][aspect_letter];
+        return this.contexts[context_key][inputs_key][data_key];
     };
     this.initialize_general_context = function (context_key) {
         var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
-        var combo_tool_row = this.get_combo(
+        var blend_mode_combo_tool_row = this.get_combo(
             context_key,
             [
                 {"id": "", "label_text": "Normal"},
@@ -32646,12 +32776,44 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             null,
             "Blend Mode cannot be visualized in this editor"
         );
-        combo_tool_row.html.css({
-            "margin-bottom": Dash.Size.Padding
-        });
+        var fade_direction_combo_tool_row = (function (self) {
+            return self.get_combo(
+                context_key,
+                [
+                    {"id": "", "label_text": "No Fade"},
+                    {"id": "to_right", "label_text": "Left to Right"},
+                    {"id": "to_left", "label_text": "Right to Left"},
+                    {"id": "to_bottom", "label_text": "Top to Bottom"},
+                    {"id": "to_top", "label_text": "Bottom to Top"}
+                ],
+                "fade_direction",
+                "",
+                function (selected_option) {
+                    for (var key in self.contexts[context_key]["fade_inputs"]) {
+                        if (selected_option["id"]) {
+                            self.contexts[context_key]["fade_inputs"][key].Enable();
+                        }
+                        else {
+                            self.contexts[context_key]["fade_inputs"][key].Disable();
+                        }
+                    }
+                    if (selected_option["id"]) {
+                        self.contexts[context_key]["fade_checkbox"].Enable();
+                    }
+                    else {
+                        self.contexts[context_key]["fade_checkbox"].Disable();
+                    }
+                }
+            );
+        })(this);
         var slider = this.get_slider(1, context_key, "opacity", 1.05);
+        slider.html.css({
+            "margin-top": Dash.Size.Padding
+        });
         this.contexts[context_key]["html"].append(input.html);
-        this.contexts[context_key]["html"].append(combo_tool_row.html);
+        this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
+        this.add_fade_tool_row(context_key);
         this.contexts[context_key]["html"].append(slider.html);
     };
     this.initialize_text_context = function (context_key) {
