@@ -22067,7 +22067,7 @@ function DashDocsView (package_id, ext, color_options={}) {
         if (!row || !row.list || !row.list.parent_row || !row.list.parent_row.id) {
             return parents;
         }
-        parents.push(row.list.parent_row.id.replace(row.list.sublist_row_tag, ""));
+        parents.push(row.list.parent_row.id.toString().replace(row.list.sublist_row_tag, ""));
         return this.get_parent_folder_names(row.list.parent_row, parents);
     };
     this.get_column_config = function () {
@@ -38857,9 +38857,9 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
     this.clear_sublist_preview_on_update = true;
-    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
-    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.startsWith(this.list.footer_row_tag) : false;
-    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
+    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.toString().startsWith(this.list.header_row_tag) : false;
+    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
+    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
     this.anim_delay = {
         "highlight_show": 100,
         "highlight_hide": 250,
@@ -39402,7 +39402,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
         else if (this.list_row.is_sublist) {
             if (this.index === 0) {
-                column_value = this.list_row.id.replace(this.list_row.list.sublist_row_tag, "");
+                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
             }
             else {
                 column_value = "";

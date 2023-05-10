@@ -173,7 +173,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
 
         else if (this.list_row.is_sublist) {
             if (this.index === 0) {
-                column_value = this.list_row.id.replace(this.list_row.list.sublist_row_tag, "");
+                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
             }
 
             else {

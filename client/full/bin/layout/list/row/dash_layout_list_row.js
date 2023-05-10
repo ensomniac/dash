@@ -18,9 +18,9 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
     this.clear_sublist_preview_on_update = true;
-    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.startsWith(this.list.header_row_tag) : false;
-    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.startsWith(this.list.footer_row_tag) : false;
-    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.startsWith(this.list.sublist_row_tag) : false;
+    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.toString().startsWith(this.list.header_row_tag) : false;
+    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
+    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
 
     this.anim_delay = {
         "highlight_show": 100,

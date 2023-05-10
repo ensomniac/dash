@@ -170,7 +170,7 @@ function DashDocsView (package_id, ext, color_options={}) {
             return parents;
         }
 
-        parents.push(row.list.parent_row.id.replace(row.list.sublist_row_tag, ""));
+        parents.push(row.list.parent_row.id.toString().replace(row.list.sublist_row_tag, ""));
 
         return this.get_parent_folder_names(row.list.parent_row, parents);
     };
