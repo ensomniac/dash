@@ -169,7 +169,7 @@ function DashFile () {
     };
 
     this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true) {
-        var html = $("<video src='" + url + "'></video>");
+        var html = $("<video src='" + url + "' crossorigin='anonymous'></video>");
 
         if (center_in_parent) {
             html.css(this.abs_center_css);
@@ -181,7 +181,7 @@ function DashFile () {
     };
 
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
-        var html = $("<audio src='" + url + "' controls></audio>");
+        var html = $("<audio src='" + url + "' crossorigin='anonymous' controls></audio>");
 
         if (center_in_parent) {
             html.css(this.abs_center_css);

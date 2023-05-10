@@ -18784,7 +18784,7 @@ function DashFile () {
         );
     };
     this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true) {
-        var html = $("<video src='" + url + "'></video>");
+        var html = $("<video src='" + url + "' crossorigin='anonymous'></video>");
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
@@ -18792,7 +18792,7 @@ function DashFile () {
         return html;
     };
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
-        var html = $("<audio src='" + url + "' controls></audio>");
+        var html = $("<audio src='" + url + "' crossorigin='anonymous' controls></audio>");
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
@@ -29237,6 +29237,23 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.html.css({"border": "1px solid " + this.highlight_color});
         }
         this.save_drag_state();
+    };
+    // TODO
+    this.update_fade_mask = function () {
+        var start_norm = this.get_value("fade_mask_start_norm") || 0.4;  // TODO: TEST
+        var end_norm = this.get_value("fade_mask_end_norm") || 0.6;  // TODO: TEST
+        var direction = this.get_value("fade_mask_direction") || "to_bottom";  // TODO: TEST
+        this.html.css({
+            "mask-image": (
+                "linear-gradient("
+                + direction.replaceAll("_", " ")
+                + ", rgba(255, 255, 255, 1.0) "
+                + (start_norm * 100)
+                + "%, rgba(255, 255, 255, 0.0) "
+                + (end_norm * 100)
+                + "%)"
+            )
+        });
     };
     this.on_rotate = function (rot_deg, force_save=false) {
         this.data["rot_deg"] = parseFloat(rot_deg);

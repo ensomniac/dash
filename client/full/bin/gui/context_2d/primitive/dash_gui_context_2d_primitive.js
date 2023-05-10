@@ -285,6 +285,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.save_drag_state();
     };
 
+    // TODO
+    this.update_fade_mask = function () {
+        var start_norm = this.get_value("fade_mask_start_norm") || 0.4;  // TODO: TEST
+        var end_norm = this.get_value("fade_mask_end_norm") || 0.6;  // TODO: TEST
+        var direction = this.get_value("fade_mask_direction") || "to_bottom";  // TODO: TEST
+
+        this.html.css({
+            "mask-image": (
+                "linear-gradient("
+                + direction.replaceAll("_", " ")
+                + ", rgba(255, 255, 255, 1.0) "
+                + (start_norm * 100)
+                + "%, rgba(255, 255, 255, 0.0) "
+                + (end_norm * 100)
+                + "%)"
+            )
+        });
+    };
+
     this.on_rotate = function (rot_deg, force_save=false) {
         this.data["rot_deg"] = parseFloat(rot_deg);
 
