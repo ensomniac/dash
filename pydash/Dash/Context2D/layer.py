@@ -253,31 +253,7 @@ class Layer:
         if not properties:
             return properties
 
-        if for_overrides:
-            from copy import deepcopy
-
-            old = deepcopy(properties)
-            properties = {}
-
-            for key in old:
-                if not key.endswith("_override"):
-                    raise ValueError(
-                        "'for_overrides' mode expects an overrides dict, where all keys end in '_override'"
-                    )
-
-                # Reformat the dict to not have "_override" keys
-                # so we can parse the properties as normal
-                properties[key.replace("_override", "")] = old[key]
-        else:
-            for key in properties:
-                if key.endswith("_override"):
-                    from Dash.Utils import ClientAlert
-
-                    raise ClientAlert(
-                        "As of writing, any overrides will have to be explicitly handled by "
-                        "the custom abstraction of Dash.Context2D. In the future, this "
-                        "can be baked into the core code if it makes sense to do so."
-                    )
+        properties = self.context_2d.parse_properties_for_override_tag(properties, for_overrides)
 
         # Should never happen, but just in case
         for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
@@ -302,23 +278,26 @@ class Layer:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key])
 
+        if self.context_2d.User and self.context_2d.User.get("email") == "stetandrew@gmail.com":
+            from Dash.Utils import SendDebugEmail
+
+            SendDebugEmail(f"PARSE PROPERTIES 1: {properties}")
+
         if "text_value" in properties and "display_name" not in properties:
             if self.data.get("display_name") == self.default_display_name or self.data["text_value"] == self.data["display_name"]:
                 # If the layer's name has not already been set manually by the user,
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
 
+        if self.context_2d.User and self.context_2d.User.get("email") == "stetandrew@gmail.com":
+            from Dash.Utils import SendDebugEmail
+
+            SendDebugEmail(f"PARSE PROPERTIES 2: {properties}")
+
         properties = self.context_2d.OnLayerSetProperties(self, properties, imported_context_layer_id)
 
         if for_overrides and retain_override_tag:
-            from copy import deepcopy
-
-            old = deepcopy(properties)
-            properties = {}
-
-            for key in old:
-                # Re-add the "_override" tag to each key
-                properties[f"{key}_override"] = old[key]
+            properties = self.context_2d.re_add_override_tag_to_properties(properties)
 
         return properties
 

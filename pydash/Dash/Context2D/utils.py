@@ -92,3 +92,46 @@ class Utils:
 
         if ext not in allowable_exts:
             raise ValueError(f"Invalid file extension ({ext}), expected: {allowable_exts}")
+
+    def parse_properties_for_override_tag(self, properties, for_overrides=False):
+        if for_overrides:
+            from copy import deepcopy
+
+            old = deepcopy(properties)
+            properties = {}
+
+            for key in old:
+                if not key.endswith("_override"):
+                    raise ValueError(
+                        "'for_overrides' mode expects an overrides dict, where all keys end in '_override'"
+                    )
+
+                # Reformat the dict to not have "_override" keys
+                # so we can parse the properties as normal
+                properties[key.replace("_override", "")] = old[key]
+
+            return properties
+
+        for key in properties:
+            if key.endswith("_override"):
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert(
+                    "As of writing, any overrides will have to be explicitly handled by "
+                    "the custom abstraction of Dash.Context2D. In the future, this "
+                    "can be baked into the core code if it makes sense to do so."
+                )
+
+        return properties
+
+    def re_add_override_tag_to_properties(self, properties):
+        from copy import deepcopy
+
+        old = deepcopy(properties)
+        properties = {}
+
+        for key in old:
+            # Re-add the "_override" tag to each key
+            properties[f"{key}_override"] = old[key]
+
+        return properties

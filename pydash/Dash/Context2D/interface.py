@@ -29,6 +29,8 @@ class Interface:
     add_layer: callable
     add_layer_from_file: callable
     validate_uploaded_file_ext: callable
+    parse_properties_for_override_tag: callable
+    re_add_override_tag_to_properties: callable
 
     def __init__(self):
         pass
@@ -96,19 +98,33 @@ class Interface:
         return self.SetProperties({key: value})
 
     def SetProperties(self, properties={}):
-        from json import loads
+        properties = self.ParseProperties(properties)
 
+        if not properties:
+            return self.ToDict()
+
+        self.Data.update(self.ParseProperties(properties))
+
+        return self.save().ToDict()
+
+    def ParseProperties(self, properties, for_overrides=False, retain_override_tag=True):
         if properties and type(properties) is str:
+            from json import loads
+
             properties = loads(properties)
 
         if "layers" in properties:  # This should never happen, but just in case
             del properties["layers"]
 
         if not properties:
-            return self.ToDict()
+            return properties
+
+        properties = self.parse_properties_for_override_tag(properties, for_overrides)
 
         if "layer_order" in properties:
             if type(properties["layer_order"]) is str:
+                from json import loads
+
                 properties["layer_order"] = loads(properties["layer_order"])
 
             if type(properties["layer_order"]) is not list:
@@ -141,9 +157,10 @@ class Interface:
             properties["aspect_ratio_w"] /= divisor
             properties["aspect_ratio_h"] /= divisor
 
-        self.Data.update(properties)
+        if for_overrides and retain_override_tag:
+            properties = self.re_add_override_tag_to_properties(properties)
 
-        return self.save().ToDict()
+        return properties
 
     def AddTextLayer(self):
         from .layer import Layer
