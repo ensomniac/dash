@@ -278,21 +278,11 @@ class Layer:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key])
 
-        if self.context_2d.User and self.context_2d.User.get("email") == "stetandrew@gmail.com":
-            from Dash.Utils import SendDebugEmail
-
-            SendDebugEmail(f"PARSE PROPERTIES 1: {properties}")
-
         if "text_value" in properties and "display_name" not in properties:
             if self.data.get("display_name") == self.default_display_name or self.data["text_value"] == self.data["display_name"]:
                 # If the layer's name has not already been set manually by the user,
                 # then auto-set the name based on the primitive's text change
                 properties["display_name"] = properties["text_value"]
-
-        if self.context_2d.User and self.context_2d.User.get("email") == "stetandrew@gmail.com":
-            from Dash.Utils import SendDebugEmail
-
-            SendDebugEmail(f"PARSE PROPERTIES 2: {properties}")
 
         properties = self.context_2d.OnLayerSetProperties(self, properties, imported_context_layer_id)
 
