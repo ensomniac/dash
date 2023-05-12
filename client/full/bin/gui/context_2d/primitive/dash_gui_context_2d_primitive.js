@@ -20,12 +20,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
-    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
+    this.highlight_color = this.editor.highlight_color;
     this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
 
@@ -462,19 +462,27 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
 
-                    self.editor.data = response;
+                    self.on_set_properties(response);
 
-                    // Is there a lighter way to achieve the same thing? maybe via Update()?
-                    if (self.type === "context" || self.parent_id) {
-                        self.canvas.RemoveAllPrimitives();
-
-                        self.editor.RedrawLayers(true);
+                    if (self.editor.linked_preview) {
+                        self.editor.linked_preview.canvas.primitives[self.id].on_set_properties(response);
                     }
                 },
                 self.editor.api,
                 params
             );
         })(this);
+    };
+
+    this.on_set_properties = function (response) {
+        this.editor.data = response;
+
+        // Is there a lighter way to achieve the same thing? maybe via Update()?
+        if (this.type === "context" || this.parent_id) {
+            this.canvas.RemoveAllPrimitives();
+
+            this.editor.RedrawLayers(true);
+        }
     };
 
     this.get_value = function (key, data=null, parent_data=null) {

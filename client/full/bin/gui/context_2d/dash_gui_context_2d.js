@@ -58,6 +58,7 @@ function DashGuiContext2D (
     this.initialized = false;
     this.editor_panel = null;
     this.ComboOptions = null;
+    this.linked_preview = null;
     this.on_duplicate_cb = null;
     this.loading_overlay = null;
     this.html = $("<div></div>");
@@ -66,6 +67,7 @@ function DashGuiContext2D (
     this.middle_pane_slider = null;
     this.min_width_extensions = {};
     this.min_height_extensions = {};
+    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
     this.editor_panel_property_box_custom_fields_cb = null;
@@ -179,6 +181,16 @@ function DashGuiContext2D (
 
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+
+    this.SetLinkedPreview = function (preview) {
+        if (!this.override_mode) {
+            console.warn("Warning: SetLinkedPreview only works in Override Mode");
+
+            return;
+        }
+
+        this.linked_preview = preview;
     };
 
     this.GetAspectRatio = function (calculated=false) {
@@ -348,7 +360,7 @@ function DashGuiContext2D (
         this.canvas = new DashGuiContext2DCanvas(this);
 
         if (this.preview_mode) {
-            new DashGuiContext2DEditorPanel(this);  // Instantiate only, don't store it
+            this.editor_panel = new DashGuiContext2DEditorPanel(this);
 
             this.html.append(this.canvas.html);
 
@@ -420,34 +432,36 @@ function DashGuiContext2D (
     };
 
     this.refresh_data = function () {
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
+        Dash.Request(
+            this,
+            this.on_data,
+            this.api,
+            {
+                "f": "get_data",
+                "obj_id": this.obj_id,
+                ...this.extra_request_params
+            }
+        );
+    };
 
-                    self.data = response;
+    this.on_data = function (response) {
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
 
-                    if (self.ComboOptions && !self.initialized) {
-                        self.initialize();
-                    }
+        this.data = response;
 
-                    console.log("Context2D data:", self.data);
+        if (this.ComboOptions && !this.initialized) {
+            this.initialize();
+        }
 
-                    if (self.initialized && self.editor_panel && !self.preview_mode) {
-                        self.editor_panel.UpdatePropertyBox();
-                    }
-                },
-                self.api,
-                {
-                    "f": "get_data",
-                    "obj_id": self.obj_id,
-                    ...self.extra_request_params
-                }
-            );
-        })(this);
+        if (!this.preview_mode) {
+            console.log("Context2D data:", this.data);
+        }
+
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdatePropertyBox();
+        }
     };
 
     this.get_combo_options = function (extra_params={}, callback=null) {
@@ -514,19 +528,10 @@ function DashGuiContext2D (
                         return;
                     }
 
-                    self.data = response;
+                    self.on_set_data(response, key, value, callback);
 
-                    // Aspect ratio change logging happens on canvas resize
-                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
-                        self.AddToLog(key.Title() + " set to: " + value);
-                    }
-
-                    if (self.editor_panel) {
-                        self.editor_panel.UpdatePropertyBox();
-                    }
-
-                    if (callback) {
-                        callback();
+                    if (self.linked_preview) {
+                        self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
                     }
                 },
                 self.api,
@@ -540,6 +545,23 @@ function DashGuiContext2D (
                 }
             );
         })(this);
+    };
+
+    this.on_set_data = function (response, key, value, callback=null) {
+        this.data = response;
+
+        // Aspect ratio change logging happens on canvas resize
+        if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
+            this.AddToLog(key.Title() + " set to: " + value);
+        }
+
+        if (this.editor_panel) {
+            this.editor_panel.UpdatePropertyBox();
+        }
+
+        if (callback) {
+            callback();
+        }
     };
 
     this.setup_styles();

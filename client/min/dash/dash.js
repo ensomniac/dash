@@ -27989,6 +27989,7 @@ function DashGuiContext2D (
     this.initialized = false;
     this.editor_panel = null;
     this.ComboOptions = null;
+    this.linked_preview = null;
     this.on_duplicate_cb = null;
     this.loading_overlay = null;
     this.html = $("<div></div>");
@@ -27997,6 +27998,7 @@ function DashGuiContext2D (
     this.middle_pane_slider = null;
     this.min_width_extensions = {};
     this.min_height_extensions = {};
+    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
     this.editor_panel_property_box_custom_fields_cb = null;
@@ -28086,6 +28088,13 @@ function DashGuiContext2D (
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+    this.SetLinkedPreview = function (preview) {
+        if (!this.override_mode) {
+            console.warn("Warning: SetLinkedPreview only works in Override Mode");
+            return;
+        }
+        this.linked_preview = preview;
     };
     this.GetAspectRatio = function (calculated=false) {
         var aspect;
@@ -28225,7 +28234,7 @@ function DashGuiContext2D (
         });
         this.canvas = new DashGuiContext2DCanvas(this);
         if (this.preview_mode) {
-            new DashGuiContext2DEditorPanel(this);  // Instantiate only, don't store it
+            this.editor_panel = new DashGuiContext2DEditorPanel(this);
             this.html.append(this.canvas.html);
             (function (self) {
                 requestAnimationFrame(function () {
@@ -28280,30 +28289,31 @@ function DashGuiContext2D (
         this.loading_overlay.Hide();
     };
     this.refresh_data = function () {
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-                    self.data = response;
-                    if (self.ComboOptions && !self.initialized) {
-                        self.initialize();
-                    }
-                    console.log("Context2D data:", self.data);
-                    if (self.initialized && self.editor_panel && !self.preview_mode) {
-                        self.editor_panel.UpdatePropertyBox();
-                    }
-                },
-                self.api,
-                {
-                    "f": "get_data",
-                    "obj_id": self.obj_id,
-                    ...self.extra_request_params
-                }
-            );
-        })(this);
+        Dash.Request(
+            this,
+            this.on_data,
+            this.api,
+            {
+                "f": "get_data",
+                "obj_id": this.obj_id,
+                ...this.extra_request_params
+            }
+        );
+    };
+    this.on_data = function (response) {
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+        this.data = response;
+        if (this.ComboOptions && !this.initialized) {
+            this.initialize();
+        }
+        if (!this.preview_mode) {
+            console.log("Context2D data:", this.data);
+        }
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdatePropertyBox();
+        }
     };
     this.get_combo_options = function (extra_params={}, callback=null) {
         (function (self) {
@@ -28357,16 +28367,9 @@ function DashGuiContext2D (
                     if (!Dash.Validate.Response(response)) {
                         return;
                     }
-                    self.data = response;
-                    // Aspect ratio change logging happens on canvas resize
-                    if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
-                        self.AddToLog(key.Title() + " set to: " + value);
-                    }
-                    if (self.editor_panel) {
-                        self.editor_panel.UpdatePropertyBox();
-                    }
-                    if (callback) {
-                        callback();
+                    self.on_set_data(response, key, value, callback);
+                    if (self.linked_preview) {
+                        self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
                     }
                 },
                 self.api,
@@ -28381,12 +28384,25 @@ function DashGuiContext2D (
             );
         })(this);
     };
+    this.on_set_data = function (response, key, value, callback=null) {
+        this.data = response;
+        // Aspect ratio change logging happens on canvas resize
+        if (key !== "aspect_ratio_w" && key !== "aspect_ratio_h" && key !== "layer_order") {
+            this.AddToLog(key.Title() + " set to: " + value);
+        }
+        if (this.editor_panel) {
+            this.editor_panel.UpdatePropertyBox();
+        }
+        if (callback) {
+            callback();
+        }
+    };
     this.setup_styles();
 }
 
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
-    this.primitives = [];
+    this.primitives = {};
     this.active_tool = "";
     this.last_aspect_ratio = null;
     this.html = $("<div></div>");
@@ -29041,12 +29057,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
     this.editor = this.canvas.editor;
-    this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
+    this.highlight_color = this.editor.highlight_color;
     this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
@@ -29380,17 +29396,23 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     if (!Dash.Validate.Response(response)) {
                         return;
                     }
-                    self.editor.data = response;
-                    // Is there a lighter way to achieve the same thing? maybe via Update()?
-                    if (self.type === "context" || self.parent_id) {
-                        self.canvas.RemoveAllPrimitives();
-                        self.editor.RedrawLayers(true);
+                    self.on_set_properties(response);
+                    if (self.editor.linked_preview) {
+                        self.editor.linked_preview.canvas.primitives[self.id].on_set_properties(response);
                     }
                 },
                 self.editor.api,
                 params
             );
         })(this);
+    };
+    this.on_set_properties = function (response) {
+        this.editor.data = response;
+        // Is there a lighter way to achieve the same thing? maybe via Update()?
+        if (this.type === "context" || this.parent_id) {
+            this.canvas.RemoveAllPrimitives();
+            this.editor.RedrawLayers(true);
+        }
     };
     this.get_value = function (key, data=null, parent_data=null) {
         data = data || this.data;
@@ -30418,7 +30440,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.set_data = this.editor.set_data.bind(this.editor);
     this.setup_styles = function () {
         if (this.preview_mode) {
-            new DashGuiContext2DEditorPanelLayers(this);  // Instantiate only, don't store it
+            this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
             return;
         }
         var abs_css = {
@@ -30512,6 +30534,9 @@ function DashGuiContext2DEditorPanel (editor) {
         this.layers_box.AddLayer(primitive_type, primitive_file_data);
     };
     this.UpdatePropertyBox = function () {
+        if (this.preview_mode) {
+            return;
+        }
         if (!this.editor.CanvasSizeInitialized()) {
             this.editor.ResizeCanvas();
         }
@@ -30963,7 +30988,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
     };
     this.Select = function (from_canvas=false) {
-        if (this.selected) {
+        if (this.selected || this.preview_mode) {
             return;
         }
         this.layers.DeselectLayers();
@@ -31020,9 +31045,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                     "linked",
                     linked,
                     function () {
-                        self.ToggleHidden(self.get_value("hidden"));
-                        self.ToggleLocked(self.get_value("locked"));
+                        var hidden = self.get_value("hidden");
+                        var locked = self.get_value("locked");
+                        self.ToggleHidden(hidden);
+                        self.ToggleLocked(locked);
                         self.UpdateLabel();
+                        if (self.editor.linked_preview) {
+                            var layer = self.editor.linked_preview.editor_panel.layers_box.layers[self.id];
+                            layer.ToggleHidden(hidden);
+                            layer.ToggleLocked(locked);
+                            layer.UpdateLabel();
+                        }
                     }
                 );
             })(this);
@@ -31096,9 +31129,15 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         })(this);
     };
     this.UpdateLabel = function () {
+        if (this.preview_mode) {
+            return;
+        }
         this.input.SetText(this.get_value("display_name"));
     };
     this.UpdateTintColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
         var tint_color = this.get_value("tint_color");
         this.html.css({
             "border-left": this.color_border_size + "px solid " + (tint_color || "rgba(0, 0, 0, 0)")
@@ -31375,6 +31414,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     parent_id,
                     function () {
                         self.on_delete(id);
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box.on_delete(id);
+                        }
                     }
                 );
             }
@@ -31383,6 +31425,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     order,
                     function () {
                         self.on_delete(id);
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box.on_delete(id);
+                        }
                     }
                 );
             }
@@ -31515,6 +31560,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     parent_id,
                     function () {
                         self._on_move(id);
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box._on_move(id);
+                        }
                     }
                 );
             }
@@ -31523,6 +31571,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     order,
                     function () {
                         self._on_move(id);
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box._on_move(id);
+                        }
                     }
                 );
             }
@@ -31531,7 +31582,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.on_delete = function (id) {
         this.redraw_layers();
         this.editor.RemoveCanvasPrimitive(id);
-        this.panel.SwitchContentToNewTab();
+        if (!this.preview_mode) {
+            this.panel.SwitchContentToNewTab();
+        }
     };
     this.get_data = function (parent_id="") {
         var layers = this.editor.data["layers"];
@@ -31612,6 +31665,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self,
                 function (response) {
                     self.on_set_layer_property(response, key, value, id, parent_id);
+                    if (self.editor.linked_preview) {
+                        self.editor.linked_preview.editor_panel.layers_box.on_set_layer_property(
+                            response, key, value, id, parent_id
+                        );
+                    }
                     if (callback) {
                         callback();
                     }
@@ -31623,7 +31681,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     };
     this.on_set_layer_property = function (response, key, value, id, parent_id="") {
         if (!Dash.Validate.Response(response)) {
-            this.toolbar.ReEnableToggle(key);
+            if (!this.preview_mode) {
+                this.toolbar.ReEnableToggle(key);
+            }
             return;
         }
         this.on_data(response);
@@ -31648,9 +31708,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.editor.AddToLog("[" + display_name + "] Set " + "'" + key + "' to '" + value + "'");
             this.editor.UpdateCanvasPrimitive(key, value, id);
         }
-        this.toolbar.ReEnableToggle(key);
-        if (key === "hidden" || key === "locked") {
-            this.panel.RedrawCurrentContentTab();
+        if (!this.preview_mode) {
+            this.toolbar.ReEnableToggle(key);
+            if (key === "hidden" || key === "locked") {
+                this.panel.RedrawCurrentContentTab();
+            }
         }
     };
     this.redraw_layers = function (select=false, redraw_primitives=false) {

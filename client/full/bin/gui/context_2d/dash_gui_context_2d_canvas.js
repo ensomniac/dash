@@ -1,7 +1,7 @@
 function DashGuiContext2DCanvas (editor) {
     this.editor = editor;
 
-    this.primitives = [];
+    this.primitives = {};
     this.active_tool = "";
     this.last_aspect_ratio = null;
     this.html = $("<div></div>");

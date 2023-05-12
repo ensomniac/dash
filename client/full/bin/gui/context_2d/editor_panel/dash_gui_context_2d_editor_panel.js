@@ -33,7 +33,7 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.setup_styles = function () {
         if (this.preview_mode) {
-            new DashGuiContext2DEditorPanelLayers(this);  // Instantiate only, don't store it
+            this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
 
             return;
         }
@@ -155,6 +155,10 @@ function DashGuiContext2DEditorPanel (editor) {
     };
 
     this.UpdatePropertyBox = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
         if (!this.editor.CanvasSizeInitialized()) {
             this.editor.ResizeCanvas();
         }

@@ -151,6 +151,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     parent_id,
                     function () {
                         self.on_delete(id);
+
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box.on_delete(id);
+                        }
                     }
                 );
             }
@@ -160,6 +164,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     order,
                     function () {
                         self.on_delete(id);
+
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box.on_delete(id);
+                        }
                     }
                 );
             }
@@ -345,6 +353,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     parent_id,
                     function () {
                         self._on_move(id);
+
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box._on_move(id);
+                        }
                     }
                 );
             }
@@ -354,6 +366,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                     order,
                     function () {
                         self._on_move(id);
+
+                        if (self.editor.linked_preview) {
+                            self.editor.linked_preview.editor_panel.layers_box._on_move(id);
+                        }
                     }
                 );
             }
@@ -365,7 +381,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.editor.RemoveCanvasPrimitive(id);
 
-        this.panel.SwitchContentToNewTab();
+        if (!this.preview_mode) {
+            this.panel.SwitchContentToNewTab();
+        }
     };
 
     this.get_data = function (parent_id="") {
@@ -473,6 +491,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 function (response) {
                     self.on_set_layer_property(response, key, value, id, parent_id);
 
+                    if (self.editor.linked_preview) {
+                        self.editor.linked_preview.editor_panel.layers_box.on_set_layer_property(
+                            response, key, value, id, parent_id
+                        );
+                    }
+
                     if (callback) {
                         callback();
                     }
@@ -485,7 +509,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
     this.on_set_layer_property = function (response, key, value, id, parent_id="") {
         if (!Dash.Validate.Response(response)) {
-            this.toolbar.ReEnableToggle(key);
+            if (!this.preview_mode) {
+                this.toolbar.ReEnableToggle(key);
+            }
 
             return;
         }
@@ -520,10 +546,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.editor.UpdateCanvasPrimitive(key, value, id);
         }
 
-        this.toolbar.ReEnableToggle(key);
+        if (!this.preview_mode) {
+            this.toolbar.ReEnableToggle(key);
 
-        if (key === "hidden" || key === "locked") {
-            this.panel.RedrawCurrentContentTab();
+            if (key === "hidden" || key === "locked") {
+                this.panel.RedrawCurrentContentTab();
+            }
         }
     };
 

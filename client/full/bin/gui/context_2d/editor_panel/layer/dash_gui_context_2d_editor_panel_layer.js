@@ -153,7 +153,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.Select = function (from_canvas=false) {
-        if (this.selected) {
+        if (this.selected || this.preview_mode) {
             return;
         }
 
@@ -230,9 +230,20 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                     "linked",
                     linked,
                     function () {
-                        self.ToggleHidden(self.get_value("hidden"));
-                        self.ToggleLocked(self.get_value("locked"));
+                        var hidden = self.get_value("hidden");
+                        var locked = self.get_value("locked");
+
+                        self.ToggleHidden(hidden);
+                        self.ToggleLocked(locked);
                         self.UpdateLabel();
+
+                        if (self.editor.linked_preview) {
+                            var layer = self.editor.linked_preview.editor_panel.layers_box.layers[self.id];
+
+                            layer.ToggleHidden(hidden);
+                            layer.ToggleLocked(locked);
+                            layer.UpdateLabel();
+                        }
                     }
                 );
             })(this);
@@ -326,10 +337,18 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.UpdateLabel = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
         this.input.SetText(this.get_value("display_name"));
     };
 
     this.UpdateTintColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
         var tint_color = this.get_value("tint_color");
 
         this.html.css({
