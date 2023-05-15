@@ -357,7 +357,28 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.add_type_icon = function () {
-        var type_icon = this.get_icon(this.get_type_icon_name());
+        var type_icon = (function (self) {
+            return new Dash.Gui.CopyButton(
+                self,
+                function () {
+                    return self.id;
+                },
+                self.icon_size_mult,
+                Dash.Size.RowHeight,
+                "default",
+                self.get_type_icon_name(),
+                self.color
+            );
+        })(this);
+
+        type_icon.SetIconColor(this.icon_color);
+
+        type_icon.html.css({
+            "margin-top": Dash.Size.Padding * 0.1
+        });
+
+        type_icon.html.attr("title", "Copy Layer ID");
+
         var css = {"margin-right": Dash.Size.Padding * 0.5};
 
         if (this.parent_id) {

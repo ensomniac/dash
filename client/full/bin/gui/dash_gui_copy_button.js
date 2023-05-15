@@ -8,6 +8,7 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
     this.color = color || binder.color || Dash.Color.Light;
 
     this.button = null;
+    this.icon_color = null;
     this.html = $("<div></div>");
     this.label = $("<div>Copied!</div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -30,6 +31,12 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
         );
 
         this.html.append(this.button.html);
+    };
+
+    this.SetIconColor = function (color) {
+        this.button.SetIconColor(color);
+
+        this.icon_color = color;
     };
 
     this.add_label = function () {
@@ -82,25 +89,23 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
         this.button.SetIconColor(this.color.Button.Background.Selected);
 
         (function (self) {
-            navigator.clipboard.writeText(text).then(
-                function () {
-                    console.log("Copied '" + text + "' to clipboard");
+            navigator.clipboard.writeText(text).then(function () {
+                console.log("Copied '" + text + "' to clipboard");
 
-                    self.label.stop().fadeIn(
-                        "fast",
-                        function () {
-                            self.button.SetIconColor(self.color.Button.Background.Base);
+                self.label.stop().fadeIn(
+                    "fast",
+                    function () {
+                        self.button.SetIconColor(self.icon_color || self.color.Button.Background.Base);
 
-                            setTimeout(
-                                function () {
-                                    self.label.stop().fadeOut("slow");
-                                },
-                                1250
-                            );
-                        }
-                    );
-                }
-            );
+                        setTimeout(
+                            function () {
+                                self.label.stop().fadeOut("slow");
+                            },
+                            1250
+                        );
+                    }
+                );
+            });
         })(this);
     };
 

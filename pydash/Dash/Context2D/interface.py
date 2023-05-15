@@ -196,7 +196,8 @@ class Interface:
 
         return self.ToDict()
 
-    # TODO: When importing context with different aspect ratio, need to recalculate norms so everything is still positioned properly - how?
+    # TODO: When importing context with different aspect ratio, need
+    #  to recalculate norms so everything is still positioned properly - how?
     def ImportAnotherContext(self, obj_id_to_import):
         from .layer import Layer
 
@@ -205,6 +206,58 @@ class Interface:
             new_layer_type="context",
             new_layer_imported_context_id=obj_id_to_import
         ))
+
+    # As of writing, just for manual testing (not available in the interface)
+    def CopyLayerToAnotherContext(self, dest_obj_id, source_layer_id):
+        source_layer_root = os.path.join(self.LayersRoot, source_layer_id)
+
+        if not os.path.exists(source_layer_root):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Source layer doesn't exist, expected: {source_layer_root}")
+
+        from . import Context2D
+
+        dest_c2d = Context2D(
+            user_data=self.User,
+            context_2d_root=self.Context2DRoot,
+            obj_id=dest_obj_id,
+            dash_context=self.DashContext
+        )
+
+        if not os.path.exists(dest_c2d.ObjRoot):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Dest C2D doesn't exist, expected: {dest_c2d.ObjRoot}")
+
+        from shutil import move
+        from Dash.LocalStorage import Duplicate, RecursivelyReplaceIDInRoot, Read
+
+        os.makedirs(dest_c2d.LayersRoot, exist_ok=True)
+
+        new_layer_id = Duplicate(
+            dash_context=self.DashContext,
+            store_path=self.LayersRoot,
+            id_to_duplicate=source_layer_id,
+            display_name_tag="",
+            nested=True
+        )["id"]
+
+        new_layer_dest_root = os.path.join(dest_c2d.LayersRoot, new_layer_id)
+
+        move(
+            os.path.join(self.LayersRoot, new_layer_id),
+            new_layer_dest_root
+        )
+
+        log = RecursivelyReplaceIDInRoot(new_layer_dest_root, self.ID, dest_obj_id)
+
+        dest_c2d.SetProperty("layer_order", [*dest_c2d.LayerOrder, new_layer_id])
+
+        return {
+            "data": Read(os.path.join(new_layer_dest_root, "data.json")),
+            "log": log
+        }
 
     # --------------------------------- OVERRIDES ---------------------------------
 

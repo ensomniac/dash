@@ -117,7 +117,7 @@ class DashLocalStorage:
         if not self.nested:
             return new_data
 
-        self.recursively_replace_id_in_root(self.get_data_root(new_id), id_to_duplicate, new_id)
+        self.RecursivelyReplaceIDInRoot(self.get_data_root(new_id), id_to_duplicate, new_id)
 
         return new_data
 
@@ -646,30 +646,49 @@ class DashLocalStorage:
             "modified_on": datetime.now().isoformat()
         }
 
-    def recursively_replace_id_in_root(self, root, old_id, new_id):
+    def RecursivelyReplaceIDInRoot(self, root, old_id, new_id):
+        log = [f"old: {old_id}, new: {new_id}"]
+
         if not os.path.exists(root):
-            return
+            log.append(f"Root doesn't exist: {root}")
+
+            return log
 
         for filename in os.listdir(root):
             path = os.path.join(root, filename)
 
+            log.append(f"{filename}: {path}")
+
             if filename.endswith(".json"):
-                data, modified = self.recursively_replace_id_in_data(self.Read(path), old_id, new_id)
+                data, modified, log = self.recursively_replace_id_in_data(self.Read(path), old_id, new_id, log)
+
+                log.append(f"modified: {modified}")
 
                 if modified:
                     self.Write(path, data)
 
             elif os.path.isdir(path):
-                self.recursively_replace_id_in_root(path, old_id, new_id)
+                log.append("is dir, recurse")
+
+                self.RecursivelyReplaceIDInRoot(path, old_id, new_id)
+
+            else:
+                log.append("skipped/missed")
 
             if old_id in filename:
+                log.append("rename file")
+
                 os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
 
-    def recursively_replace_id_in_data(self, data, old_id, new_id):
+        return log
+
+    def recursively_replace_id_in_data(self, data, old_id, new_id, log):
         modified = False
 
+        log.append(f"json: {data}")
+
         if not data:
-            return data, modified
+            return data, modified, log
 
         key_changes = []
 
@@ -677,12 +696,44 @@ class DashLocalStorage:
             if key == "_duplicated_from":
                 continue
 
+            log.append(f"key: {key}")
+
             if old_id in key:
                 key_changes.append(key)
 
             value = data.get(key)
 
-            if not value or type(value) is not str or old_id not in value:
+            if not value:
+                log.append("continue")
+
+                continue
+
+            t = type(value)
+
+            if t is dict:
+                log.append("recurse")
+
+                value, modified, log = self.recursively_replace_id_in_data(value, old_id, new_id, log)
+
+                data[key] = value
+
+                continue
+
+            if t is list:
+                if old_id not in value:
+                    continue
+
+                value[value.index(old_id)] = new_id
+
+                data[key] = value
+
+                modified = True
+
+                continue
+
+            if t is not str or old_id not in value:
+                log.append("continue")
+
                 continue
 
             data[key] = value.replace(old_id, new_id)
@@ -694,7 +745,9 @@ class DashLocalStorage:
 
             modified = True
 
-        return data, modified
+        log.append(f"key changes: {key_changes}")
+
+        return data, modified, log
 
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
@@ -767,3 +820,7 @@ def ConformPermissions(full_path):
 
 def ConvertToNested(dash_context, store_path):
     return DashLocalStorage(dash_context, store_path).ConvertToNested()
+
+
+def RecursivelyReplaceIDInRoot(root, old_id, new_id):
+    return DashLocalStorage().RecursivelyReplaceIDInRoot(root, old_id, new_id)

@@ -24398,6 +24398,7 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
     this.icon_name = icon_name;
     this.color = color || binder.color || Dash.Color.Light;
     this.button = null;
+    this.icon_color = null;
     this.html = $("<div></div>");
     this.label = $("<div>Copied!</div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -24417,6 +24418,10 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
             }
         );
         this.html.append(this.button.html);
+    };
+    this.SetIconColor = function (color) {
+        this.button.SetIconColor(color);
+        this.icon_color = color;
     };
     this.add_label = function () {
         this.label.css({
@@ -24462,23 +24467,21 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
         var text = this.getter_cb();
         this.button.SetIconColor(this.color.Button.Background.Selected);
         (function (self) {
-            navigator.clipboard.writeText(text).then(
-                function () {
-                    console.log("Copied '" + text + "' to clipboard");
-                    self.label.stop().fadeIn(
-                        "fast",
-                        function () {
-                            self.button.SetIconColor(self.color.Button.Background.Base);
-                            setTimeout(
-                                function () {
-                                    self.label.stop().fadeOut("slow");
-                                },
-                                1250
-                            );
-                        }
-                    );
-                }
-            );
+            navigator.clipboard.writeText(text).then(function () {
+                console.log("Copied '" + text + "' to clipboard");
+                self.label.stop().fadeIn(
+                    "fast",
+                    function () {
+                        self.button.SetIconColor(self.icon_color || self.color.Button.Background.Base);
+                        setTimeout(
+                            function () {
+                                self.label.stop().fadeOut("slow");
+                            },
+                            1250
+                        );
+                    }
+                );
+            });
         })(this);
     };
     this.setup_styles();
@@ -31144,7 +31147,24 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
     };
     this.add_type_icon = function () {
-        var type_icon = this.get_icon(this.get_type_icon_name());
+        var type_icon = (function (self) {
+            return new Dash.Gui.CopyButton(
+                self,
+                function () {
+                    return self.id;
+                },
+                self.icon_size_mult,
+                Dash.Size.RowHeight,
+                "default",
+                self.get_type_icon_name(),
+                self.color
+            );
+        })(this);
+        type_icon.SetIconColor(this.icon_color);
+        type_icon.html.css({
+            "margin-top": Dash.Size.Padding * 0.1
+        });
+        type_icon.html.attr("title", "Copy Layer ID");
         var css = {"margin-right": Dash.Size.Padding * 0.5};
         if (this.parent_id) {
             css["margin-left"] = this.child_left_margin;

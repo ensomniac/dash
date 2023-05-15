@@ -73,3 +73,7 @@ def AddVideoLayer(user_data, context_2d_root, obj_id, dash_context, file, filena
 
 def ImportAnotherContext(user_data, context_2d_root, obj_id, obj_id_to_import):
     return Context2D(user_data, context_2d_root, obj_id).ImportAnotherContext(obj_id_to_import)
+
+
+def CopyLayerToAnotherContext(user_data, context_2d_root, source_obj_id, dest_obj_id, source_layer_id):
+    return Context2D(user_data, context_2d_root, source_obj_id).CopyLayerToAnotherContext(dest_obj_id, source_layer_id)
