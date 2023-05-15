@@ -250,14 +250,11 @@ class Interface:
             new_layer_dest_root
         )
 
-        log = RecursivelyReplaceIDInRoot(new_layer_dest_root, self.ID, dest_obj_id)
+        RecursivelyReplaceIDInRoot(new_layer_dest_root, self.ID, dest_obj_id)
 
         dest_c2d.SetProperty("layer_order", [*dest_c2d.LayerOrder, new_layer_id])
 
-        return {
-            "data": Read(os.path.join(new_layer_dest_root, "data.json")),
-            "log": log
-        }
+        return Read(os.path.join(new_layer_dest_root, "data.json"))
 
     # --------------------------------- OVERRIDES ---------------------------------
 
