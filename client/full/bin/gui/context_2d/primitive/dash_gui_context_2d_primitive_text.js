@@ -331,15 +331,15 @@ function DashGuiContext2DPrimitiveText () {
     };
 
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.text_area.html.hide();
-        }
-
-        else {
-            this.text_area.html.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.text_area.html.hide();
+    //     }
+    //
+    //     else {
+    //         this.text_area.html.show();
+    //     }
+    // };
 
     this._setup_styles();
 }

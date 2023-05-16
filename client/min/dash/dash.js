@@ -29187,14 +29187,27 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (from_click && this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
             return;
         }
+        var locked = this.get_value("locked");
+        if (from_click && locked) {
+            return;
+        }
         this.canvas.DeselectAllPrimitives();
         var css = border ? {"border": "1px solid " + this.highlight_color} : {};
         if (this.type === "context") {
             css["pointer-events"] = "none";
         }
+        // When a layer is hovered in the layer stack, it adds +0.1 to the brightness
+        // to indicate in the canvas which layer is hovered over in the layer stack,
+        // so when selected, we want to remove that slight highlight
+        if (this.hasOwnProperty("update_filter")) {
+            this.update_filter(this.get_value("brightness"));
+        }
+        else {
+            css["filter"] = "brightness(" + (this.get_value("brightness") || 1.0) + ")";
+        }
         this.html.css(css);
         this.canvas.OnPrimitiveSelected(this, from_click);
-        if (!this.get_value("locked") && this.type === "text") {
+        if (!locked && this.type === "text") {
             this.unlock_text_area();
             this.focus_text_area();
         }
@@ -29477,14 +29490,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_hidden_change = function (hidden) {
-        if (this.type !== "context") {
-            console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
-            if (hidden) {
-                this.html.hide();
-            }
-            else {
-                this.html.show();
-            }
+        if (this.type === "context") {
+            return;
+        }
+        // console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+        if (hidden) {
+            this.html.hide();
+        }
+        else {
+            this.html.show();
         }
     };
     // Meant to be overridden by member classes
@@ -29662,8 +29676,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         (function (self) {
-            self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_check=false) {
-                if (!_skip_check && self.check_if_transparent_image_pixel("click", _event_override || event, _previous_layer_index)) {
+            self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_checks=false) {
+                if (!_skip_checks && (
+                       self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
+                    || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)
+                )) {
                     self.Deselect();
                     return;
                 }
@@ -29673,7 +29690,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             // TODO: This does not pass through the transparent part of
-            //  and image like the click event does, because it's very
+            //  an image like the click event does, because it's very
             //  complicated and I've spent enough time for now on getting
             //  the click pass-through to work, so need to leave it for now.
             self.html.on("mousedown", function () {
@@ -29681,7 +29698,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             });
         })(this);
     };
-    this.check_if_transparent_image_pixel = function (type, event, previous_layer_index=null) {
+    this.click_next_layer_if_hidden = function (event, previous_layer_index=null) {
+        if (!this.get_value("hidden") && this.get_value("opacity")) {
+            return false;
+        }
+        var [next_layer, layer_index] = self.get_next_primitive_and_index(event, previous_layer_index);
+        if (next_layer) {  // Click the next layer
+            $(next_layer).trigger("click", [event, layer_index]);
+        }
+        // Even if no next layer, we don't want to follow through
+        // with the original click, since the layer is hidden
+        return true;
+    };
+    this.click_next_layer_if_transparent_image_pixel = function (event, previous_layer_index=null) {
         if (this.type !== "image") {
             return false;
         }
@@ -29714,41 +29743,45 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 catch {
                     // Pass
                 }
-                // Check if clicked pixel is transparent
+                // If clicked pixel is transparent
                 if (img_data && img_data[3] === 0) {
-                    var elements = document.elementsFromPoint(event.clientX, event.clientY);
-                    for (var i in elements) {
-                        if (previous_layer_index !== null && parseInt(i) <= previous_layer_index) {
-                            continue;
-                        }
-                        var element = elements[i];
-                        var parent = $(element).parent()[0];
-                        if (parent === self.html[0] || element === self.html[0]) {
-                            continue;
-                        }
-                        if (element === self.canvas.html[0] || parent === self.canvas.html[0]) {
-                            break;
-                        }
-                        if ($(element).attr("class") !== "DashGuiContext2DPrimitive") {
-                            continue;
-                        }
-                        next_layer = element;
-                        layer_index = parseInt(i);
-                        break;
-                    }
+                    [next_layer, layer_index] = self.get_next_primitive_and_index(event, previous_layer_index);
                 }
-                if (next_layer) {
-                    // Click the next layer
-                    $(next_layer).trigger(type, [event, layer_index]);
+                if (next_layer) {  // Click the next layer
+                    $(next_layer).trigger("click", [event, layer_index]);
                 }
-                else {
-                    // Re-trigger the click without checking for transparency
-                    self.html.trigger(type, [event, null, true]);
+                else {  // Re-trigger the click without checking for transparency
+                    self.html.trigger("click", [event, null, true]);
                 }
                 return true;
             };
         })(this);
         return false;
+    };
+    this.get_next_primitive_and_index = function (event, previous_layer_index=null) {
+        var next_primitive = null;
+        var primitive_index = null;
+        var elements = document.elementsFromPoint(event.clientX, event.clientY);
+        for (var i in elements) {
+            if (previous_layer_index !== null && parseInt(i) <= previous_layer_index) {
+                continue;
+            }
+            var element = elements[i];
+            var parent = $(element).parent()[0];
+            if (parent === this.html[0] || element === this.html[0]) {
+                continue;
+            }
+            if (element === this.canvas.html[0] || parent === this.canvas.html[0]) {
+                break;
+            }
+            if ($(element).attr("class") !== "DashGuiContext2DPrimitive") {
+                continue;
+            }
+            next_primitive = element;
+            primitive_index = parseInt(i);
+            break;
+        }
+        return [next_primitive, primitive_index];
     };
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
@@ -30032,14 +30065,15 @@ function DashGuiContext2DPrimitiveText () {
         }
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.text_area.html.hide();
-        }
-        else {
-            this.text_area.html.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.text_area.html.hide();
+    //     }
+    //
+    //     else {
+    //         this.text_area.html.show();
+    //     }
+    // };
     this._setup_styles();
 }
 
@@ -30109,14 +30143,15 @@ function DashGuiContext2DPrimitiveColor () {
         });
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.color.hide();
-        }
-        else {
-            this.color.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.color.hide();
+    //     }
+    //
+    //     else {
+    //         this.color.show();
+    //     }
+    // };
     this._setup_styles();
 }
 
@@ -30371,25 +30406,28 @@ function DashGuiContext2DPrimitiveMedia () {
         });
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (!this.media) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_hidden_change(hidden);
-                    },
-                    10
-                );
-            })(this);
-            return;
-        }
-        if (hidden) {
-            this.media.hide();
-        }
-        else {
-            this.media.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (!this.media) {
+    //         (function (self) {
+    //             setTimeout(
+    //                 function () {
+    //                     self.on_hidden_change(hidden);
+    //                 },
+    //                 10
+    //             );
+    //         })(this);
+    //
+    //         return;
+    //     }
+    //
+    //     if (hidden) {
+    //         this.media.hide();
+    //     }
+    //
+    //     else {
+    //         this.media.show();
+    //     }
+    // };
     // Override
     this.on_locked_change = function (locked) {
         if (this.type !== "video") {
@@ -31115,9 +31153,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             self.html.on("mouseleave", function () {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
-                    primitive.html.css({
-                        "border": "1px solid rgba(0, 0, 0, 0)"
-                    });
                     var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
                     if (primitive.hasOwnProperty("update_filter")) {
                         primitive.update_filter(primitive.get_value("brightness"));

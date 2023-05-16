@@ -304,28 +304,28 @@ function DashGuiContext2DPrimitiveMedia () {
     };
 
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (!this.media) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_hidden_change(hidden);
-                    },
-                    10
-                );
-            })(this);
-
-            return;
-        }
-
-        if (hidden) {
-            this.media.hide();
-        }
-
-        else {
-            this.media.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (!this.media) {
+    //         (function (self) {
+    //             setTimeout(
+    //                 function () {
+    //                     self.on_hidden_change(hidden);
+    //                 },
+    //                 10
+    //             );
+    //         })(this);
+    //
+    //         return;
+    //     }
+    //
+    //     if (hidden) {
+    //         this.media.hide();
+    //     }
+    //
+    //     else {
+    //         this.media.show();
+    //     }
+    // };
 
     // Override
     this.on_locked_change = function (locked) {

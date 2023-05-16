@@ -310,10 +310,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
 
                 if (!primitive.selected) {
-                    primitive.html.css({
-                        "border": "1px solid rgba(0, 0, 0, 0)"
-                    });
-
                     var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
 
                     if (primitive.hasOwnProperty("update_filter")) {
