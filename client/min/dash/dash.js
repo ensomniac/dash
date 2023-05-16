@@ -31054,7 +31054,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.panel.UpdatePropertyBoxToolSlider("", this);
         }
         this.panel.SwitchContentToEditTab();
-        this.html[0].scrollIntoView();
+        if (!this.html.is(":visible")) {
+            this.html[0].scrollIntoView();
+        }
     };
     this.ToggleHidden = function (hidden) {
         if (hidden) {
