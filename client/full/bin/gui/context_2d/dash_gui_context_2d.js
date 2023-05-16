@@ -530,11 +530,8 @@ function DashGuiContext2D (
 
                     self.on_set_data(response, key, value, callback);
 
-                    console.debug("TEST2 preview", self.linked_preview);
-
                     if (self.linked_preview) {
                         self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
-                        console.debug("TEST2 on set data", response, key, value);
                     }
                 },
                 self.api,

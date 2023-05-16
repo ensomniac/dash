@@ -491,12 +491,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 function (response) {
                     self.on_set_layer_property(response, key, value, id, parent_id);
 
-                    console.debug("TEST3 preview", self.editor.linked_preview);
                     if (self.editor.linked_preview) {
                         self.editor.linked_preview.editor_panel.layers_box.on_set_layer_property(
                             response, key, value, id, parent_id
                         );
-                        console.debug("TEST3 layers box", self.editor.linked_preview.editor_panel.layers_box);
                     }
 
                     if (callback) {

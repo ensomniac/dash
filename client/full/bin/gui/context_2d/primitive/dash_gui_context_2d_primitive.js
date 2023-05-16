@@ -481,10 +481,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     self.on_set_properties(response);
 
-                    console.debug("TEST4 preview", self.editor.linked_preview);
                     if (self.editor.linked_preview) {
                         self.editor.linked_preview.canvas.primitives[self.id].on_set_properties(response);
-                        console.debug("TEST4 prim", self.editor.linked_preview.canvas.primitives[self.id]);
                     }
                 },
                 self.editor.api,
