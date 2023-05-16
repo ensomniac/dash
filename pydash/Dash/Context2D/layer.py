@@ -278,13 +278,14 @@ class Layer:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key])
 
-        if "text_value" in properties and "display_name" not in properties:
-            if self.data.get("display_name") == self.default_display_name or self.data["text_value"] == self.data["display_name"]:
-                # If the layer's name has not already been set manually by the user,
-                # then auto-set the name based on the primitive's text change
-                properties["display_name"] = properties["text_value"]
+        properties = self.check_display_name_for_set_property(properties)
 
-        properties = self.context_2d.OnLayerSetProperties(self, properties, imported_context_layer_id)
+        properties = self.context_2d.OnLayerSetProperties(
+            layer=self,
+            properties=properties,
+            imported_context_layer_id=imported_context_layer_id,
+            for_overrides=for_overrides
+        )
 
         if for_overrides and retain_override_tag:
             properties = self.context_2d.re_add_override_tag_to_properties(properties)
@@ -373,6 +374,17 @@ class Layer:
             "type": self.Type,
             "display_name": self.default_display_name
         }
+
+    def check_display_name_for_set_property(self, properties, key="text_value"):
+        if key not in properties or "display_name" in properties:
+            return properties
+
+        if self.data.get("display_name") == self.default_display_name or self.data[key] == self.data["display_name"]:
+            # If the layer's name has not already been set manually by the user,
+            # then auto-set the name based on the primitive's text change
+            properties["display_name"] = properties[key] or self.default_display_name
+
+        return properties
 
     def get_imported_context_id(self):
         imported_context = self.data.get("imported_context") or {}

@@ -28375,8 +28375,10 @@ function DashGuiContext2D (
                         return;
                     }
                     self.on_set_data(response, key, value, callback);
+                    console.debug("TEST2 preview", self.linked_preview);
                     if (self.linked_preview) {
                         self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
+                        console.debug("TEST2 on set data", response, key, value);
                     }
                 },
                 self.api,
@@ -29417,8 +29419,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
                     self.on_set_properties(response);
+                    console.debug("TEST4 preview", self.editor.linked_preview);
                     if (self.editor.linked_preview) {
                         self.editor.linked_preview.canvas.primitives[self.id].on_set_properties(response);
+                        console.debug("TEST4 prim", self.editor.linked_preview.canvas.primitives[self.id]);
                     }
                 },
                 self.editor.api,
@@ -31099,8 +31103,10 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                         self.ToggleHidden(hidden);
                         self.ToggleLocked(locked);
                         self.UpdateLabel();
+                        console.debug("TEST1 preview", self.editor.linked_preview);
                         if (self.editor.linked_preview) {
                             var layer = self.editor.linked_preview.editor_panel.layers_box.layers[self.id];
+                            console.debug("TEST1 layer", layer);
                             layer.ToggleHidden(hidden);
                             layer.ToggleLocked(locked);
                             layer.UpdateLabel();
@@ -31728,10 +31734,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self,
                 function (response) {
                     self.on_set_layer_property(response, key, value, id, parent_id);
+                    console.debug("TEST3 preview", self.editor.linked_preview);
                     if (self.editor.linked_preview) {
                         self.editor.linked_preview.editor_panel.layers_box.on_set_layer_property(
                             response, key, value, id, parent_id
                         );
+                        console.debug("TEST3 layers box", self.editor.linked_preview.editor_panel.layers_box);
                     }
                     if (callback) {
                         callback();

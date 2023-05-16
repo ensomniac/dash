@@ -270,7 +270,7 @@ class Interface:
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to for custom property handling of layer properties for abstractions.
-    def OnLayerSetProperties(self, layer, properties={}, imported_context_layer_id=""):  # noqa
+    def OnLayerSetProperties(self, layer, properties={}, imported_context_layer_id="", for_overrides=False):  # noqa
         return properties
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.

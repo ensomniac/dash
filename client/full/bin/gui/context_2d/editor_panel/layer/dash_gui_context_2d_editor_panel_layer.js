@@ -239,8 +239,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                         self.ToggleLocked(locked);
                         self.UpdateLabel();
 
+                        console.debug("TEST1 preview", self.editor.linked_preview);
+
                         if (self.editor.linked_preview) {
                             var layer = self.editor.linked_preview.editor_panel.layers_box.layers[self.id];
+                            console.debug("TEST1 layer", layer);
 
                             layer.ToggleHidden(hidden);
                             layer.ToggleLocked(locked);
