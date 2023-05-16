@@ -930,6 +930,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+        var value = this.get_value(data_key);
+
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -939,7 +941,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                self.get_value(data_key) || default_value,
+                (value || value === 0) ? value : default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
 

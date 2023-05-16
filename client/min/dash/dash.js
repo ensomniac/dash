@@ -26486,6 +26486,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.row_buttons = [];
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
     this.dropdown_icon = null;
@@ -26839,7 +26840,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.gravity_vertical = 0;
         this.gravity_horizontal = 0;
         // Expand the combo upwards if not enough room below
-        if (total_height > (this.gravity_height_override || window.innerHeight)) {
+        if (this.auto_gravity && total_height > (this.gravity_height_override || window.innerHeight)) {
             // As long as there's enough room above
             if (end_height < this.html.offset().top) {
                 gravity = this.html.height() - end_height;
@@ -26859,7 +26860,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             }
         }
         // If the row list width is wider than this.html (assuming this.html is deliberately placed/contained on the page)
-        if (this.rows.width() > this.html.width()) {
+        if (this.auto_gravity && this.rows.width() > this.html.width()) {
             // Expand the combo to the left if not enough room on the right
             if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {
                 // As long as there's enough room to the left
@@ -27603,6 +27604,9 @@ function DashGuiComboInterface () {
     };
     this.SetGravityValueOverride = function (value) {
         this.gravity_value_override = value;
+    };
+    this.DisableAutoGravity = function () {
+        this.auto_gravity = false;
     };
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
@@ -31894,6 +31898,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
             if (!combo) {
                 continue;
             }
+            // Not the best, but necessary right now
+            if (this.editor.override_mode) {
+                combo.DisableAutoGravity();
+            }
             combo.html.detach();
             combo.html.css({
                 "position": "absolute",
@@ -33141,6 +33149,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return color_picker;
     };
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+        var value = this.get_value(data_key);
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -33150,7 +33159,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                self.get_value(data_key) || default_value,
+                (value || value === 0) ? value : default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {

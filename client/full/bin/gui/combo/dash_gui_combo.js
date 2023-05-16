@@ -13,6 +13,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.row_buttons = [];
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
     this.dropdown_icon = null;
@@ -469,7 +470,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.gravity_horizontal = 0;
 
         // Expand the combo upwards if not enough room below
-        if (total_height > (this.gravity_height_override || window.innerHeight)) {
+        if (this.auto_gravity && total_height > (this.gravity_height_override || window.innerHeight)) {
 
             // As long as there's enough room above
             if (end_height < this.html.offset().top) {
@@ -495,7 +496,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         // If the row list width is wider than this.html (assuming this.html is deliberately placed/contained on the page)
-        if (this.rows.width() > this.html.width()) {
+        if (this.auto_gravity && this.rows.width() > this.html.width()) {
 
             // Expand the combo to the left if not enough room on the right
             if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {

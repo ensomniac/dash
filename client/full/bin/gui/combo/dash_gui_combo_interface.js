@@ -212,6 +212,10 @@ function DashGuiComboInterface () {
         this.gravity_value_override = value;
     };
 
+    this.DisableAutoGravity = function () {
+        this.auto_gravity = false;
+    };
+
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
 
