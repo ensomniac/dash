@@ -179,6 +179,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         this.panel.SwitchContentToEditTab();
+
+        this.html[0].scrollIntoView();
     };
 
     this.ToggleHidden = function (hidden) {

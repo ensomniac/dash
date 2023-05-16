@@ -820,11 +820,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         (function (self) {
             self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_checks=false) {
-                if (!_skip_checks && (
-                       self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
-                    || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)
-                )) {
-                    self.Deselect();
+                if (!_skip_checks) {
+                    if (
+                           self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
+                        || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)
+                    ) {
+                        self.Deselect();
+                    }
+
+                    event.stopPropagation();
 
                     return;
                 }
