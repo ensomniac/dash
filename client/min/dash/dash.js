@@ -29705,7 +29705,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.get_value("hidden") && this.get_value("opacity")) {
             return false;
         }
-        var [next_layer, layer_index] = self.get_next_primitive_and_index(event, previous_layer_index);
+        var [next_layer, layer_index] = this.get_next_primitive_and_index(event, previous_layer_index);
         if (next_layer) {  // Click the next layer
             $(next_layer).trigger("click", [event, layer_index]);
         }
