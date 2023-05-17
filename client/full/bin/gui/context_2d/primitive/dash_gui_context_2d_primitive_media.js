@@ -41,7 +41,7 @@ function DashGuiContext2DPrimitiveMedia () {
                     "100%",
                     true,
                     false,
-                    !this.get_value("locked")
+                    !(this.get_value("locked") || this.editor.preview_mode)
                 ) : $("<div></div>")
             );
 
@@ -356,6 +356,10 @@ function DashGuiContext2DPrimitiveMedia () {
                 );
             })(this);
 
+            return;
+        }
+
+        if (this.editor.preview_mode) {
             return;
         }
 

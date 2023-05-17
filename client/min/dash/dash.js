@@ -30223,7 +30223,7 @@ function DashGuiContext2DPrimitiveMedia () {
                     "100%",
                     true,
                     false,
-                    !this.get_value("locked")
+                    !(this.get_value("locked") || this.editor.preview_mode)
                 ) : $("<div></div>")
             );
             this.html.append(this.media);
@@ -30485,6 +30485,9 @@ function DashGuiContext2DPrimitiveMedia () {
                     10
                 );
             })(this);
+            return;
+        }
+        if (this.editor.preview_mode) {
             return;
         }
         try {
