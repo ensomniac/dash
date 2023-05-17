@@ -206,7 +206,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         else {
-            css["filter"] = "brightness(" + (this.get_value("brightness") || 1.0) + ")";
+            css["filter"] = "brightness(" + this.get_value("brightness") + ")";
         }
 
         this.html.css(css);

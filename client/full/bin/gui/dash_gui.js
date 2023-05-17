@@ -83,7 +83,10 @@ function DashGui() {
 
     this.HasOverflow = function (html) {
         try {
-            return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
+            return (
+                   (html[0].offsetHeight < html[0].scrollHeight)
+                || (html[0].offsetWidth < html[0].scrollWidth)
+            );
         }
 
         catch {
@@ -93,6 +96,26 @@ function DashGui() {
 
     this.ScrollToBottom = function (html) {
         html[0].scrollTop = html[0].scrollHeight;
+    };
+
+    this.ScrollToElement = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return;
+        }
+
+        var container_top = container_html.offset().top;
+        var container_bottom = container_top + container_html.height();
+        var element_top = element_html.offset().top;
+        var element_bottom = element_top + element_html.height();
+
+        if (  // Element is partially or fully visible within the container
+               (element_top >= container_top && element_top <= container_bottom)
+            || (element_bottom >= container_top && element_bottom <= container_bottom)
+        ) {
+            return;
+        }
+
+        element_html[0].scrollIntoView();
     };
 
     this.GetBottomDivider = function (color=null, width_percent="") {

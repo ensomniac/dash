@@ -17911,7 +17911,10 @@ function DashGui() {
     };
     this.HasOverflow = function (html) {
         try {
-            return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
+            return (
+                   (html[0].offsetHeight < html[0].scrollHeight)
+                || (html[0].offsetWidth < html[0].scrollWidth)
+            );
         }
         catch {
             return false;
@@ -17919,6 +17922,22 @@ function DashGui() {
     };
     this.ScrollToBottom = function (html) {
         html[0].scrollTop = html[0].scrollHeight;
+    };
+    this.ScrollToElement = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return;
+        }
+        var container_top = container_html.offset().top;
+        var container_bottom = container_top + container_html.height();
+        var element_top = element_html.offset().top;
+        var element_bottom = element_top + element_html.height();
+        if (  // Element is partially or fully visible within the container
+               (element_top >= container_top && element_top <= container_bottom)
+            || (element_bottom >= container_top && element_bottom <= container_bottom)
+        ) {
+            return;
+        }
+        element_html[0].scrollIntoView();
     };
     this.GetBottomDivider = function (color=null, width_percent="") {
         var bottom_divider = $("<div></div>");
@@ -29203,7 +29222,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.update_filter(this.get_value("brightness"));
         }
         else {
-            css["filter"] = "brightness(" + (this.get_value("brightness") || 1.0) + ")";
+            css["filter"] = "brightness(" + this.get_value("brightness") + ")";
         }
         this.html.css(css);
         this.canvas.OnPrimitiveSelected(this, from_click);
@@ -31054,9 +31073,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.panel.UpdatePropertyBoxToolSlider("", this);
         }
         this.panel.SwitchContentToEditTab();
-        if (!this.html.is(":visible")) {
-            this.html[0].scrollIntoView();
-        }
+        // TODO: Ryan didn't like this, re-enable after it's improved - what's wrong with it?
+        // Dash.Gui.ScrollToElement(this.layers.layers_box, this.html);
     };
     this.ToggleHidden = function (hidden) {
         if (hidden) {
@@ -31142,11 +31160,12 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
                     var css = {"border": "1px solid " + primitive.hover_color};
+                    var brightness = primitive.get_value("brightness");
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter((primitive.get_value("brightness") || 1.0) + 0.1);
+                        primitive.update_filter(brightness + 0.1);
                     }
                     else {
-                        css["filter"] = "brightness(" + ((self.get_value("brightness") || 1.0) + 0.1) + ")";
+                        css["filter"] = "brightness(" + (brightness + 0.1) + ")";
                     }
                     primitive.html.css(css);
                 }
@@ -31160,11 +31179,12 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
                     var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
+                    var brightness = primitive.get_value("brightness");
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter(primitive.get_value("brightness"));
+                        primitive.update_filter(brightness);
                     }
                     else {
-                        css["filter"] = "brightness(" + (self.get_value("brightness") || 1.0) + ")";
+                        css["filter"] = "brightness(" + brightness + ")";
                     }
                     primitive.html.css(css);
                 }
