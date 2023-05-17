@@ -30286,6 +30286,17 @@ function DashGuiContext2DPrimitiveMedia () {
         }
     };
     this.update_filter = function (brightness=null, contrast=null) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_filter(brightness, contrast);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
         this.media.css({
             "filter": (
                 "brightness(" + (
