@@ -453,10 +453,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
             params["f"] = "set_layer_properties";
 
-            params["properties"] = JSON.stringify({
+            params["properties"] = {
                 "font_id": value,
                 "font_url": font_url
-            });
+            };
         }
 
         else {
@@ -483,6 +483,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             if (params["key"]) {
                 params["key"] += "_override";
             }
+        }
+
+        if (params["properties"]) {
+            params["properties"] = JSON.stringify(params["properties"]);
         }
 
         (function (self) {
