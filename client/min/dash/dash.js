@@ -26964,28 +26964,30 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             Dash.Temp.SetLastComboChanged(this);
         }
     };
-    this.setup_connections = function () {
+    this.setup_connections = function (refresh=false) {
         if (this.read_only) {
             return;
         }
         (function (self) {
-            $(window).on("click." + self.random_id, function (event) {
-                if (!self.html.is(":visible")) {
-                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
-                    return;
-                }
-                if (!self.expanded) {
-                    return;
-                }
-                if (!$(event.target).hasClass("Combo")) {
-                    self.hide();
-                    event.preventDefault();
-                    if (event.originalEvent) {
-                        event.originalEvent.preventDefault();
+            if (!refresh) {
+                $(window).on("click." + self.random_id, function (event) {
+                    if (!self.html.is(":visible")) {
+                        $(window).off("click." + self.random_id);  // Kill this when leaving the page
+                        return;
                     }
-                    return false;
-                }
-            });
+                    if (!self.expanded) {
+                        return;
+                    }
+                    if (!$(event.target).hasClass("Combo")) {
+                        self.hide();
+                        event.preventDefault();
+                        if (event.originalEvent) {
+                            event.originalEvent.preventDefault();
+                        }
+                        return false;
+                    }
+                });
+            }
             self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
             });
@@ -27004,15 +27006,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return false;
                 }
             });
-            // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(
-                function () {
-                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                        self.EnableSearchSelection();
-                    }
-                },
-                300
-            );
+            if (!refresh) {
+                // This delayed check is important because the option_list size may have changed after the first frame
+                setTimeout(
+                    function () {
+                        if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                            self.EnableSearchSelection();
+                        }
+                    },
+                    300
+                );
+            }
         })(this);
     };
     this.handle_arrow_input = function (self, event) {
@@ -27687,6 +27691,12 @@ function DashGuiComboInterface () {
     };
     this.OptionList = function () {
         return this.option_list;
+    };
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+        this.setup_connections(true);
     };
     this.SetLoading = function (is_loading, align_right=false) {
         if (is_loading && this.load_dots) {
@@ -29211,7 +29221,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         this.canvas.DeselectAllPrimitives();
-        var css = border ? {"border": "1px solid " + this.highlight_color} : {};
+        var css = (border && !this.editor.preview_mode) ? {"border": "1px solid " + this.highlight_color} : {};
         if (this.type === "context") {
             css["pointer-events"] = "none";
         }
@@ -31856,6 +31866,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.redraw_layers();
         this.editor.UpdateCanvasPrimitiveZIndexes();
         this.layers[id].Select();
+        Dash.Gui.ScrollToElement(this.layers_box, this.layers[id].html);
     };
     this.setup_styles();
 }
@@ -31991,6 +32002,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
             });
             this.panel.html.append(combo.html);
             this.floating_combos.push(combo);
+            combo.RefreshConnections();
         }
     };
     this.AddCustomElementToNewTab = function (
@@ -32571,11 +32583,33 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     continue;
                 }
                 for (var element of context["all_elements"]) {
-                    (element.html || element).css({
-                        "opacity": disabled ? 0.5 : 1,
-                        "user-select": disabled ? "none" : "auto",
-                        "pointer-events": disabled ? "none" : "auto"
-                    });
+                    if (element.hasOwnProperty("Disable") && element.hasOwnProperty("Enable")) {
+                        if (disabled) {
+                            element.Disable();
+                        }
+                        else {
+                            element.Enable();
+                        }
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+                    else if (element.hasOwnProperty("SetLocked")) {
+                        element.SetLocked(disabled);
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+                    else {
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1,
+                            "user-select": disabled ? "none" : "auto",
+                            "pointer-events": disabled ? "none" : "auto"
+                        });
+                    }
+                    if (!disabled && element.hasOwnProperty("RefreshConnections")) {
+                        element.RefreshConnections();
+                    }
                 }
             }
             self.redrawing = false;

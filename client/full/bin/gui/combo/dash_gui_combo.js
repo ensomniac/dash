@@ -614,35 +614,37 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.setup_connections = function () {
+    this.setup_connections = function (refresh=false) {
         if (this.read_only) {
             return;
         }
 
         (function (self) {
-            $(window).on("click." + self.random_id, function (event) {
-                if (!self.html.is(":visible")) {
-                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
+            if (!refresh) {
+                $(window).on("click." + self.random_id, function (event) {
+                    if (!self.html.is(":visible")) {
+                        $(window).off("click." + self.random_id);  // Kill this when leaving the page
 
-                    return;
-                }
-
-                if (!self.expanded) {
-                    return;
-                }
-
-                if (!$(event.target).hasClass("Combo")) {
-                    self.hide();
-
-                    event.preventDefault();
-
-                    if (event.originalEvent) {
-                        event.originalEvent.preventDefault();
+                        return;
                     }
 
-                    return false;
-                }
-            });
+                    if (!self.expanded) {
+                        return;
+                    }
+
+                    if (!$(event.target).hasClass("Combo")) {
+                        self.hide();
+
+                        event.preventDefault();
+
+                        if (event.originalEvent) {
+                            event.originalEvent.preventDefault();
+                        }
+
+                        return false;
+                    }
+                });
+            }
 
             self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
@@ -670,15 +672,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 }
             });
 
-            // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(
-                function () {
-                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                        self.EnableSearchSelection();
-                    }
-                },
-                300
-            );
+            if (!refresh) {
+                // This delayed check is important because the option_list size may have changed after the first frame
+                setTimeout(
+                    function () {
+                        if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                            self.EnableSearchSelection();
+                        }
+                    },
+                    300
+                );
+            }
         })(this);
     };
 

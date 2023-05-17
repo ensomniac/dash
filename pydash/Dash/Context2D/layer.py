@@ -164,10 +164,13 @@ class Layer:
         }
 
         if self.Type == "text":
+            text_caps = self.data["text_caps"] if "text_caps" in self.data else False
+            text_value = self.data.get("text_value") or ""
+
             data.update({
                 "text_alignment": self.data.get("text_alignment") or "",
-                "text_caps": self.data["text_caps"] if "text_caps" in self.data else False,
-                "text_value": self.data.get("text_value") or "",
+                "text_caps": text_caps,
+                "text_value": text_value.upper() if text_caps else text_value,
                 "font_color": self.data.get("font_color") or "",
                 "font_id": self.data.get("font_id") or "",
                 "font_url": self.data.get("font_url") or "",

@@ -166,6 +166,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
             this.panel.html.append(combo.html);
 
             this.floating_combos.push(combo);
+
+            combo.RefreshConnections();
         }
     };
 

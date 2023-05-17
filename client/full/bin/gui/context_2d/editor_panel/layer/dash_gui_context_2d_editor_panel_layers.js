@@ -618,6 +618,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.UpdateCanvasPrimitiveZIndexes();
 
         this.layers[id].Select();
+
+        Dash.Gui.ScrollToElement(this.layers_box, this.layers[id].html);
     };
 
     this.setup_styles();

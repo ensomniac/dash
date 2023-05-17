@@ -298,6 +298,14 @@ function DashGuiComboInterface () {
         return this.option_list;
     };
 
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+
+        this.setup_connections(true);
+    };
+
     this.SetLoading = function (is_loading, align_right=false) {
         if (is_loading && this.load_dots) {
             return;

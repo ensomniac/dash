@@ -103,11 +103,39 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 }
 
                 for (var element of context["all_elements"]) {
-                    (element.html || element).css({
-                        "opacity": disabled ? 0.5 : 1,
-                        "user-select": disabled ? "none" : "auto",
-                        "pointer-events": disabled ? "none" : "auto"
-                    });
+                    if (element.hasOwnProperty("Disable") && element.hasOwnProperty("Enable")) {
+                        if (disabled) {
+                            element.Disable();
+                        }
+
+                        else {
+                            element.Enable();
+                        }
+
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+
+                    else if (element.hasOwnProperty("SetLocked")) {
+                        element.SetLocked(disabled);
+
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+
+                    else {
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1,
+                            "user-select": disabled ? "none" : "auto",
+                            "pointer-events": disabled ? "none" : "auto"
+                        });
+                    }
+
+                    if (!disabled && element.hasOwnProperty("RefreshConnections")) {
+                        element.RefreshConnections();
+                    }
                 }
             }
 

@@ -192,7 +192,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.canvas.DeselectAllPrimitives();
 
-        var css = border ? {"border": "1px solid " + this.highlight_color} : {};
+        var css = (border && !this.editor.preview_mode) ? {"border": "1px solid " + this.highlight_color} : {};
 
         if (this.type === "context") {
             css["pointer-events"] = "none";
