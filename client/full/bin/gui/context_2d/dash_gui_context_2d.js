@@ -22,6 +22,7 @@ function DashGuiContext2D (
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
+     *         - "get_pil_preview":        Get PIL preview image URL of current state of provided object ID
      *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
@@ -496,6 +497,7 @@ function DashGuiContext2D (
                 self.api,
                 {
                     "f": "get_combo_options",
+                    "obj_id": self.obj_id,
                     ...extra_params
                 }
             );

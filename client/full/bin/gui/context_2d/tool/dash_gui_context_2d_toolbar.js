@@ -2,8 +2,13 @@ function DashGuiContext2DToolbar (editor) {
     this.editor = editor;
 
     this.tools = [];
+    this.pil_data = null;
+    this.pil_button = null;
+    this.pil_preview = null;
     this.initialized = false;
+    this.pil_interval = null;
     this.html = $("<div></div>");
+    this.pil_button_active = false;
     this.color = this.editor.color;
     this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
@@ -13,6 +18,8 @@ function DashGuiContext2DToolbar (editor) {
         this.html.css({
             "position": "absolute",
             "inset": 0,
+            "display": "flex",
+            "flex-direction": "column",
             "box-sizing": "border-box",
             "border-right": "1px solid " + this.color.StrokeLight,
             "padding": this.padding
@@ -20,6 +27,7 @@ function DashGuiContext2DToolbar (editor) {
 
         this.add_header();
         this.add_tools();
+        this.add_pil_button();
         this.setup_connections();
 
         this.initialized = true;
@@ -29,6 +37,151 @@ function DashGuiContext2DToolbar (editor) {
         for (var tool of this.tools) {
             tool.Deselect();
         }
+    };
+
+    this.add_pil_button = function () {
+        this.html.append(Dash.Gui.GetFlexSpacer());
+
+        this.pil_button = new Dash.Gui.Button(
+            "PIL",
+            this.on_pil_button_toggled,
+            this,
+            this.color,
+            {"style": "toolbar"}
+        );
+
+        this.pil_button.html.css({
+            "box-sizing": "border-box",
+            "margin": 0
+        });
+
+        this.pil_button.label.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "font-family": "sans_serif_bold",
+            "letter-spacing": Dash.Size.Padding * 0.1,
+            "overflow": "visible",
+            "user-select": "none"
+        });
+
+        this.pil_button.html.attr(
+            "title",
+            "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
+        );
+
+        this.html.append(this.pil_button.html);
+    };
+
+    this.on_pil_button_toggled = function () {
+        this.pil_data = null;
+        this.pil_button_active = !this.pil_button_active;
+
+        if (!this.pil_button_active) {
+            this.disable_pil_button();
+
+            return;
+        }
+
+        this.pil_button.SetLoading(true);
+        this.pil_button.Disable();
+
+        this.pil_interval = Dash.SetInterval(this, this.refresh_pil_data, 3000);
+    };
+
+    this.disable_pil_button = function () {
+        if (this.pil_preview) {
+            this.pil_preview.hide();
+        }
+
+        this.pil_button.SetLoading(false);
+        this.pil_button.Enable();
+
+        if (this.pil_interval) {
+            clearInterval(this.pil_interval);
+
+            this.pil_interval = null;
+        }
+
+        this.style_pil_button();
+    };
+
+    this.refresh_pil_data = function () {
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+
+                    if (!self.pil_button_active) {
+                        self.disable_pil_button();
+
+                        return;
+                    }
+
+                    if (!self.pil_data || (self.pil_data && response["url"] !== self.pil_data["url"])) {
+                        self.update_pil_preview(response["url"]);
+                    }
+
+                    if (!self.pil_data) {
+                        self.pil_button.SetLoading(false);
+                        self.pil_button.Enable();
+
+                        self.style_pil_button();
+                    }
+
+                    self.pil_data = response;
+                },
+                self.editor.api,
+                {
+                    "f": "get_pil_preview",
+                    "obj_id": self.editor.obj_id,
+                    ...self.editor.extra_request_params
+                }
+            );
+        })(this);
+    };
+
+    this.update_pil_preview = function (url) {
+        var css = {"background-image": "url(" + url + ")"};
+
+        if (!this.pil_preview) {
+            this.pil_preview = $("<div></div>");
+
+            css = {
+                ...css,
+                "background-repeat": "no-repeat",
+                "background-size": "contain",
+                "background-position": "center center",
+                "position": "absolute",
+                "inset": 0,
+                "z-index": 999999998,
+                "user-select": "none",
+                "pointer-events": "none"
+            };
+
+            this.editor.canvas.canvas.append(this.pil_preview);
+        }
+
+        else {
+            this.pil_preview.show();
+        }
+
+        this.pil_preview.css(css);
+    };
+
+    this.style_pil_button = function () {
+        var size = 2;
+
+        this.pil_button.html.css({
+            "border": this.pil_button_active ? (size + "px solid " + this.color.AccentGood) : ""
+        });
+
+        this.pil_button.label.css({
+            "line-height": (Dash.Size.RowHeight - (this.pil_button_active ? (size * 2) : 0)) + "px",
+            "padding-left": (Dash.Size.Padding * 0.5) - (this.pil_button_active ? size : 0)
+        });
     };
 
     this.add_header = function () {

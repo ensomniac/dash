@@ -59,6 +59,7 @@ class Layer:
         self.float_keys = [
             *self.state_keys,
             "aspect",
+            "kerning",
             "contrast",
             "brightness",
             "fade_norm_end",
@@ -175,7 +176,8 @@ class Layer:
                 "font_id": self.data.get("font_id") or "",
                 "font_url": self.data.get("font_url") or "",
                 "stroke_color": self.data.get("stroke_color") or "",
-                "stroke_thickness": self.data.get("stroke_thickness") or 0
+                "stroke_thickness": self.data.get("stroke_thickness") or 0,
+                "kerning": self.data.get("kerning") or 0
             })
 
         elif self.Type == "color":

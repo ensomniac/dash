@@ -655,6 +655,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_text_context = function (context_key) {
+        // var kerning_slider = this.get_slider(  // TODO: -1 to 1
+        //     0,
+        //     context_key,
+        //     "kerning",
+        //     0.735,
+        //     "",
+        //     0,
+        //     0.1
+        // );
+
         var thickness_slider = this.get_slider(
             0,
             context_key,
