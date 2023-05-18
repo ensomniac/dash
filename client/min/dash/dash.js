@@ -29070,6 +29070,7 @@ function DashGuiContext2DToolbar (editor) {
                 self,
                 function (response) {
                     if (!Dash.Validate.Response(response)) {
+                        self.disable_pil_button();
                         return;
                     }
                     if (!self.pil_button_active) {
