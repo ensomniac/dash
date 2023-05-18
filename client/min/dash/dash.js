@@ -29050,7 +29050,7 @@ function DashGuiContext2DToolbar (editor) {
         }
         this.pil_button.SetLoading(true);
         this.pil_button.Disable();
-        this.pil_interval = Dash.SetInterval(this, this.refresh_pil_data, 3000);
+        this.pil_interval = Dash.SetInterval(this, this.refresh_pil_data, 5000);
     };
     this.disable_pil_button = function () {
         if (this.pil_preview) {
