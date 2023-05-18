@@ -146,6 +146,14 @@ class ApiCore:
 
         return self._user
 
+    def SetUserByToken(self, user_token):
+        if hasattr(self, "_user"):
+            delattr(self, "_user")
+
+        self._params["token"] = token
+
+        return self.User
+
     @property
     def Params(self):
         return self._params
