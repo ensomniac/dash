@@ -29431,6 +29431,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.selected) {
             this.html.css({"border": "1px solid " + this.highlight_color});
         }
+        if (this.type === "text") {
+            this.update_textarea_width();
+        }
         this.save_drag_state();
     };
     this.update_fade = function () {
@@ -30221,6 +30224,7 @@ function DashGuiContext2DPrimitiveText () {
         }
         else if (key === "kerning") {
             this.update_kerning();
+            this.update_textarea_width();
         }
         this.update_stroke();
         this.update_font_color();
@@ -33114,8 +33118,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 {"id": "", "label_text": "Normal"},
                 {"id": "multiply", "label_text": "Multiply"},
                 {"id": "additive", "label_text": "Additive"},
-                {"id": "overlay", "label_text": "Overlay"},
-                {"id": "color", "label_text": "Color"}
+                {"id": "overlay", "label_text": "Overlay"}
             ],
             "blend_mode",
             "*Blend Mode",

@@ -595,8 +595,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 {"id": "", "label_text": "Normal"},
                 {"id": "multiply", "label_text": "Multiply"},
                 {"id": "additive", "label_text": "Additive"},
-                {"id": "overlay", "label_text": "Overlay"},
-                {"id": "color", "label_text": "Color"}
+                {"id": "overlay", "label_text": "Overlay"}
             ],
             "blend_mode",
             "*Blend Mode",

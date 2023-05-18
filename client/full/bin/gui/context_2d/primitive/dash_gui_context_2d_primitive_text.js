@@ -332,6 +332,7 @@ function DashGuiContext2DPrimitiveText () {
 
         else if (key === "kerning") {
             this.update_kerning();
+            this.update_textarea_width();
         }
 
         this.update_stroke();

@@ -308,6 +308,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.html.css({"border": "1px solid " + this.highlight_color});
         }
 
+        if (this.type === "text") {
+            this.update_textarea_width();
+        }
+
         this.save_drag_state();
     };
 
