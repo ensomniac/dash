@@ -150,7 +150,7 @@ class ApiCore:
         if hasattr(self, "_user"):
             delattr(self, "_user")
 
-        self._params["token"] = token
+        self._params["token"] = user_token
 
         return self.User
 
