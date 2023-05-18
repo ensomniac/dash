@@ -17911,7 +17911,10 @@ function DashGui() {
     };
     this.HasOverflow = function (html) {
         try {
-            return html[0].offsetHeight < html[0].scrollHeight || html[0].offsetWidth < html[0].scrollWidth;
+            return (
+                   (html[0].offsetHeight < html[0].scrollHeight)
+                || (html[0].offsetWidth < html[0].scrollWidth)
+            );
         }
         catch {
             return false;
@@ -17919,6 +17922,22 @@ function DashGui() {
     };
     this.ScrollToBottom = function (html) {
         html[0].scrollTop = html[0].scrollHeight;
+    };
+    this.ScrollToElement = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return;
+        }
+        var container_top = container_html.offset().top;
+        var container_bottom = container_top + container_html.height();
+        var element_top = element_html.offset().top;
+        var element_bottom = element_top + element_html.height();
+        if (  // Element is partially or fully visible within the container
+               (element_top >= container_top && element_top <= container_bottom)
+            || (element_bottom >= container_top && element_bottom <= container_bottom)
+        ) {
+            return;
+        }
+        element_html[0].scrollIntoView();
     };
     this.GetBottomDivider = function (color=null, width_percent="") {
         var bottom_divider = $("<div></div>");
@@ -26486,6 +26505,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.row_buttons = [];
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
     this.dropdown_icon = null;
@@ -26839,7 +26859,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.gravity_vertical = 0;
         this.gravity_horizontal = 0;
         // Expand the combo upwards if not enough room below
-        if (total_height > (this.gravity_height_override || window.innerHeight)) {
+        if (this.auto_gravity && total_height > (this.gravity_height_override || window.innerHeight)) {
             // As long as there's enough room above
             if (end_height < this.html.offset().top) {
                 gravity = this.html.height() - end_height;
@@ -26859,7 +26879,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             }
         }
         // If the row list width is wider than this.html (assuming this.html is deliberately placed/contained on the page)
-        if (this.rows.width() > this.html.width()) {
+        if (this.auto_gravity && this.rows.width() > this.html.width()) {
             // Expand the combo to the left if not enough room on the right
             if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {
                 // As long as there's enough room to the left
@@ -26944,28 +26964,30 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             Dash.Temp.SetLastComboChanged(this);
         }
     };
-    this.setup_connections = function () {
+    this.setup_connections = function (refresh=false) {
         if (this.read_only) {
             return;
         }
         (function (self) {
-            $(window).on("click." + self.random_id, function (event) {
-                if (!self.html.is(":visible")) {
-                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
-                    return;
-                }
-                if (!self.expanded) {
-                    return;
-                }
-                if (!$(event.target).hasClass("Combo")) {
-                    self.hide();
-                    event.preventDefault();
-                    if (event.originalEvent) {
-                        event.originalEvent.preventDefault();
+            if (!refresh) {
+                $(window).on("click." + self.random_id, function (event) {
+                    if (!self.html.is(":visible")) {
+                        $(window).off("click." + self.random_id);  // Kill this when leaving the page
+                        return;
                     }
-                    return false;
-                }
-            });
+                    if (!self.expanded) {
+                        return;
+                    }
+                    if (!$(event.target).hasClass("Combo")) {
+                        self.hide();
+                        event.preventDefault();
+                        if (event.originalEvent) {
+                            event.originalEvent.preventDefault();
+                        }
+                        return false;
+                    }
+                });
+            }
             self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
             });
@@ -26984,15 +27006,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                     return false;
                 }
             });
-            // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(
-                function () {
-                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                        self.EnableSearchSelection();
-                    }
-                },
-                300
-            );
+            if (!refresh) {
+                // This delayed check is important because the option_list size may have changed after the first frame
+                setTimeout(
+                    function () {
+                        if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                            self.EnableSearchSelection();
+                        }
+                    },
+                    300
+                );
+            }
         })(this);
     };
     this.handle_arrow_input = function (self, event) {
@@ -27604,6 +27628,9 @@ function DashGuiComboInterface () {
     this.SetGravityValueOverride = function (value) {
         this.gravity_value_override = value;
     };
+    this.DisableAutoGravity = function () {
+        this.auto_gravity = false;
+    };
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
         if (!Number.isInteger(offset)) {
@@ -27664,6 +27691,12 @@ function DashGuiComboInterface () {
     };
     this.OptionList = function () {
         return this.option_list;
+    };
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+        this.setup_connections(true);
     };
     this.SetLoading = function (is_loading, align_right=false) {
         if (is_loading && this.load_dots) {
@@ -29183,14 +29216,27 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (from_click && this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
             return;
         }
+        var locked = this.get_value("locked");
+        if (from_click && locked) {
+            return;
+        }
         this.canvas.DeselectAllPrimitives();
-        var css = border ? {"border": "1px solid " + this.highlight_color} : {};
+        var css = (border && !this.editor.preview_mode) ? {"border": "1px solid " + this.highlight_color} : {};
         if (this.type === "context") {
             css["pointer-events"] = "none";
         }
+        // When a layer is hovered in the layer stack, it adds +0.1 to the brightness
+        // to indicate in the canvas which layer is hovered over in the layer stack,
+        // so when selected, we want to remove that slight highlight
+        if (this.hasOwnProperty("update_filter")) {
+            this.update_filter(this.get_value("brightness"));
+        }
+        else {
+            css["filter"] = "brightness(" + this.get_value("brightness") + ")";
+        }
         this.html.css(css);
         this.canvas.OnPrimitiveSelected(this, from_click);
-        if (!this.get_value("locked") && this.type === "text") {
+        if (!locked && this.type === "text") {
             this.unlock_text_area();
             this.focus_text_area();
         }
@@ -29473,14 +29519,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_hidden_change = function (hidden) {
-        if (this.type !== "context") {
-            console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
-            if (hidden) {
-                this.html.hide();
-            }
-            else {
-                this.html.show();
-            }
+        if (this.type === "context") {
+            return;
+        }
+        // console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+        if (hidden) {
+            this.html.hide();
+        }
+        else {
+            this.html.show();
         }
     };
     // Meant to be overridden by member classes
@@ -29658,9 +29705,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
         (function (self) {
-            self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_check=false) {
-                if (!_skip_check && self.check_if_transparent_image_pixel("click", _event_override || event, _previous_layer_index)) {
-                    self.Deselect();
+            self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_checks=false) {
+                if (!_skip_checks) {
+                    if (
+                           self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
+                        || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)
+                    ) {
+                        self.Deselect();
+                    }
+                    event.stopPropagation();
                     return;
                 }
                 self.Select(true);
@@ -29669,7 +29722,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // Without this, if you try to move/rotate/scale/etc this
             // container while it's not already selected, it won't work
             // TODO: This does not pass through the transparent part of
-            //  and image like the click event does, because it's very
+            //  an image like the click event does, because it's very
             //  complicated and I've spent enough time for now on getting
             //  the click pass-through to work, so need to leave it for now.
             self.html.on("mousedown", function () {
@@ -29677,7 +29730,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             });
         })(this);
     };
-    this.check_if_transparent_image_pixel = function (type, event, previous_layer_index=null) {
+    this.click_next_layer_if_hidden = function (event, previous_layer_index=null) {
+        if (!this.get_value("hidden") && this.get_value("opacity")) {
+            return false;
+        }
+        var [next_layer, layer_index] = this.get_next_primitive_and_index(event, previous_layer_index);
+        if (next_layer) {  // Click the next layer
+            $(next_layer).trigger("click", [event, layer_index]);
+        }
+        // Even if no next layer, we don't want to follow through
+        // with the original click, since the layer is hidden
+        return true;
+    };
+    this.click_next_layer_if_transparent_image_pixel = function (event, previous_layer_index=null) {
         if (this.type !== "image") {
             return false;
         }
@@ -29710,41 +29775,45 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 catch {
                     // Pass
                 }
-                // Check if clicked pixel is transparent
+                // If clicked pixel is transparent
                 if (img_data && img_data[3] === 0) {
-                    var elements = document.elementsFromPoint(event.clientX, event.clientY);
-                    for (var i in elements) {
-                        if (previous_layer_index !== null && parseInt(i) <= previous_layer_index) {
-                            continue;
-                        }
-                        var element = elements[i];
-                        var parent = $(element).parent()[0];
-                        if (parent === self.html[0] || element === self.html[0]) {
-                            continue;
-                        }
-                        if (element === self.canvas.html[0] || parent === self.canvas.html[0]) {
-                            break;
-                        }
-                        if ($(element).attr("class") !== "DashGuiContext2DPrimitive") {
-                            continue;
-                        }
-                        next_layer = element;
-                        layer_index = parseInt(i);
-                        break;
-                    }
+                    [next_layer, layer_index] = self.get_next_primitive_and_index(event, previous_layer_index);
                 }
-                if (next_layer) {
-                    // Click the next layer
-                    $(next_layer).trigger(type, [event, layer_index]);
+                if (next_layer) {  // Click the next layer
+                    $(next_layer).trigger("click", [event, layer_index]);
                 }
-                else {
-                    // Re-trigger the click without checking for transparency
-                    self.html.trigger(type, [event, null, true]);
+                else {  // Re-trigger the click without checking for transparency
+                    self.html.trigger("click", [event, null, true]);
                 }
                 return true;
             };
         })(this);
         return false;
+    };
+    this.get_next_primitive_and_index = function (event, previous_layer_index=null) {
+        var next_primitive = null;
+        var primitive_index = null;
+        var elements = document.elementsFromPoint(event.clientX, event.clientY);
+        for (var i in elements) {
+            if (previous_layer_index !== null && parseInt(i) <= previous_layer_index) {
+                continue;
+            }
+            var element = elements[i];
+            var parent = $(element).parent()[0];
+            if (parent === this.html[0] || element === this.html[0]) {
+                continue;
+            }
+            if (element === this.canvas.html[0] || parent === this.canvas.html[0]) {
+                break;
+            }
+            if ($(element).attr("class") !== "DashGuiContext2DPrimitive") {
+                continue;
+            }
+            next_primitive = element;
+            primitive_index = parseInt(i);
+            break;
+        }
+        return [next_primitive, primitive_index];
     };
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
@@ -30028,14 +30097,15 @@ function DashGuiContext2DPrimitiveText () {
         }
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.text_area.html.hide();
-        }
-        else {
-            this.text_area.html.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.text_area.html.hide();
+    //     }
+    //
+    //     else {
+    //         this.text_area.html.show();
+    //     }
+    // };
     this._setup_styles();
 }
 
@@ -30105,14 +30175,15 @@ function DashGuiContext2DPrimitiveColor () {
         });
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.color.hide();
-        }
-        else {
-            this.color.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.color.hide();
+    //     }
+    //
+    //     else {
+    //         this.color.show();
+    //     }
+    // };
     this._setup_styles();
 }
 
@@ -30152,7 +30223,7 @@ function DashGuiContext2DPrimitiveMedia () {
                     "100%",
                     true,
                     false,
-                    !this.get_value("locked")
+                    !(this.get_value("locked") || this.editor.preview_mode)
                 ) : $("<div></div>")
             );
             this.html.append(this.media);
@@ -30213,18 +30284,29 @@ function DashGuiContext2DPrimitiveMedia () {
                 this.video_tint.css({
                     "position": "absolute",
                     "inset": 0,
-                    "opacity": 0.25,
                     "pointer-events": "none",
-                    "user-select": "none"
+                    "user-select": "none",
+                    "mix-blend-mode": "overlay"
                 });
             }
             this.html.append(this.video_tint);
             this.video_tint.css({
-                "background": tint_color
+                "background-color": tint_color
             });
         }
     };
     this.update_filter = function (brightness=null, contrast=null) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_filter(brightness, contrast);
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
         this.media.css({
             "filter": (
                 "brightness(" + (
@@ -30367,25 +30449,28 @@ function DashGuiContext2DPrimitiveMedia () {
         });
     };
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (!this.media) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_hidden_change(hidden);
-                    },
-                    10
-                );
-            })(this);
-            return;
-        }
-        if (hidden) {
-            this.media.hide();
-        }
-        else {
-            this.media.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (!this.media) {
+    //         (function (self) {
+    //             setTimeout(
+    //                 function () {
+    //                     self.on_hidden_change(hidden);
+    //                 },
+    //                 10
+    //             );
+    //         })(this);
+    //
+    //         return;
+    //     }
+    //
+    //     if (hidden) {
+    //         this.media.hide();
+    //     }
+    //
+    //     else {
+    //         this.media.show();
+    //     }
+    // };
     // Override
     this.on_locked_change = function (locked) {
         if (this.type !== "video") {
@@ -30400,6 +30485,9 @@ function DashGuiContext2DPrimitiveMedia () {
                     10
                 );
             })(this);
+            return;
+        }
+        if (this.editor.preview_mode) {
             return;
         }
         try {
@@ -31009,6 +31097,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             this.panel.UpdatePropertyBoxToolSlider("", this);
         }
         this.panel.SwitchContentToEditTab();
+        // TODO: Ryan didn't like this, re-enable after it's improved - what's wrong with it?
+        // Dash.Gui.ScrollToElement(this.layers.layers_box, this.html);
     };
     this.ToggleHidden = function (hidden) {
         if (hidden) {
@@ -31094,11 +31184,12 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
                     var css = {"border": "1px solid " + primitive.hover_color};
+                    var brightness = primitive.get_value("brightness");
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter((primitive.get_value("brightness") || 1.0) + 0.1);
+                        primitive.update_filter(brightness + 0.1);
                     }
                     else {
-                        css["filter"] = "brightness(" + ((self.get_value("brightness") || 1.0) + 0.1) + ")";
+                        css["filter"] = "brightness(" + (brightness + 0.1) + ")";
                     }
                     primitive.html.css(css);
                 }
@@ -31111,15 +31202,13 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             self.html.on("mouseleave", function () {
                 var primitive = self.editor.canvas.primitives[self.id];
                 if (!primitive.selected) {
-                    primitive.html.css({
-                        "border": "1px solid rgba(0, 0, 0, 0)"
-                    });
                     var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
+                    var brightness = primitive.get_value("brightness");
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter(primitive.get_value("brightness"));
+                        primitive.update_filter(brightness);
                     }
                     else {
-                        css["filter"] = "brightness(" + (self.get_value("brightness") || 1.0) + ")";
+                        css["filter"] = "brightness(" + brightness + ")";
                     }
                     primitive.html.css(css);
                 }
@@ -31655,10 +31744,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 }
             }
             params["f"] = "set_layer_properties";
-            params["properties"] = JSON.stringify({
+            params["properties"] = {
                 "font_id": value,
                 "font_url": font_url
-            });
+            };
         }
         else {
             params["f"] = "set_layer_property";
@@ -31679,6 +31768,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             if (params["key"]) {
                 params["key"] += "_override";
             }
+        }
+        if (params["properties"]) {
+            params["properties"] = JSON.stringify(params["properties"]);
         }
         (function (self) {
             Dash.Request(
@@ -31777,6 +31869,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.redraw_layers();
         this.editor.UpdateCanvasPrimitiveZIndexes();
         this.layers[id].Select();
+        Dash.Gui.ScrollToElement(this.layers_box, this.layers[id].html);
     };
     this.setup_styles();
 }
@@ -31894,6 +31987,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
             if (!combo) {
                 continue;
             }
+            // Not the best, but necessary right now
+            if (this.editor.override_mode) {
+                combo.DisableAutoGravity();
+            }
             combo.html.detach();
             combo.html.css({
                 "position": "absolute",
@@ -31908,6 +32005,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
             });
             this.panel.html.append(combo.html);
             this.floating_combos.push(combo);
+            combo.RefreshConnections();
         }
     };
     this.AddCustomElementToNewTab = function (
@@ -32488,11 +32586,33 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     continue;
                 }
                 for (var element of context["all_elements"]) {
-                    (element.html || element).css({
-                        "opacity": disabled ? 0.5 : 1,
-                        "user-select": disabled ? "none" : "auto",
-                        "pointer-events": disabled ? "none" : "auto"
-                    });
+                    if (element.hasOwnProperty("Disable") && element.hasOwnProperty("Enable")) {
+                        if (disabled) {
+                            element.Disable();
+                        }
+                        else {
+                            element.Enable();
+                        }
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+                    else if (element.hasOwnProperty("SetLocked")) {
+                        element.SetLocked(disabled);
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+                    else {
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1,
+                            "user-select": disabled ? "none" : "auto",
+                            "pointer-events": disabled ? "none" : "auto"
+                        });
+                    }
+                    if (!disabled && element.hasOwnProperty("RefreshConnections")) {
+                        element.RefreshConnections();
+                    }
                 }
             }
             self.redrawing = false;
@@ -32972,6 +33092,24 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return checkbox;
     };
     this.initialize_video_context = function (context_key) {
+        var contrast_slider = this.get_slider(
+            1,
+            context_key,
+            "contrast",
+            1.02,
+            "",
+            0.5,
+            2.0
+        );
+        var brightness_slider = this.get_slider(
+            1,
+            context_key,
+            "brightness",
+            0.95,
+            "",
+            0.5,
+            2.0
+        );
         var color_container = $("<div></div>");
         color_container.css({
             "display": "flex"
@@ -32987,6 +33125,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         );
         color_picker.clear_button = icon_button;
         color_container.append(icon_button.html);
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
     };
     this.initialize_image_context = function (context_key) {
@@ -33141,6 +33281,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return color_picker;
     };
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+        var value = this.get_value(data_key);
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -33150,7 +33291,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                self.get_value(data_key) || default_value,
+                (value || value === 0) ? value : default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {

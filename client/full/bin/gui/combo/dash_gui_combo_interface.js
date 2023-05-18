@@ -212,6 +212,10 @@ function DashGuiComboInterface () {
         this.gravity_value_override = value;
     };
 
+    this.DisableAutoGravity = function () {
+        this.auto_gravity = false;
+    };
+
     this.SetListVerticalOffset = function (offset) {
         offset = parseInt(offset);
 
@@ -292,6 +296,14 @@ function DashGuiComboInterface () {
 
     this.OptionList = function () {
         return this.option_list;
+    };
+
+    this.RefreshConnections = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+
+        this.setup_connections(true);
     };
 
     this.SetLoading = function (is_loading, align_right=false) {

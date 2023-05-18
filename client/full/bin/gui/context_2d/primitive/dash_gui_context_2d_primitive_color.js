@@ -83,15 +83,15 @@ function DashGuiContext2DPrimitiveColor () {
     };
 
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (hidden) {
-            this.color.hide();
-        }
-
-        else {
-            this.color.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (hidden) {
+    //         this.color.hide();
+    //     }
+    //
+    //     else {
+    //         this.color.show();
+    //     }
+    // };
 
     this._setup_styles();
 }

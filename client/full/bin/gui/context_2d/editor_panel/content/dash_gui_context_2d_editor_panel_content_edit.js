@@ -103,11 +103,39 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 }
 
                 for (var element of context["all_elements"]) {
-                    (element.html || element).css({
-                        "opacity": disabled ? 0.5 : 1,
-                        "user-select": disabled ? "none" : "auto",
-                        "pointer-events": disabled ? "none" : "auto"
-                    });
+                    if (element.hasOwnProperty("Disable") && element.hasOwnProperty("Enable")) {
+                        if (disabled) {
+                            element.Disable();
+                        }
+
+                        else {
+                            element.Enable();
+                        }
+
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+
+                    else if (element.hasOwnProperty("SetLocked")) {
+                        element.SetLocked(disabled);
+
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1
+                        });
+                    }
+
+                    else {
+                        (element.html || element).css({
+                            "opacity": disabled ? 0.5 : 1,
+                            "user-select": disabled ? "none" : "auto",
+                            "pointer-events": disabled ? "none" : "auto"
+                        });
+                    }
+
+                    if (!disabled && element.hasOwnProperty("RefreshConnections")) {
+                        element.RefreshConnections();
+                    }
                 }
             }
 
@@ -715,6 +743,26 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_video_context = function (context_key) {
+        var contrast_slider = this.get_slider(
+            1,
+            context_key,
+            "contrast",
+            1.02,
+            "",
+            0.5,
+            2.0
+        );
+
+        var brightness_slider = this.get_slider(
+            1,
+            context_key,
+            "brightness",
+            0.95,
+            "",
+            0.5,
+            2.0
+        );
+
         var color_container = $("<div></div>");
 
         color_container.css({
@@ -737,6 +785,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         color_container.append(icon_button.html);
 
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
     };
 
@@ -930,6 +980,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+        var value = this.get_value(data_key);
+
         return (function (self) {
             var slider = new Dash.Gui.Slider(
                 self.color,
@@ -939,7 +991,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                self.get_value(data_key) || default_value,
+                (value || value === 0) ? value : default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
 

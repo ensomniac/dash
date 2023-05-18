@@ -41,7 +41,7 @@ function DashGuiContext2DPrimitiveMedia () {
                     "100%",
                     true,
                     false,
-                    !this.get_value("locked")
+                    !(this.get_value("locked") || this.editor.preview_mode)
                 ) : $("<div></div>")
             );
 
@@ -116,21 +116,34 @@ function DashGuiContext2DPrimitiveMedia () {
                 this.video_tint.css({
                     "position": "absolute",
                     "inset": 0,
-                    "opacity": 0.25,
                     "pointer-events": "none",
-                    "user-select": "none"
+                    "user-select": "none",
+                    "mix-blend-mode": "overlay"
                 });
             }
 
             this.html.append(this.video_tint);
 
             this.video_tint.css({
-                "background": tint_color
+                "background-color": tint_color
             });
         }
     };
 
     this.update_filter = function (brightness=null, contrast=null) {
+        if (!this.media) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_filter(brightness, contrast);
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
         this.media.css({
             "filter": (
                 "brightness(" + (
@@ -304,28 +317,28 @@ function DashGuiContext2DPrimitiveMedia () {
     };
 
     // Override
-    this.on_hidden_change = function (hidden) {
-        if (!this.media) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_hidden_change(hidden);
-                    },
-                    10
-                );
-            })(this);
-
-            return;
-        }
-
-        if (hidden) {
-            this.media.hide();
-        }
-
-        else {
-            this.media.show();
-        }
-    };
+    // this.on_hidden_change = function (hidden) {
+    //     if (!this.media) {
+    //         (function (self) {
+    //             setTimeout(
+    //                 function () {
+    //                     self.on_hidden_change(hidden);
+    //                 },
+    //                 10
+    //             );
+    //         })(this);
+    //
+    //         return;
+    //     }
+    //
+    //     if (hidden) {
+    //         this.media.hide();
+    //     }
+    //
+    //     else {
+    //         this.media.show();
+    //     }
+    // };
 
     // Override
     this.on_locked_change = function (locked) {
@@ -343,6 +356,10 @@ function DashGuiContext2DPrimitiveMedia () {
                 );
             })(this);
 
+            return;
+        }
+
+        if (this.editor.preview_mode) {
             return;
         }
 

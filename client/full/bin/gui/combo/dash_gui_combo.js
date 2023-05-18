@@ -13,6 +13,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.row_buttons = [];
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
     this.dropdown_icon = null;
@@ -469,7 +470,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.gravity_horizontal = 0;
 
         // Expand the combo upwards if not enough room below
-        if (total_height > (this.gravity_height_override || window.innerHeight)) {
+        if (this.auto_gravity && total_height > (this.gravity_height_override || window.innerHeight)) {
 
             // As long as there's enough room above
             if (end_height < this.html.offset().top) {
@@ -495,7 +496,7 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         // If the row list width is wider than this.html (assuming this.html is deliberately placed/contained on the page)
-        if (this.rows.width() > this.html.width()) {
+        if (this.auto_gravity && this.rows.width() > this.html.width()) {
 
             // Expand the combo to the left if not enough room on the right
             if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {
@@ -613,35 +614,37 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
     };
 
-    this.setup_connections = function () {
+    this.setup_connections = function (refresh=false) {
         if (this.read_only) {
             return;
         }
 
         (function (self) {
-            $(window).on("click." + self.random_id, function (event) {
-                if (!self.html.is(":visible")) {
-                    $(window).off("click." + self.random_id);  // Kill this when leaving the page
+            if (!refresh) {
+                $(window).on("click." + self.random_id, function (event) {
+                    if (!self.html.is(":visible")) {
+                        $(window).off("click." + self.random_id);  // Kill this when leaving the page
 
-                    return;
-                }
-
-                if (!self.expanded) {
-                    return;
-                }
-
-                if (!$(event.target).hasClass("Combo")) {
-                    self.hide();
-
-                    event.preventDefault();
-
-                    if (event.originalEvent) {
-                        event.originalEvent.preventDefault();
+                        return;
                     }
 
-                    return false;
-                }
-            });
+                    if (!self.expanded) {
+                        return;
+                    }
+
+                    if (!$(event.target).hasClass("Combo")) {
+                        self.hide();
+
+                        event.preventDefault();
+
+                        if (event.originalEvent) {
+                            event.originalEvent.preventDefault();
+                        }
+
+                        return false;
+                    }
+                });
+            }
 
             self.html.on("mouseenter", function () {
                 self.highlight.stop().css({"opacity": 1});
@@ -669,15 +672,17 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
                 }
             });
 
-            // This delayed check is important because the option_list size may have changed after the first frame
-            setTimeout(
-                function () {
-                    if (!self.is_searchable && self.option_list.length > self.searchable_min) {
-                        self.EnableSearchSelection();
-                    }
-                },
-                300
-            );
+            if (!refresh) {
+                // This delayed check is important because the option_list size may have changed after the first frame
+                setTimeout(
+                    function () {
+                        if (!self.is_searchable && self.option_list.length > self.searchable_min) {
+                            self.EnableSearchSelection();
+                        }
+                    },
+                    300
+                );
+            }
         })(this);
     };
 

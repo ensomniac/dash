@@ -179,6 +179,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         this.panel.SwitchContentToEditTab();
+
+        // TODO: Ryan didn't like this, re-enable after it's improved - what's wrong with it?
+        // Dash.Gui.ScrollToElement(this.layers.layers_box, this.html);
     };
 
     this.ToggleHidden = function (hidden) {
@@ -287,13 +290,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
                 if (!primitive.selected) {
                     var css = {"border": "1px solid " + primitive.hover_color};
+                    var brightness = primitive.get_value("brightness");
 
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter((primitive.get_value("brightness") || 1.0) + 0.1);
+                        primitive.update_filter(brightness + 0.1);
                     }
 
                     else {
-                        css["filter"] = "brightness(" + ((self.get_value("brightness") || 1.0) + 0.1) + ")";
+                        css["filter"] = "brightness(" + (brightness + 0.1) + ")";
                     }
 
                     primitive.html.css(css);
@@ -310,18 +314,15 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 var primitive = self.editor.canvas.primitives[self.id];
 
                 if (!primitive.selected) {
-                    primitive.html.css({
-                        "border": "1px solid rgba(0, 0, 0, 0)"
-                    });
-
                     var css = {"border": "1px solid rgba(0, 0, 0, 0)"};
+                    var brightness = primitive.get_value("brightness");
 
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter(primitive.get_value("brightness"));
+                        primitive.update_filter(brightness);
                     }
 
                     else {
-                        css["filter"] = "brightness(" + (self.get_value("brightness") || 1.0) + ")";
+                        css["filter"] = "brightness(" + brightness + ")";
                     }
 
                     primitive.html.css(css);

@@ -144,6 +144,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 continue;
             }
 
+            // Not the best, but necessary right now
+            if (this.editor.override_mode) {
+                combo.DisableAutoGravity();
+            }
+
             combo.html.detach();
 
             combo.html.css({
@@ -161,6 +166,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
             this.panel.html.append(combo.html);
 
             this.floating_combos.push(combo);
+
+            combo.RefreshConnections();
         }
     };
 
