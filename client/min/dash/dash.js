@@ -30284,14 +30284,14 @@ function DashGuiContext2DPrimitiveMedia () {
                 this.video_tint.css({
                     "position": "absolute",
                     "inset": 0,
-                    "opacity": 0.25,
                     "pointer-events": "none",
-                    "user-select": "none"
+                    "user-select": "none",
+                    "mix-blend-mode": "overlay"
                 });
             }
             this.html.append(this.video_tint);
             this.video_tint.css({
-                "background": tint_color
+                "background-color": tint_color
             });
         }
     };
@@ -33092,6 +33092,24 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return checkbox;
     };
     this.initialize_video_context = function (context_key) {
+        var contrast_slider = this.get_slider(
+            1,
+            context_key,
+            "contrast",
+            1.02,
+            "",
+            0.5,
+            2.0
+        );
+        var brightness_slider = this.get_slider(
+            1,
+            context_key,
+            "brightness",
+            0.95,
+            "",
+            0.5,
+            2.0
+        );
         var color_container = $("<div></div>");
         color_container.css({
             "display": "flex"
@@ -33107,6 +33125,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         );
         color_picker.clear_button = icon_button;
         color_container.append(icon_button.html);
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
     };
     this.initialize_image_context = function (context_key) {

@@ -743,6 +743,26 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_video_context = function (context_key) {
+        var contrast_slider = this.get_slider(
+            1,
+            context_key,
+            "contrast",
+            1.02,
+            "",
+            0.5,
+            2.0
+        );
+
+        var brightness_slider = this.get_slider(
+            1,
+            context_key,
+            "brightness",
+            0.95,
+            "",
+            0.5,
+            2.0
+        );
+
         var color_container = $("<div></div>");
 
         color_container.css({
@@ -765,6 +785,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         color_container.append(icon_button.html);
 
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
     };
 

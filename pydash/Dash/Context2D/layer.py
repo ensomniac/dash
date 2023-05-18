@@ -192,14 +192,12 @@ class Layer:
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
 
-        elif self.Type == "image":
+        if self.Type in ["image", "video"]:
             data.update({
                 "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
-                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0
+                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
+                "file": self.data.get("file") or {}
             })
-
-        if self.Type in ["image", "video"]:
-            data["file"] = self.data.get("file") or {}
 
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.

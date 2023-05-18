@@ -116,16 +116,16 @@ function DashGuiContext2DPrimitiveMedia () {
                 this.video_tint.css({
                     "position": "absolute",
                     "inset": 0,
-                    "opacity": 0.25,
                     "pointer-events": "none",
-                    "user-select": "none"
+                    "user-select": "none",
+                    "mix-blend-mode": "overlay"
                 });
             }
 
             this.html.append(this.video_tint);
 
             this.video_tint.css({
-                "background": tint_color
+                "background-color": tint_color
             });
         }
     };
