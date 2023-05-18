@@ -747,6 +747,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (this.type === "text") {
             this.resize_text();
+            this.update_kerning();
 
             (function (self) {
                 requestAnimationFrame(function () {

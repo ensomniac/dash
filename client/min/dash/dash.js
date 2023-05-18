@@ -29774,6 +29774,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         if (this.type === "text") {
             this.resize_text();
+            this.update_kerning();
             (function (self) {
                 requestAnimationFrame(function () {
                     self.update_stroke();
@@ -30031,6 +30032,7 @@ function DashGuiContext2DPrimitiveText () {
                 "pointer-events": "none"
             });
         }
+        this.update_kerning();
         (function (self) {
             requestAnimationFrame(function () {
                 self.update_stroke();
@@ -30152,10 +30154,26 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
-        var thickness = this.get_value("stroke_thickness") || 0;
-        var size_px = (this.height_px * thickness);
+        var thickness_norm = this.get_value("stroke_thickness") || 0;
         this.text_area.textarea.css({
-            "text-stroke": thickness ? (size_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+            "text-stroke": thickness_norm ? ((this.height_px * thickness_norm) + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+        });
+    };
+    this.update_kerning = function () {
+        if (!this.height_px) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_kerning();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
+        var kerning_norm = this.get_value("kerning") || 0;
+        this.text_area.textarea.css({
+            "letter-spacing": kerning_norm ? ((this.height_px * kerning_norm) + "px") : "normal"  // When 0, don't apply kerning
         });
     };
     this.get_font_option = function () {
@@ -30200,6 +30218,9 @@ function DashGuiContext2DPrimitiveText () {
         }
         else if (key === "stroke_thickness") {
             this.resize_text();
+        }
+        else if (key === "kerning") {
+            this.update_kerning();
         }
         this.update_stroke();
         this.update_font_color();
@@ -32014,7 +32035,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.edit_tab_custom_element_configs = {};
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 10) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
+    this.min_height = (Dash.Size.ButtonHeight * 10.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -33142,15 +33164,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(slider.html);
     };
     this.initialize_text_context = function (context_key) {
-        // var kerning_slider = this.get_slider(  // TODO: -1 to 1
-        //     0,
-        //     context_key,
-        //     "kerning",
-        //     0.735,
-        //     "",
-        //     0,
-        //     0.1
-        // );
+        var kerning_slider = this.get_slider(
+            0,
+            context_key,
+            "kerning",
+            1.05,
+            "",
+            0.5,
+            1.0,
+            -1.0
+        );
         var thickness_slider = this.get_slider(
             0,
             context_key,
@@ -33193,6 +33216,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "text_alignment",
             "Alignment"
         );
+        this.contexts[context_key]["html"].append(kerning_slider.html);
         this.contexts[context_key]["html"].append(thickness_slider.html);
         this.contexts[context_key]["html"].append(container);
         this.contexts[context_key]["html"].append(font_combo_tool_row.html);

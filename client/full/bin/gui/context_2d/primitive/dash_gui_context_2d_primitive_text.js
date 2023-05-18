@@ -87,6 +87,8 @@ function DashGuiContext2DPrimitiveText () {
             });
         }
 
+        this.update_kerning();
+
         (function (self) {
             requestAnimationFrame(function () {
                 self.update_stroke();
@@ -242,11 +244,31 @@ function DashGuiContext2DPrimitiveText () {
             return;
         }
 
-        var thickness = this.get_value("stroke_thickness") || 0;
-        var size_px = (this.height_px * thickness);
+        var thickness_norm = this.get_value("stroke_thickness") || 0;
 
         this.text_area.textarea.css({
-            "text-stroke": thickness ? (size_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+            "text-stroke": thickness_norm ? ((this.height_px * thickness_norm) + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+        });
+    };
+
+    this.update_kerning = function () {
+        if (!this.height_px) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.update_kerning();
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
+        var kerning_norm = this.get_value("kerning") || 0;
+
+        this.text_area.textarea.css({
+            "letter-spacing": kerning_norm ? ((this.height_px * kerning_norm) + "px") : "normal"  // When 0, don't apply kerning
         });
     };
 
@@ -306,6 +328,10 @@ function DashGuiContext2DPrimitiveText () {
 
         else if (key === "stroke_thickness") {
             this.resize_text();
+        }
+
+        else if (key === "kerning") {
+            this.update_kerning();
         }
 
         this.update_stroke();

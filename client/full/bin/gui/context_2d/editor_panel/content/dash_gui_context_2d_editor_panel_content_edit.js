@@ -655,15 +655,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_text_context = function (context_key) {
-        // var kerning_slider = this.get_slider(  // TODO: -1 to 1
-        //     0,
-        //     context_key,
-        //     "kerning",
-        //     0.735,
-        //     "",
-        //     0,
-        //     0.1
-        // );
+        var kerning_slider = this.get_slider(
+            0,
+            context_key,
+            "kerning",
+            1.05,
+            "",
+            0.5,
+            1.0,
+            -1.0
+        );
 
         var thickness_slider = this.get_slider(
             0,
@@ -716,6 +717,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "Alignment"
         );
 
+        this.contexts[context_key]["html"].append(kerning_slider.html);
         this.contexts[context_key]["html"].append(thickness_slider.html);
         this.contexts[context_key]["html"].append(container);
         this.contexts[context_key]["html"].append(font_combo_tool_row.html);

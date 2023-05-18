@@ -17,7 +17,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
 
     // Increase this when any other elements are added that would increase the overall height
-    this.min_height = (Dash.Size.ButtonHeight * 9.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
+    this.min_height = (Dash.Size.ButtonHeight * 10.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
 
     this.PrimitiveTypes = [
         "text",
