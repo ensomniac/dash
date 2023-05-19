@@ -28785,6 +28785,9 @@ function DashGuiContext2DCanvas (editor) {
                 }
             });
             self.html.on("click", function () {
+                if (self.last_selected_primitive && self.last_selected_primitive.drag_cooldown) {
+                    return;
+                }
                 self.editor.DeselectAllLayers();
             });
         })(this);
@@ -29166,7 +29169,7 @@ function DashGuiContext2DToolbar (editor) {
         if (!this.can_edit) {
             return;
         }
-        var identifier = "dash_gui_context_2d_toolbar";
+        var identifier = "dash_gui_context_2d_toolbar" + (this.editor.override_mode ? "_override" : "");
         (function (self) {
             $(document).on(
                 "keydown." + identifier,  // Adding an ID to the event listener allows us to kill this specific listener
@@ -29213,6 +29216,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_context = null;
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
+    this.drag_cooldown = false;
     this.last_width_norm = null;
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
@@ -29396,6 +29400,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!this.drag_active || this.get_value("locked")) {
             return;
         }
+        this.drag_cooldown = true;
         if (this.type === "video" && !this.media[0].paused) {
             this.media[0].pause();
         }
@@ -29436,6 +29441,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.update_textarea_width();
         }
         this.save_drag_state();
+        (function (self) {
+            setTimeout(
+                function () {
+                    self.drag_cooldown = false;
+                },
+                300
+            );
+        })(this);
     };
     this.update_fade = function () {
         var direction = this.get_value("fade_direction");
@@ -29834,7 +29847,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         (function (self) {
             self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_checks=false) {
-                if (!_skip_checks) {
+                if (!_skip_checks && !self.drag_cooldown) {
                     if (
                            self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
                         || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)

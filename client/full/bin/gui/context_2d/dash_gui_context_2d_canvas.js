@@ -438,6 +438,10 @@ function DashGuiContext2DCanvas (editor) {
             });
 
             self.html.on("click", function () {
+                if (self.last_selected_primitive && self.last_selected_primitive.drag_cooldown) {
+                    return;
+                }
+
                 self.editor.DeselectAllLayers();
             });
         })(this);

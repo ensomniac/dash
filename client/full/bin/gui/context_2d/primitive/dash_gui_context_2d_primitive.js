@@ -16,6 +16,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.drag_context = null;
     this.z_index_mult = 1000;
     this.z_index_base = 1010;
+    this.drag_cooldown = false;
     this.last_width_norm = null;
     this.color = this.canvas.color;
     this.data = this.layer.GetData();
@@ -259,6 +260,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
+        this.drag_cooldown = true;
+
         if (this.type === "video" && !this.media[0].paused) {
             this.media[0].pause();
         }
@@ -313,6 +316,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         this.save_drag_state();
+
+        (function (self) {
+            setTimeout(
+                function () {
+                    self.drag_cooldown = false;
+                },
+                300
+            );
+        })(this);
     };
 
     this.update_fade = function () {
@@ -825,7 +837,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         (function (self) {
             self.html.on("click", function (event, _event_override=null, _previous_layer_index=null, _skip_checks=false) {
-                if (!_skip_checks) {
+                if (!_skip_checks && !self.drag_cooldown) {
                     if (
                            self.click_next_layer_if_transparent_image_pixel(_event_override || event, _previous_layer_index)
                         || self.click_next_layer_if_hidden(_event_override || event, _previous_layer_index)

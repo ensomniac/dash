@@ -234,7 +234,7 @@ function DashGuiContext2DToolbar (editor) {
             return;
         }
 
-        var identifier = "dash_gui_context_2d_toolbar";
+        var identifier = "dash_gui_context_2d_toolbar" + (this.editor.override_mode ? "_override" : "");
 
         (function (self) {
             $(document).on(
