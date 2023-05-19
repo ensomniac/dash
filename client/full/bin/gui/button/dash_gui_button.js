@@ -13,10 +13,15 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.is_selected = false;
     this.html = $("<div></div>");
     this.load_bar = $("<div></div>");
+    this.base_color_override = null;
     this.highlight = $("<div></div>");
+    this.label_color_override = null;
     this.last_right_label_text = null;
+    this.load_bar_color_override = null;
+    this.highlight_color_override = null;
     this.change_text_color_on_hover = true;
     this.click_highlight = $("<div></div>");
+    this.click_highlight_color_override = null;
     this.label = $("<div>" + this.label + "</div>");
     this.style = this.options["style"] || "default";
 
@@ -63,7 +68,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         this.setup_styles();
     };
 
-    this.reset_background_colors = function () {
+    this.reset_colors = function () {
         this.html.css({
             "background": this.default_html_background
         });
@@ -79,6 +84,16 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         this.click_highlight.css({
             "background": this.default_click_highlight_background
         });
+
+        this.label.css({
+            "color": this.default_label_color
+        });
+
+        this.base_color_override = null;
+        this.label_color_override = null;
+        this.load_bar_color_override = null;
+        this.highlight_color_override = null;
+        this.click_highlight_color_override = null;
     };
 
     this.on_hover_in = function () {
@@ -89,11 +104,11 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.SelectedHover);
+            this.label.css("color", this.label_color_override || this.color_set.Text.SelectedHover);
         }
 
         else {
-            this.label.css("color", this.color_set.Text.BaseHover);
+            this.label.css("color", this.label_color_override || this.color_set.Text.BaseHover);
         }
     };
 
@@ -105,11 +120,11 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.Selected);
+            this.label.css("color", this.label_color_override || this.color_set.Text.Selected);
         }
 
         else {
-            this.label.css("color", this.color_set.Text.Base);
+            this.label.css("color", this.label_color_override || this.color_set.Text.Base);
         }
     };
 

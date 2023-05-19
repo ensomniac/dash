@@ -67,34 +67,50 @@ function DashGuiButtonInterface () {
         });
     };
 
-    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
-        if (!base && !highlight && !load_bar && !click_highlight) {
-            this.reset_background_colors();
+    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null, label=null) {
+        if (!base && !highlight && !load_bar && !click_highlight && !label) {
+            this.reset_colors();
 
             return;
         }
 
         if (base) {
+            this.base_color_override = base;
+
             this.html.css({
                 "background": base
             });
         }
 
         if (highlight) {
+            this.highlight_color_override = highlight;
+
             this.highlight.css({
                 "background": highlight
             });
         }
 
         if (load_bar) {
+            this.load_bar_color_override = load_bar;
+
             this.load_bar.css({
                 "background": load_bar
             });
         }
 
         if (click_highlight) {
+            this.click_highlight_color_override = click_highlight;
+
             this.click_highlight.css({
                 "background": click_highlight
+            });
+        }
+
+        if (label) {
+            this.label_color_override = label;
+
+            this.label.css({
+                "color": label
             });
         }
     };

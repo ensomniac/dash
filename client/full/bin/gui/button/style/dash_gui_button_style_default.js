@@ -11,6 +11,7 @@ function DashGuiButtonStyleDefault () {
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
+        this.default_label_color = this.color_set.Text.Base;
 
         this.html.css({
             "background": this.default_html_background,
@@ -55,7 +56,7 @@ function DashGuiButtonStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": this.color_set.Text.Base,
+            "color": this.color_set.Text.Base
         });
     };
 }

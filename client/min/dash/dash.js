@@ -24520,10 +24520,15 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.is_selected = false;
     this.html = $("<div></div>");
     this.load_bar = $("<div></div>");
+    this.base_color_override = null;
     this.highlight = $("<div></div>");
+    this.label_color_override = null;
     this.last_right_label_text = null;
+    this.load_bar_color_override = null;
+    this.highlight_color_override = null;
     this.change_text_color_on_hover = true;
     this.click_highlight = $("<div></div>");
+    this.click_highlight_color_override = null;
     this.label = $("<div>" + this.label + "</div>");
     this.style = this.options["style"] || "default";
     DashGuiButtonInterface.call(this);
@@ -24555,7 +24560,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
         this.setup_styles();
     };
-    this.reset_background_colors = function () {
+    this.reset_colors = function () {
         this.html.css({
             "background": this.default_html_background
         });
@@ -24568,6 +24573,14 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         this.click_highlight.css({
             "background": this.default_click_highlight_background
         });
+        this.label.css({
+            "color": this.default_label_color
+        });
+        this.base_color_override = null;
+        this.label_color_override = null;
+        this.load_bar_color_override = null;
+        this.highlight_color_override = null;
+        this.click_highlight_color_override = null;
     };
     this.on_hover_in = function () {
         this.highlight.stop().animate({"opacity": 1}, 50);
@@ -24575,10 +24588,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             return;
         }
         if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.SelectedHover);
+            this.label.css("color", this.label_color_override || this.color_set.Text.SelectedHover);
         }
         else {
-            this.label.css("color", this.color_set.Text.BaseHover);
+            this.label.css("color", this.label_color_override || this.color_set.Text.BaseHover);
         }
     };
     this.on_hover_out = function () {
@@ -24587,10 +24600,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             return;
         }
         if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.Selected);
+            this.label.css("color", this.label_color_override || this.color_set.Text.Selected);
         }
         else {
-            this.label.css("color", this.color_set.Text.Base);
+            this.label.css("color", this.label_color_override || this.color_set.Text.Base);
         }
     };
     this.on_file_upload_response = function (response, return_button=false) {
@@ -24962,29 +24975,39 @@ function DashGuiButtonInterface () {
             "margin-top": -border_size
         });
     };
-    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null) {
-        if (!base && !highlight && !load_bar && !click_highlight) {
-            this.reset_background_colors();
+    this.SetColor = function (base=null, highlight=null, load_bar=null, click_highlight=null, label=null) {
+        if (!base && !highlight && !load_bar && !click_highlight && !label) {
+            this.reset_colors();
             return;
         }
         if (base) {
+            this.base_color_override = base;
             this.html.css({
                 "background": base
             });
         }
         if (highlight) {
+            this.highlight_color_override = highlight;
             this.highlight.css({
                 "background": highlight
             });
         }
         if (load_bar) {
+            this.load_bar_color_override = load_bar;
             this.load_bar.css({
                 "background": load_bar
             });
         }
         if (click_highlight) {
+            this.click_highlight_color_override = click_highlight;
             this.click_highlight.css({
                 "background": click_highlight
+            });
+        }
+        if (label) {
+            this.label_color_override = label;
+            this.label.css({
+                "color": label
             });
         }
     };
@@ -25374,6 +25397,7 @@ function DashGuiButtonStyleDefault () {
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
+        this.default_label_color = this.color_set.Text.Base;
         this.html.css({
             "background": this.default_html_background,
             "cursor": "pointer",
@@ -25413,7 +25437,7 @@ function DashGuiButtonStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": this.color_set.Text.Base,
+            "color": this.color_set.Text.Base
         });
     };
 }
@@ -25429,6 +25453,7 @@ function DashGuiButtonStyleTabTop () {
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
+        this.default_label_color = this.color_set.Text.Base;
         this.html.css({
             "background": this.default_html_background,
             "cursor": "pointer",
@@ -25510,6 +25535,7 @@ function DashGuiButtonStyleToolbar () {
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
+        this.default_label_color = this.color_set.Text.Base;
         this.html.css({
             "background": this.default_html_background,
             "cursor": "pointer",
@@ -25569,6 +25595,7 @@ function DashGuiButtonStyleTabSide () {
         this.default_highlight_background = this.color_set.Background.BaseHover;
         this.default_load_bar_background = Dash.Color.Primary;
         this.default_click_highlight_background = "rgba(255, 255, 255, 0.5)";
+        this.default_label_color = this.color_set.Text.Base;
         this.html.css({
             "background": this.default_html_background,
             "cursor": "pointer",
@@ -28996,6 +29023,7 @@ function DashGuiContext2DToolbar (editor) {
     this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
+    this.opposite_color = this.editor.opposite_color;
     this.setup_styles = function () {
         this.html.css({
             "position": "absolute",
@@ -29042,6 +29070,8 @@ function DashGuiContext2DToolbar (editor) {
             "title",
             "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
         );
+        this.pil_button.DisableHoverTextColorChange();
+        this.pil_button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
         this.html.append(this.pil_button.html);
     };
     this.on_pil_button_toggled = function () {
@@ -29051,7 +29081,8 @@ function DashGuiContext2DToolbar (editor) {
             this.disable_pil_button();
             return;
         }
-        this.pil_button.SetLoading(true);
+        this.pil_button.SetColor(this.color.PinstripeDark);
+        this.pil_button.SetLoading(true, 1, true, this.opposite_color);
         this.pil_button.Disable();
         this.pil_interval = Dash.SetInterval(this, this.refresh_pil_data, 5000);
     };
@@ -29061,11 +29092,11 @@ function DashGuiContext2DToolbar (editor) {
         }
         this.pil_button.SetLoading(false);
         this.pil_button.Enable();
+        this.pil_button.SetColor("none");
         if (this.pil_interval) {
             clearInterval(this.pil_interval);
             this.pil_interval = null;
         }
-        this.style_pil_button();
     };
     this.refresh_pil_data = function () {
         (function (self) {
@@ -29086,7 +29117,6 @@ function DashGuiContext2DToolbar (editor) {
                     if (!self.pil_data) {
                         self.pil_button.SetLoading(false);
                         self.pil_button.Enable();
-                        self.style_pil_button();
                     }
                     self.pil_data = response;
                 },
@@ -29120,16 +29150,6 @@ function DashGuiContext2DToolbar (editor) {
             this.pil_preview.show();
         }
         this.pil_preview.css(css);
-    };
-    this.style_pil_button = function () {
-        var size = 2;
-        this.pil_button.html.css({
-            "border": this.pil_button_active ? (size + "px solid " + this.color.AccentGood) : ""
-        });
-        this.pil_button.label.css({
-            "line-height": (Dash.Size.RowHeight - (this.pil_button_active ? (size * 2) : 0)) + "px",
-            "padding-left": (Dash.Size.Padding * 0.5) - (this.pil_button_active ? size : 0)
-        });
     };
     this.add_header = function () {
         var icon = new Dash.Gui.Icon(this.color, "tools", Dash.Size.ButtonHeight, 0.75, this.color.AccentGood);

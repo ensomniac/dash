@@ -13,6 +13,7 @@ function DashGuiContext2DToolbar (editor) {
     this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
     this.min_width = Dash.Size.ColumnWidth * 0.3;
+    this.opposite_color = this.editor.opposite_color;
 
     this.setup_styles = function () {
         this.html.css({
@@ -69,6 +70,9 @@ function DashGuiContext2DToolbar (editor) {
             "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
         );
 
+        this.pil_button.DisableHoverTextColorChange();
+        this.pil_button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
+
         this.html.append(this.pil_button.html);
     };
 
@@ -82,7 +86,8 @@ function DashGuiContext2DToolbar (editor) {
             return;
         }
 
-        this.pil_button.SetLoading(true);
+        this.pil_button.SetColor(this.color.PinstripeDark);
+        this.pil_button.SetLoading(true, 1, true, this.opposite_color);
         this.pil_button.Disable();
 
         this.pil_interval = Dash.SetInterval(this, this.refresh_pil_data, 5000);
@@ -95,14 +100,13 @@ function DashGuiContext2DToolbar (editor) {
 
         this.pil_button.SetLoading(false);
         this.pil_button.Enable();
+        this.pil_button.SetColor("none");
 
         if (this.pil_interval) {
             clearInterval(this.pil_interval);
 
             this.pil_interval = null;
         }
-
-        this.style_pil_button();
     };
 
     this.refresh_pil_data = function () {
@@ -129,8 +133,6 @@ function DashGuiContext2DToolbar (editor) {
                     if (!self.pil_data) {
                         self.pil_button.SetLoading(false);
                         self.pil_button.Enable();
-
-                        self.style_pil_button();
                     }
 
                     self.pil_data = response;
@@ -171,19 +173,6 @@ function DashGuiContext2DToolbar (editor) {
         }
 
         this.pil_preview.css(css);
-    };
-
-    this.style_pil_button = function () {
-        var size = 2;
-
-        this.pil_button.html.css({
-            "border": this.pil_button_active ? (size + "px solid " + this.color.AccentGood) : ""
-        });
-
-        this.pil_button.label.css({
-            "line-height": (Dash.Size.RowHeight - (this.pil_button_active ? (size * 2) : 0)) + "px",
-            "padding-left": (Dash.Size.Padding * 0.5) - (this.pil_button_active ? size : 0)
-        });
     };
 
     this.add_header = function () {
