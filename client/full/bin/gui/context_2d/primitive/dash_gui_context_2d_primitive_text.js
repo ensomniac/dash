@@ -330,11 +330,8 @@ function DashGuiContext2DPrimitiveText () {
             this.resize_text();
         }
 
-        else if (key === "kerning") {
-            this.update_kerning();
-            this.update_textarea_width();
-        }
-
+        this.update_kerning();
+        this.update_textarea_width();
         this.update_stroke();
         this.update_font_color();
     };
