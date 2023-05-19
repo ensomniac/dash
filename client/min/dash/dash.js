@@ -30120,18 +30120,18 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
-        var size = this.height_px;
+        var text_height = this.height_px;
         var font_option = this.get_font_option();
         if (font_option && font_option["override_scale_mult"] !== 1.0) {
-            size *= font_option["override_scale_mult"];
+            text_height *= font_option["override_scale_mult"];
         }
         // This makes sure we keep the text within the bounding box, as opposed to the stroke extending outside it
-        var stroke_px = size * (this.get_value("stroke_thickness") || 0);
+        var stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
         this.text_area.textarea.css({
-            "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * size) : 0,
-            "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * size) : 0,
-            "font-size": (size - stroke_px) + "px",
-            "line-height": size + "px"
+            "top": font_option && font_option["override_top_mult"] ? (font_option["override_top_mult"] * text_height) : 0,
+            "left": font_option && font_option["override_left_mult"] ? (font_option["override_left_mult"] * text_height) : 0,
+            "font-size": (text_height - stroke_px) + "px",
+            "line-height": text_height + "px"
         });
     };
     this.on_text_change = function (value) {
@@ -30191,9 +30191,15 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
-        var thickness_norm = this.get_value("stroke_thickness") || 0;
+        var text_height = this.height_px;
+        var font_option = this.get_font_option();
+        if (font_option && font_option["override_scale_mult"] !== 1.0) {
+            text_height *= font_option["override_scale_mult"];
+        }
+        // This makes sure we keep the text within the bounding box, as opposed to the stroke extending outside it
+        var stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
         this.text_area.textarea.css({
-            "text-stroke": thickness_norm ? ((this.height_px * thickness_norm) + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+            "text-stroke": stroke_px ? (stroke_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
         });
     };
     this.update_kerning = function () {
@@ -30208,9 +30214,16 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
+        var text_height = this.height_px;
+        var font_option = this.get_font_option();
+        if (font_option && font_option["override_scale_mult"] !== 1.0) {
+            text_height *= font_option["override_scale_mult"];
+        }
+        // This makes sure we keep the text within the bounding box, as opposed to the stroke extending outside it
+        var stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
         var kerning_norm = this.get_value("kerning") || 0;
         this.text_area.textarea.css({
-            "letter-spacing": kerning_norm ? ((this.height_px * kerning_norm) + "px") : "normal"  // When 0, don't apply kerning
+            "letter-spacing": kerning_norm ? (((this.height_px * kerning_norm) + stroke_px) + "px") : "normal"  // When 0, don't apply kerning
         });
     };
     this.get_font_option = function () {
