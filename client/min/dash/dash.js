@@ -32468,17 +32468,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         element.Enable();
     };
     this.get_upload_button = function (primitive_type, label_text) {
+        var media = ["image", "video"].includes(primitive_type);
         var button = this.get_button(label_text + " (Upload)", this.on_new_layer);
+        var params = {
+            "f": "add_" + (media ? "media" : primitive_type) + "_layer",
+            "obj_id": this.editor.obj_id
+        };
+        if (media) {
+            params["media_type"] = primitive_type;
+        }
         button.SetFileUploader(
             this.editor.api,
-            {
-                "f": (
-                    "add_" + (
-                        ["image", "video"].includes(primitive_type) ? "media" : primitive_type
-                    ) + "_layer"
-                ),
-                "obj_id": this.editor.obj_id
-            },
+            params,
             function () {
                 button.SetLoading(true);
                 button.Disable();
