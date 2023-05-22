@@ -234,14 +234,19 @@ class Layer:
 
                     properties[key] = int(properties[key])
 
-                from math import gcd
+                if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
+                    properties["aspect_ratio_w"] = 1
+                    properties["aspect_ratio_h"] = 1
 
-                divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+                else:
+                    from math import gcd
 
-                properties["aspect_ratio_w"] /= divisor
-                properties["aspect_ratio_h"] /= divisor
+                    divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
 
-                properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
+                    properties["aspect_ratio_w"] /= divisor
+                    properties["aspect_ratio_h"] /= divisor
+    
+                    properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
 
             self.data.update(properties)
 

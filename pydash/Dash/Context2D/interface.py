@@ -150,12 +150,17 @@ class Interface:
 
                 properties[key] = int(properties[key])
 
-            from math import gcd
+            if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
+                properties["aspect_ratio_w"] = 1
+                properties["aspect_ratio_h"] = 1
 
-            divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+            else:
+                from math import gcd
 
-            properties["aspect_ratio_w"] /= divisor
-            properties["aspect_ratio_h"] /= divisor
+                divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+
+                properties["aspect_ratio_w"] /= divisor
+                properties["aspect_ratio_h"] /= divisor
 
         if for_overrides and retain_override_tag:
             properties = self.re_add_override_tag_to_properties(properties)
