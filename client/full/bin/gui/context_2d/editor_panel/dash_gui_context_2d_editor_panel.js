@@ -22,7 +22,7 @@ function DashGuiContext2DEditorPanel (editor) {
 
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = this.override_mode ? (
-           Dash.Size.RowHeight
+          (Dash.Size.RowHeight * 2)
         + (Dash.Size.Padding * 1.5)
     ) : (
            Dash.Size.ButtonHeight        // Header
@@ -391,6 +391,7 @@ function DashGuiContext2DEditorPanel (editor) {
         });
 
         if (this.override_mode) {
+            this.add_aspect_tool_row();
             this.add_tool_value_tool_row();
 
             return;
@@ -538,6 +539,12 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.add_aspect_tool_row = function () {
         this.aspect_tool_row = this.property_box.AddToolRow();
+
+        if (this.override_mode) {
+            this.aspect_tool_row.html.css({
+                "margin-left": 0
+            });
+        }
 
         this.get_aspect_tool_row_input("w");
 

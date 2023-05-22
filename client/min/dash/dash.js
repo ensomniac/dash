@@ -28440,7 +28440,7 @@ function DashGuiContext2D (
                 {
                     "f": "set_property",
                     "obj_id": self.obj_id,
-                    "key": key,
+                    "key": key + (self.override_mode ? "_override" : ""),
                     "value": value,
                     ...self.extra_request_params,
                     ...additional_params
@@ -30729,7 +30729,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.min_width = (Dash.Size.ColumnWidth * 2.4) + (this.editor.min_width_extensions["editor_panel"] || 0);
     // Update if things are added to the box that would increase the overall height
     this.property_box_height = this.override_mode ? (
-           Dash.Size.RowHeight
+          (Dash.Size.RowHeight * 2)
         + (Dash.Size.Padding * 1.5)
     ) : (
            Dash.Size.ButtonHeight        // Header
@@ -31027,6 +31027,7 @@ function DashGuiContext2DEditorPanel (editor) {
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
         if (this.override_mode) {
+            this.add_aspect_tool_row();
             this.add_tool_value_tool_row();
             return;
         }
@@ -31142,6 +31143,11 @@ function DashGuiContext2DEditorPanel (editor) {
     };
     this.add_aspect_tool_row = function () {
         this.aspect_tool_row = this.property_box.AddToolRow();
+        if (this.override_mode) {
+            this.aspect_tool_row.html.css({
+                "margin-left": 0
+            });
+        }
         this.get_aspect_tool_row_input("w");
         var label = this.aspect_tool_row.AddLabel("x", Dash.Size.Padding * 0.7, null, null, false);
         label.label.css({

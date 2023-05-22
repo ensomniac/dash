@@ -539,7 +539,7 @@ function DashGuiContext2D (
                 {
                     "f": "set_property",
                     "obj_id": self.obj_id,
-                    "key": key,
+                    "key": key + (self.override_mode ? "_override" : ""),
                     "value": value,
                     ...self.extra_request_params,
                     ...additional_params
