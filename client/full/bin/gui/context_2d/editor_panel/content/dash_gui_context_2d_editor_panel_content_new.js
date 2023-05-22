@@ -136,7 +136,11 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         button.SetFileUploader(
             this.editor.api,
             {
-                "f": "add_" + primitive_type + "_layer",
+                "f": (
+                    "add_" + (
+                        ["image", "video"].includes(primitive_type) ? "media" : primitive_type
+                    ) + "_layer"
+                ),
                 "obj_id": this.editor.obj_id
             },
             function () {
