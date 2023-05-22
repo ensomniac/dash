@@ -245,7 +245,7 @@ class Layer:
 
                     properties["aspect_ratio_w"] /= divisor
                     properties["aspect_ratio_h"] /= divisor
-    
+
                     properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
 
             self.data.update(properties)
