@@ -155,7 +155,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
             combo.html.css({
                 "position": "absolute",
                 "top": (
-                    (this.editor.override_mode ? 0 : this.panel.property_box.html.outerHeight())  // Editor panel top box height
+                      (this.editor.override_mode ? 0 : this.panel.property_box.html.outerHeight())  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
                     + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
                     + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box

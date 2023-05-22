@@ -17,10 +17,14 @@ function DashGuiContext2DEditorPanel (editor) {
     this.obj_id = this.editor.obj_id;
     this.can_edit = this.editor.can_edit;
     this.preview_mode = this.editor.preview_mode;
+    this.override_mode = this.editor.override_mode;
     this.min_width = (Dash.Size.ColumnWidth * 2.4) + (this.editor.min_width_extensions["editor_panel"] || 0);
 
     // Update if things are added to the box that would increase the overall height
-    this.property_box_height = (
+    this.property_box_height = this.override_mode ? (
+           Dash.Size.RowHeight
+        + (Dash.Size.Padding * 1.5)
+    ) : (
            Dash.Size.ButtonHeight        // Header
         + (Dash.Size.RowHeight * 5)      // Rows and toolbar-style-buttons
         + (Dash.Size.Padding   * 2.5)    // Top, bottom, and button padding
@@ -52,34 +56,36 @@ function DashGuiContext2DEditorPanel (editor) {
 
         this.layers_box = new DashGuiContext2DEditorPanelLayers(this);
         this.content_box = new DashGuiContext2DEditorPanelContent(this);
+        this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
 
-        if (this.editor.override_mode) {
-            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.content_box.min_height, "dash_gui_context_2d_editor_panel_first_override_mode", true);
+        this.first_pane_slider = new Dash.Layout.PaneSlider(
+            this,
+            true,
+            this.property_box_height,
+            "dash_gui_context_2d_editor_panel_first" + (this.override_mode ? "_override" : ""),
+            true
+        );
 
-            this.first_pane_slider.SetPaneContentA(this.content_box.html);
-            this.first_pane_slider.SetPaneContentB(this.layers_box.html);
+        this.second_pane_slider = new Dash.Layout.PaneSlider(
+            this,
+            true,
+            this.get_top_html_size(),
+            "dash_gui_context_2d_editor_panel_second" + (this.override_mode ? "_override" : ""),
+            true
+        );
 
-            this.html.append(this.first_pane_slider.html);
-        }
+        this.second_pane_slider.SetPaneContentA(this.top_html);
+        this.second_pane_slider.SetPaneContentB(this.layers_box.html);
 
-        else {
-            this.property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
-            this.first_pane_slider = new Dash.Layout.PaneSlider(this, true, this.property_box_height, "dash_gui_context_2d_editor_panel_first", true);
-            this.second_pane_slider = new Dash.Layout.PaneSlider(this, true, this.get_top_html_size(), "dash_gui_context_2d_editor_panel_second", true);
+        this.html.append(this.second_pane_slider.html);
 
-            this.second_pane_slider.SetPaneContentA(this.top_html);
-            this.second_pane_slider.SetPaneContentB(this.layers_box.html);
+        this.first_pane_slider.SetPaneContentA(this.property_box.html);
+        this.first_pane_slider.SetPaneContentB(this.content_box.html);
 
-            this.html.append(this.second_pane_slider.html);
+        this.top_html.css(abs_css);
+        this.top_html.append(this.first_pane_slider.html);
 
-            this.first_pane_slider.SetPaneContentA(this.property_box.html);
-            this.first_pane_slider.SetPaneContentB(this.content_box.html);
-
-            this.top_html.css(abs_css);
-            this.top_html.append(this.first_pane_slider.html);
-
-            this.setup_property_box();
-        }
+        this.setup_property_box();
 
         if (this.GetSelectedLayer()) {
             this.SwitchContentToEditTab();
@@ -384,6 +390,12 @@ function DashGuiContext2DEditorPanel (editor) {
             "border-bottom": "1px solid " + this.color.StrokeLight
         });
 
+        if (this.override_mode) {
+            this.add_tool_value_tool_row();
+
+            return;
+        }
+
         this.add_property_box_header();
 
         this.property_box.AddInput("id", "ID", "", null, false).RemoveSaveButton();
@@ -401,6 +413,12 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.add_tool_value_tool_row = function () {
         this.tool_value_tool_row = this.property_box.AddToolRow();
+
+        if (this.override_mode) {
+            this.tool_value_tool_row.html.css({
+                "margin-left": 0
+            });
+        }
 
         var label = this.tool_value_tool_row.AddLabel("Tool:", null, null, null, false);
 
@@ -489,7 +507,7 @@ function DashGuiContext2DEditorPanel (editor) {
 
     this.duplicate_context = function () {
         // Should never happen, but just in case
-        if (this.editor.preview_mode || this.editor.override_mode) {
+        if (this.editor.preview_mode || this.override_mode) {
             return;
         }
 
