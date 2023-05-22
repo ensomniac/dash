@@ -16,8 +16,7 @@ function DashGuiContext2D (
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
      *         - "add_color_layer":        Add new color layer to provided object ID
-     *         - "add_image_layer":        Add new image layer to provided object ID via image upload
-     *         - "add_video_layer":        Add new video layer to provided object ID via video upload
+     *         - "add_media_layer":        Add new media layer to provided object ID via media upload
      *         - "import_another_context": Import another context (layers) into provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
