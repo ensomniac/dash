@@ -672,7 +672,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.735,
             "",
             0,
-            0.1
+            0.2
         );
 
         var font_color_picker = this.get_color_picker(context_key, "font_color", "Font\nColor");

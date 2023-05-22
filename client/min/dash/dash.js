@@ -30191,15 +30191,30 @@ function DashGuiContext2DPrimitiveText () {
             })(this);
             return;
         }
+        var shadow = "";
         var text_height = this.height_px;
+        var opacity = this.get_value("opacity");
         var font_option = this.get_font_option();
+        var stroke_color = (this.get_value("stroke_color") || this.color.Text);
         if (font_option && font_option["override_scale_mult"] !== 1.0) {
             text_height *= font_option["override_scale_mult"];
         }
-        // This makes sure we keep the text within the bounding box, as opposed to the stroke extending outside it
-        var stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
+        // Cut in half to match PIL
+        var stroke_px = (text_height * (this.get_value("stroke_thickness") || 0)) * 0.5;
+
+        // text-stroke applies inwards, but PIL applies stroke outwards,
+        // so this approach allows us to match the output from PIL
+        if (opacity && stroke_px) {
+            var iterations = parseInt(100 * opacity);
+            for (var num of Dash.Math.Range(iterations)) {
+                shadow += "0px 0px " + stroke_px + "px " + stroke_color;
+                if (num !== iterations - 1) {
+                    shadow += ", ";
+                }
+            }
+        }
         this.text_area.textarea.css({
-            "text-stroke": stroke_px ? (stroke_px + "px " + (this.get_value("stroke_color") || "rgba(0, 0, 0, 0)")) : ""
+            "text-shadow": shadow
         });
     };
     this.update_kerning = function () {
@@ -33229,7 +33244,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.735,
             "",
             0,
-            0.1
+            0.2
         );
         var font_color_picker = this.get_color_picker(context_key, "font_color", "Font\nColor");
         var stroke_color_picker = this.get_color_picker(context_key, "stroke_color", "Stroke\nColor");
