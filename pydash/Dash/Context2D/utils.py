@@ -135,3 +135,19 @@ class Utils:
             properties[f"{key}_override"] = old[key]
 
         return properties
+
+    # If abstraction of this module is managing overrides,
+    # you'll likely want to override this function so that
+    # 'or self.Data[key]' checks for the overridden value first.
+    def parse_aspect_keys_for_properties(self, properties, for_overrides=False):
+        for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+            properties[key] = float(properties.get(key) or self.Data[key])
+
+            if not properties[key].is_integer():
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+
+            properties[key] = int(properties[key])
+
+        return properties

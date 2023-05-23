@@ -29,6 +29,7 @@ class Interface:
     add_layer: callable
     add_layer_from_file: callable
     validate_uploaded_file_ext: callable
+    parse_aspect_keys_for_properties: callable
     parse_properties_for_override_tag: callable
     re_add_override_tag_to_properties: callable
 
@@ -140,20 +141,11 @@ class Interface:
                     rmtree(os.path.join(self.LayersRoot, layer_id))
 
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
-            for key in ["aspect_ratio_w", "aspect_ratio_h"]:
-                properties[key] = float(properties.get(key) or self.AspectRatioW)
-
-                if not properties[key].is_integer():
-                    from Dash.Utils import ClientAlert
-
-                    raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
-
-                properties[key] = int(properties[key])
+            properties = self.parse_aspect_keys_for_properties(properties, for_overrides)
 
             if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
                 properties["aspect_ratio_w"] = 1
                 properties["aspect_ratio_h"] = 1
-
             else:
                 from math import gcd
 

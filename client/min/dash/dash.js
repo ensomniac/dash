@@ -28424,7 +28424,6 @@ function DashGuiContext2D (
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
-        console.debug("TEST", key, value, additional_params);
         (function (self) {
             Dash.Request(
                 self,
