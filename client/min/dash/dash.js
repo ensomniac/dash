@@ -30457,7 +30457,14 @@ function DashGuiContext2DPrimitiveMedia () {
         );
     };
     this.update_tint_color = function () {
-        var tint_color = this.get_value("tint_color");
+        var multi_tone_colors = [];
+        for (var num of Dash.Math.Range(3)) {
+            var color = this.get_value("multi_tone_color_" + (num + 1));
+            if (color) {
+                multi_tone_colors.push(color);
+            }
+        }
+        var tint_color = multi_tone_colors.length >= 2 ? multi_tone_colors[0] : this.get_value("tint_color");
         if (this.type === "image") {
             if (!tint_color) {
                 this.media.css({
