@@ -336,7 +336,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
 
-        var label = $("<div>Color(s):</div>");
+        this.add_colors(context_key);
+    };
+
+    this.add_colors = function (context_key, key_prefix="color", include_opacity=true, total=3) {
+        var label = $("<div>" + key_prefix.Title() + "(s):</div>");
         var colors_container = $("<div></div>");
         var picker_container = $("<div></div>");
 
@@ -352,47 +356,72 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding * 0.9
         });
 
+        var horizontal = !include_opacity && total <= 3;
+
+        if (horizontal) {
+            picker_container.css({
+                "display": "flex"
+            });
+        }
+
         colors_container.append(label);
         colors_container.append(picker_container);
 
-        for (var num of [1, 2, 3]) {
-            var data_key = "color_" + num;
+        for (var num of Dash.Math.Range(total)) {
+            num += 1;
+
+            var data_key = key_prefix + "_" + num;
             var color_picker = this.get_color_picker(context_key, data_key, "none");
 
-            color_picker.html.css({
+            var css = {
                 "display": "flex",
                 "margin-bottom": Dash.Size.Padding * 0.5
-            });
+            };
 
-            var icon_button = (function (self, color_picker) {
+            if (horizontal && num !== total) {
+                css["border-right"] = "1px solid " + this.color.PinstripeDark;
+                css["margin-right"] = Dash.Size.Padding * 0.5;
+            }
+
+            color_picker.html.css(css);
+
+            var icon_button = (function (self, color_picker, data_key) {
                 return self.get_clear_button(
                     context_key,
-                    "color_" + num,
+                    data_key,
                     function () {
                         color_picker.input.val("#000000");
                     }
                 );
-            })(this, color_picker);
+            })(this, color_picker, data_key);
 
             color_picker.clear_button = icon_button;
 
             color_picker.html.append(icon_button.html);
 
-            var opacity_slider = this.get_slider(1, context_key, data_key + "_opacity", 0.6, "Opacity");
+            if (include_opacity) {
+                var opacity_slider = this.get_slider(
+                    1,
+                    context_key,
+                    data_key + "_opacity",
+                    0.6,
+                    "Opacity"
+                );
 
-            opacity_slider.html.css({
-                "margin-top": Dash.Size.Padding * 0.6
-            });
-
-            (function (opacity_slider) {
-                requestAnimationFrame(function () {
-                    opacity_slider.html.css({
-                        "margin-bottom": 0
-                    });
+                opacity_slider.html.css({
+                    "margin-top": Dash.Size.Padding * 0.6
                 });
-            })(opacity_slider);
 
-            color_picker.html.append(opacity_slider.html);
+                (function (opacity_slider) {
+                    requestAnimationFrame(function () {
+                        opacity_slider.html.css({
+                            "margin-bottom": 0
+                        });
+                    });
+                })(opacity_slider);
+
+                color_picker.html.append(opacity_slider.html);
+            }
 
             picker_container.append(color_picker.html);
         }
@@ -847,6 +876,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
+
+        this.add_colors(context_key, "tone", false);
     };
 
     this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {

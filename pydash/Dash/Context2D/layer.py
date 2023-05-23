@@ -32,6 +32,9 @@ class Layer:
         ]
 
         self.str_keys = [
+            "tone_1",
+            "tone_2",
+            "tone_3",
             "color_1",
             "color_2",
             "color_3",
@@ -193,6 +196,10 @@ class Layer:
 
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
+
+        if self.Type == "image":
+            for num in [1, 2, 3]:
+                data[f"tone_{num}"] = self.data.get(f"tone_{num}") or ""
 
         if self.Type in ["image", "video"]:
             data.update({

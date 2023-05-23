@@ -33,11 +33,12 @@ class Collection:
     _root: dict
     _all_ids: list
 
-    def __init__(self, store_path, nested=False, dash_context=None, sort_by_key=""):
+    def __init__(self, store_path, nested=False, dash_context=None, sort_by_key="", default_data_to_assert_on_get={}):
         self.store_path = store_path
         self.nested = nested
         self._dash_context = dash_context
         self._sort_by_key = sort_by_key
+        self.default_data_to_assert_on_get = default_data_to_assert_on_get
 
     @property
     def DashContext(self):
@@ -95,7 +96,8 @@ class Collection:
             self.store_path,
             nested=self.nested,
             sort_by_key=self._sort_by_key,
-            filter_params=filter_params
+            filter_params=filter_params,
+            default_data_to_assert=self.default_data_to_assert_on_get
         )
 
         return self._all
@@ -115,7 +117,8 @@ class Collection:
             self.store_path,
             nested=self.nested,
             sort_by_key=(sort_by_key or self._sort_by_key),
-            filter_out_keys=filter_out_keys
+            filter_out_keys=filter_out_keys,
+            default_data_to_assert=self.default_data_to_assert_on_get
         )
 
     def Get(self, obj_id, filter_out_keys=[]):

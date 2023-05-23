@@ -136,7 +136,7 @@ class DashLocalStorage:
 
         return all_ids
 
-    def GetAll(self, extensionless=False, filter_params={}):
+    def GetAll(self, extensionless=False, filter_params={}, default_data_to_assert={}):
         """
         Returns a dictionary containing ID > Data pairs.
         """
@@ -215,6 +215,14 @@ class DashLocalStorage:
         if self.filter_out_keys:
             for entry_id in all_data["data"]:
                 all_data["data"][entry_id] = self.filter_data_entry(all_data["data"][entry_id])
+
+        if default_data_to_assert:
+            for entry_id in all_data["data"]:
+                for key in default_data_to_assert:
+                    if key in all_data["data"][entry_id]:
+                        continue
+
+                    all_data["data"][entry_id][key] = default_data_to_assert[key]
 
         return all_data
 
@@ -640,6 +648,7 @@ class DashLocalStorage:
     def get_default_data(self, record_id):
         return {
             "id": record_id,
+            "display_name": record_id,
             "created_by": Memory.Global.RequestUser["email"],
             "created_on": datetime.now().isoformat(),
             "modified_by": Memory.Global.RequestUser["email"],
@@ -774,8 +783,13 @@ def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
     return DashLocalStorage(dash_context, store_path, nested, filter_out_keys=filter_out_keys).GetData(obj_id)
 
 
-def GetAll(dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[], extensionless=False, filter_params={}):
-    return DashLocalStorage(dash_context, store_path, nested, sort_by_key, filter_out_keys).GetAll(extensionless, filter_params=filter_params)
+def GetAll(
+        dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[],
+        extensionless=False, filter_params={}, default_data_to_assert={}
+):
+    return DashLocalStorage(
+        dash_context, store_path, nested, sort_by_key, filter_out_keys
+    ).GetAll(extensionless, filter_params=filter_params, default_data_to_assert=default_data_to_assert)
 
 
 def GetAllIDs(dash_context, store_path, nested=False):
