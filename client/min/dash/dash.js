@@ -28424,6 +28424,7 @@ function DashGuiContext2D (
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
+        console.debug("TEST", key, value, additional_params);
         (function (self) {
             Dash.Request(
                 self,
@@ -33001,8 +33002,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
         this.add_colors(context_key);
     };
-    this.add_colors = function (context_key, key_prefix="color", include_opacity=true, total=3) {
-        var label = $("<div>" + key_prefix.Title() + "(s):</div>");
+    this.add_colors = function (context_key, key_prefix="color", include_opacity=true, label_text="", total=3) {
+        var label = $("<div>" + (label_text || (key_prefix.Title() + "(s)")) + ":</div>");
         var colors_container = $("<div></div>");
         var picker_container = $("<div></div>");
         colors_container.css({
@@ -33435,7 +33436,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_container);
-        this.add_colors(context_key, "tone", false);
+        this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
     };
     this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {
         var icon_button = (function (self) {

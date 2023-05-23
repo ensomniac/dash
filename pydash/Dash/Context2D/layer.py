@@ -35,9 +35,6 @@ class Layer:
             "tone_1",
             "tone_2",
             "tone_3",
-            "color_1",
-            "color_2",
-            "color_3",
             "font_id",
             "text_value",
             "font_color",
@@ -46,6 +43,9 @@ class Layer:
             "stroke_color",
             "text_alignment",
             "fade_direction",
+            "multi_tone_color_1",
+            "multi_tone_color_2",
+            "multi_tone_color_3",
             "gradient_direction",
             *self.context_2d.LayerExtraStrKeys
         ]
@@ -199,7 +199,7 @@ class Layer:
 
         if self.Type == "image":
             for num in [1, 2, 3]:
-                data[f"tone_{num}"] = self.data.get(f"tone_{num}") or ""
+                data[f"multi_tone_color_{num}"] = self.data.get(f"multi_tone_color_{num}") or ""
 
         if self.Type in ["image", "video"]:
             data.update({
