@@ -28064,8 +28064,10 @@ function DashGuiContext2D (
     this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
+    this.refresh_ms = this.preview_mode ? 30000 : 5000;
     this.editor_panel_property_box_custom_fields_cb = null;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
+    this.refresh_data_request_failure_id = "dash_gui_context_2d_on_data";
     this.setup_styles = function () {
         var css = {
             "position": "absolute",
@@ -28077,7 +28079,7 @@ function DashGuiContext2D (
         }
         this.html.css(css);
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
-        Dash.SetInterval(this, this.refresh_data, this.preview_mode ? 30000 : 5000);
+        Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
         this.get_combo_options();
     };
     this.SetEditorPanelLayerProperty = function (key, value, id) {
@@ -28365,8 +28367,13 @@ function DashGuiContext2D (
     };
     this.on_data = function (response) {
         if (!Dash.Validate.Response(response)) {
+            Dash.Requests.TrackRequestFailureForID(
+                this.refresh_data_request_failure_id,
+                parseInt(30 / (this.refresh_ms / 1000))
+            );
             return;
         }
+        Dash.Requests.ResetRequestFailuresForID(this.refresh_data_request_failure_id);
         this.data = response;
         if (this.ComboOptions && !this.initialized) {
             this.initialize();
