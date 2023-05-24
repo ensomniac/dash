@@ -32836,6 +32836,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     continue;
                 }
                 for (var element of context["all_elements"]) {
+                    var html = typeof element.html === "function" ? element : (element.html || element);
                     if (element.hasOwnProperty("Disable") && element.hasOwnProperty("Enable")) {
                         if (disabled) {
                             element.Disable();
@@ -32843,18 +32844,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                         else {
                             element.Enable();
                         }
-                        (element.html || element).css({
+                        html.css({
                             "opacity": disabled ? 0.5 : 1
                         });
                     }
                     else if (element.hasOwnProperty("SetLocked")) {
                         element.SetLocked(disabled);
-                        (element.html || element).css({
+                        html.css({
                             "opacity": disabled ? 0.5 : 1
                         });
                     }
                     else {
-                        (element.html || element).css({
+                        html.css({
                             "opacity": disabled ? 0.5 : 1,
                             "user-select": disabled ? "none" : "auto",
                             "pointer-events": disabled ? "none" : "auto"
@@ -32997,14 +32998,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var gradient_direction_combo_tool_row = this.get_combo(
             context_key,
             [
-                {"id": "to_right", "label_text": "Left to Right"},  // Default to this
-                {"id": "to_left", "label_text": "Right to Left"},
-                {"id": "to_bottom", "label_text": "Top to Bottom"},
+                {"id": "to_bottom", "label_text": "Top to Bottom"},  // Default to this
                 {"id": "to_top", "label_text": "Bottom to Top"},
-                {"id": "to_right_top", "label_text": "Bottom Left to Top Right"},
-                {"id": "to_right_bottom", "label_text": "Top Left to Bottom Right"},
-                {"id": "to_left_top", "label_text": "Bottom Right to Top Left"},
-                {"id": "to_left_bottom", "label_text": "Top Right to Bottom Left"}
+                {"id": "to_right", "label_text": "Left to Right"},
+                {"id": "to_left", "label_text": "Right to Left"},
+                // Hiding these until PIL support is added
+                // {"id": "to_right_top", "label_text": "Bottom Left to Top Right"},
+                // {"id": "to_right_bottom", "label_text": "Top Left to Bottom Right"},
+                // {"id": "to_left_top", "label_text": "Bottom Right to Top Left"},
+                // {"id": "to_left_bottom", "label_text": "Top Right to Bottom Left"}
             ],
             "gradient_direction",
             "*Gradient Direction",
@@ -33083,6 +33085,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
             picker_container.append(color_picker.html);
         }
+        this.contexts[context_key]["all_elements"].push(label);
         this.contexts[context_key]["html"].append(colors_container);
     };
     
