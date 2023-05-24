@@ -173,6 +173,14 @@ function DashGuiContext2D (
         }
     };
 
+    this.GetSelectedLayer = function () {
+        if (this.editor_panel) {
+            return this.editor_panel.GetSelectedLayer();
+        }
+
+        return null;
+    };
+
     this.DeselectAllLayers = function () {
         this.editor_panel.layers_box.DeselectLayers();
 

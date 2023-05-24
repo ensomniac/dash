@@ -211,6 +211,10 @@ function DashGuiButtonInterface () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
 
+    this.SetHoverHint = function (hint) {
+        this.html.attr("title", hint);
+    };
+
     this.SetLoading = function (is_loading, size_mult=1, vertical=true, color=null, css={}) {
         if (is_loading && this.load_dots) {
             return;

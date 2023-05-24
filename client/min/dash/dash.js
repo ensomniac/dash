@@ -25086,6 +25086,9 @@ function DashGuiButtonInterface () {
     this.IsLoading = function () {
         return !!this.load_dots; // If this.load_dots, return true - else, return false
     };
+    this.SetHoverHint = function (hint) {
+        this.html.attr("title", hint);
+    };
     this.SetLoading = function (is_loading, size_mult=1, vertical=true, color=null, css={}) {
         if (is_loading && this.load_dots) {
             return;
@@ -28145,6 +28148,12 @@ function DashGuiContext2D (
         if (this.editor_panel) {
             this.editor_panel.SelectLayer(id, from_canvas);
         }
+    };
+    this.GetSelectedLayer = function () {
+        if (this.editor_panel) {
+            return this.editor_panel.GetSelectedLayer();
+        }
+        return null;
     };
     this.DeselectAllLayers = function () {
         this.editor_panel.layers_box.DeselectLayers();
