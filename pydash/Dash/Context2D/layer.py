@@ -187,7 +187,7 @@ class Layer:
             data.update({
                 "aspect_ratio_w": self.data.get("aspect_ratio_w") or 1.0,
                 "aspect_ratio_h": self.data.get("aspect_ratio_h") or 1.0,
-                "gradient_direction": self.data.get("gradient_direction") or "to_right"
+                "gradient_direction": self.data.get("gradient_direction") or "vertical"
             })
 
             for num in [1, 2, 3]:

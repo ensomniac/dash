@@ -52,11 +52,21 @@ function DashGuiContext2DPrimitiveColor () {
             return;
         }
 
+        var direction = this.get_value("gradient_direction").replaceAll("_", " ");
+
+        if (direction === "vertical") {
+            direction = "to bottom";
+        }
+
+        else if (direction === "horizontal") {
+            direction = "to right";
+        }
+
         this.color.css({
             // https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
             "background": (
                   "linear-gradient("
-                + this.get_value("gradient_direction").replaceAll("_", " ")
+                + direction
                 + ", "
                 + colors.join(", ")
                 + ")"

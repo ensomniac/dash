@@ -30362,11 +30362,18 @@ function DashGuiContext2DPrimitiveColor () {
             });
             return;
         }
+        var direction = this.get_value("gradient_direction").replaceAll("_", " ");
+        if (direction === "vertical") {
+            direction = "to bottom";
+        }
+        else if (direction === "horizontal") {
+            direction = "to right";
+        }
         this.color.css({
             // https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
             "background": (
                   "linear-gradient("
-                + this.get_value("gradient_direction").replaceAll("_", " ")
+                + direction
                 + ", "
                 + colors.join(", ")
                 + ")"
@@ -32998,15 +33005,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         var gradient_direction_combo_tool_row = this.get_combo(
             context_key,
             [
-                {"id": "to_bottom", "label_text": "Top to Bottom"},  // Default to this
-                {"id": "to_top", "label_text": "Bottom to Top"},
-                {"id": "to_right", "label_text": "Left to Right"},
-                {"id": "to_left", "label_text": "Right to Left"},
-                // Hiding these until PIL support is added
-                // {"id": "to_right_top", "label_text": "Bottom Left to Top Right"},
-                // {"id": "to_right_bottom", "label_text": "Top Left to Bottom Right"},
-                // {"id": "to_left_top", "label_text": "Bottom Right to Top Left"},
-                // {"id": "to_left_bottom", "label_text": "Top Right to Bottom Left"}
+                {"id": "vertical", "label_text": "Vertical"},  // Default to this
+                {"id": "horizontal", "label_text": "Horizontal"}
             ],
             "gradient_direction",
             "*Gradient Direction",
