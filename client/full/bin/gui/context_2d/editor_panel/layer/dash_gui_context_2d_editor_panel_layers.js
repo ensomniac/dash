@@ -121,7 +121,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 self.editor.api,
                 {
                     "f": "duplicate_layer",
-                    "obj_id": self.editor.obj_id,
+                    "c2d_id": self.editor.c2d_id,
                     "layer_id": id
                 }
             );
@@ -431,7 +431,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         var params = {
-            "obj_id": this.editor.obj_id,
+            "c2d_id": this.editor.c2d_id,
             "layer_id": parent_id || id,
             ...this.editor.extra_request_params
         };

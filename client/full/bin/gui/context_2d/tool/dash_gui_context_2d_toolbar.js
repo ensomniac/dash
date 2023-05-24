@@ -140,7 +140,7 @@ function DashGuiContext2DToolbar (editor) {
                 self.editor.api,
                 {
                     "f": "get_pil_preview",
-                    "obj_id": self.editor.obj_id,
+                    "c2d_id": self.editor.c2d_id,
                     ...self.editor.extra_request_params
                 }
             );

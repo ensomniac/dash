@@ -1,5 +1,5 @@
 function DashGuiContext2D (
-    obj_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
+    c2d_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
 ) {
     /**
      * Context2D editor element.
@@ -29,7 +29,7 @@ function DashGuiContext2D (
      *                                       - fonts (make sure 'url' and 'filename' are included in each option, alongside the usual 'id' and 'label_text')
      *                                       - contexts (all Context2D objects)
      *
-     * @param {string} obj_id - Object (context) ID (this will be included in requests as 'obj_id')
+     * @param {string} c2d_id - Object (context) ID (this will be included in requests as 'c2d_id')
      * @param {boolean} can_edit - Determines whether buttons, inputs, etc will be enabled (default=true)
      * @param {DashColorSet} color - DashColorSet instance (default=null)
      * @param {string} api - API name for requests (default="Context2D")
@@ -38,7 +38,7 @@ function DashGuiContext2D (
      * @param {Object} extra_request_params - Extra params to send on requests (default={})
      */
 
-    this.obj_id = obj_id;
+    this.c2d_id = c2d_id;
     this.api = api;
     this.color = color || Dash.Color.Light;
     this.can_edit = preview_mode ? false : can_edit;
@@ -438,7 +438,7 @@ function DashGuiContext2D (
             this.api,
             {
                 "f": "get_data",
-                "obj_id": this.obj_id,
+                "c2d_id": this.c2d_id,
                 ...this.extra_request_params
             }
         );
@@ -496,7 +496,7 @@ function DashGuiContext2D (
                 self.api,
                 {
                     "f": "get_combo_options",
-                    "obj_id": self.obj_id,
+                    "c2d_id": self.c2d_id,
                     ...extra_params
                 }
             );
@@ -538,7 +538,7 @@ function DashGuiContext2D (
                 self.api,
                 {
                     "f": "set_property",
-                    "obj_id": self.obj_id,
+                    "c2d_id": self.c2d_id,
                     "key": key + (self.override_mode ? "_override" : ""),
                     "value": value,
                     ...self.extra_request_params,

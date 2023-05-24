@@ -477,7 +477,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         var params = {
             "f": "set_layer_properties",
-            "obj_id": this.editor.obj_id,
+            "c2d_id": this.editor.c2d_id,
             "layer_id": this.parent_id || this.id,
             "properties": JSON.stringify(properties),
             ...this.editor.extra_request_params

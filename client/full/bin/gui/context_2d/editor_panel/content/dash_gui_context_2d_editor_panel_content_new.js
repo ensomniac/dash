@@ -70,7 +70,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                                 self.editor.api,
                                 {
                                     "f": "add_" + primitive_type + "_layer",
-                                    "obj_id": self.editor.obj_id
+                                    "c2d_id": self.editor.c2d_id
                                 }
                             );
                         }
@@ -136,7 +136,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
 
         var params = {
             "f": "add_" + (media ? "media" : primitive_type) + "_layer",
-            "obj_id": this.editor.obj_id
+            "c2d_id": this.editor.c2d_id
         };
 
         if (media) {
@@ -172,7 +172,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                         return;
                     }
                     
-                    if (selected_option["id"] === self.editor.obj_id) {
+                    if (selected_option["id"] === self.editor.c2d_id) {
                         alert("Importing a context into itself is not yet supported.");
 
                         return;
@@ -189,8 +189,8 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                         self.editor.api,
                         {
                             "f": "import_another_context",
-                            "obj_id": self.editor.obj_id,
-                            "obj_id_to_import": selected_option["id"]
+                            "c2d_id": self.editor.c2d_id,
+                            "c2d_id_to_import": selected_option["id"]
                         }
                     );
                 }

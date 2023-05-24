@@ -14,7 +14,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.tool_value_tool_row = null;
     this.top_html = $("<div></div>");
     this.aspect_tool_row_inputs = {};
-    this.obj_id = this.editor.obj_id;
+    this.c2d_id = this.editor.c2d_id;
     this.can_edit = this.editor.can_edit;
     this.preview_mode = this.editor.preview_mode;
     this.override_mode = this.editor.override_mode;
@@ -531,7 +531,7 @@ function DashGuiContext2DEditorPanel (editor) {
                 self.api,
                 {
                     "f": "duplicate",
-                    "obj_id": self.obj_id
+                    "c2d_id": self.c2d_id
                 }
             );
         })(this);
