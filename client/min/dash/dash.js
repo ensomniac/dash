@@ -35540,6 +35540,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
     this.end_tag = null;
+    this.disabled = false;
     this.icon_button_count = 0;
     this.html = $("<div></div>");
     this.save_button_visible = false;
@@ -35816,6 +35817,28 @@ function DashGuiInputRowInterface () {
     };
     this.SetAutosaveDelayMs = function (ms) {
         this.input.SetAutosaveDelayMs(ms);
+    };
+    this.Disable = function () {
+        if (this.disabled) {
+            return;
+        }
+        this.disabled = true;
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+        this.disabled = false;
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
     this.SetInputValidity = function (input_is_valid) {
         console.log("input_is_valid: " + input_is_valid, "\n", this.color);

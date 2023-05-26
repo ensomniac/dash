@@ -9,6 +9,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
     this.data_key = data_key;
 
     this.end_tag = null;
+    this.disabled = false;
     this.icon_button_count = 0;
     this.html = $("<div></div>");
     this.save_button_visible = false;
