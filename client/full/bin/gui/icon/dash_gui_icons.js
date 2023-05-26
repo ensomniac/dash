@@ -194,6 +194,7 @@ function DashGuiIcons (icon) {
         "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
         "note":                  new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),
         "notify":                new DashGuiIconDefinition(this.icon, "Notify", this.weight["regular"], "bell"),
+        "object_group":          new DashGuiIconDefinition(this.icon, "Object Group", this.weight["regular"], "object-group"),
         "open_folder":           new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
         "paperclip":             new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
         "pen":                   new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),

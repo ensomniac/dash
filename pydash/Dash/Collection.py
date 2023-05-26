@@ -217,6 +217,28 @@ class Collection:
             else:
                 os.remove(path)
 
+    def GetComboOptions(self, additional_keys=[], default_label="Not Selected"):
+        options = []
+        data = self.GetAll()
+
+        if default_label:
+            options.append({"id": "", "label_text": default_label})
+
+        for obj_id in data["order"]:
+            obj_data = data["data"][obj_id]
+
+            option = {
+                "id": obj_id,
+                "label_text": obj_data.get("display_name") or obj_id
+            }
+
+            for key in additional_keys:
+                option[key] = obj_data.get(key)
+
+            options.append(option)
+
+        return options
+
     def handle_new_data(self, new_data, return_all_data=True):
         if hasattr(self, "_all") and type(self._all) is dict:
             if "data" in self._all and not self._all["data"].get(new_data["id"]):

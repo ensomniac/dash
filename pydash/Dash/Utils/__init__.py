@@ -20,9 +20,12 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 # ------------------------------------------------- FILE ----------------------------------------------------
 def UploadFile(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None,
-        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True, min_size=0
+        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False,
+        parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={},
+        enforce_single_period=True, allowable_executable_exts=[], related_file_path="",
+        target_aspect_ratio=None, additional_data={}, replace_extra_periods=True,
+        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
+        include_orig_png=True, min_size=0
 ):
     from .file import Upload
 
@@ -200,8 +203,9 @@ def GetListPortion(list_obj, center_anchor_value, size=3):
 
 # ------------------------------------------------- COMMS ---------------------------------------------------
 def SendEmail(
-        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False,
-        reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[], ensure_sender_gets_copied=True
+        subject, notify_email_list=[], msg="", error="", sender_email="",
+        sender_name="Dash", strict_notify=False, reply_to_email="", reply_to_name="",
+        bcc_email_list=[], attachment_file_paths=[], ensure_sender_gets_copied=True
 ):
     from .comms import SendEmail
 

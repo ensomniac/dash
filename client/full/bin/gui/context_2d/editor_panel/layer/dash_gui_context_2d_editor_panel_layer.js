@@ -501,14 +501,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.get_type_icon_name = function () {
         var type = this.get_data()["type"];
 
-        var icon_name = (
-              type === "text" ? "font"
-            : type === "image" ? type
-            : type === "video" ? "film"
-            : type === "color" ? "color_palette"
-            : type === "context" ? "project_diagram"
-            : "unknown"
-        );
+        var icon_name = this.layers.icon_map[type] || "unknown";
 
         if (icon_name === "unknown") {
             console.warn("Unhandled layer type, couldn't get layer icon:", type);

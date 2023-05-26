@@ -12,6 +12,15 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.can_edit = this.panel.can_edit;
     this.preview_mode = this.panel.preview_mode;
 
+    this.icon_map = {
+        // Layer type: icon name
+        "text": "font",
+        "image": "image",
+        "video": "film",
+        "color": "color_palette",
+        "context": "project_diagram"
+    };
+
     this.setup_styles = function () {
         if (!this.preview_mode) {
             this.html.css({

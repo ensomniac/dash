@@ -31605,14 +31605,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
     this.get_type_icon_name = function () {
         var type = this.get_data()["type"];
-        var icon_name = (
-              type === "text" ? "font"
-            : type === "image" ? type
-            : type === "video" ? "film"
-            : type === "color" ? "color_palette"
-            : type === "context" ? "project_diagram"
-            : "unknown"
-        );
+        var icon_name = this.layers.icon_map[type] || "unknown";
         if (icon_name === "unknown") {
             console.warn("Unhandled layer type, couldn't get layer icon:", type);
         }
@@ -31670,6 +31663,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.layers_box = $("<div></div>");
     this.can_edit = this.panel.can_edit;
     this.preview_mode = this.panel.preview_mode;
+    this.icon_map = {
+        // Layer type: icon name
+        "text": "font",
+        "image": "image",
+        "video": "film",
+        "color": "color_palette",
+        "context": "project_diagram"
+    };
     this.setup_styles = function () {
         if (!this.preview_mode) {
             this.html.css({
@@ -32555,14 +32556,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             );
         })(this);
     };
-    this.add_combo = function (label_text, options_key, callback) {
-        var tool_row = this.content.GetCombo(
-            label_text,
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            callback
-        );
+    this.add_combo = function (label_text, options_key, callback, wrap_cb=false) {
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                label_text,
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                wrap_cb ? function (selected_option, previous_option, toolbar) {
+                    callback(self, selected_option, toolbar.objects[0].html);
+                } : callback
+            );
+        })(this);
         this.floating_combos.push({
             "tool_row": tool_row
         });
@@ -35037,6 +35042,7 @@ function DashGuiIcons (icon) {
         "newsfeed":              new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
         "note":                  new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),
         "notify":                new DashGuiIconDefinition(this.icon, "Notify", this.weight["regular"], "bell"),
+        "object_group":          new DashGuiIconDefinition(this.icon, "Object Group", this.weight["regular"], "object-group"),
         "open_folder":           new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
         "paperclip":             new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
         "pen":                   new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),

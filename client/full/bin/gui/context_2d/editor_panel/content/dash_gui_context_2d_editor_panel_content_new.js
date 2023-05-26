@@ -198,14 +198,18 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         })(this);
     };
 
-    this.add_combo = function (label_text, options_key, callback) {
-        var tool_row = this.content.GetCombo(
-            label_text,
-            this.editor.ComboOptions ? (
-                this.editor.ComboOptions["contexts"] ? this.editor.ComboOptions["contexts"] : [{"id": "", "label_text": "ERROR"}]
-            ) : [{"id": "", "label_text": "Loading..."}],
-            callback
-        );
+    this.add_combo = function (label_text, options_key, callback, wrap_cb=false) {
+        var tool_row = (function (self) {
+            return self.content.GetCombo(
+                label_text,
+                self.editor.ComboOptions ? (
+                    self.editor.ComboOptions[options_key] ? self.editor.ComboOptions[options_key] : [{"id": "", "label_text": "ERROR"}]
+                ) : [{"id": "", "label_text": "Loading..."}],
+                wrap_cb ? function (selected_option, previous_option, toolbar) {
+                    callback(self, selected_option, toolbar.objects[0].html);
+                } : callback
+            );
+        })(this);
 
         this.floating_combos.push({
             "tool_row": tool_row
