@@ -145,10 +145,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 continue;
             }
 
-            // Not the best, but necessary right now
-            if (this.editor.override_mode) {
-                combo.DisableAutoGravity();
-            }
+            combo.DisableAutoGravity();
 
             combo.html.detach();
 
