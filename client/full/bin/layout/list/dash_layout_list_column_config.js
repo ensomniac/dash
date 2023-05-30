@@ -40,7 +40,7 @@ function DashLayoutListColumnConfig () {
     };
 
     // This has not yet been tested for support with header/footer rows
-    this.AddLabel = function (text, css={}, header_css={}, footer_css={}) {
+    this.AddLabel = function (text, css={}, header_css={}, footer_css={}, hover_text="") {
         this.AddColumn(
             text,
             "",
@@ -50,7 +50,10 @@ function DashLayoutListColumnConfig () {
                 "type": "label",
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "options": {
+                    "hover_text": hover_text
+                }
             }
         );
     };

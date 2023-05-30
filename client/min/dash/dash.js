@@ -39826,7 +39826,7 @@ function DashLayoutListColumnConfig () {
         });
     };
     // This has not yet been tested for support with header/footer rows
-    this.AddLabel = function (text, css={}, header_css={}, footer_css={}) {
+    this.AddLabel = function (text, css={}, header_css={}, footer_css={}, hover_text="") {
         this.AddColumn(
             text,
             "",
@@ -39836,7 +39836,10 @@ function DashLayoutListColumnConfig () {
                 "type": "label",
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "options": {
+                    "hover_text": hover_text
+                }
             }
         );
     };
@@ -40010,6 +40013,12 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
         if (this.list_row.is_footer && this.column_config_data["footer_css"]) {
             this.html.css(this.column_config_data["footer_css"]);
+        }
+        if (!this.list.is_header && !this.list_row.is_footer && this.column_config_data["options"]["hover_text"]) {
+            this.html.attr("title", this.column_config_data["options"]["hover_text"]);
+            this.html.css({
+                "cursor": "help"
+            });
         }
     };
     this.Disable = function () {

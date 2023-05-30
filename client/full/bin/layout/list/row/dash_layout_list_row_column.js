@@ -22,6 +22,14 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.list_row.is_footer && this.column_config_data["footer_css"]) {
             this.html.css(this.column_config_data["footer_css"]);
         }
+
+        if (!this.list.is_header && !this.list_row.is_footer && this.column_config_data["options"]["hover_text"]) {
+            this.html.attr("title", this.column_config_data["options"]["hover_text"]);
+
+            this.html.css({
+                "cursor": "help"
+            });
+        }
     };
 
     this.Disable = function () {
