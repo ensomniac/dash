@@ -9,6 +9,14 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.FitContent = function () {
+        this.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "width": "fit-content"
+        });
+    };
+
     this.DisableHoverTextColorChange = function () {
         this.change_text_color_on_hover = false;
     };

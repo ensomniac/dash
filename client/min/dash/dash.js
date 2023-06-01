@@ -24927,6 +24927,13 @@ function DashGuiButtonInterface () {
             this.html.css({"width": width});
         }
     };
+    this.FitContent = function () {
+        this.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "width": "fit-content"
+        });
+    };
     this.DisableHoverTextColorChange = function () {
         this.change_text_color_on_hover = false;
     };
@@ -41980,7 +41987,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             return;
         }
         this.observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting){
+            if (entries[0].isIntersecting) {
                 this.on_visible();
             }
             else {
