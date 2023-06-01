@@ -41110,7 +41110,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.CollapseExpandedRows = function () {
         for (var row_id in this.expanded_ids) {
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
                 row.Collapse();
@@ -41161,7 +41161,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             return;
         }
         for (var row of this.row_objects) {
-            if (row.ID() === row_id) {
+            if (row.ID().toString() === row_id.toString()) {
                 return row;
             }
         }
@@ -41388,7 +41388,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
             this.row_count_buffer = row_buffer;
         }
         for (var other_row of this.row_objects) {
-            if (other_row.index <= row.index || other_row.ID() === row.ID()) {
+            if (other_row.index <= row.index || other_row.ID().toString() === row.ID().toString()) {
                 continue;
             }
             var top_pos = parseInt(other_row.html.css("top"));
@@ -41575,7 +41575,7 @@ function DashLayoutRevolvingListScrolling () {
                 return;
             }
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
                 if (!row.IsExpanded()) {
@@ -41590,7 +41590,7 @@ function DashLayoutRevolvingListScrolling () {
             return;
         }
         for (var row of this.row_objects) {
-            if (row.ID() !== this.last_selected_row_id) {
+            if (row.ID().toString() !== this.last_selected_row_id.toString()) {
                 continue;
             }
             row.ShowHighlight(this.non_expanding_click_highlight_color);

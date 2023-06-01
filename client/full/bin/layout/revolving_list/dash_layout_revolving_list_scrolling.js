@@ -163,7 +163,7 @@ function DashLayoutRevolvingListScrolling () {
             }
 
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
 
@@ -182,7 +182,7 @@ function DashLayoutRevolvingListScrolling () {
         }
 
         for (var row of this.row_objects) {
-            if (row.ID() !== this.last_selected_row_id) {
+            if (row.ID().toString() !== this.last_selected_row_id.toString()) {
                 continue;
             }
 

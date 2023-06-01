@@ -272,7 +272,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.CollapseExpandedRows = function () {
         for (var row_id in this.expanded_ids) {
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
 
@@ -337,7 +337,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         for (var row of this.row_objects) {
-            if (row.ID() === row_id) {
+            if (row.ID().toString() === row_id.toString()) {
                 return row;
             }
         }
@@ -648,7 +648,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         for (var other_row of this.row_objects) {
-            if (other_row.index <= row.index || other_row.ID() === row.ID()) {
+            if (other_row.index <= row.index || other_row.ID().toString() === row.ID().toString()) {
                 continue;
             }
 
