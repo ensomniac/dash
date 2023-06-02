@@ -18,7 +18,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 9.5) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
 
     this.PrimitiveTypes = [
         "text",

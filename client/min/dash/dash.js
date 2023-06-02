@@ -31525,7 +31525,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         if (this.parent_id) {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
-            type_icon.icon_html.css({
+            type_icon.button.icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
             });
         }
@@ -32160,7 +32160,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 9.5) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -33575,14 +33575,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     "top": -Dash.Size.Padding * 0.6
                 });
             }
+            this.contexts[context_key]["all_elements"].push(color_picker.label);
         }
-        var css = {"margin-bottom": Dash.Size.Padding};
         if (!this.can_edit) {
-            css["user-select"] = "none";
-            css["pointer-events"] = "none";
+            color_picker.html.css({
+                "user-select": "none",
+                "pointer-events": "none"
+            });
         }
-        color_picker.html.css(css);
-        this.contexts[context_key]["all_elements"].push(color_picker);
+        this.contexts[context_key]["all_elements"].push(color_picker.input);
         return color_picker;
     };
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
@@ -33636,8 +33637,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             slider.Disable();
         }
         slider.html.css({
-            "margin-left": 0,
-            "margin-bottom": Dash.Size.Padding
+            "margin-left": 0
         });
         this.contexts[context_key]["inputs"].push(slider.value_label);
     };

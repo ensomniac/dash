@@ -386,7 +386,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
 
-            type_icon.icon_html.css({
+            type_icon.button.icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
             });
         }

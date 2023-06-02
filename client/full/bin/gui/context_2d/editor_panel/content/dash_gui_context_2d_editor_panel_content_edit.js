@@ -1002,18 +1002,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     "top": -Dash.Size.Padding * 0.6
                 });
             }
-        }
 
-        var css = {"margin-bottom": Dash.Size.Padding};
+            this.contexts[context_key]["all_elements"].push(color_picker.label);
+        }
 
         if (!this.can_edit) {
-            css["user-select"] = "none";
-            css["pointer-events"] = "none";
+            color_picker.html.css({
+                "user-select": "none",
+                "pointer-events": "none"
+            });
         }
 
-        color_picker.html.css(css);
-
-        this.contexts[context_key]["all_elements"].push(color_picker);
+        this.contexts[context_key]["all_elements"].push(color_picker.input);
 
         return color_picker;
     };
@@ -1083,8 +1083,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         slider.html.css({
-            "margin-left": 0,
-            "margin-bottom": Dash.Size.Padding
+            "margin-left": 0
         });
 
         this.contexts[context_key]["inputs"].push(slider.value_label);
