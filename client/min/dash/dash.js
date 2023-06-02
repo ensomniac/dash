@@ -18000,7 +18000,11 @@ function DashGui() {
         });
         return html;
     };
-    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#00ff00") {
+    // TODO: This needs to be its own class/element
+    this.GetColorPicker = function (
+        binder, callback, label_text="Color Picker", dash_color=null,
+        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null
+    ) {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
@@ -18017,7 +18021,7 @@ function DashGui() {
                 "font-family": "sans_serif_bold",
                 "font-size": "80%",
                 "color": dash_color.Text || "black",
-                "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
+                "top": line_break ? 0 : (Dash.Size.Padding * (include_clear_button ? 0.5 : -0.5))
             };
             if (line_break) {
                 label_css = {
@@ -18030,6 +18034,7 @@ function DashGui() {
                     "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
                 };
             }
+            console.debug("TEST", label_text, label_css, color_picker.label);
             color_picker.label.css(label_css);
         }
         color_picker.input.css({
@@ -18044,6 +18049,36 @@ function DashGui() {
             color_picker.html.append(color_picker.label);
         }
         color_picker.html.append(color_picker.input);
+        if (include_clear_button) {
+            color_picker.html.css({
+                "display": "flex"
+            });
+            if (clear_button_cb) {
+                clear_button_cb = clear_button_cb.bind(binder);
+            }
+            color_picker["clear_button"] = (function (self) {
+                return new Dash.Gui.IconButton(
+                    "close_square",
+                    function () {
+                        color_picker.input.val(default_picker_hex_color);
+                        if (clear_button_cb) {
+                            clear_button_cb();
+                        }
+                    },
+                    self,
+                    self.color,
+                    {
+                        "container_size": Dash.Size.ButtonHeight,
+                        "size_mult": 0.5
+                    }
+                );
+            })(this);
+            color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
+            color_picker["clear_button"].html.css({
+                "padding-top": Dash.Size.Padding * 0.1
+            });
+            color_picker.html.append(color_picker.clear_button.html);
+        }
         (function (input, callback) {
             input.on("change", function () {
                 callback(color_picker.input.val());
@@ -32186,6 +32221,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
             this.add_new_box();
         }
         this.add_edit_box();
+        if (!this.editor.override_mode) {
+            this.add_precomps_box();
+        }
         this.set_header_right_margin();
     };
     this.InputInFocus = function () {
@@ -32330,6 +32368,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
         }
         this.set_inactive_tabs_bg_color(selected_content_data);
         this.last_instantiated_class = instantiated_class;
+    };
+    this.add_precomps_box = function () {
+        this.layout.Prepend("Pre-Comps", function () {
+            return new DashGuiContext2DEditorPanelContentPreComps(this);
+        });
     };
     this.add_edit_box = function () {
         this.layout.Prepend("Edit", function () {
@@ -33070,17 +33113,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 css["margin-right"] = Dash.Size.Padding * 0.5;
             }
             color_picker.html.css(css);
-            var icon_button = (function (self, color_picker, data_key) {
-                return self.get_clear_button(
-                    context_key,
-                    data_key,
-                    function () {
-                        color_picker.input.val("#000000");
-                    }
-                );
-            })(this, color_picker, data_key);
-            color_picker.clear_button = icon_button;
-            color_picker.html.append(icon_button.html);
             if (include_opacity) {
                 var opacity_slider = this.get_slider(
                     1,
@@ -33414,24 +33446,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.5,
             2.0
         );
-        var color_container = $("<div></div>");
-        color_container.css({
-            "display": "flex"
-        });
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-        color_container.append(color_picker.html);
-        var icon_button = this.get_clear_button(
-            context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
-        );
-        color_picker.clear_button = icon_button;
-        color_container.append(icon_button.html);
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.contexts[context_key]["html"].append(color_picker.html);
     };
     this.initialize_image_context = function (context_key) {
         var contrast_slider = this.get_slider(
@@ -33452,47 +33470,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.5,
             2.0
         );
-        var color_container = $("<div></div>");
-        color_container.css({
-            "display": "flex"
-        });
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-        color_container.append(color_picker.html);
-        var icon_button = this.get_clear_button(
-            context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
-        );
-        color_picker.clear_button = icon_button;
-        color_container.append(icon_button.html);
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.contexts[context_key]["html"].append(color_picker.html);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
-    };
-    this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {
-        var icon_button = (function (self) {
-            return new Dash.Gui.IconButton(
-                icon_name,
-                function () {
-                    self.set_data(data_key, "", callback);
-                },
-                self,
-                self.color,
-                {
-                    "container_size": Dash.Size.ButtonHeight,
-                    "size_mult": 0.5
-                }
-            );
-        })(this);
-        icon_button.SetIconColor(icon_color || this.color.AccentBad);
-        icon_button.html.css({
-            "padding-top": Dash.Size.Padding * 0.1
-        });
-        this.contexts[context_key]["all_elements"].push(icon_button);
-        return icon_button;
     };
     this.get_input = function (context_key, data_key, label_text="") {
         if (!label_text) {
@@ -33554,7 +33536,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         return tool_row;
     };
-    this.get_color_picker = function (context_key, data_key, label_text="") {
+    this.get_color_picker = function (context_key, data_key, label_text="", include_clear_button=true) {
         var color_picker = (function (self) {
             return Dash.Gui.GetColorPicker(
                 self,
@@ -33566,7 +33548,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 (label_text || data_key.Title()) + ":",
                 self.color,
-                self.get_data()[data_key] || "#000000"
+                self.get_data()[data_key] || "#000000",
+                include_clear_button,
+                function () {
+                    self.set_data(data_key, "");
+                }
             );
         })(this);
         if (color_picker.label) {
@@ -33584,6 +33570,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             });
         }
         this.contexts[context_key]["all_elements"].push(color_picker.input);
+        if (include_clear_button) {
+            this.contexts[context_key]["all_elements"].push(color_picker.clear_button);
+        }
         return color_picker;
     };
     this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
@@ -33654,6 +33643,111 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return;
         }
         callback(...params);
+    };
+    this.setup_styles();
+}
+
+function DashGuiContext2DEditorPanelContentPreComps (content) {
+    this.content = content;
+    this.rows = [];
+    this.html = $("<div></div>");
+    this.color = this.content.color;
+    this.panel = this.content.panel;
+    this.editor = this.panel.editor;
+    this.can_edit = this.content.can_edit;
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "inset": 0,
+            "padding": Dash.Size.Padding,
+            "overflow-x": "hidden"
+        });
+        this.redraw_rows();
+    };
+    this.InputInFocus = function () {
+        for (var row of this.rows) {
+            if (row["input"].InFocus()) {
+                return true;
+            }
+        }
+        return false;
+    };
+    this.redraw_rows = function () {
+        this.html.empty();
+        this.rows = [];
+        for (var num of Dash.Math.Range(7)) {  // As of writing, 7 is max
+            this.draw_row(num);
+        }
+    };
+    this.draw_row = function (num) {
+        var row = {};
+        row["toolbar"] = new Dash.Layout.Toolbar(this);
+        row["toolbar"].DisablePaddingRefactoring();
+        row["toolbar"].RemoveStrokeSep();
+        row["toolbar"].html.css({
+            "background": "",
+            "padding": 0,
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+        var on_input_changed = (function (self) {
+            return function (value) {
+                self.set_data("display_name", value, num);
+            };
+        })(this);
+        row["input"] = row["toolbar"].AddInput(
+            "Pre-Comp #" + (num + 1),
+            on_input_changed,
+            {
+                "on_enter": on_input_changed,
+                "on_autosave": on_input_changed
+            },
+            {},
+            false
+        );
+        if (this.get_data()["display_name"]) {
+            row["input"].SetText(this.get_data()["display_name"]);
+        }
+        row["input"].html.css({
+            "box-shadow": "none",
+            "flex": 2,
+            "border": "1px solid " + this.color.Stroke
+        });
+        // This is broken by default somehow, doing this workaround for now
+        row["input"].input.css({
+            "color": this.color.Text
+        });
+        row["color_picker"] = (function (self) {
+            return Dash.Gui.GetColorPicker(
+                self,
+                function (color_val) {
+                    if (!color_val) {
+                        return;
+                    }
+                    self.set_data("color", color_val, num);
+                },
+                "",
+                self.color,
+                self.get_data()["color"] || "#000000",
+                true,
+                function () {
+                    self.set_data("color", "", num);
+                }
+            );
+        })(this);
+
+        row["toolbar"].AddHTML(row["color_picker"].html);
+        this.rows.push(row);
+        this.html.append(row["toolbar"].html);
+    };
+    this.get_data = function () {
+        return {};  // TODO
+    };
+    this.set_data = function (key, value, num) {
+        if (this.get_data()[key] === value) {
+            return;
+        }
+        console.debug("TEST set data", key, value, num);
+        // TODO
     };
     this.setup_styles();
 }

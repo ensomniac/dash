@@ -197,7 +197,11 @@ function DashGui() {
         return html;
     };
 
-    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#00ff00") {
+    // TODO: This needs to be its own class/element
+    this.GetColorPicker = function (
+        binder, callback, label_text="Color Picker", dash_color=null,
+        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null
+    ) {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
@@ -220,7 +224,7 @@ function DashGui() {
                 "font-family": "sans_serif_bold",
                 "font-size": "80%",
                 "color": dash_color.Text || "black",
-                "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
+                "top": line_break ? 0 : (Dash.Size.Padding * (include_clear_button ? 0.5 : -0.5))
             };
 
             if (line_break) {
@@ -234,6 +238,8 @@ function DashGui() {
                     "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
                 };
             }
+
+            console.debug("TEST", label_text, label_css, color_picker.label);
 
             color_picker.label.css(label_css);
         }
@@ -252,6 +258,43 @@ function DashGui() {
         }
 
         color_picker.html.append(color_picker.input);
+
+        if (include_clear_button) {
+            color_picker.html.css({
+                "display": "flex"
+            });
+
+            if (clear_button_cb) {
+                clear_button_cb = clear_button_cb.bind(binder);
+            }
+
+            color_picker["clear_button"] = (function (self) {
+                return new Dash.Gui.IconButton(
+                    "close_square",
+                    function () {
+                        color_picker.input.val(default_picker_hex_color);
+
+                        if (clear_button_cb) {
+                            clear_button_cb();
+                        }
+                    },
+                    self,
+                    self.color,
+                    {
+                        "container_size": Dash.Size.ButtonHeight,
+                        "size_mult": 0.5
+                    }
+                );
+            })(this);
+
+            color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
+
+            color_picker["clear_button"].html.css({
+                "padding-top": Dash.Size.Padding * 0.1
+            });
+
+            color_picker.html.append(color_picker.clear_button.html);
+        }
 
         (function (input, callback) {
             input.on("change", function () {

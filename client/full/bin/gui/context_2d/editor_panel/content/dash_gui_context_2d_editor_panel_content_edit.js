@@ -380,20 +380,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
             color_picker.html.css(css);
 
-            var icon_button = (function (self, color_picker, data_key) {
-                return self.get_clear_button(
-                    context_key,
-                    data_key,
-                    function () {
-                        color_picker.input.val("#000000");
-                    }
-                );
-            })(this, color_picker, data_key);
-
-            color_picker.clear_button = icon_button;
-
-            color_picker.html.append(icon_button.html);
-
             if (include_opacity) {
                 var opacity_slider = this.get_slider(
                     1,
@@ -800,31 +786,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
-        var color_container = $("<div></div>");
-
-        color_container.css({
-            "display": "flex"
-        });
-
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-
-        color_container.append(color_picker.html);
-
-        var icon_button = this.get_clear_button(
-            context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
-        );
-
-        color_picker.clear_button = icon_button;
-
-        color_container.append(icon_button.html);
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.contexts[context_key]["html"].append(color_picker.html);
     };
 
     this.initialize_image_context = function (context_key) {
@@ -848,60 +814,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
-        var color_container = $("<div></div>");
-
-        color_container.css({
-            "display": "flex"
-        });
-
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-
-        color_container.append(color_picker.html);
-
-        var icon_button = this.get_clear_button(
-            context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
-        );
-
-        color_picker.clear_button = icon_button;
-
-        color_container.append(icon_button.html);
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.contexts[context_key]["html"].append(color_picker.html);
 
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
-    };
-
-    this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {
-        var icon_button = (function (self) {
-            return new Dash.Gui.IconButton(
-                icon_name,
-                function () {
-                    self.set_data(data_key, "", callback);
-                },
-                self,
-                self.color,
-                {
-                    "container_size": Dash.Size.ButtonHeight,
-                    "size_mult": 0.5
-                }
-            );
-        })(this);
-
-        icon_button.SetIconColor(icon_color || this.color.AccentBad);
-
-        icon_button.html.css({
-            "padding-top": Dash.Size.Padding * 0.1
-        });
-
-        this.contexts[context_key]["all_elements"].push(icon_button);
-
-        return icon_button;
     };
 
     this.get_input = function (context_key, data_key, label_text="") {
@@ -979,7 +898,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return tool_row;
     };
 
-    this.get_color_picker = function (context_key, data_key, label_text="") {
+    this.get_color_picker = function (context_key, data_key, label_text="", include_clear_button=true) {
         var color_picker = (function (self) {
             return Dash.Gui.GetColorPicker(
                 self,
@@ -992,7 +911,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 (label_text || data_key.Title()) + ":",
                 self.color,
-                self.get_data()[data_key] || "#000000"
+                self.get_data()[data_key] || "#000000",
+                include_clear_button,
+                function () {
+                    self.set_data(data_key, "");
+                }
             );
         })(this);
 
@@ -1014,6 +937,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         this.contexts[context_key]["all_elements"].push(color_picker.input);
+
+        if (include_clear_button) {
+            this.contexts[context_key]["all_elements"].push(color_picker.clear_button);
+        }
 
         return color_picker;
     };

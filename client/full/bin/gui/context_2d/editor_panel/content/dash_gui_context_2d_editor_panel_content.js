@@ -52,6 +52,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
         }
 
         this.add_edit_box();
+
+        if (!this.editor.override_mode) {
+            this.add_precomps_box();
+        }
+
         this.set_header_right_margin();
     };
 
@@ -239,6 +244,12 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.set_inactive_tabs_bg_color(selected_content_data);
 
         this.last_instantiated_class = instantiated_class;
+    };
+
+    this.add_precomps_box = function () {
+        this.layout.Prepend("Pre-Comps", function () {
+            return new DashGuiContext2DEditorPanelContentPreComps(this);
+        });
     };
 
     this.add_edit_box = function () {
