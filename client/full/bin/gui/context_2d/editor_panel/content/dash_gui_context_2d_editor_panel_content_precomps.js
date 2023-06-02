@@ -35,7 +35,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
         this.rows = [];
 
-        for (var num of Dash.Math.Range(7)) {  // As of writing, seven is max
+        for (var num in this.get_data()) {
             this.draw_row(num);
         }
 
@@ -44,6 +44,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
     this.draw_row = function (num) {
         var row = {};
+        var data = this.get_data()[num];
 
         row["toolbar"] = new Dash.Layout.Toolbar(this);
 
@@ -63,7 +64,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         })(this);
 
         row["input"] = row["toolbar"].AddInput(
-            "Pre-Comp #" + (num + 1),
+            data["display_name"],
             on_input_changed,
             {
                 "on_enter": on_input_changed,
@@ -73,13 +74,13 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             false
         );
 
-        if (this.get_data()["display_name"]) {
-            row["input"].SetText(this.get_data()["display_name"]);
+        if (data["display_name"]) {
+            row["input"].SetText(data["display_name"]);
         }
 
         row["input"].html.css({
-            "box-shadow": "none",
             "flex": 2,
+            "box-shadow": "none",
             "border": "1px solid " + this.color.Stroke
         });
 
@@ -100,7 +101,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                 },
                 "",
                 self.color,
-                self.get_data()["color"] || "#000000",
+                data["color"] || "#000000",
                 true,
                 function () {
                     self.set_data("color", "", num);
@@ -153,7 +154,11 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             Dash.Request(
                 self,
                 function (response) {
-                    if (!Dash.Validate.Response(response)) {
+                    if (!Dash.Validate.Response(response) || !response["url"]) {
+                        if (!response["url"]) {
+                            alert("No rendered Pre-Comp found");
+                        }
+
                         self.rows[num]["download_button"].SetLoading(false);
                         self.rows[num]["download_button"].Enable();
 
@@ -161,7 +166,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     }
 
                     Dash.Gui.OpenFileURLDownloadDialog(
-                        response["url"],  // TODO?
+                        response["url"],
                         "",
                         function () {
                             self.rows[num]["download_button"].SetLoading(false);
@@ -171,7 +176,9 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                 },
                 self.editor.api,
                 {
-                    "f": ""  // TODO
+                    "f": "get_precomp",
+                    "c2d_id": self.editor.c2d_id,
+                    "index": num
                 }
             );
         })(this);
@@ -192,27 +199,52 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                         return;
                     }
 
-                    alert("Renders complete!");  // TODO?
+                    alert("Renders complete!");
+
+                    console.log("Pre-Comps rendered:", response);
                 },
                 self.editor.api,
                 {
-                    "f": ""  // TODO
+                    "f": "render_all_precomps",
+                    "c2d_id": self.editor.c2d_id
                 }
             );
         })(this);
     };
 
     this.get_data = function () {
-        return {};  // TODO
+        return this.editor.get_data()["precomps"];
     };
 
     this.set_data = function (key, value, num) {
-        if (this.get_data()[key] === value) {
+        if (this.get_data()[num][key] === value) {
             return;
         }
 
-        console.debug("TEST set data", key, value, num);
-        // TODO
+        (function (self) {
+            Dash.Request(
+                this,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+
+                    self.editor.data = response;
+
+                    if (key === "color" && !value) {
+                        self.rows[num]["color_picker"].input.val(self.get_data()[num]["color"]);
+                    }
+                },
+                self.editor.api,
+                {
+                    "f": "set_precomp_property",
+                    "c2d_id": self.editor.c2d_id,
+                    "key": key,
+                    "value": value,
+                    "index": num
+                }
+            );
+        })(this);
     };
 
     this.setup_styles();

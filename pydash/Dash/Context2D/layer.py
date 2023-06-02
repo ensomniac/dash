@@ -39,6 +39,7 @@ class Layer:
             "text_value",
             "font_color",
             "tint_color",
+            "precomp_tag",
             "display_name",
             "stroke_color",
             "text_alignment",
@@ -158,6 +159,7 @@ class Layer:
             "modified_by":     self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":     self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
             "opacity":         self.data["opacity"] if "opacity" in self.data else 1.0,
+            "precomp_tag":     self.data.get("precomp_tag") or "",  # ("" if save else "precomp_1"),  # TODO: use this once the ISP side is ready
             "rot_deg":         self.data.get("rot_deg") or 0,  # -180 to 180
             "tint_color":      self.data.get("tint_color") or "",
             "type":            self.Type,

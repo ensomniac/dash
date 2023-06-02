@@ -598,8 +598,49 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return this.contexts[context_key][inputs_key][data_key];
     };
 
+    // Fresh every time
+    this.get_precomp_combo_options = function () {
+        var options = [];
+        var precomps = this.editor.get_data()["precomps"];
+
+        for (var num in precomps) {
+            var precomp = precomps[num];
+
+            options.push({
+                "id": precomp["asset_path"],
+                "label_text": precomp["display_name"]
+            });
+        }
+
+        return options;
+    };
+
     this.initialize_general_context = function (context_key) {
         var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+
+        // TODO: finish this
+        // var precomp_combo_tool_row = (function (self) {
+        //     return self.get_combo(
+        //         context_key,
+        //         self.get_precomp_combo_options(),
+        //         "precomp_tag",
+        //         "Pre-Comp Tag",
+        //         function (selected_option) {
+        //             var color = "";
+        //             var precomps = self.editor.get_data()["precomps"];
+        //
+        //             for (var num in precomps) {
+        //                 var precomp = precomps[num];
+        //
+        //                 if (precomp["asset_path"] === selected_option["id"]) {
+        //                     color = precomp["color"];
+        //                 }
+        //             }
+        //
+        //             // TODO: update color of layer's precomp highlight
+        //         }
+        //     );
+        // })(this);
 
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
@@ -657,6 +698,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
 
         this.contexts[context_key]["html"].append(input.html);
+        // this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
 
@@ -922,7 +964,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (color_picker.label) {
             if (!(label_text.includes("\n"))) {
                 color_picker.label.css({
-                    "top": -Dash.Size.Padding * 0.6
+                    "top": Dash.Size.Padding * 0.9
                 });
             }
 

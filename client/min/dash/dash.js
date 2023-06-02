@@ -18034,7 +18034,6 @@ function DashGui() {
                     "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
                 };
             }
-            console.debug("TEST", label_text, label_css, color_picker.label);
             color_picker.label.css(label_css);
         }
         color_picker.input.css({
@@ -28054,7 +28053,10 @@ function DashGuiContext2D (
      *     to the respective API file (which should be utilizing the Dash.Context2D module) as follows:
      *
      *         - "get_data":               Get data dict for provided object ID
+     *         - "get_precomp":            Set rendered precomp data (must include "url" key) for provided object ID
      *         - "set_property":           Set property with a key/value for provided object ID
+     *         - "render_all_precomps":    Render all precomps for provided object ID
+     *         - "set_precomp_property":   Set precomp property with a key/value/num for provided object ID
      *         - "set_layer_property":     Set layer property with a key/value for provided object ID
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
@@ -33287,8 +33289,44 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         });
         return this.contexts[context_key][inputs_key][data_key];
     };
+    // Fresh every time
+    this.get_precomp_combo_options = function () {
+        var options = [];
+        var precomps = this.editor.get_data()["precomps"];
+        for (var num in precomps) {
+            var precomp = precomps[num];
+            options.push({
+                "id": precomp["asset_path"],
+                "label_text": precomp["display_name"]
+            });
+        }
+        return options;
+    };
     this.initialize_general_context = function (context_key) {
         var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+        // TODO: finish this
+        // var precomp_combo_tool_row = (function (self) {
+        //     return self.get_combo(
+        //         context_key,
+        //         self.get_precomp_combo_options(),
+        //         "precomp_tag",
+        //         "Pre-Comp Tag",
+        //         function (selected_option) {
+        //             var color = "";
+        //             var precomps = self.editor.get_data()["precomps"];
+        //
+        //             for (var num in precomps) {
+        //                 var precomp = precomps[num];
+        //
+        //                 if (precomp["asset_path"] === selected_option["id"]) {
+        //                     color = precomp["color"];
+        //                 }
+        //             }
+        //
+        //             // TODO: update color of layer's precomp highlight
+        //         }
+        //     );
+        // })(this);
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
             [
@@ -33338,6 +33376,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding
         });
         this.contexts[context_key]["html"].append(input.html);
+        // this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
         this.add_fade_tool_row(context_key);
@@ -33558,7 +33597,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (color_picker.label) {
             if (!(label_text.includes("\n"))) {
                 color_picker.label.css({
-                    "top": -Dash.Size.Padding * 0.6
+                    "top": Dash.Size.Padding * 0.9
                 });
             }
             this.contexts[context_key]["all_elements"].push(color_picker.label);
@@ -33676,13 +33715,14 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.redraw = function () {
         this.html.empty();
         this.rows = [];
-        for (var num of Dash.Math.Range(7)) {  // As of writing, seven is max
+        for (var num in this.get_data()) {
             this.draw_row(num);
         }
         this.add_buttons();
     };
     this.draw_row = function (num) {
         var row = {};
+        var data = this.get_data()[num];
         row["toolbar"] = new Dash.Layout.Toolbar(this);
         row["toolbar"].DisablePaddingRefactoring();
         row["toolbar"].RemoveStrokeSep();
@@ -33697,7 +33737,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             };
         })(this);
         row["input"] = row["toolbar"].AddInput(
-            "Pre-Comp #" + (num + 1),
+            data["display_name"],
             on_input_changed,
             {
                 "on_enter": on_input_changed,
@@ -33706,12 +33746,12 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             {},
             false
         );
-        if (this.get_data()["display_name"]) {
-            row["input"].SetText(this.get_data()["display_name"]);
+        if (data["display_name"]) {
+            row["input"].SetText(data["display_name"]);
         }
         row["input"].html.css({
-            "box-shadow": "none",
             "flex": 2,
+            "box-shadow": "none",
             "border": "1px solid " + this.color.Stroke
         });
         // This is broken by default somehow, doing this workaround for now
@@ -33729,7 +33769,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                 },
                 "",
                 self.color,
-                self.get_data()["color"] || "#000000",
+                data["color"] || "#000000",
                 true,
                 function () {
                     self.set_data("color", "", num);
@@ -33771,13 +33811,16 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             Dash.Request(
                 self,
                 function (response) {
-                    if (!Dash.Validate.Response(response)) {
+                    if (!Dash.Validate.Response(response) || !response["url"]) {
+                        if (!response["url"]) {
+                            alert("No rendered Pre-Comp found");
+                        }
                         self.rows[num]["download_button"].SetLoading(false);
                         self.rows[num]["download_button"].Enable();
                         return;
                     }
                     Dash.Gui.OpenFileURLDownloadDialog(
-                        response["url"],  // TODO?
+                        response["url"],
                         "",
                         function () {
                             self.rows[num]["download_button"].SetLoading(false);
@@ -33787,7 +33830,9 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                 },
                 self.editor.api,
                 {
-                    "f": ""  // TODO
+                    "f": "get_precomp",
+                    "c2d_id": self.editor.c2d_id,
+                    "index": num
                 }
             );
         })(this);
@@ -33804,24 +33849,46 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     if (!Dash.Validate.Response(response)) {
                         return;
                     }
-                    alert("Renders complete!");  // TODO?
+                    alert("Renders complete!");
+                    console.log("Pre-Comps rendered:", response);
                 },
                 self.editor.api,
                 {
-                    "f": ""  // TODO
+                    "f": "render_all_precomps",
+                    "c2d_id": self.editor.c2d_id
                 }
             );
         })(this);
     };
     this.get_data = function () {
-        return {};  // TODO
+        return this.editor.get_data()["precomps"];
     };
     this.set_data = function (key, value, num) {
-        if (this.get_data()[key] === value) {
+        if (this.get_data()[num][key] === value) {
             return;
         }
-        console.debug("TEST set data", key, value, num);
-        // TODO
+        (function (self) {
+            Dash.Request(
+                this,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+                    self.editor.data = response;
+                    if (key === "color" && !value) {
+                        self.rows[num]["color_picker"].input.val(self.get_data()[num]["color"]);
+                    }
+                },
+                self.editor.api,
+                {
+                    "f": "set_precomp_property",
+                    "c2d_id": self.editor.c2d_id,
+                    "key": key,
+                    "value": value,
+                    "index": num
+                }
+            );
+        })(this);
     };
     this.setup_styles();
 }

@@ -25,6 +25,8 @@ class Interface:
     DashContext: dict
     AspectRatioH: int
     AspectRatioW: int
+    PreCompsMin: dict
+    PreCompsFull: dict
     Context2DRoot: str
     add_layer: callable
     add_layer_from_file: callable
@@ -60,7 +62,10 @@ class Interface:
             "layer_order" if save else "layers": self.LayerOrder if save else self.Layers,
 
             "modified_by":                       self.User["email"] if save else self.ModifiedBy,
-            "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn
+            "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn,
+
+            # Only save changes, don't need to save the entire default data structure
+            "precomps": self.PreCompsMin if save else self.PreCompsFull
         }
 
         # This is a function that is meant to be overridden to use for custom modifications
@@ -105,6 +110,19 @@ class Interface:
             return self.ToDict()
 
         self.Data.update(self.ParseProperties(properties))
+
+        return self.save().ToDict()
+
+    def SetPreCompProperty(self, key, value, index):
+        num = str(index)
+
+        if "precomps" not in self.Data:
+            self.Data["precomps"] = {}
+
+        if num not in self.PreCompsMin:
+            self.Data["precomps"][num] = {}
+
+        self.Data["precomps"][num][key] = value
 
         return self.save().ToDict()
 
@@ -274,3 +292,13 @@ class Interface:
     # This is used to customize the imported context data for abstractions.
     def OnLayerImportedContextData(self, data):
         return data
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to get rendered precomp data (must include a "url" key).
+    def GetPreComp(self, index):
+        return {"index": index}
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to render all precomps.
+    def RenderAllPreComps(self):
+        return {}

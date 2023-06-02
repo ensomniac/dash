@@ -17,6 +17,7 @@ class Utils:
     LayersRoot: str
     ToDict: callable
     LayerOrder: list
+    PreCompsMin: dict
     SetProperty: callable
     precomps_default: dict
 
@@ -57,8 +58,18 @@ class Utils:
         return self
 
     def get_precomps(self):
-        # TODO
-        return self.precomps_default
+        precomps = {}
+
+        for num in self.precomps_default:
+            precomps[num] = {}
+
+            for key in self.precomps_default[num]:
+                if self.PreCompsMin.get(num) and self.PreCompsMin[num].get(key):
+                    precomps[num][key] = self.PreCompsMin[num][key]
+                else:
+                    precomps[num][key] = self.precomps_default[num][key]
+
+        return precomps
 
     def get_layers(self):
         layers = {

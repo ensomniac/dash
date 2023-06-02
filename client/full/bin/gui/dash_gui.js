@@ -239,8 +239,6 @@ function DashGui() {
                 };
             }
 
-            console.debug("TEST", label_text, label_css, color_picker.label);
-
             color_picker.label.css(label_css);
         }
 
