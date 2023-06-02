@@ -18,6 +18,7 @@ class Utils:
     ToDict: callable
     LayerOrder: list
     SetProperty: callable
+    precomps_default: dict
 
     def __init__(self):
         pass
@@ -54,6 +55,10 @@ class Utils:
         Write(self.DataPath, self.ToDict(save=True))
 
         return self
+
+    def get_precomps(self):
+        # TODO
+        return self.precomps_default
 
     def get_layers(self):
         layers = {

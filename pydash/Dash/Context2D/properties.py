@@ -11,6 +11,8 @@ class Properties:
     _layers: list
     _now: callable
     get_layers: callable
+    get_precomps: callable
+    _precomps_default: dict
 
     def __init__(self, user_data, context2d_root, obj_id="", dash_context={}):
         self.User = user_data
@@ -65,6 +67,14 @@ class Properties:
     def ModifiedOn(self):
         return self.Data.get("modified_on") or ""
 
+    @property
+    def PreCompsMin(self):
+        return self.Data.get("pre_comps") or {}
+
+    @property
+    def PreCompsFull(self):
+        return self.get_precomps()
+
     # -------------------------------PATHS--------------------------------------
 
     @property
@@ -89,3 +99,12 @@ class Properties:
             self._now = datetime.now()
 
         return self._now
+
+    @property
+    def precomps_default(self):
+        if not hasattr(self, "_precomps_default"):
+            self._precomps_default = {
+
+            }
+
+        return self._precomps_default

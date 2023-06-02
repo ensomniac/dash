@@ -2,6 +2,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.content = content;
 
     this.rows = [];
+    this.render_button = null;
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -16,7 +17,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             "overflow-x": "hidden"
         });
 
-        this.redraw_rows();
+        this.redraw();
     };
 
     this.InputInFocus = function () {
@@ -29,14 +30,16 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         return false;
     };
 
-    this.redraw_rows = function () {
+    this.redraw = function () {
         this.html.empty();
 
         this.rows = [];
 
-        for (var num of Dash.Math.Range(7)) {  // As of writing, 7 is max
+        for (var num of Dash.Math.Range(7)) {  // As of writing, seven is max
             this.draw_row(num);
         }
+
+        this.add_buttons();
     };
 
     this.draw_row = function (num) {
@@ -108,9 +111,95 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
         row["toolbar"].AddHTML(row["color_picker"].html);
 
+        row["download_button"] = (function (self) {
+            return row["toolbar"].AddIconButton(
+                "download",
+                function () {
+                    self.download(num);
+                },
+                null,
+                null,
+                Dash.Size.ButtonHeight,
+                0.65
+            );
+        })(this);
+
         this.rows.push(row);
 
         this.html.append(row["toolbar"].html);
+    };
+
+    this.add_buttons = function () {
+        var button_bar = new Dash.Gui.ButtonBar(this, null, "toolbar");
+
+        this.render_button = button_bar.AddButton("Render All Pre-Comps", this.render_all);
+
+        this.render_button.SetHoverHint(
+            "Render out pre-comps to see changes to layers tagged as pre-comps reflected in the CPE"
+        );
+
+        button_bar.html.css({
+            "margin-top": Dash.Size.Padding
+        });
+
+        this.html.append(button_bar.html);
+    };
+
+    this.download = function (num) {
+        this.rows[num]["download_button"].SetLoading(true);
+        this.rows[num]["download_button"].Disable();
+
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    if (!Dash.Validate.Response(response)) {
+                        self.rows[num]["download_button"].SetLoading(false);
+                        self.rows[num]["download_button"].Enable();
+
+                        return;
+                    }
+
+                    Dash.Gui.OpenFileURLDownloadDialog(
+                        response["url"],  // TODO?
+                        "",
+                        function () {
+                            self.rows[num]["download_button"].SetLoading(false);
+                            self.rows[num]["download_button"].Enable();
+                        }
+                    );
+                },
+                self.editor.api,
+                {
+                    "f": ""  // TODO
+                }
+            );
+        })(this);
+    };
+
+    this.render_all = function () {
+        this.render_button.SetLoading(true);
+        this.render_button.Disable();
+
+        (function (self) {
+            Dash.Request(
+                self,
+                function (response) {
+                    self.render_button.SetLoading(false);
+                    self.render_button.Enable();
+
+                    if (!Dash.Validate.Response(response)) {
+                        return;
+                    }
+
+                    alert("Renders complete!");  // TODO?
+                },
+                self.editor.api,
+                {
+                    "f": ""  // TODO
+                }
+            );
+        })(this);
     };
 
     this.get_data = function () {

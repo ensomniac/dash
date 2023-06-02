@@ -291,7 +291,7 @@ class Layer:
         # Floats
         for key in self.float_keys:
             if key in properties and type(properties[key]) not in [float, int]:
-                properties[key] = float(properties[key])
+                properties[key] = float(properties[key] or 0)
 
         properties = self.check_display_name_for_set_property(properties)
 
