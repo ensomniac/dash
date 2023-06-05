@@ -309,6 +309,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.panel.UpdatePropertyBoxToolSlider();
     };
 
+    this.UpdatePreCompColors = function () {
+        for (var id in this.layers) {
+            this.layers[id].UpdatePreCompColor();
+        }
+    };
+
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
@@ -537,6 +543,10 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         else if (key === "tint_color") {
             this.layers[id].UpdateTintColor();
+        }
+
+        else if (key === "precomp_tag") {
+            this.layers[id].UpdatePreCompColor();
         }
 
         var display_name;

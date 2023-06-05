@@ -616,31 +616,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_general_context = function (context_key) {
-        var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+        // var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
 
-        // TODO: finish this
-        // var precomp_combo_tool_row = (function (self) {
-        //     return self.get_combo(
-        //         context_key,
-        //         self.get_precomp_combo_options(),
-        //         "precomp_tag",
-        //         "Pre-Comp Tag",
-        //         function (selected_option) {
-        //             var color = "";
-        //             var precomps = self.editor.get_data()["precomps"];
-        //
-        //             for (var num in precomps) {
-        //                 var precomp = precomps[num];
-        //
-        //                 if (precomp["asset_path"] === selected_option["id"]) {
-        //                     color = precomp["color"];
-        //                 }
-        //             }
-        //
-        //             // TODO: update color of layer's precomp highlight
-        //         }
-        //     );
-        // })(this);
+        var precomp_combo_tool_row = this.get_combo(
+            context_key,
+            this.get_precomp_combo_options(),
+            "precomp_tag",
+            "Pre-Comp Tag"
+        );
 
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
@@ -697,8 +680,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding
         });
 
-        this.contexts[context_key]["html"].append(input.html);
-        // this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
+        // this.contexts[context_key]["html"].append(input.html);
+        this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
 

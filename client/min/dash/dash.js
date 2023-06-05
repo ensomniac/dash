@@ -31289,7 +31289,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return;
         }
         this.html.css({
-            "padding": Dash.Size.Padding - this.color_border_size,
+            "padding": Dash.Size.Padding - (this.color_border_size * 2),
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
@@ -31297,6 +31297,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "opacity": this.can_edit ? 1 : 0.5
         });
         this.UpdateTintColor();
+        this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
         this.html.append(Dash.Gui.GetFlexSpacer());
@@ -31537,6 +31538,29 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var tint_color = this.get_value("tint_color");
         this.html.css({
             "border-left": this.color_border_size + "px solid " + (tint_color || "rgba(0, 0, 0, 0)")
+        });
+    };
+    this.UpdatePreCompColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+        var precomp_color = "";
+        var precomps = this.editor.get_data()["precomps"];
+        var precomp_tag = this.get_value("precomp_tag");
+        if (precomp_tag) {
+            for (var num in precomps) {
+                var precomp = precomps[num];
+                if (precomp["asset_path"] === precomp_tag) {
+                    precomp_color = precomp["color"];
+                    break;
+                }
+            }
+        }
+        else {
+            precomp_color = precomps["0"]["color"];
+        }
+        this.html.css({
+            "border-right": this.color_border_size + "px solid " + (precomp_color || "rgba(0, 0, 0, 0)")
         });
     };
     this.add_type_icon = function () {
@@ -31934,6 +31958,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.UpdateToolbarIconStates();
         this.panel.UpdatePropertyBoxToolSlider();
     };
+    this.UpdatePreCompColors = function () {
+        for (var id in this.layers) {
+            this.layers[id].UpdatePreCompColor();
+        }
+    };
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
@@ -32109,6 +32138,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         else if (key === "tint_color") {
             this.layers[id].UpdateTintColor();
+        }
+        else if (key === "precomp_tag") {
+            this.layers[id].UpdatePreCompColor();
         }
         var display_name;
         if (parent_id) {
@@ -33303,30 +33335,13 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return options;
     };
     this.initialize_general_context = function (context_key) {
-        var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
-        // TODO: finish this
-        // var precomp_combo_tool_row = (function (self) {
-        //     return self.get_combo(
-        //         context_key,
-        //         self.get_precomp_combo_options(),
-        //         "precomp_tag",
-        //         "Pre-Comp Tag",
-        //         function (selected_option) {
-        //             var color = "";
-        //             var precomps = self.editor.get_data()["precomps"];
-        //
-        //             for (var num in precomps) {
-        //                 var precomp = precomps[num];
-        //
-        //                 if (precomp["asset_path"] === selected_option["id"]) {
-        //                     color = precomp["color"];
-        //                 }
-        //             }
-        //
-        //             // TODO: update color of layer's precomp highlight
-        //         }
-        //     );
-        // })(this);
+        // var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+        var precomp_combo_tool_row = this.get_combo(
+            context_key,
+            this.get_precomp_combo_options(),
+            "precomp_tag",
+            "Pre-Comp Tag"
+        );
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
             [
@@ -33375,8 +33390,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         slider.html.css({
             "margin-top": Dash.Size.Padding
         });
-        this.contexts[context_key]["html"].append(input.html);
-        // this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
+        // this.contexts[context_key]["html"].append(input.html);
+        this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
         this.add_fade_tool_row(context_key);
@@ -33878,6 +33893,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     if (key === "color" && !value) {
                         self.rows[num]["color_picker"].input.val(self.get_data()[num]["color"]);
                     }
+                    self.panel.layers_box.UpdatePreCompColors();
                 },
                 self.editor.api,
                 {

@@ -27,7 +27,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         this.html.css({
-            "padding": Dash.Size.Padding - this.color_border_size,
+            "padding": Dash.Size.Padding - (this.color_border_size * 2),
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
@@ -36,6 +36,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         this.UpdateTintColor();
+        this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
 
@@ -354,6 +355,36 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         this.html.css({
             "border-left": this.color_border_size + "px solid " + (tint_color || "rgba(0, 0, 0, 0)")
+        });
+    };
+
+    this.UpdatePreCompColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
+        var precomp_color = "";
+        var precomps = this.editor.get_data()["precomps"];
+        var precomp_tag = this.get_value("precomp_tag");
+
+        if (precomp_tag) {
+            for (var num in precomps) {
+                var precomp = precomps[num];
+
+                if (precomp["asset_path"] === precomp_tag) {
+                    precomp_color = precomp["color"];
+
+                    break;
+                }
+            }
+        }
+
+        else {
+            precomp_color = precomps["0"]["color"];
+        }
+
+        this.html.css({
+            "border-right": this.color_border_size + "px solid " + (precomp_color || "rgba(0, 0, 0, 0)")
         });
     };
 

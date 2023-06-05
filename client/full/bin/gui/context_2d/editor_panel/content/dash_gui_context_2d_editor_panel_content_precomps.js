@@ -234,6 +234,8 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     if (key === "color" && !value) {
                         self.rows[num]["color_picker"].input.val(self.get_data()[num]["color"]);
                     }
+
+                    self.panel.layers_box.UpdatePreCompColors();
                 },
                 self.editor.api,
                 {
