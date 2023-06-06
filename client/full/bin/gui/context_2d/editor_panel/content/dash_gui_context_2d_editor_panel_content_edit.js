@@ -600,7 +600,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
     // Fresh every time
     this.get_precomp_combo_options = function () {
-        var options = [];
+        var options = [{"id": "", "label_text": "Unspecified (Inherit)"}];
         var precomps = this.editor.get_data()["precomps"];
 
         for (var num in precomps) {

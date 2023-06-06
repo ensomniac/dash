@@ -148,6 +148,8 @@ function DashGuiContext2DToolbar (editor) {
     };
 
     this.update_pil_preview = function (url) {
+        console.log("PIL URL:", url);
+
         var css = {"background-image": "url(" + url + ")"};
 
         if (!this.pil_preview) {

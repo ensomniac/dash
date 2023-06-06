@@ -60,14 +60,14 @@ class Utils:
     def get_precomps(self):
         precomps = {}
 
-        for num in self.precomps_default:
-            precomps[num] = {}
+        for letter in self.precomps_default:
+            precomps[letter] = {}
 
-            for key in self.precomps_default[num]:
-                if self.PreCompsMin.get(num) and self.PreCompsMin[num].get(key):
-                    precomps[num][key] = self.PreCompsMin[num][key]
+            for key in self.precomps_default[letter]:
+                if self.PreCompsMin.get(letter) and self.PreCompsMin[letter].get(key):
+                    precomps[letter][key] = self.PreCompsMin[letter][key]
                 else:
-                    precomps[num][key] = self.precomps_default[num][key]
+                    precomps[letter][key] = self.precomps_default[letter][key]
 
         return precomps
 
@@ -81,9 +81,27 @@ class Utils:
             return layers
 
         from .layer import Layer
+        from copy import deepcopy
 
         for layer_id in self.LayerOrder:
             layers["data"][layer_id] = Layer(self, layer_id).ToDict()
+
+        last_precomp_tag = ""
+        reversed_order = deepcopy(self.LayerOrder)
+
+        reversed_order.reverse()
+
+        for layer_id in reversed_order:
+            if not last_precomp_tag:
+                last_precomp_tag = (
+                        layers["data"][layer_id]["precomp_tag"]
+                        or self.precomps_default[list(self.precomps_default.keys())[0]]["asset_path"]
+                )
+
+            if not layers["data"][layer_id]["precomp_tag"]:
+                layers["data"][layer_id]["precomp_tag"] = last_precomp_tag
+
+            last_precomp_tag = layers["data"][layer_id]["precomp_tag"]
 
         return layers
 

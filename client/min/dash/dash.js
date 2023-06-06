@@ -29189,6 +29189,7 @@ function DashGuiContext2DToolbar (editor) {
         })(this);
     };
     this.update_pil_preview = function (url) {
+        console.log("PIL URL:", url);
         var css = {"background-image": "url(" + url + ")"};
         if (!this.pil_preview) {
             this.pil_preview = $("<div></div>");
@@ -33323,7 +33324,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
     // Fresh every time
     this.get_precomp_combo_options = function () {
-        var options = [];
+        var options = [{"id": "", "label_text": "Unspecified (Inherit)"}];
         var precomps = this.editor.get_data()["precomps"];
         for (var num in precomps) {
             var precomp = precomps[num];
@@ -33730,14 +33731,14 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.redraw = function () {
         this.html.empty();
         this.rows = [];
-        for (var num in this.get_data()) {
-            this.draw_row(num);
+        for (var letter in this.get_data()) {
+            this.draw_row(letter);
         }
         this.add_buttons();
     };
-    this.draw_row = function (num) {
+    this.draw_row = function (letter) {
         var row = {};
-        var data = this.get_data()[num];
+        var data = this.get_data()[letter];
         row["toolbar"] = new Dash.Layout.Toolbar(this);
         row["toolbar"].DisablePaddingRefactoring();
         row["toolbar"].RemoveStrokeSep();
@@ -33748,7 +33749,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         });
         var on_input_changed = (function (self) {
             return function (value) {
-                self.set_data("display_name", value, num);
+                self.set_data("display_name", value, letter);
             };
         })(this);
         row["input"] = row["toolbar"].AddInput(
@@ -33780,14 +33781,14 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     if (!color_val) {
                         return;
                     }
-                    self.set_data("color", color_val, num);
+                    self.set_data("color", color_val, letter);
                 },
                 "",
                 self.color,
                 data["color"] || "#000000",
                 true,
                 function () {
-                    self.set_data("color", "", num);
+                    self.set_data("color", "", letter);
                 }
             );
         })(this);
@@ -33797,7 +33798,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             return row["toolbar"].AddIconButton(
                 "download",
                 function () {
-                    self.download(num);
+                    self.download(letter);
                 },
                 null,
                 null,
@@ -33819,9 +33820,9 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         });
         this.html.append(button_bar.html);
     };
-    this.download = function (num) {
-        this.rows[num]["download_button"].SetLoading(true);
-        this.rows[num]["download_button"].Disable();
+    this.download = function (letter) {
+        this.rows[letter]["download_button"].SetLoading(true);
+        this.rows[letter]["download_button"].Disable();
         (function (self) {
             Dash.Request(
                 self,
@@ -33830,16 +33831,16 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                         if (!response["url"]) {
                             alert("No rendered Pre-Comp found");
                         }
-                        self.rows[num]["download_button"].SetLoading(false);
-                        self.rows[num]["download_button"].Enable();
+                        self.rows[letter]["download_button"].SetLoading(false);
+                        self.rows[letter]["download_button"].Enable();
                         return;
                     }
                     Dash.Gui.OpenFileURLDownloadDialog(
                         response["url"],
                         "",
                         function () {
-                            self.rows[num]["download_button"].SetLoading(false);
-                            self.rows[num]["download_button"].Enable();
+                            self.rows[letter]["download_button"].SetLoading(false);
+                            self.rows[letter]["download_button"].Enable();
                         }
                     );
                 },
@@ -33847,7 +33848,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                 {
                     "f": "get_precomp",
                     "c2d_id": self.editor.c2d_id,
-                    "index": num
+                    "letter": letter
                 }
             );
         })(this);
@@ -33878,10 +33879,11 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.get_data = function () {
         return this.editor.get_data()["precomps"];
     };
-    this.set_data = function (key, value, num) {
-        if (this.get_data()[num][key] === value) {
+    this.set_data = function (key, value, letter) {
+        if (this.get_data()[letter][key] === value) {
             return;
         }
+        console.debug("TEST set data", key, value, letter);
         (function (self) {
             Dash.Request(
                 this,
@@ -33891,7 +33893,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     }
                     self.editor.data = response;
                     if (key === "color" && !value) {
-                        self.rows[num]["color_picker"].input.val(self.get_data()[num]["color"]);
+                        self.rows[letter]["color_picker"].input.val(self.get_data()[letter]["color"]);
                     }
                     self.panel.layers_box.UpdatePreCompColors();
                 },
@@ -33901,7 +33903,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     "c2d_id": self.editor.c2d_id,
                     "key": key,
                     "value": value,
-                    "index": num
+                    "letter": letter
                 }
             );
         })(this);

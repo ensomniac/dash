@@ -103,24 +103,19 @@ class Properties:
     @property
     def precomps_default(self):
         if not hasattr(self, "_precomps_default"):
-            colors = [  # ROYGBIV
-                "#d10000",
-                "#ff6622",
-                "#ffda21",
-                "#33dd00",
-                "#1133cc",
-                "#220066",
-                "#330044"
-                # If max increases above seven, add more colors
-            ]
+            from string import ascii_lowercase
+            from Dash.Utils import GetHexColorList
 
             self._precomps_default = {}
 
-            for num in range(7):
-                self._precomps_default[str(num)] = {
-                    "display_name": f"Pre-Comp #{num + 1}",
-                    "color": colors[num],
-                    "asset_path": f"precomp_{num + 1}"
+            limit = 7
+            colors = GetHexColorList(limit)
+
+            for index, letter in enumerate(list(ascii_lowercase)[0:limit]):
+                self._precomps_default[letter] = {
+                    "display_name": f"Pre-Comp {letter.title()}",
+                    "color": colors[index],
+                    "asset_path": f"precomp_{letter}"
                 }
 
         return self._precomps_default

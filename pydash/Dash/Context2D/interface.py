@@ -113,16 +113,14 @@ class Interface:
 
         return self.save().ToDict()
 
-    def SetPreCompProperty(self, key, value, index):
-        num = str(index)
-
+    def SetPreCompProperty(self, key, value, letter):
         if "precomps" not in self.Data:
             self.Data["precomps"] = {}
 
-        if num not in self.PreCompsMin:
-            self.Data["precomps"][num] = {}
+        if letter not in self.PreCompsMin:
+            self.Data["precomps"][letter] = {}
 
-        self.Data["precomps"][num][key] = value
+        self.Data["precomps"][letter][key] = value
 
         return self.save().ToDict()
 
@@ -295,8 +293,8 @@ class Interface:
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to get rendered precomp data (must include a "url" key).
-    def GetPreComp(self, index):
-        return {"index": index}
+    def GetPreComp(self, letter):
+        return {"letter": letter}
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to render all precomps.
