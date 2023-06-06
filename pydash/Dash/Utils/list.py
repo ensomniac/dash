@@ -67,3 +67,18 @@ def GetListPortion(list_obj, center_anchor_value, size=3):
         portion = list_obj[start_index:end_index]
 
     return portion
+
+
+def GetHexColorList(num_colors=5, saturation=1.0, value=1.0):
+    from colorsys import hsv_to_rgb
+
+    hex_colors = []
+    hsv_colors = [[float(x / num_colors), saturation, value] for x in range(num_colors)]
+
+    for hsv in hsv_colors:
+        hsv = [int(x * 255) for x in hsv_to_rgb(*hsv)]
+
+        # Formatted as hexadecimal string using the ':02x' format specifier
+        hex_colors.append(f"#{hsv[0]:02x}{hsv[1]:02x}{hsv[2]:02x}")
+
+    return hex_colors

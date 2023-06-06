@@ -201,6 +201,12 @@ def GetListPortion(list_obj, center_anchor_value, size=3):
     return GetListPortion(list_obj, center_anchor_value, size)
 
 
+def GetHexColorList(num_colors=5, saturation=1.0, value=1.0):
+    from .list import GetHexColorList
+
+    return GetHexColorList(num_colors, saturation, value)
+
+
 # ------------------------------------------------- COMMS ---------------------------------------------------
 def SendEmail(
         subject, notify_email_list=[], msg="", error="", sender_email="",
