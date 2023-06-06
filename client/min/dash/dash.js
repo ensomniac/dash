@@ -33883,7 +33883,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         if (this.get_data()[letter][key] === value) {
             return;
         }
-        console.debug("TEST set data", key, value, letter);
         (function (self) {
             Dash.Request(
                 this,

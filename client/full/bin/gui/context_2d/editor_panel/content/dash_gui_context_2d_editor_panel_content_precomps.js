@@ -221,8 +221,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             return;
         }
 
-        console.debug("TEST set data", key, value, letter);
-
         (function (self) {
             Dash.Request(
                 this,
