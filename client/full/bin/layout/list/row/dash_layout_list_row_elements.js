@@ -153,7 +153,7 @@ function DashLayoutListRowElements () {
             this.color,
             {
                 "style": "row",
-                "read_only": read_only,
+                "read_only": read_only || column_config_data["can_edit"] === false,
                 "additional_data": {
                     "row_id": this.id,
                     "row": this,  // For revolving lists, use this instead of relying on row_id

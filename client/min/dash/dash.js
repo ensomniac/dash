@@ -23960,7 +23960,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             {
                 "data_key": data_key
             },
-            double_click_clear
+            can_edit ? double_click_clear : false
         );
         if (include_label) {
             input.label = label;
@@ -24276,6 +24276,17 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         return this.signature.isEmpty();
     };
     this.Disable = function () {
+        if (!this.save_button) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.Disable();
+                    },
+                    10
+                );
+            })(this);
+            return;
+        }
         this.signature.off();
         this.save_button.Disable();
         this.clear_button.Disable();
@@ -27651,9 +27662,11 @@ function DashGuiComboInterface () {
             "color": this.color.Button.Text.Base,
             "padding-right": Dash.Size.Padding * 0.25
         });
-        this.dropdown_icon.html.remove();
-        this.add_dropdown_icon(0.7, "caret_down");
-        this.dropdown_icon.SetColor(this.color.Button.Text.Base);
+        if (!this.read_only) {
+            this.dropdown_icon.html.remove();
+            this.add_dropdown_icon(0.7, "caret_down");
+            this.dropdown_icon.SetColor(this.color.Button.Text.Base);
+        }
         var highlight_color = Dash.Color.GetTransparent(this.color.Button.Background.Base, 0.1);
         (function (self) {
             self.SetOnRowsDrawnCallback(function () {
@@ -37108,7 +37121,7 @@ function DashGuiPropertyBoxInterface () {
         });
         return button;
     };
-    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
+    this.AddCombo = function (label_text, combo_options, property_key="", default_value=null, bool=false, options={}) {
         var indent_px = options["indent_px"] || (Dash.Size.Padding * 2);
         var indent_row = false;
         if (this.num_headers > 0) {
@@ -40103,13 +40116,13 @@ function DashLayoutListColumnConfig () {
         );
     };
     this.AddCombo = function (
-        label_text, combo_options, binder, callback, data_key="", width_mult=null,
-        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text=""
+        label_text, combo_options, binder, callback, data_key="", width_mult=null, css={},
+        header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text="", can_edit=true
     ) {
         this.AddColumn(
             label_text,
             data_key,
-            true,
+            can_edit,
             width_mult ? Dash.Size.ColumnWidth * width_mult : null,
             {
                 "type": "combo",
@@ -40563,7 +40576,7 @@ function DashLayoutListRowElements () {
             this.color,
             {
                 "style": "row",
-                "read_only": read_only,
+                "read_only": read_only || column_config_data["can_edit"] === false,
                 "additional_data": {
                     "row_id": this.id,
                     "row": this,  // For revolving lists, use this instead of relying on row_id
@@ -42982,11 +42995,23 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         }
         this.select.val(option_id);
     };
-    this.Lock = function () {
+    this.Lock = function (restyle=true) {
         this.select.prop("disabled", true);
+        if (restyle) {
+            this.html.css({
+                "opacity": 0.5,
+                "pointer-events": "none",
+                "user-select": "none"
+            });
+        }
     };
     this.Unlock = function () {
         this.select.prop("disabled", false);
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
     this.SetWidth = function (width, min=null, max=null) {
         if (min === null) {
@@ -45343,9 +45368,11 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
             "pointer-events": "none",
             "user-select": "none"
+        });
+        this.icon.html.css({
+            "opacity": 0.5
         });
     };
     this.Enable = function () {
@@ -45354,9 +45381,11 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         }
         this.disabled = false;
         this.html.css({
-            "opacity": 1,
             "pointer-events": "auto",
             "user-select": "auto"
+        });
+        this.icon.html.css({
+            "opacity": 1
         });
     };
     this.setup_connections = function () {

@@ -162,9 +162,12 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
             "pointer-events": "none",
             "user-select": "none"
+        });
+
+        this.icon.html.css({
+            "opacity": 0.5
         });
     };
 
@@ -176,9 +179,12 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.disabled = false;
 
         this.html.css({
-            "opacity": 1,
             "pointer-events": "auto",
             "user-select": "auto"
+        });
+
+        this.icon.html.css({
+            "opacity": 1
         });
     };
 

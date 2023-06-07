@@ -85,12 +85,26 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.select.val(option_id);
     };
 
-    this.Lock = function () {
+    this.Lock = function (restyle=true) {
         this.select.prop("disabled", true);
+
+        if (restyle) {
+            this.html.css({
+                "opacity": 0.5,
+                "pointer-events": "none",
+                "user-select": "none"
+            });
+        }
     };
 
     this.Unlock = function () {
         this.select.prop("disabled", false);
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
     };
 
     this.SetWidth = function (width, min=null, max=null) {

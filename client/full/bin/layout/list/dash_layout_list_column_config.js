@@ -59,13 +59,13 @@ function DashLayoutListColumnConfig () {
     };
 
     this.AddCombo = function (
-        label_text, combo_options, binder, callback, data_key="", width_mult=null,
-        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text=""
+        label_text, combo_options, binder, callback, data_key="", width_mult=null, css={},
+        header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text="", can_edit=true
     ) {
         this.AddColumn(
             label_text,
             data_key,
-            true,
+            can_edit,
             width_mult ? Dash.Size.ColumnWidth * width_mult : null,
             {
                 "type": "combo",

@@ -71,6 +71,19 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     };
 
     this.Disable = function () {
+        if (!this.save_button) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.Disable();
+                    },
+                    10
+                );
+            })(this);
+
+            return;
+        }
+
         this.signature.off();
 
         this.save_button.Disable();

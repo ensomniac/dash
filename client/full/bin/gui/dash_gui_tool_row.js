@@ -412,7 +412,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             {
                 "data_key": data_key
             },
-            double_click_clear
+            can_edit ? double_click_clear : false
         );
 
         if (include_label) {

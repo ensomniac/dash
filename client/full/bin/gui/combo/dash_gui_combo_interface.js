@@ -147,11 +147,13 @@ function DashGuiComboInterface () {
             "padding-right": Dash.Size.Padding * 0.25
         });
 
-        this.dropdown_icon.html.remove();
+        if (!this.read_only) {
+            this.dropdown_icon.html.remove();
 
-        this.add_dropdown_icon(0.7, "caret_down");
+            this.add_dropdown_icon(0.7, "caret_down");
 
-        this.dropdown_icon.SetColor(this.color.Button.Text.Base);
+            this.dropdown_icon.SetColor(this.color.Button.Text.Base);
+        }
 
         var highlight_color = Dash.Color.GetTransparent(this.color.Button.Background.Base, 0.1);
 
