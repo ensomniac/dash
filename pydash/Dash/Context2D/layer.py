@@ -360,7 +360,13 @@ class Layer:
     def load_data(self):
         if self.ID:  # Existing
             if not os.path.exists(self.data_path):
-                raise FileNotFoundError(f"Data path doesn't exist for layer ({self.ID}), this shouldn't happen")
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert(
+                    f"This layer ({self.ID}) appears to have been deleted (expected: {self.data_path})."
+                    f"If not by you, possibly by another user working on the same context.\n\n"
+                    f"Please refresh and try again.\nIf this error persists, please report it."
+                )
 
             from Dash.LocalStorage import Read
 
