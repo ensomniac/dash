@@ -340,12 +340,18 @@ class DashLocalStorage:
         return data
 
     def Write(self, full_path, data, conform_permissions=True):
+        if not full_path:
+            raise ValueError(f"No path provided to LocalStorage.Write: {full_path}")
+
         if type(data) is bytes or type(data) is memoryview:
             return self.write_binary(full_path, data, conform_permissions)
 
         return self.write_json_protected(full_path, data, conform_permissions)
 
     def Read(self, full_path, is_json=True):
+        if not full_path:
+            raise ValueError(f"No path provided to LocalStorage.Read: {full_path}")
+
         if not os.path.exists(full_path):
             return None
 
