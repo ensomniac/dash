@@ -5,6 +5,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.header = null;
     this.toolbar = null;
     this.redrawing = false;
+    this.legacy_precomps = {};
     this.html = $("<div></div>");
     this.color = this.panel.color;
     this.editor = this.panel.editor;

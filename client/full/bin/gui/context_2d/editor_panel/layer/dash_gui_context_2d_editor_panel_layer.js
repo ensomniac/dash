@@ -282,6 +282,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 self.html.on("click", function (e) {
                     self.Select();
 
+                    console.log("Layer data:", self.get_data());
+
                     e.stopPropagation();
                 });
             }
@@ -364,28 +366,64 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         var precomp_color = "";
-        var precomps = this.editor.get_data()["precomps"];
         var precomp_tag = this.get_value("precomp_tag");
 
         if (precomp_tag) {
-            for (var num in precomps) {
-                var precomp = precomps[num];
-
-                if (precomp["asset_path"] === precomp_tag) {
-                    precomp_color = precomp["color"];
-
-                    break;
-                }
+            if (this.layers.legacy_precomps[precomp_tag]) {
+                precomp_color = this.layers.legacy_precomps[precomp_tag];
             }
-        }
 
-        else {
-            precomp_color = precomps["0"]["color"];
+            else {
+                precomp_color = this.get_precomp_color(precomp_tag);
+            }
         }
 
         this.html.css({
             "border-right": this.color_border_size + "px solid " + (precomp_color || "rgba(0, 0, 0, 0)")
         });
+    };
+
+    this.get_precomp_color = function (precomp_tag) {
+        var precomp_colors = [];
+        var precomps = this.editor.get_data()["precomps"];
+
+        for (var num in precomps) {
+            var precomp = precomps[num];
+
+            precomp_colors.push(precomp["color"]);
+
+            if (precomp["asset_path"] === precomp_tag) {
+                return precomp["color"];
+            }
+        }
+
+        var legacy_colors = [];
+        var dark = Dash.Color.IsDark(this.color);
+
+        for (var tag in this.layers.legacy_precomps) {
+            legacy_colors.push(this.layers.legacy_precomps[tag]);
+        }
+
+        for (var _ of Dash.Math.Range(100)) {
+            var color = Dash.Color.Random();
+
+            if (precomp_colors.includes(color) || legacy_colors.includes(color)) {
+                continue;
+            }
+
+            if (
+                   (dark && color.includes("black"))
+                || (!dark && color.includes("white"))
+            ) {
+                continue;
+            }
+
+            this.layers.legacy_precomps[precomp_tag] = color;
+
+            return color;
+        }
+
+        return "";
     };
 
     this.add_type_icon = function () {
