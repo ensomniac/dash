@@ -32213,9 +32213,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.layers = {};
         this.layers_box.empty();
+        var precomps_log = [];
         for (var id of this.get_data()["order"]) {
             this.AddLayer(id, select);
+            precomps_log.push(
+                  this.layers[id].get_value("display_name")
+                + ": "
+                + this.layers[id].get_value("precomp_tag")
+            );
         }
+        console.log("Pre-Comps:", precomps_log.reverse());
         this.redrawing = false;
     };
     this.add_header = function () {
