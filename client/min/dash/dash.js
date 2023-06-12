@@ -29405,6 +29405,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "context") {
             this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
         }
+        if (key === "invert") {
+            this.draw_properties(true);
+        }
     };
     this.IsSelected = function () {
         return this.selected;
@@ -30052,17 +30055,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
+        var transform = (
+            "rotate(" + this.get_value("rot_deg") + "deg)"
+            // This was added as a smoother alternative to setting "top" and "left",
+            // but it causes a complete breakage when media is rotated
+            // + " translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+        );
+        var invert = this.get_value("invert");
+        if (invert === "vertical") {
+            transform += " scale(1, -1)";
+        }
+        else if (invert === "horizontal") {
+            transform += " scale(-1, 1)";
+        }
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
             "top": this.top_px,
             "left": this.left_px,
-            "transform": (
-                "rotate(" + this.get_value("rot_deg") + "deg) "
-                // This was added as an alternative to setting "top" and "left",
-                // but it causes a complete breakage when media is rotated
-                // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
-            )
+            "transform": transform
         });
         this.on_opacity_change(this.get_value("opacity"));
         this.update_fade();
@@ -32278,7 +32289,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 9.5) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 10.15) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -33384,7 +33395,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return options;
     };
     this.initialize_general_context = function (context_key) {
-        // var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
         var precomp_combo_tool_row = this.get_combo(
             context_key,
             this.get_precomp_combo_options(),
@@ -33573,11 +33583,21 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.5,
             2.0
         );
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "vertical", "label_text": "Vertically"},
+                {"id": "horizontal", "label_text": "Horizontally"}
+            ],
+            "invert"
+        );
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
         this.contexts[context_key]["html"].append(color_picker.html);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
     };
     this.get_input = function (context_key, data_key, label_text="") {
         if (!label_text) {

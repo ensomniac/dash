@@ -616,8 +616,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_general_context = function (context_key) {
-        // var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
-
         var precomp_combo_tool_row = this.get_combo(
             context_key,
             this.get_precomp_combo_options(),
@@ -839,6 +837,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "vertical", "label_text": "Vertically"},
+                {"id": "horizontal", "label_text": "Horizontally"}
+            ],
+            "invert"
+        );
+
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
@@ -846,6 +854,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(color_picker.html);
 
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
     };
 
     this.get_input = function (context_key, data_key, label_text="") {

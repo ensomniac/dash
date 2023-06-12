@@ -35,6 +35,7 @@ class Layer:
             "tone_1",
             "tone_2",
             "tone_3",
+            "invert",
             "font_id",
             "text_value",
             "font_color",
@@ -202,6 +203,8 @@ class Layer:
         if self.Type == "image":
             for num in [1, 2, 3]:
                 data[f"multi_tone_color_{num}"] = self.data.get(f"multi_tone_color_{num}") or ""
+
+            data["invert"] = self.data.get("invert") or ""
 
         if self.Type in ["image", "video"]:
             data.update({

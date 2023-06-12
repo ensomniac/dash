@@ -142,6 +142,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "context") {
             this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
         }
+
+        if (key === "invert") {
+            this.draw_properties(true);
+        }
     };
 
     this.IsSelected = function () {
@@ -985,18 +989,30 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this._draw_properties = function () {
         this.draw_properties_pending = false;
 
+        var transform = (
+            "rotate(" + this.get_value("rot_deg") + "deg)"
+
+            // This was added as a smoother alternative to setting "top" and "left",
+            // but it causes a complete breakage when media is rotated
+            // + " translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+        );
+
+        var invert = this.get_value("invert");
+
+        if (invert === "vertical") {
+            transform += " scale(1, -1)";
+        }
+
+        else if (invert === "horizontal") {
+            transform += " scale(-1, 1)";
+        }
+
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
             "top": this.top_px,
             "left": this.left_px,
-            "transform": (
-                "rotate(" + this.get_value("rot_deg") + "deg) "
-
-                // This was added as an alternative to setting "top" and "left",
-                // but it causes a complete breakage when media is rotated
-                // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
-            )
+            "transform": transform
         });
 
         this.on_opacity_change(this.get_value("opacity"));
