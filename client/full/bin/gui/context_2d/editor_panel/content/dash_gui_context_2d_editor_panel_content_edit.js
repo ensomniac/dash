@@ -638,6 +638,17 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "Blend Mode cannot be visualized in this editor"
         );
 
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "vertical", "label_text": "Vertically"},
+                {"id": "horizontal", "label_text": "Horizontally"}
+            ],
+            "invert",
+            "Invert/Mirror"
+        );
+
         var fade_direction_combo_tool_row = (function (self) {
             return self.get_combo(
                 context_key,
@@ -678,9 +689,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding
         });
 
-        // this.contexts[context_key]["html"].append(input.html);
         this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
 
         this.add_fade_tool_row(context_key);
@@ -837,16 +848,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
-        var gradient_direction_combo_tool_row = this.get_combo(
-            context_key,
-            [
-                {"id": "", "label_text": "Not Selected"},
-                {"id": "vertical", "label_text": "Vertically"},
-                {"id": "horizontal", "label_text": "Horizontally"}
-            ],
-            "invert"
-        );
-
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
@@ -854,8 +855,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(color_picker.html);
 
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
-
-        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
     };
 
     this.get_input = function (context_key, data_key, label_text="") {

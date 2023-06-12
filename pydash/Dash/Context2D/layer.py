@@ -156,6 +156,7 @@ class Layer:
             "fade_norm_start": self.data["fade_norm_start"] if "fade_norm_start" in self.data else 0.5,
             "hidden":          self.data["hidden"] if "hidden" in self.data else False,
             "id":              self.ID,
+            "invert":          self.data.get("invert") or "",
             "locked":          self.data["locked"] if "locked" in self.data else False,
             "modified_by":     self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":     self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
@@ -203,8 +204,6 @@ class Layer:
         if self.Type == "image":
             for num in [1, 2, 3]:
                 data[f"multi_tone_color_{num}"] = self.data.get(f"multi_tone_color_{num}") or ""
-
-            data["invert"] = self.data.get("invert") or ""
 
         if self.Type in ["image", "video"]:
             data.update({
