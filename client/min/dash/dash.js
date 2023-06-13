@@ -32390,18 +32390,6 @@ function DashGuiContext2DEditorPanelContent (panel) {
             }
             var parent = floating_combo["parent"];
             var row = parent ? parent : floating_combo["tool_row"].html;
-            // if (parent) {
-            //     console.debug(
-            //         "TEST",
-            //         combo.html.outerWidth(),
-            //         combo.rows.outerWidth(),
-            //         floating_combo["tool_row"].html[0].offsetLeft
-            //     );
-            //
-            //     if (!row.outerWidth() || !floating_combo["tool_row"].html.outerWidth() || !combo.html.outerWidth()) {
-            //         console.error("Error: hit");
-            //     }
-            // }
             combo.DisableAutoGravity();
             combo.html.css({
                 "position": "absolute",
@@ -32413,12 +32401,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
                     + 1  // Bottom border of tabs
                     + (parent ? parseInt(floating_combo["tool_row"].html.css("margin-top")) : 0)
                 ),
-                "left": (
-                    parent ? (
-                        row.outerWidth() - floating_combo["tool_row"].html.outerWidth() - combo.html.outerWidth()
-                    ) : floating_combo["tool_row"].elements[0].html.outerWidth()  // Combo label
-                ) + (Dash.Size.Padding * (parent ? 2 : 1.5)),
-                // "background": "pink"
+                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (  // Combo label
+                    parent ? floating_combo["tool_row"].html[0].offsetLeft : 0
+                ) + (Dash.Size.Padding * 1.5)
             });
             combo.html.detach();
             this.panel.html.append(combo.html);
