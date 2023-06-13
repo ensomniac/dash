@@ -32289,7 +32289,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.15) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 10.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -32388,19 +32388,39 @@ function DashGuiContext2DEditorPanelContent (panel) {
             if (!combo) {
                 continue;
             }
+            var parent = floating_combo["parent"];
+            var row = parent ? parent : floating_combo["tool_row"].html;
+            // if (parent) {
+            //     console.debug(
+            //         "TEST",
+            //         combo.html.outerWidth(),
+            //         combo.rows.outerWidth(),
+            //         floating_combo["tool_row"].html[0].offsetLeft
+            //     );
+            //
+            //     if (!row.outerWidth() || !floating_combo["tool_row"].html.outerWidth() || !combo.html.outerWidth()) {
+            //         console.error("Error: hit");
+            //     }
+            // }
             combo.DisableAutoGravity();
-            combo.html.detach();
             combo.html.css({
                 "position": "absolute",
                 "top": (
                       this.panel.property_box.html.outerHeight()  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
-                    + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
-                    + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
+                    + row[0].offsetTop  // Tool row offset from top of context div
+                    + row.parent()[0].offsetTop  // Context div offset from top of content box
                     + 1  // Bottom border of tabs
+                    + (parent ? parseInt(floating_combo["tool_row"].html.css("margin-top")) : 0)
                 ),
-                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
+                "left": (
+                    parent ? (
+                        row.outerWidth() - floating_combo["tool_row"].html.outerWidth() - combo.html.outerWidth()
+                    ) : floating_combo["tool_row"].elements[0].html.outerWidth()  // Combo label
+                ) + (Dash.Size.Padding * (parent ? 2 : 1.5)),
+                // "background": "pink"
             });
+            combo.html.detach();
             this.panel.html.append(combo.html);
             this.floating_combos.push(combo);
             combo.RefreshConnections();
@@ -33551,30 +33571,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return checkbox;
     };
     this.initialize_video_context = function (context_key) {
-        var contrast_slider = this.get_slider(
-            1,
-            context_key,
-            "contrast",
-            1.02,
-            "",
-            0.5,
-            2.0
-        );
-        var brightness_slider = this.get_slider(
-            1,
-            context_key,
-            "brightness",
-            0.95,
-            "",
-            0.5,
-            2.0
-        );
-        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-        this.contexts[context_key]["html"].append(contrast_slider.html);
-        this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_picker.html);
+        this.initialize_media_context(context_key);
+        // Add any gui here that is not shared across all media types
     };
     this.initialize_image_context = function (context_key) {
+        this.initialize_media_context(context_key);
+        // Add any gui here that is not shared across all media types
+    };
+    this.initialize_media_context = function (context_key) {
         var contrast_slider = this.get_slider(
             1,
             context_key,
@@ -33593,11 +33597,40 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             0.5,
             2.0
         );
-        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_picker.html);
+        this.add_tint(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+    };
+    this.add_tint = function (context_key) {
+        var container = $("<div></div>");
+        container.css({
+            "display": "flex",
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+        var mode_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Default"},
+                {"id": "replace", "label_text": "Replace"}
+            ],
+            "tint_mode",
+            "Mode",
+            null,
+            null,
+            "When using 'Replace' mode, you can best visualize it in this editor by using an asset that is white",
+            container
+        );
+        mode_combo_tool_row.html.css({
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.6,
+            "border": "none"
+        });
+        container.append(color_picker.html);
+        container.append(mode_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(container);
     };
     this.get_input = function (context_key, data_key, label_text="") {
         if (!label_text) {
@@ -33621,7 +33654,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             return input;
         })(this);
     };
-    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="") {
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="", parent=null) {
         var starting_value = this.get_data()[data_key] || "";
         var tool_row = (function (self) {
             return self.content.GetCombo(
@@ -33640,7 +33673,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
         })(this);
         this.floating_combos.push({
-            "tool_row": tool_row
+            "tool_row": tool_row,
+            "parent": parent
         });
         if (data_key === "font_id") {
             this.font_combo = tool_row.elements.Last().combo;

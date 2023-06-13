@@ -18,7 +18,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.15) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 10.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
 
     this.PrimitiveTypes = [
         "text",
@@ -150,21 +150,43 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 continue;
             }
 
-            combo.DisableAutoGravity();
+            var parent = floating_combo["parent"];
+            var row = parent ? parent : floating_combo["tool_row"].html;
 
-            combo.html.detach();
+            // if (parent) {
+            //     console.debug(
+            //         "TEST",
+            //         combo.html.outerWidth(),
+            //         combo.rows.outerWidth(),
+            //         floating_combo["tool_row"].html[0].offsetLeft
+            //     );
+            //
+            //     if (!row.outerWidth() || !floating_combo["tool_row"].html.outerWidth() || !combo.html.outerWidth()) {
+            //         console.error("Error: hit");
+            //     }
+            // }
+
+            combo.DisableAutoGravity();
 
             combo.html.css({
                 "position": "absolute",
                 "top": (
                       this.panel.property_box.html.outerHeight()  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
-                    + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
-                    + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
+                    + row[0].offsetTop  // Tool row offset from top of context div
+                    + row.parent()[0].offsetTop  // Context div offset from top of content box
                     + 1  // Bottom border of tabs
+                    + (parent ? parseInt(floating_combo["tool_row"].html.css("margin-top")) : 0)
                 ),
-                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
+                "left": (
+                    parent ? (
+                        row.outerWidth() - floating_combo["tool_row"].html.outerWidth() - combo.html.outerWidth()
+                    ) : floating_combo["tool_row"].elements[0].html.outerWidth()  // Combo label
+                ) + (Dash.Size.Padding * (parent ? 2 : 1.5)),
+                // "background": "pink"
             });
+
+            combo.html.detach();
 
             this.panel.html.append(combo.html);
 

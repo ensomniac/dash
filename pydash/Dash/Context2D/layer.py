@@ -37,6 +37,7 @@ class Layer:
             "tone_3",
             "invert",
             "font_id",
+            "tint_mode",
             "text_value",
             "font_color",
             "tint_color",
@@ -164,6 +165,7 @@ class Layer:
             "precomp_tag":     self.data.get("precomp_tag") or "",
             "rot_deg":         self.data.get("rot_deg") or 0,  # -180 to 180
             "tint_color":      self.data.get("tint_color") or "",
+            "tint_mode":       self.data.get("tint_mode") or "",
             "type":            self.Type,
             "width_norm":      self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
                 # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution

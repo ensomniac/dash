@@ -800,34 +800,18 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_video_context = function (context_key) {
-        var contrast_slider = this.get_slider(
-            1,
-            context_key,
-            "contrast",
-            1.02,
-            "",
-            0.5,
-            2.0
-        );
+        this.initialize_media_context(context_key);
 
-        var brightness_slider = this.get_slider(
-            1,
-            context_key,
-            "brightness",
-            0.95,
-            "",
-            0.5,
-            2.0
-        );
-
-        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-
-        this.contexts[context_key]["html"].append(contrast_slider.html);
-        this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_picker.html);
+        // Add any gui here that is not shared across all media types
     };
 
     this.initialize_image_context = function (context_key) {
+        this.initialize_media_context(context_key);
+
+        // Add any gui here that is not shared across all media types
+    };
+
+    this.initialize_media_context = function (context_key) {
         var contrast_slider = this.get_slider(
             1,
             context_key,
@@ -848,13 +832,48 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
-        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_picker.html);
 
+        this.add_tint(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+    };
+
+    this.add_tint = function (context_key) {
+        var container = $("<div></div>");
+
+        container.css({
+            "display": "flex",
+            "margin-top": Dash.Size.Padding * 0.5
+        });
+
+        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
+
+        var mode_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Default"},
+                {"id": "replace", "label_text": "Replace"}
+            ],
+            "tint_mode",
+            "Mode",
+            null,
+            null,
+            "When using 'Replace' mode, you can best visualize it in this editor by using an asset that is white",
+            container
+        );
+
+        mode_combo_tool_row.html.css({
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.6,
+            "border": "none"
+        });
+
+        container.append(color_picker.html);
+        container.append(mode_combo_tool_row.html);
+
+        this.contexts[context_key]["html"].append(container);
     };
 
     this.get_input = function (context_key, data_key, label_text="") {
@@ -884,7 +903,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         })(this);
     };
 
-    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="") {
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="", parent=null) {
         var starting_value = this.get_data()[data_key] || "";
 
         var tool_row = (function (self) {
@@ -905,7 +924,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         })(this);
 
         this.floating_combos.push({
-            "tool_row": tool_row
+            "tool_row": tool_row,
+            "parent": parent
         });
 
         if (data_key === "font_id") {
