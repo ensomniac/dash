@@ -266,7 +266,7 @@ class Layer:
         properties = self.context_2d.parse_properties_for_override_tag(properties, for_overrides)
 
         # Should never happen, but just in case
-        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type", "file"]:
+        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
             if key in properties:
                 del properties[key]
 
