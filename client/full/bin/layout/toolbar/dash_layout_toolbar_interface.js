@@ -58,7 +58,10 @@ function DashLayoutToolbarInterface () {
     };
 
     // TODO: These params are a mess
-    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0, for_uploader=false) {
+    this.AddIconButton = function (
+        icon_name, callback, size_percent_num=null, data=null,
+        container_size=null, size_mult=1.0, for_uploader=false
+    ) {
         var obj_index = this.objects.length;
 
         callback = callback.bind(this.binder);

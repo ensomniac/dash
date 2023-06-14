@@ -32314,7 +32314,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     this.inactive_tab_bg_color = Dash.Color.GetTransparent(this.color.Text, 0.05);
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 11.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
     this.PrimitiveTypes = [
         "text",
         "color",
@@ -33582,11 +33582,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
     this.initialize_video_context = function (context_key) {
         this.initialize_media_context(context_key);
-        // Add any gui here that is not shared across all media types
+        // Add any gui below that is not shared across all media types
+        this.add_mask_toolbar(context_key);  // As of writing, this is restricted to video
     };
     this.initialize_image_context = function (context_key) {
         this.initialize_media_context(context_key);
-        // Add any gui here that is not shared across all media types
+        // Add any gui below that is not shared across all media types
     };
     this.initialize_media_context = function (context_key) {
         var contrast_slider = this.get_slider(
@@ -33610,10 +33611,97 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.add_tint(context_key);
+        this.add_tint_row(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
     };
-    this.add_tint = function (context_key) {
+    this.add_mask_toolbar = function (context_key) {
+        var toolbar = new Dash.Layout.Toolbar(this);
+        toolbar.html.css({
+            "background": "none",
+            "padding": 0
+        });
+        toolbar.RemoveStrokeSep();
+        toolbar.DisablePaddingRefactoring();
+        var label = toolbar.AddLabel("Mask:", false, null, false);
+        label.label.css({
+            "font-size": "80%"
+        });
+        var mask = this.get_data()["mask"] || {};
+        var width = toolbar.height - 1;
+        var height = width;
+        if (Dash.Validate.Object(mask)) {
+            if (mask["aspect"] > 1) {
+                if (mask["aspect"] > 3) {
+                    height = width / mask["aspect"];
+                }
+                else {
+                    width *= mask["aspect"];
+                }
+            }
+            else if (mask["aspect"] < 1) {
+                width *= mask["aspect"];
+            }
+        }
+        var preview = Dash.File.GetImagePreview(mask["thumb_url"], height, width);
+        preview.css({
+            "border-radius": Dash.Size.BorderRadius,
+            "user-select": "none",
+            "pointer-events": "none",
+            "margin-right": Dash.Size.Padding
+        });
+        toolbar.AddHTML(preview);
+        var [download_button, upload_button, delete_button] = (function (self) {
+            return [
+                toolbar.AddIconButton(
+                    "download",
+                    function (button) {
+                        console.debug("TEST download", button);
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                ),
+                toolbar.AddIconButton(
+                    "upload",
+                    function (button) {
+                        console.debug("TEST upload", button);
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6,
+                    true
+                ),
+                toolbar.AddIconButton(
+                    "trash",
+                    function (button) {
+                        console.debug("TEST delete", button);
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                )
+            ];
+        })(this);
+        this.contexts[context_key]["all_elements"].push(label);
+        this.contexts[context_key]["all_elements"].push(preview);
+        this.contexts[context_key]["all_elements"].push(download_button);
+        this.contexts[context_key]["all_elements"].push(upload_button);
+        this.contexts[context_key]["all_elements"].push(delete_button);
+        this.contexts[context_key]["html"].append(toolbar.html);
+        // TODO: remove when done
+        toolbar.html.css({
+            "opacity": 0.5,
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+    };
+    this.add_tint_row = function (context_key) {
         var container = $("<div></div>");
         container.css({
             "display": "flex",
@@ -42683,7 +42771,10 @@ function DashLayoutToolbarInterface () {
         this.html.append(space);
     };
     // TODO: These params are a mess
-    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0, for_uploader=false) {
+    this.AddIconButton = function (
+        icon_name, callback, size_percent_num=null, data=null,
+        container_size=null, size_mult=1.0, for_uploader=false
+    ) {
         var obj_index = this.objects.length;
         callback = callback.bind(this.binder);
         var button = (function (self, obj_index, data) {

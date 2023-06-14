@@ -802,13 +802,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     this.initialize_video_context = function (context_key) {
         this.initialize_media_context(context_key);
 
-        // Add any gui here that is not shared across all media types
+        // Add any gui below that is not shared across all media types
+
+        this.add_mask_toolbar(context_key);  // As of writing, this is restricted to video
     };
 
     this.initialize_image_context = function (context_key) {
         this.initialize_media_context(context_key);
 
-        // Add any gui here that is not shared across all media types
+        // Add any gui below that is not shared across all media types
     };
 
     this.initialize_media_context = function (context_key) {
@@ -836,11 +838,117 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(contrast_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
 
-        this.add_tint(context_key);
+        this.add_tint_row(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
     };
 
-    this.add_tint = function (context_key) {
+    this.add_mask_toolbar = function (context_key) {
+        var toolbar = new Dash.Layout.Toolbar(this);
+
+        toolbar.html.css({
+            "background": "none",
+            "padding": 0
+        });
+
+        toolbar.RemoveStrokeSep();
+        toolbar.DisablePaddingRefactoring();
+
+        var label = toolbar.AddLabel("Mask:", false, null, false);
+
+        label.label.css({
+            "font-size": "80%"
+        });
+
+        var mask = this.get_data()["mask"] || {};
+        var width = toolbar.height - 1;
+        var height = width;
+
+        if (Dash.Validate.Object(mask)) {
+            if (mask["aspect"] > 1) {
+                if (mask["aspect"] > 3) {
+                    height = width / mask["aspect"];
+                }
+
+                else {
+                    width *= mask["aspect"];
+                }
+            }
+
+            else if (mask["aspect"] < 1) {
+                width *= mask["aspect"];
+            }
+        }
+
+        var preview = Dash.File.GetImagePreview(mask["thumb_url"], height, width);
+
+        preview.css({
+            "border-radius": Dash.Size.BorderRadius,
+            "user-select": "none",
+            "pointer-events": "none",
+            "margin-right": Dash.Size.Padding
+        });
+
+        toolbar.AddHTML(preview);
+
+        var [download_button, upload_button, delete_button] = (function (self) {
+            return [
+                toolbar.AddIconButton(
+                    "download",
+                    function (button) {
+                        console.debug("TEST download", button);
+
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                ),
+                toolbar.AddIconButton(
+                    "upload",
+                    function (button) {
+                        console.debug("TEST upload", button);
+
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6,
+                    true
+                ),
+                toolbar.AddIconButton(
+                    "trash",
+                    function (button) {
+                        console.debug("TEST delete", button);
+
+                        // TODO
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                )
+            ];
+        })(this);
+
+        this.contexts[context_key]["all_elements"].push(label);
+        this.contexts[context_key]["all_elements"].push(preview);
+        this.contexts[context_key]["all_elements"].push(download_button);
+        this.contexts[context_key]["all_elements"].push(upload_button);
+        this.contexts[context_key]["all_elements"].push(delete_button);
+
+        this.contexts[context_key]["html"].append(toolbar.html);
+
+        // TODO: remove when done
+        toolbar.html.css({
+            "opacity": 0.5,
+            "user-select": "none",
+            "pointer-events": "none"
+        });
+    };
+
+    this.add_tint_row = function (context_key) {
         var container = $("<div></div>");
 
         container.css({
