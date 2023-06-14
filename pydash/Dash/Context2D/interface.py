@@ -49,30 +49,26 @@ class Interface:
         if not self.Data:
             return self.Data
 
-        data = {
-            "aspect_ratio_h":                    self.AspectRatioH,
-            "aspect_ratio_w":                    self.AspectRatioW,
-            "created_by":                        self.CreatedBy,
-            "created_on":                        self.CreatedOn,
-            "display_name":                      self.DisplayName,
-            "id":                                self.ID,
+        # This is a function that is meant to be overridden to use for custom modifications
+        # to this returned data for abstractions and extensions of this code.
+        return self.OnToDict({
+            "aspect_ratio_h": self.AspectRatioH,
+            "aspect_ratio_w": self.AspectRatioW,
+            "created_by":     self.CreatedBy,
+            "created_on":     self.CreatedOn,
+            "display_name":   self.DisplayName,
+            "id":             self.ID,
 
             # We don't want to save the "layers" key, since we store the layers separately, but we need to
             # save the "layer_order" to be able to populate the "layers" when serving this dict (not saving)
             "layer_order" if save else "layers": self.LayerOrder if save else self.Layers,
 
-            "modified_by":                       self.User["email"] if save else self.ModifiedBy,
-            "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn,
+            "modified_by": self.User["email"] if save else self.ModifiedBy,
+            "modified_on": self.Now.isoformat() if save else self.ModifiedOn,
 
             # Only save changes, don't need to save the entire default data structure
             "precomps": self.PreCompsMin if save else self.PreCompsFull
-        }
-
-        # This is a function that is meant to be overridden to use for custom modifications
-        # to this returned data for abstractions and extensions of this code.
-        data = self.OnToDict(data)
-
-        return data
+        })
 
     def Duplicate(self):
         from Dash.LocalStorage import Duplicate
@@ -100,16 +96,19 @@ class Interface:
             ]
         )
 
-    def SetProperty(self, key, value):
-        return self.SetProperties({key: value})
+    def SetProperty(self, key, value, moved_layer_id=""):
+        return self.SetProperties({key: value}, moved_layer_id)
 
-    def SetProperties(self, properties={}):
-        properties = self.ParseProperties(properties)
+    def SetProperties(self, properties={}, moved_layer_id=""):
+        properties = self.ParseProperties(
+            properties,
+            moved_layer_id=moved_layer_id
+        )
 
         if not properties:
             return self.ToDict()
 
-        self.Data.update(self.ParseProperties(properties))
+        self.Data.update(properties)
 
         return self.save().ToDict()
 
@@ -124,7 +123,7 @@ class Interface:
 
         return self.save().ToDict()
 
-    def ParseProperties(self, properties, for_overrides=False, retain_override_tag=True):
+    def ParseProperties(self, properties, for_overrides=False, retain_override_tag=True, moved_layer_id=""):
         if properties and type(properties) is str:
             from json import loads
 
@@ -155,6 +154,14 @@ class Interface:
                         continue
 
                     rmtree(os.path.join(self.LayersRoot, layer_id))
+
+            if moved_layer_id:
+                from .layer import Layer
+
+                layer = Layer(self, moved_layer_id)
+
+                if layer.data.get("precomp_tag"):
+                    layer.SetProperty("precomp_tag", "")
 
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
             properties = self.parse_aspect_keys_for_properties(properties, for_overrides)

@@ -354,28 +354,22 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         var additional_params = {};
-        // var next_index = up ? index + 1 : index - 1;
-        // var next_layer = this.layers[order[next_index]];
-        //
-        // console.debug("TEST", id, index, layer.get_value("precomp_tag"), next_index, next_layer.get_value("precomp_tag"));
-        //
-        // if (
-        //        (layer.get_value("precomp_tag_explicitly_set") || next_layer.get_value("precomp_tag_explicitly_set"))
-        //     && (layer.get_value("precomp_tag") !== next_layer.get_value("precomp_tag"))
-        // ) {
-        //     if (!window.confirm("This move will change the current Pre-Comp flow.\n\nProceed?")) {
-        //         // In the future, we may want to give more choices, such as removing
-        //         // pre-comp tag, changing it, etc. For now, the backend handles it.
-        //         // If we want to change it later, use Dash.Gui.Prompt instead of this.
-        //         return;
-        //     }
-        //
-        //     // TODO: on the backend, use this ID to do similar logic as above and clear out the
-        //     //  necessary affected precomp_tag value(s)
-        //     additional_params["moved_layer_id"] = id;
-        // }
-        //
-        // return;
+        var next_index = up ? index + 1 : index - 1;
+        var next_layer = this.layers[order[next_index]];
+
+        if (
+               (layer.get_value("precomp_tag_explicitly_set") || next_layer.get_value("precomp_tag_explicitly_set"))
+            && (layer.get_value("precomp_tag") !== next_layer.get_value("precomp_tag"))
+        ) {
+            if (!window.confirm("This move will change the current Pre-Comp flow.\n\nProceed?")) {
+                // In the future, we may want to give more choices, such as removing
+                // pre-comp tag, changing it, etc. For now, the backend handles it.
+                // If we want to change it later, use Dash.Gui.Prompt instead of this.
+                return;
+            }
+
+            additional_params["moved_layer_id"] = id;
+        }
 
         delete this.layers[id];
 
@@ -571,7 +565,9 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         else if (key === "precomp_tag") {
-            this.layers[id].UpdatePreCompColor();
+            for (var layer_id in this.layers) {
+                this.layers[layer_id].UpdatePreCompColor();
+            }
         }
 
         var display_name;

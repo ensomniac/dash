@@ -236,36 +236,16 @@ class Layer:
         if self.Type == "context":
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
-        else:
-            if "layer_order" in properties:
-                del properties["layer_order"]  # Should never happen, but just in case
 
-            if self.Type == "color" and ("aspect_ratio_w" in properties or "aspect_ratio_h" in properties):
-                for key in ["aspect_ratio_w", "aspect_ratio_h"]:
-                    properties[key] = float(properties.get(key) or self.data[key])
+            return self.Save().ToDict()
 
-                    if not properties[key].is_integer():
-                        from Dash.Utils import ClientAlert
+        if "layer_order" in properties:
+            del properties["layer_order"]  # Should never happen, but just in case
 
-                        raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+        if self.Type == "color" and ("aspect_ratio_w" in properties or "aspect_ratio_h" in properties):
+            properties = self.update_color_properties_on_aspect_change(properties)
 
-                    properties[key] = int(properties[key])
-
-                if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
-                    properties["aspect_ratio_w"] = 1
-                    properties["aspect_ratio_h"] = 1
-
-                else:
-                    from math import gcd
-
-                    divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
-
-                    properties["aspect_ratio_w"] /= divisor
-                    properties["aspect_ratio_h"] /= divisor
-
-                    properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
-
-            self.data.update(properties)
+        self.data.update(properties)
 
         return self.Save().ToDict()
 
@@ -405,6 +385,32 @@ class Layer:
             "type": self.Type,
             "display_name": self.default_display_name
         }
+
+    def update_color_properties_on_aspect_change(self, properties):
+        for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+            properties[key] = float(properties.get(key) or self.data[key])
+
+            if not properties[key].is_integer():
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+
+            properties[key] = int(properties[key])
+
+        if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
+            properties["aspect_ratio_w"] = 1
+            properties["aspect_ratio_h"] = 1
+        else:
+            from math import gcd
+
+            divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+
+            properties["aspect_ratio_w"] /= divisor
+            properties["aspect_ratio_h"] /= divisor
+
+            properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
+
+        return properties
 
     def check_display_name_for_set_property(self, properties, key="text_value"):
         if key not in properties or "display_name" in properties:

@@ -35,12 +35,12 @@ def Duplicate(user_data, context_2d_root, obj_id, dash_context):
     return Context2D(user_data, context_2d_root, obj_id, dash_context).Duplicate()
 
 
-def SetProperty(user_data, context_2d_root, obj_id, key, value):
-    return Context2D(user_data, context_2d_root, obj_id).SetProperty(key, value)
+def SetProperty(user_data, context_2d_root, obj_id, key, value, moved_layer_id=""):
+    return Context2D(user_data, context_2d_root, obj_id).SetProperty(key, value, moved_layer_id)
 
 
-def SetProperties(user_data, context_2d_root, obj_id, props):
-    return Context2D(user_data, context_2d_root, obj_id).SetProperties(props)
+def SetProperties(user_data, context_2d_root, obj_id, props, moved_layer_id=""):
+    return Context2D(user_data, context_2d_root, obj_id).SetProperties(props, moved_layer_id)
 
 
 def SetPreCompProperty(user_data, context_2d_root, obj_id, key, value, letter):
