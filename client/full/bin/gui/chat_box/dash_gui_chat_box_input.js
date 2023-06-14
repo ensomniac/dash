@@ -24,7 +24,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             css["padding-top"] = Dash.Size.Padding * 0.5;
             css["margin-left"] = -Dash.Size.Padding * 0.5;
             css["margin-right"] = -Dash.Size.Padding * 0.5;
-            css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
+            css["border-top"] = "1px solid " + this.color.PinstripeDark;
+            // css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
         }
 
         this.html = Dash.Gui.GetHTMLContext("", css, this.color);

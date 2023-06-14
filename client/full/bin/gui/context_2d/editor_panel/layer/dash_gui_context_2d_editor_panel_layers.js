@@ -347,12 +347,35 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var parent_id = layer.GetParentID();
         var parent_layer_order = layer.GetParentLayerOrder();
         var order = [...(parent_id ? parent_layer_order : this.get_data()["order"])];
-
         var index = parent_id ? parent_layer_order.indexOf(id) : layer.GetIndex();
 
         if (index < 0 || order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
             return;
         }
+
+        var additional_params = {};
+        // var next_index = up ? index + 1 : index - 1;
+        // var next_layer = this.layers[order[next_index]];
+        //
+        // console.debug("TEST", id, index, layer.get_value("precomp_tag"), next_index, next_layer.get_value("precomp_tag"));
+        //
+        // if (
+        //        (layer.get_value("precomp_tag_explicitly_set") || next_layer.get_value("precomp_tag_explicitly_set"))
+        //     && (layer.get_value("precomp_tag") !== next_layer.get_value("precomp_tag"))
+        // ) {
+        //     if (!window.confirm("This move will change the current Pre-Comp flow.\n\nProceed?")) {
+        //         // In the future, we may want to give more choices, such as removing
+        //         // pre-comp tag, changing it, etc. For now, the backend handles it.
+        //         // If we want to change it later, use Dash.Gui.Prompt instead of this.
+        //         return;
+        //     }
+        //
+        //     // TODO: on the backend, use this ID to do similar logic as above and clear out the
+        //     //  necessary affected precomp_tag value(s)
+        //     additional_params["moved_layer_id"] = id;
+        // }
+        //
+        // return;
 
         delete this.layers[id];
 
@@ -386,7 +409,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         if (self.editor.linked_preview) {
                             self.editor.linked_preview.editor_panel.layers_box._on_move(id);
                         }
-                    }
+                    },
+                    additional_params
                 );
             }
         })(this);
@@ -420,8 +444,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
 
-    this.set_layer_order = function (order, callback=null) {
-        this.editor.set_data("layer_order", order, callback);
+    this.set_layer_order = function (order, callback=null, additional_params={}) {
+        this.editor.set_data("layer_order", order, callback, additional_params);
     };
 
     this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {

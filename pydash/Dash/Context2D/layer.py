@@ -28,6 +28,7 @@ class Layer:
             "text_caps",
             "fade_global",
             "placeholder",
+            "precomp_tag_explicitly_set",
             *self.context_2d.LayerExtraBoolKeys
         ]
 
@@ -172,6 +173,9 @@ class Layer:
                 (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9) if self.Type == "text" else 0.5
             )
         }
+
+        if not save:
+            data["precomp_tag_explicitly_set"] = bool(data["precomp_tag"])
 
         if self.Type == "text":
             text_caps = self.data["text_caps"] if "text_caps" in self.data else False

@@ -26128,7 +26128,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             css["padding-top"] = Dash.Size.Padding * 0.5;
             css["margin-left"] = -Dash.Size.Padding * 0.5;
             css["margin-right"] = -Dash.Size.Padding * 0.5;
-            css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
+            css["border-top"] = "1px solid " + this.color.PinstripeDark;
+            // css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
         }
         this.html = Dash.Gui.GetHTMLContext("", css, this.color);
         this.add_pen_icon();
@@ -26452,7 +26453,8 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
                 "margin": Dash.Size.Padding * 0.2,
                 "padding": Dash.Size.Padding * (Dash.IsMobile ? 0.75 : 1),
                 "border-radius": Dash.Size.Padding,
-                "box-shadow": Dash.IsMobile ? "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)" : "none",
+                "border": Dash.IsMobile ? ("1px solid " + this.color.PinstripeDark) : "none",
+                "box-shadow": "none",  // Dash.IsMobile ? "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)" : "none",
                 "display": "flex",
                 // Workaround for the current discrepancy of Light.BackgroundRaised not being unique,
                 // which can't simply be fixed by making it different, because too many things would break.
@@ -32044,6 +32046,29 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         if (index < 0 || order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
             return;
         }
+        var additional_params = {};
+        // var next_index = up ? index + 1 : index - 1;
+        // var next_layer = this.layers[order[next_index]];
+        //
+        // console.debug("TEST", id, index, layer.get_value("precomp_tag"), next_index, next_layer.get_value("precomp_tag"));
+        //
+        // if (
+        //        (layer.get_value("precomp_tag_explicitly_set") || next_layer.get_value("precomp_tag_explicitly_set"))
+        //     && (layer.get_value("precomp_tag") !== next_layer.get_value("precomp_tag"))
+        // ) {
+        //     if (!window.confirm("This move will change the current Pre-Comp flow.\n\nProceed?")) {
+        //         // In the future, we may want to give more choices, such as removing
+        //         // pre-comp tag, changing it, etc. For now, the backend handles it.
+        //         // If we want to change it later, use Dash.Gui.Prompt instead of this.
+        //         return;
+        //     }
+        //
+        //     // TODO: on the backend, use this ID to do similar logic as above and clear out the
+        //     //  necessary affected precomp_tag value(s)
+        //     additional_params["moved_layer_id"] = id;
+        // }
+        //
+        // return;
         delete this.layers[id];
         order.Remove(id);
         order.splice((up ? index + 1 : index - 1), 0, id);
@@ -32070,7 +32095,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         if (self.editor.linked_preview) {
                             self.editor.linked_preview.editor_panel.layers_box._on_move(id);
                         }
-                    }
+                    },
+                    additional_params
                 );
             }
         })(this);
@@ -32095,8 +32121,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.redraw_layers(select);
         }
     };
-    this.set_layer_order = function (order, callback=null) {
-        this.editor.set_data("layer_order", order, callback);
+    this.set_layer_order = function (order, callback=null, additional_params={}) {
+        this.editor.set_data("layer_order", order, callback, additional_params);
     };
     this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
         // Should never happen, but just in case
@@ -43477,7 +43503,8 @@ function DashMobileCard (stack) {
             "background": "white",
             "padding": Dash.Size.Padding,
             "border-radius": Dash.Size.BorderRadius,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
+            "border": "1px solid " + this.color.PinstripeDark,
+            // "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
             "color": this.color.Text,
             "margin-right": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
@@ -44593,7 +44620,9 @@ function DashMobileCardStack (binder, color=null) {
                 "display": "flex",
                 "top": "auto",
                 "color": "white",
-                "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+                "border": "1px solid " + this.color.PinstripeDark,
+                "background": this.color.BackgroundRaised,
+                // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
                 "padding-left": Dash.Size.Padding * 0.5,
                 // This prevents cut-off from the rounded corners of the modern iPhone screen, which are only problematic on the bottom
                 "padding-bottom": this.iphone_standalone ? Dash.Size.Padding * 0.5 : 0
@@ -44743,14 +44772,16 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
             this.icon_only ? 0.65 : 0.75,
             Dash.Color.Mobile.AccentPrimary
         );
-        this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
+        this.icon.AddShadow("0px 1px 2px rgba(0, 0, 0, 0.15)");
         var css = {
             "background": "rgb(250, 250, 250)",
             "height": this.icon_size,
             "width": this.icon_size,
             "border-radius": this.icon_size * 0.5,
-            "box-shadow": (this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)") +
-                ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
+            "border": "1px solid " + this.color.PinstripeDark
+            // "box-shadow": (
+            //     this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)"
+            // ) + ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         };
         if (this.icon_only) {
             css["inset"] = 0;
@@ -44759,7 +44790,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
         }
         else {
             css["left"] = this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto";
-            css["top"] = Dash.Size.Padding * 0.25;
+            css["top"] = Dash.Size.Padding * 0.2;
             css["right"] = this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25;
             css["bottom"] = "auto";
         }
@@ -45326,8 +45357,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
-    this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
+    // this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
+    // this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
     this.icon = new Dash.Gui.Icon(
         this.color,
@@ -45338,9 +45369,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     );
     this.setup_styles = function () {
         this.label.text(this.label_text);
-        this.icon.icon_html.css({
-            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
-        });
+        this.icon.AddShadow("0px 1px 2px rgba(0, 0, 0, 0.15)");
         this.html.css({
             "height": this.row_height,
             "width": this.width,
@@ -45357,7 +45386,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "height": this.width,
             "width": this.width,
             "border-radius": this.width * 0.5,
-            "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+            "border": "1px solid " + this.color.PinstripeDark
+            // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
         this.label.css({
             "position": "absolute",
@@ -45426,12 +45456,14 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         }
         if (highlighted) {
             this.icon_circle.css({
-                "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
+                "border": "2px solid " + Dash.Color.Mobile.AccentPrimary
+                // "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
             });
         }
         else {
             this.icon_circle.css({
-                "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+                "border": "1px solid " + this.color.PinstripeDark
+                // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
             });
         }
         this.highlighted = highlighted;

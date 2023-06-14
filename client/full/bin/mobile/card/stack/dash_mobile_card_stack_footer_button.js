@@ -53,15 +53,17 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
             Dash.Color.Mobile.AccentPrimary
         );
 
-        this.icon.AddShadow("0px 2px 3px rgba(0, 0, 0, 0.2)");
+        this.icon.AddShadow("0px 1px 2px rgba(0, 0, 0, 0.15)");
 
         var css = {
             "background": "rgb(250, 250, 250)",
             "height": this.icon_size,
             "width": this.icon_size,
             "border-radius": this.icon_size * 0.5,
-            "box-shadow": (this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)") +
-                ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
+            "border": "1px solid " + this.color.PinstripeDark
+            // "box-shadow": (
+            //     this.icon_only ? "0px 0px 7px 2px rgba(0, 0, 0, 0.35)" : "0px 6px 10px 1px rgba(0, 0, 0, 0.1)"
+            // ) + ", inset 0px 2px 2px 0px rgba(255, 255, 255, 1)"
         };
 
         if (this.icon_only) {
@@ -72,7 +74,7 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
 
         else {
             css["left"] = this.left_side_icon ? Dash.Size.Padding * 0.25 : "auto";
-            css["top"] = Dash.Size.Padding * 0.25;
+            css["top"] = Dash.Size.Padding * 0.2;
             css["right"] = this.left_side_icon ? "auto" : Dash.Size.Padding * 0.25;
             css["bottom"] = "auto";
         }

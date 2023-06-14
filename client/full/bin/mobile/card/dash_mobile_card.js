@@ -29,7 +29,8 @@ function DashMobileCard (stack) {
             "background": "white",
             "padding": Dash.Size.Padding,
             "border-radius": Dash.Size.BorderRadius,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
+            "border": "1px solid " + this.color.PinstripeDark,
+            // "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
             "color": this.color.Text,
             "margin-right": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
