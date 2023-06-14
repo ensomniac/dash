@@ -43,7 +43,11 @@ function DashGuiContext2DCanvas (editor) {
         };
 
         this.canvas.css({
-            "background": this.color.Background,
+            "background": (
+                  "url('https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
+                + (Dash.Color.IsDark(this.color) ? "dark" : "light") + ".png')"
+            ),
+            "background-size": Dash.Size.Padding,
             "z-index": 2,
             ...css
         });

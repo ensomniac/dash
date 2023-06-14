@@ -22,9 +22,11 @@ ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[], enforce_unique_filename_key=True,
-        existing_data_for_update={}, enforce_single_period=True, allowable_executable_exts=[], related_file_path="", target_aspect_ratio=None,
-        additional_data={}, replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True, min_size=0
+    dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
+    enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
+    allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
+    replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
+    include_orig_png=True, min_size=0, is_mask=False
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -65,7 +67,8 @@ def Upload(
             file_bytes_or_existing_path,
             existing_data_for_update.get("orig_filename") or filename,
             target_aspect_ratio,
-            min_size
+            min_size,
+            is_mask
         )
     else:
         img = None
@@ -130,12 +133,15 @@ def CreateZIP(dir_path):
     )
 
 
-def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio=False):
-    from PIL import Image
-    from io import BytesIO
+def ValidateImageAspectRatio(
+    target_aspect_ratio, file_bytes_or_existing_path="",
+    filename="", pil_image_object=None, return_image_aspect_ratio=False
+):
+    if not pil_image_object and not file_bytes_or_existing_path:
+        raise ValueError("Must provide either 'pil_image_object' or 'file_bytes_or_existing_path'")
 
     return validate_image_aspect_ratio(
-        Image.open(BytesIO(image_bytes)),
+        (pil_image_object or get_pil_image_object(file_bytes_or_existing_path, filename)),
         target_aspect_ratio,
         return_image_aspect_ratio
     )
@@ -284,6 +290,57 @@ def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", 
         return False
 
 
+def ImageIsGrayscale(pil_image_object=None, file_bytes_or_existing_path="", filename=""):
+    if not pil_image_object and not file_bytes_or_existing_path:
+        raise ValueError("Must provide either 'pil_image_object' or 'file_bytes_or_existing_path'")
+
+    if not pil_image_object:
+        pil_image_object = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+    # If 'getcolors()' exceeds 256 (default max value), this method returns None,
+    # meaning that you had more than 256 color options in your pixel list, hence
+    # it is a colored image (grayscale can only have 256 colors (0,0,0) to (255,255,255))
+    return bool(pil_image_object.getcolors())
+
+
+def ValidateMaskImage(
+    file_bytes_or_existing_path="", filename="", pil_image_object=None, target_aspect_ratio=0, raise_reason=True
+):
+    if not pil_image_object and not file_bytes_or_existing_path:
+        raise ValueError("Must provide either 'pil_image_object' or 'file_bytes_or_existing_path'")
+
+    valid = True
+    reason = "Invalid mask"
+
+    if not pil_image_object:
+        pil_image_object = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+    if target_aspect_ratio:  # Optional check if mask aspect must match aspect of image to be masked
+        valid, image_aspect_ratio = ValidateImageAspectRatio(
+            target_aspect_ratio,
+            pil_image_object=pil_image_object,
+            return_image_aspect_ratio=True
+        )
+
+        if not valid:
+            reason = f"Mask is not the correct aspect ratio ({image_aspect_ratio}), expected: {target_aspect_ratio}"
+
+    if valid and ImageHasTransparency(pil_image_object):
+        valid = False
+        reason = "Masks cannot have transparency"
+
+    if valid and not ImageIsGrayscale(pil_image_object):
+        valid = False
+        reason = "Masks must be grayscale"
+
+    if not valid and raise_reason:
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(reason)
+
+    return valid
+
+
 def get_tagless_filename(filename):
     if ")." not in filename:
         return filename
@@ -367,7 +424,7 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=None, min_size=0):
+def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=0, min_size=0, is_mask=False):
     img = get_pil_image_object(file_bytes_or_existing_path, filename)
 
     if min_size and img.size[0] < min_size and img.size[1] < min_size:
@@ -375,14 +432,26 @@ def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_rat
 
         raise ClientAlert(f"Image is too small. Make sure either the width or height is at least {min_size}.")
 
-    if target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
+    if is_mask:
+        ValidateMaskImage(
+            file_bytes_or_existing_path=file_bytes_or_existing_path,
+            filename=filename,
+            pil_image_object=img,
+            target_aspect_ratio=target_aspect_ratio
+        )
+
+    elif target_aspect_ratio and not validate_image_aspect_ratio(img, target_aspect_ratio):
         from Dash.Utils import ClientAlert
 
         raise ClientAlert(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
 
     img_format = img.format.lower()
 
-    if (img_format in ["jpg", "jpeg"] or filename.endswith("jpg") or filename.endswith("jpeg")) and img.mode == "RGBA":
+    if is_mask:
+        if len(img.getbands()) > 1:  # More than one channel
+            img = img.convert("L")
+
+    elif img.mode == "RGBA" and (img_format in ["jpg", "jpeg"] or filename.endswith("jpg") or filename.endswith("jpeg")):
         img = img.convert("RGB")
 
     file_data = {
@@ -423,9 +492,9 @@ def get_pil_image_object(file_bytes_or_existing_path, filename=""):
     return None
 
 
-def validate_image_aspect_ratio(image, target_aspect_ratio, return_image_aspect_ratio=False):
+def validate_image_aspect_ratio(pil_image_object, target_aspect_ratio, return_image_aspect_ratio=False):
     valid = True
-    image_aspect_ratio = image.size[0] / image.size[1]
+    image_aspect_ratio = pil_image_object.size[0] / pil_image_object.size[1]
 
     if abs(image_aspect_ratio - target_aspect_ratio) > 0.01:
         valid = False
@@ -674,7 +743,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
         # If a file is uploaded as CMYK, it can't be saved as a PNG
         if png_thumb.mode == "CMYK":
             try:
-                # Try to preserve transparency is present and if possible
+                # Try to preserve transparency if present and if possible
                 if ImageHasTransparency(png_thumb):
                     png_thumb = png_thumb.convert("RGBA")
                 else:
@@ -685,8 +754,9 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
         png_thumb.save(thumb_png_path, quality=40)
 
     if thumb_path or thumb_square_path:
-        # Convert to RGB AFTER saving the original and PNG thumb, otherwise we lose alpha channel if present
-        img = img.convert("RGB")
+        if img.mode != "L":
+            # Convert to RGB AFTER saving the original and PNG thumb, otherwise we lose alpha channel if present
+            img = img.convert("RGB")
 
         if img.size[0] > ThumbSize or img.size[1] > ThumbSize:
             img.thumbnail((ThumbSize, ThumbSize), ANTIALIAS)

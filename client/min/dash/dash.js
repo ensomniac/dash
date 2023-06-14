@@ -28078,6 +28078,7 @@ function DashGuiContext2D (
      *         - "add_color_layer":        Add new color layer to provided object ID
      *         - "add_media_layer":        Add new media layer to provided object ID via media upload
      *         - "import_another_context": Import another context (layers) into provided object ID
+     *         - "upload_layer_mask":      Upload a mask image to a layer for provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
@@ -28579,7 +28580,11 @@ function DashGuiContext2DCanvas (editor) {
             "transform": "translate(-50%, -50%)"
         };
         this.canvas.css({
-            "background": this.color.Background,
+            "background": (
+                  "url('https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
+                + (Dash.Color.IsDark(this.color) ? "dark" : "light") + ".png')"
+            ),
+            "background-size": Dash.Size.Padding,
             "z-index": 2,
             ...css
         });

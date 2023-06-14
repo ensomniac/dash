@@ -207,9 +207,14 @@ class Layer:
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
 
-        if self.Type == "image":
+        elif self.Type == "image":
             for num in [1, 2, 3]:
                 data[f"multi_tone_color_{num}"] = self.data.get(f"multi_tone_color_{num}") or ""
+
+        elif self.Type == "video":
+            # As of writing, masks are supported for more types on the backend,
+            # but the frontend is restricting it to video only for CPE/PIL consideration
+            data["mask"] = self.data.get("mask") or {}
 
         if self.Type in ["image", "video"]:
             data.update({
@@ -261,7 +266,7 @@ class Layer:
         properties = self.context_2d.parse_properties_for_override_tag(properties, for_overrides)
 
         # Should never happen, but just in case
-        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
+        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type", "file"]:
             if key in properties:
                 del properties[key]
 
@@ -298,19 +303,29 @@ class Layer:
         return properties
 
     def UploadFile(self, file, filename):
-        if self.Type == "text" or self.Type == "context":
-            raise ValueError("Can't upload files to 'text' or 'context' layers")  # Should never happen, but just in case
+        return self.upload_file(file, filename, "file")
+
+    def UploadMask(self, file, filename):
+        return self.upload_file(file, filename, "mask")
+
+    def upload_file(self, file, filename, key):
+        if self.Type == "text" or self.Type == "context":  # Should never happen, but just in case
+            raise ValueError("Can't upload files to 'text' or 'context' layers")
+
+        if key == "mask":
+            if not self.data.get("file"):  # Should never happen, but just in case
+                raise FileNotFoundError("No original file data exists for this layer")
+
+        elif self.Type == "color":  # Should never happen, but just in case
+            raise ValueError("Can't upload standard files to 'color' layers, only masks")
 
         from Dash.Utils import UploadFile
 
-        # A single layer will only ever have a single file (each upload is its own layer)
-        file_root = os.path.join(self.root, "file")
+        file_root = os.path.join(self.root, key)
 
         if os.path.exists(file_root):
             from shutil import rmtree
 
-            # This should never be the case, since each upload is its own layer (you're never
-            # updating the file on a layer, you would just get a new layer when you upload a new file)
             rmtree(file_root)
 
         file_data = UploadFile(
@@ -320,19 +335,21 @@ class Layer:
             file_bytes_or_existing_path=file,
             filename=filename,
             enforce_unique_filename_key=False,
+            target_aspect_ratio=(self.data["aspect"] if key == "mask" else 0),
             include_jpg_thumb=False,
-            min_size=1024
+            min_size=1024,
+            is_mask=(key == "mask")
         )
 
-        properties = {
-            "file": file_data,
-            "display_name": filename.split(".")[0]
-        }
+        properties = {key: file_data}
 
-        aspect = file_data.get("aspect") or file_data.get("orig_aspect")
+        if key == "file":
+            properties["display_name"] = filename.split(".")[0]
 
-        if aspect:
-            properties["aspect"] = aspect
+            aspect = file_data.get("aspect") or file_data.get("orig_aspect")
+
+            if aspect:
+                properties["aspect"] = aspect
 
         return self.SetProperties(properties)
 

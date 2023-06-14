@@ -21,6 +21,7 @@ function DashGuiContext2D (
      *         - "add_color_layer":        Add new color layer to provided object ID
      *         - "add_media_layer":        Add new media layer to provided object ID via media upload
      *         - "import_another_context": Import another context (layers) into provided object ID
+     *         - "upload_layer_mask":      Upload a mask image to a layer for provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)

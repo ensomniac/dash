@@ -20,12 +20,11 @@ OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
 
 # ------------------------------------------------- FILE ----------------------------------------------------
 def UploadFile(
-        dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False,
-        parent_folders=[], enforce_unique_filename_key=True, existing_data_for_update={},
-        enforce_single_period=True, allowable_executable_exts=[], related_file_path="",
-        target_aspect_ratio=None, additional_data={}, replace_extra_periods=True,
-        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
-        include_orig_png=True, min_size=0
+    dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
+    enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
+    allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
+    replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
+    include_orig_png=True, min_size=0, is_mask=False
 ):
     from .file import Upload
 
@@ -49,20 +48,36 @@ def UploadFile(
         include_png_thumb=include_png_thumb,
         include_square_thumb=include_square_thumb,
         include_orig_png=include_orig_png,
-        min_size=min_size
+        min_size=min_size,
+        is_mask=is_mask
     )
 
 
-def ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio=False):
+def ValidateImageAspectRatio(
+    target_aspect_ratio, file_bytes_or_existing_path="",
+    filename="", pil_image_object=None, return_image_aspect_ratio=False
+):
     from .file import ValidateImageAspectRatio
 
-    return ValidateImageAspectRatio(image_bytes, target_aspect_ratio, return_image_aspect_ratio)
+    return ValidateImageAspectRatio(
+        target_aspect_ratio, file_bytes_or_existing_path, filename, pil_image_object, return_image_aspect_ratio
+    )
 
 
 def ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details=False):
     from .file import ValidateVideoAspectRatio
 
     return ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details)
+
+
+def ValidateMaskImage(
+    file_bytes_or_existing_path="", filename="", pil_image_object=None, target_aspect_ratio=0, raise_reason=True
+):
+    from .file import ValidateMaskImage
+
+    return ValidateMaskImage(
+        file_bytes_or_existing_path, filename, pil_image_object, target_aspect_ratio, raise_reason
+    )
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):
@@ -117,6 +132,12 @@ def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", 
     from .file import ImageHasTransparency
 
     return ImageHasTransparency(pil_image_object, file_bytes_or_existing_path, filename)
+
+
+def ImageIsGrayscale(pil_image_object=None, file_bytes_or_existing_path="", filename=""):
+    from .file import ImageIsGrayscale
+
+    return ImageIsGrayscale(pil_image_object, file_bytes_or_existing_path, filename)
 
 
 # ------------------------------------------------- MODEL ---------------------------------------------------

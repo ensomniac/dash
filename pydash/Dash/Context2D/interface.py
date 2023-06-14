@@ -276,6 +276,17 @@ class Interface:
 
         return Read(os.path.join(new_layer_dest_root, "data.json"))
 
+    def UploadLayerMask(self, layer_id, file, filename):
+        from Dash.Utils import GetImageExtensions
+
+        self.validate_uploaded_file_ext(filename, GetImageExtensions())
+
+        from .layer import Layer
+
+        Layer(self, layer_id).UploadMask(file, filename)
+
+        return self.ToDict()
+
     # --------------------------------- OVERRIDES ---------------------------------
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
