@@ -124,7 +124,12 @@ class ApiCore:
     @property
     def User(self):
         if not hasattr(self, "_user"):
-            if self._execute_as_module and self.dash_global.RequestUser:
+            if (
+                self._execute_as_module
+                and self.dash_global
+                and hasattr(self.dash_global, "RequestUser")
+                and self.dash_global.RequestUser
+            ):
                 self._user = self.dash_global.RequestUser
             else:
                 from Dash.Users import Users as DashUsers

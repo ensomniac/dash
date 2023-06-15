@@ -138,9 +138,10 @@ class Layer:
 
         return self._default_display_name
 
-    def ToDict(self, save=False):
+    def ToDict(self, save=False, file_key_validation=True):
         """
         :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
+        :param bool file_key_validation: When True, asserts relevant file keys and validates the URLs inside the file data (default=True)
 
         :return: Sanitized layer data
         :rtype: dict
@@ -230,7 +231,7 @@ class Layer:
                 "file": self.data.get("file") or {}
             })
 
-        if not self._new:
+        if file_key_validation and not self._new:
             for file_key in self.file_keys:
                 if file_key not in data:
                     continue
@@ -253,10 +254,10 @@ class Layer:
 
         return data
 
-    def SetProperty(self, key, value, imported_context_layer_id="", file_upload_key=""):
-        return self.SetProperties({key: value}, imported_context_layer_id, file_upload_key)
+    def SetProperty(self, key, value, imported_context_layer_id="", file_upload_key="", file_key_validation=True):
+        return self.SetProperties({key: value}, imported_context_layer_id, file_upload_key, file_key_validation)
 
-    def SetProperties(self, properties={}, imported_context_layer_id="", file_upload_key=""):
+    def SetProperties(self, properties={}, imported_context_layer_id="", file_upload_key="", file_key_validation=True):
         properties = self.ParseProperties(
             properties=properties,
             imported_context_layer_id=imported_context_layer_id,
@@ -264,13 +265,13 @@ class Layer:
         )
 
         if not properties:
-            return self.ToDict()
+            return self.ToDict(file_key_validation=file_key_validation)
 
         if self.Type == "context":
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
 
-            return self.Save().ToDict()
+            return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
         if "layer_order" in properties:
             del properties["layer_order"]  # Should never happen, but just in case
@@ -280,7 +281,7 @@ class Layer:
 
         self.data.update(properties)
 
-        return self.Save().ToDict()
+        return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
     def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_upload_key=""):
         from json import loads
@@ -388,12 +389,18 @@ class Layer:
 
         return self.SetProperties(properties, file_upload_key=key)
 
-    def Save(self):
+    def Save(self, file_key_validation=True):
         from Dash.LocalStorage import Write
 
         os.makedirs(self.root, exist_ok=True)
 
-        Write(self.data_path, self.ToDict(save=True))
+        Write(
+            self.data_path,
+            self.ToDict(
+                save=True,
+                file_key_validation=file_key_validation
+            )
+        )
 
         return self
 
@@ -725,7 +732,12 @@ class Layer:
             return {}
 
         if update:
-            self.SetProperty(file_key, file_data, file_upload_key=file_key)
+            self.SetProperty(
+                file_key,
+                file_data,
+                file_upload_key=file_key,
+                file_key_validation=False
+            )
 
         return file_data
 
@@ -780,11 +792,21 @@ class Layer:
                 # queried, if the file actually exists where it should.
                 if not os.path.exists(path):
                     if update:
-                        self.SetProperty(file_key, {}, file_upload_key=file_key)
+                        self.SetProperty(
+                            file_key,
+                            {},
+                            file_upload_key=file_key,
+                            file_key_validation=False
+                        )
 
                     return {}
 
         if modified and update:
-            self.SetProperty(file_key, file_data, file_upload_key=file_key)
+            self.SetProperty(
+                file_key,
+                file_data,
+                file_upload_key=file_key,
+                file_key_validation=False
+            )
 
         return file_data
