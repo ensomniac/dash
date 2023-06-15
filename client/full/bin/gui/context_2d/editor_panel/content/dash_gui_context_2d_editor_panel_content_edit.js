@@ -885,7 +885,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png"
         );
 
-        var preview = Dash.File.GetImagePreview(mask["thumb_url"] || checker_url, height, width);
+        var preview = Dash.File.GetImagePreview(
+            mask["thumb_url"] || mask["thumb_png_url"] || mask["orig_url"] || mask["url"] || checker_url
+            , height
+            , width
+        );
 
         preview.css({
             "border-radius": Dash.Size.BorderRadius,
@@ -898,6 +902,39 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         var [download_button, upload_button, delete_button] = (function (self) {
             return [
+                toolbar.AddIconButton(
+                    "upload",
+                    function (response, button) {
+                        button.SetLoading(false);
+                        button.Enable();
+
+                        if (!Dash.Validate.Response(response)) {
+                            return;
+                        }
+
+                        self.editor.data = response;
+
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["thumb_url"] || mask["thumb_png_url"] || mask["orig_url"] || mask["url"];
+
+                        if (!url) {
+                            alert("Upload failed for an unexpected reason, please try again.");
+
+                            return;
+                        }
+
+                        preview.css({
+                            "background-image": "url(" + url + ")"
+                        });
+
+                        // TODO: apply mask to primitive
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6,
+                    true
+                ),
                 toolbar.AddIconButton(
                     "download",
                     function (button) {
@@ -926,39 +963,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                     null,
                     toolbar.height,
                     0.6
-                ),
-                toolbar.AddIconButton(
-                    "upload",
-                    function (response, button) {
-                        button.SetLoading(false);
-                        button.Enable();
-
-                        if (!Dash.Validate.Response(response)) {
-                            return;
-                        }
-
-                        self.editor.data = response;
-
-                        var mask = self.get_data()["mask"] || {};
-                        var url = mask["url"] || mask["orig_url"];
-
-                        if (!url) {
-                            alert("Upload failed for an unexpected reason, please try again.");
-
-                            return;
-                        }
-
-                        preview.css({
-                            "background-image": "url(" + url + ")"
-                        });
-
-                        // TODO: apply mask to primitive
-                    },
-                    null,
-                    null,
-                    toolbar.height,
-                    0.6,
-                    true
                 ),
                 toolbar.AddIconButton(
                     "trash",
@@ -1013,8 +1017,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         this.contexts[context_key]["all_elements"].push(label);
         this.contexts[context_key]["all_elements"].push(preview);
-        this.contexts[context_key]["all_elements"].push(download_button);
         this.contexts[context_key]["all_elements"].push(upload_button);
+        this.contexts[context_key]["all_elements"].push(download_button);
         this.contexts[context_key]["all_elements"].push(delete_button);
 
         this.contexts[context_key]["html"].append(toolbar.html);

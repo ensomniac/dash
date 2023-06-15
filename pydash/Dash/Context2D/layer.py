@@ -376,7 +376,7 @@ class Layer:
             enforce_unique_filename_key=False,
             target_aspect_ratio=(self.data["aspect"] if key == "mask" else 0),
             include_jpg_thumb=False,
-            min_size=1024,
+            min_size=(512 if key == "mask" else 1024),
             is_mask=(key == "mask")
         )
 
