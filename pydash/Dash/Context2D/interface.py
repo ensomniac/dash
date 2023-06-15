@@ -202,10 +202,10 @@ class Interface:
 
         return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")
 
-    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id=""):
+    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id="", file_op_key=""):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id)
+        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id, file_op_key)
 
         return self.ToDict()
 

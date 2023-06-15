@@ -254,14 +254,14 @@ class Layer:
 
         return data
 
-    def SetProperty(self, key, value, imported_context_layer_id="", file_upload_key="", file_key_validation=True):
-        return self.SetProperties({key: value}, imported_context_layer_id, file_upload_key, file_key_validation)
+    def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
+        return self.SetProperties({key: value}, imported_context_layer_id, file_op_key, file_key_validation)
 
-    def SetProperties(self, properties={}, imported_context_layer_id="", file_upload_key="", file_key_validation=True):
+    def SetProperties(self, properties={}, imported_context_layer_id="", file_op_key="", file_key_validation=True):
         properties = self.ParseProperties(
             properties=properties,
             imported_context_layer_id=imported_context_layer_id,
-            file_upload_key=file_upload_key
+            file_op_key=file_op_key
         )
 
         if not properties:
@@ -283,7 +283,7 @@ class Layer:
 
         return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
-    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_upload_key=""):
+    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_op_key=""):
         from json import loads
 
         if properties and type(properties) is str:
@@ -296,8 +296,11 @@ class Layer:
         protected_keys = ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]
 
         for key in self.file_keys:
-            if key == file_upload_key:
-                continue  # On file upload, don't protect the key
+            if key == file_op_key:
+                if key in properties and type(properties[key]) is str:
+                    properties[key] = loads(properties[key])
+
+                continue  # On file operations, don't protect the key
 
             protected_keys.append(key)
 
@@ -387,7 +390,7 @@ class Layer:
             if aspect:
                 properties["aspect"] = aspect
 
-        return self.SetProperties(properties, file_upload_key=key)
+        return self.SetProperties(properties, file_op_key=key)
 
     def Save(self, file_key_validation=True):
         from Dash.LocalStorage import Write
@@ -735,7 +738,7 @@ class Layer:
             self.SetProperty(
                 file_key,
                 file_data,
-                file_upload_key=file_key,
+                file_op_key=file_key,
                 file_key_validation=False
             )
 
@@ -795,7 +798,7 @@ class Layer:
                         self.SetProperty(
                             file_key,
                             {},
-                            file_upload_key=file_key,
+                            file_op_key=file_key,
                             file_key_validation=False
                         )
 
@@ -805,7 +808,7 @@ class Layer:
             self.SetProperty(
                 file_key,
                 file_data,
-                file_upload_key=file_key,
+                file_op_key=file_key,
                 file_key_validation=False
             )
 

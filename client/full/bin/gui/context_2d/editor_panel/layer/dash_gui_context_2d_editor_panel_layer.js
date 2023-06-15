@@ -126,8 +126,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
 
-    this.SetData = function (key, value, callback=null) {
-        return this.set_data(key, value, callback);
+    this.SetData = function (key, value, callback=null, additional_params={}) {
+        return this.set_data(key, value, callback, additional_params);
     };
 
     this.InputInFocus = function () {
@@ -583,8 +583,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.set_data("display_name", this.input.Text().trim());
     };
 
-    this.set_data = function (key, value, callback=null) {
-        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback);
+    this.set_data = function (key, value, callback=null, additional_params={}) {
+        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback, additional_params);
     };
 
     this.get_data = function () {

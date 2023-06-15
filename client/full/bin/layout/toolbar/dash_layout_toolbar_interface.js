@@ -62,6 +62,10 @@ function DashLayoutToolbarInterface () {
         icon_name, callback, size_percent_num=null, data=null,
         container_size=null, size_mult=1.0, for_uploader=false
     ) {
+        // When 'for_uploader' is true, 'callback' should be the
+        // respective 'on_upload' function, and 'SetFileUploader'
+        // should be called on this button after instantiated
+
         var obj_index = this.objects.length;
 
         callback = callback.bind(this.binder);

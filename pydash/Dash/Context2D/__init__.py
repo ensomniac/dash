@@ -47,8 +47,8 @@ def SetPreCompProperty(user_data, context_2d_root, obj_id, key, value, letter):
     return Context2D(user_data, context_2d_root, obj_id).SetPreCompProperty(key, value, letter)
 
 
-def SetLayerProperty(user_data, context_2d_root, obj_id, layer_id, key, value, imported_context_layer_id=""):
-    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperty(layer_id, key, value, imported_context_layer_id)
+def SetLayerProperty(user_data, context_2d_root, obj_id, layer_id, key, value, imported_context_layer_id="", file_op_key=""):
+    return Context2D(user_data, context_2d_root, obj_id).SetLayerProperty(layer_id, key, value, imported_context_layer_id, file_op_key)
 
 
 def SetLayerProperties(user_data, context_2d_root, obj_id, layer_id, props, imported_context_layer_id=""):

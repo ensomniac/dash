@@ -442,7 +442,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.editor.set_data("layer_order", order, callback, additional_params);
     };
 
-    this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
+    this.set_layer_property = function (key, value, id="", parent_id="", callback=null, additional_params={}) {
         // Should never happen, but just in case
         if (this.editor.preview_mode) {
             return;
@@ -467,7 +467,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var params = {
             "c2d_id": this.editor.c2d_id,
             "layer_id": parent_id || id,
-            ...this.editor.extra_request_params
+            ...this.editor.extra_request_params,
+            ...additional_params
         };
 
         if (key === "font_id") {

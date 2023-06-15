@@ -31395,8 +31395,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var default_order = data["imported_context"]["layers"]["order"];
         return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
-    this.SetData = function (key, value, callback=null) {
-        return this.set_data(key, value, callback);
+    this.SetData = function (key, value, callback=null, additional_params={}) {
+        return this.set_data(key, value, callback, additional_params);
     };
     this.InputInFocus = function () {
         return this.input.InFocus();
@@ -31741,8 +31741,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.on_input_submit = function () {
         this.set_data("display_name", this.input.Text().trim());
     };
-    this.set_data = function (key, value, callback=null) {
-        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback);
+    this.set_data = function (key, value, callback=null, additional_params={}) {
+        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback, additional_params);
     };
     this.get_data = function () {
         return this.layers.get_data(this.parent_id)["data"][this.id];
@@ -32121,7 +32121,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.set_layer_order = function (order, callback=null, additional_params={}) {
         this.editor.set_data("layer_order", order, callback, additional_params);
     };
-    this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
+    this.set_layer_property = function (key, value, id="", parent_id="", callback=null, additional_params={}) {
         // Should never happen, but just in case
         if (this.editor.preview_mode) {
             return;
@@ -32140,7 +32140,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var params = {
             "c2d_id": this.editor.c2d_id,
             "layer_id": parent_id || id,
-            ...this.editor.extra_request_params
+            ...this.editor.extra_request_params,
+            ...additional_params
         };
         if (key === "font_id") {
             var font_url = "";
@@ -33130,12 +33131,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         return value + override;
     };
-    this.set_data = function (key, value, callback=null) {
+    this.set_data = function (key, value, callback=null, additional_params={}) {
         var selected_layer = this.panel.GetSelectedLayer();
         if (!selected_layer) {
             return;
         }
-        selected_layer.SetData(key, value, callback);
+        selected_layer.SetData(key, value, callback, additional_params);
     };
     this.add_context = function (key) {
         this.contexts[key] = {
@@ -33614,6 +33615,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.add_tint_row(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
     };
+    // TODO: break this up
     this.add_mask_toolbar = function (context_key) {
         var toolbar = new Dash.Layout.Toolbar(this);
         toolbar.html.css({
@@ -33642,7 +33644,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 width *= mask["aspect"];
             }
         }
-        var preview = Dash.File.GetImagePreview(mask["thumb_url"], height, width);
+        var checker_url = (
+            "https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
+            + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png"
+        );
+        var preview = Dash.File.GetImagePreview(mask["thumb_url"] || checker_url, height, width);
         preview.css({
             "border-radius": Dash.Size.BorderRadius,
             "user-select": "none",
@@ -33655,8 +33661,22 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 toolbar.AddIconButton(
                     "download",
                     function (button) {
-                        console.debug("TEST download", button);
-                        // TODO
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["url"] || mask["orig_url"];
+                        if (!url) {
+                            alert("No file found");
+                            return;
+                        }
+                        button.SetLoading(true);
+                        button.Disable();
+                        Dash.Gui.OpenFileURLDownloadDialog(
+                            url,
+                            "",
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+                            }
+                        );
                     },
                     null,
                     null,
@@ -33665,9 +33685,23 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 ),
                 toolbar.AddIconButton(
                     "upload",
-                    function (button) {
-                        console.debug("TEST upload", button);
-                        // TODO
+                    function (response, button) {
+                        button.SetLoading(false);
+                        button.Enable();
+                        if (!Dash.Validate.Response(response)) {
+                            return;
+                        }
+                        self.editor.data = response;
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["url"] || mask["orig_url"];
+                        if (!url) {
+                            alert("Upload failed for an unexpected reason, please try again.");
+                            return;
+                        }
+                        preview.css({
+                            "background-image": "url(" + url + ")"
+                        });
+                        // TODO: apply mask to primitive
                     },
                     null,
                     null,
@@ -33678,8 +33712,25 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 toolbar.AddIconButton(
                     "trash",
                     function (button) {
-                        console.debug("TEST delete", button);
-                        // TODO
+                        if (!Dash.Validate.Object(self.get_data()["mask"])) {
+                            alert("No file found");
+                            return;
+                        }
+                        button.SetLoading(true);
+                        button.Disable();
+                        self.set_data(
+                            "mask",
+                            {},
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+                                preview.css({
+                                    "background-image": "url(" + checker_url + ")"
+                                });
+                                // TODO: remove mask from primitive
+                            },
+                            {"file_op_key": "mask"}
+                        );
                     },
                     null,
                     null,
@@ -33688,6 +33739,20 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 )
             ];
         })(this);
+        upload_button.SetFileUploader(
+            this.editor.api,
+            {
+                "f": "upload_layer_mask",
+                "c2d_id": this.editor.obj_id,
+                "layer_id": this.panel.layers_box.GetSelectedID()
+            },
+            function () {
+                upload_button.SetLoading(true);
+                upload_button.Disable();
+            },
+            {},
+            true
+        );
         this.contexts[context_key]["all_elements"].push(label);
         this.contexts[context_key]["all_elements"].push(preview);
         this.contexts[context_key]["all_elements"].push(download_button);
@@ -33695,11 +33760,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["all_elements"].push(delete_button);
         this.contexts[context_key]["html"].append(toolbar.html);
         // TODO: remove when done
-        toolbar.html.css({
-            "opacity": 0.5,
-            "user-select": "none",
-            "pointer-events": "none"
-        });
+        // toolbar.html.css({
+        //     "opacity": 0.5,
+        //     "user-select": "none",
+        //     "pointer-events": "none"
+        // });
     };
     this.add_tint_row = function (context_key) {
         var container = $("<div></div>");
@@ -42775,6 +42840,9 @@ function DashLayoutToolbarInterface () {
         icon_name, callback, size_percent_num=null, data=null,
         container_size=null, size_mult=1.0, for_uploader=false
     ) {
+        // When 'for_uploader' is true, 'callback' should be the
+        // respective 'on_upload' function, and 'SetFileUploader'
+        // should be called on this button after instantiated
         var obj_index = this.objects.length;
         callback = callback.bind(this.binder);
         var button = (function (self, obj_index, data) {

@@ -239,14 +239,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return value + override;
     };
 
-    this.set_data = function (key, value, callback=null) {
+    this.set_data = function (key, value, callback=null, additional_params={}) {
         var selected_layer = this.panel.GetSelectedLayer();
 
         if (!selected_layer) {
             return;
         }
 
-        selected_layer.SetData(key, value, callback);
+        selected_layer.SetData(key, value, callback, additional_params);
     };
 
     this.add_context = function (key) {
@@ -842,6 +842,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
     };
 
+    // TODO: break this up
     this.add_mask_toolbar = function (context_key) {
         var toolbar = new Dash.Layout.Toolbar(this);
 
@@ -879,7 +880,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
         }
 
-        var preview = Dash.File.GetImagePreview(mask["thumb_url"], height, width);
+        var checker_url = (
+            "https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
+            + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png"
+        );
+
+        var preview = Dash.File.GetImagePreview(mask["thumb_url"] || checker_url, height, width);
 
         preview.css({
             "border-radius": Dash.Size.BorderRadius,
@@ -895,9 +901,26 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 toolbar.AddIconButton(
                     "download",
                     function (button) {
-                        console.debug("TEST download", button);
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["url"] || mask["orig_url"];
 
-                        // TODO
+                        if (!url) {
+                            alert("No file found");
+
+                            return;
+                        }
+
+                        button.SetLoading(true);
+                        button.Disable();
+
+                        Dash.Gui.OpenFileURLDownloadDialog(
+                            url,
+                            "",
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+                            }
+                        );
                     },
                     null,
                     null,
@@ -906,10 +929,30 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 ),
                 toolbar.AddIconButton(
                     "upload",
-                    function (button) {
-                        console.debug("TEST upload", button);
+                    function (response, button) {
+                        button.SetLoading(false);
+                        button.Enable();
 
-                        // TODO
+                        if (!Dash.Validate.Response(response)) {
+                            return;
+                        }
+
+                        self.editor.data = response;
+
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["url"] || mask["orig_url"];
+
+                        if (!url) {
+                            alert("Upload failed for an unexpected reason, please try again.");
+
+                            return;
+                        }
+
+                        preview.css({
+                            "background-image": "url(" + url + ")"
+                        });
+
+                        // TODO: apply mask to primitive
                     },
                     null,
                     null,
@@ -920,9 +963,30 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 toolbar.AddIconButton(
                     "trash",
                     function (button) {
-                        console.debug("TEST delete", button);
+                        if (!Dash.Validate.Object(self.get_data()["mask"])) {
+                            alert("No file found");
 
-                        // TODO
+                            return;
+                        }
+
+                        button.SetLoading(true);
+                        button.Disable();
+
+                        self.set_data(
+                            "mask",
+                            {},
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+
+                                preview.css({
+                                    "background-image": "url(" + checker_url + ")"
+                                });
+
+                                // TODO: remove mask from primitive
+                            },
+                            {"file_op_key": "mask"}
+                        );
                     },
                     null,
                     null,
@@ -931,6 +995,21 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 )
             ];
         })(this);
+
+        upload_button.SetFileUploader(
+            this.editor.api,
+            {
+                "f": "upload_layer_mask",
+                "c2d_id": this.editor.obj_id,
+                "layer_id": this.panel.layers_box.GetSelectedID()
+            },
+            function () {
+                upload_button.SetLoading(true);
+                upload_button.Disable();
+            },
+            {},
+            true
+        );
 
         this.contexts[context_key]["all_elements"].push(label);
         this.contexts[context_key]["all_elements"].push(preview);
@@ -941,11 +1020,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["html"].append(toolbar.html);
 
         // TODO: remove when done
-        toolbar.html.css({
-            "opacity": 0.5,
-            "user-select": "none",
-            "pointer-events": "none"
-        });
+        // toolbar.html.css({
+        //     "opacity": 0.5,
+        //     "user-select": "none",
+        //     "pointer-events": "none"
+        // });
     };
 
     this.add_tint_row = function (context_key) {
