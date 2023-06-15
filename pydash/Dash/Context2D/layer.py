@@ -6,6 +6,8 @@
 import os
 import sys
 
+# TODO: break up into module
+
 
 class Layer:
     _default_display_name: str
@@ -19,6 +21,11 @@ class Layer:
 
         self.data = {}
         self._new = False
+
+        self.file_keys = [
+            "file",
+            "mask"
+        ]
 
         self.bool_keys = [
             "hidden",
@@ -223,17 +230,38 @@ class Layer:
                 "file": self.data.get("file") or {}
             })
 
+        if not self._new:
+            for file_key in self.file_keys:
+                if file_key not in data:
+                    continue
+
+                if data[file_key]:
+                    data[file_key] = self.validate_file_urls(
+                        file_key,
+                        file_data=data[file_key],
+                        update=(not save)  # Only call SetProperty if not already saving
+                    )
+                else:
+                    data[file_key] = self.assert_file_key(
+                        file_key,
+                        update=(not save)  # Only call SetProperty if not already saving
+                    )
+
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.
         data = self.context_2d.OnLayerToDict(self, data, save)
 
         return data
 
-    def SetProperty(self, key, value, imported_context_layer_id=""):
-        return self.SetProperties({key: value}, imported_context_layer_id)
+    def SetProperty(self, key, value, imported_context_layer_id="", file_upload_key=""):
+        return self.SetProperties({key: value}, imported_context_layer_id, file_upload_key)
 
-    def SetProperties(self, properties={}, imported_context_layer_id=""):
-        properties = self.ParseProperties(properties, imported_context_layer_id)
+    def SetProperties(self, properties={}, imported_context_layer_id="", file_upload_key=""):
+        properties = self.ParseProperties(
+            properties=properties,
+            imported_context_layer_id=imported_context_layer_id,
+            file_upload_key=file_upload_key
+        )
 
         if not properties:
             return self.ToDict()
@@ -254,7 +282,7 @@ class Layer:
 
         return self.Save().ToDict()
 
-    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True):
+    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_upload_key=""):
         from json import loads
 
         if properties and type(properties) is str:
@@ -264,9 +292,16 @@ class Layer:
             return properties
 
         properties = self.context_2d.parse_properties_for_override_tag(properties, for_overrides)
+        protected_keys = ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]
+
+        for key in self.file_keys:
+            if key == file_upload_key:
+                continue  # On file upload, don't protect the key
+
+            protected_keys.append(key)
 
         # Should never happen, but just in case
-        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
+        for key in protected_keys:
             if key in properties:
                 del properties[key]
 
@@ -351,7 +386,7 @@ class Layer:
             if aspect:
                 properties["aspect"] = aspect
 
-        return self.SetProperties(properties)
+        return self.SetProperties(properties, file_upload_key=key)
 
     def Save(self):
         from Dash.LocalStorage import Write
@@ -661,3 +696,95 @@ class Layer:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
             else:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
+
+    # This should never be necessary, but just in case
+    def assert_file_key(self, file_key, update=True):
+        file_root = os.path.join(self.root, file_key)
+
+        if not os.path.exists(file_root):
+            return {}
+
+        filenames = []
+
+        for filename in os.listdir(file_root):
+            if not filename.endswith(".json"):
+                continue
+
+            filenames.append(filename)
+
+        if not filenames:
+            return {}
+
+        from Dash.LocalStorage import Read
+
+        filenames.sort()
+
+        file_data = Read(os.path.join(file_root, filenames[-1]))
+
+        if not file_data or type(file_data) is not dict:
+            return {}
+
+        if update:
+            self.SetProperty(file_key, file_data, file_upload_key=file_key)
+
+        return file_data
+
+    # There's a sneaky bug somewhere that I can't track down where somehow
+    # a layer's file data gets altered and the file URLs get changed
+    # to not have the right layer ID in the URL anymore. Doesn't make
+    # sense, everything tested is working as expected, so there's a
+    # fringe case somewhere that I'm not finding/catching. This
+    # will ensure all URLs are correct in the meantime, and fix them.
+    def validate_file_urls(self, file_key, file_data={}, update=True):
+        if not file_data:
+            return file_data
+
+        modified = False
+
+        for key in file_data:
+            if key != "url" and not key.endswith("_url"):
+                continue
+
+            url = file_data[key]
+
+            if not url:
+                continue
+
+            layer_id_in_url = url.split("/layers/")[-1].split("/")[0]
+
+            if layer_id_in_url == self.ID:
+                continue
+
+            from Dash.Utils import GetFilePathFromURL
+
+            fixed_url = file_data[key].replace(f"/layers/{layer_id_in_url}/", f"/layers/{self.ID}/")
+
+            path = GetFilePathFromURL(
+                dash_context=self.context_2d.DashContext,
+                server_file_url=fixed_url
+            )
+
+            if os.path.exists(path):
+                file_data[key] = fixed_url
+
+                modified = True
+            else:
+                path = GetFilePathFromURL(
+                    dash_context=self.context_2d.DashContext,
+                    server_file_url=url
+                )
+
+                # Both the correct path and original path don't exist,
+                # so something is wrong. By resetting the file data, the
+                # layer data will correct itself next time the data is
+                # queried, if the file actually exists where it should.
+                if not os.path.exists(path):
+                    if update:
+                        self.SetProperty(file_key, {}, file_upload_key=file_key)
+
+                    return {}
+
+        if modified and update:
+            self.SetProperty(file_key, file_data, file_upload_key=file_key)
+
+        return file_data

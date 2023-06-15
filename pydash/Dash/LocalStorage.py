@@ -97,8 +97,11 @@ class DashLocalStorage:
             copytree(self.get_data_root(id_to_duplicate), self.get_data_root(new_id))
 
             new_data = self.GetData(new_id)
+            default_data = self.get_default_data(new_id)
 
-            new_data.update(self.get_default_data(new_id))
+            for key in default_data:
+                if key != "display_name":
+                    new_data[key] = default_data[key]
         else:
             new_data = self.New(self.GetData(id_to_duplicate))
             new_id = new_data["id"]
