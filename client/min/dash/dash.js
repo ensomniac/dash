@@ -29323,10 +29323,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
+    this.mask_data = this.data["mask"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
     this.highlight_color = this.editor.highlight_color;
+    this.test = $("<div></div>");
     this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
@@ -29348,6 +29350,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
+        this.html.append(this.test);
         this.draw_properties(true);
         this.on_opacity_change(this.get_value("opacity"));
         var hidden = this.get_value("hidden");
@@ -29363,7 +29366,11 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (!contained) {
             this.on_contained_change(contained);
         }
-        if (fade_direction) {
+        if (Dash.Validate.Object(this.mask_data)) {
+            this.update_mask();
+        }
+        // Only check fade if not masked by image
+        else if (fade_direction) {
             this.update_fade();
         }
         this.setup_connections();
@@ -29385,6 +29392,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         this.data = this.layer.GetData();
         this.file_data = this.data["file"] || {};
+        this.mask_data = this.data["mask"] || {};
         this.parent_data = this.layer.GetParentData();
         if (key === "opacity") {
             this.on_opacity_change(this.get_value(key));
@@ -29555,6 +29563,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     this.update_fade = function () {
         var direction = this.get_value("fade_direction");
+        if (Dash.Validate.Object(this.mask_data)) {
+            if (direction) {
+                console.warn(
+                    "Warning: Layer fade was not applied because an image mask was used instead"
+                );
+            }
+            return;
+        }
         var norm_start = this.get_value("fade_norm_start");
         var norm_end = this.get_value("fade_norm_end");
         if (this.get_value("fade_global")) {
@@ -29598,6 +29614,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 + (norm_end * 100)
                 + "%)"
             ) : "none"
+        });
+    };
+    this.update_mask = function () {
+        var url = this.get_url(this.mask_data);
+        console.debug("TEST mask", url, this.html);
+        this.html.css({
+            "mask-image": url ? ("url(" + url + ")") : "none",
+            "mask-mode": "alpha",
+            "mask-size": "contain",
+            "mask-repeat": "no-repeat",
+            "mask-position": "center center"
         });
     };
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -29990,7 +30017,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type !== "image") {
             return false;
         }
-        var url = this.get_url();
+        var url = this.get_url(this.file_data);
         if (!url || !url.toLowerCase().endsWith(".png")) {
             return false;
         }
@@ -30058,6 +30085,15 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             break;
         }
         return [next_primitive, primitive_index];
+    };
+    this.get_url = function (file_data) {
+        return (
+               file_data["url"]
+            || file_data["orig_url"]
+            || file_data["thumb_png_url"]
+            || file_data["thumb_jpg_url"]
+            || ""
+        );
     };
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
@@ -30521,11 +30557,11 @@ function DashGuiContext2DPrimitiveMedia () {
         else {
             this.media = (
                 this.type === "image" ? Dash.File.GetImagePreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     "100%"
                 ) : this.type === "video" ? Dash.File.GetVideoPreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     true,
                     false,
@@ -30544,15 +30580,6 @@ function DashGuiContext2DPrimitiveMedia () {
                 e.preventDefault();
             });
         }
-    };
-    this.get_url = function () {
-        return (
-               this.file_data["url"]
-            || this.file_data["orig_url"]
-            || this.file_data["thumb_png_url"]
-            || this.file_data["thumb_jpg_url"]
-            || ""
-        );
     };
     this.update_tint_color = function () {
         var multi_tone_colors = [];
@@ -30573,7 +30600,7 @@ function DashGuiContext2DPrimitiveMedia () {
                 return;
             }
             this.media.css({
-                "mask-image": "url(" + this.get_url() + ")",
+                "mask-image": "url(" + this.get_url(this.file_data) + ")",
                 "mask-mode": "alpha",
                 "mask-size": "contain",
                 "mask-repeat": "no-repeat",
@@ -33660,7 +33687,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-right": Dash.Size.Padding
         });
         toolbar.AddHTML(preview);
-        var [download_button, upload_button, delete_button] = (function (self) {
+        var [upload_button, download_button, delete_button] = (function (self) {
             return [
                 toolbar.AddIconButton(
                     "upload",

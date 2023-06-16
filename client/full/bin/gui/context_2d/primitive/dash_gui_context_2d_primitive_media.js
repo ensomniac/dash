@@ -33,11 +33,11 @@ function DashGuiContext2DPrimitiveMedia () {
         else {
             this.media = (
                 this.type === "image" ? Dash.File.GetImagePreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     "100%"
                 ) : this.type === "video" ? Dash.File.GetVideoPreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     true,
                     false,
@@ -60,16 +60,6 @@ function DashGuiContext2DPrimitiveMedia () {
                 e.preventDefault();
             });
         }
-    };
-
-    this.get_url = function () {
-        return (
-               this.file_data["url"]
-            || this.file_data["orig_url"]
-            || this.file_data["thumb_png_url"]
-            || this.file_data["thumb_jpg_url"]
-            || ""
-        );
     };
 
     this.update_tint_color = function () {
@@ -97,7 +87,7 @@ function DashGuiContext2DPrimitiveMedia () {
             }
 
             this.media.css({
-                "mask-image": "url(" + this.get_url() + ")",
+                "mask-image": "url(" + this.get_url(this.file_data) + ")",
                 "mask-mode": "alpha",
                 "mask-size": "contain",
                 "mask-repeat": "no-repeat",

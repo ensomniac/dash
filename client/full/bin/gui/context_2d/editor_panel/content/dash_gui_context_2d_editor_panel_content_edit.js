@@ -900,7 +900,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         toolbar.AddHTML(preview);
 
-        var [download_button, upload_button, delete_button] = (function (self) {
+        var [upload_button, download_button, delete_button] = (function (self) {
             return [
                 toolbar.AddIconButton(
                     "upload",

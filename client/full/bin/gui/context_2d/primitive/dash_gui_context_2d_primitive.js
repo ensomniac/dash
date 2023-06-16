@@ -23,6 +23,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
+    this.mask_data = this.data["mask"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
@@ -77,7 +78,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.on_contained_change(contained);
         }
 
-        if (fade_direction) {
+        if (Dash.Validate.Object(this.mask_data)) {
+            this.update_mask();
+        }
+
+        // Only check fade if not masked by image
+        else if (fade_direction) {
             this.update_fade();
         }
 
@@ -105,6 +111,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         this.data = this.layer.GetData();
         this.file_data = this.data["file"] || {};
+        this.mask_data = this.data["mask"] || {};
         this.parent_data = this.layer.GetParentData();
 
         if (key === "opacity") {
@@ -333,6 +340,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.update_fade = function () {
         var direction = this.get_value("fade_direction");
+
+        if (Dash.Validate.Object(this.mask_data)) {
+            if (direction) {
+                console.warn(
+                    "Warning: Layer fade was not applied because an image mask was used instead"
+                );
+            }
+
+            return;
+        }
+
         var norm_start = this.get_value("fade_norm_start");
         var norm_end = this.get_value("fade_norm_end");
 
@@ -385,6 +403,20 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 + "%)"
             ) : "none"
         });
+    };
+
+    this.update_mask = function () {
+        // var url = this.get_url(this.mask_data);
+        //
+        // console.debug("TEST mask", url, this.html);
+        //
+        // this.html.css({
+        //     "mask-image": url ? ("url(" + url + ")") : "none",
+        //     "mask-mode": "alpha",
+        //     "mask-size": "contain",
+        //     "mask-repeat": "no-repeat",
+        //     "mask-position": "center center"
+        // });
     };
 
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -892,7 +924,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return false;
         }
 
-        var url = this.get_url();
+        var url = this.get_url(this.file_data);
 
         if (!url || !url.toLowerCase().endsWith(".png")) {
             return false;
@@ -983,6 +1015,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
 
         return [next_primitive, primitive_index];
+    };
+
+    this.get_url = function (file_data) {
+        return (
+               file_data["url"]
+            || file_data["orig_url"]
+            || file_data["thumb_png_url"]
+            || file_data["thumb_jpg_url"]
+            || ""
+        );
     };
 
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
