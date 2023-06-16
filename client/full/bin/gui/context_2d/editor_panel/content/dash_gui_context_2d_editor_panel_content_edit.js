@@ -914,7 +914,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
                         self.editor.data = response;
 
-                        var mask = self.get_data()["mask"] || {};
                         var url = mask["thumb_url"] || mask["thumb_png_url"] || mask["orig_url"] || mask["url"];
 
                         if (!url) {
@@ -927,7 +926,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                             "background-image": "url(" + url + ")"
                         });
 
-                        // TODO: apply mask to primitive
+                        if (self.editor.canvas.last_selected_primitive && mask["tmask_url"]) {
+                            self.editor.canvas.last_selected_primitive.update_mask();
+                        }
                     },
                     null,
                     null,
@@ -987,7 +988,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                                     "background-image": "url(" + checker_url + ")"
                                 });
 
-                                // TODO: remove mask from primitive
+                                if (self.editor.canvas.last_selected_primitive) {
+                                    self.editor.canvas.last_selected_primitive.update_mask();
+                                }
                             },
                             {"file_op_key": "mask"}
                         );
@@ -1022,13 +1025,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.contexts[context_key]["all_elements"].push(delete_button);
 
         this.contexts[context_key]["html"].append(toolbar.html);
-
-        // TODO: remove when done
-        // toolbar.html.css({
-        //     "opacity": 0.5,
-        //     "user-select": "none",
-        //     "pointer-events": "none"
-        // });
     };
 
     this.add_tint_row = function (context_key) {

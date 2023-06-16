@@ -406,17 +406,22 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.update_mask = function () {
-        // var url = this.get_url(this.mask_data);
-        //
-        // console.debug("TEST mask", url, this.html);
-        //
-        // this.html.css({
-        //     "mask-image": url ? ("url(" + url + ")") : "none",
-        //     "mask-mode": "alpha",
-        //     "mask-size": "contain",
-        //     "mask-repeat": "no-repeat",
-        //     "mask-position": "center center"
-        // });
+        var url = this.get_url(this.mask_data);
+
+        if (url) {
+            this.html.css({
+                "mask-image": "url(" + url + ")",
+                "mask-size": "contain",
+                "mask-repeat": "no-repeat",
+                "mask-position": "center"
+            });
+        }
+
+        else {
+            this.html.css({
+                "mask": "none"
+            });
+        }
     };
 
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -1019,7 +1024,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.get_url = function (file_data) {
         return (
-               file_data["url"]
+               file_data["tmask_url"]
+            || file_data["url"]
             || file_data["orig_url"]
             || file_data["thumb_png_url"]
             || file_data["thumb_jpg_url"]

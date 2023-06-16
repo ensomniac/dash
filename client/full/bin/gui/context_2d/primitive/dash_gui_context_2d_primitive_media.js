@@ -88,10 +88,9 @@ function DashGuiContext2DPrimitiveMedia () {
 
             this.media.css({
                 "mask-image": "url(" + this.get_url(this.file_data) + ")",
-                "mask-mode": "alpha",
                 "mask-size": "contain",
                 "mask-repeat": "no-repeat",
-                "mask-position": "center center",
+                "mask-position": "center",
                 "background-color": tint_color,
                 "background-blend-mode": "overlay"
             });

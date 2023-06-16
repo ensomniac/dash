@@ -96,7 +96,8 @@ def Upload(
             include_jpg_thumb=include_jpg_thumb,
             include_png_thumb=include_png_thumb,
             include_square_thumb=include_square_thumb,
-            include_orig_png=include_orig_png
+            include_orig_png=include_orig_png,
+            is_mask=is_mask
         )
     else:
         file_data = update_data_with_saved_file(
@@ -506,8 +507,8 @@ def validate_image_aspect_ratio(pil_image_object, target_aspect_ratio, return_im
 
 
 def update_data_with_saved_images(
-        file_data, file_root, file_ext, img, dash_context, replace_existing=False,
-        include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False, include_orig_png=True
+    file_data, file_root, file_ext, img, dash_context, replace_existing=False, include_jpg_thumb=True,
+    include_png_thumb=True, include_square_thumb=False, include_orig_png=True, is_mask=False
 ):
     is_jpg = file_ext == "jpg" or file_ext == "jpeg"
     bigger_than_thumb = img.size[0] > ThumbSize or img.size[1] > ThumbSize
@@ -516,14 +517,14 @@ def update_data_with_saved_images(
     # If saving the orig, and the orig image is a jpg, or is already smaller than
     # ThumbSize, don't save the png thumb, otherwise this ends up wasting space on the server
     thumb_png_path = os.path.join(file_root, f"{file_data['id']}_thb.png") if (
-            include_png_thumb and ((bigger_than_thumb and not is_jpg) if include_orig_png else True)
+        include_png_thumb and ((bigger_than_thumb and not is_jpg) if include_orig_png else True)
     ) else ""
 
     # If saving the orig, and the orig image is already smaller than
     # ThumbSize and is a jpg/jpeg, don't save the jpg thumb, otherwise
     # this ends up just being a duplicate and wastes space on the server
     thumb_path = os.path.join(file_root, f"{file_data['id']}_thb.jpg") if (
-            include_jpg_thumb and ((bigger_than_thumb if is_jpg else True) if include_orig_png else True)
+        include_jpg_thumb and ((bigger_than_thumb if is_jpg else True) if include_orig_png else True)
     ) else ""
 
     # If saving the orig, and the orig image is already smaller than
@@ -533,18 +534,26 @@ def update_data_with_saved_images(
         include_square_thumb and ((bigger_than_thumb and img.size[0] != img.size[1] if is_jpg else True) if include_orig_png else True)
     ) else ""
 
+    # CSS accepts SVG and PNG for the mask-image property, but CSS doesn't handle masks the same
+    # as Photoshop. They both use white for the visible part of the mask, but while Photoshop
+    # uses black for the hidden part, CSS uses transparency for the hidden part. So any non-white
+    # values in the grayscale mask need to be converted to white values with transparency based
+    # on their darkness. Without this version, the frontend won't be able to use the mask.
+    transparent_mask_path = os.path.join(file_root, f"{file_data['id']}_tmask.png") if is_mask else ""
+
     if replace_existing:
-        for path in [orig_path, thumb_path, thumb_square_path, thumb_png_path]:
-            if os.path.exists(path):
+        for path in [orig_path, thumb_path, thumb_square_path, thumb_png_path, transparent_mask_path]:
+            if path and os.path.exists(path):
                 os.remove(path)
 
-    img = save_images(img, orig_path, thumb_path, thumb_square_path, thumb_png_path)
+    img = save_images(img, orig_path, thumb_path, thumb_square_path, thumb_png_path, transparent_mask_path)
 
     url_data = {
         "orig_url": GetURLFromPath(dash_context, orig_path) if orig_path else "",
         "thumb_url": GetURLFromPath(dash_context, thumb_path) if thumb_path else "",
         "thumb_sq_url": GetURLFromPath(dash_context, thumb_square_path) if thumb_square_path else "",
         "thumb_png_url": GetURLFromPath(dash_context, thumb_png_path) if thumb_png_path else "",
+        "tmask_url": GetURLFromPath(dash_context, transparent_mask_path) if transparent_mask_path else "",
         "width": img.size[0],
         "height": img.size[1],
         "aspect": img.size[0] / float(img.size[1])
@@ -724,7 +733,7 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
     return glb_path
 
 
-def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_png_path=""):
+def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_png_path="", transparent_mask_path=""):
     from PIL.Image import ANTIALIAS
 
     if orig_path:
@@ -752,6 +761,22 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
                 png_thumb = png_thumb.convert("RGB")
 
         png_thumb.save(thumb_png_path, quality=40)
+
+        ConformPermissions(thumb_png_path)
+
+    if transparent_mask_path:
+        data = []
+        tmask = img.copy()
+
+        if tmask.mode != "la":
+            tmask = tmask.convert("LA")
+
+        # All pixels become white with their transparency determined by their darkness
+        for item in tmask.getdata():
+            data.append((255, item[0]))
+
+        tmask.putdata(data)
+        tmask.save(transparent_mask_path)
 
     if thumb_path or thumb_square_path:
         if img.mode != "L":
