@@ -281,6 +281,14 @@ class Layer:
 
         self.data.update(properties)
 
+        if file_op_key and file_op_key in properties and not properties[file_op_key]:
+            file_root = os.path.join(self.root, file_op_key)
+
+            if os.path.exists(file_root):
+                from shutil import rmtree
+
+                rmtree(file_root)
+
         return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
     def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_op_key=""):
@@ -346,51 +354,6 @@ class Layer:
 
     def UploadMask(self, file, filename):
         return self.upload_file(file, filename, "mask")
-
-    def upload_file(self, file, filename, key):
-        if self.Type == "text" or self.Type == "context":  # Should never happen, but just in case
-            raise ValueError("Can't upload files to 'text' or 'context' layers")
-
-        if key == "mask":
-            if not self.data.get("file"):  # Should never happen, but just in case
-                raise FileNotFoundError("No original file data exists for this layer")
-
-        elif self.Type == "color":  # Should never happen, but just in case
-            raise ValueError("Can't upload standard files to 'color' layers, only masks")
-
-        from Dash.Utils import UploadFile
-
-        file_root = os.path.join(self.root, key)
-
-        if os.path.exists(file_root):
-            from shutil import rmtree
-
-            rmtree(file_root)
-
-        file_data = UploadFile(
-            dash_context=self.context_2d.DashContext,
-            user=self.context_2d.User,
-            file_root=file_root,
-            file_bytes_or_existing_path=file,
-            filename=filename,
-            enforce_unique_filename_key=False,
-            target_aspect_ratio=(self.data["aspect"] if key == "mask" else 0),
-            include_jpg_thumb=False,
-            min_size=(512 if key == "mask" else 1024),
-            is_mask=(key == "mask")
-        )
-
-        properties = {key: file_data}
-
-        if key == "file":
-            properties["display_name"] = filename.split(".")[0]
-
-            aspect = file_data.get("aspect") or file_data.get("orig_aspect")
-
-            if aspect:
-                properties["aspect"] = aspect
-
-        return self.SetProperties(properties, file_op_key=key)
 
     def Save(self, file_key_validation=True):
         from Dash.LocalStorage import Write
@@ -706,6 +669,51 @@ class Layer:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
             else:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
+
+    def upload_file(self, file, filename, key):
+        if self.Type == "text" or self.Type == "context":  # Should never happen, but just in case
+            raise ValueError("Can't upload files to 'text' or 'context' layers")
+
+        if key == "mask":
+            if not self.data.get("file"):  # Should never happen, but just in case
+                raise FileNotFoundError("No original file data exists for this layer")
+
+        elif self.Type == "color":  # Should never happen, but just in case
+            raise ValueError("Can't upload standard files to 'color' layers, only masks")
+
+        from Dash.Utils import UploadFile
+
+        file_root = os.path.join(self.root, key)
+
+        if os.path.exists(file_root):
+            from shutil import rmtree
+
+            rmtree(file_root)
+
+        file_data = UploadFile(
+            dash_context=self.context_2d.DashContext,
+            user=self.context_2d.User,
+            file_root=file_root,
+            file_bytes_or_existing_path=file,
+            filename=filename,
+            enforce_unique_filename_key=False,
+            target_aspect_ratio=(self.data["aspect"] if key == "mask" else 0),
+            include_jpg_thumb=False,
+            min_size=(512 if key == "mask" else 1024),
+            is_mask=(key == "mask")
+        )
+
+        properties = {key: file_data}
+
+        if key == "file":
+            properties["display_name"] = filename.split(".")[0]
+
+            aspect = file_data.get("aspect") or file_data.get("orig_aspect")
+
+            if aspect:
+                properties["aspect"] = aspect
+
+        return self.SetProperties(properties, file_op_key=key)
 
     # This should never be necessary, but just in case
     def assert_file_key(self, file_key, update=True):

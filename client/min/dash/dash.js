@@ -29638,8 +29638,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         else {
             this.html.css({
-                "mask": "none"
+                "mask": ""
             });
+            this.update_fade();
         }
     };
     this.on_rotate = function (rot_deg, force_save=false) {
@@ -33775,9 +33776,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                                 preview.css({
                                     "background-image": "url(" + checker_url + ")"
                                 });
-                                if (self.editor.canvas.last_selected_primitive) {
-                                    self.editor.canvas.last_selected_primitive.Update("mask");
-                                }
                             },
                             {"file_op_key": "mask"}
                         );

@@ -425,8 +425,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         else {
             this.html.css({
-                "mask": "none"
+                "mask": ""
             });
+
+            this.update_fade();
         }
     };
 
