@@ -905,10 +905,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 toolbar.AddIconButton(
                     "upload",
                     function (response, button) {
+                        console.debug("TEST on upload", response, button, self.editor.canvas.last_selected_primitive);
                         button.SetLoading(false);
                         button.Enable();
 
                         if (!Dash.Validate.Response(response)) {
+                            console.debug("TEST return1");
                             return;
                         }
 
@@ -918,6 +920,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
                         if (!url) {
                             alert("Upload failed for an unexpected reason, please try again.");
+                            console.debug("TEST return2");
 
                             return;
                         }
