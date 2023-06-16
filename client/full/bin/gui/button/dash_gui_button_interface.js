@@ -283,6 +283,8 @@ function DashGuiButtonInterface () {
         this.file_upload_type = "file";
         this.file_upload_api = api;
         this.file_upload_params = params;
+        this.file_upload_optional_css = optional_css;
+        this.file_upload_return_button = return_button;
 
         if (this.file_uploader) {
             this.file_uploader.html.remove();
@@ -312,8 +314,8 @@ function DashGuiButtonInterface () {
             );
         })(this);
 
-        if (Dash.Validate.Object(optional_css)) {
-            this.file_uploader.html.css(optional_css);
+        if (Dash.Validate.Object(this.file_upload_optional_css)) {
+            this.file_uploader.html.css(this.file_upload_optional_css);
         }
 
         else {

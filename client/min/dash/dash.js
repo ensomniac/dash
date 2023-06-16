@@ -24656,7 +24656,13 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             this.file_uploader.html.remove();
         }
         if (this.file_upload_api) {
-            this.SetFileUploader(this.file_upload_api, this.file_upload_params);
+            this.SetFileUploader(
+                this.file_upload_api,
+                this.file_upload_params,
+                this.on_file_upload_start_callback,
+                this.file_upload_optional_css,
+                this.file_upload_return_button
+            );
         }
         if (this.callback && this.bind) {
             if (return_button) {
@@ -25188,6 +25194,8 @@ function DashGuiButtonInterface () {
         this.file_upload_type = "file";
         this.file_upload_api = api;
         this.file_upload_params = params;
+        this.file_upload_optional_css = optional_css;
+        this.file_upload_return_button = return_button;
         if (this.file_uploader) {
             this.file_uploader.html.remove();
         }
@@ -25212,8 +25220,8 @@ function DashGuiButtonInterface () {
                 }
             );
         })(this);
-        if (Dash.Validate.Object(optional_css)) {
-            this.file_uploader.html.css(optional_css);
+        if (Dash.Validate.Object(this.file_upload_optional_css)) {
+            this.file_uploader.html.css(this.file_upload_optional_css);
         }
         else {
             this.set_file_uploader_size();
