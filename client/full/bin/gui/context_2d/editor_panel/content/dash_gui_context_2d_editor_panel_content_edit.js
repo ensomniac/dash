@@ -927,8 +927,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                             "background-image": "url(" + url + ")"
                         });
 
-                        if (self.editor.canvas.last_selected_primitive && mask["tmask_url"]) {
-                            self.editor.canvas.last_selected_primitive.update_mask();
+                        if (self.editor.canvas.last_selected_primitive) {
+                            self.editor.canvas.last_selected_primitive.Update("mask");
                         }
                     },
                     null,
@@ -990,7 +990,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                                 });
 
                                 if (self.editor.canvas.last_selected_primitive) {
-                                    self.editor.canvas.last_selected_primitive.update_mask();
+                                    self.editor.canvas.last_selected_primitive.Update("mask");
                                 }
                             },
                             {"file_op_key": "mask"}

@@ -114,6 +114,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.mask_data = this.data["mask"] || {};
         this.parent_data = this.layer.GetParentData();
 
+        if (key === "mask") {
+            this.update_mask();
+
+            return;
+        }
+
         if (key === "opacity") {
             this.on_opacity_change(this.get_value(key));
         }

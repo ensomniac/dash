@@ -29392,6 +29392,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.file_data = this.data["file"] || {};
         this.mask_data = this.data["mask"] || {};
         this.parent_data = this.layer.GetParentData();
+        if (key === "mask") {
+            this.update_mask();
+            return;
+        }
         if (key === "opacity") {
             this.on_opacity_change(this.get_value(key));
         }
@@ -33710,8 +33714,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                         preview.css({
                             "background-image": "url(" + url + ")"
                         });
-                        if (self.editor.canvas.last_selected_primitive && mask["tmask_url"]) {
-                            self.editor.canvas.last_selected_primitive.update_mask();
+                        if (self.editor.canvas.last_selected_primitive) {
+                            self.editor.canvas.last_selected_primitive.Update("mask");
                         }
                     },
                     null,
@@ -33764,7 +33768,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                                     "background-image": "url(" + checker_url + ")"
                                 });
                                 if (self.editor.canvas.last_selected_primitive) {
-                                    self.editor.canvas.last_selected_primitive.update_mask();
+                                    self.editor.canvas.last_selected_primitive.Update("mask");
                                 }
                             },
                             {"file_op_key": "mask"}
