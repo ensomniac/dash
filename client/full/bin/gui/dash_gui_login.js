@@ -149,8 +149,9 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
             "margin-top": Dash.Size.Padding * 2,
             "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
+            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "border": "1px solid " + this.color.Pinstripe,
             "border-radius": 4,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "opacity": 0,
         });
 
@@ -206,8 +207,9 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
             "margin-top": Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
+            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "border": this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "opacity": 0,
         });
 

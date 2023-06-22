@@ -413,6 +413,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             "padding": 0,
             "padding-right": Dash.Size.Padding * (Dash.IsMobile ? 0.6 : 0.5),  // Room for scroll bar
             "box-shadow": "none",
+            "border": "none",
             "background": "none",
             "flex-grow": 2,
             "flex-shrink": 2,

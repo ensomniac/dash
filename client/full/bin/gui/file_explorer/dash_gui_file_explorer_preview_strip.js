@@ -108,6 +108,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             "margin": 0,
             "margin-left": Dash.Size.Padding,
             "box-shadow": "none",
+            "border": "none",
             "overflow-y": "auto"
         });
     };

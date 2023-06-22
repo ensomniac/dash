@@ -125,7 +125,8 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.modal_profile.html.css({
             "padding": 0,
             "background": "",
-            "box-shadow": ""
+            "box-shadow": "",
+            "border": ""
         });
 
         this.modal_profile.img_box.css({
@@ -247,10 +248,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "width": this.img_box_size,
             "height": this.img_box_size,
             "background": "#222",
-            "border-radius": 4,
             "background-image": "url(" + img_url + ")",
             "background-size": "cover",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "outline": "1px solid " + this.color.Pinstripe,
+            "border-radius": 4
         });
 
         this.add_user_image_upload_button();

@@ -72,8 +72,9 @@ function DashGui() {
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "color": color.Text,
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
+            "border": "1px solid " + color.Pinstripe,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
             ...optional_style_css
         });
@@ -179,7 +180,8 @@ function DashGui() {
             "background": ContainerColor,  // TODO: What is this meant to be?
             "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding,
-            "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            "border": "1px solid " + Dash.Color.Light.Pinstripe,
             "color": "rgba(0, 0, 0, 0.8)",
             "border-radius": 6,
         });
@@ -471,7 +473,8 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
-            "border-radius": ""
+            // "border-radius": ""
+            "border": "none"
         });
     };
 

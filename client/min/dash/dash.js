@@ -17902,8 +17902,9 @@ function DashGui() {
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "color": color.Text,
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
+            "border": "1px solid " + color.Pinstripe,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
             ...optional_style_css
         });
@@ -17986,7 +17987,8 @@ function DashGui() {
             "background": ContainerColor,  // TODO: What is this meant to be?
             "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding,
-            "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            "border": "1px solid " + Dash.Color.Light.Pinstripe,
             "color": "rgba(0, 0, 0, 0.8)",
             "border-radius": 6,
         });
@@ -18216,7 +18218,8 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
-            "border-radius": ""
+            // "border-radius": ""
+            "border": "none"
         });
     };
     this.GetDarkModeToggle = function (color) {
@@ -22285,8 +22288,9 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
             "margin-top": Dash.Size.Padding * 2,
             "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
+            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "border": "1px solid " + this.color.Pinstripe,
             "border-radius": 4,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "opacity": 0,
         });
         this.header_label.css({
@@ -22332,8 +22336,9 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
             "margin-top": Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 2,
             "background": this.color.BackgroundRaised,
+            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "border": this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "opacity": 0,
         });
         this.header_label.css({
@@ -23315,6 +23320,14 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.AddLine = function (height=0, color="", additional_css={}) {
         if (this.line) {
             return this.line;
+        }
+        if (!this.icon) {
+            this.html.css({
+                "display": "flex"
+            });
+            if (!("margin-left" in additional_css)) {
+                additional_css["margin-left"] = Dash.Size.Padding;
+            }
         }
         this.line = Dash.Gui.GetFlexSpacer();
         if (!height) {
@@ -26033,6 +26046,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             "padding": 0,
             "padding-right": Dash.Size.Padding * (Dash.IsMobile ? 0.6 : 0.5),  // Room for scroll bar
             "box-shadow": "none",
+            "border": "none",
             "background": "none",
             "flex-grow": 2,
             "flex-shrink": 2,
@@ -35156,6 +35170,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             "margin": 0,
             "margin-left": Dash.Size.Padding,
             "box-shadow": "none",
+            "border": "none",
             "overflow-y": "auto"
         });
     };
@@ -35514,6 +35529,7 @@ function DashGuiIcons (icon) {
         "comments_square":       new DashGuiIconDefinition(this.icon, "Multiple Conversations Boxes", this.weight["regular"], "comments-alt"),
         "complete":              new DashGuiIconDefinition(this.icon, "Complete", this.weight["regular"], "check"),
         "copy":                  new DashGuiIconDefinition(this.icon, "Copy", this.weight["regular"], "copy"),
+        "crown":                 new DashGuiIconDefinition(this.icon, "Crown", this.weight["regular"], "crown"),
         "cube":                  new DashGuiIconDefinition(this.icon, "Cube", this.weight["regular"], "cube"),
         "cubes":                 new DashGuiIconDefinition(this.icon, "Cubes", this.weight["regular"], "cubes"),
         "database":              new DashGuiIconDefinition(this.icon, "Database", this.weight["regular"], "database"),
@@ -35651,6 +35667,7 @@ function DashGuiIcons (icon) {
         "stopwatch":             new DashGuiIconDefinition(this.icon, "Stopwatch", this.weight["regular"], "stopwatch"),
         "stroopwafel":           new DashGuiIconDefinition(this.icon, "Stroopwafel", this.weight["regular"], "stroopwafel"),
         "sun":                   new DashGuiIconDefinition(this.icon, "Sun", this.weight["regular"], "sun"),
+        "sun_dust":              new DashGuiIconDefinition(this.icon, "Sun Dust", this.weight["regular"], "sun-dust"),
         "sword":                 new DashGuiIconDefinition(this.icon, "Sword", this.weight["regular"],"sword"),
         "swords":                new DashGuiIconDefinition(this.icon, "Swords", this.weight["regular"],"swords"),
         "sync":                  new DashGuiIconDefinition(this.icon, "Sync", this.weight["regular"], "sync"),
@@ -38490,7 +38507,8 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.modal_profile.html.css({
             "padding": 0,
             "background": "",
-            "box-shadow": ""
+            "box-shadow": "",
+            "border": ""
         });
         this.modal_profile.img_box.css({
             "left": 0,
@@ -38586,10 +38604,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "width": this.img_box_size,
             "height": this.img_box_size,
             "background": "#222",
-            "border-radius": 4,
             "background-image": "url(" + img_url + ")",
             "background-size": "cover",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "outline": "1px solid " + this.color.Pinstripe,
+            "border-radius": 4
         });
         this.add_user_image_upload_button();
     };
@@ -40243,7 +40262,8 @@ function DashLayoutListRow (list, row_id, height=null) {
             "opacity": 0,
             "top": -1,
             "bottom": -1,
-            "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            // "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            "border": this.is_sublist ? "none" : this.color.Pinstripe
         });
         if (this.is_sublist) {
             this.expanded_highlight.css({

@@ -92,6 +92,16 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             return this.line;
         }
 
+        if (!this.icon) {
+            this.html.css({
+                "display": "flex"
+            });
+
+            if (!("margin-left" in additional_css)) {
+                additional_css["margin-left"] = Dash.Size.Padding;
+            }
+        }
+
         this.line = Dash.Gui.GetFlexSpacer();
 
         if (!height) {

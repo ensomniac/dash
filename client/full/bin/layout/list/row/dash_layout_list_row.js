@@ -128,7 +128,8 @@ function DashLayoutListRow (list, row_id, height=null) {
             "opacity": 0,
             "top": -1,
             "bottom": -1,
-            "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            // "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            "border": this.is_sublist ? "none" : this.color.Pinstripe
         });
 
         if (this.is_sublist) {
