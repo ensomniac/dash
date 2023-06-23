@@ -113,6 +113,7 @@ function DashGuiIcons (icon) {
         "dollar_sign_circle":    new DashGuiIconDefinition(this.icon, "Dollar Sign Circle", this.weight["regular"], "usd-circle"),
         "dollar_sign_square":    new DashGuiIconDefinition(this.icon, "Dollar Sign Square", this.weight["regular"], "usd-square"),
         "dot":                   new DashGuiIconDefinition(this.icon, "Dot", this.weight["light"], "circle"),
+        "dot_solid":             new DashGuiIconDefinition(this.icon, "Dot", this.weight["solid"], "circle"),
         "dots_horizontal":       new DashGuiIconDefinition(this.icon, "Horizontal Dots", this.weight["solid"], "ellipsis-h"),
         "dots_vertical":         new DashGuiIconDefinition(this.icon, "Vertical Dots", this.weight["solid"], "ellipsis-v"),
         "download":              new DashGuiIconDefinition(this.icon, "Download", this.weight["regular"], "download"),
