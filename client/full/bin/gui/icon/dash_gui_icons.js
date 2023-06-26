@@ -292,6 +292,8 @@ function DashGuiIcons (icon) {
         "worker":                new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
         "wrench":                new DashGuiIconDefinition(this.icon, "Wrench", this.weight["regular"], "wrench"),
         "wrestling_mask":        new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
+        "zoom_in":               new DashGuiIconDefinition(this.icon, "Zoom In", this.weight["regular"],"search-plus"),
+        "zoom_out":              new DashGuiIconDefinition(this.icon, "Zoom Out", this.weight["regular"],"search-minus")
     };
 
     // Return icon map for use in portal editor > font icons
