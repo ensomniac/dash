@@ -1,4 +1,4 @@
-function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null) {
+function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null, label_text="Copied!") {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
     this.size_mult = size_mult;
@@ -6,11 +6,12 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
     this.style = style;
     this.icon_name = icon_name;
     this.color = color || binder.color || Dash.Color.Light;
+    this.label_text = label_text;
 
     this.button = null;
     this.icon_color = null;
     this.html = $("<div></div>");
-    this.label = $("<div>Copied!</div>");
+    this.label = $("<div>" + this.label_text + "</div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {
@@ -42,7 +43,7 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
     this.add_label = function () {
         this.label.css({
             "z-index": 10000,
-            "font_family": "sans_serif_normal",
+            "font-family": "sans_serif_normal",
             "color": this.opposite_color.Text,
             "background": this.opposite_color.BackgroundRaised,
             "padding-left": Dash.Size.Padding * 0.25,
@@ -54,6 +55,7 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
             "pointer-events": "none",
             "user-select": "none",
             "width": "fit-content",
+            "text-align": "center",
             "clip-path": "polygon(" +
                 "0% 0%, " +     // Top left corner of bubble
                 "100% 0%, " +   // Top right corner of bubble

@@ -437,7 +437,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 Dash.Size.RowHeight,
                 "default",
                 self.get_type_icon_name(),
-                self.color
+                self.color,
+                "Copied Layer ID!"
             );
         })(this);
 
