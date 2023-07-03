@@ -174,7 +174,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.list_row.is_header || this.column_config_data["type"] === "label") {
             column_value = (this.column_config_data["display_name"] || this.column_config_data["data_key"].Title() || "").trim();
 
-            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":")) {
+            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":") && this.column_config_data["enforce_colon"]) {
                 column_value += ":";
             }
         }

@@ -5,13 +5,14 @@ function DashLayoutListColumnConfig () {
         this.columns.push({
             "width": width,
             "data_key": data_key,
-            "can_edit": typeof can_edit !== "boolean" ? true : can_edit,
             "display_name": display_name,
-            "type": options && options["type"] ? options["type"] : "",
             "css": options && options["css"] ? options["css"] : null,
+            "type": options && options["type"] ? options["type"] : "",
+            "can_edit": typeof can_edit !== "boolean" ? true : can_edit,
+            "options": options && options["options"] ? options["options"] : {},
             "header_css": options && options["header_css"] ? options["header_css"] : null,
             "footer_css": options && options["footer_css"] ? options["footer_css"] : null,
-            "options": options && options["options"] ? options["options"] : {},
+            "enforce_colon": options && "enforce_colon" in options ? options["enforce_colon"] : true,
             "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
         });
     };
@@ -40,7 +41,7 @@ function DashLayoutListColumnConfig () {
     };
 
     // This has not yet been tested for support with header/footer rows
-    this.AddLabel = function (text, css={}, header_css={}, footer_css={}, hover_text="") {
+    this.AddLabel = function (text, css={}, header_css={}, footer_css={}, hover_text="", enforce_colon=true) {
         this.AddColumn(
             text,
             "",
@@ -51,6 +52,7 @@ function DashLayoutListColumnConfig () {
                 "css": css,
                 "header_css": header_css,
                 "footer_css": footer_css,
+                "enforce_colon": enforce_colon,
                 "options": {
                     "hover_text": hover_text
                 }

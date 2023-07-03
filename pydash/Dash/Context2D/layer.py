@@ -413,9 +413,18 @@ class Layer:
 
     def update_color_properties_on_aspect_change(self, properties):
         for key in ["aspect_ratio_w", "aspect_ratio_h"]:
-            properties[key] = float(properties.get(key) or self.data[key])
+            valid = True
 
-            if not properties[key].is_integer():
+            try:
+                properties[key] = float(properties.get(key) or self.data[key])
+
+                if not properties[key].is_integer():
+                    valid = False
+
+            except ValueError:
+                valid = False
+
+            if not valid:
                 from Dash.Utils import ClientAlert
 
                 raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
