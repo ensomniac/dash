@@ -359,11 +359,14 @@ function DashGuiButtonInterface () {
     // This may be necessary in certain cases when the parent html is
     // emptied and then this button is then re-appended to that parent.
     this.RefreshConnections = function () {
+        this.BreakConnections();
+        this.setup_connections();
+    };
+
+    this.BreakConnections = function () {
         this.html.off("mouseenter");
         this.html.off("mouseleave");
         this.html.off("click");
-
-        this.setup_connections();
     };
 
     this.SetRightLabelText = function (label_text) {

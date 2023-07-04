@@ -23440,7 +23440,7 @@ function DashGuiCheckbox (
             this.redraw();
         }
     };
-    this.SetReadOnly = function (is_read_only=true) {
+    this.SetReadOnly = function (is_read_only=true, restyle=false) {
         var pointer_events;
         if (is_read_only) {
             this._hover_hint = this.hover_hint;
@@ -23450,7 +23450,7 @@ function DashGuiCheckbox (
         else {
             this.hover_hint = this._hover_hint;
             this._hover_hint = "";
-            pointer_events = "pointer";
+            pointer_events = "auto";
         }
         this.icon_button.SetHoverHint(this.hover_hint);
         this.icon_button.html.css({
@@ -23460,14 +23460,22 @@ function DashGuiCheckbox (
             this.DisableClick();
         }
         else {
-            // TODO: the inverse of DisableClick
+            this.EnableClick();
         }
         this.is_read_only = is_read_only;
+        if (restyle) {
+            this.html.css({
+                "opacity": is_read_only ? 0.65 : 1
+            });
+        }
     };
     this.DisableClick = function () {
         this.can_click = false;
-        this.html.off("click");
-        this.icon_button.html.off("click");
+        this.icon_button.BreakConnections();
+    };
+    this.EnableClick = function () {
+        this.can_click = true;
+        this.icon_button.RefreshConnections();
     };
     this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
         if (this.toggle_confirmation_msg) {
@@ -23560,7 +23568,9 @@ function DashGuiCheckbox (
         this.html.empty();
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : (
+                    self.checked ? self.true_icon_name : self.false_icon_name
+                ),
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
@@ -25270,10 +25280,13 @@ function DashGuiButtonInterface () {
     // This may be necessary in certain cases when the parent html is
     // emptied and then this button is then re-appended to that parent.
     this.RefreshConnections = function () {
+        this.BreakConnections();
+        this.setup_connections();
+    };
+    this.BreakConnections = function () {
         this.html.off("mouseenter");
         this.html.off("mouseleave");
         this.html.off("click");
-        this.setup_connections();
     };
     this.SetRightLabelText = function (label_text) {
         if (!this.right_label) {

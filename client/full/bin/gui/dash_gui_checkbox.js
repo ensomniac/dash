@@ -118,7 +118,7 @@ function DashGuiCheckbox (
         }
     };
 
-    this.SetReadOnly = function (is_read_only=true) {
+    this.SetReadOnly = function (is_read_only=true, restyle=false) {
         var pointer_events;
 
         if (is_read_only) {
@@ -132,7 +132,7 @@ function DashGuiCheckbox (
             this.hover_hint = this._hover_hint;
             this._hover_hint = "";
 
-            pointer_events = "pointer";
+            pointer_events = "auto";
         }
 
         this.icon_button.SetHoverHint(this.hover_hint);
@@ -146,18 +146,28 @@ function DashGuiCheckbox (
         }
 
         else {
-            // TODO: the inverse of DisableClick
+            this.EnableClick();
         }
 
         this.is_read_only = is_read_only;
+
+        if (restyle) {
+            this.html.css({
+                "opacity": is_read_only ? 0.65 : 1
+            });
+        }
     };
 
     this.DisableClick = function () {
         this.can_click = false;
 
-        this.html.off("click");
+        this.icon_button.BreakConnections();
+    };
 
-        this.icon_button.html.off("click");
+    this.EnableClick = function () {
+        this.can_click = true;
+
+        this.icon_button.RefreshConnections();
     };
 
     this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
@@ -280,7 +290,9 @@ function DashGuiCheckbox (
 
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : (
+                    self.checked ? self.true_icon_name : self.false_icon_name
+                ),
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
