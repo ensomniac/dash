@@ -293,7 +293,7 @@ function DashGuiPropertyBox (
             }
         }
 
-        if (this.dash_obj_id == null) {
+        if (!this.dash_obj_id) {
             if (this.set_data_cb) {
                 this.set_data_cb(row_details["key"], new_value);
             }
