@@ -347,16 +347,20 @@ function DashGuiPropertyBoxInterface () {
         return row;
     };
 
-    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
+    this.AddInput = function (data_key, label_text="", default_value="", combo_options=null, can_edit=false, options={}) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
 
+        if (!label_text) {
+            label_text = data_key ? data_key.Title() : "[MISSING LABEL]";
+        }
+
         var row_details = {
             "key": data_key,
             "label_text": label_text,
-            "default_value": default_value || null,
-            "combo_options": combo_options || null,
+            "default_value": default_value,
+            "combo_options": combo_options,
             "value": value !== null && value !== undefined ? value : default_value,  // Keep 'false' intact
             "can_edit": can_edit
         };

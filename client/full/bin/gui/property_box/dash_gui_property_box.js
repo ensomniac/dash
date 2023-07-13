@@ -1,7 +1,9 @@
-function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options={}) {
+function DashGuiPropertyBox (
+    binder, get_data_cb=null, set_data_cb=null, endpoint="", dash_obj_id="", options={}
+) {
     this.binder = binder;
-    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
-    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
+    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : function () {return {};};
+    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : function () {};
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.options = options;

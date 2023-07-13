@@ -36904,10 +36904,12 @@ function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", 
     this.setup_styles();
 }
 
-function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options={}) {
+function DashGuiPropertyBox (
+    binder, get_data_cb=null, set_data_cb=null, endpoint="", dash_obj_id="", options={}
+) {
     this.binder = binder;
-    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
-    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
+    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : function () {return {};};
+    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : function () {};
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.options = options;
@@ -37513,14 +37515,17 @@ function DashGuiPropertyBoxInterface () {
         this.track_row(row);
         return row;
     };
-    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
+    this.AddInput = function (data_key, label_text="", default_value="", combo_options=null, can_edit=false, options={}) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        if (!label_text) {
+            label_text = data_key ? data_key.Title() : "[MISSING LABEL]";
+        }
         var row_details = {
             "key": data_key,
             "label_text": label_text,
-            "default_value": default_value || null,
-            "combo_options": combo_options || null,
+            "default_value": default_value,
+            "combo_options": combo_options,
             "value": value !== null && value !== undefined ? value : default_value,  // Keep 'false' intact
             "can_edit": can_edit
         };
