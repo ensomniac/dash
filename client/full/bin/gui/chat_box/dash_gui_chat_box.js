@@ -491,6 +491,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         );
 
         this.message_input.SetText("");
+
         this.callback_mentions = [];
     };
 
