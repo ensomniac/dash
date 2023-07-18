@@ -151,14 +151,6 @@ class ApiCore:
 
         return self._user
 
-    def SetUserByToken(self, user_token):
-        if hasattr(self, "_user"):
-            delattr(self, "_user")
-
-        self._params["token"] = user_token
-
-        return self.User
-
     @property
     def Params(self):
         return self._params
@@ -223,6 +215,21 @@ class ApiCore:
         self._user = user_data
 
         self.set_dash_globals()
+
+    def SetUserByToken(self, user_token):
+        if hasattr(self, "_user"):
+            delattr(self, "_user")
+
+        self._params["token"] = user_token
+
+        self.set_dash_globals()
+
+        return self.User
+
+    def SetUserByEmail(self, user_email):
+        from Dash.Users import Get as GetUser
+
+        self.SetUser(GetUser(user_email))
 
     def SetDashContext(self, dash_context):
         if not dash_context or type(dash_context) is not dict or not dash_context.get("srv_path_local"):
