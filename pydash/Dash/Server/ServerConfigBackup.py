@@ -2,18 +2,19 @@
 #
 # Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
 #
-# This is meant to be ran manually and ran as root
+# This is meant to be run manually and ran as root
 
 import os
 import sys
 import json
 import time
 import shutil
-import datetime
 
-from subprocess import check_output
-from Dash.Utils import OapiRoot, GetRandomID
-from Dash.LocalStorage import Read, Write
+from datetime import datetime
+# from subprocess import check_output
+# from Dash.Utils import OapiRoot, GetRandomID
+# from Dash.LocalStorage import Read, Write
+
 
 class ServerConfigBackup:
     def __init__(self):
@@ -23,7 +24,7 @@ class ServerConfigBackup:
 
     @property
     def server_backup_root(self):
-        today = datetime.datetime.now()
+        today = datetime.now()
         folder_name = [str(today.year), str(today.month), str(today.day)]
         folder_name = "_".join(folder_name)
         full_path = "/root/server_backup/" + folder_name + "/"
@@ -90,7 +91,6 @@ class ServerConfigBackup:
         print("\nRemoving temporary zip...")
         os.remove(dest_zip_tmp)
 
-
     def fatal_error(self, msg):
         print("TODO: Email on error!")
         print("FATAL ERROR", msg)
@@ -119,8 +119,10 @@ class ServerConfigBackup:
 
         has_all = True
 
-        if not has_http_conf: has_all = False
-        if not has_nginx_conf: has_all = False
+        if not has_http_conf:
+            has_all = False
+        if not has_nginx_conf:
+            has_all = False
         # if not has_vhost_conf: has_all = False
 
         if has_all:
@@ -137,16 +139,13 @@ class ServerConfigBackup:
         # cmd = "/usr/local/psa/admin/bin/httpdmng –reconfigure-domain kaiju.network"
         cmd = "/usr/local/psa/admin/bin/httpdmng --reconfigure-domain kaiju.network"
 
-
         # ; echo “$domain – success”; done
-
 
         # print(config_root, os.path.exists(config_root))
 
         # print(domain, ">>")
         # for item in os.listdir(domain_root):
         #     print("\t", item)
-
 
 
 if __name__ == "__main__":
