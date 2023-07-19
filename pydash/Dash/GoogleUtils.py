@@ -49,6 +49,41 @@ class GUtils:
     def OAuth2Creds(self):
         return self._auth_utils.OAuth2Creds
 
+    @property
+    def PDFMimeType(self):
+        return "application/pdf"
+
+    def DownloadAsPDF(self, file_id, pdf_path):
+        return self.download_as(
+            file_id=file_id,
+            download_path=pdf_path,
+            mime_type=self.PDFMimeType
+        )
+
+    def download_as(self, file_id, download_path, mime_type, fields=""):
+        from io import BytesIO
+        from Dash.LocalStorage import Write
+        from googleapiclient.http import MediaIoBaseDownload
+
+        done = False
+        file = BytesIO()
+
+        downloader = MediaIoBaseDownload(
+            file,
+            self.DriveClient.files().export(
+                fileId=file_id,
+                fields=fields,
+                mimeType=mime_type
+            )
+        )
+
+        while done is False:
+            status, done = downloader.next_chunk()
+
+        Write(download_path, file.getbuffer())
+
+        return download_path
+
     # ========================= SHEETS =========================
     @property
     def SheetsClient(self):
@@ -66,10 +101,6 @@ class GUtils:
     def ExcelMimeType(self):
         return self._sheets_utils.ExcelMimeType
 
-    @property
-    def PDFMimeType(self):
-        return self._sheets_utils.PDFMimeType
-
     def GetSheetData(self, sheet_id, row_data_only=True):
         return self._sheets_utils.GetData(sheet_id, row_data_only)
 
@@ -81,9 +112,6 @@ class GUtils:
 
     def DownloadSheetAsXLSX(self, sheet_id, xlsx_path):
         return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path)
-
-    def DownloadSheetAsPDF(self, sheet_id, pdf_path):
-        return self._sheets_utils.DownloadAsPDF(sheet_id, pdf_path)
 
     # ========================= DRIVE =========================
     @property
@@ -472,10 +500,6 @@ class _SheetsUtils:
     def ExcelMimeType(self):
         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-    @property
-    def PDFMimeType(self):
-        return "application/pdf"
-
     def GetData(self, sheet_id, row_data_only=True):
         """
         Note: This doesn't currently account for extra, empty rows at the bottom.
@@ -523,42 +547,11 @@ class _SheetsUtils:
         return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
 
     def DownloadAsXLSX(self, sheet_id, xlsx_path):
-        return self.download_as(
-            sheet_id=sheet_id,
+        return self.gutils.download_as(
+            file_id=sheet_id,
             download_path=xlsx_path,
             mime_type=self.ExcelMimeType
         )
-
-    def DownloadAsPDF(self, sheet_id, pdf_path):
-        return self.download_as(
-            sheet_id=sheet_id,
-            download_path=pdf_path,
-            mime_type=self.PDFMimeType
-        )
-
-    def download_as(self, sheet_id, download_path, mime_type, fields=""):
-        from io import BytesIO
-        from Dash.LocalStorage import Write
-        from googleapiclient.http import MediaIoBaseDownload
-
-        done = False
-        file = BytesIO()
-
-        downloader = MediaIoBaseDownload(
-            file,
-            self.gutils.DriveClient.files().export(
-                fileId=sheet_id,
-                fields=fields,
-                mimeType=mime_type
-            )
-        )
-
-        while done is False:
-            status, done = downloader.next_chunk()
-
-        Write(download_path, file.getbuffer())
-
-        return download_path
 
 
 class _AuthUtils:
