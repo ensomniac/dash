@@ -35,11 +35,13 @@ class GUtils:
         if not self._user_email:
             from Dash import AdminEmails
 
-            self._user_email = AdminEmails[0]  # Ryan's email (default)
+            self._user_email = AdminEmails[0]
 
         self._auth_utils = _AuthUtils(self)
+        self._docs_utils = _DocsUtils(self)
         self._drive_utils = _DriveUtils(self)
         self._sheets_utils = _SheetsUtils(self)
+        self._slides_utils = _SlidesUtils(self)
 
     @property
     def UserEmail(self):
@@ -85,6 +87,7 @@ class GUtils:
         return download_path
 
     # ========================= SHEETS =========================
+
     @property
     def SheetsClient(self):
         return self._sheets_utils.Client
@@ -114,6 +117,7 @@ class GUtils:
         return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path)
 
     # ========================= DRIVE =========================
+
     @property
     def DriveClient(self):
         return self._drive_utils.Client
@@ -156,6 +160,26 @@ class GUtils:
     def RemovePermissionFromDriveFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         return self._drive_utils.RemovePermissionFromFile(user_email, file_id, in_shared_drive, permission_id)
 
+    # ========================= SLIDES =========================
+
+    @property
+    def SlidesClient(self):
+        return self._slides_utils.Client
+
+    @property
+    def SlidesMimeType(self):
+        return self._slides_utils.SlidesMimeType
+
+    # ========================= DOCS =========================
+
+    @property
+    def DocsClient(self):
+        return self._docs_utils.Client
+
+    @property
+    def DocsMimeType(self):
+        return self._docs_utils.DocsMimeType
+
 
 class _DriveUtils:
     _client: callable
@@ -165,7 +189,7 @@ class _DriveUtils:
 
     @property
     def Client(self):
-        if not hasattr(self, "_drive_client"):
+        if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
             self._client = build("drive", "v3", http=self.gutils.OAuth2Creds)
@@ -476,7 +500,7 @@ class _SheetsUtils:
 
     @property
     def Client(self):
-        if not hasattr(self, "_sheets_client"):
+        if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
             self._client = build("sheets", "v4", http=self.gutils.OAuth2Creds)
@@ -552,6 +576,46 @@ class _SheetsUtils:
             download_path=xlsx_path,
             mime_type=self.ExcelMimeType
         )
+
+
+class _SlidesUtils:
+    _client: callable
+
+    def __init__(self, gutils):
+        self.gutils = gutils
+
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
+
+            self._client = build("slides", "v1", http=self.gutils.OAuth2Creds)
+
+        return self._client
+
+    @property
+    def SlidesMimeType(self):
+        return "application/vnd.google-apps.presentation"
+
+
+class _DocsUtils:
+    _client: callable
+
+    def __init__(self, gutils):
+        self.gutils = gutils
+
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
+
+            self._client = build("docs", "v1", http=self.gutils.OAuth2Creds)
+
+        return self._client
+
+    @property
+    def DocsMimeType(self):
+        return "application/vnd.google-apps.document"
 
 
 class _AuthUtils:
