@@ -17839,7 +17839,7 @@ $(document).on("ready", function () {
     }
 });
 
-function DashGui() {
+function DashGui () {
     this.Button                    = DashGuiButton;
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
@@ -17847,6 +17847,7 @@ function DashGui() {
     this.Combo                     = DashGuiCombo;
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
+    this.DatePicker                = DashGuiDatePicker;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
     this.Header                    = DashGuiHeader;
@@ -17864,6 +17865,7 @@ function DashGui() {
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
+    this.TimePicker                = DashGuiTimePicker;
     this.ToolRow                   = DashGuiToolRow;
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {
@@ -24574,6 +24576,67 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
         })(this);
     };
     this.setup_styles();
+}
+
+/**@member DashGuiInputType*/
+function DashGuiDatePicker (
+    label_text="",
+    binder=null,
+    on_submit_cb=null,
+    on_change_cb=null,
+    color=null,
+    min="",  // Ex: "2018-01-01"
+    max=""   // Ex: "2018-12-31"
+) {
+    DashGuiInputType.call(
+        this,
+        $(  // Output: yyyy-mm-dd
+            "<input type='date'" +
+            (min ? " min='" + min + "'" : "") +
+            (max ? " max='" + max + "'" : "") +
+            ">"
+        ),
+        label_text,
+        binder,
+        on_submit_cb,
+        on_change_cb,
+        color
+    );
+    this._setup_styles = function () {
+    };
+    this._setup_styles();
+}
+
+/**@member DashGuiInputType*/
+function DashGuiTimePicker (
+    label_text="",
+    binder=null,
+    on_submit_cb=null,
+    on_change_cb=null,
+    color=null,
+    min="",  // Ex: "09:00"
+    max="",  // Ex: "18:00"
+    include_seconds=false
+) {
+    this.include_seconds = include_seconds;
+    DashGuiInputType.call(
+        this,
+        $(  // Output: always 24-hour format, hh-mm (or hh-mm-ss if this.include_seconds)
+            "<input type='time'" +
+            (min ? " min='" + min + "'" : "") +
+            (max ? " max='" + max + "'" : "") +
+            (this.include_seconds ? " step='1'" : "") +
+            ">"
+        ),
+        label_text,
+        binder,
+        on_submit_cb,
+        on_change_cb,
+        color
+    );
+    this._setup_styles = function () {
+    };
+    this._setup_styles();
 }
 
 function DashGuiButton (label, callback, binder, color=null, options={}) {
@@ -35803,7 +35866,100 @@ function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
 
 function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
-    this.color = color || Dash.Color.Light;
+    DashGuiInputBase.call(this, color);
+    this.input = $(
+        "<input class='" + this.color.PlaceholderClass + "' " +
+        (this.placeholder.toString().toLowerCase().includes("password") ? "type=password " : "") +
+        "placeholder='" + this.placeholder + "'>"
+    );
+    this.setup_styles = function () {
+        this.html.css({
+            "height": this.height,
+            "background": this.color.Input.Background.Base,
+            "border-radius": Dash.Size.BorderRadiusInteractive,
+            "padding-right": Dash.Size.Padding,
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "padding": 0,
+            "margin": 0
+        });
+        this.input.css({
+            "background": "rgba(0, 0, 0, 0)",
+            "line-height": this.height + "px",
+            "width": "100%",
+            "height": "100%",
+            "padding-left": Dash.Size.Padding,
+            "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
+        });
+        this.html.append(this.input);
+        this.setup_connections();
+    };
+    this.SetDarkMode = function (dark_mode_on) {
+        if (dark_mode_on) {
+            this.html.css({
+                "box-shadow": "none",
+                "background": "rgba(0, 0, 0, 0)",
+            });
+            this.input.css({
+                "color": "rgba(255, 255, 255, 0.9)",
+            });
+        }
+    };
+    this.SetTransparent = function (is_transparent) {
+        if (is_transparent) {
+            this.html.css({
+                "box-shadow": "none",
+                "background": "rgba(0, 0, 0, 0)",
+            });
+        }
+        return this;
+    };
+    // DEPRECATED
+    this.OnChange = function (callback, bind_to) {
+        this.SetOnChange(callback, bind_to);
+    };
+    // DEPRECATED
+    this.OnAutosave = function (callback, bind_to) {
+        this.SetOnAutosave(callback, bind_to);
+    };
+    // DEPRECATED
+    this.OnSubmit = function (callback, bind_to) {
+        this.SetOnSubmit(callback, bind_to);
+    };
+    // Override
+    this.parse_value = function (value, data_key="") {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (value === false) {
+            return value.toString();  // Keep this value intact, protect against '!'
+        }
+        // Initial value is a dict or array
+        if (Dash.Validate.Object(value)) {
+            return JSON.stringify(value);
+        }
+        // Initial value is ISO datetime string
+        if (Dash.DateTime.IsIsoFormat(value)) {
+            return Dash.DateTime.Readable(value, false);
+        }
+        // Initial value is team member email
+        if (data_key && !(data_key.includes("email")) && Dash.Validate.Email(value)) {
+            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
+                if ("display_name" in Dash.User.Init["team"][value]) {
+                    return Dash.User.Init["team"][value]["display_name"];
+                }
+            }
+        }
+        return value;
+    };
+    this.setup_styles();
+}
+
+// Abstract from this for any input element
+function DashGuiInputBase (color=null) {
+    this.tab_index = 0;
     this.locked = false;
     this.autosave = false;
     this.blur_enabled = null;
@@ -35818,37 +35974,10 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.skip_next_autosave = false;
     this.on_autosave_callback = null;
     this.previous_submitted_text = "";
+    this.height = Dash.Size.RowHeight;
     this.last_arrow_navigation_ts = null;
+    this.color = color || Dash.Color.Light;
     this.submit_called_from_autosave = false;
-    if (this.placeholder.toString().toLowerCase().includes("password")) {
-        this.input = $("<input class='" + this.color.PlaceholderClass + "' type=password placeholder='" + this.placeholder + "'>");
-    }
-    else {
-        this.input = $("<input class='" + this.color.PlaceholderClass + "' placeholder='" + this.placeholder + "'>");
-    }
-    this.setup_styles = function () {
-        this.html.append(this.input);
-        this.html.css({
-            "height": Dash.Size.RowHeight,
-            "background": this.color.Input.Background.Base,
-            "border-radius": Dash.Size.BorderRadiusInteractive,
-            "padding-right": Dash.Size.Padding,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
-            "padding": 0,
-            "margin": 0,
-        });
-        this.input.css({
-            "background": "rgba(0, 0, 0, 0)",
-            "line-height": Dash.Size.RowHeight + "px",
-            "width": "100%",
-            "height": "100%",
-            "padding-left": Dash.Size.Padding,
-            "color": this.color.Text,
-            "white-space": "nowrap",
-            "overflow": "hidden",
-            "text-overflow": "ellipsis"
-        });
-    };
     this.Flatten = function () {
         Dash.Gui.Flatten(this.html);
     };
@@ -35916,95 +36045,39 @@ function DashGuiInput (placeholder_text="", color=null) {
             "opacity": 1
         });
     };
-    this.SetLocked = function (is_locked) {
-        this.locked = is_locked;
-        if (is_locked) {
-            this.input.prop("readOnly", true);
-            // Prevent navigating to locked box via tab
-            this.input[0].tabIndex = "-1";  // Shouldn't this be a number, not a string? (-1)
+    this.SetLocked = function (locked) {
+        this.locked = locked;
+        if (locked && !this.tab_index) {
+            this.tab_index = this.input[0].tabIndex;
         }
-        else {
-            this.input.prop("readOnly", false);
-        }
-    };
-    this.SetDarkMode = function (dark_mode_on) {
-        if (dark_mode_on) {
-            this.html.css({
-                "box-shadow": "none",
-                "background": "rgba(0, 0, 0, 0)",
-            });
-            this.input.css({
-                "color": "rgba(255, 255, 255, 0.9)",
-            });
-        }
-    };
-    this.SetTransparent = function (is_transparent) {
-        if (is_transparent) {
-            this.html.css({
-                "box-shadow": "none",
-                "background": "rgba(0, 0, 0, 0)",
-            });
-        }
-        return this;
+        this.input.prop("readOnly", locked);
+        this.input[0].tabIndex = locked ? -1 : this.tab_index;
     };
     this.Text = function () {
         return this.input.val();
     };
     this.SetText = function (text, input_row_data_key="") {
-        text = this.parse_value(text, input_row_data_key);  // Was formerly (incorrectly) located in InputRow
+        text = this.parse_value(text, input_row_data_key);
         this.last_val = text;
         this.last_submitted_text = text;
         return this.input.val(text);
     };
-    this.SetOnChange = function (callback, bind_to) {
-        this.on_change_callback = callback.bind(bind_to);
+    this.SetOnChange = function (callback=null, binder=null) {
+        this.on_change_callback = binder && callback ? callback.bind(binder) : callback;
     };
-    this.SetOnAutosave = function (callback, bind_to) {
-        // TODO: Shouldn't this also call this.EnableAutosave by default?
-        this.on_autosave_callback = callback.bind(bind_to);
+    // Should this also call this.EnableAutosave by default?
+    this.SetOnAutosave = function (callback=null, binder=null) {
+        this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };
-    this.SetOnSubmit = function (callback, bind_to) {
-        this.on_submit_callback = callback.bind(bind_to);
-    };
-    // DEPRECATED
-    this.OnChange = function (callback, bind_to) {
-        this.SetOnChange(callback, bind_to);
-    };
-    // DEPRECATED
-    this.OnAutosave = function (callback, bind_to) {
-        this.SetOnAutosave(callback, bind_to);
-    };
-    // DEPRECATED
-    this.OnSubmit = function (callback, bind_to) {
-        this.SetOnSubmit(callback, bind_to);
+    this.SetOnSubmit = function (callback=null, binder=null) {
+        this.on_submit_callback = binder && callback ? callback.bind(binder) : callback;
     };
     this.Focus = function () {
         this.input.trigger("focus");
     };
-    this.parse_value = function (value, data_key="") {
-        if (value === null || value === undefined) {
-            return "";
-        }
-        if (value === false) {
-            return value.toString();  // Keep this value intact, protect against '!'
-        }
-        // Initial value is a dict or array
-        if (Dash.Validate.Object(value)) {
-            return JSON.stringify(value);
-        }
-        // Initial value is ISO datetime string
-        if (Dash.DateTime.IsIsoFormat(value)) {
-            return Dash.DateTime.Readable(value, false);
-        }
-        // Initial value is team member email
-        if (data_key && !(data_key.includes("email")) && Dash.Validate.Email(value)) {
-            if ("team" in Dash.User.Init && value in Dash.User.Init["team"]) {
-                if ("display_name" in Dash.User.Init["team"][value]) {
-                    return Dash.User.Init["team"][value]["display_name"];
-                }
-            }
-        }
-        return value;
+    // Intended to be overwritten
+    this.parse_value = function (text) {
+        return text;
     };
     // Fired if the box is clicked on or the user is typing
     this.on_change = function () {
@@ -36039,7 +36112,10 @@ function DashGuiInput (placeholder_text="", color=null) {
             if (!this.on_autosave_callback) {
                 return;
             }
-            if (this.previous_submitted_text && this.Text().toString() === this.previous_submitted_text.toString()) {
+            if (
+                this.previous_submitted_text
+                && this.Text().toString() === this.previous_submitted_text.toString()
+            ) {
                 return;
             }
         }
@@ -36138,8 +36214,51 @@ function DashGuiInput (placeholder_text="", color=null) {
         })(this);
         this.EnableBlurSubmit();
     };
+}
+
+/**@member DashGuiInputBase*/
+// Abstract from this for input elements with specific "types", such as "date", "time", etc
+function DashGuiInputType (input, label_text="", binder=null, on_submit_cb=null, on_change_cb=null, color=null) {
+    this.input = input;
+    this.label_text = label_text;
+    DashGuiInputBase.call(this, color || (binder ? binder.color : color));
+    this.label = null;
+    this.EnableAutosave();
+    this.SetOnSubmit(on_submit_cb, binder);
+    this.SetOnChange(on_change_cb, binder);
+    this.SetOnAutosave(on_change_cb, binder);
+    this.setup_styles = function () {
+        this.html.css({
+            "height": this.height,
+            "line-height": this.height + "px",
+            "display": "flex"
+        });
+        if (this.label_text) {
+            this.setup_label();
+        }
+        this.input.css({
+            "color": this.color.Text,
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
+        });
+        this.html.append(this.input);
+        this.setup_connections();
+    };
+    this.setup_label = function () {
+        if (!(this.label_text.endsWith(":"))) {
+            this.label_text += ":";
+        }
+        this.label = $("<div>" + this.label_text + "</div>");
+        this.label.css({
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "flex": "none"
+        });
+        this.html.append(this.label);
+    };
     this.setup_styles();
-    this.setup_connections();
 }
 
 function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key="") {

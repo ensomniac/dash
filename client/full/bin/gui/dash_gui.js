@@ -1,4 +1,4 @@
-function DashGui() {
+function DashGui () {
     this.Button                    = DashGuiButton;
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
@@ -6,6 +6,7 @@ function DashGui() {
     this.Combo                     = DashGuiCombo;
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
+    this.DatePicker                = DashGuiDatePicker;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
     this.Header                    = DashGuiHeader;
@@ -23,6 +24,7 @@ function DashGui() {
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
+    this.TimePicker                = DashGuiTimePicker;
     this.ToolRow                   = DashGuiToolRow;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
