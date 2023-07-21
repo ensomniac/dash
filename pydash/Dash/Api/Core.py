@@ -414,7 +414,10 @@ class ApiCore:
 
         self.set_dash_globals()
 
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False, from_set_response=False):
+    def SendEmail(
+        self, subject="", msg="", error="", notify_email_list=[],
+        strict_notify=False, from_set_response=False, strict_msg=False
+    ):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
             return
 
@@ -426,7 +429,9 @@ class ApiCore:
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
-        msg = self.get_msg_for_email(msg)
+        if not strict_msg:
+            msg = self.get_msg_for_email(msg)
+
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
         self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
