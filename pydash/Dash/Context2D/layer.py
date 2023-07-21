@@ -252,6 +252,11 @@ class Layer:
         # to this returned data for abstractions and extensions of this code.
         data = self.context_2d.OnLayerToDict(self, data, save)
 
+        if save:  # Just in case
+            for key in self.data:
+                if key not in data:
+                    data[key] = self.data[key]
+
         return data
 
     def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
