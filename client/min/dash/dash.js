@@ -17766,6 +17766,20 @@ function Dash () {
                 return this;
             }
         };
+        String.prototype.ZFill = function (len) {
+            if (!len || this.length === len) {
+                return this;
+            }
+            var string = "";
+            string += this;
+            for (var _ of Dash.Math.Range(len)) {
+                if (string.length >= len) {
+                    break;
+                }
+                string = "0" + string;
+            }
+            return string;
+        };
     };
     this.extend_date_prototype = function () {
         // This gets the ISO week number, which is equivalent to calling '.isocalendar().week' on a python datetime object
@@ -24583,14 +24597,16 @@ function DashGuiDatePicker (
     label_text="",
     binder=null,
     on_submit_cb=null,
+    on_autosave_cb=null,
     on_change_cb=null,
     color=null,
-    min="",  // Ex: "2018-01-01"
-    max=""   // Ex: "2018-12-31"
+    // yyyy-mm-dd
+    min="",
+    max=""
 ) {
     DashGuiInputType.call(
         this,
-        $(  // Output: yyyy-mm-dd
+        $(
             "<input type='date'" +
             (min ? " min='" + min + "'" : "") +
             (max ? " max='" + max + "'" : "") +
@@ -24599,10 +24615,40 @@ function DashGuiDatePicker (
         label_text,
         binder,
         on_submit_cb,
+        on_autosave_cb,
         on_change_cb,
-        color
+        color,
+        false
     );
     this._setup_styles = function () {
+        this.input.css({
+            "flex": "none",
+            "width": Dash.Size.ColumnWidth * 0.74
+        });
+    };
+    // Alternative to this, if using this.SetText() to set the value
+    // instead, it has to be passed in using the correct format:
+    // yyyy-mm-dd
+    this.SetValue = function (year=1970, month=1, day=1) {
+        this.SetText(
+              year.toString().ZFill(4)
+            + "-"
+            + month.toString().ZFill(2)
+            + "-"
+            + day.toString().ZFill(2)
+        );
+    };
+    // Override
+    this.parse_value = function (value) {
+        if (!value) {
+            return null;
+        }
+        var [year, month, day] = value.split("-");
+        return {
+            "year": parseInt(year),
+            "month": parseInt(month),
+            "day": parseInt(day)
+        };
     };
     this._setup_styles();
 }
@@ -24612,16 +24658,19 @@ function DashGuiTimePicker (
     label_text="",
     binder=null,
     on_submit_cb=null,
+    on_autosave_cb=null,
     on_change_cb=null,
     color=null,
-    min="",  // Ex: "09:00"
-    max="",  // Ex: "18:00"
+    // (in 24-hour format)
+    // hh:mm (or hh:mm:ss if including seconds)
+    min="",
+    max="",
     include_seconds=false
 ) {
     this.include_seconds = include_seconds;
     DashGuiInputType.call(
         this,
-        $(  // Output: always 24-hour format, hh-mm (or hh-mm-ss if this.include_seconds)
+        $(
             "<input type='time'" +
             (min ? " min='" + min + "'" : "") +
             (max ? " max='" + max + "'" : "") +
@@ -24631,10 +24680,73 @@ function DashGuiTimePicker (
         label_text,
         binder,
         on_submit_cb,
+        on_autosave_cb,
         on_change_cb,
-        color
+        color,
+        false
     );
     this._setup_styles = function () {
+        this.input.css({
+            "flex": "none",
+            "width": Dash.Size.ColumnWidth * (this.include_seconds ? 0.8 : 0.66)
+        });
+    };
+    // Alternative to this, if using this.SetText() to set the
+    // value, it has to be passed in using the correct format:
+    // (in 24-hour format)
+    // hh:mm (or hh:mm:ss if including seconds)
+    this.SetValue = function (meridiem="", hours=0, mins=0, secs=0) {
+        hours = parseInt(hours);
+        // In this case (12-hour format), need to validate meridiem
+        // to ensure proper 24-hour format conversion, if needed
+        if (hours < 13) {
+            meridiem = meridiem.toLowerCase();
+            if (meridiem !== "am" && meridiem !== "pm") {
+                console.error("Error: Invalid meridiem:", meridiem);
+                return;
+            }
+            if (hours < 12 && meridiem === "pm") {
+                hours += 12;
+            }
+            else if (hours === 12 && meridiem === "am") {
+                hours = 0;
+            }
+        }
+        if (hours === 24) {
+            hours = 0;
+        }
+        var value = (
+              hours.toString().ZFill(2)
+            + ":"
+            + mins.toString().ZFill(2)
+        );
+        if (this.include_seconds) {
+            value += ":" + secs.toString().ZFill(2);
+        }
+        this.SetText(value);
+    };
+    // Override
+    this.parse_value = function (value) {
+        if (!value) {
+            return null;
+        }
+        var mins;
+        var hours;
+        var secs = null;
+        if (this.include_seconds) {
+            [hours, mins, secs] = value.split(":");
+        }
+        else {
+            [hours, mins] = value.split(":");
+        }
+        hours = parseInt(hours);
+        return {
+            "hours_24": hours,
+            "hours_12": hours > 12 ? hours - 12 : hours,
+            "mins": parseInt(mins),
+            "secs": secs !== null ? parseInt(secs) : secs,
+            "meridiem": hours < 12 ? "am" : "pm"
+        };
     };
     this._setup_styles();
 }
@@ -35864,9 +35976,10 @@ function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
     };
 }
 
+/**@member DashGuiInputBase*/
 function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
-    DashGuiInputBase.call(this, color);
+    DashGuiInputBase.call(this, color, true, true);
     this.input = $(
         "<input class='" + this.color.PlaceholderClass + "' " +
         (this.placeholder.toString().toLowerCase().includes("password") ? "type=password " : "") +
@@ -35958,7 +36071,13 @@ function DashGuiInput (placeholder_text="", color=null) {
 }
 
 // Abstract from this for any input element
-function DashGuiInputBase (color=null) {
+function DashGuiInputBase (
+    color=null, include_paste_connection=true, include_click_connections=false, parse_on_set=true
+) {
+    this.color = color || Dash.Color.Light;
+    this.include_paste_connection = include_paste_connection;
+    this.include_click_connections = include_click_connections;
+    this.parse_on_set = parse_on_set;
     this.tab_index = 0;
     this.locked = false;
     this.autosave = false;
@@ -35976,7 +36095,6 @@ function DashGuiInputBase (color=null) {
     this.previous_submitted_text = "";
     this.height = Dash.Size.RowHeight;
     this.last_arrow_navigation_ts = null;
-    this.color = color || Dash.Color.Light;
     this.submit_called_from_autosave = false;
     this.Flatten = function () {
         Dash.Gui.Flatten(this.html);
@@ -36057,7 +36175,9 @@ function DashGuiInputBase (color=null) {
         return this.input.val();
     };
     this.SetText = function (text, input_row_data_key="") {
-        text = this.parse_value(text, input_row_data_key);
+        if (this.parse_on_set) {
+            text = this.parse_value(text, input_row_data_key);
+        }
         this.last_val = text;
         this.last_submitted_text = text;
         return this.input.val(text);
@@ -36190,10 +36310,6 @@ function DashGuiInputBase (color=null) {
     };
     this.setup_connections = function () {
         (function (self) {
-            self.input.on("click", function (event) {
-                event.preventDefault();
-                return false;
-            });
             self.input.on("keydown",function (e) {
                 if (self.autosave && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
                     self.last_arrow_navigation_ts = new Date();
@@ -36205,12 +36321,21 @@ function DashGuiInputBase (color=null) {
             self.input.on("change", function () {
                 self.on_change();
             });
-            self.input.on("paste", function () {
-                self.on_change();
-            });
-            self.input.on("keyup click", function () {
-                self.on_change();
-            });
+            if (self.include_paste_connection) {
+                self.input.on("paste", function () {
+                    self.on_change();
+                });
+            }
+            if (self.include_click_connections) {
+                // Isn't this one redundant because of the next connection?
+                self.input.on("click", function (event) {
+                    event.preventDefault();
+                    return false;
+                });
+                self.input.on("keyup click", function () {
+                    self.on_change();
+                });
+            }
         })(this);
         this.EnableBlurSubmit();
     };
@@ -36218,15 +36343,23 @@ function DashGuiInputBase (color=null) {
 
 /**@member DashGuiInputBase*/
 // Abstract from this for input elements with specific "types", such as "date", "time", etc
-function DashGuiInputType (input, label_text="", binder=null, on_submit_cb=null, on_change_cb=null, color=null) {
+function DashGuiInputType (
+    input, label_text="", binder=null, on_submit_cb=null, on_autosave_cb=null,
+    on_change_cb=null, color=null, include_paste_connection=true
+) {
     this.input = input;
     this.label_text = label_text;
-    DashGuiInputBase.call(this, color || (binder ? binder.color : color));
+    this.on_submit_cb = on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb;
+    this.on_autosave_cb = on_autosave_cb && binder ? on_autosave_cb.bind(binder) : on_autosave_cb;
+    this.on_change_cb = on_change_cb && binder ? on_change_cb.bind(binder) : on_change_cb;
+    DashGuiInputBase.call(
+        this,
+        color || (binder ? binder.color : color),
+        include_paste_connection,
+        false,
+        false
+    );
     this.label = null;
-    this.EnableAutosave();
-    this.SetOnSubmit(on_submit_cb, binder);
-    this.SetOnChange(on_change_cb, binder);
-    this.SetOnAutosave(on_change_cb, binder);
     this.setup_styles = function () {
         this.html.css({
             "height": this.height,
@@ -36240,10 +36373,51 @@ function DashGuiInputType (input, label_text="", binder=null, on_submit_cb=null,
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "background": "none"
         });
         this.html.append(this.input);
+        this.set_cbs();
         this.setup_connections();
+    };
+    // Intended to be overridden
+    this.SetValue = function (value) {
+        // Override this, using it as a wrapper for this.SetText(), if the input type
+        // has a specific format that is required in order for the value to be set, rather
+        // than expecting the user to know the right format when calling this.SetText()
+        this.SetText(value);
+    };
+    this.GetValue = function () {
+        return this.parse_value(this.Text());
+    };
+    this.set_cbs = function () {
+        (function (self) {
+            if (self.on_submit_cb) {
+                self.SetOnSubmit(
+                    function () {
+                        self.on_submit_cb(self.GetValue());
+                    },
+                    self
+                );
+            }
+            if (self.on_autosave_cb) {
+                self.EnableAutosave();
+                self.SetOnAutosave(
+                    function () {
+                        self.on_autosave_cb(self.GetValue());
+                    },
+                    self
+                );
+            }
+            if (self.on_change_cb) {
+                self.SetOnChange(
+                    function () {
+                        self.on_change_cb(self.GetValue());
+                    },
+                    self
+                );
+            }
+        })(this);
     };
     this.setup_label = function () {
         if (!(this.label_text.endsWith(":"))) {
@@ -36254,7 +36428,8 @@ function DashGuiInputType (input, label_text="", binder=null, on_submit_cb=null,
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": "80%",
-            "flex": "none"
+            "flex": "none",
+            "margin-right": Dash.Size.Padding * 0.5
         });
         this.html.append(this.label);
     };
@@ -37054,6 +37229,7 @@ function DashGuiPropertyBox (
     this.top_right_delete_button = null;
     this.indent_px = Dash.Size.Padding * 2;
     this.every_other_row_hightlight = null;
+    this.bottom_border = "1px dotted rgba(0, 0, 0, 0.2)";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -37140,8 +37316,19 @@ function DashGuiPropertyBox (
             return;
         }
         row.html.css({
-            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
+            "margin-left": this.indent_px + (
+                (this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0
+            )
         });
+    };
+    this.on_input_added = function (key, can_edit) {
+        if (!can_edit) {
+            this.inputs[key].SetLocked(true);
+        }
+        this.indent_row(this.inputs[key]);
+        this.AddHTML(this.inputs[key].html);
+        this.track_row(this.inputs[key]);
+        return this.inputs[key];
     };
     this.on_server_property_set = function (property_set_data) {
         if (property_set_data["error"]) {
@@ -37460,7 +37647,9 @@ function DashGuiPropertyBoxInterface () {
     // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
     // it's only been implemented in input-related areas for now (there may be other areas it should be added)
     this.SetGetFormattedDataCallback = function (callback, binder=null) {
-        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+        this.get_formatted_data_cb = (
+            binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback
+        );
     };
     this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
@@ -37553,10 +37742,12 @@ function DashGuiPropertyBoxInterface () {
         var button = (function (self) {
             return new Dash.Gui.Button(
                 label_text,
-                // Andrew 1/17/23 - For some reason, the original code here wraps the provided callback in an empty function, which
-                // suppresses the button's actual callback return values. I can't understand why it was written this way, but I've
-                // added an extra param, 'wrap_cb', to circumvent this behavior and actually pass the provided callback directly to
-                // the button, as it should be. I've done it this way to make sure nothing else will break, but this is a strange one.
+                // Andrew 1/17/23 - For some reason, the original code here wraps the provided
+                // callback in an empty function, which suppresses the button's actual callback
+                // return values. I can't understand why it was written this way, but I've added
+                // an extra param, 'wrap_cb', to circumvent this behavior and actually pass the
+                // provided callback directly to the button, as it should be. I've done it this
+                // way to make sure nothing else will break, but this is a strange one.
                 wrap_cb ? function () {
                     if (callback) {
                         callback.bind(self.binder)(button);
@@ -37585,7 +37776,9 @@ function DashGuiPropertyBoxInterface () {
         });
         return button;
     };
-    this.AddCombo = function (label_text, combo_options, property_key="", default_value=null, bool=false, options={}) {
+    this.AddCombo = function (
+        label_text, combo_options, property_key="", default_value=null, bool=false, options={}
+    ) {
         var indent_px = options["indent_px"] || (Dash.Size.Padding * 2);
         var indent_row = false;
         if (this.num_headers > 0) {
@@ -37642,7 +37835,9 @@ function DashGuiPropertyBoxInterface () {
         this.track_row(row);
         return row;
     };
-    this.AddInput = function (data_key, label_text="", default_value="", combo_options=null, can_edit=false, options={}) {
+    this.AddInput = function (
+        data_key, label_text="", default_value="", combo_options=null, can_edit=false, options={}
+    ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
         if (!label_text) {
@@ -37713,10 +37908,12 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(label.html);
         return label;
     };
-    // TODO: this should've originally been setup to be directly connected to this property box's set_data function
+    // TODO: this should've originally been setup to be directly
+    //  connected to this property box's set_data function
     this.AddCheckbox = function (
-        local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null,
-        label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
+        local_storage_key="", default_state=true, color=null, hover_hint="Toggle",
+        binder=null, callback=null, label_text="", label_first=true,
+        include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
     ) {
         label_text = label_text.trim();
         if (label_text && !label_text.endsWith(":")) {
@@ -37740,7 +37937,7 @@ function DashGuiPropertyBoxInterface () {
         );
         this.indent_row(checkbox);
         checkbox.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": this.bottom_border
         });
         checkbox.label.label.css({
             "font-family": "sans_serif_bold",
@@ -37763,6 +37960,49 @@ function DashGuiPropertyBoxInterface () {
         this.AddHTML(checkbox.html);
         this.track_row(checkbox);
         return checkbox;
+    };
+    this.AddDatePicker = function (
+        key="", label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        this.inputs[key] = (function (self) {
+            return new Dash.Gui.DatePicker(
+                label_text || key.Title() || "[Date]",
+                self.binder,
+                on_submit_cb,
+                on_autosave_cb,
+                on_change_cb,
+                self.color,
+                min,
+                max
+            );
+        })(this);
+        this.inputs[key].html.css({
+            "border-bottom": this.bottom_border
+        });
+        return this.on_input_added(key, can_edit);
+    };
+    this.AddTimePicker = function (
+        key="", label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max="", include_seconds=false
+    ) {
+        this.inputs[key] = (function (self) {
+            return new Dash.Gui.TimePicker(
+                label_text || key.Title() || "[Time]",
+                self.binder,
+                on_submit_cb,
+                on_autosave_cb,
+                on_change_cb,
+                self.color,
+                min,
+                max,
+                include_seconds
+            );
+        })(this);
+        this.inputs[key].html.css({
+            "border-bottom": this.bottom_border
+        });
+        return this.on_input_added(key, can_edit);
     };
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
     this.HighlightEveryOtherRow = function (odd_rows=false, color="") {

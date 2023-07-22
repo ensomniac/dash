@@ -22,6 +22,7 @@ function DashGuiPropertyBox (
     this.top_right_delete_button = null;
     this.indent_px = Dash.Size.Padding * 2;
     this.every_other_row_hightlight = null;
+    this.bottom_border = "1px dotted rgba(0, 0, 0, 0.2)";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
@@ -133,8 +134,22 @@ function DashGuiPropertyBox (
         }
 
         row.html.css({
-            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
+            "margin-left": this.indent_px + (
+                (this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0
+            )
         });
+    };
+
+    this.on_input_added = function (key, can_edit) {
+        if (!can_edit) {
+            this.inputs[key].SetLocked(true);
+        }
+
+        this.indent_row(this.inputs[key]);
+        this.AddHTML(this.inputs[key].html);
+        this.track_row(this.inputs[key]);
+
+        return this.inputs[key];
     };
 
     this.on_server_property_set = function (property_set_data) {

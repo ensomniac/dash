@@ -1,7 +1,9 @@
+/**@member DashGuiInputBase*/
+
 function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
 
-    DashGuiInputBase.call(this, color);
+    DashGuiInputBase.call(this, color, true, true);
 
     this.input = $(
         "<input class='" + this.color.PlaceholderClass + "' " +

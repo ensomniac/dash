@@ -349,6 +349,26 @@ function Dash () {
                 return this;
             }
         };
+
+        String.prototype.ZFill = function (len) {
+            if (!len || this.length === len) {
+                return this;
+            }
+
+            var string = "";
+
+            string += this;
+
+            for (var _ of Dash.Math.Range(len)) {
+                if (string.length >= len) {
+                    break;
+                }
+
+                string = "0" + string;
+            }
+
+            return string;
+        };
     };
 
     this.extend_date_prototype = function () {

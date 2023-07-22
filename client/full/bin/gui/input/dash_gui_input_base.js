@@ -1,5 +1,12 @@
 // Abstract from this for any input element
-function DashGuiInputBase (color=null) {
+function DashGuiInputBase (
+    color=null, include_paste_connection=true, include_click_connections=false, parse_on_set=true
+) {
+    this.color = color || Dash.Color.Light;
+    this.include_paste_connection = include_paste_connection;
+    this.include_click_connections = include_click_connections;
+    this.parse_on_set = parse_on_set;
+
     this.tab_index = 0;
     this.locked = false;
     this.autosave = false;
@@ -17,7 +24,6 @@ function DashGuiInputBase (color=null) {
     this.previous_submitted_text = "";
     this.height = Dash.Size.RowHeight;
     this.last_arrow_navigation_ts = null;
-    this.color = color || Dash.Color.Light;
     this.submit_called_from_autosave = false;
 
     this.Flatten = function () {
@@ -124,7 +130,9 @@ function DashGuiInputBase (color=null) {
     };
 
     this.SetText = function (text, input_row_data_key="") {
-        text = this.parse_value(text, input_row_data_key);
+        if (this.parse_on_set) {
+            text = this.parse_value(text, input_row_data_key);
+        }
 
         this.last_val = text;
         this.last_submitted_text = text;
@@ -296,12 +304,6 @@ function DashGuiInputBase (color=null) {
 
     this.setup_connections = function () {
         (function (self) {
-            self.input.on("click", function (event) {
-                event.preventDefault();
-
-                return false;
-            });
-
             self.input.on("keydown",function (e) {
                 if (self.autosave && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
                     self.last_arrow_navigation_ts = new Date();
@@ -316,13 +318,24 @@ function DashGuiInputBase (color=null) {
                 self.on_change();
             });
 
-            self.input.on("paste", function () {
-                self.on_change();
-            });
+            if (self.include_paste_connection) {
+                self.input.on("paste", function () {
+                    self.on_change();
+                });
+            }
 
-            self.input.on("keyup click", function () {
-                self.on_change();
-            });
+            if (self.include_click_connections) {
+                // Isn't this one redundant because of the next connection?
+                self.input.on("click", function (event) {
+                    event.preventDefault();
+
+                    return false;
+                });
+
+                self.input.on("keyup click", function () {
+                    self.on_change();
+                });
+            }
         })(this);
 
         this.EnableBlurSubmit();
