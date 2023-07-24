@@ -64,11 +64,21 @@ class ApiUsers:
     def login(self):
         from Dash.Users import Login
 
-        return self.SetResponse(self.merge_addl_into_init(Login(
+        response = Login(
             use_pin=self.ParseParam("use_pin", bool, False),
             request_params=self.Params,
             dash_context=self.DashContext
-        )))
+        )
+
+        try:
+            # When abstracting from both this class and ApiCore, having access to
+            # self.User is sometimes needed when adding custom init data on login
+            if response.get("user") and hasattr(self, "SetUser") and hasattr(self, "User") and not self.User:
+                self.SetUser(response["user"])
+        except:
+            pass
+
+        return self.SetResponse(self.merge_addl_into_init(response))
 
     # TODO - get rid of this code - it's been moved to Admin.py (why is this not using Users.GetAll?)
     def get_all(self):

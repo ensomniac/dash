@@ -184,24 +184,6 @@ class ApiCore:
 
         return self._dash_global
 
-    def process_raw_body_content(self):
-        # This was an attempt at resolving this issue, but it still
-        # isn't solved and I have to move on. Leaving this breakout for
-        # future dev. GOOD NEWS: I know how to parse the content in
-        # this case (see sys.stdin.read()) but that only works if cgi.FieldStorage
-        # has not yet been read. So the solution comes down to determining
-        # what type of request it is first, and then picking the correct method
-
-        self._raw_body = str(sys.stdin.read())
-
-        # Ref: https://bugs.python.org/issue32029
-        # There's a long-running bug in cgi (see ref) that means we can't properly
-        # handle certain requests that come through. This is a work-around that
-        # allows the request to continue without failing, though with no params.
-        # As of writing, this is useful to allow certain webhooks to hit the server.
-        self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
-        self._proceeding_with_empty_fs = True
-
     def AddNotifyEmail(self, email):
         if email in self._additional_notify_emails:
             return
@@ -435,6 +417,24 @@ class ApiCore:
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
         self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
+
+    def process_raw_body_content(self):
+        # This was an attempt at resolving this issue, but it still
+        # isn't solved and I have to move on. Leaving this breakout for
+        # future dev. GOOD NEWS: I know how to parse the content in
+        # this case (see sys.stdin.read()) but that only works if cgi.FieldStorage
+        # has not yet been read. So the solution comes down to determining
+        # what type of request it is first, and then picking the correct method
+
+        self._raw_body = str(sys.stdin.read())
+
+        # Ref: https://bugs.python.org/issue32029
+        # There's a long-running bug in cgi (see ref) that means we can't properly
+        # handle certain requests that come through. This is a work-around that
+        # allows the request to continue without failing, though with no params.
+        # As of writing, this is useful to allow certain webhooks to hit the server.
+        self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
+        self._proceeding_with_empty_fs = True
 
     def get_misc_for_email(self, strict_notify, notify_email_list):
         from Dash import PersonalContexts
