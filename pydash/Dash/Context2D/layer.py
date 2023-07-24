@@ -787,14 +787,25 @@ class Layer:
             if not url:
                 continue
 
-            layer_id_in_url = url.split("/layers/")[-1].split("/")[0]
+            split = url.split("/layers/")
+            c2d_id_in_url = split[0].split("/")[-1]
+            layer_id_in_url = split[-1].split("/")[0]
 
-            if layer_id_in_url == self.ID:
+            if layer_id_in_url == self.ID and c2d_id_in_url == self.context_2d.ID:
+                continue
+
+            fixed_url = ""
+
+            if layer_id_in_url != self.ID:
+                fixed_url = (fixed_url or file_data[key]).replace(f"/layers/{layer_id_in_url}/", f"/layers/{self.ID}/")
+
+            if c2d_id_in_url != self.context_2d.ID:
+                fixed_url = (fixed_url or file_data[key]).replace(f"/{c2d_id_in_url}/layers/", f"/{self.context_2d.ID}/layers/")
+
+            if not fixed_url:
                 continue
 
             from Dash.Utils import GetFilePathFromURL
-
-            fixed_url = file_data[key].replace(f"/layers/{layer_id_in_url}/", f"/layers/{self.ID}/")
 
             path = GetFilePathFromURL(
                 dash_context=self.context_2d.DashContext,
