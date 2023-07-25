@@ -386,7 +386,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
         placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
-        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true, allow_update=true
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true,
+        allow_update=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -472,6 +473,47 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.elements.push(input);
 
         return input;
+    };
+
+    this.AddDatePicker = function (
+        label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        var picker = new Dash.Gui.DatePicker(
+            label_text || "[Date]",
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+
+        if (!can_edit) {
+            picker.SetLocked(true);
+        }
+
+        picker.height = this.height - (Dash.Size.Padding * 0.1);
+
+        picker.input.css({
+            "margin-top": Dash.Size.Padding * 0.1,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "border-radius": Dash.Size.BorderRadius,
+            "border": "1px solid " + this.color.PinstripeDark
+        });
+
+        picker.html.css({
+            "height": picker.height,
+            "line-height": picker.height + "px",
+            "margin-left": this.elements.length ? Dash.Size.Padding : 0
+        });
+
+        this.elements.push(picker);
+
+        this.AddHTML(picker.html);
+
+        return picker;
     };
 
     this.on_input_keystroke = function () {

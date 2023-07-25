@@ -22,9 +22,9 @@ function DashGuiInputBase (
     this.skip_next_autosave = false;
     this.on_autosave_callback = null;
     this.previous_submitted_text = "";
-    this.height = Dash.Size.RowHeight;
     this.last_arrow_navigation_ts = null;
     this.submit_called_from_autosave = false;
+    this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
 
     this.Flatten = function () {
         Dash.Gui.Flatten(this.html);

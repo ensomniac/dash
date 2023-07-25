@@ -38,7 +38,9 @@ function DashGuiTimePicker (
     this._setup_styles = function () {
         this.input.css({
             "flex": "none",
-            "width": Dash.Size.ColumnWidth * (this.include_seconds ? 0.8 : 0.66)
+            "width": Dash.Size.ColumnWidth * (
+                this.include_seconds ? (Dash.IsMobile ? 0.5 : 0.8) : (Dash.IsMobile ? 0.41 : 0.66)
+            )
         });
     };
 

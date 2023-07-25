@@ -32,7 +32,7 @@ function DashGuiDatePicker (
     this._setup_styles = function () {
         this.input.css({
             "flex": "none",
-            "width": Dash.Size.ColumnWidth * 0.74
+            "width": Dash.Size.ColumnWidth * (Dash.IsMobile ? 0.41 : 0.66)
         });
     };
 

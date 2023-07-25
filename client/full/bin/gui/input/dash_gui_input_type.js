@@ -22,24 +22,35 @@ function DashGuiInputType (
     this.label = null;
 
     this.setup_styles = function () {
-        this.html.css({
+        var html_css = {
             "height": this.height,
             "line-height": this.height + "px",
             "display": "flex"
-        });
+        };
 
-        if (this.label_text) {
-            this.setup_label();
-        }
-
-        this.input.css({
+        var input_css = {
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "background": "none"
-        });
+        };
 
+        if (Dash.IsMobile) {
+            html_css["border"] = "1px solid " + this.color.Stroke;
+            html_css["border-radius"] = Dash.Size.BorderRadius * 0.5;
+
+            input_css["padding-left"] = Dash.Size.Padding * 0.5;
+            input_css["padding-right"] = Dash.Size.Padding * 0.25;
+        }
+
+        if (this.label_text) {
+            this.setup_label();
+        }
+
+        this.input.css(input_css);
+
+        this.html.css(html_css);
         this.html.append(this.input);
 
         this.set_cbs();
@@ -92,19 +103,31 @@ function DashGuiInputType (
     };
 
     this.setup_label = function () {
-        if (!(this.label_text.endsWith(":"))) {
+        if (!Dash.IsMobile && !(this.label_text.endsWith(":"))) {
             this.label_text += ":";
         }
 
         this.label = $("<div>" + this.label_text + "</div>");
 
-        this.label.css({
-            "color": this.color.Text,
+        var css = {
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
-            "flex": "none",
-            "margin-right": Dash.Size.Padding * 0.5
-        });
+            "font-size": "80%"
+        };
+
+        if (Dash.IsMobile) {
+            css["position"] = "absolute";
+            css["top"] = -Dash.Size.Padding * 1.4;
+            css["left"] = Dash.Size.Padding * 0.1;
+            css["color"] = this.color.StrokeLight;
+        }
+
+        else {
+            css["flex"] = "none";
+            css["color"] = this.color.Text;
+            css["margin-right"] = Dash.Size.Padding * 0.5;
+        }
+
+        this.label.css(css);
 
         this.html.append(this.label);
     };

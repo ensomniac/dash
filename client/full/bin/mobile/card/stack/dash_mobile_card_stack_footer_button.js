@@ -42,6 +42,31 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
         this.setup_connections();
     };
 
+    this.SetNotificationActive = function (is_active) {
+        if (is_active && !this.notification_icon) {
+            this.create_notification_icon();
+        }
+
+        if (!is_active && this.notification_icon) {
+            this.notification_icon.remove();
+
+            this.notification_icon = null;
+        }
+    };
+
+    this.StyleAsBorderButton = function () {
+        if (!this.icon_only) {
+            this.html.css({
+                "background": "",
+                "border": "1px solid " + Dash.Color.Mobile.AccentPrimary
+            });
+
+            this.label.css({
+                "color": this.color.Text
+            });
+        }
+    };
+
     this.add_icon = function () {
         this.icon_size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
 
@@ -149,18 +174,6 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
                 750
             );
         })(this);
-    };
-
-    this.SetNotificationActive = function (is_active) {
-        if (is_active && !this.notification_icon) {
-            this.create_notification_icon();
-        }
-
-        if (!is_active && this.notification_icon) {
-            this.notification_icon.remove();
-
-            this.notification_icon = null;
-        }
     };
 
     this.create_notification_icon = function () {

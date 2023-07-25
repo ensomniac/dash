@@ -23977,7 +23977,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     // TODO: These params are a mess, fix it (globally)
     this.AddInput = function (
         placeholder_text, data_key, width=null, flex=false, on_submit_cb=null, on_change_cb=null,
-        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true, allow_update=true
+        can_edit=true, include_label=false, label_text="", double_click_clear=true, transparent=true,
+        allow_update=true
     ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInput requires ToolRow to have been provided a 'get_data_cb'");
@@ -24044,6 +24045,39 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         }
         this.elements.push(input);
         return input;
+    };
+    this.AddDatePicker = function (
+        label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        var picker = new Dash.Gui.DatePicker(
+            label_text || "[Date]",
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+        if (!can_edit) {
+            picker.SetLocked(true);
+        }
+        picker.height = this.height - (Dash.Size.Padding * 0.1);
+        picker.input.css({
+            "margin-top": Dash.Size.Padding * 0.1,
+            "padding-left": Dash.Size.Padding * 0.5,
+            "border-radius": Dash.Size.BorderRadius,
+            "border": "1px solid " + this.color.PinstripeDark
+        });
+        picker.html.css({
+            "height": picker.height,
+            "line-height": picker.height + "px",
+            "margin-left": this.elements.length ? Dash.Size.Padding : 0
+        });
+        this.elements.push(picker);
+        this.AddHTML(picker.html);
+        return picker;
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -24623,7 +24657,7 @@ function DashGuiDatePicker (
     this._setup_styles = function () {
         this.input.css({
             "flex": "none",
-            "width": Dash.Size.ColumnWidth * 0.74
+            "width": Dash.Size.ColumnWidth * (Dash.IsMobile ? 0.41 : 0.66)
         });
     };
     // Alternative to this, if using this.SetText() to set the value
@@ -24688,7 +24722,9 @@ function DashGuiTimePicker (
     this._setup_styles = function () {
         this.input.css({
             "flex": "none",
-            "width": Dash.Size.ColumnWidth * (this.include_seconds ? 0.8 : 0.66)
+            "width": Dash.Size.ColumnWidth * (
+                this.include_seconds ? (Dash.IsMobile ? 0.5 : 0.8) : (Dash.IsMobile ? 0.41 : 0.66)
+            )
         });
     };
     // Alternative to this, if using this.SetText() to set the
@@ -36093,9 +36129,9 @@ function DashGuiInputBase (
     this.skip_next_autosave = false;
     this.on_autosave_callback = null;
     this.previous_submitted_text = "";
-    this.height = Dash.Size.RowHeight;
     this.last_arrow_navigation_ts = null;
     this.submit_called_from_autosave = false;
+    this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
     this.Flatten = function () {
         Dash.Gui.Flatten(this.html);
     };
@@ -36361,21 +36397,29 @@ function DashGuiInputType (
     );
     this.label = null;
     this.setup_styles = function () {
-        this.html.css({
+        var html_css = {
             "height": this.height,
             "line-height": this.height + "px",
             "display": "flex"
-        });
-        if (this.label_text) {
-            this.setup_label();
-        }
-        this.input.css({
+        };
+        var input_css = {
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "background": "none"
-        });
+        };
+        if (Dash.IsMobile) {
+            html_css["border"] = "1px solid " + this.color.Stroke;
+            html_css["border-radius"] = Dash.Size.BorderRadius * 0.5;
+            input_css["padding-left"] = Dash.Size.Padding * 0.5;
+            input_css["padding-right"] = Dash.Size.Padding * 0.25;
+        }
+        if (this.label_text) {
+            this.setup_label();
+        }
+        this.input.css(input_css);
+        this.html.css(html_css);
         this.html.append(this.input);
         this.set_cbs();
         this.setup_connections();
@@ -36420,17 +36464,26 @@ function DashGuiInputType (
         })(this);
     };
     this.setup_label = function () {
-        if (!(this.label_text.endsWith(":"))) {
+        if (!Dash.IsMobile && !(this.label_text.endsWith(":"))) {
             this.label_text += ":";
         }
         this.label = $("<div>" + this.label_text + "</div>");
-        this.label.css({
-            "color": this.color.Text,
+        var css = {
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
-            "flex": "none",
-            "margin-right": Dash.Size.Padding * 0.5
-        });
+            "font-size": "80%"
+        };
+        if (Dash.IsMobile) {
+            css["position"] = "absolute";
+            css["top"] = -Dash.Size.Padding * 1.4;
+            css["left"] = Dash.Size.Padding * 0.1;
+            css["color"] = this.color.StrokeLight;
+        }
+        else {
+            css["flex"] = "none";
+            css["color"] = this.color.Text;
+            css["margin-right"] = Dash.Size.Padding * 0.5;
+        }
+        this.label.css(css);
         this.html.append(this.label);
     };
     this.setup_styles();
@@ -37965,18 +38018,16 @@ function DashGuiPropertyBoxInterface () {
         key="", label_text="", can_edit=false, on_submit_cb=null,
         on_autosave_cb=null, on_change_cb=null, min="", max=""
     ) {
-        this.inputs[key] = (function (self) {
-            return new Dash.Gui.DatePicker(
-                label_text || key.Title() || "[Date]",
-                self.binder,
-                on_submit_cb,
-                on_autosave_cb,
-                on_change_cb,
-                self.color,
-                min,
-                max
-            );
-        })(this);
+        this.inputs[key] = new Dash.Gui.DatePicker(
+            label_text || key.Title() || "[Date]",
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
         this.inputs[key].html.css({
             "border-bottom": this.bottom_border
         });
@@ -43777,7 +43828,9 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     this.setup_styles();
 }
 
-function DashMobileTextBox (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
+function DashMobileTextBox (
+    color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false
+) {
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.placeholder_text = placeholder_text;
     this.binder = binder;
@@ -45381,6 +45434,26 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
         this.add_label();
         this.setup_connections();
     };
+    this.SetNotificationActive = function (is_active) {
+        if (is_active && !this.notification_icon) {
+            this.create_notification_icon();
+        }
+        if (!is_active && this.notification_icon) {
+            this.notification_icon.remove();
+            this.notification_icon = null;
+        }
+    };
+    this.StyleAsBorderButton = function () {
+        if (!this.icon_only) {
+            this.html.css({
+                "background": "",
+                "border": "1px solid " + Dash.Color.Mobile.AccentPrimary
+            });
+            this.label.css({
+                "color": this.color.Text
+            });
+        }
+    };
     this.add_icon = function () {
         this.icon_size = this.height - (Dash.Size.Padding * (this.icon_only ? 0.25 : 0.5));
         this.icon = new Dash.Gui.Icon(
@@ -45465,15 +45538,6 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
                 750
             );
         })(this);
-    };
-    this.SetNotificationActive = function (is_active) {
-        if (is_active && !this.notification_icon) {
-            this.create_notification_icon();
-        }
-        if (!is_active && this.notification_icon) {
-            this.notification_icon.remove();
-            this.notification_icon = null;
-        }
     };
     this.create_notification_icon = function () {
         this.notification_icon = Dash.Gui.GetMobileNotificationIcon(this.height * 0.25);

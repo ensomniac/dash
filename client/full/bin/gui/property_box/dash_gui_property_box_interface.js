@@ -520,18 +520,16 @@ function DashGuiPropertyBoxInterface () {
         key="", label_text="", can_edit=false, on_submit_cb=null,
         on_autosave_cb=null, on_change_cb=null, min="", max=""
     ) {
-        this.inputs[key] = (function (self) {
-            return new Dash.Gui.DatePicker(
-                label_text || key.Title() || "[Date]",
-                self.binder,
-                on_submit_cb,
-                on_autosave_cb,
-                on_change_cb,
-                self.color,
-                min,
-                max
-            );
-        })(this);
+        this.inputs[key] = new Dash.Gui.DatePicker(
+            label_text || key.Title() || "[Date]",
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
 
         this.inputs[key].html.css({
             "border-bottom": this.bottom_border
