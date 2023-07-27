@@ -29,6 +29,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.as_button_combo = false;
     this.on_rows_drawn_cb = null;
     this.list_offset_vertical = 0;
+    this.left_arrow_button = null;
+    this.right_arrow_button = null;
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.gravity_width_override = null;
@@ -388,8 +390,12 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.selected_option = selected_option;
         this.selected_option_id = selected_option["id"];
 
-        if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
+        if (this.initialized) {
+            this.update_arrow_buttons();
+
+            if (!ignore_callback && this.callback) {
+                this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
+            }
         }
     };
 
@@ -790,6 +796,64 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         }
 
         event.preventDefault();
+    };
+
+    this.on_arrow_button = function (left=null) {
+        if (left === null) {
+            return;
+        }
+
+        var active_index = this.GetActiveIndex();
+
+        if (active_index === null) {
+            return;
+        }
+
+        if (left) {
+            if (active_index < 1) {
+                return;  // Shouldn't be possible, but just in case
+            }
+
+            this.Update(null, this.option_list[active_index - 1]);
+
+            return;
+        }
+
+        if (active_index > (this.option_list.length - 2)) {
+            return;  // Shouldn't be possible, but just in case
+        }
+
+        this.Update(null, this.option_list[active_index + 1]);
+    };
+
+    this.update_arrow_buttons = function () {
+        if (!this.left_arrow_button) {
+            return;
+        }
+
+        var active_index = this.GetActiveIndex();
+
+        if (active_index === null) {
+            return;
+        }
+
+        if (active_index < 1) {
+            this.left_arrow_button.Disable();
+
+            this.right_arrow_button.Enable();
+        }
+
+        else if (active_index > (this.option_list.length - 2)) {
+            this.left_arrow_button.Enable();
+
+            this.right_arrow_button.Disable();
+        }
+
+        else {
+            this.left_arrow_button.Enable();
+
+            this.right_arrow_button.Enable();
+        }
     };
 
     this.initialize_style();

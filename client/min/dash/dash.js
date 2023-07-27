@@ -26861,6 +26861,8 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.as_button_combo = false;
     this.on_rows_drawn_cb = null;
     this.list_offset_vertical = 0;
+    this.left_arrow_button = null;
+    this.right_arrow_button = null;
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.gravity_width_override = null;
@@ -27138,8 +27140,11 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         this.previous_selected_option = this.selected_option;
         this.selected_option = selected_option;
         this.selected_option_id = selected_option["id"];
-        if (this.initialized && !ignore_callback && this.callback) {
-            this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
+        if (this.initialized) {
+            this.update_arrow_buttons();
+            if (!ignore_callback && this.callback) {
+                this.callback(selected_option, this.previous_selected_option, this.additional_data, search_text);
+            }
         }
     };
     this.update_label_for_multi_select = function () {
@@ -27435,6 +27440,47 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
             }
         }
         event.preventDefault();
+    };
+    this.on_arrow_button = function (left=null) {
+        if (left === null) {
+            return;
+        }
+        var active_index = this.GetActiveIndex();
+        if (active_index === null) {
+            return;
+        }
+        if (left) {
+            if (active_index < 1) {
+                return;  // Shouldn't be possible, but just in case
+            }
+            this.Update(null, this.option_list[active_index - 1]);
+            return;
+        }
+        if (active_index > (this.option_list.length - 2)) {
+            return;  // Shouldn't be possible, but just in case
+        }
+        this.Update(null, this.option_list[active_index + 1]);
+    };
+    this.update_arrow_buttons = function () {
+        if (!this.left_arrow_button) {
+            return;
+        }
+        var active_index = this.GetActiveIndex();
+        if (active_index === null) {
+            return;
+        }
+        if (active_index < 1) {
+            this.left_arrow_button.Disable();
+            this.right_arrow_button.Enable();
+        }
+        else if (active_index > (this.option_list.length - 2)) {
+            this.left_arrow_button.Enable();
+            this.right_arrow_button.Disable();
+        }
+        else {
+            this.left_arrow_button.Enable();
+            this.right_arrow_button.Enable();
+        }
     };
     this.initialize_style();
     this.setup_connections();
@@ -27947,6 +27993,77 @@ function DashGuiComboInterface () {
         })(this);
         this.SetStaticLabelText(label_text);
         this.as_button_combo = true;
+    };
+    this.AddArrowButtons = function (left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy") {
+        if (this.multi_select) {
+            console.warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
+            return;
+        }
+        if (this.left_arrow_button) {
+            return;
+        }
+        var size = Math.max(this.html.outerHeight() || 0, this.inner_html.outerHeight() || 0);
+        if (!size) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddArrowButtons();
+                    },
+                    100
+                );
+            })(this);
+            return;
+        }
+        this.html.css({
+            "margin-left": size,
+            "margin-right": size
+        });
+        var options = {
+            "container_size": size,
+            "size_mult": 0.9
+        };
+        (function (self) {
+            self.left_arrow_button = new Dash.Gui.IconButton(
+                left_icon_name,
+                function () {
+                    self.on_arrow_button(true);
+                },
+                self,
+                self.color,
+                options
+            );
+            self.right_arrow_button = new Dash.Gui.IconButton(
+                right_icon_name,
+                function () {
+                    self.on_arrow_button(false);
+                },
+                self,
+                self.color,
+                options
+            );
+        })(this);
+        this.left_arrow_button.html.css({
+            "position": "absolute",
+            "left": -size,
+            "top": 0
+        });
+        this.right_arrow_button.html.css({
+            "position": "absolute",
+            "right": -size,
+            "top": 0
+        });
+        this.html.append(this.left_arrow_button.html);
+        this.html.append(this.right_arrow_button.html);
+        this.update_arrow_buttons();
+    };
+    this.GetActiveIndex = function () {
+        var current_id = this.ActiveID();
+        for (var i in this.option_list) {
+            if (this.option_list[i]["id"] === current_id) {
+                return parseInt(i);
+            }
+        }
+        return null;
     };
     this.DisableFlash = function () {
         this.flash_enabled = false;
@@ -35694,11 +35811,13 @@ function DashGuiIcons (icon) {
         "arrow_down_alt":        new DashGuiIconDefinition(this.icon, "Arrow Down Alt", this.weight["regular"], "arrow-down"),
         "arrow_down_alt_heavy":  new DashGuiIconDefinition(this.icon, "Arrow Down Alt (Heavy)", this.weight["solid"], "arrow-down"),
         "arrow_left":            new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),
+        "arrow_left_heavy":      new DashGuiIconDefinition(this.icon, "Arrow Left (Heavy)", this.weight["solid"], "angle-left"),
         "arrow_left_alt":        new DashGuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
         "arrow_left_long":       new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
         "arrow_left_circled":    new DashGuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
         "arrow_left_from_right": new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
         "arrow_right":           new DashGuiIconDefinition(this.icon, "Arrow Right", this.weight["regular"], "angle-right"),
+        "arrow_right_heavy":     new DashGuiIconDefinition(this.icon, "Arrow Right (Heavy)", this.weight["solid"], "angle-right"),
         "arrow_right_to_right":  new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-to-right"),
         "arrow_to_left":         new DashGuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
         "arrow_up":              new DashGuiIconDefinition(this.icon, "Arrow Up", this.weight["regular"], "angle-up"),

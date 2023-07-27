@@ -184,6 +184,94 @@ function DashGuiComboInterface () {
         this.as_button_combo = true;
     };
 
+    this.AddArrowButtons = function (left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy") {
+        if (this.multi_select) {
+            console.warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
+
+            return;
+        }
+
+        if (this.left_arrow_button) {
+            return;
+        }
+
+        var size = Math.max(this.html.outerHeight() || 0, this.inner_html.outerHeight() || 0);
+
+        if (!size) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.AddArrowButtons();
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        this.html.css({
+            "margin-left": size,
+            "margin-right": size
+        });
+
+        var options = {
+            "container_size": size,
+            "size_mult": 0.9
+        };
+
+        (function (self) {
+            self.left_arrow_button = new Dash.Gui.IconButton(
+                left_icon_name,
+                function () {
+                    self.on_arrow_button(true);
+                },
+                self,
+                self.color,
+                options
+            );
+
+            self.right_arrow_button = new Dash.Gui.IconButton(
+                right_icon_name,
+                function () {
+                    self.on_arrow_button(false);
+                },
+                self,
+                self.color,
+                options
+            );
+        })(this);
+
+        this.left_arrow_button.html.css({
+            "position": "absolute",
+            "left": -size,
+            "top": 0
+        });
+
+        this.right_arrow_button.html.css({
+            "position": "absolute",
+            "right": -size,
+            "top": 0
+        });
+
+        this.html.append(this.left_arrow_button.html);
+        this.html.append(this.right_arrow_button.html);
+
+        this.update_arrow_buttons();
+    };
+
+    this.GetActiveIndex = function () {
+        var current_id = this.ActiveID();
+
+        for (var i in this.option_list) {
+            if (this.option_list[i]["id"] === current_id) {
+                return parseInt(i);
+            }
+        }
+
+        return null;
+    };
+
     this.DisableFlash = function () {
         this.flash_enabled = false;
     };
