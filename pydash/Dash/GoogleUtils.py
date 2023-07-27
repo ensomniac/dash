@@ -70,19 +70,23 @@ class GUtils:
         done = False
         file = BytesIO()
 
-        downloader = MediaIoBaseDownload(
-            file,
-            self.DriveClient.files().export(
-                fileId=file_id,
-                fields=fields,
-                mimeType=mime_type
+        try:
+            downloader = MediaIoBaseDownload(
+                file,
+                self.DriveClient.files().export(
+                    fileId=file_id,
+                    fields=fields,
+                    mimeType=mime_type
+                )
             )
-        )
 
-        while done is False:
-            status, done = downloader.next_chunk()
+            while done is False:
+                status, done = downloader.next_chunk()
 
-        Write(download_path, file.getbuffer())
+            Write(download_path, file.getbuffer())
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
         return download_path
 
@@ -354,6 +358,10 @@ class _DriveUtils:
                 fields=(fields_override or self.Fields),
                 supportsAllDrives=in_shared_drive
             ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
         except:
             return None  # Why is this not being handled?
 
@@ -423,23 +431,29 @@ class _DriveUtils:
             if extra_query:
                 query += f" and {extra_query}"
 
-        files = self.Client.files().list(
-            driveId=drive_id,
-            corpora="drive",
-            q=query,
-            fields=f"files({(fields_override or self.Fields)})",
-            supportsAllDrives=is_shared_drive,
-            includeItemsFromAllDrives=is_shared_drive
-        ).execute()["files"]
+        try:
+            return self.Client.files().list(
+                driveId=drive_id,
+                corpora="drive",
+                q=query,
+                fields=f"files({(fields_override or self.Fields)})",
+                supportsAllDrives=is_shared_drive,
+                includeItemsFromAllDrives=is_shared_drive
+            ).execute()["files"]
 
-        return files
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def GetFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
-        return self.Client.permissions().list(
-            supportsAllDrives=in_shared_drive,
-            fields=f"permissions({fields})",
-            fileId=file_id,
-        ).execute()["permissions"]
+        try:
+            return self.Client.permissions().list(
+                supportsAllDrives=in_shared_drive,
+                fields=f"permissions({fields})",
+                fileId=file_id,
+            ).execute()["permissions"]
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def AddPermissionToFile(self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False):
         """
@@ -458,18 +472,22 @@ class _DriveUtils:
             transfer_ownership = True
             notify_user = True
 
-        return self.Client.permissions().create(
-            supportsAllDrives=in_shared_drive,
-            transferOwnership=transfer_ownership,
-            fields="emailAddress, role, displayName, id",
-            fileId=file_id,
-            sendNotificationEmail=notify_user,
-            body={
-                "type": "user",
-                "emailAddress": user_email,
-                "role": permission_level
-            }
-        ).execute()
+        try:
+            return self.Client.permissions().create(
+                supportsAllDrives=in_shared_drive,
+                transferOwnership=transfer_ownership,
+                fields="emailAddress, role, displayName, id",
+                fileId=file_id,
+                sendNotificationEmail=notify_user,
+                body={
+                    "type": "user",
+                    "emailAddress": user_email,
+                    "role": permission_level
+                }
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def RemovePermissionFromFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         if not permission_id:
@@ -484,11 +502,15 @@ class _DriveUtils:
         if not permission_id:
             return None
 
-        return self.Client.permissions().delete(
-            supportsAllDrives=in_shared_drive,
-            fileId=file_id,
-            permissionId=permission_id
-        ).execute()
+        try:
+            return self.Client.permissions().delete(
+                supportsAllDrives=in_shared_drive,
+                fileId=file_id,
+                permissionId=permission_id
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
 
 class _SheetsUtils:
@@ -529,10 +551,16 @@ class _SheetsUtils:
         Note: This doesn't currently account for extra, empty rows at the bottom.
         """
 
-        data = self.Client.spreadsheets().get(
-            spreadsheetId=sheet_id,
-            includeGridData=True
-        ).execute()["sheets"][0]
+        data = {}
+
+        try:
+            data = self.Client.spreadsheets().get(
+                spreadsheetId=sheet_id,
+                includeGridData=True
+            ).execute()["sheets"][0]
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
         if row_data_only and data.get("data"):
             return data["data"][0]["rowData"]
