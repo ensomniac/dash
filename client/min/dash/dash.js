@@ -23544,8 +23544,8 @@ function DashGuiCheckbox (
         this.false_color = false_color;
         this.redraw();
     };
-    this.Disable = function () {
-        if (this.disabled) {
+    this.Disable = function (force=false) {
+        if (!force && this.disabled) {
             return;
         }
         this.icon_button.Disable();
@@ -23627,6 +23627,9 @@ function DashGuiCheckbox (
         this.restyle_icon_button();
         if (this.is_read_only) {
             this.SetReadOnly();
+        }
+        else if (this.disabled) {
+            this.Disable(true);
         }
         else if (!this.can_click) {
             this.DisableClick();
