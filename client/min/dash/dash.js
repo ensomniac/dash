@@ -23663,11 +23663,22 @@ function DashGuiCheckbox (
             this.label.label.css({
                 "margin-right": padding_to_icon
             });
+            if (this.include_border) {
+                this.label.border.css({
+                    "left": -Dash.Size.Padding * 0.75
+                });
+            }
         }
         else {
             this.label.label.css({
                 "margin-left": padding_to_icon
             });
+            if (this.include_border) {
+                this.label.border.css({
+                    "left": "",
+                    "right": -Dash.Size.Padding * 0.75
+                });
+            }
         }
     };
     this.get_checked_state = function () {

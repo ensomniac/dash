@@ -14,18 +14,65 @@ def ParseHTTPError(http_error):
     Attempt to decode Google's "unprintable" error (googleapiclient.errors.HttpError).
     """
 
+    # Should never happen
+    if not isinstance(http_error, HttpError):
+        raise Exception(http_error)
+
+    from json import loads
+
+    errors = []
+
     try:
-        raise Exception(
+        message = str(loads(http_error.content).get("error", {}).get("message", ""))
+
+    except Exception as e:
+        message = ""
+
+        errors.append(str(e))
+
+    if message:
+        raise Exception(message)
+
+    error = str(http_error).strip().strip("\n").strip()
+
+    try:
+        message = (
             f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
-            f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'  # noqa
+            f'returned "{http_error._get_reason()}". Details: "{http_error.error_details}">'  # noqa
         )
-    except:
+
+    except Exception as e:
+        errors.append(str(e))
+
         try:
-            raise Exception(
-                f'<HttpError {http_error.resp.status} when requesting {http_error.uri}. Details: "{http_error.error_details}">'
+            message = (
+                f'<HttpError {http_error.resp.status} when requesting '
+                f'{http_error.uri}. Details: "{http_error.error_details}">'
             )
-        except:
-            raise Exception(str(http_error))
+
+        except Exception as e:
+            errors.append(str(e))
+
+            if len(error) and error != "Exception:":
+                message = error
+
+            else:
+                message = (
+                    "The Google API returned an error that was either empty, had no information, "
+                    "or was unable to be parsed. Unfortunately, Google does this on purpose for "
+                    "security reasons.\n\nThis means the operation failed on Google's end, but we "
+                    "don't know why.\nPlease try again.\n\nIf this persists, even after waiting 10 "
+                    "minutes or so, reach out to an admin for assistance."
+                )
+
+    message += f"\n\n\n\n***Google Error***:\n{error}"
+
+    if len(errors):
+        errors = "\n>>".join(errors)
+
+        message += f"\n\n***Parser Errors***:\n{errors}"
+
+    raise Exception(message)
 
 
 class GUtils:
