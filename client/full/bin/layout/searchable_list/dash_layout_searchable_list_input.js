@@ -30,7 +30,7 @@ function DashLayoutSearchableListInput (list, on_search_cb=null, on_clear_cb=nul
             "right": 0,
             "height": this.row_height,
             "border-bottom": "1px solid " + this.color.Pinstripe,
-            "background": Dash.Color.Lighten(this.color.Background, 10),
+            "background": this.color.BackgroundRaised,
             "box-shadow": "none",
             "margin-right": 0,
             "padding-right": this.row_height + Dash.Size.Padding * 0.5

@@ -36068,6 +36068,7 @@ function DashGuiIcons (icon) {
         "triangle":              new DashGuiIconDefinition(this.icon, "Triangle", this.weight["regular"], "triangle"),
         "truck":                 new DashGuiIconDefinition(this.icon, "Truck", this.weight["regular"], "truck"),
         "unchecked_box":         new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
+        "unchecked_box_thin":    new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["light"],"square"),
         "undo":                  new DashGuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new DashGuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
         "unlink":                new DashGuiIconDefinition(this.icon, "Unlink", this.weight["regular"], "unlink"),
@@ -42945,7 +42946,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": Dash.Color.Lighten(this.color.Background, 5)
+            "background": this.color.BackgroundRaised
         });
         this.list_container.css({
             "position": "absolute",
@@ -43276,7 +43277,7 @@ function DashLayoutSearchableListInput (list, on_search_cb=null, on_clear_cb=nul
             "right": 0,
             "height": this.row_height,
             "border-bottom": "1px solid " + this.color.Pinstripe,
-            "background": Dash.Color.Lighten(this.color.Background, 10),
+            "background": this.color.BackgroundRaised,
             "box-shadow": "none",
             "margin-right": 0,
             "padding-right": this.row_height + Dash.Size.Padding * 0.5

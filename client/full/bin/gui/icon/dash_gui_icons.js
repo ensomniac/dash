@@ -276,6 +276,7 @@ function DashGuiIcons (icon) {
         "triangle":              new DashGuiIconDefinition(this.icon, "Triangle", this.weight["regular"], "triangle"),
         "truck":                 new DashGuiIconDefinition(this.icon, "Truck", this.weight["regular"], "truck"),
         "unchecked_box":         new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["regular"],"square"),
+        "unchecked_box_thin":    new DashGuiIconDefinition(this.icon, "Unchecked Box", this.weight["light"],"square"),
         "undo":                  new DashGuiIconDefinition(this.icon, "Undo", this.weight["regular"], "undo"),
         "unknown":               new DashGuiIconDefinition(this.icon, "Unknown Icon", this.weight["light"], "spider-black-widow"),
         "unlink":                new DashGuiIconDefinition(this.icon, "Unlink", this.weight["regular"], "unlink"),

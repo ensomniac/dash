@@ -28,7 +28,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             "top": 0,
             "right": 0,
             "bottom": 0,
-            "background": Dash.Color.Lighten(this.color.Background, 5)
+            "background": this.color.BackgroundRaised
         });
 
         this.list_container.css({
