@@ -68,6 +68,8 @@ function DashGuiIcons (icon) {
         "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
         "caret_down":            new DashGuiIconDefinition(this.icon, "Caret Down", this.weight["solid"], "caret-down"),
+        "caret_left":            new DashGuiIconDefinition(this.icon, "Caret Left", this.weight["solid"], "caret-left"),
+        "caret_right":           new DashGuiIconDefinition(this.icon, "Caret Right", this.weight["solid"], "caret-right"),
         "caret_up":              new DashGuiIconDefinition(this.icon, "Caret Up", this.weight["solid"], "caret-up"),
         "cdn_tool_accordion":    new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),

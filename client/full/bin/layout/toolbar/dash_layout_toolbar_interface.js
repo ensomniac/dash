@@ -288,7 +288,9 @@ function DashLayoutToolbarInterface () {
         return label;
     };
 
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddTransparentInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var input = this.AddInput(placeholder_label, callback, options, additional_data, double_click_clear);
 
         input.EnableAutosave();
@@ -336,7 +338,9 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
 
@@ -397,7 +401,8 @@ function DashLayoutToolbarInterface () {
                 );
             }
 
-            // This really shouldn't be default behavior, but leaving the default as true to ensure nothing breaks.
+            // This really shouldn't be default behavior, but leaving
+            // the default as true to ensure nothing breaks
             if (double_click_clear) {
                 input.input.on("dblclick", function () {
                     input.SetText("");
@@ -414,7 +419,10 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
+    this.AddCombo = function (
+        label_text, combo_options, selected_id, callback,
+        return_full_option=false, additional_data={}, extra_options={}
+    ) {
         var obj_index = this.objects.length;
 
         callback = callback ? callback.bind(this.binder) : function (selected) {
@@ -474,10 +482,11 @@ function DashLayoutToolbarInterface () {
     };
 
     this.AddCheckbox = function (
-        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+        label_text="", default_state=false, callback=null, identifier="", hover_hint="Toggle",
+        checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // LS key (mess)
             default_state,                                          // Default state
             this.color,                                             // Color
             hover_hint,                                             // Hover hint text

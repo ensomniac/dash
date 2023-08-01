@@ -1183,7 +1183,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return color_picker;
     };
 
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+    this.get_slider = function (
+        default_value, context_key, data_key, width_mult, label_text="",
+        reset_value=null, end_range=1.0, start_range=0, hover_text=""
+    ) {
         var value = this.get_value(data_key);
 
         return (function (self) {
@@ -1200,7 +1203,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
 
             requestAnimationFrame(function () {
-                self.style_slider(slider, reset_value || default_value, context_key);
+                self.style_slider(
+                    slider,
+                    reset_value !== null ? reset_value : default_value,
+                    context_key
+                );
             });
 
             if (hover_text) {
@@ -1218,6 +1225,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         slider.SetMaxValueLabelLength(5);
         slider.StyleForPropertyBox(0);
         slider.AddResetToDefaultButton(default_value, "Reset");
+
+        if (!this.can_edit) {
+            slider.Disable();
+        }
 
         // Ideally, we use this instead of the below slop, but it's not fully worked out yet
         // slider.FlexInsteadOfAbsolute();
@@ -1243,12 +1254,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
         });
 
-        if (!this.can_edit) {
-            slider.Disable();
-        }
-
         slider.html.css({
-            "margin-left": 0
+            "margin-left": 0,
+            "background": ""
         });
 
         this.contexts[context_key]["inputs"].push(slider.value_label);

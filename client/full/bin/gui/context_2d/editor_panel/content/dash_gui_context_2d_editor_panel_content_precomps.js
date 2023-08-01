@@ -43,10 +43,14 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     };
 
     this.draw_row = function (letter) {
-        var row = {};
+        var row = {
+            "container": $("<div></div>"),
+            "toolbar": new Dash.Layout.Toolbar(this)
+        };
+
         var data = this.get_data()[letter];
 
-        row["toolbar"] = new Dash.Layout.Toolbar(this);
+        row["container"].append(row["toolbar"].html);
 
         row["toolbar"].DisablePaddingRefactoring();
         row["toolbar"].RemoveStrokeSep();
@@ -58,6 +62,22 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         });
 
         var on_input_changed = (function (self) {
+            var checkbox = row["toolbar"].AddCheckbox(
+                "",
+                false,
+                function (checkbox) {
+                    self.on_expand_toggled(letter, checkbox.IsChecked(), row);
+                },
+                "",
+                "Expand/Collapse",
+                null,
+                false,
+                true
+            );
+
+            checkbox.SetTrueIconName("caret_down");
+            checkbox.SetFalseIconName("caret_right");
+
             return function (value) {
                 self.set_data("display_name", value, letter);
             };
@@ -127,7 +147,112 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
         this.rows.push(row);
 
-        this.html.append(row["toolbar"].html);
+        this.html.append(row["container"]);
+    };
+
+    this.on_expand_toggled = function (letter, expanded, row) {
+        if (!expanded) {
+            if (row["expanded_content"]) {
+                row["expanded_content"].hide();
+            }
+
+            return;
+        }
+
+        if (!row["expanded_content"]) {
+            row["expanded_content"] = $("<div></div>");
+
+            row["expanded_content"].css({
+                "margin-left": Dash.Size.Padding * 2,
+                "margin-right": Dash.Size.Padding,
+                "margin-bottom": Dash.Size.Padding,
+                "margin-top": -Dash.Size.Padding * 0.5,
+                "padding": Dash.Size.Padding,
+                "border-left": "1px solid " + this.color.PinstripeDark,
+                "border-right": "1px solid " + this.color.PinstripeDark,
+                "border-bottom": "1px solid " + this.color.PinstripeDark,
+                "border-bottom-left-radius": Dash.Size.BorderRadius,
+                "border-bottom-right-radius": Dash.Size.BorderRadius
+            });
+
+            row["container"].append(row["expanded_content"]);
+
+            this.add_slider_to_expanded_content(letter, row, "parallax", 0.5);
+        }
+
+        row["expanded_content"].show();
+    };
+
+    this.add_slider_to_expanded_content = function (
+        letter, row, data_key, default_value=null, start_range=0, end_range=1.0, label_text="", reset_value=null
+    ) {
+        var value = this.get_data()[letter][data_key];
+
+        default_value = default_value !== null ? default_value : start_range;
+
+        (function (self) {
+            var slider = new Dash.Gui.Slider(
+                self.color,
+                (label_text || data_key.Title()) + ":",
+                function (value) {
+                    self.set_data(data_key, value, letter);
+                },
+                start_range,
+                end_range,
+                (value || value === 0) ? value : default_value,
+                Dash.Size.ColumnWidth
+            );
+
+            row["expanded_content"].append(slider.html);
+
+            requestAnimationFrame(function () {
+                self.style_slider(
+                    slider,
+                    reset_value !== null ? reset_value : default_value
+                );
+            });
+        })(this);
+    };
+
+    // Copied from DashGuiContext2DEditorPanelContentEdit
+    this.style_slider = function (slider, default_value) {
+        slider.FireCallbackOnUpInsteadOfMove();
+        slider.SetMaxValueLabelLength(5);
+        slider.StyleForPropertyBox(0);
+        slider.AddResetToDefaultButton(default_value, "Reset");
+
+        if (!this.can_edit) {
+            slider.Disable();
+        }
+
+        // Ideally, we use this instead of the below slop, but it's not fully worked out yet
+        // slider.FlexInsteadOfAbsolute();
+
+        slider.label.css({
+            "padding-left": 0
+        });
+
+        slider.reset_button.label.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
+        });
+
+        slider.slider.css({
+            "left": parseInt(slider.slider.css("left")) - (Dash.Size.Padding * 0.5)
+        });
+
+        slider.value_label.html.css({
+            "left": parseInt(slider.value_label.html.css("left")) - (Dash.Size.Padding * 1.5)
+        });
+
+        slider.reset_button.html.css({
+            "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
+        });
+
+        slider.html.css({
+            "margin-left": 0,
+            "background": ""
+        });
     };
 
     this.add_buttons = function () {

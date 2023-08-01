@@ -115,7 +115,8 @@ class Properties:
                 self._precomps_default[letter] = {
                     "display_name": f"Pre-Comp {letter.title()}",
                     "color": colors[index],
-                    "asset_path": f"precomp_{letter}"
+                    "asset_path": f"precomp_{letter}",
+                    "parallax": 0.5
                 }
 
         return self._precomps_default

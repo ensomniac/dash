@@ -34317,7 +34317,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         return color_picker;
     };
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+    this.get_slider = function (
+        default_value, context_key, data_key, width_mult, label_text="",
+        reset_value=null, end_range=1.0, start_range=0, hover_text=""
+    ) {
         var value = this.get_value(data_key);
         return (function (self) {
             var slider = new Dash.Gui.Slider(
@@ -34332,7 +34335,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {
-                self.style_slider(slider, reset_value || default_value, context_key);
+                self.style_slider(
+                    slider,
+                    reset_value !== null ? reset_value : default_value,
+                    context_key
+                );
             });
             if (hover_text) {
                 slider.label.attr("title", hover_text);
@@ -34346,6 +34353,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         slider.SetMaxValueLabelLength(5);
         slider.StyleForPropertyBox(0);
         slider.AddResetToDefaultButton(default_value, "Reset");
+        if (!this.can_edit) {
+            slider.Disable();
+        }
         // Ideally, we use this instead of the below slop, but it's not fully worked out yet
         // slider.FlexInsteadOfAbsolute();
         slider.label.css({
@@ -34364,11 +34374,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         slider.reset_button.html.css({
             "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
         });
-        if (!this.can_edit) {
-            slider.Disable();
-        }
         slider.html.css({
-            "margin-left": 0
+            "margin-left": 0,
+            "background": ""
         });
         this.contexts[context_key]["inputs"].push(slider.value_label);
     };
@@ -34424,9 +34432,12 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         this.add_buttons();
     };
     this.draw_row = function (letter) {
-        var row = {};
+        var row = {
+            "container": $("<div></div>"),
+            "toolbar": new Dash.Layout.Toolbar(this)
+        };
         var data = this.get_data()[letter];
-        row["toolbar"] = new Dash.Layout.Toolbar(this);
+        row["container"].append(row["toolbar"].html);
         row["toolbar"].DisablePaddingRefactoring();
         row["toolbar"].RemoveStrokeSep();
         row["toolbar"].html.css({
@@ -34435,6 +34446,20 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             "margin-bottom": Dash.Size.Padding * 0.5
         });
         var on_input_changed = (function (self) {
+            var checkbox = row["toolbar"].AddCheckbox(
+                "",
+                false,
+                function (checkbox) {
+                    self.on_expand_toggled(letter, checkbox.IsChecked(), row);
+                },
+                "",
+                "Expand/Collapse",
+                null,
+                false,
+                true
+            );
+            checkbox.SetTrueIconName("caret_down");
+            checkbox.SetFalseIconName("caret_right");
             return function (value) {
                 self.set_data("display_name", value, letter);
             };
@@ -34494,7 +34519,91 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             );
         })(this);
         this.rows.push(row);
-        this.html.append(row["toolbar"].html);
+        this.html.append(row["container"]);
+    };
+    this.on_expand_toggled = function (letter, expanded, row) {
+        if (!expanded) {
+            if (row["expanded_content"]) {
+                row["expanded_content"].hide();
+            }
+            return;
+        }
+        if (!row["expanded_content"]) {
+            row["expanded_content"] = $("<div></div>");
+            row["expanded_content"].css({
+                "margin-left": Dash.Size.Padding * 2,
+                "margin-right": Dash.Size.Padding,
+                "margin-bottom": Dash.Size.Padding,
+                "margin-top": -Dash.Size.Padding * 0.5,
+                "padding": Dash.Size.Padding,
+                "border-left": "1px solid " + this.color.PinstripeDark,
+                "border-right": "1px solid " + this.color.PinstripeDark,
+                "border-bottom": "1px solid " + this.color.PinstripeDark,
+                "border-bottom-left-radius": Dash.Size.BorderRadius,
+                "border-bottom-right-radius": Dash.Size.BorderRadius
+            });
+            row["container"].append(row["expanded_content"]);
+            this.add_slider_to_expanded_content(letter, row, "parallax", 0.5);
+        }
+        row["expanded_content"].show();
+    };
+    this.add_slider_to_expanded_content = function (
+        letter, row, data_key, default_value=null, start_range=0, end_range=1.0, label_text="", reset_value=null
+    ) {
+        var value = this.get_data()[letter][data_key];
+        default_value = default_value !== null ? default_value : start_range;
+        (function (self) {
+            var slider = new Dash.Gui.Slider(
+                self.color,
+                (label_text || data_key.Title()) + ":",
+                function (value) {
+                    self.set_data(data_key, value, letter);
+                },
+                start_range,
+                end_range,
+                (value || value === 0) ? value : default_value,
+                Dash.Size.ColumnWidth
+            );
+            row["expanded_content"].append(slider.html);
+            requestAnimationFrame(function () {
+                self.style_slider(
+                    slider,
+                    reset_value !== null ? reset_value : default_value
+                );
+            });
+        })(this);
+    };
+    // Copied from DashGuiContext2DEditorPanelContentEdit
+    this.style_slider = function (slider, default_value) {
+        slider.FireCallbackOnUpInsteadOfMove();
+        slider.SetMaxValueLabelLength(5);
+        slider.StyleForPropertyBox(0);
+        slider.AddResetToDefaultButton(default_value, "Reset");
+        if (!this.can_edit) {
+            slider.Disable();
+        }
+        // Ideally, we use this instead of the below slop, but it's not fully worked out yet
+        // slider.FlexInsteadOfAbsolute();
+        slider.label.css({
+            "padding-left": 0
+        });
+        slider.reset_button.label.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
+        });
+        slider.slider.css({
+            "left": parseInt(slider.slider.css("left")) - (Dash.Size.Padding * 0.5)
+        });
+        slider.value_label.html.css({
+            "left": parseInt(slider.value_label.html.css("left")) - (Dash.Size.Padding * 1.5)
+        });
+        slider.reset_button.html.css({
+            "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
+        });
+        slider.html.css({
+            "margin-left": 0,
+            "background": ""
+        });
     };
     this.add_buttons = function () {
         var button_bar = new Dash.Gui.ButtonBar(this, null, "toolbar");
@@ -35860,6 +35969,8 @@ function DashGuiIcons (icon) {
         "cancel_thick":          new DashGuiIconDefinition(this.icon, "Cancel (Thick)", this.weight["solid"], "ban"),
         "car":                   new DashGuiIconDefinition(this.icon, "Car", this.weight["regular"], "car"),
         "caret_down":            new DashGuiIconDefinition(this.icon, "Caret Down", this.weight["solid"], "caret-down"),
+        "caret_left":            new DashGuiIconDefinition(this.icon, "Caret Left", this.weight["solid"], "caret-left"),
+        "caret_right":           new DashGuiIconDefinition(this.icon, "Caret Right", this.weight["solid"], "caret-right"),
         "caret_up":              new DashGuiIconDefinition(this.icon, "Caret Up", this.weight["solid"], "caret-up"),
         "cdn_tool_accordion":    new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout": new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
@@ -43658,7 +43769,9 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return label;
     };
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddTransparentInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var input = this.AddInput(placeholder_label, callback, options, additional_data, double_click_clear);
         input.EnableAutosave();
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
@@ -43696,7 +43809,9 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return input;
     };
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
         input.html.css({
@@ -43746,7 +43861,8 @@ function DashLayoutToolbarInterface () {
                     self
                 );
             }
-            // This really shouldn't be default behavior, but leaving the default as true to ensure nothing breaks.
+            // This really shouldn't be default behavior, but leaving
+            // the default as true to ensure nothing breaks
             if (double_click_clear) {
                 input.input.on("dblclick", function () {
                     input.SetText("");
@@ -43758,7 +43874,10 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return input;
     };
-    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
+    this.AddCombo = function (
+        label_text, combo_options, selected_id, callback,
+        return_full_option=false, additional_data={}, extra_options={}
+    ) {
         var obj_index = this.objects.length;
         callback = callback ? callback.bind(this.binder) : function (selected) {
             console.warn("No callback provided, selected:", selected);
@@ -43808,10 +43927,11 @@ function DashLayoutToolbarInterface () {
         return this.objects[obj_index]["html"];
     };
     this.AddCheckbox = function (
-        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+        label_text="", default_state=false, callback=null, identifier="", hover_hint="Toggle",
+        checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // LS key (mess)
             default_state,                                          // Default state
             this.color,                                             // Color
             hover_hint,                                             // Hover hint text
