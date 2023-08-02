@@ -45,21 +45,15 @@ class Users:
 
         self.validate_reset(email, user_email_domain_bypass_emails)
 
-        from json import dumps
-        from random import randint
-        from datetime import datetime
-        from base64 import urlsafe_b64encode
-
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
-        user_reset_root = os.path.join(user_root, "reset_requests")
 
         if not os.path.exists(user_root):
             self.validate_dash_guide_account_creation(email)
 
             from validate_email_address import validate_email
 
-            # Make sure it's a real email address that actually exists before we
-            # create a user for an email address that was simply misspelled, etc
+            # Make sure it's a real, existing email address that actually exists before
+            # we create a user for an email address that was simply misspelled, etc
             if not validate_email(email, verify=True):
                 from Dash.Utils import ClientAlert
 
@@ -71,28 +65,24 @@ class Users:
         else:
             account_exists = True
 
+        from json import dumps
+        from random import randint
+        from datetime import datetime
+        from base64 import urlsafe_b64encode
+
+        user_reset_root = os.path.join(user_root, "reset_requests")
+
         os.makedirs(user_reset_root, exist_ok=True)
 
-        request_token = randint(10000000, 99999999)
-        now = datetime.now()
-
-        uri_data = {
+        uri_data_64 = urlsafe_b64encode(dumps({
             "email": email,
-            "time": now.isoformat(),
-            "request_token": request_token,
-        }
+            "time": datetime.now().isoformat(),
+            "request_token": randint(10000000, 99999999)
+        }).encode()).decode().strip()
 
-        uri_str = dumps(uri_data)
-        uri_data_64 = urlsafe_b64encode(uri_str.encode()).decode().strip()
-        reset_path = os.path.join(user_reset_root, uri_data_64)
+        open(os.path.join(user_reset_root, uri_data_64), "w").write("")  # Why not Dash.LocalStorage.Write?
 
-        open(reset_path, "w").write("")
-
-        return_data = {
-            "email": email,
-            "t": uri_data_64
-        }
-
+        user_data = self.get_user_info(email)  # Calling this will ensure we create default data for new user right off the bat
         link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
         body_text = f"Use <a href='{link}'>this link</a> to "
 
@@ -113,9 +103,12 @@ class Users:
             notify_email_list=[email]
         )
 
-        return_data["success"] = True
-
-        return return_data
+        return {
+            "email": email,
+            "t": uri_data_64,
+            "user": user_data,
+            "success": True
+        }
 
     def ResetResponse(self):
         uri_data_64 = self.request_params.get("t")
@@ -365,7 +358,7 @@ class Users:
 
         from passlib.apps import custom_app_context as pwd_context
 
-        hashed_password = open(pass_path, "r").read()
+        hashed_password = open(pass_path).read()
         password_correct = pwd_context.verify(password, hashed_password)
 
         if not password_correct:
@@ -596,7 +589,7 @@ class Users:
             user_data = GetData(
                 dash_context=self.dash_context,
                 store_path="users",
-                obj_id=email,
+                obj_id=email
             )
 
             user_data["has_pin"] = os.path.exists(user_data_path.replace("usr.data", "pin_hash"))
@@ -610,7 +603,7 @@ class Users:
                 dash_context=self.dash_context,
                 store_path="users",
                 additional_data={"email": email},
-                obj_id=email,
+                obj_id=email
             )
 
         return self.set_display_name(user_data)
