@@ -37252,15 +37252,14 @@ function DashGuiInputRowInterface () {
     };
 }
 
-function DashGuiLoadingLabel (binder, label_text, height=null, color=null) {
+function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null, color=null) {
     this.binder = binder;
     this.label_text = label_text;
     this.height = height || Dash.Size.ButtonHeight;
+    this.color = color || (this.binder && this.binder.color ? this.binder.color : Dash.Color.Light);
     this.html = null;
     this.loading_dots = null;
-    this.color = color || this.binder.color || Dash.Color.Light;
     this.label = $("<div>" + this.label_text + "</div>");
-
     this.setup_styles = function () {
         this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
         this.html = this.loading_dots.html;
@@ -37285,12 +37284,33 @@ function DashGuiLoadingLabel (binder, label_text, height=null, color=null) {
         this.Start();
         this.label.animate({"opacity": 1}, 250);
     };
+    this.StyleAsButton = function () {
+        this.html = $("<div></div>");
+        this.label.detach();
+        this.loading_dots.html.detach();
+        this.html.append(this.loading_dots.html);
+        this.html.append(this.label);
+        this.loading_dots.html.css({
+            "margin-bottom": -Dash.Size.Padding
+        });
+        this.label.css({
+            "position": "",
+            "inset": ""
+        });
+        this.html.css({
+            "width": "fit-content",
+            "background": this.color.Pinstripe,
+            "border-radius": Dash.Size.BorderRadius,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding
+        });
+    };
+    // This function will fade out the loading label while converting
+    // it to an absolutely positioned element. Since this element is
+    // really meant to be used to show while something is loading, once
+    // loading is complete, this flow makes it easy to build the loaded
+    // content without having to wait to fade out the label first and fire a callback.
     this.Clear = function () {
-        // This function will fade out the loading label while converting
-        // it to an absolutely positioned element. Since this element is
-        // really meant to be used to show while something is loading, once
-        // loading is complete, this flow makes it easy to build the loaded
-        // content without having to wait to fade out the label first and fire a callback.
         if (this.html) {
             this.html.css({
                 "position": "absolute",
@@ -40271,23 +40291,15 @@ function DashLayoutDashboardModuleSquare () {
         if (!this.label_text) {
             this.label_text = text;
             this.label.text(this.label_text);
+            this.set_tag_label_font_size();
             return;  // No need to animate
         }
         this.label_text = text;
-        if (this.label_text.length > 4) {
-            console.warn("Warning: Square Module SetLabelText is intended to be four characters or less - any more may introduce cut-off.");
-        }
         (function (self) {
             self.label.fadeOut(
                 500,
                 function () {
-                    if (self.sub_style === "tag" && self.label_text.length <= 3) {
-                        self.label.css({
-                            "font-size": self.dashboard.get_text_vsize(0.36) + "vh",  // TEMP
-                            "height": self.dashboard.get_text_vsize(0.36) + "vh",  // TEMP
-                            "line-height": self.dashboard.get_text_vsize(0.4) + "vh"  // TEMP
-                        });
-                    }
+                    self.set_tag_label_font_size();
                     self.label.text(self.label_text);
                     self.label.fadeIn(500);
                 }
@@ -40341,11 +40353,9 @@ function DashLayoutDashboardModuleSquare () {
         this.label.css({
             ...this.centered_text_css,
             "color": this.primary_color,
-            "width": "95%",
-            "font-size": this.dashboard.get_text_vsize(0.3) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.3) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.33) + "vh",  // TEMP
+            "width": "95%"
         });
+        this.set_tag_label_font_size();
         if (css_only) {
             return;
         }
@@ -40360,6 +40370,20 @@ function DashLayoutDashboardModuleSquare () {
                 1000
             );
         })(this);
+    };
+    this.set_tag_label_font_size = function () {
+        if (this.sub_style !== "tag") {
+            return;
+        }
+        var size = 0.39;
+        if (this.label_text.length > 1) {
+            size = Math.max(0.1, size - (0.03 * (this.label_text.length - 1)));
+        }
+        this.label.css({
+            "font-size": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
+            "height": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
+            "line-height": this.dashboard.get_text_vsize(size * 1.11) + "vh"  // TEMP
+        });
     };
     this.setup_radial_style = function () {
         this.label_header.css({
