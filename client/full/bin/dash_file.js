@@ -61,53 +61,73 @@ function DashFile () {
         );
     };
 
-    this.GetPreview = function (color, file_data, height) {
+    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true) {
+        var preview = null;
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];
 
-        if (!file_url) {
-            return this.GetPlaceholderPreview(color, filename);
+        if (file_url) {
+            var file_ext = file_url.split(".").Last();
+
+            if (file_ext === "txt") {
+                preview = this.GetPlainTextPreview(file_url);
+            }
+
+            else if (this.Extensions["video"].includes(file_ext)) {
+                preview = this.GetVideoPreview(file_url, height);
+            }
+
+            else if (this.Extensions["audio"].includes(file_ext)) {
+                preview = this.GetAudioPreview(file_url, height);
+            }
+
+            else if (file_ext === "pdf") {
+                preview = this.GetPDFPreview(file_url, height);
+            }
+
+            else if (this.Extensions["image"].includes(file_ext) || "aspect" in file_data) {
+                preview = this.GetImagePreview(file_url, height);
+            }
+
+            else if (this.Extensions["model_viewer"].includes(file_ext)) {
+                preview = this.GetModelPreview(file_data["glb_url"], height);
+            }
+
+            else if (this.Extensions["model"].includes(file_ext) && "glb_url" in file_data) {
+                preview = this.GetModelPreview(file_data["glb_url"], height);
+            }
+
+            else if (file_ext === "csv") {
+                preview = this.GetCSVPreview(color, file_url, height);
+            }
+
+            else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "one"].includes(file_ext)) {
+                preview = this.GetMicrosoftPreview(file_url, height);
+            }
         }
 
-        var file_ext = file_url.split(".").Last();
-
-        if (file_ext === "txt") {
-            return this.GetPlainTextPreview(file_url);
+        if (!preview) {
+            preview = this.GetPlaceholderPreview(color, filename);
         }
 
-        if (this.Extensions["video"].includes(file_ext)) {
-            return this.GetVideoPreview(file_url, height);
+        if (!allow_100_percent_size) {
+            var h = preview.css("height");
+            var w = preview.css("width");
+
+            if (h === "100%" && w && w !== "100%") {
+                preview.css({
+                    "height": parseInt(w)
+                });
+            }
+
+            if (w === "100%" && h && h !== "100%") {
+                preview.css({
+                    "width": parseInt(h)
+                });
+            }
         }
 
-        if (this.Extensions["audio"].includes(file_ext)) {
-            return this.GetAudioPreview(file_url, height);
-        }
-
-        if (file_ext === "pdf") {
-            return this.GetPDFPreview(file_url, height);
-        }
-
-        if (this.Extensions["image"].includes(file_ext) || "aspect" in file_data) {
-            return this.GetImagePreview(file_url, height);
-        }
-
-        if (this.Extensions["model_viewer"].includes(file_ext)) {
-            return this.GetModelPreview(file_data["glb_url"], height);
-        }
-
-        if (this.Extensions["model"].includes(file_ext) && "glb_url" in file_data) {
-            return this.GetModelPreview(file_data["glb_url"], height);
-        }
-
-        if (file_ext === "csv") {
-            return this.GetCSVPreview(color, file_url, height);
-        }
-
-        if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "one"].includes(file_ext)) {
-            return this.GetMicrosoftPreview(file_url, height);
-        }
-
-        return this.GetPlaceholderPreview(color, filename);
+        return preview;
     };
 
     this.set_preview_size = function (html, width=null, height=null) {
