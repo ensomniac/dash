@@ -187,11 +187,12 @@ function DashGuiPropertyBoxInterface () {
         return header_obj;
     };
 
-    this.AddButtonBar = function (style="default") {
+    this.AddButtonBar = function (style="default", indent=false) {
         var bar = new Dash.Gui.ButtonBar(this.binder, this.color, style);
 
         bar.html.css({
             "margin-top": Dash.Size.Padding,
+            "margin-left": indent ? (Dash.Size.Padding * 2) : 0
         });
 
         this.AddHTML(bar.html);

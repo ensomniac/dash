@@ -25006,6 +25006,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.style = button_style;
     this.buttons = [];
     this.disabled = false;
+    this.fit_content = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
     this.setup_styles = function () {
@@ -25018,15 +25019,19 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.html.css({
             "height": height
         });
+        return this;
     };
     this.FitContent = function () {
         this.html.css({
             "height": "fit-content",
             "width": "fit-content"
         });
+        this.fit_content = true;
+        return this;
     };
     this.DisableAutoSpacing = function () {
         this.auto_spacing_enabled = false;
+        return this;
     };
     this.Disable = function () {
         for (var button of this.buttons) {
@@ -25061,10 +25066,14 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
                 {"style": self.style}
             );
         })(this, callback);
-        button.html.css({
-            "margin": 0,
-            "flex-grow": 1
-        });
+        var css = {"margin": 0};
+        if (this.fit_content) {
+            css["flex"] = "none";
+        }
+        else {
+            css["flex-grow"] = 1;
+        }
+        button.html.css(css);
         if (prepend) {
             this.html.prepend(button.html);
             this.buttons.unshift(button);
@@ -25086,14 +25095,10 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         }
         for (var i in this.buttons) {
             var button = this.buttons[i];
-            var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);
-            if (parseInt(i) === this.buttons.length - 1) {
-                right_padding = 0;
-            }
             button.html.css({
-                "margin": 0,
-                "flex-grow": 1,
-                "margin-right": right_padding,
+                "margin-right": (parseInt(i) === this.buttons.length - 1) ? 0 : (
+                    Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1)
+                )
             });
         }
     };
@@ -25434,7 +25439,9 @@ function DashGuiButtonInterface () {
         this.html.append(this.load_dots.html);
         this.load_dots.Start();
     };
-    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}, return_button=false) {
+    this.SetFileUploader = function (
+        api, params, optional_on_start_callback=null, optional_css={}, return_button=false
+    ) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
             if (token) {
@@ -38006,10 +38013,11 @@ function DashGuiPropertyBoxInterface () {
         }
         return header_obj;
     };
-    this.AddButtonBar = function (style="default") {
+    this.AddButtonBar = function (style="default", indent=false) {
         var bar = new Dash.Gui.ButtonBar(this.binder, this.color, style);
         bar.html.css({
             "margin-top": Dash.Size.Padding,
+            "margin-left": indent ? (Dash.Size.Padding * 2) : 0
         });
         this.AddHTML(bar.html);
         return bar;

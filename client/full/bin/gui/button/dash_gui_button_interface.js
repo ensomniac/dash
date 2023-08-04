@@ -271,7 +271,9 @@ function DashGuiButtonInterface () {
         this.load_dots.Start();
     };
 
-    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}, return_button=false) {
+    this.SetFileUploader = function (
+        api, params, optional_on_start_callback=null, optional_css={}, return_button=false
+    ) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
 

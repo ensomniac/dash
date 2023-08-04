@@ -5,6 +5,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
     this.buttons = [];
     this.disabled = false;
+    this.fit_content = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
 
@@ -19,6 +20,8 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.html.css({
             "height": height
         });
+
+        return this;
     };
 
     this.FitContent = function () {
@@ -26,10 +29,16 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             "height": "fit-content",
             "width": "fit-content"
         });
+
+        this.fit_content = true;
+
+        return this;
     };
 
     this.DisableAutoSpacing = function () {
         this.auto_spacing_enabled = false;
+
+        return this;
     };
 
     this.Disable = function () {
@@ -75,10 +84,17 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             );
         })(this, callback);
 
-        button.html.css({
-            "margin": 0,
-            "flex-grow": 1
-        });
+        var css = {"margin": 0};
+
+        if (this.fit_content) {
+            css["flex"] = "none";
+        }
+
+        else {
+            css["flex-grow"] = 1;
+        }
+
+        button.html.css(css);
 
         if (prepend) {
             this.html.prepend(button.html);
@@ -109,16 +125,11 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
         for (var i in this.buttons) {
             var button = this.buttons[i];
-            var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);
-
-            if (parseInt(i) === this.buttons.length - 1) {
-                right_padding = 0;
-            }
 
             button.html.css({
-                "margin": 0,
-                "flex-grow": 1,
-                "margin-right": right_padding,
+                "margin-right": (parseInt(i) === this.buttons.length - 1) ? 0 : (
+                    Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1)
+                )
             });
         }
     };
