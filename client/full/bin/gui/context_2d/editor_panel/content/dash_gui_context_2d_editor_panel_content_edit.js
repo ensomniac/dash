@@ -616,13 +616,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_general_context = function (context_key) {
-        var precomp_combo_tool_row = this.get_combo(
-            context_key,
-            this.get_precomp_combo_options(),
-            "precomp_tag",
-            "Pre-Comp Tag"
-        );
-
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
             [
@@ -689,7 +682,17 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding
         });
 
-        this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
+        if (!this.editor.override_mode) {
+            var precomp_combo_tool_row = this.get_combo(
+                context_key,
+                this.get_precomp_combo_options(),
+                "precomp_tag",
+                "Pre-Comp Tag"
+            );
+
+            this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
+        }
+
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
         this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
