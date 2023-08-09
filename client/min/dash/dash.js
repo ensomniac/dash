@@ -28556,8 +28556,8 @@ function DashGuiContext2D (
         Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
         this.get_combo_options();
     };
-    this.SetEditorPanelLayerProperty = function (key, value, id) {
-        this.editor_panel.SetLayerProperty(key, value, id);
+    this.SetEditorPanelLayerProperty = function (key, value, id, callback=null) {
+        this.editor_panel.SetLayerProperty(key, value, id, callback);
     };
     this.EditorPanelInputInFocus = function () {
         return this.editor_panel.InputInFocus();
@@ -31345,8 +31345,8 @@ function DashGuiContext2DEditorPanel (editor) {
     this.OnNewLayer = function (response) {
         this.layers_box.OnNewLayer(response);
     };
-    this.SetLayerProperty = function (key, value, id) {
-        this.layers_box.SetProperty(key, value, id);
+    this.SetLayerProperty = function (key, value, id, callback=null) {
+        this.layers_box.SetProperty(key, value, id, callback);
     };
     this.SwitchContentToEditTab = function () {
         if (this.content_box) {
@@ -32476,8 +32476,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.Select = function (id, from_canvas=true) {
         this.layers[id].Select(from_canvas);
     };
-    this.SetProperty = function (key, value, id) {
-        this.set_layer_property(key, value, id);
+    this.SetProperty = function (key, value, id, callback=null) {
+        this.set_layer_property(key, value, id, "", callback);
     };
     this.OnNewLayer = function (response) {
         this.on_data(response, true, true);

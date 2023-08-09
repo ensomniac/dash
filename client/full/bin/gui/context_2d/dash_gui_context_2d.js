@@ -99,8 +99,8 @@ function DashGuiContext2D (
         this.get_combo_options();
     };
 
-    this.SetEditorPanelLayerProperty = function (key, value, id) {
-        this.editor_panel.SetLayerProperty(key, value, id);
+    this.SetEditorPanelLayerProperty = function (key, value, id, callback=null) {
+        this.editor_panel.SetLayerProperty(key, value, id, callback);
     };
 
     this.EditorPanelInputInFocus = function () {

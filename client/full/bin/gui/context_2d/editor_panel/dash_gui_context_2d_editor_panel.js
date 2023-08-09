@@ -104,8 +104,8 @@ function DashGuiContext2DEditorPanel (editor) {
         this.layers_box.OnNewLayer(response);
     };
 
-    this.SetLayerProperty = function (key, value, id) {
-        this.layers_box.SetProperty(key, value, id);
+    this.SetLayerProperty = function (key, value, id, callback=null) {
+        this.layers_box.SetProperty(key, value, id, callback);
     };
 
     this.SwitchContentToEditTab = function () {

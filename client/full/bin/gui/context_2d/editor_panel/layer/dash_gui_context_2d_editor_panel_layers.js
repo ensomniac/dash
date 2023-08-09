@@ -324,8 +324,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.layers[id].Select(from_canvas);
     };
 
-    this.SetProperty = function (key, value, id) {
-        this.set_layer_property(key, value, id);
+    this.SetProperty = function (key, value, id, callback=null) {
+        this.set_layer_property(key, value, id, "", callback);
     };
 
     this.OnNewLayer = function (response) {
