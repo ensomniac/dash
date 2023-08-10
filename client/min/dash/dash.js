@@ -20274,10 +20274,9 @@ function DashAdminColor () {
             {"color": this.color}
         );
         this.html.append(this.property_box.html);
-        var header_title = "Property Box";
-        this.property_box.AddHeader(header_title, this.color);
-        this.property_box.AddInput("email",       "E-mail Address", "", null, false);
-        this.property_box.AddInput("first_name",  "First Name",     "", null, true);
+        this.property_box.AddHeader("Property Box", this.color);
+        this.property_box.AddInput("email", "Email Address", "", null, false);
+        this.property_box.AddInput("first_name", "First Name", "", null, true);
         this.new_password_row = new Dash.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
         this.new_password_row.html.css("margin-left", Dash.Size.Padding * 2);
         this.property_box.AddHTML(this.new_password_row.html);
@@ -34732,20 +34731,25 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.setup_styles();
 }
 
-function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (
+    color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true,
+    include_modified_keys_columns=false, extra_params={}
+) {
     /**
      * File Explorer box element.
      * --------------------------
      *
      * IMPORTANT NOTE: <br>
-     *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
-     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *     For consistency across Dash, this takes an API name and parent object ID, and uses
+     *     predetermined names for function calls. For each context this is used in, make sure
+     *     to add the correct function names to the respective API file as follows:
      *
      *         - "get_files":                      Get all files and return dict with data/order keys
      *         - "upload_file":                    Upload a file
      *         - "delete_file":                    Delete a file
      *         - "set_file_property":              Set a property for a file with provided key/value
-     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
+     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id
+     *                                             and session_id) by adding a key/value pair to it
      *
      *         (Archive Mode)
      *         - "get_archived_files":    Get all archived files and return dict with data/order keys
@@ -34753,10 +34757,15 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
      *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
-     * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
-     * @param {boolean} supports_desktop_client - Whether this context has a related desktop client app it should try to connect to
+     * @param {string} parent_obj_id - Parent object ID where the file is stored (this
+     *                                 will be included in requests as 'parent_obj_id')
+     * @param {boolean} supports_desktop_client - Whether this context has a related desktop
+     *                                            client app it should try to connect to
      * @param {boolean} supports_folders - Whether this context uses folders/subfolders
-     * @param {boolean} include_modified_keys_columns - Whether to include list columns for "modified_on" and "modified_by"
+     * @param {boolean} include_modified_keys_columns - Whether to include list columns for
+     *                                                  "modified_on" and "modified_by"
+     * @param {object} extra_params - Dictionary with extra params for each request type above,
+     *                                where the function name for the request is the key
      */
     this.color = color || Dash.Color.Light;
     this.api = api;
@@ -34764,6 +34773,7 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
     this.supports_desktop_client = supports_desktop_client;
     this.supports_folders = supports_folders;
     this.include_modified_keys_columns = include_modified_keys_columns;
+    this.extra_params = extra_params;
     // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
     if (window.innerWidth < 1065) {
         this.include_modified_keys_columns = false;
@@ -34793,10 +34803,15 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
     this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.request_failure_id = "dash_gui_file_explorer_on_files_data";
-    this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
+    this.loader = new Dash.Gui.FileExplorerDesktopLoader(
+        this.api,
+        this.parent_obj_id,
+        this.supports_desktop_client
+    );
     this.upload_button_params = {
         "f": "upload_file",
-        "parent_obj_id": this.parent_obj_id
+        "parent_obj_id": this.parent_obj_id,
+        ...(this.extra_params["upload_file"] || {})
     };
     // See this.instantiate_button_configs()
     this.OpenButtonConfig = null;
@@ -34808,7 +34823,9 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log("(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided");
+            console.log(
+                "(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided"
+            );
         }
         if (!this.read_only) {
             this.instantiate_button_configs();
@@ -34895,7 +34912,9 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
         }
         this.redraw_rows();
     };
-    this.CreateCustomButtonConfig = function (display_name, icon_name, callback, binder=null, right_margin=null, hover_text="") {
+    this.CreateCustomButtonConfig = function (
+        display_name, icon_name, callback, binder=null, right_margin=null, hover_text=""
+    ) {
         return {
             "config_name": display_name,
             "icon_name": icon_name,
@@ -34985,9 +35004,10 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
             "icon_name": "link",
             "callback": this.open_file,
             "right_margin": -Dash.Size.Padding * 0.25,
-            "hover_preview": this.supports_desktop_client ?
-                "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
-                "View file in new browser tab"
+            "hover_preview": this.supports_desktop_client ? (
+                "Open locally on your computer (or in a browser tab, if "
+                + this.desktop_client_name + " app isn't running)"
+            ) : "View file in new browser tab"
         };
         this.UpdateContentButtonConfig = {
             "config_name": "Update Content",
@@ -35343,6 +35363,7 @@ function DashGuiFileExplorerData () {
         }
         this.show_subheader("Deleting...");
         this.disable_load_buttons();
+        var f = "delete_file";
         (function (self) {
             Dash.Request(
                 self,
@@ -35352,9 +35373,10 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": "delete_file",
+                    "f": f,
                     "parent_obj_id": self.parent_obj_id,
-                    "file_id": row.ID()
+                    "file_id": row.ID(),
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
@@ -35365,16 +35387,18 @@ function DashGuiFileExplorerData () {
         }
         this.show_subheader("Restoring...");
         this.disable_load_buttons();
+        var f = "restore_archived_file";
         Dash.Request(
             this,
             this.on_files_changed,
             this.api,
             {
-                "f": "restore_archived_file",
+                "f": f,
                 "parent_obj_id": this.parent_obj_id,
                 "file_id": row.ID(),
                 "return_all": false,
-                "return_all_archived": true
+                "return_all_archived": true,
+                ...(this.extra_params[f] || {})
             }
         );
     };
@@ -35388,6 +35412,7 @@ function DashGuiFileExplorerData () {
     this.set_file_data = function (key, value, file_id) {
         this.show_subheader("Updating...");
         this.disable_load_buttons();
+        var f = "set_file_property";
         (function (self) {
             Dash.Request(
                 self,
@@ -35403,17 +35428,20 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": "set_file_property",
+                    "f": f,
                     "parent_obj_id": self.parent_obj_id,
                     "key": key,
                     "value": value,
-                    "file_id": file_id
+                    "file_id": file_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
     };
     this.get_files_data = function (callback=null) {
-        var archive_mode = this.archive_mode;  // Need archive mode at the moment of the request, not at the moment of the callback
+        var f = this.archive_mode ? "get_archived_files" : "get_files";
+        // Need archive mode at the moment of the request, not at the moment of the callback
+        var archive_mode = this.archive_mode;
         (function (self) {
             Dash.Request(
                 self,
@@ -35422,8 +35450,9 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": self.archive_mode ? "get_archived_files" : "get_files",
-                    "parent_obj_id": self.parent_obj_id
+                    "f": f,
+                    "parent_obj_id": self.parent_obj_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
@@ -35790,6 +35819,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         }
         this.pending_file_view_requests[file_data["id"]] += 1;
         console.log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
+        var f = "send_signal_to_desktop_session";
         (function (self) {
             Dash.Request(
                 self,
@@ -35798,10 +35828,11 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
                 },
                 self.api,
                 {
-                    "f": "send_signal_to_desktop_session",
+                    "f": f,
                     "key": key,
                     "value": JSON.stringify(file_data),
-                    "parent_obj_id": self.parent_obj_id
+                    "parent_obj_id": self.parent_obj_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
@@ -39301,7 +39332,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
             // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
             //  the right things are in place on the back-end, like renaming the user's folder etc
-            this.property_box.AddInput("email", "E-mail Address", "", null, false);
+            this.property_box.AddInput("email", "Email Address", "", null, false);
             this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
             if (this.has_privileges) {

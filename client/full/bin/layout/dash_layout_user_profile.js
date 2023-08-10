@@ -202,7 +202,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
             // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
             //  the right things are in place on the back-end, like renaming the user's folder etc
-            this.property_box.AddInput("email", "E-mail Address", "", null, false);
+            this.property_box.AddInput("email", "Email Address", "", null, false);
 
             this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);

@@ -33,6 +33,8 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Deleting...");
         this.disable_load_buttons();
 
+        var f = "delete_file";
+
         (function (self) {
             Dash.Request(
                 self,
@@ -43,9 +45,10 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": "delete_file",
+                    "f": f,
                     "parent_obj_id": self.parent_obj_id,
-                    "file_id": row.ID()
+                    "file_id": row.ID(),
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
@@ -59,16 +62,19 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Restoring...");
         this.disable_load_buttons();
 
+        var f = "restore_archived_file";
+
         Dash.Request(
             this,
             this.on_files_changed,
             this.api,
             {
-                "f": "restore_archived_file",
+                "f": f,
                 "parent_obj_id": this.parent_obj_id,
                 "file_id": row.ID(),
                 "return_all": false,
-                "return_all_archived": true
+                "return_all_archived": true,
+                ...(this.extra_params[f] || {})
             }
         );
     };
@@ -85,6 +91,8 @@ function DashGuiFileExplorerData () {
     this.set_file_data = function (key, value, file_id) {
         this.show_subheader("Updating...");
         this.disable_load_buttons();
+
+        var f = "set_file_property";
 
         (function (self) {
             Dash.Request(
@@ -104,18 +112,22 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": "set_file_property",
+                    "f": f,
                     "parent_obj_id": self.parent_obj_id,
                     "key": key,
                     "value": value,
-                    "file_id": file_id
+                    "file_id": file_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
     };
 
     this.get_files_data = function (callback=null) {
-        var archive_mode = this.archive_mode;  // Need archive mode at the moment of the request, not at the moment of the callback
+        var f = this.archive_mode ? "get_archived_files" : "get_files";
+
+        // Need archive mode at the moment of the request, not at the moment of the callback
+        var archive_mode = this.archive_mode;
 
         (function (self) {
             Dash.Request(
@@ -125,8 +137,9 @@ function DashGuiFileExplorerData () {
                 },
                 self.api,
                 {
-                    "f": self.archive_mode ? "get_archived_files" : "get_files",
-                    "parent_obj_id": self.parent_obj_id
+                    "f": f,
+                    "parent_obj_id": self.parent_obj_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);

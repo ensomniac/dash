@@ -73,6 +73,8 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
 
         console.log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
 
+        var f = "send_signal_to_desktop_session";
+
         (function (self) {
             Dash.Request(
                 self,
@@ -81,10 +83,11 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
                 },
                 self.api,
                 {
-                    "f": "send_signal_to_desktop_session",
+                    "f": f,
                     "key": key,
                     "value": JSON.stringify(file_data),
-                    "parent_obj_id": self.parent_obj_id
+                    "parent_obj_id": self.parent_obj_id,
+                    ...(self.extra_params[f] || {})
                 }
             );
         })(this);
