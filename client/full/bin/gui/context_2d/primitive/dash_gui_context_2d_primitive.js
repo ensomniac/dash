@@ -8,10 +8,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.height_px = 0;
     this.selected = false;
     this.width_px_max = 0;
-    this.width_px_min = 5;
     this.height_px_max = 0;
     this.drag_state = null;
-    this.height_px_min = 5;
     this.drag_active = false;
     this.drag_context = null;
     this.z_index_mult = 1000;
@@ -33,6 +31,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
+
+    // This is no longer needed, but it's so small, it really doesn't hurt anything
+    this.width_px_min = 5;
+    this.height_px_min = 5;
 
     this.setup_styles = function () {
         this.set_max();
@@ -456,12 +458,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
 
+    // This is no longer needed, but rather than remove
+    // it, I've just raised it to a ludicrous level
     this.set_max = function () {
         var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
 
         // Text gets special handling since it has an extra-wide container
-        this.width_px_max = max * (this.type === "text" ? 8 : 2);
-        this.height_px_max = max * (this.type === "text" ? 1 : 2);
+        this.width_px_max = max * (this.type === "text" ? 80 : 20);
+        this.height_px_max = max * (this.type === "text" ? 10 : 20);
     };
 
     this.set_drag_state = function () {
@@ -757,18 +761,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
-            this.width_px = this.width_px_min;
+            console.warn("Warning: Minimum width surpassed", this.data["display_name"], ":", this.width_px, "<", this.width_px_min);
 
-            // console.warn("Warning: Minimum width reached");
+            this.width_px = this.width_px_min;
 
             capped = true;
         }
 
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
-            this.width_px = this.width_px_max;
+            console.warn("Warning: Maximum width surpassed", this.data["display_name"], ":", this.width_px, ">", this.width_px_max);
 
-            // console.warn("Warning: Maximum width reached");
+            this.width_px = this.width_px_max;
 
             capped = true;
         }
@@ -785,16 +789,16 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
-            this.height_px = this.height_px_min;
+            console.warn("Warning: Minimum height surpassed", this.data["display_name"], ":", this.height_px, "<", this.height_px_min);
 
-            // console.warn("Warning: Minimum height reached");
+            this.height_px = this.height_px_min;
         }
 
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
-            this.height_px = this.height_px_max;
+            console.warn("Warning: Maximum height surpassed", this.data["display_name"], ":", this.height_px, ">", this.height_px_max);
 
-            // console.warn("Warning: Maximum height reached");
+            this.height_px = this.height_px_max;
         }
     };
 
