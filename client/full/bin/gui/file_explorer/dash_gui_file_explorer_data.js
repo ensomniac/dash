@@ -39,7 +39,9 @@ function DashGuiFileExplorerData () {
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_files_changed(response, false);
+                    if (!self.on_files_changed(response, false)) {
+                        return;
+                    }
 
                     self.list.RemoveRow(row.ID(), true);
                 },
@@ -98,7 +100,9 @@ function DashGuiFileExplorerData () {
             Dash.Request(
                 self,
                 function (response) {
-                    self.on_files_changed(response, false);
+                    if (!self.on_files_changed(response, false)) {
+                        return;
+                    }
 
                     var row = self.list.GetRow(file_id);
 
@@ -232,22 +236,22 @@ function DashGuiFileExplorerData () {
     };
 
     this.on_files_changed = function (response, redraw_rows=true) {
+        if (!Dash.Validate.Response(response)) {
+            return false;
+        }
+
         var error_context = "on_files_changed response (on upload/delete) was invalid.";
 
         if (!response["all_files"]) {
             console.error("Error:", error_context, "An 'all_files' key is required to update the list:", response);
 
-            return;
+            return false;
         }
 
         if (!response["all_files"]["data"] || !response["all_files"]["order"]) {
             console.error("Error:", error_context, "Both 'data' and 'order' keys are required to update the list:", response);
 
-            return;
-        }
-
-        if (!Dash.Validate.Response(response)) {
-            return;
+            return false;
         }
 
         this.update_cached_data(this.clean_cached_data(response["all_files"]));
@@ -258,6 +262,8 @@ function DashGuiFileExplorerData () {
 
         this.hide_subheader();
         this.enable_load_buttons();
+
+        return true;
     };
 
     this.on_file_upload_started = function () {
