@@ -30302,13 +30302,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.width_px = override || (this.canvas.GetWidth() * this.get_value("width_norm"));
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
-            console.warn("Warning: Minimum width surpassed", this.data["display_name"], ":", this.width_px, "<", this.width_px_min);
+            this.size_warn("Minimum width surpassed", this.data["display_name"], ":", this.width_px, "<", this.width_px_min);
             this.width_px = this.width_px_min;
             capped = true;
         }
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
-            console.warn("Warning: Maximum width surpassed", this.data["display_name"], ":", this.width_px, ">", this.width_px_max);
+            this.size_warn("Maximum width surpassed", this.data["display_name"], ":", this.width_px, ">", this.width_px_max);
             this.width_px = this.width_px_max;
             capped = true;
         }
@@ -30322,14 +30322,28 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
-            console.warn("Warning: Minimum height surpassed", this.data["display_name"], ":", this.height_px, "<", this.height_px_min);
+            this.size_warn("Minimum height surpassed", this.data["display_name"], ":", this.height_px, "<", this.height_px_min);
             this.height_px = this.height_px_min;
         }
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
-            console.warn("Warning: Maximum height surpassed", this.data["display_name"], ":", this.height_px, ">", this.height_px_max);
+            this.size_warn("Maximum height surpassed", this.data["display_name"], ":", this.height_px, ">", this.height_px_max);
             this.height_px = this.height_px_max;
         }
+    };
+    // Without the delay, these warnings will trigger when leaving the page
+    this.size_warn = function (msg) {
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!self.html.is(":visible")) {
+                        return;
+                    }
+                    console.warn("Warning:", msg);
+                },
+                500
+            );
+        })(this);
     };
     this.set_scale = function (width=null, height=null, draw=true) {
         this.set_width_px(width);
