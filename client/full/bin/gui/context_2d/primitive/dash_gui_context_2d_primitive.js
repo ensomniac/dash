@@ -32,9 +32,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
 
-    // This is no longer needed, but it's so small, it really doesn't hurt anything
-    this.width_px_min = 5;
-    this.height_px_min = 5;
+    // This is no longer needed, but at 1, it really doesn't hurt anything
+    this.width_px_min = 1;
+    this.height_px_min = 1;
 
     this.setup_styles = function () {
         this.set_max();
@@ -761,7 +761,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
-            this.size_warn("Minimum width surpassed", this.data["display_name"], ":", this.width_px, "<", this.width_px_min);
+            this.size_warn("Minimum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " < " + this.width_px_min);
 
             this.width_px = this.width_px_min;
 
@@ -770,7 +770,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
-            this.size_warn("Maximum width surpassed", this.data["display_name"], ":", this.width_px, ">", this.width_px_max);
+            this.size_warn("Maximum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " > " + this.width_px_max);
 
             this.width_px = this.width_px_max;
 
@@ -789,14 +789,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
-            this.size_warn("Minimum height surpassed", this.data["display_name"], ":", this.height_px, "<", this.height_px_min);
+            this.size_warn("Minimum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " < " + this.height_px_min);
 
             this.height_px = this.height_px_min;
         }
 
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
-            this.size_warn("Maximum height surpassed", this.data["display_name"], ":", this.height_px, ">", this.height_px_max);
+            this.size_warn("Maximum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " > " + this.height_px_max);
 
             this.height_px = this.height_px_max;
         }
@@ -813,7 +813,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
                     console.warn("Warning:", msg);
                 },
-                500
+                1000
             );
         })(this);
     };
@@ -1051,12 +1051,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
 
     this.get_url = function (file_data) {
+        if (this.editor.full_res_mode) {
+            return (
+                   file_data["tmask_url"]
+                || file_data["url"]
+                || file_data["orig_url"]
+                || file_data["thumb_png_url"]
+                || file_data["thumb_url"]
+                || file_data["thumb_jpg_url"]
+                || ""
+            );
+        }
+
         return (
                file_data["tmask_url"]
+            || file_data["thumb_png_url"]
+            || file_data["thumb_url"]
+            || file_data["thumb_jpg_url"]
             || file_data["url"]
             || file_data["orig_url"]
-            || file_data["thumb_png_url"]
-            || file_data["thumb_jpg_url"]
             || ""
         );
     };

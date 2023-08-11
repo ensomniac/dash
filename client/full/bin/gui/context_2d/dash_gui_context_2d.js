@@ -62,6 +62,7 @@ function DashGuiContext2D (
     this.initialized = false;
     this.editor_panel = null;
     this.ComboOptions = null;
+    this.full_res_mode = false;
     this.linked_preview = null;
     this.on_duplicate_cb = null;
     this.loading_overlay = null;
@@ -350,6 +351,25 @@ function DashGuiContext2D (
         }
 
         this.canvas.OnPrimitiveUpdated = binder ? callback.bind(binder) : callback;
+    };
+
+    this.ToggleFullResMode = function () {
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.ToggleFullResMode();
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        this.full_res_mode = !this.full_res_mode;
+
+        this.RedrawLayers(false, true);
     };
 
     this.initialize = function () {

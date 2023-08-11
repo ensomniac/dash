@@ -28544,6 +28544,7 @@ function DashGuiContext2D (
     this.initialized = false;
     this.editor_panel = null;
     this.ComboOptions = null;
+    this.full_res_mode = false;
     this.linked_preview = null;
     this.on_duplicate_cb = null;
     this.loading_overlay = null;
@@ -28779,6 +28780,21 @@ function DashGuiContext2D (
             return;
         }
         this.canvas.OnPrimitiveUpdated = binder ? callback.bind(binder) : callback;
+    };
+    this.ToggleFullResMode = function () {
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.ToggleFullResMode();
+                    },
+                    100
+                );
+            })(this);
+            return;
+        }
+        this.full_res_mode = !this.full_res_mode;
+        this.RedrawLayers(false, true);
     };
     this.initialize = function () {
         if (this.initialized) {
@@ -29525,11 +29541,13 @@ function DashGuiContext2DToolbar (editor) {
     this.pil_preview = null;
     this.initialized = false;
     this.pil_interval = null;
+    this.full_res_button = null;
     this.html = $("<div></div>");
     this.pil_button_active = false;
     this.color = this.editor.color;
     this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
+    this.bottom_button_area = $("<div></div>");
     this.min_width = Dash.Size.ColumnWidth * 0.3;
     this.opposite_color = this.editor.opposite_color;
     this.setup_styles = function () {
@@ -29540,11 +29558,15 @@ function DashGuiContext2DToolbar (editor) {
             "flex-direction": "column",
             "box-sizing": "border-box",
             "border-right": "1px solid " + this.color.StrokeLight,
-            "padding": this.padding
+            "padding": this.padding,
+            "overflow": "hidden"
         });
         this.add_header();
         this.add_tools();
-        this.add_pil_button();
+        this.html.append(Dash.Gui.GetFlexSpacer());
+        this.html.append(this.get_line());
+        this.html.append(this.bottom_button_area);
+        this.add_bottom_buttons();
         this.setup_connections();
         this.initialized = true;
     };
@@ -29553,34 +29575,71 @@ function DashGuiContext2DToolbar (editor) {
             tool.Deselect();
         }
     };
-    this.add_pil_button = function () {
-        this.html.append(Dash.Gui.GetFlexSpacer());
-        this.pil_button = new Dash.Gui.Button(
+    this.add_bottom_buttons = function () {
+        this.full_res_button = this.add_bottom_button(
+            "Full\nRes",
+            this.on_full_res_button_toggled,
+            "Toggle full-resolution media for layers\n(may take a moment to swap out)"
+        );
+        this.bottom_button_area.append(this.get_line());
+        this.pil_button = this.add_bottom_button(
             "PIL",
             this.on_pil_button_toggled,
+            "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
+        );
+    };
+    this.get_line = function () {
+        var line = $("<div></div>");
+        line.css({
+            "height": Dash.Size.Padding * 0.1,
+            "background": this.color.StrokeLight,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+        return line;
+    };
+    this.add_bottom_button = function (label_text, callback, hover_hint="") {
+        var two_lines = label_text.includes("\n");
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
             this,
             this.color,
-            {"style": "toolbar"}
+            {"style": two_lines ? "default" : "toolbar"}
         );
-        this.pil_button.html.css({
-            "box-sizing": "border-box",
-            "margin": 0
-        });
-        this.pil_button.label.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+        var label_css = {
+            "padding-left": Dash.Size.Padding * (two_lines ? 0.5 : 0.3),
             "padding-right": Dash.Size.Padding * 0.5,
             "font-family": "sans_serif_bold",
             "letter-spacing": Dash.Size.Padding * 0.1,
             "overflow": "visible",
             "user-select": "none"
+        };
+        if (two_lines) {
+            label_css["white-space"] = "pre-wrap";
+            label_css["line-height"] = (Dash.Size.ButtonHeight * 0.45) + "px";
+            label_css["padding-top"] = Dash.Size.Padding * 0.3;
+        }
+        button.html.css({
+            "box-sizing": "border-box",
+            "margin": 0
         });
-        this.pil_button.html.attr(
-            "title",
-            "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
-        );
-        this.pil_button.DisableHoverTextColorChange();
-        this.pil_button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
-        this.html.append(this.pil_button.html);
+        button.label.css(label_css);
+        if (hover_hint) {
+            button.html.attr("title", hover_hint);
+        }
+        button.DisableHoverTextColorChange();
+        button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
+        this.bottom_button_area.append(button.html);
+        return button;
+    };
+    this.on_full_res_button_toggled = function () {
+        this.full_res_button.SetLoading(true);
+        this.full_res_button.Disable();
+        this.editor.ToggleFullResMode();
+        this.full_res_button.SetColor(this.editor.full_res_mode ? this.color.PinstripeDark : "none");
+        this.full_res_button.SetLoading(false);
+        this.full_res_button.Enable();
     };
     this.on_pil_button_toggled = function () {
         this.pil_data = null;
@@ -29759,9 +29818,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
-    // This is no longer needed, but it's so small, it really doesn't hurt anything
-    this.width_px_min = 5;
-    this.height_px_min = 5;
+    // This is no longer needed, but at 1, it really doesn't hurt anything
+    this.width_px_min = 1;
+    this.height_px_min = 1;
     this.setup_styles = function () {
         this.set_max();
         if (!this.call_style()) {
@@ -30321,13 +30380,13 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.width_px = override || (this.canvas.GetWidth() * this.get_value("width_norm"));
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
-            this.size_warn("Minimum width surpassed", this.data["display_name"], ":", this.width_px, "<", this.width_px_min);
+            this.size_warn("Minimum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " < " + this.width_px_min);
             this.width_px = this.width_px_min;
             capped = true;
         }
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
-            this.size_warn("Maximum width surpassed", this.data["display_name"], ":", this.width_px, ">", this.width_px_max);
+            this.size_warn("Maximum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " > " + this.width_px_max);
             this.width_px = this.width_px_max;
             capped = true;
         }
@@ -30341,12 +30400,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.height_px = override || (this.width_px / (this.data["aspect"] || this.editor.GetAspectRatio(true)));
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
-            this.size_warn("Minimum height surpassed", this.data["display_name"], ":", this.height_px, "<", this.height_px_min);
+            this.size_warn("Minimum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " < " + this.height_px_min);
             this.height_px = this.height_px_min;
         }
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
-            this.size_warn("Maximum height surpassed", this.data["display_name"], ":", this.height_px, ">", this.height_px_max);
+            this.size_warn("Maximum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " > " + this.height_px_max);
             this.height_px = this.height_px_max;
         }
     };
@@ -30360,7 +30419,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     }
                     console.warn("Warning:", msg);
                 },
-                500
+                1000
             );
         })(this);
     };
@@ -30541,12 +30600,24 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return [next_primitive, primitive_index];
     };
     this.get_url = function (file_data) {
+        if (this.editor.full_res_mode) {
+            return (
+                   file_data["tmask_url"]
+                || file_data["url"]
+                || file_data["orig_url"]
+                || file_data["thumb_png_url"]
+                || file_data["thumb_url"]
+                || file_data["thumb_jpg_url"]
+                || ""
+            );
+        }
         return (
                file_data["tmask_url"]
+            || file_data["thumb_png_url"]
+            || file_data["thumb_url"]
+            || file_data["thumb_jpg_url"]
             || file_data["url"]
             || file_data["orig_url"]
-            || file_data["thumb_png_url"]
-            || file_data["thumb_jpg_url"]
             || ""
         );
     };
