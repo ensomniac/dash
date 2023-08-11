@@ -326,7 +326,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
         label.label.css({
             "white-space": "nowrap",
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
             "font-family": "sans_serif_bold"
         });
 

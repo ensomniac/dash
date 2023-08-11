@@ -24,7 +24,8 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "font-family": "sans_serif_bold",
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
 
         this.html.append(this.label);

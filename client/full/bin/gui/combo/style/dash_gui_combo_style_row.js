@@ -9,7 +9,7 @@ function DashGuiComboStyleRow () {
     };
 
     this.setup_styles = function () {
-        this.font_size = "100%";
+        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
         this.text_alignment = "left";
         this.label_background = this.color_set.Background.Base;
 
@@ -60,6 +60,7 @@ function DashGuiComboStyleRow () {
             "color": this.color.Text,
             "white-space": "nowrap",
             "text-overflow": "ellipsis",
+            "font-size": this.font_size
         });
 
         this.rows.css({

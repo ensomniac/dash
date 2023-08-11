@@ -31,7 +31,8 @@ function DashGuiInput (placeholder_text="", color=null) {
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
 
         this.html.append(this.input);

@@ -56,7 +56,8 @@ function DashGuiButtonStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": this.color_set.Text.Base
+            "color": this.color_set.Text.Base,
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
 }

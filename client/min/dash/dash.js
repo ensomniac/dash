@@ -18568,6 +18568,7 @@ function DashSize (is_mobile) {
     this.ColumnWidth = is_mobile ? 300 : 150;
     this.BorderRadiusInteractive = is_mobile ? 30 : 3; // For interactive elements (buttons, inputs, combos, etc)
     this.ButtonHeight = this.RowHeight + (this.Padding);
+    this.DesktopToMobileMode = false;
     if (is_mobile) {
         // This is special handling for iPhone 13 mini that has "Larger Text" selected for the "Display Zoom" setting (globally-zoomed screen)
         if (/iPhone/i.test(navigator.userAgent) && window.devicePixelRatio === 3 && window.screen.width === 320 && window.screen.height === 693) {
@@ -18577,6 +18578,19 @@ function DashSize (is_mobile) {
         }
         // Add any other special cases here
     }
+    this.MakeDesktopViewMoreReadableOnMobile = function () {
+        if (!Dash.IsMobile || this.DesktopToMobileMode) {
+            return;
+        }
+        this.DesktopToMobileMode = true;
+        Dash.Size.Stroke *= 0.5;
+        Dash.Size.Padding *= 0.5;
+        Dash.Size.RowHeight *= 0.5;
+        Dash.Size.ColumnWidth *= 0.5;
+        Dash.Size.ButtonHeight *= 0.5;
+        Dash.Size.BorderRadius *= 0.5;
+        Dash.Size.BorderRadiusInteractive *= 0.25;
+    };
 }
 
 function DashView () {
@@ -23302,7 +23316,8 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "font-family": "sans_serif_bold",
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
         this.html.append(this.label);
         if (this.include_border) {
@@ -23958,7 +23973,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         });
         label.label.css({
             "white-space": "nowrap",
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
             "font-family": "sans_serif_bold"
         });
         if (border) {
@@ -25776,7 +25791,8 @@ function DashGuiButtonStyleDefault () {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "text-align": "center",
-            "color": this.color_set.Text.Base
+            "color": this.color_set.Text.Base,
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
 }
@@ -25838,7 +25854,7 @@ function DashGuiButtonStyleTabTop () {
             "font-family": "sans_serif_bold",
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%"
         });
     };
     this.on_hover_in = function () {
@@ -25919,6 +25935,7 @@ function DashGuiButtonStyleToolbar () {
             "line-height": Dash.Size.RowHeight + "px",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
 }
@@ -25977,6 +25994,7 @@ function DashGuiButtonStyleTabSide () {
             "text-overflow": "ellipsis",
             "text-align": "left",
             "color": this.color_set.Text.Base,
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
 }
@@ -28323,7 +28341,7 @@ function DashGuiComboStyleRow () {
         "pointer-events": "none"
     };
     this.setup_styles = function () {
-        this.font_size = "100%";
+        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
         this.text_alignment = "left";
         this.label_background = this.color_set.Background.Base;
         this.html.append(this.highlight);
@@ -28366,6 +28384,7 @@ function DashGuiComboStyleRow () {
             "color": this.color.Text,
             "white-space": "nowrap",
             "text-overflow": "ellipsis",
+            "font-size": this.font_size
         });
         this.rows.css({
             "position": "absolute",
@@ -28402,7 +28421,7 @@ function DashGuiComboStyleDefault () {
             "border-radius": border_radius,
             "opacity": 0
         };
-        this.font_size = "100%";
+        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
         this.text_alignment = "center";
         this.label_background = this.color_set.Background.Base;
         this.inner_html = $("<div></div>");
@@ -36364,7 +36383,8 @@ function DashGuiInput (placeholder_text="", color=null) {
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
         this.html.append(this.input);
         this.setup_connections();
@@ -36900,7 +36920,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
             "flex": "none"
         });
         if (Array.isArray(this.button_text)) {

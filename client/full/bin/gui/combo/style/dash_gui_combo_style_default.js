@@ -26,7 +26,7 @@ function DashGuiComboStyleDefault () {
             "opacity": 0
         };
 
-        this.font_size = "100%";
+        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
         this.text_alignment = "center";
         this.label_background = this.color_set.Background.Base;
         this.inner_html = $("<div></div>");

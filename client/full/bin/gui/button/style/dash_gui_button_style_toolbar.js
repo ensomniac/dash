@@ -61,6 +61,7 @@ function DashGuiButtonStyleToolbar () {
             "line-height": Dash.Size.RowHeight + "px",
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding,
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
 }

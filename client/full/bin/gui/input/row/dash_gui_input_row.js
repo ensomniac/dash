@@ -106,7 +106,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
             "flex": "none"
         });
 
