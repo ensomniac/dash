@@ -623,7 +623,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             );
         }
 
-        console.log("Pre-Comps:", precomps_log.reverse());
+        // console.log("Pre-Comps:", precomps_log.reverse());
 
         this.redrawing = false;
     };

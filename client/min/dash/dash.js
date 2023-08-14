@@ -32812,7 +32812,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 + this.layers[id].get_value("precomp_tag")
             );
         }
-        console.log("Pre-Comps:", precomps_log.reverse());
+        // console.log("Pre-Comps:", precomps_log.reverse());
         this.redrawing = false;
     };
     this.add_header = function () {
