@@ -22446,7 +22446,10 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 }
 
 /**@member DashGuiPrompt*/
-function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
+function DashGuiModal (
+    color=null, parent_html=null, width=null, height=null,
+    include_bg=true, bg_opacity=0.6, include_close_button=true
+) {
     this.parent_html = parent_html;
     this.width = width;
     this.height = height;
@@ -24136,7 +24139,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.setup_styles();
 }
 
-function DashGuiTextArea (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
+function DashGuiTextArea (
+    color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false
+) {
     // For now, this file is no more than a wrapper when desiring a textarea element outside of mobile.
     // We can add to or modify this is as needed, or eventually just write this out as its own class.
     // This actually isn't exclusive to mobile for any reason. It's just the only textarea
@@ -36130,6 +36135,7 @@ function DashGuiIcons (icon) {
         "box_open":              new DashGuiIconDefinition(this.icon, "Box (Open)", this.weight["regular"], "box-open"),
         "boxes":                 new DashGuiIconDefinition(this.icon, "Boxes", this.weight["regular"], "boxes"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
+        "bug":                   new DashGuiIconDefinition(this.icon, "Bug", this.weight["regular"], "bug"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "business_time":         new DashGuiIconDefinition(this.icon, "Business Time", this.weight["regular"], "business-time"),
         "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
@@ -44439,10 +44445,13 @@ function DashMobileTextBox (
     this.SetMaxCharacters = function (num) {
         this.textarea.attr("maxlength", num);
     };
-    this.SetHeight = function (height) {
-        this.textarea.css({
-            "height": height
-        });
+    this.SetHeight = function (height, enforce=false) {
+        var css = {"height": height};
+        if (enforce) {
+            css["min-height"] = height;
+            css["max-height"] = height;
+        }
+        this.textarea.css(css);
     };
     this.SetWidth = function (width) {
         this.html.css({

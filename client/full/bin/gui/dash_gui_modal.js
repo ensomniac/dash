@@ -1,6 +1,9 @@
 /**@member DashGuiPrompt*/
 
-function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
+function DashGuiModal (
+    color=null, parent_html=null, width=null, height=null,
+    include_bg=true, bg_opacity=0.6, include_close_button=true
+) {
     this.parent_html = parent_html;
     this.width = width;
     this.height = height;

@@ -198,10 +198,15 @@ function DashMobileTextBox (
         this.textarea.attr("maxlength", num);
     };
 
-    this.SetHeight = function (height) {
-        this.textarea.css({
-            "height": height
-        });
+    this.SetHeight = function (height, enforce=false) {
+        var css = {"height": height};
+
+        if (enforce) {
+            css["min-height"] = height;
+            css["max-height"] = height;
+        }
+
+        this.textarea.css(css);
     };
 
     this.SetWidth = function (width) {

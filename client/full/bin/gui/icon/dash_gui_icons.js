@@ -60,6 +60,7 @@ function DashGuiIcons (icon) {
         "box_open":              new DashGuiIconDefinition(this.icon, "Box (Open)", this.weight["regular"], "box-open"),
         "boxes":                 new DashGuiIconDefinition(this.icon, "Boxes", this.weight["regular"], "boxes"),
         "browser_window":        new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
+        "bug":                   new DashGuiIconDefinition(this.icon, "Bug", this.weight["regular"], "bug"),
         "building":              new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
         "business_time":         new DashGuiIconDefinition(this.icon, "Business Time", this.weight["regular"], "business-time"),
         "calendar":              new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
