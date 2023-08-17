@@ -29,9 +29,21 @@ function DashGuiContext2DEditorPanelContent (panel) {
     ];
 
     this.setup_styles = function () {
-        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content");
+        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content", this.color);
 
         this.layout.OnTabChanged(this.on_tab_changed);
+
+        this.layout.list_backing.css({
+            "background": "red"
+        });
+
+        this.layout.tab_top.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
+
+        this.layout.tab_bottom.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
 
         this.html = this.layout.html;
 

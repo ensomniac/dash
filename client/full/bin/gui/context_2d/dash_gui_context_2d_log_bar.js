@@ -15,7 +15,7 @@ function DashGuiContext2DLogBar (editor) {
             "position": "absolute",
             "inset": 0,
             "box-sizing": "border-box",
-            "background": this.color.Stroke,
+            "background": this.opposite_color.BackgroundRaised,
             "border-top": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 0.5
         });

@@ -1,6 +1,7 @@
-function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
+function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.binder = binder;
     this.side_tabs = side_tabs;
+    this.color = color;
 
     this.temp_html = [];
     this.all_content = [];
@@ -22,14 +23,20 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     }
 
     if (this.side_tabs) {
-        this.color = Dash.Color.Dark;
+        if (!this.color) {
+            this.color = Dash.Color.Dark;
+        }
+
         this.tab_area = $("<div></div>");
         this.tab_middle = $("<div></div>");
         this.tab_area_size = Dash.Size.ColumnWidth;
     }
 
     else {  // TODO: This should probably also be converted to a better div grouping
-        this.color = Dash.Color.Light;
+        if (!this.color) {
+            this.color = Dash.Color.Light;
+        }
+
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
     }
@@ -450,7 +457,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.Tab.AreaBackground,
+            "background": this.color.Tab.AreaBackground
         });
 
         this.list_backing.css({

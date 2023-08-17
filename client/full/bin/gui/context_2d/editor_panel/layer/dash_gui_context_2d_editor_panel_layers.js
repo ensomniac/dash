@@ -30,6 +30,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 "padding": Dash.Size.Padding,
                 "padding-top": Dash.Size.Padding * 0.5,
                 "box-sizing": "border-box",
+                "background": this.color.Background,
                 "border-top": "1px solid " + this.color.StrokeLight
             });
 
@@ -634,11 +635,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.header.ReplaceBorderWithIcon("layers");
 
         this.header.html.css({
-            "margin-left": -Dash.Size.Padding * 0.5,
-            "margin-right": -Dash.Size.Padding * 0.5,
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "margin-left": -Dash.Size.Padding,
+            "margin-top": -Dash.Size.Padding * 0.5,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "margin-right": -Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.5,
+            "background": this.color.Tab.Background.BaseHover,
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
 

@@ -486,14 +486,14 @@ function DashGuiContext2DEditorPanel (editor) {
         });
 
         header.html.css({
-            "background": this.color.Pinstripe,
             "margin-top": -Dash.Size.Padding,
             "margin-left": -Dash.Size.Padding,
             "margin-right": -Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.6,
             "padding-top": Dash.Size.Padding,
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding
+            "padding-right": Dash.Size.Padding,
+            "background": this.color.Tab.Background.BaseHover
         });
 
         header.label.css({

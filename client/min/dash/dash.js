@@ -28812,7 +28812,7 @@ function DashGuiContext2D (
         };
         this.html.css({
             "box-sizing": "border-box",
-            "background": this.color.Pinstripe,
+            "background": this.color.Tab.Background.BaseHover,
             "border": this.preview_mode ? "" : ("2px solid " + this.color.StrokeLight),
             ...abs_css
         });
@@ -29365,7 +29365,7 @@ function DashGuiContext2DLogBar (editor) {
             "position": "absolute",
             "inset": 0,
             "box-sizing": "border-box",
-            "background": this.color.Stroke,
+            "background": this.opposite_color.BackgroundRaised,
             "border-top": "1px solid " + this.color.StrokeLight,
             "padding": Dash.Size.Padding * 0.5
         });
@@ -29562,6 +29562,7 @@ function DashGuiContext2DToolbar (editor) {
             "display": "flex",
             "flex-direction": "column",
             "box-sizing": "border-box",
+            "background": this.color.Tab.Background.BaseHover,
             "border-right": "1px solid " + this.color.StrokeLight,
             "padding": this.padding,
             "overflow": "hidden"
@@ -31759,14 +31760,14 @@ function DashGuiContext2DEditorPanel (editor) {
             "padding-left": Dash.Size.Padding * 0.3
         });
         header.html.css({
-            "background": this.color.Pinstripe,
             "margin-top": -Dash.Size.Padding,
             "margin-left": -Dash.Size.Padding,
             "margin-right": -Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.6,
             "padding-top": Dash.Size.Padding,
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding
+            "padding-right": Dash.Size.Padding,
+            "background": this.color.Tab.Background.BaseHover
         });
         header.label.css({
             "flex": 2,
@@ -32365,6 +32366,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 "padding": Dash.Size.Padding,
                 "padding-top": Dash.Size.Padding * 0.5,
                 "box-sizing": "border-box",
+                "background": this.color.Background,
                 "border-top": "1px solid " + this.color.StrokeLight
             });
             this.add_header();
@@ -32824,11 +32826,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.header = new Dash.Gui.Header("Layers");
         this.header.ReplaceBorderWithIcon("layers");
         this.header.html.css({
-            "margin-left": -Dash.Size.Padding * 0.5,
-            "margin-right": -Dash.Size.Padding * 0.5,
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "margin-left": -Dash.Size.Padding,
+            "margin-top": -Dash.Size.Padding * 0.5,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "margin-right": -Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.5,
+            "background": this.color.Tab.Background.BaseHover,
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
         this.header.label.css({
@@ -32882,8 +32887,17 @@ function DashGuiContext2DEditorPanelContent (panel) {
         // Add to this list as support for more primitives are added
     ];
     this.setup_styles = function () {
-        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content");
+        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content", this.color);
         this.layout.OnTabChanged(this.on_tab_changed);
+        this.layout.list_backing.css({
+            "background": "red"
+        });
+        this.layout.tab_top.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
+        this.layout.tab_bottom.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
         this.html = this.layout.html;
         this.html.css({
             "background": "none",
@@ -38532,21 +38546,22 @@ function DashLayout () {
     this.UserProfile             = DashLayoutUserProfile;
     this.Tabs = {
         Side: class DashLayoutTabsSide extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="") {
-                super(binder, true, recall_id_suffix);
+            constructor(binder, recall_id_suffix="", color=null) {
+                super(binder, true, recall_id_suffix, color);
             };
         },
         Top:  class DashLayoutTabsTop extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="") {
-                super(binder, false, recall_id_suffix);
+            constructor(binder, recall_id_suffix="", color=null) {
+                super(binder, false, recall_id_suffix, color);
             };
         }
     };
 }
 
-function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
+function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.binder = binder;
     this.side_tabs = side_tabs;
+    this.color = color;
     this.temp_html = [];
     this.all_content = [];
     this.selected_index = -1;
@@ -38565,13 +38580,17 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         this.recall_id += "_" + recall_id_suffix;
     }
     if (this.side_tabs) {
-        this.color = Dash.Color.Dark;
+        if (!this.color) {
+            this.color = Dash.Color.Dark;
+        }
         this.tab_area = $("<div></div>");
         this.tab_middle = $("<div></div>");
         this.tab_area_size = Dash.Size.ColumnWidth;
     }
     else {  // TODO: This should probably also be converted to a better div grouping
-        this.color = Dash.Color.Light;
+        if (!this.color) {
+            this.color = Dash.Color.Light;
+        }
         this.list_backing = $("<div></div>");
         this.tab_area_size = Dash.Size.RowHeight + Dash.Size.Padding;
     }
@@ -38891,7 +38910,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
         this.html.css({
             "position": "absolute",
             "inset": 0,
-            "background": this.color.Tab.AreaBackground,
+            "background": this.color.Tab.AreaBackground
         });
         this.list_backing.css({
             "position": "absolute",

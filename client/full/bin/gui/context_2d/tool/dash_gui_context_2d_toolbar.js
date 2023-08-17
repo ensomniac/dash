@@ -24,6 +24,7 @@ function DashGuiContext2DToolbar (editor) {
             "display": "flex",
             "flex-direction": "column",
             "box-sizing": "border-box",
+            "background": this.color.Tab.Background.BaseHover,
             "border-right": "1px solid " + this.color.StrokeLight,
             "padding": this.padding,
             "overflow": "hidden"

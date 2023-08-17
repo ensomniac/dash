@@ -386,7 +386,7 @@ function DashGuiContext2D (
 
         this.html.css({
             "box-sizing": "border-box",
-            "background": this.color.Pinstripe,
+            "background": this.color.Tab.Background.BaseHover,
             "border": this.preview_mode ? "" : ("2px solid " + this.color.StrokeLight),
             ...abs_css
         });
