@@ -17941,20 +17941,23 @@ function DashGui () {
         html[0].scrollTop = html[0].scrollHeight;
     };
     this.ScrollToElement = function (container_html, element_html) {
-        if (!this.HasOverflow(container_html)) {
+        if (this.InScrollView(container_html, element_html)) {
             return;
+        }
+        element_html[0].scrollIntoView();
+    };
+    this.InScrollView = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return true;  // No overflow means there's no scroll, but it is therefore in view
         }
         var container_top = container_html.offset().top;
         var container_bottom = container_top + container_html.height();
         var element_top = element_html.offset().top;
         var element_bottom = element_top + element_html.height();
-        if (  // Element is partially or fully visible within the container
+        return (  // Element is partially or fully visible within the container
                (element_top >= container_top && element_top <= container_bottom)
             || (element_bottom >= container_top && element_bottom <= container_bottom)
-        ) {
-            return;
-        }
-        element_html[0].scrollIntoView();
+        );
     };
     this.GetBottomDivider = function (color=null, width_percent="") {
         var bottom_divider = $("<div></div>");
@@ -28490,7 +28493,8 @@ function DashGuiComboStyleDefault () {
 }
 
 function DashGuiContext2D (
-    c2d_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
+    c2d_id, can_edit=true, color=null, api="Context2D", preview_mode=false,
+    override_mode=false, extra_request_params={}, data=null, combo_options=null
 ) {
     /**
      * Context2D editor element.
@@ -28531,6 +28535,8 @@ function DashGuiContext2D (
      * @param {boolean} preview_mode - When enabled, only shows a read-only "preview" of the context, hiding all the gui/tools (default=false)
      * @param {boolean} override_mode - When enabled, hides some gui/tools (default=false)
      * @param {Object} extra_request_params - Extra params to send on requests (default={})
+     * @param {Object} data - C2D data to start with, like when using a bulk request with a bunch of previews (default=null)
+     * @param {Array} combo_options - Combo options to start with, like when using a bulk request with a bunch of previews (default=null)
      */
     this.c2d_id = c2d_id;
     this.api = api;
@@ -28542,13 +28548,13 @@ function DashGuiContext2D (
     // the future, this can be baked into the core code if it makes sense to do so.
     this.override_mode = override_mode;
     this.extra_request_params = extra_request_params;
-    this.data = null;
+    this.data = data;
+    this.ComboOptions = combo_options;
     this.canvas = null;
     this.log_bar = null;
     this.toolbar = null;
     this.initialized = false;
     this.editor_panel = null;
-    this.ComboOptions = null;
     this.full_res_mode = false;
     this.linked_preview = null;
     this.on_duplicate_cb = null;
@@ -28562,7 +28568,7 @@ function DashGuiContext2D (
     this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
-    this.refresh_ms = this.preview_mode ? 30000 : 5000;
+    this.refresh_ms = this.preview_mode ? 60000 : 10000;
     this.editor_panel_property_box_custom_fields_cb = null;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.refresh_data_request_failure_id = "dash_gui_context_2d_on_data";
@@ -28577,7 +28583,20 @@ function DashGuiContext2D (
         }
         this.html.css(css);
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
-        Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
+        if (this.data) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        Dash.SetInterval(self, self.refresh_data, self.refresh_ms);
+                    },
+                    self.refresh_ms
+                );
+            })(this);
+            this._on_data();
+        }
+        else {
+            Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
+        }
         this.get_combo_options();
     };
     this.SetEditorPanelLayerProperty = function (key, value, id, callback=null) {
@@ -28894,17 +28913,13 @@ function DashGuiContext2D (
         }
         Dash.Requests.ResetRequestFailuresForID(this.refresh_data_request_failure_id);
         this.data = response;
-        if (this.ComboOptions && !this.initialized) {
-            this.initialize();
-        }
-        if (!this.preview_mode) {
-            console.log("Context2D data:", this.data);
-        }
-        if (this.initialized && this.editor_panel && !this.preview_mode) {
-            this.editor_panel.UpdatePropertyBox();
-        }
+        this._on_data();
     };
     this.get_combo_options = function (extra_params={}, callback=null) {
+        if (this.ComboOptions) {
+            this.on_combo_options(callback);
+            return;
+        }
         (function (self) {
             Dash.Request(
                 self,
@@ -28916,16 +28931,8 @@ function DashGuiContext2D (
                         delete response["error"];
                     }
                     self.ComboOptions = response;
-                    if (self.data && !self.initialized) {
-                        self.initialize();
-                    }
                     console.log("Context2D combo options:", self.ComboOptions);
-                    if (self.initialized && self.editor_panel && !self.preview_mode) {
-                        self.editor_panel.UpdateContentBoxComboOptions();
-                    }
-                    if (callback) {
-                        callback();
-                    }
+                    self.on_combo_options(callback);
                 },
                 self.api,
                 {
@@ -28935,6 +28942,17 @@ function DashGuiContext2D (
                 }
             );
         })(this);
+    };
+    this.on_combo_options = function (callback=null) {
+        if (this.data && !this.initialized) {
+            this.initialize();
+        }
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdateContentBoxComboOptions();
+        }
+        if (callback) {
+            callback();
+        }
     };
     this.get_data = function () {
         return this.data;
@@ -28985,6 +29003,17 @@ function DashGuiContext2D (
         }
         if (callback) {
             callback();
+        }
+    };
+    this._on_data = function () {
+        if (this.ComboOptions && !this.initialized) {
+            this.initialize();
+        }
+        if (!this.preview_mode) {
+            console.log("Context2D data:", this.data);
+        }
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdatePropertyBox();
         }
     };
     this.setup_styles();

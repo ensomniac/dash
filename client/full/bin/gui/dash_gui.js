@@ -102,8 +102,16 @@ function DashGui () {
     };
 
     this.ScrollToElement = function (container_html, element_html) {
-        if (!this.HasOverflow(container_html)) {
+        if (this.InScrollView(container_html, element_html)) {
             return;
+        }
+
+        element_html[0].scrollIntoView();
+    };
+
+    this.InScrollView = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return true;  // No overflow means there's no scroll, but it is therefore in view
         }
 
         var container_top = container_html.offset().top;
@@ -111,14 +119,10 @@ function DashGui () {
         var element_top = element_html.offset().top;
         var element_bottom = element_top + element_html.height();
 
-        if (  // Element is partially or fully visible within the container
+        return (  // Element is partially or fully visible within the container
                (element_top >= container_top && element_top <= container_bottom)
             || (element_bottom >= container_top && element_bottom <= container_bottom)
-        ) {
-            return;
-        }
-
-        element_html[0].scrollIntoView();
+        );
     };
 
     this.GetBottomDivider = function (color=null, width_percent="") {
