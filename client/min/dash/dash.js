@@ -26930,8 +26930,10 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
     this.init_labels_drawn = false;
     this.gravity_width_override = null;
     this.gravity_value_override = null;
+    this.arrow_buttons_inverted = false;
     this.gravity_height_override = null;
     this.previous_selected_option = null;
+    this.arrow_buttons_allow_first = true;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
     this.html = $("<div class='Combo'></div>");
@@ -27532,13 +27534,25 @@ function DashGuiCombo (label, callback, binder, option_list, selected_option_id,
         if (active_index === null) {
             return;
         }
-        if (active_index < 1) {
-            this.left_arrow_button.Disable();
-            this.right_arrow_button.Enable();
+        if (active_index < (this.arrow_buttons_allow_first ? 1 : 2)) {
+            if (this.arrow_buttons_inverted) {
+                this.right_arrow_button.Disable();
+                this.left_arrow_button.Enable();
+            }
+            else {
+                this.left_arrow_button.Disable();
+                this.right_arrow_button.Enable();
+            }
         }
         else if (active_index > (this.option_list.length - 2)) {
-            this.left_arrow_button.Enable();
-            this.right_arrow_button.Disable();
+            if (this.arrow_buttons_inverted) {
+                this.right_arrow_button.Enable();
+                this.left_arrow_button.Disable();
+            }
+            else {
+                this.left_arrow_button.Enable();
+                this.right_arrow_button.Disable();
+            }
         }
         else {
             this.left_arrow_button.Enable();
@@ -28057,7 +28071,9 @@ function DashGuiComboInterface () {
         this.SetStaticLabelText(label_text);
         this.as_button_combo = true;
     };
-    this.AddArrowButtons = function (left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy") {
+    this.AddArrowButtons = function (
+        inverted=false, allow_first=true, left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy"
+    ) {
         if (this.multi_select) {
             console.warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
             return;
@@ -28077,6 +28093,8 @@ function DashGuiComboInterface () {
             })(this);
             return;
         }
+        this.arrow_buttons_inverted = inverted;
+        this.arrow_buttons_allow_first = allow_first;
         this.html.css({
             "margin-left": size,
             "margin-right": size
@@ -28089,7 +28107,7 @@ function DashGuiComboInterface () {
             self.left_arrow_button = new Dash.Gui.IconButton(
                 left_icon_name,
                 function () {
-                    self.on_arrow_button(true);
+                    self.on_arrow_button(!inverted);
                 },
                 self,
                 self.color,
@@ -28098,7 +28116,7 @@ function DashGuiComboInterface () {
             self.right_arrow_button = new Dash.Gui.IconButton(
                 right_icon_name,
                 function () {
-                    self.on_arrow_button(false);
+                    self.on_arrow_button(inverted);
                 },
                 self,
                 self.color,
