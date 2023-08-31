@@ -14,6 +14,7 @@ function DashGuiPropertyBox (
     this.inputs = {};
     this.headers = [];
     this.tool_rows = [];
+    this.text_areas = {};
     this.num_headers = 0;
     this.disabled = false;
     this.bottom_divider = null;
@@ -63,6 +64,20 @@ function DashGuiPropertyBox (
             }
 
             input_row.SetText(this.get_update_value(data_key));
+        }
+    };
+
+    this.update_text_areas = function () {
+        for (var data_key in this.text_areas) {
+            var text_area = this.text_areas[data_key];
+
+            if (text_area.InFocus()) {
+                console.log("(Currently being edited) Skipping update for " + data_key);
+
+                continue;
+            }
+
+            text_area.SetText(this.get_update_value(data_key));
         }
     };
 
@@ -133,7 +148,7 @@ function DashGuiPropertyBox (
             return;
         }
 
-        row.html.css({
+        (typeof row.html === "function" ? row : row.html).css({
             "margin-left": this.indent_px + (
                 (this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0
             )
@@ -433,7 +448,7 @@ function DashGuiPropertyBox (
         }
 
         if (this.every_other_row_hightlight["highlight"]) {
-            row.html.css({
+            (typeof row.html === "function" ? row : row.html).css({
                 "background": this.every_other_row_hightlight["color"]
             });
         }

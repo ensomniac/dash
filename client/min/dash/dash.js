@@ -37776,6 +37776,7 @@ function DashGuiPropertyBox (
     this.inputs = {};
     this.headers = [];
     this.tool_rows = [];
+    this.text_areas = {};
     this.num_headers = 0;
     this.disabled = false;
     this.bottom_divider = null;
@@ -37816,6 +37817,16 @@ function DashGuiPropertyBox (
                 continue;
             }
             input_row.SetText(this.get_update_value(data_key));
+        }
+    };
+    this.update_text_areas = function () {
+        for (var data_key in this.text_areas) {
+            var text_area = this.text_areas[data_key];
+            if (text_area.InFocus()) {
+                console.log("(Currently being edited) Skipping update for " + data_key);
+                continue;
+            }
+            text_area.SetText(this.get_update_value(data_key));
         }
     };
     this.update_combos = function () {
@@ -37870,7 +37881,7 @@ function DashGuiPropertyBox (
         if (this.num_headers <= 0) {
             return;
         }
-        row.html.css({
+        (typeof row.html === "function" ? row : row.html).css({
             "margin-left": this.indent_px + (
                 (this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0
             )
@@ -38107,7 +38118,7 @@ function DashGuiPropertyBox (
             return;
         }
         if (this.every_other_row_hightlight["highlight"]) {
-            row.html.css({
+            (typeof row.html === "function" ? row : row.html).css({
                 "background": this.every_other_row_hightlight["color"]
             });
         }
@@ -38123,9 +38134,10 @@ function DashGuiPropertyBox (
 /**@member DashGuiPropertyBox*/
 function DashGuiPropertyBoxInterface () {
     this.Update = function () {
-        this.update_inputs();
-        this.update_combos();
         this.update_headers();
+        this.update_inputs();
+        this.update_text_areas();
+        this.update_combos();
         this.update_tool_rows();
     };
     this.Disable = function () {
@@ -38442,6 +38454,80 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(row.html);
         this.track_row(row);
         return row;
+    };
+    this.AddTextArea = function (
+        data_key, label_text="", can_edit=true, placeholder_text="",
+        callback=null, delay_cb=true, starting_height_mult=6
+    ) {
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        if (!(label_text.endsWith(":"))) {
+            label_text += ":";
+        }
+        var container = $("<div></div>");
+        container.css({
+            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+        });
+        var label = $("<div>" + label_text + "</div>");
+        label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": (Dash.Size.RowHeight) + "px",
+            "text-align": "left",
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
+            "flex": "none"
+        });
+        container.append(label);
+        var text_area = (function (self) {
+            return new Dash.Gui.TextArea(
+                self.color,
+                placeholder_text,
+                self,
+                callback ? function (value) {
+                    callback.bind(self.binder)(data_key, value);
+                } : function (value, text_area) {
+                    if (!can_edit) {
+                        return;
+                    }
+                    if (self.get_data_cb) {
+                        var old_value = self.get_data_cb()[data_key];
+                        if (old_value === value) {
+                            return;
+                        }
+                    }
+                    if (!self.dash_obj_id) {
+                        if (self.set_data_cb) {
+                            self.set_data_cb(data_key, value);
+                        }
+                        else {
+                            console.error("Error: Property Box has no callback and no endpoint information!");
+                        }
+                        return;
+                    }
+                    self.set_property(data_key, value, text_area, false);
+                },
+                delay_cb
+            );
+        })(this);
+        text_area.textarea.css({
+            "border": text_area.border_size + "px solid " + this.color.StrokeLight
+        });
+        text_area.SetHeight(Dash.Size.RowHeight * starting_height_mult);
+        if (!can_edit) {
+            text_area.Lock(false);
+        }
+        if (value) {
+            text_area.SetText(value);
+        }
+        container.append(text_area.html);
+        container._label = label;
+        container._text_area = text_area;
+        this.text_areas[data_key] = text_area;
+        this.indent_row(container);
+        this.track_row(container);
+        this.html.append(container);
+        return container;
     };
     this.AddLabel = function (text, color=null) {
         var header = new Dash.Gui.Header(text, color || this.color);
@@ -44540,7 +44626,9 @@ function DashMobileTextBox (
         if (!this.flash_highlight) {
             this.flash_highlight = $("<div></div>");
             this.flash_highlight.css({
-                "border": (this.border_size * 2) + "px solid " + Dash.Color.Mobile.AccentSecondary,
+                "border": (this.border_size * 2) + "px solid " + (
+                    Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood
+                ),
                 "position": "absolute",
                 "inset": 0,
                 "opacity": 0,
@@ -44550,7 +44638,9 @@ function DashMobileTextBox (
             this.html.append(this.flash_highlight);
         }
         this.flash_highlight.css({
-            "height": (this.textarea.outerHeight() || this.textarea.innerHeight() || this.textarea.height()) - (this.border_size * 4)
+            "height": (
+                this.textarea.outerHeight() || this.textarea.innerHeight() || this.textarea.height()
+            ) - (this.border_size * 4)
         });
         (function (self) {
             self.flash_highlight.stop().animate(

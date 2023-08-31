@@ -236,7 +236,9 @@ function DashMobileTextBox (
             this.flash_highlight = $("<div></div>");
 
             this.flash_highlight.css({
-                "border": (this.border_size * 2) + "px solid " + Dash.Color.Mobile.AccentSecondary,
+                "border": (this.border_size * 2) + "px solid " + (
+                    Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood
+                ),
                 "position": "absolute",
                 "inset": 0,
                 "opacity": 0,
@@ -248,7 +250,9 @@ function DashMobileTextBox (
         }
 
         this.flash_highlight.css({
-            "height": (this.textarea.outerHeight() || this.textarea.innerHeight() || this.textarea.height()) - (this.border_size * 4)
+            "height": (
+                this.textarea.outerHeight() || this.textarea.innerHeight() || this.textarea.height()
+            ) - (this.border_size * 4)
         });
 
         (function (self) {
