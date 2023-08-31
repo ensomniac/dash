@@ -96,3 +96,19 @@ def ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_
         parent_x + new_distance * math.cos(angle),  # New x-coordinate of the child center
         parent_y + new_distance * math.sin(angle)   # New y-coordinate of the child center
     )
+
+
+def GetOrdinalSuffix(num):
+    if num % 100 in [11, 12, 13]:
+        return "th"
+
+    if num % 10 == 1:
+        return "st"
+
+    if num % 10 == 2:
+        return "nd"
+
+    if num % 10 == 3:
+        return "rd"
+
+    return "th"

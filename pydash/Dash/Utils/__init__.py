@@ -190,6 +190,12 @@ def ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_
     return ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_y, scale_factor)
 
 
+def GetOrdinalSuffix(num):
+    from .number import GetOrdinalSuffix
+
+    return GetOrdinalSuffix(num)
+
+
 # ------------------------------------------------- STRING --------------------------------------------------
 def FormatTime(datetime_object, time_format=1, tz="utc"):
     from .string import FormatTime
