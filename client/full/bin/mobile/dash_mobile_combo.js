@@ -75,7 +75,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         this.select.append(row);
     };
 
-    this.SetSelection = function (option_id) {
+    this.SetSelection = function (option_id, trigger_cb=false) {
         if (!this.options[option_id]) {
             console.warn("Option ID (" + option_id + ") not in options:", this.options);
 
@@ -83,6 +83,12 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         }
 
         this.select.val(option_id);
+
+        // The 'change' event of this element only gets triggered when an option is manually
+        // selected, so when changing it this way, we need to manually trigger the callback
+        if (trigger_cb && this.on_change_cb) {
+            this.on_change_cb(this.GetID());
+        }
     };
 
     this.Lock = function (restyle=true) {
@@ -152,6 +158,9 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
 
     this.setup_connections = function () {
         (function (self) {
+            // The 'change' event only triggers when a selection is
+            // made, whether that's by clicking an option or typing an
+            // option and selecting it using the arrow keys and enter key
             self.select.on("change", function () {
                 if (self.on_change_cb) {
                     self.on_change_cb(self.GetID());
