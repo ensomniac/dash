@@ -36171,10 +36171,13 @@ function DashGuiIcons (icon) {
         "arrow_left":            new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),
         "arrow_left_heavy":      new DashGuiIconDefinition(this.icon, "Arrow Left (Heavy)", this.weight["solid"], "angle-left"),
         "arrow_left_alt":        new DashGuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
+        "arrow_left_alt_heavy":  new DashGuiIconDefinition(this.icon, "Arrow Left Alt (Heavy)", this.weight["solid"], "arrow-left"),
         "arrow_left_long":       new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
         "arrow_left_circled":    new DashGuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
         "arrow_left_from_right": new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
         "arrow_right":           new DashGuiIconDefinition(this.icon, "Arrow Right", this.weight["regular"], "angle-right"),
+        "arrow_right_alt":       new DashGuiIconDefinition(this.icon, "Arrow Right Alt", this.weight["regular"], "arrow-right"),
+        "arrow_right_alt_heavy": new DashGuiIconDefinition(this.icon, "Arrow Right Alt (Heavy)", this.weight["solid"], "arrow-right"),
         "arrow_right_heavy":     new DashGuiIconDefinition(this.icon, "Arrow Right (Heavy)", this.weight["solid"], "angle-right"),
         "arrow_right_to_right":  new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-to-right"),
         "arrow_to_left":         new DashGuiIconDefinition(this.icon, "Arrow To Left", this.weight["regular"], "arrow-to-left"),
@@ -41201,6 +41204,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.tmp_css_cache = [];
     this.sublist_queue = [];
     this.is_expanded = false;
+    this.hover_active = false;
     this.cached_preview = null;  // Intended for sublists only
     this.is_highlighted = false;
     this.fully_disabled = false;
@@ -41211,9 +41215,15 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
     this.clear_sublist_preview_on_update = true;
-    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.toString().startsWith(this.list.header_row_tag) : false;
-    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
-    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
+    this.is_header = this.list.hasOwnProperty(
+        "header_row_tag"
+    ) ? this.id.toString().startsWith(this.list.header_row_tag) : false;
+    this.is_footer = this.list.hasOwnProperty(
+        "footer_row_tag"
+    ) ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
+    this.is_sublist = this.list.hasOwnProperty(
+        "sublist_row_tag"
+    ) ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
     this.anim_delay = {
         "highlight_show": 100,
         "highlight_hide": 250,
@@ -41247,7 +41257,10 @@ function DashLayoutListRow (list, row_id, height=null) {
                 "top": 0,
                 "right": 0,
                 "height": this.height,
-                "background": Dash.Color.GetTransparent(Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood, 0.5),
+                "background": Dash.Color.GetTransparent(
+                    Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
+                    0.5
+                ),
                 "pointer-events": "none",
                 "opacity": 0
             });
@@ -41321,31 +41334,39 @@ function DashLayoutListRow (list, row_id, height=null) {
         }
         return this.list.get_data_for_key(this.id, column_config_data["data_key"]) || default_value;
     };
+    this.on_hover_in = function () {
+        if (this.is_header || this.is_footer) {
+            return;
+        }
+        this.hover_active = true;
+        this.highlight.stop().animate({"opacity": 1}, this.anim_delay["highlight_show"]);
+        if (this.list.allow_row_divider_color_change_on_hover === false) {
+            return;
+        }
+        for (var divider of this.columns["dividers"]) {
+            divider["obj"].css({"background": this.color.Button.Background.Base});
+        }
+    };
+    this.on_hover_out = function () {
+        if (this.is_expanded || this.is_header || this.is_footer) {
+            return;
+        }
+        this.hover_active = false;
+        this.highlight.stop().animate({"opacity": 0}, this.anim_delay["highlight_hide"]);
+        if (this.list.allow_row_divider_color_change_on_hover === false) {
+            return;
+        }
+        for (var divider of this.columns["dividers"]) {
+            divider["obj"].css({"background": this.color.AccentGood});
+        }
+    };
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {
-                if (self.is_header || self.is_footer) {
-                    return;
-                }
-                self.highlight.stop().animate({"opacity": 1}, self.anim_delay["highlight_show"]);
-                if (self.list.allow_row_divider_color_change_on_hover === false) {
-                    return;
-                }
-                for (var divider of self.columns["dividers"]) {
-                    divider["obj"].css({"background": self.color.Button.Background.Base});
-                }
+                self.on_hover_in();
             });
             self.html.on("mouseleave", function () {
-                if (self.is_expanded || self.is_header || self.is_footer) {
-                    return;
-                }
-                self.highlight.stop().animate({"opacity": 0}, self.anim_delay["highlight_hide"]);
-                if (self.list.allow_row_divider_color_change_on_hover === false) {
-                    return;
-                }
-                for (var divider of self.columns["dividers"]) {
-                    divider["obj"].css({"background": self.color.AccentGood});
-                }
+                self.on_hover_out();
             });
             self.column_box.on("click", function (e) {
                 if (e.target && e.target.className.includes(" fa-")) {
@@ -42536,16 +42557,25 @@ function DashLayoutListRowInterface () {
 }
 
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null, include_footer_row=false) {
+function DashLayoutRevolvingList (
+    binder, column_config, color=null, include_header_row=false,
+    row_options={}, get_data_for_key=null, include_footer_row=false
+) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.include_header_row = include_header_row;
     this.include_footer_row = include_footer_row;
-    // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
-    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
+    // This is useful if there is more than one list in the same
+    // script, which each need their own GetDataForKey function
+    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : (
+        binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null
+    );
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
+        console.error(
+            "Error: Required second parameter 'column_config' is " +
+            "not of the correct class, DashLayoutListColumnConfig"
+        );
         return;
     }
     if (!this.get_data_for_key) {
