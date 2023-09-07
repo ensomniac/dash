@@ -33,7 +33,7 @@ function DashGuiPropertyBox (
 
     this.setup_styles = function () {
         this.html.css({
-            "background": "rgba(255, 255, 255, 0.25)",
+            "background": "rgba(255, 255, 255, 0.25)"
         });
 
         if (Dash.IsMobile) {

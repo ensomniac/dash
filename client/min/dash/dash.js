@@ -37809,7 +37809,7 @@ function DashGuiPropertyBox (
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         this.html.css({
-            "background": "rgba(255, 255, 255, 0.25)",
+            "background": "rgba(255, 255, 255, 0.25)"
         });
         if (Dash.IsMobile) {
             this.setup_mobile_styles();
@@ -38295,7 +38295,7 @@ function DashGuiPropertyBoxInterface () {
         var bar = new Dash.Gui.ButtonBar(this.binder, this.color, style);
         bar.html.css({
             "margin-top": Dash.Size.Padding,
-            "margin-left": indent ? (Dash.Size.Padding * 2) : 0
+            "margin-left": indent ? this.indent_px : 0
         });
         this.AddHTML(bar.html);
         return bar;
@@ -38355,7 +38355,7 @@ function DashGuiPropertyBoxInterface () {
         var button = this.AddButton("Delete", callback);
         button.StyleAsDeleteButton(Dash.Size.ColumnWidth, faint);
         button.html.css({
-            "margin-left": Dash.Size.Padding * 2,
+            "margin-left": this.indent_px,
             "margin-right": "auto"
         });
         return button;
@@ -38363,7 +38363,7 @@ function DashGuiPropertyBoxInterface () {
     this.AddCombo = function (
         label_text, combo_options, property_key="", default_value=null, bool=false, options={}
     ) {
-        var indent_px = options["indent_px"] || (Dash.Size.Padding * 2);
+        var indent_px = options["indent_px"] || this.indent_px;
         var indent_row = false;
         if (this.num_headers > 0) {
             indent_row = true;
@@ -38417,6 +38417,21 @@ function DashGuiPropertyBoxInterface () {
         row.property_box_input_combo = combo;
         this.combos[property_key] = combo;
         this.track_row(row);
+        if (options["two_lines"]) {
+            row.input.html.remove();
+            row.highlight.detach();
+            row.html.css({
+                "display": "",
+                "height": "auto"
+            });
+            row.property_box_input_combo.html.css({
+                "position": "",
+                "left": 0
+            });
+            row.property_box_input_combo.html.detach();
+            row.html.append(row.property_box_input_combo.html);
+            row.property_box_input_combo.html.append(row.highlight);
+        }
         return row;
     };
     this.AddInput = function (
@@ -38548,7 +38563,7 @@ function DashGuiPropertyBoxInterface () {
     this.AddLabel = function (text, color=null) {
         var header = new Dash.Gui.Header(text, color || this.color);
         header.html.css({
-            "margin-left": Dash.Size.Padding * 2
+            "margin-left": this.indent_px
         });
         this.html.append(header.html);
         return header;
