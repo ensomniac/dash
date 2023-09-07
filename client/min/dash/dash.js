@@ -25193,6 +25193,17 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         });
         return this;
     };
+    this.FitWidth = function () {
+        this.icon.html.css({
+            "width": "fit-content"
+        });
+        this.icon.icon_html.css({
+            "width": "fit-content"
+        });
+        this.html.css({
+            "width": "fit-content"
+        });
+    };
     this.setup_icon = function () {
         if (this.style === "toolbar") {
             if (!this.icon_height) {

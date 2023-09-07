@@ -102,19 +102,21 @@ class GUtils:
     def PDFMimeType(self):
         return "application/pdf"
 
-    def DownloadAsPDF(self, file_id, pdf_path):
+    def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
         return self.download_as(
             file_id=file_id,
             download_path=pdf_path,
-            mime_type=self.PDFMimeType
+            mime_type=self.PDFMimeType,
+            parent_id=parent_id
         )
 
-    def download_as(self, file_id, download_path, mime_type, fields=""):
+    def download_as(self, file_id, download_path, mime_type, fields="", parent_id=""):
         from io import BytesIO
         from Dash.LocalStorage import Write
         from googleapiclient.http import MediaIoBaseDownload
 
         done = False
+        error = None
         file = BytesIO()
 
         try:
@@ -133,7 +135,37 @@ class GUtils:
             Write(download_path, file.getbuffer())
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            try:
+                error = ParseHTTPError(http_error)
+
+            except Exception as e:
+                error = e
+
+        except Exception as e:
+            error = e
+
+        if error:
+            if "file is too large" in str(error):
+                from Dash.Utils import ClientAlert
+
+                msg = "The file is too big to be exported from Google's API as the desired format."
+
+                if parent_id:
+                    msg += f"\n\nYou can find the file in this folder:\nhttps://drive.google.com/drive/u/2/folders/{parent_id}\n\n"
+                else:
+                    msg += "\n\nIf you know which drive the source file was uploaded to, you can open it directly there.\n"
+
+                msg += "After opening the file, you can download it as the desired format using:\n[File]>[Download]"
+
+                if not parent_id:
+                    msg += (
+                        "\n\nIf you don't know how to find the source file or the drive it "
+                        "was uploaded to, please reach out to the dev team for assistance."
+                    )
+
+                raise ClientAlert(msg)
+
+            raise Exception(error)
 
         return download_path
 
@@ -164,8 +196,8 @@ class GUtils:
     def GetNewSheet(self, sheet_name):
         return self._sheets_utils.GetNew(sheet_name)
 
-    def DownloadSheetAsXLSX(self, sheet_id, xlsx_path):
-        return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path)
+    def DownloadSheetAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
+        return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path, parent_id)
 
     # ========================= DRIVE =========================
 
@@ -645,11 +677,12 @@ class _SheetsUtils:
     def GetNew(self, sheet_name):
         return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
 
-    def DownloadAsXLSX(self, sheet_id, xlsx_path):
+    def DownloadAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
         return self.gutils.download_as(
             file_id=sheet_id,
             download_path=xlsx_path,
-            mime_type=self.ExcelMimeType
+            mime_type=self.ExcelMimeType,
+            parent_id=parent_id
         )
 
 

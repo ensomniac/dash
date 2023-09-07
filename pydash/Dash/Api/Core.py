@@ -371,11 +371,22 @@ class ApiCore:
 
         self._response = response
 
-        if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
-            if os.environ and os.environ.get("HTTP_USER_AGENT") and "slackbot" in os.environ["HTTP_USER_AGENT"].lower() and "unknown function" in self._response["error"].lower():
-                pass  # Don't bother sending the email if and old/deprecated endpoint/function was hit by a Slack URL preview
-            else:
-                self.SendEmail(from_set_response=True)
+        if (
+            # Basic qualifications to send error email
+            self._send_email_on_error
+            and not self._execute_as_module
+            and type(self._response) is dict
+            and self._response.get("error")
+
+            # Don't send if and old/deprecated endpoint/function was hit by a Slack URL preview
+            and not (
+                os.environ
+                and os.environ.get("HTTP_USER_AGENT")
+                and "slackbot" in os.environ["HTTP_USER_AGENT"].lower()
+                and "unknown function" in self._response["error"].lower()
+            )
+        ):
+            self.SendEmail(from_set_response=True)
 
         # Private errors should be deleted after sending the error email, so they're not exposed to the client
         if "_error" in self._response:
@@ -551,6 +562,9 @@ class ApiCore:
             return True
 
         if "Missing param 'file'" in error:
+            return True
+
+        if "Unauthorized" in error:
             return True
 
         return False
