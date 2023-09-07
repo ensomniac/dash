@@ -180,9 +180,9 @@ function DashGuiContext2DEditorPanel (editor) {
         this.content_box.UpdateComboOptions();
     };
 
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.layers_box) {
-            this.layers_box.Select(id, from_canvas);
+            this.layers_box.Select(id, from_canvas, focus);
         }
     };
 

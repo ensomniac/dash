@@ -191,7 +191,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.selected = false;
     };
 
-    this.Select = function (from_click=false, border=true) {
+    this.Select = function (from_click=false, border=true, focus=true) {
         if (this.selected) {
             return;
         }
@@ -235,7 +235,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (!locked && this.type === "text") {
             this.unlock_text_area();
-            this.focus_text_area();
+
+            if (focus) {
+                this.focus_text_area();
+            }
         }
 
         this.selected = true;

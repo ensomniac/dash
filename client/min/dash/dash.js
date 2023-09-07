@@ -28642,9 +28642,9 @@ function DashGuiContext2D (
             this.canvas.SetTool(name, cursor);
         }
     };
-    this.SetCanvasActivePrimitive = function (id) {
+    this.SetCanvasActivePrimitive = function (id, focus=true) {
         if (this.canvas) {
-            this.canvas.SetActivePrimitive(id);
+            this.canvas.SetActivePrimitive(id, focus);
         }
     };
     this.UpdateCanvasPrimitive = function (key, value, id="") {
@@ -28687,9 +28687,9 @@ function DashGuiContext2D (
             this.canvas.Resize();
         }
     };
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.editor_panel) {
-            this.editor_panel.SelectLayer(id, from_canvas);
+            this.editor_panel.SelectLayer(id, from_canvas, focus);
         }
     };
     this.GetSelectedLayer = function () {
@@ -29139,11 +29139,11 @@ function DashGuiContext2DCanvas (editor) {
         }
         this.last_selected_primitive.Update(key, value);
     };
-    this.SetActivePrimitive = function (id) {
+    this.SetActivePrimitive = function (id, focus=true) {
         if (!this.primitives[id]) {
             return;
         }
-        this.primitives[id].Select();
+        this.primitives[id].Select(false, true, focus);
         this.last_selected_primitive = this.primitives[id];
     };
     this.AddPrimitive = function (layer, select=true) {
@@ -30000,7 +30000,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         this.selected = false;
     };
-    this.Select = function (from_click=false, border=true) {
+    this.Select = function (from_click=false, border=true, focus=true) {
         if (this.selected) {
             return;
         }
@@ -30032,7 +30032,9 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.canvas.OnPrimitiveSelected(this, from_click);
         if (!locked && this.type === "text") {
             this.unlock_text_area();
-            this.focus_text_area();
+            if (focus) {
+                this.focus_text_area();
+            }
         }
         this.selected = true;
     };
@@ -31576,9 +31578,9 @@ function DashGuiContext2DEditorPanel (editor) {
     this.UpdateContentBoxComboOptions = function () {
         this.content_box.UpdateComboOptions();
     };
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.layers_box) {
-            this.layers_box.Select(id, from_canvas);
+            this.layers_box.Select(id, from_canvas, focus);
         }
     };
     this.AddCustomElementToContentNewTab = function (
@@ -32031,7 +32033,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "cursor": "pointer"
         });
     };
-    this.Select = function (from_canvas=false) {
+    this.Select = function (from_canvas=false, focus=true) {
         if (this.selected || this.preview_mode) {
             return;
         }
@@ -32042,7 +32044,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "cursor": "auto"
         });
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.id);
+            this.editor.SetCanvasActivePrimitive(this.id, focus);
         }
         if (!this.layers.redrawing) {
             this.editor.AddToLog("Selected layer: " + this.get_value("display_name"));
@@ -32644,8 +32646,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
-    this.Select = function (id, from_canvas=true) {
-        this.layers[id].Select(from_canvas);
+    this.Select = function (id, from_canvas=true, focus=true) {
+        this.layers[id].Select(from_canvas, focus);
     };
     this.SetProperty = function (key, value, id, callback=null) {
         this.set_layer_property(key, value, id, "", callback);

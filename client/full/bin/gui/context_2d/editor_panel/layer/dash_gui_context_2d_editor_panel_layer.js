@@ -153,7 +153,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
     };
 
-    this.Select = function (from_canvas=false) {
+    this.Select = function (from_canvas=false, focus=true) {
         if (this.selected || this.preview_mode) {
             return;
         }
@@ -168,7 +168,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.id);
+            this.editor.SetCanvasActivePrimitive(this.id, focus);
         }
 
         if (!this.layers.redrawing) {

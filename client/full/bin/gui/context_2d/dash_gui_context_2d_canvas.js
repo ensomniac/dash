@@ -110,12 +110,12 @@ function DashGuiContext2DCanvas (editor) {
         this.last_selected_primitive.Update(key, value);
     };
 
-    this.SetActivePrimitive = function (id) {
+    this.SetActivePrimitive = function (id, focus=true) {
         if (!this.primitives[id]) {
             return;
         }
 
-        this.primitives[id].Select();
+        this.primitives[id].Select(false, true, focus);
 
         this.last_selected_primitive = this.primitives[id];
     };

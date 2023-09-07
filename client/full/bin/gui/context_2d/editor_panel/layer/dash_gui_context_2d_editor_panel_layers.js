@@ -321,8 +321,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.toolbar.UpdateIconStates();
     };
 
-    this.Select = function (id, from_canvas=true) {
-        this.layers[id].Select(from_canvas);
+    this.Select = function (id, from_canvas=true, focus=true) {
+        this.layers[id].Select(from_canvas, focus);
     };
 
     this.SetProperty = function (key, value, id, callback=null) {

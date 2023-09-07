@@ -136,9 +136,9 @@ function DashGuiContext2D (
         }
     };
 
-    this.SetCanvasActivePrimitive = function (id) {
+    this.SetCanvasActivePrimitive = function (id, focus=true) {
         if (this.canvas) {
-            this.canvas.SetActivePrimitive(id);
+            this.canvas.SetActivePrimitive(id, focus);
         }
     };
 
@@ -190,9 +190,9 @@ function DashGuiContext2D (
         }
     };
 
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.editor_panel) {
-            this.editor_panel.SelectLayer(id, from_canvas);
+            this.editor_panel.SelectLayer(id, from_canvas, focus);
         }
     };
 
