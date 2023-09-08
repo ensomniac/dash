@@ -38419,18 +38419,17 @@ function DashGuiPropertyBoxInterface () {
         this.track_row(row);
         if (options["two_lines"]) {
             row.input.html.remove();
-            row.highlight.detach();
             row.html.css({
                 "display": "",
                 "height": "auto"
             });
-            row.property_box_input_combo.html.css({
+            combo.html.css({
                 "position": "",
                 "left": 0
             });
-            row.property_box_input_combo.html.detach();
-            row.html.append(row.property_box_input_combo.html);
-            row.property_box_input_combo.html.append(row.highlight);
+            combo.html.detach();
+            row.html.append(combo.html);
+            combo.RefreshConnections();
         }
         return row;
     };
