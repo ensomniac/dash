@@ -38483,6 +38483,11 @@ function DashGuiPropertyBoxInterface () {
         }
         this.html.append(row.html);
         this.track_row(row);
+        if (data_key === "id") {
+            row.html.css({
+                "opacity": 0.5
+            });
+        }
         return row;
     };
     this.AddTextArea = function (
