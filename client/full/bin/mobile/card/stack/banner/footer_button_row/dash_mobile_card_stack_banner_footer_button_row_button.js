@@ -55,17 +55,26 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
 
-        this.label.css({
+        var two_lines = this.label_text.includes("\n");
+
+        var label_css = {
             "position": "absolute",
             "left": -Dash.Size.Padding,
             "bottom": 0,
             "top": "auto",
             "height": this.label_height,
-            "line-height": this.label_height + "px",
+            "line-height": (this.label_height * (two_lines ? 0.35 : 1)) + "px",
             "width": this.width + (Dash.Size.Padding * 2),
             "font-size": "80%",
             "background": "none"
-        });
+        };
+
+        if (two_lines) {
+            label_css["white-space"] = "pre-wrap";
+            label_css["margin-bottom"] = -Dash.Size.Padding * 0.5;
+        }
+
+        this.label.css(label_css);
 
         this.icon_circle.append(this.icon.html);
 

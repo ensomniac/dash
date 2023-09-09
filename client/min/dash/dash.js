@@ -46683,10 +46683,13 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
             label_text,
             callback
         );
-        if (this.buttons.length > 0) {
-            this.buttons.Last().html.css({
-                "margin-right": Dash.Size.Padding * 2
-            });
+        var len = this.buttons.length;
+        if (len > 0) {
+            for (var _button of this.buttons) {
+                _button.html.css({
+                    "margin-right": Dash.Size.Padding * (len < 3 ? 2 : len < 5 ? 1 : 0.5)
+                });
+            }
         }
         this.center_content.append(button.html);
         this.buttons.push(button);
@@ -46757,17 +46760,23 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "border": "1px solid " + this.color.PinstripeDark
             // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
-        this.label.css({
+        var two_lines = this.label_text.includes("\n");
+        var label_css = {
             "position": "absolute",
             "left": -Dash.Size.Padding,
             "bottom": 0,
             "top": "auto",
             "height": this.label_height,
-            "line-height": this.label_height + "px",
+            "line-height": (this.label_height * (two_lines ? 0.35 : 1)) + "px",
             "width": this.width + (Dash.Size.Padding * 2),
             "font-size": "80%",
             "background": "none"
-        });
+        };
+        if (two_lines) {
+            label_css["white-space"] = "pre-wrap";
+            label_css["margin-bottom"] = -Dash.Size.Padding * 0.5;
+        }
+        this.label.css(label_css);
         this.icon_circle.append(this.icon.html);
         this.html.append(this.icon_circle);
         this.html.append(this.label);
