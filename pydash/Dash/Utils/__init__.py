@@ -104,6 +104,12 @@ def GetImageExtensions():
     return ImageExtensions
 
 
+def GetDraftingExtensions():
+    from .file import DraftingExtensions
+
+    return DraftingExtensions
+
+
 def GetAudioExtensions():
     from .file import AudioExtensions
 

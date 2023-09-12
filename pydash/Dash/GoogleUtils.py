@@ -324,6 +324,14 @@ class _DriveUtils:
         :rtype: dict
         """
 
+        if not params.get("mimeType"):
+            from Dash.Utils import GetDraftingExtensions
+
+            ext = file_path.split(".")[-1].strip().lower()
+
+            if ext in GetDraftingExtensions():
+                params["mimeType"] = "application/x-autocad"
+
         file = None
 
         if file_path:

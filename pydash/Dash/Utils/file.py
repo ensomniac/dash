@@ -16,7 +16,8 @@ from Dash.LocalStorage import Read, Write, ConformPermissions
 ThumbSize = 512
 VideoExtensions = ["mp4"]
 AudioExtensions = ["mp3", "wav", "ogg"]
-FontExtensions  = ["ttf", "otf", "woff", "woff2"]
+FontExtensions = ["ttf", "otf", "woff", "woff2"]
+DraftingExtensions = ["cad", "pdg", "dxf", "dwg", "job", "3d"]
 ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
 
 

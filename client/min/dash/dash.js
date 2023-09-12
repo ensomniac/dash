@@ -18766,6 +18766,9 @@ function DashFile () {
         "drafting": [
             "cad",
             "pdg",
+            "dxf",
+            "dwg",
+            "job",
             "3d"
         ]
     };
