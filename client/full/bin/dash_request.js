@@ -193,5 +193,38 @@ function DashRequest () {
         }
 
         callback(response);
+
+        // ------------------------------------
+
+        response = response || {};
+
+        var key = "__dash_force_front_end_refresh__";
+
+        // This allows us to force a refresh for clients that are left open,
+        // never refreshed, etc, by simply adding this param to the response of
+        // an interval request that is known to be running, via dashsync, then
+        // removing the param shortly thereafter
+        if (!response["error"] && response[key]) {
+            alert("There are updates that require a refresh, sorry for any inconvenience.");
+
+            try {
+                this.SendEmail(
+                    (
+                          Dash.User.Init["email"]
+                        + " has had their client forcibly refreshed via: "
+                        + key
+                        + "\n\nDon't forget to disable this flag from the "
+                        + "backend as soon as all desired clients have been refreshed!"
+                    ),
+                    "Forced Refresh"
+                );
+            }
+
+            catch {
+                // pass
+            }
+
+            location.reload();
+        }
     };
 }

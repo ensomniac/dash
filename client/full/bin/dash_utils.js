@@ -187,9 +187,23 @@ function DashUtils () {
     this.manage_timer = function (timer) {
         var still_active = true;
 
-        if (timer.iterations && timer.iterations >= 1) {
-            if (timer.source && timer.source.html && !timer.source.html.is(":visible")) {
-                still_active = false;
+        if (timer.iterations && timer.iterations >= 1 && timer.source) {
+            try {
+                if (timer.source.html && !timer.source.html.is(":visible")) {
+                    still_active = false;
+                }
+            }
+
+            catch {
+                try {
+                    if (!timer.source.is(":visible")) {
+                        still_active = false;
+                    }
+                }
+
+                catch {
+                    // Pass
+                }
             }
         }
 
