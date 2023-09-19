@@ -103,7 +103,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return this.all_content[this.current_index];
     };
 
-    this.GetIndexByTabName = function (name) {
+    this.GetIndexByTabName = function (name, default_zero=true) {
         for (var i in this.all_content) {
             var content = this.all_content[i];
 
@@ -112,9 +112,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
         }
 
-        console.warn("Warning: Failed to find index by tab name for:", name);
+        console.warn("Warning: Failed to find index by tab name for:", name, this.all_content);
 
-        return 0;
+        return (default_zero ? 0 : null);
     };
 
     // TODO: Break this function up

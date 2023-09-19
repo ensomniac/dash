@@ -38852,15 +38852,15 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         return this.all_content[this.current_index];
     };
-    this.GetIndexByTabName = function (name) {
+    this.GetIndexByTabName = function (name, default_zero=true) {
         for (var i in this.all_content) {
             var content = this.all_content[i];
             if (content["label_text"] === name) {
                 return i;
             }
         }
-        console.warn("Warning: Failed to find index by tab name for:", name);
-        return 0;
+        console.warn("Warning: Failed to find index by tab name for:", name, this.all_content);
+        return (default_zero ? 0 : null);
     };
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {
