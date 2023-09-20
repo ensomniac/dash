@@ -5,8 +5,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
 
     this.temp_html = [];
     this.all_content = [];
+    this.init_attempts = 0;
     this.selected_index = -1;
     this.current_index = null;
+    this.initial_load = false;
     this.html = $("<div></div>");
     this.on_tab_changed_cb = null;
     this.tab_top = $("<div></div>");
@@ -52,27 +54,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
 
         (function (self) {
             requestAnimationFrame(function () {
-                if (!Dash.User.Data || Dash.User.Data["first_name"]) {
-                    self.load_last_selection();
-
-                    return;
-                }
-
-                // If the user is new and hasn't yet at least entered their first name, gently
-                // nudge them to do so every time they load the main view by loading their user view
-                for (var i in self.all_content) {
-                    if (self.all_content[i]["content_div_html_class"] !== DashUserView) {
-                        continue;
-                    }
-
-                    try {
-                        self.LoadIndex(i);
-                    }
-
-                    catch {
-                        self.load_last_selection();
-                    }
-                }
+                self.init();
             });
         })(this);
     };
@@ -386,6 +368,55 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             this.content_area.css({
                 "top": this.tab_area_size
             });
+        }
+    };
+
+    this.init = function () {
+        if (!this.all_content.length) {
+            if (this.init_attempts > 10) {
+                return;
+            }
+
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.init();
+                    },
+                    100
+                );
+            })(this);
+
+            this.init_attempts += 1;
+
+            return;
+        }
+
+        if (this.initial_load) {
+            return;
+        }
+
+        this.initial_load = true;
+
+        if (!Dash.User.Data || Dash.User.Data["first_name"]) {
+            this.load_last_selection();
+
+            return;
+        }
+
+        // If the user is new and hasn't yet at least entered their first name, gently
+        // nudge them to do so every time they load the main view by loading their user view
+        for (var i in this.all_content) {
+            if (this.all_content[i]["content_div_html_class"] !== DashUserView) {
+                continue;
+            }
+
+            try {
+                this.LoadIndex(i);
+            }
+
+            catch {
+                this.load_last_selection();
+            }
         }
     };
 

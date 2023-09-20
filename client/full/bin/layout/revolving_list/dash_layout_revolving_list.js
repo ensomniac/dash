@@ -50,6 +50,7 @@ function DashLayoutRevolvingList (
     this.row_clicks_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
+    this.divider_row_tag = "__divider__";
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
     this.footer_row_tag = "_bottom_footer_row";
@@ -573,6 +574,11 @@ function DashLayoutRevolvingList (
 
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
+        row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
+
+        // TODO: work out the height change throughout this code
+        //  (big thing to handle - any use of this.row_height or this.full_row_height)
+        // row.height = this.row_height * (row.is_divider ? 0.5 : 1);
 
         row.html.css({
             "top": row_index * this.full_row_height,

@@ -38773,8 +38773,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.color = color;
     this.temp_html = [];
     this.all_content = [];
+    this.init_attempts = 0;
     this.selected_index = -1;
     this.current_index = null;
+    this.initial_load = false;
     this.html = $("<div></div>");
     this.on_tab_changed_cb = null;
     this.tab_top = $("<div></div>");
@@ -38812,23 +38814,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         (function (self) {
             requestAnimationFrame(function () {
-                if (!Dash.User.Data || Dash.User.Data["first_name"]) {
-                    self.load_last_selection();
-                    return;
-                }
-                // If the user is new and hasn't yet at least entered their first name, gently
-                // nudge them to do so every time they load the main view by loading their user view
-                for (var i in self.all_content) {
-                    if (self.all_content[i]["content_div_html_class"] !== DashUserView) {
-                        continue;
-                    }
-                    try {
-                        self.LoadIndex(i);
-                    }
-                    catch {
-                        self.load_last_selection();
-                    }
-                }
+                self.init();
             });
         })(this);
     };
@@ -39061,6 +39047,44 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             this.content_area.css({
                 "top": this.tab_area_size
             });
+        }
+    };
+    this.init = function () {
+        if (!this.all_content.length) {
+            if (this.init_attempts > 10) {
+                return;
+            }
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.init();
+                    },
+                    100
+                );
+            })(this);
+            this.init_attempts += 1;
+            return;
+        }
+        if (this.initial_load) {
+            return;
+        }
+        this.initial_load = true;
+        if (!Dash.User.Data || Dash.User.Data["first_name"]) {
+            this.load_last_selection();
+            return;
+        }
+        // If the user is new and hasn't yet at least entered their first name, gently
+        // nudge them to do so every time they load the main view by loading their user view
+        for (var i in this.all_content) {
+            if (this.all_content[i]["content_div_html_class"] !== DashUserView) {
+                continue;
+            }
+            try {
+                this.LoadIndex(i);
+            }
+            catch {
+                this.load_last_selection();
+            }
         }
     };
     this.remove_temp_html = function () {
@@ -41297,6 +41321,9 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.is_sublist = this.list.hasOwnProperty(
         "sublist_row_tag"
     ) ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
+    this.is_divider = this.list.hasOwnProperty(
+        "divider_row_tag"
+    ) ? this.id.toString().startsWith(this.list.divider_row_tag) : false;
     this.anim_delay = {
         "highlight_show": 100,
         "highlight_hide": 250,
@@ -41306,6 +41333,9 @@ function DashLayoutListRow (list, row_id, height=null) {
     DashLayoutListRowElements.call(this);
     DashLayoutListRowInterface.call(this);
     this.setup_styles = function () {
+        if (this.is_divider) {
+            this.height *= 0.5;
+        }
         if (this.is_header || this.is_footer) {
             this.column_box.css({
                 "background": this.color.AccentGood,
@@ -41770,11 +41800,77 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             "user-select": "auto"
         });
     };
+    this.Update = function () {
+        this.height = this.list_row.height;
+        var css = {
+            "height": this.height,
+            "line-height": this.height.toString() + "px"
+        };
+        var column_value;
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            column_value = (
+                this.column_config_data["display_name"]
+                || this.column_config_data["data_key"].Title()
+                || ""
+            ).trim();
+            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":") && this.column_config_data["enforce_colon"]) {
+                column_value += ":";
+            }
+        }
+        else if (this.list_row.is_sublist) {
+            if (this.index === 0) {
+                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
+            }
+            else {
+                column_value = "";
+            }
+        }
+        else {
+            column_value = this.list.get_data_for_key(
+                this.list_row.id,
+                this.column_config_data["data_key"],
+                this
+            );
+        }
+        if (
+               this.list_row.is_header
+            || this.list_row.is_footer
+            || this.list_row.is_divider
+            || this.column_config_data["type"] === "label"
+        ) {
+            css["font-family"] = "sans_serif_bold";
+        }
+        else if (this.list_row.is_sublist) {
+            css["font-family"] = "sans_serif_italic";
+        }
+        else if (column_value && column_value.length > 0) {
+            css["font-family"] = "sans_serif_normal";
+        }
+        if (!column_value) {
+            var options = this.column_config_data["options"];
+            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
+                column_value = this.column_config_data["display_name"];
+            }
+            css["font-family"] = "sans_serif_italic";
+        }
+        css = this.get_font_size_css(css);
+        css = this.get_text_color_css(css);
+        css = this.get_preserved_css(css, "color");
+        css = this.get_preserved_css(css, "font-size");
+        css = this.get_preserved_css(css, "font-family");
+        this.html.css(css);
+        if (column_value && column_value.toString().includes("</")) {
+            // jQuery's .text() escapes HTML tags, so this approach is required
+            this.html[0].innerHTML = column_value;
+        }
+        else {
+            this.html.text(column_value);
+        }
+    };
     this.get_css = function () {
         var css = {
             "height": this.height,
             "line-height": this.height.toString() + "px",
-            "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
@@ -41785,19 +41881,28 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.width > 0) {
             css["width"] = this.width;
         }
-        if (this.column_config_data["type"] === "label") {
-            css["font-size"] = "80%";
-        }
+        css = this.get_font_size_css(css);
         css = this.get_css_margins(css);
         css = this.get_column_config_css(css);
         css = this.get_text_color_css(css);
         return css;
     };
-    this.get_text_color_css = function (css) {
-        if (!this.list_row.is_header && !this.list_row.is_footer) {
-            return css;
+    this.get_font_size_css = function (css) {
+        if (this.column_config_data["type"] === "label" || this.list_row.is_divider) {
+            css["font-size"] = "80%";
         }
-        css["color"] = this.color.Stroke;
+        else {
+            css["font-size"] = "100%";
+        }
+        return css;
+    };
+    this.get_text_color_css = function (css) {
+        if (this.list_row.is_header || this.list_row.is_footer || this.list_row.is_divider) {
+            css["color"] = this.color.Stroke;
+        }
+        else {
+            css["color"] = this.color.Text;
+        }
         return css;
     };
     this.get_column_config_css = function (css) {
@@ -41851,64 +41956,17 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             });
         })(this);
     };
-    this.Update = function () {
-        var css = {};
-        var column_value;
-        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
-            column_value = (this.column_config_data["display_name"] || this.column_config_data["data_key"].Title() || "").trim();
-            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":") && this.column_config_data["enforce_colon"]) {
-                column_value += ":";
-            }
+    this.get_preserved_css = function (css, key) {
+        if (this.column_config_data["css"] && this.column_config_data["css"][key]) {
+            css[key] = this.column_config_data["css"][key];
         }
-        else if (this.list_row.is_sublist) {
-            if (this.index === 0) {
-                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
-            }
-            else {
-                column_value = "";
-            }
+        else if (this.list_row.is_header && this.column_config_data["header_css"] && this.column_config_data["header_css"][key]) {
+            css[key] = this.column_config_data["header_css"][key];
         }
-        else {
-            column_value = this.list.get_data_for_key(
-                this.list_row.id,
-                this.column_config_data["data_key"],
-                this
-            );
+        else if (this.list_row.is_footer && this.column_config_data["footer_css"] && this.column_config_data["footer_css"][key]) {
+            css[key] = this.column_config_data["footer_css"][key];
         }
-        if (this.list_row.is_header || this.list_row.is_footer || this.column_config_data["type"] === "label") {
-            css["font-family"] = "sans_serif_bold";
-        }
-        else if (this.list_row.is_sublist) {
-            css["font-family"] = "sans_serif_italic";
-        }
-        else if (column_value && column_value.length > 0) {
-            css["font-family"] = "sans_serif_normal";
-        }
-        if (!column_value) {
-            var options = this.column_config_data["options"];
-            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
-                column_value = this.column_config_data["display_name"];
-            }
-            css["font-family"] = "sans_serif_italic";
-        }
-        // Make sure these are preserved if provided
-        if (this.column_config_data["css"] && this.column_config_data["css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["css"]["font-family"];
-        }
-        else if (this.list_row.is_header && this.column_config_data["header_css"] && this.column_config_data["header_css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["header_css"]["font-family"];
-        }
-        else if (this.list_row.is_footer && this.column_config_data["footer_css"] && this.column_config_data["footer_css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["footer_css"]["font-family"];
-        }
-        this.html.css(css);
-        if (column_value && column_value.toString().includes("</")) {
-            // jQuery's .text() escapes HTML tags, so this approach is required
-            this.html[0].innerHTML = column_value;
-        }
-        else {
-            this.html.text(column_value);
-        }
+        return css;
     };
     this.setup_styles();
 }
@@ -42675,6 +42733,7 @@ function DashLayoutRevolvingList (
     this.row_clicks_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
+    this.divider_row_tag = "__divider__";
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
     this.footer_row_tag = "_bottom_footer_row";
@@ -43064,6 +43123,7 @@ function DashLayoutRevolvingList (
         }
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
+        row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
         row.html.css({
             "top": row_index * this.full_row_height,
             "display": "initial",

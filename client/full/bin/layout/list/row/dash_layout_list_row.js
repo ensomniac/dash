@@ -32,6 +32,10 @@ function DashLayoutListRow (list, row_id, height=null) {
         "sublist_row_tag"
     ) ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
 
+    this.is_divider = this.list.hasOwnProperty(
+        "divider_row_tag"
+    ) ? this.id.toString().startsWith(this.list.divider_row_tag) : false;
+
     this.anim_delay = {
         "highlight_show": 100,
         "highlight_hide": 250,
@@ -43,6 +47,10 @@ function DashLayoutListRow (list, row_id, height=null) {
     DashLayoutListRowInterface.call(this);
 
     this.setup_styles = function () {
+        if (this.is_divider) {
+            this.height *= 0.5;
+        }
+
         if (this.is_header || this.is_footer) {
             this.column_box.css({
                 "background": this.color.AccentGood,
