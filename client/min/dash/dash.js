@@ -41801,15 +41801,20 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         });
     };
     this.Update = function () {
-        this.height = this.list_row.height;
-        var css = {
-            "height": this.height,
-            "line-height": this.height.toString() + "px"
-        };
+        // In the case that the row's height attribute has been programmatically
+        // changed, like in the RevolvingList code when using divider rows
+        if (this.list_row.height !== this.height) {
+            this.height = this.list_row.height;
+            this.html.css({
+                "height": this.height,
+                "line-height": this.height.toString() + "px"
+            });
+        }
+        var css = {};
         var column_value;
         if (this.list_row.is_header || this.column_config_data["type"] === "label") {
             column_value = (
-                this.column_config_data["display_name"]
+                   this.column_config_data["display_name"]
                 || this.column_config_data["data_key"].Title()
                 || ""
             ).trim();
@@ -41855,9 +41860,9 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
         css = this.get_font_size_css(css);
         css = this.get_text_color_css(css);
-        css = this.get_preserved_css(css, "color");
-        css = this.get_preserved_css(css, "font-size");
-        css = this.get_preserved_css(css, "font-family");
+        for (var key in css) {
+            css = this.get_preserved_css(css, key);
+        }
         this.html.css(css);
         if (column_value && column_value.toString().includes("</")) {
             // jQuery's .text() escapes HTML tags, so this approach is required
@@ -41957,14 +41962,18 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         })(this);
     };
     this.get_preserved_css = function (css, key) {
-        if (this.column_config_data["css"] && this.column_config_data["css"][key]) {
+        if (this.list_row.is_header) {
+            if (this.column_config_data["header_css"] && this.column_config_data["header_css"][key]) {
+                css[key] = this.column_config_data["header_css"][key];
+            }
+        }
+        else if (this.list_row.is_footer) {
+            if (this.column_config_data["footer_css"] && this.column_config_data["footer_css"][key]) {
+                css[key] = this.column_config_data["footer_css"][key];
+            }
+        }
+        else if (this.column_config_data["css"] && this.column_config_data["css"][key]) {
             css[key] = this.column_config_data["css"][key];
-        }
-        else if (this.list_row.is_header && this.column_config_data["header_css"] && this.column_config_data["header_css"][key]) {
-            css[key] = this.column_config_data["header_css"][key];
-        }
-        else if (this.list_row.is_footer && this.column_config_data["footer_css"] && this.column_config_data["footer_css"][key]) {
-            css[key] = this.column_config_data["footer_css"][key];
         }
         return css;
     };
@@ -43124,6 +43133,9 @@ function DashLayoutRevolvingList (
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
         row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
+        // TODO: work out the height change throughout this code
+        //  (big thing to handle - any use of this.row_height or this.full_row_height)
+        // row.height = this.row_height * (row.is_divider ? 0.5 : 1);
         row.html.css({
             "top": row_index * this.full_row_height,
             "display": "initial",
