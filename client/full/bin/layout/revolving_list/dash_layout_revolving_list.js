@@ -268,7 +268,7 @@ function DashLayoutRevolvingList (
     this.SelectRow = function (row_id) {
         this.last_selected_row_id = row_id;
 
-        var scroll_top = this.included_row_ids.indexOf(this.last_selected_row_id) * this.full_row_height;
+        var scroll_top = this.get_row_top(this.included_row_ids.indexOf(this.last_selected_row_id));
 
         if (scroll_top > this.html.height()) {
             this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
@@ -414,22 +414,23 @@ function DashLayoutRevolvingList (
     };
 
     this.create_filler_space = function () {
-        var filler_content = "";
+        var height = 0;
+        var filler_html = $("<div></div>");
 
-        for (var row_id of this.included_row_ids) {
-            filler_content += row_id + "<br>";
+        for (var i in this.included_row_ids) {
+            height += (this.row_height * (
+                this.included_row_ids[i].toString().startsWith(this.divider_row_tag) ? 0.5 : 1
+            )) + 1;
         }
-
-        var filler_html = $("<div" + filler_content + "</div>");
 
         filler_html.css({
             "text-align": "left",
             "overflow": "hidden",
             "text-overflow": "clip",
             "white-space": "nowrap",
-            "max-height": this.full_row_height,
-            "height": this.full_row_height,
-            "line-height": this.full_row_height + "px",
+            "max-height": height,
+            "height": height,
+            "width": Dash.Size.ColumnWidth,  // Arbitrary
             "opacity": 0
         });
 
@@ -576,12 +577,10 @@ function DashLayoutRevolvingList (
         row.id = this.included_row_ids[row_index];
         row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
 
-        // TODO: work out the height change throughout this code
-        //  (big thing to handle - any use of this.row_height or this.full_row_height)
-        // row.height = this.row_height * (row.is_divider ? 0.5 : 1);
+        row.SetHeight(this.row_height * (row.is_divider ? 0.5 : 1));
 
         row.html.css({
-            "top": row_index * this.full_row_height,
+            "top": this.get_row_top(row_index),
             "display": "initial",
             "pointer-events": "auto"
         });
@@ -591,8 +590,39 @@ function DashLayoutRevolvingList (
         this.setup_row_connections(row);
     };
 
+    this.get_row_top = function (row_index, for_scroll=true) {
+        var i;
+        var top = 0;
+
+        if (for_scroll) {
+            for (i in this.included_row_ids) {
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+
+                var id = this.included_row_ids[i];
+
+                top += (this.row_height * (id.toString().startsWith(this.divider_row_tag) ? 0.5 : 1)) + 1;
+            }
+        }
+
+        else {
+            for (i in this.row_objects) {
+                var row = this.row_objects[i];
+
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+
+                top += row.height + 1;
+            }
+        }
+
+        return top;
+    };
+
     this.on_row_selected = function (row, force_expand=false) {
-        if (!row) {
+        if (!row || row.is_divider) {
             return;
         }
 
@@ -668,7 +698,7 @@ function DashLayoutRevolvingList (
             }
 
             var top_pos = parseInt(other_row.html.css("top"));
-            var default_top_pos = other_row.index * this.full_row_height;
+            var default_top_pos = this.get_row_top(other_row.index);
 
             if (expanded || top_pos > default_top_pos) {
                 var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;

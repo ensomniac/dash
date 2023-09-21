@@ -174,7 +174,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
-        if (this.is_header || this.is_footer) {
+        if (this.is_header || this.is_footer || this.is_divider) {
             return;
         }
 
@@ -289,7 +289,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.ShowHighlight = function (highlight_color=null) {
-        if (this.is_highlighted) {
+        if (this.is_highlighted || this.is_divider) {
             return;
         }
 
@@ -457,6 +457,28 @@ function DashLayoutListRowInterface () {
     this.SetHighlightColor = function (color) {
         this.highlight.css({
             "background": color
+        });
+    };
+
+    this.SetHeight = function (height) {
+        if (this.height === height) {
+            return;
+        }
+
+        this.height = height;
+
+        if (!this.is_header && !this.is_footer) {
+            this.highlight.css({
+                "height": this.height
+            });
+        }
+
+        this.column_box.css({
+            "height": this.height
+        });
+
+        this.html.css({
+            "min-height": this.height
         });
     };
 }

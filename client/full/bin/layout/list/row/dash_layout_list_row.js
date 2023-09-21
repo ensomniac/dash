@@ -175,7 +175,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     };
 
     this.on_hover_in = function () {
-        if (this.is_header || this.is_footer) {
+        if (this.is_header || this.is_footer || this.is_divider) {
             return;
         }
 
@@ -193,7 +193,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     };
 
     this.on_hover_out = function () {
-        if (this.is_expanded || this.is_header || this.is_footer) {
+        if (this.is_expanded || this.is_header || this.is_footer || this.is_divider) {
             return;
         }
 
@@ -226,7 +226,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                     return;
                 }
 
-                if (self.is_header || self.is_footer) {
+                if (self.is_header || self.is_footer || self.is_divider) {
                     return;
                 }
 
@@ -297,7 +297,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
                 // The change only pertains to the row itself, and then each element controls their own cursor behavior.
                 "cursor": (
-                    (this.is_header || this.is_footer) ? "auto" :
+                    (this.is_header || this.is_footer || this.is_divider) ? "auto" :
                     this.is_sublist ? "context-menu" :
                     default_columns_only ? "pointer" :
                     this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :

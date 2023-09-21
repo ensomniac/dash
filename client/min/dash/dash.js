@@ -41438,7 +41438,7 @@ function DashLayoutListRow (list, row_id, height=null) {
         return this.list.get_data_for_key(this.id, column_config_data["data_key"]) || default_value;
     };
     this.on_hover_in = function () {
-        if (this.is_header || this.is_footer) {
+        if (this.is_header || this.is_footer || this.is_divider) {
             return;
         }
         this.hover_active = true;
@@ -41451,7 +41451,7 @@ function DashLayoutListRow (list, row_id, height=null) {
         }
     };
     this.on_hover_out = function () {
-        if (this.is_expanded || this.is_header || this.is_footer) {
+        if (this.is_expanded || this.is_header || this.is_footer || this.is_divider) {
             return;
         }
         this.hover_active = false;
@@ -41476,7 +41476,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                     // Don't set selection if it was an icon button that was clicked
                     return;
                 }
-                if (self.is_header || self.is_footer) {
+                if (self.is_header || self.is_footer || self.is_divider) {
                     return;
                 }
                 self.list.SetSelection(self);
@@ -41530,7 +41530,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
                 // The change only pertains to the row itself, and then each element controls their own cursor behavior.
                 "cursor": (
-                    (this.is_header || this.is_footer) ? "auto" :
+                    (this.is_header || this.is_footer || this.is_divider) ? "auto" :
                     this.is_sublist ? "context-menu" :
                     default_columns_only ? "pointer" :
                     this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :
@@ -42475,7 +42475,7 @@ function DashLayoutListRowInterface () {
         row.SetExpandedSubListParentHeight(height_change);
     };
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
-        if (this.is_header || this.is_footer) {
+        if (this.is_header || this.is_footer || this.is_divider) {
             return;
         }
         if (this.is_expanded) {
@@ -42562,7 +42562,7 @@ function DashLayoutListRowInterface () {
         return expanded_height;
     };
     this.ShowHighlight = function (highlight_color=null) {
-        if (this.is_highlighted) {
+        if (this.is_highlighted || this.is_divider) {
             return;
         }
         if (!this.expanded_highlight) {
@@ -42692,6 +42692,23 @@ function DashLayoutListRowInterface () {
     this.SetHighlightColor = function (color) {
         this.highlight.css({
             "background": color
+        });
+    };
+    this.SetHeight = function (height) {
+        if (this.height === height) {
+            return;
+        }
+        this.height = height;
+        if (!this.is_header && !this.is_footer) {
+            this.highlight.css({
+                "height": this.height
+            });
+        }
+        this.column_box.css({
+            "height": this.height
+        });
+        this.html.css({
+            "min-height": this.height
         });
     };
 }
@@ -42903,7 +42920,7 @@ function DashLayoutRevolvingList (
     };
     this.SelectRow = function (row_id) {
         this.last_selected_row_id = row_id;
-        var scroll_top = this.included_row_ids.indexOf(this.last_selected_row_id) * this.full_row_height;
+        var scroll_top = this.get_row_top(this.included_row_ids.indexOf(this.last_selected_row_id));
         if (scroll_top > this.html.height()) {
             this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
         }
@@ -43012,19 +43029,21 @@ function DashLayoutRevolvingList (
         this.html.append(this.footer_row_backing);
     };
     this.create_filler_space = function () {
-        var filler_content = "";
-        for (var row_id of this.included_row_ids) {
-            filler_content += row_id + "<br>";
+        var height = 0;
+        var filler_html = $("<div></div>");
+        for (var i in this.included_row_ids) {
+            height += (this.row_height * (
+                this.included_row_ids[i].toString().startsWith(this.divider_row_tag) ? 0.5 : 1
+            )) + 1;
         }
-        var filler_html = $("<div" + filler_content + "</div>");
         filler_html.css({
             "text-align": "left",
             "overflow": "hidden",
             "text-overflow": "clip",
             "white-space": "nowrap",
-            "max-height": this.full_row_height,
-            "height": this.full_row_height,
-            "line-height": this.full_row_height + "px",
+            "max-height": height,
+            "height": height,
+            "width": Dash.Size.ColumnWidth,  // Arbitrary
             "opacity": 0
         });
         this.container.append(filler_html);
@@ -43133,19 +43152,40 @@ function DashLayoutRevolvingList (
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
         row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
-        // TODO: work out the height change throughout this code
-        //  (big thing to handle - any use of this.row_height or this.full_row_height)
-        // row.height = this.row_height * (row.is_divider ? 0.5 : 1);
+        row.SetHeight(this.row_height * (row.is_divider ? 0.5 : 1));
         row.html.css({
-            "top": row_index * this.full_row_height,
+            "top": this.get_row_top(row_index),
             "display": "initial",
             "pointer-events": "auto"
         });
         row.Update();
         this.setup_row_connections(row);
     };
+    this.get_row_top = function (row_index, for_scroll=true) {
+        var i;
+        var top = 0;
+        if (for_scroll) {
+            for (i in this.included_row_ids) {
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+                var id = this.included_row_ids[i];
+                top += (this.row_height * (id.toString().startsWith(this.divider_row_tag) ? 0.5 : 1)) + 1;
+            }
+        }
+        else {
+            for (i in this.row_objects) {
+                var row = this.row_objects[i];
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+                top += row.height + 1;
+            }
+        }
+        return top;
+    };
     this.on_row_selected = function (row, force_expand=false) {
-        if (!row) {
+        if (!row || row.is_divider) {
             return;
         }
         if (row.ID()) {
@@ -43200,7 +43240,7 @@ function DashLayoutRevolvingList (
                 continue;
             }
             var top_pos = parseInt(other_row.html.css("top"));
-            var default_top_pos = other_row.index * this.full_row_height;
+            var default_top_pos = this.get_row_top(other_row.index);
             if (expanded || top_pos > default_top_pos) {
                 var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;
                 if (new_top < default_top_pos) {
@@ -43282,11 +43322,13 @@ function DashLayoutRevolvingListScrolling () {
             start_pos = 0;
         }
         var end_pos = start_pos + window.innerHeight + this.full_row_height;
-        var start_index = Math.floor(parseInt((start_pos / this.full_row_height).toString()));
+        var start_index = parseInt(this.get_index_from_pos(start_pos));
         return [start_pos, end_pos, start_index];
     };
     this.get_scroll_indexes = function () {
-        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.full_row_height);
+        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(
+            this.container.scrollTop() - this.full_row_height
+        );
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
             if (!Dash.Validate.Object(expanded_data) || !expanded_data["preview_content"]) {
@@ -43306,7 +43348,7 @@ function DashLayoutRevolvingListScrolling () {
             end_pos -= preview_height;
             break;
         }
-        var end_index = parseInt((end_pos / this.full_row_height).toString());
+        var end_index = parseInt(this.get_index_from_pos(end_pos));
         if (start_index < 0) {
             start_index = 0;
         }
@@ -43314,6 +43356,21 @@ function DashLayoutRevolvingListScrolling () {
             end_index = this.included_row_ids.length;
         }
         return [start_index, end_index];
+    };
+    this.get_index_from_pos = function (pos=0) {
+        if (!pos) {
+            return 0;
+        }
+        var top = 0;
+        for (var i in this.included_row_ids) {
+            if (top >= pos) {
+                return i;
+            }
+            top += (this.row_height * (
+                this.included_row_ids[i].toString().startsWith(this.divider_row_tag) ? 0.5 : 1
+            )) + 1;
+        }
+        return i || 0;
     };
     this.get_scroll_needed_count = function (start_index, end_index) {
         var needed = (end_index - start_index) + this.row_count_buffer;
@@ -43341,6 +43398,7 @@ function DashLayoutRevolvingListScrolling () {
                 can_move.push(this.row_objects[i]);
             }
         }
+        already_moved.sort();
         return [can_move, already_moved];
     };
     this.show_scroll_moves = function (needed_count, already_moved, can_move, row_index) {
@@ -43372,7 +43430,7 @@ function DashLayoutRevolvingListScrolling () {
         }
         for (row of this.row_objects) {
             row.html.css({
-                "top": row.index * this.full_row_height
+                "top": this.get_row_top(row.index)
             });
         }
     };
