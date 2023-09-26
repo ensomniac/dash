@@ -23791,7 +23791,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             "padding-right": 0,
             "height": this.height,
             "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
         this.html = this.toolbar.html;
     };
@@ -35463,7 +35463,7 @@ function DashGuiFileExplorerGUI () {
         var row = this.list.AddRow(row_id);
         row.html.css({
             "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
         row.Update();
         this.rows[row_id] = row;
@@ -35472,7 +35472,7 @@ function DashGuiFileExplorerGUI () {
     this.add_sublist = function (row_id, list) {
         var row = list.AddSubList(row_id, this.color.Pinstripe, true);
         row.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
         if (list === this.list) {
             row.html.css({
@@ -35499,7 +35499,7 @@ function DashGuiFileExplorerGUI () {
                     row = this.add_sublist(folder_name, list);
                 }
                 if (parseInt(i) === (parents.length - 1)) {
-                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"});
+                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted " + this.color.PinstripeDark});
                 }
                 list = row.GetCachedPreview();
             }
@@ -37078,7 +37078,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "cursor": "auto",
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
         this.invalid_input_highlight.css({
             "position": "absolute",
@@ -37842,11 +37842,11 @@ function DashGuiPropertyBox (
     this.top_right_delete_button = null;
     this.indent_px = Dash.Size.Padding * 2;
     this.every_other_row_hightlight = null;
-    this.bottom_border = "1px dotted rgba(0, 0, 0, 0.2)";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.color = this.options["color"] || (binder && binder.color ? binder.color : Dash.Color.Light);
+    this.bottom_border = "1px dotted " + this.color.PinstripeDark;
     DashGuiPropertyBoxInterface.call(this);
     this.setup_styles = function () {
         this.html.css({
@@ -38542,7 +38542,7 @@ function DashGuiPropertyBoxInterface () {
         }
         var container = $("<div></div>");
         container.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
         var label = $("<div>" + label_text + "</div>");
         label.css({
@@ -43681,7 +43681,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         this.filter_text = search_term;
         this.filter_rows();
     };
-    this.UpdateRows = function (order, data) {
+    this.UpdateRows = function (order=[], data={}) {
         /**
          * @param {Array} order - IDs that correspond to data's keys
          * @param {Object} data - Data objects whose keys correspond to order

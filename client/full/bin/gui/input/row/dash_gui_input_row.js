@@ -64,7 +64,7 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             "cursor": "auto",
             "height": Dash.Size.RowHeight,
             "display": "flex",
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
         this.invalid_input_highlight.css({

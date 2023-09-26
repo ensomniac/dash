@@ -23,7 +23,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             "padding-right": 0,
             "height": this.height,
             "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
         this.html = this.toolbar.html;

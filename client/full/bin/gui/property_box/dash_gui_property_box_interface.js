@@ -461,7 +461,7 @@ function DashGuiPropertyBoxInterface () {
         var container = $("<div></div>");
 
         container.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
         var label = $("<div>" + label_text + "</div>");

@@ -23,11 +23,11 @@ function DashGuiPropertyBox (
     this.top_right_delete_button = null;
     this.indent_px = Dash.Size.Padding * 2;
     this.every_other_row_hightlight = null;
-    this.bottom_border = "1px dotted rgba(0, 0, 0, 0.2)";
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.color = this.options["color"] || (binder && binder.color ? binder.color : Dash.Color.Light);
+    this.bottom_border = "1px dotted " + this.color.PinstripeDark;
 
     DashGuiPropertyBoxInterface.call(this);
 

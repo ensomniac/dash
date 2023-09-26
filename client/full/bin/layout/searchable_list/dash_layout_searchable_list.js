@@ -79,7 +79,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
         this.filter_rows();
     };
 
-    this.UpdateRows = function (order, data) {
+    this.UpdateRows = function (order=[], data={}) {
         /**
          * @param {Array} order - IDs that correspond to data's keys
          * @param {Object} data - Data objects whose keys correspond to order

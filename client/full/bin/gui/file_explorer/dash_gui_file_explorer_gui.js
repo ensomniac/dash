@@ -107,7 +107,7 @@ function DashGuiFileExplorerGUI () {
 
         row.html.css({
             "margin-left": Dash.Size.Padding * 2,
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
         row.Update();
@@ -121,7 +121,7 @@ function DashGuiFileExplorerGUI () {
         var row = list.AddSubList(row_id, this.color.Pinstripe, true);
 
         row.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
         if (list === this.list) {
@@ -158,7 +158,7 @@ function DashGuiFileExplorerGUI () {
                 }
 
                 if (parseInt(i) === (parents.length - 1)) {
-                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"});
+                    row.AddToSublistQueue(file_id, {"border-bottom": "1px dotted " + this.color.PinstripeDark});
                 }
 
                 list = row.GetCachedPreview();
