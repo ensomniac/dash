@@ -37,8 +37,8 @@ function DashGuiPrompt (
         this,
         color || Dash.Color.Dark,
         $("body"),  // Window
-        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
-        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
+        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
         include_bg,
         bg_opacity,
         false

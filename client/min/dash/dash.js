@@ -19354,8 +19354,8 @@ function DashGuiPrompt (
         this,
         color || Dash.Color.Dark,
         $("body"),  // Window
-        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
-        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
+        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
         include_bg,
         bg_opacity,
         false
@@ -22495,8 +22495,8 @@ function DashGuiModal (
     include_bg=true, bg_opacity=0.6, include_close_button=true
 ) {
     this.parent_html = parent_html;
-    this.width = width;
-    this.height = height;
+    this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
+    this.height = height !== null ? (Math.min(height, (window.innerHeight - (Dash.Size.Padding * 2)))) : null;
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
     this.color = color || Dash.Color.Light;
