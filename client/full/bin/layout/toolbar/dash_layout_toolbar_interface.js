@@ -243,6 +243,8 @@ function DashLayoutToolbarInterface () {
 
         this.html.append(end_border);
 
+        header._end_border = end_border;
+
         this.objects.push({
             "html_elem": end_border,
             "callback": null,
@@ -254,14 +256,14 @@ function DashLayoutToolbarInterface () {
         return header;
     };
 
-    this.AddText = function (text, color=null) {
+    this.AddText = function (text, color=null, centered=false) {  // should default to true
         var label = this.AddLabel(text, false, color);
 
         label.border.remove();
 
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0  // Why is this the default?
+            "margin-top": 0
         });
 
         label.label.css({
@@ -272,7 +274,16 @@ function DashLayoutToolbarInterface () {
             "padding-left": 0
         });
 
-        this.html.append(label.html);
+        if (centered) {
+            label.html.css({
+                "margin-bottom": 0
+            });
+
+            label.label.css({
+                "height": this.height,
+                "line-height": this.height + "px"
+            });
+        }
 
         var obj_index = this.objects.length;
 
@@ -297,11 +308,6 @@ function DashLayoutToolbarInterface () {
 
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
-        var text_align = "left";
-
-        if (options["center"]) {
-            text_align = "center";
-        }
 
         input.Flatten();
 
@@ -323,7 +329,7 @@ function DashLayoutToolbarInterface () {
             "line-height": height + "px",
             "top": -Dash.Size.Padding * 0.5,
             "width": width,
-            "text-align": text_align
+            "text-align": options["center"] ? "center" : "left"
         });
 
         this.objects.push({
@@ -364,11 +370,11 @@ function DashLayoutToolbarInterface () {
         };
 
         if (options["on_enter"]) {
-            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
+            obj["on_enter"] = options["on_enter"].bind(this.binder);
         }
 
         if (options["on_autosave"]) {
-            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+            obj["on_autosave"] = options["on_autosave"].bind(this.binder);
         }
 
         this.objects.push(obj);
@@ -381,7 +387,7 @@ function DashLayoutToolbarInterface () {
                 self
             );
 
-            if (obj["on_enter_callback"]) {
+            if (obj["on_enter"]) {
                 input.SetOnSubmit(
                     function () {
                         self.on_input_submitted(obj_index);
@@ -390,7 +396,7 @@ function DashLayoutToolbarInterface () {
                 );
             }
 
-            if (obj["on_autosave_callback"]) {
+            if (obj["on_autosave"]) {
                 input.EnableAutosave();
 
                 input.SetOnAutosave(
@@ -508,5 +514,43 @@ function DashLayoutToolbarInterface () {
         this.AddHTML(checkbox.html);
 
         return checkbox;
+    };
+
+    this.AddDatePicker = function (
+        label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        var picker = new Dash.Gui.DatePicker(
+            label_text,
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+
+        if (!can_edit) {
+            picker.SetLocked(true);
+        }
+
+        picker.height = this.height - (Dash.Size.Padding * 0.1);
+
+        picker.html.css({
+            "height": picker.height,
+            "line-height": picker.height + "px",
+            "margin-left": this.objects.length ? Dash.Size.Padding : 0
+        });
+
+        this.objects.push({
+            "html": picker,
+            "html_elem": picker.html,
+            "index": this.objects.length
+        });
+
+        this.AddHTML(picker.html);
+
+        return picker;
     };
 }

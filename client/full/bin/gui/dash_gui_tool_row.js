@@ -13,6 +13,8 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.setup_styles = function () {
         this.toolbar = new Dash.Layout.Toolbar(this, this.color);
 
+        this.toolbar.height = this.height;
+
         this.toolbar.DisablePaddingRefactoring();
 
         this.toolbar.stroke_sep.remove();
@@ -479,39 +481,21 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         label_text="", can_edit=false, on_submit_cb=null,
         on_autosave_cb=null, on_change_cb=null, min="", max=""
     ) {
-        var picker = new Dash.Gui.DatePicker(
-            label_text || "[Date]",
-            this.binder,
-            on_submit_cb,
-            on_autosave_cb,
-            on_change_cb,
-            this.color,
-            min,
-            max
+        var picker = this.toolbar.AddDatePicker(
+            label_text, can_edit, on_submit_cb, on_autosave_cb, on_change_cb, min, max
         );
-
-        if (!can_edit) {
-            picker.SetLocked(true);
-        }
-
-        picker.height = this.height - (Dash.Size.Padding * 0.1);
 
         picker.input.css({
             "margin-top": Dash.Size.Padding * 0.1,
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5
+        });
+
+        picker.input.css({
             "border-radius": Dash.Size.BorderRadius,
             "border": "1px solid " + this.color.PinstripeDark
         });
 
-        picker.html.css({
-            "height": picker.height,
-            "line-height": picker.height + "px",
-            "margin-left": this.elements.length ? Dash.Size.Padding : 0
-        });
-
         this.elements.push(picker);
-
-        this.AddHTML(picker.html);
 
         return picker;
     };

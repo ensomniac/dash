@@ -157,6 +157,17 @@ function DashGuiInputBase (
         this.input.trigger("focus");
     };
 
+    this.RefreshConnections = function () {
+        this.input.off("keydown");
+        this.input.off("change");
+        this.input.off("paste");
+        this.input.off("click");
+        this.input.off("blur");
+        this.input.off("keyup click");
+
+        this.setup_connections();
+    };
+
     // Intended to be overwritten
     this.parse_value = function (text) {
         return text;

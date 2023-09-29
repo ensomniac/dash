@@ -23783,6 +23783,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.get_formatted_data_cb = null;
     this.setup_styles = function () {
         this.toolbar = new Dash.Layout.Toolbar(this, this.color);
+        this.toolbar.height = this.height;
         this.toolbar.DisablePaddingRefactoring();
         this.toolbar.stroke_sep.remove();
         this.toolbar.html.css({
@@ -24142,33 +24143,18 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         label_text="", can_edit=false, on_submit_cb=null,
         on_autosave_cb=null, on_change_cb=null, min="", max=""
     ) {
-        var picker = new Dash.Gui.DatePicker(
-            label_text || "[Date]",
-            this.binder,
-            on_submit_cb,
-            on_autosave_cb,
-            on_change_cb,
-            this.color,
-            min,
-            max
+        var picker = this.toolbar.AddDatePicker(
+            label_text, can_edit, on_submit_cb, on_autosave_cb, on_change_cb, min, max
         );
-        if (!can_edit) {
-            picker.SetLocked(true);
-        }
-        picker.height = this.height - (Dash.Size.Padding * 0.1);
         picker.input.css({
             "margin-top": Dash.Size.Padding * 0.1,
-            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-left": Dash.Size.Padding * 0.5
+        });
+        picker.input.css({
             "border-radius": Dash.Size.BorderRadius,
             "border": "1px solid " + this.color.PinstripeDark
         });
-        picker.html.css({
-            "height": picker.height,
-            "line-height": picker.height + "px",
-            "margin-left": this.elements.length ? Dash.Size.Padding : 0
-        });
         this.elements.push(picker);
-        this.AddHTML(picker.html);
         return picker;
     };
     this.on_input_keystroke = function () {
@@ -24751,7 +24737,7 @@ function DashGuiDatePicker (
     this._setup_styles = function () {
         this.input.css({
             "flex": "none",
-            "width": Dash.Size.ColumnWidth * (Dash.IsMobile ? 0.41 : 0.66)
+            "width": (Dash.Size.ColumnWidth * (Dash.IsMobile ? 0.41 : 0.66)) + (min || max ? Dash.Size.Padding : 0)
         });
     };
     // Alternative to this, if using this.SetText() to set the value
@@ -36770,6 +36756,15 @@ function DashGuiInputBase (
     this.Focus = function () {
         this.input.trigger("focus");
     };
+    this.RefreshConnections = function () {
+        this.input.off("keydown");
+        this.input.off("change");
+        this.input.off("paste");
+        this.input.off("click");
+        this.input.off("blur");
+        this.input.off("keyup click");
+        this.setup_connections();
+    };
     // Intended to be overwritten
     this.parse_value = function (text) {
         return text;
@@ -44082,11 +44077,11 @@ function DashLayoutToolbar (binder, color=null) {
     };
     this.on_input_submitted = function (obj_index) {
         var obj = this.objects[obj_index];
-        obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
     this.on_input_autosaved = function (obj_index) {
         var obj = this.objects[obj_index];
-        obj["on_autosave_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        obj["on_autosave"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
     this.on_button_clicked = function (obj_index, data=null) {
         var obj = this.objects[obj_index];
@@ -44322,6 +44317,7 @@ function DashLayoutToolbarInterface () {
             "background": this.color.AccentGood,
         });
         this.html.append(end_border);
+        header._end_border = end_border;
         this.objects.push({
             "html_elem": end_border,
             "callback": null,
@@ -44330,12 +44326,12 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return header;
     };
-    this.AddText = function (text, color=null) {
+    this.AddText = function (text, color=null, centered=false) {  // should default to true
         var label = this.AddLabel(text, false, color);
         label.border.remove();
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0  // Why is this the default?
+            "margin-top": 0
         });
         label.label.css({
             "font-family": "sans_serif_normal",
@@ -44344,7 +44340,15 @@ function DashLayoutToolbarInterface () {
             "text-overflow": "ellipsis",
             "padding-left": 0
         });
-        this.html.append(label.html);
+        if (centered) {
+            label.html.css({
+                "margin-bottom": 0
+            });
+            label.label.css({
+                "height": this.height,
+                "line-height": this.height + "px"
+            });
+        }
         var obj_index = this.objects.length;
         this.objects.push({
             "html": label,
@@ -44362,10 +44366,6 @@ function DashLayoutToolbarInterface () {
         input.EnableAutosave();
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
-        var text_align = "left";
-        if (options["center"]) {
-            text_align = "center";
-        }
         input.Flatten();
         input.html.css({
             "padding": 0,
@@ -44384,7 +44384,7 @@ function DashLayoutToolbarInterface () {
             "line-height": height + "px",
             "top": -Dash.Size.Padding * 0.5,
             "width": width,
-            "text-align": text_align
+            "text-align": options["center"] ? "center" : "left"
         });
         this.objects.push({
             "html": input,
@@ -44417,10 +44417,10 @@ function DashLayoutToolbarInterface () {
             "additional_data": additional_data
         };
         if (options["on_enter"]) {
-            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
+            obj["on_enter"] = options["on_enter"].bind(this.binder);
         }
         if (options["on_autosave"]) {
-            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+            obj["on_autosave"] = options["on_autosave"].bind(this.binder);
         }
         this.objects.push(obj);
         (function (self, input, obj_index, obj) {
@@ -44430,7 +44430,7 @@ function DashLayoutToolbarInterface () {
                 },
                 self
             );
-            if (obj["on_enter_callback"]) {
+            if (obj["on_enter"]) {
                 input.SetOnSubmit(
                     function () {
                         self.on_input_submitted(obj_index);
@@ -44438,7 +44438,7 @@ function DashLayoutToolbarInterface () {
                     self
                 );
             }
-            if (obj["on_autosave_callback"]) {
+            if (obj["on_autosave"]) {
                 input.EnableAutosave();
                 input.SetOnAutosave(
                     function () {
@@ -44535,6 +44535,37 @@ function DashLayoutToolbarInterface () {
         }
         this.AddHTML(checkbox.html);
         return checkbox;
+    };
+    this.AddDatePicker = function (
+        label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        var picker = new Dash.Gui.DatePicker(
+            label_text,
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+        if (!can_edit) {
+            picker.SetLocked(true);
+        }
+        picker.height = this.height - (Dash.Size.Padding * 0.1);
+        picker.html.css({
+            "height": picker.height,
+            "line-height": picker.height + "px",
+            "margin-left": this.objects.length ? Dash.Size.Padding : 0
+        });
+        this.objects.push({
+            "html": picker,
+            "html_elem": picker.html,
+            "index": this.objects.length
+        });
+        this.AddHTML(picker.html);
+        return picker;
     };
 }
 
