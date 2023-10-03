@@ -345,6 +345,10 @@ class ApiCore:
 
         return self._params[key]
 
+    def DeleteParam(self, key):
+        if key in self._params:
+            del self._params[key]
+
     def StopExecutionOnError(self, error):
         self._response["error"] = error
 
