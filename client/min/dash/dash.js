@@ -23782,7 +23782,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.height = Dash.Size.RowHeight;
     this.get_formatted_data_cb = null;
     this.setup_styles = function () {
-        this.toolbar = new Dash.Layout.Toolbar(this, this.color);
+        this.toolbar = new Dash.Layout.Toolbar(this.binder, this.color);
         this.toolbar.height = this.height;
         this.toolbar.DisablePaddingRefactoring();
         this.toolbar.stroke_sep.remove();
@@ -23819,7 +23819,10 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         });
         return divider;
     };
-    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}, add_highlight=true) {
+    this.AddComboRow = function (
+        label_text, combo_options, default_value, callback,
+        additional_data={}, extra_options={}, add_highlight=true
+    ) {
         if (!label_text.endsWith(":")) {
             label_text += ":";
         }
@@ -23846,7 +23849,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
             container.append(highlight);
         }
-        var label = this.AddLabel(label_text, Dash.Size.Padding * 0.5, "", null, false);
+        var label = this.AddLabel(
+            label_text, Dash.Size.Padding * 0.5, "", null, false
+        );
         label.html.css({
             "padding-left": 0
         });
@@ -23863,7 +23868,10 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         container.combo = combo;
         return container;
     };
-    this.AddInputRow = function (data_key, label_text="", default_value=null, width=null, on_submit_cb=null, placeholder_text="", can_edit=true) {
+    this.AddInputRow = function (
+        data_key, label_text="", default_value=null, width=null,
+        on_submit_cb=null, placeholder_text="", can_edit=true
+    ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInputRow requires ToolRow to have been provided a 'get_data_cb'");
             return;
@@ -23917,8 +23925,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.AddHTML(input_row.html);
         return input_row;
     };
-    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null, icon_size=null, size_mult=1.0, for_uploader=false) {
-        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), icon_size, additional_data, this.height, size_mult, for_uploader);
+    this.AddIconButton = function (
+        icon_name, callback, hover_hint="", additional_data=null,
+        icon_size=null, size_mult=1.0, for_uploader=false
+    ) {
+        var button = this.toolbar.AddIconButton(
+            icon_name, callback, icon_size, additional_data, this.height, size_mult, for_uploader
+        );
         button.html.css({
             "margin-top": 0
         });
@@ -23929,12 +23942,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return button;
     };
     this.AddCheckbox = function (
-        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+        label_text, default_state, callback, identifier, hover_hint="Toggle",
+        checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = this.toolbar.AddCheckbox(
             label_text,
             default_state,
-            callback ? callback.bind(this.binder) : callback,
+            callback,
             identifier,
             hover_hint,
             checkbox_redraw_styling,
@@ -23993,7 +24007,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             "",
             combo_options,
             default_value,
-            callback.bind(this.binder),
+            callback,
             true,
             additional_data,
             extra_options
@@ -24007,7 +24021,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
     // TODO: These params are a mess, fix it (globally)
     this.AddLabel = function (text, right_margin=null, icon_name="", left_label_margin=null, border=true) {
-        var label = this.toolbar.AddLabel(text, false, this.color);
+        var label = this.toolbar.AddLabel(text, false);
         if (right_margin !== null) {
             label.html.css({
                 "margin-right": right_margin
@@ -24078,17 +24092,23 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             return;
         }
         if (include_label) {
-            var label = this.AddLabel(label_text || placeholder_text, Dash.Size.Padding * 0.5, null, null, false);
+            var label = this.AddLabel(
+                label_text || placeholder_text,
+                Dash.Size.Padding * 0.5,
+                null,
+                null,
+                false
+            );
             label.html.css({
                 "margin-top": Dash.Size.Padding * 0.1
             });
         }
         var input = this.toolbar.AddTransparentInput(
             placeholder_text,
-            on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
+            on_change_cb || this.on_input_keystroke.bind(this),
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
-                "on_enter": on_submit_cb ? on_submit_cb.bind(this.binder) : this.on_input_submit
+                "on_enter": on_submit_cb || this.on_input_submit.bind(this)
             },
             {
                 "data_key": data_key
@@ -41485,6 +41505,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             "combos": [],
             "spacers": [],
             "dividers": [],
+            "text_areas": [],
             "copy_buttons": [],
             "icon_buttons": []
         };
@@ -41504,6 +41525,10 @@ function DashLayoutListRow (list, row_id, height=null) {
             else if (column_config_data["type"] === "input") {
                 default_columns_only = false;
                 this.add_input_column(column_config_data);
+            }
+            else if (column_config_data["type"] === "text_area") {
+                default_columns_only = false;
+                this.add_text_area_column(column_config_data);
             }
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
@@ -41566,7 +41591,9 @@ function DashLayoutListColumnConfig () {
             "footer_only": footer_only
         });
     };
-    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}) {
+    this.AddDivider = function (
+        css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}
+    ) {
         this.columns.push({
             "type": "divider",
             "css": css,
@@ -41652,7 +41679,10 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
-    this.AddCopyButton = function (binder, getter_cb, hover_text="Copy", width_mult=0.25, css={}, header_css={}, size_mult=0.8, icon_name="copy", footer_css={}) {
+    this.AddCopyButton = function (
+        binder, getter_cb, hover_text="Copy", width_mult=0.25, css={},
+        header_css={}, size_mult=0.8, icon_name="copy", footer_css={}
+    ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
@@ -41704,8 +41734,37 @@ function DashLayoutListColumnConfig () {
             }
         );
     };
+    this.AddTextArea = function (
+        label_text="", binder=null, callback=null, data_key="", width_mult=1, css={},
+        header_css={}, placeholder_label="", default_value="", disable_autosave=false,
+        can_edit=true, use_placeholder_label_for_header=true, footer_css={}
+    ) {
+        this.AddColumn(
+            label_text,
+            data_key,
+            can_edit,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            {
+                "type": "text_area",
+                "options": {
+                    "placeholder_label": placeholder_label || label_text,
+                    "use_placeholder_label_for_header": use_placeholder_label_for_header,
+                    "callback" : callback,
+                    "binder": binder,
+                    "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light,
+                    "default_value": default_value,
+                    "disable_autosave": disable_autosave
+                },
+                "css": css,
+                "header_css": header_css,
+                "footer_css": footer_css
+            }
+        );
+    };
     // Abstraction to simplify AddColumn when just using a flex text value
-    this.AddFlexText = function (data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}) {
+    this.AddFlexText = function (
+        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}
+    ) {
         var min_width = Dash.Size.ColumnWidth * min_width_mult;
         css["flex-grow"] = 2;
         css["flex-shrink"] = 2;
@@ -42024,6 +42083,14 @@ function DashLayoutListRowElements () {
             "column_config_data": column_config_data
         });
     };
+    this.add_text_area_column = function (column_config_data) {
+        var text_area = this.get_text_area(column_config_data);
+        this.column_box.append(text_area.html);
+        this.columns["text_areas"].push({
+            "obj": text_area,
+            "column_config_data": column_config_data
+        });
+    };
     this.add_icon_button_column = function (column_config_data) {
         var icon_button = this.get_icon_button(column_config_data);
         this.column_box.append(icon_button.html);
@@ -42082,13 +42149,14 @@ function DashLayoutListRowElements () {
         return divider_line;
     };
     this.get_combo = function (column_config_data) {
+        var options = column_config_data["options"] || {};
         var read_only = this.is_header || this.is_footer || this.is_sublist;
-        var label = column_config_data["options"]["label_text"] || column_config_data["options"]["display_name"] || "";
+        var label = options["label_text"] || options["display_name"] || "";
         var combo = new Dash.Gui.Combo (
             label,
-            column_config_data["options"]["callback"] || column_config_data["on_click_callback"] || null,
-            column_config_data["options"]["binder"] || null,
-            (this.is_header) && label ? [{"id": label, "label_text": label}] : column_config_data["options"]["combo_options"] || null,
+            options["callback"] || column_config_data["on_click_callback"] || null,
+            options["binder"] || null,
+            (this.is_header) && label ? [{"id": label, "label_text": label}] : options["combo_options"] || null,
             this.get_data_for_key(column_config_data, "", true),
             this.color,
             {
@@ -42100,8 +42168,8 @@ function DashLayoutListRowElements () {
                     "column_index": this.columns["combos"].length,
                     "data_key": column_config_data["data_key"]
                 },
-                "is_user_list": column_config_data["options"]["is_user_list"] || false,
-                "multi_select": column_config_data["options"]["multi_select"] || false
+                "is_user_list": options["is_user_list"] || false,
+                "multi_select": options["multi_select"] || false
             }
         );
         var css = {
@@ -42136,9 +42204,9 @@ function DashLayoutListRowElements () {
                 };
             }
         }
-        if (read_only && column_config_data["options"]["hover_text"]) {
+        if (read_only && options["hover_text"]) {
             css["cursor"] = "help";
-            combo.html.attr("title", column_config_data["options"]["hover_text"]);
+            combo.html.attr("title", options["hover_text"]);
         }
         combo.html.css(css);
         combo.label.css({
@@ -42169,14 +42237,15 @@ function DashLayoutListRowElements () {
             }
             this.prevent_events_for_placeholder(
                 combo.html,
-                column_config_data["options"]["hover_text"]
+                options["hover_text"]
             );
         }
         return combo;
     };
     this.get_input = function (column_config_data) {
-        var color = column_config_data["options"]["color"] || this.color;
-        var placeholder_label = column_config_data["options"]["placeholder_label"] || "";
+        var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
+        var placeholder_label = options["placeholder_label"] || "";
         var input = new Dash.Gui.Input(placeholder_label === "none" ? "" : placeholder_label, color);
         var css = {
             "background": "none",
@@ -42225,7 +42294,7 @@ function DashLayoutListRowElements () {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             input.input.remove();
             input.html.text(
-                placeholder_label && this.is_header && column_config_data["options"]["use_placeholder_label_for_header"] ?
+                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
                 placeholder_label : (this.is_footer ? this.get_data_for_key(column_config_data) : "") || column_config_data["display_name"]
             );
             this.prevent_events_for_placeholder(input.html);
@@ -42236,23 +42305,28 @@ function DashLayoutListRowElements () {
             "line-height": (this.height * 0.9) + "px",
             "padding-left": Dash.Size.Padding * 0.35
         });
-        var starting_value = column_config_data["options"]["default_value"] || this.get_data_for_key(column_config_data);
+        var starting_value = options["default_value"] || this.get_data_for_key(column_config_data);
         if (starting_value) {
             input.SetText(starting_value.toString());
         }
-        if (column_config_data["options"]["callback"] && column_config_data["options"]["binder"]) {
-            (function (self, column_config_data, input) {
+        if (options["callback"] && options["binder"]) {
+            (function (self) {
                 input.SetOnSubmit(
                     function () {
-                        var callback = column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"]);
-                        callback(self.id, input.Text(), column_config_data, self, input);
+                        options["callback"].bind(options["binder"])(
+                            self.id,
+                            input.Text(),
+                            column_config_data,
+                            self,
+                            input
+                        );
                     },
-                    column_config_data["options"]["binder"]
+                    options["binder"]
                 );
                 input.EnableAutosave();
-            })(this, column_config_data, input);
+            })(this);
         }
-        if (column_config_data["options"]["disable_autosave"]) {
+        if (options["disable_autosave"]) {
             input.DisableAutosave();
         }
         if (column_config_data["can_edit"] === false) {
@@ -42260,16 +42334,115 @@ function DashLayoutListRowElements () {
         }
         return input;
     };
+    this.get_text_area = function (column_config_data) {
+        var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
+        var callback = options["binder"] ? options["callback"].bind(options["binder"]) : options["callback"];
+        var placeholder_label = options["placeholder_label"] === "none" ? "" : (options["placeholder_label"] || "");
+        var text_area = (function (self) {
+            return new Dash.Gui.TextArea(
+                color,
+                placeholder_label,
+                options["binder"],
+                callback ? function (value, text_area) {
+                    callback(
+                        // This is a lot of things to return, but just copying the input cb for now
+                        self.id,
+                        value,
+                        column_config_data,
+                        self,
+                        text_area
+                    );
+                } : null,
+                true
+            );
+        })(this);
+        // TODO: if this css stuff stays the same as input, abstract it
+        var css = {
+            "background": "none",
+            "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
+            "box-shadow": "none"
+        };
+        if (column_config_data["width"]) {
+            css["width"] = column_config_data["width"];
+        }
+        if (this.is_header || this.is_footer) {
+            if (placeholder_label || this.is_footer) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+            css["border"] = "none";
+            css["line-height"] = this.height + "px";
+        }
+        else {
+            if (this.is_sublist && placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+            css["border"] = "1px solid " + this.color.Pinstripe;
+            css["margin-top"] = Dash.Size.Padding * 0.1;
+            if (column_config_data["css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["css"]
+                };
+            }
+        }
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+        else if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
+        }
+        text_area.html.css(css);
+        if (this.is_header || this.is_footer || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            text_area.textarea.remove();
+            text_area.html.text(
+                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
+                    placeholder_label : (
+                        this.is_footer ? this.get_data_for_key(column_config_data) : ""
+                ) || column_config_data["display_name"]
+            );
+            this.prevent_events_for_placeholder(text_area.html);
+            return text_area;
+        }
+        // TODO: try disabling all this input css to see what's causing the broken gui
+        text_area.textarea.css({
+            "height": this.height * 0.9,
+            "min-height": this.height * 0.9,
+            "line-height": (this.height * 0.9) + "px",
+            "padding-left": Dash.Size.Padding * 0.35
+        });
+        if (options["disable_autosave"]) {
+            text_area.DisableAutoSubmit();
+        }
+        var starting_value = options["default_value"] || this.get_data_for_key(column_config_data);
+        if (starting_value) {
+            text_area.SetText(starting_value.toString());
+        }
+        if (column_config_data["can_edit"] === false) {
+            text_area.Lock(false);
+        }
+        return text_area;
+    };
     this.get_icon_button = function (column_config_data) {
+        var options = column_config_data["options"] || {};
         var icon_button = (function (self) {
             return new Dash.Gui.IconButton(
-                column_config_data["options"]["icon_name"],
+                options["icon_name"],
                 function (event, button) {
-                    column_config_data["options"]["callback"].bind(column_config_data["options"]["binder"])(self, button);
+                    options["callback"].bind(options["binder"])(self, button);
                 },
-                column_config_data["options"]["binder"],
-                column_config_data["options"]["color"] || self.color,
-                column_config_data["options"]["options"] || {}
+                options["binder"],
+                options["color"] || self.color,
+                options["options"] || {}
             );
         })(this);
         icon_button.html.css({
@@ -42284,26 +42457,27 @@ function DashLayoutListRowElements () {
             this.prevent_events_for_placeholder(icon_button.html);
             return icon_button;
         }
-        if (column_config_data["options"]["hover_text"]) {
-            icon_button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        if (options["hover_text"]) {
+            icon_button.SetHoverHint(options["hover_text"]);
         }
-        if (column_config_data["options"]["icon_color"]) {
-            icon_button.SetIconColor(column_config_data["options"]["icon_color"]);
+        if (options["icon_color"]) {
+            icon_button.SetIconColor(options["icon_color"]);
         }
         return icon_button;
     };
     this.get_copy_button = function (column_config_data) {
+        var options = column_config_data["options"] || {};
         var copy_button = (function (self) {
             return new Dash.Gui.CopyButton(
-                column_config_data["options"]["binder"],
+                options["binder"],
                 function () {
-                    return column_config_data["options"]["getter_cb"].bind(column_config_data["options"]["binder"])(self);
+                    return options["getter_cb"].bind(options["binder"])(self);
                 },
-                column_config_data["options"]["size_mult"],
+                options["size_mult"],
                 null,
                 "default",
-                column_config_data["options"]["icon_name"],
-                column_config_data["options"]["color"] || self.color
+                options["icon_name"],
+                options["color"] || self.color
             );
         })(this);
         copy_button.html.css({
@@ -42319,8 +42493,8 @@ function DashLayoutListRowElements () {
             this.prevent_events_for_placeholder(copy_button.html);
             return copy_button;
         }
-        if (column_config_data["options"]["hover_text"]) {
-            copy_button.button.SetHoverHint(column_config_data["options"]["hover_text"]);
+        if (options["hover_text"]) {
+            copy_button.button.SetHoverHint(options["hover_text"]);
         }
         return copy_button;
     };
@@ -42422,6 +42596,7 @@ function DashLayoutListRowInterface () {
         if (this.clear_sublist_preview_on_update) {
             this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
         }
+        var new_value;
         for (var type in this.columns) {
             if (!Dash.Validate.Object(this.columns[type])) {
                 continue;
@@ -42433,9 +42608,17 @@ function DashLayoutListRowInterface () {
             }
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
-                    var new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
+                    new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
                     if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
+                    }
+                }
+            }
+            else if (type === "text_areas") {
+                for (var text_area of this.columns[type]) {
+                    new_value = this.get_data_for_key(text_area["column_config_data"], "", text_area["obj"]);
+                    if (new_value || new_value !== text_area["obj"].GetText()) {
+                        text_area["obj"].SetText(new_value);
                     }
                 }
             }
@@ -42444,7 +42627,7 @@ function DashLayoutListRowInterface () {
                     var value = this.get_data_for_key(combo["column_config_data"], "", true);
                     if (value) {
                         if (this.is_header || this.is_footer) {
-                            // TODO
+                            // TODO?
                         }
                         else {
                             combo["obj"].Update(null, value, true);
@@ -44746,7 +44929,7 @@ function DashMobileTextBox (
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
             "line-height": (Dash.Size.RowHeight * 0.5) + "px",
-            "min-height": Dash.Size.RowHeight * 1.1,
+            "min-height": Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1),
             "border-radius": this.border_radius,
             "border": this.border_size + "px solid " + this.color.Stroke
         });

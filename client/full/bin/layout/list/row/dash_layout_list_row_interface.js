@@ -112,6 +112,8 @@ function DashLayoutListRowInterface () {
             this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
         }
 
+        var new_value;
+
         for (var type in this.columns) {
             if (!Dash.Validate.Object(this.columns[type])) {
                 continue;
@@ -125,10 +127,20 @@ function DashLayoutListRowInterface () {
 
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
-                    var new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
+                    new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
 
                     if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
+                    }
+                }
+            }
+
+            else if (type === "text_areas") {
+                for (var text_area of this.columns[type]) {
+                    new_value = this.get_data_for_key(text_area["column_config_data"], "", text_area["obj"]);
+
+                    if (new_value || new_value !== text_area["obj"].GetText()) {
+                        text_area["obj"].SetText(new_value);
                     }
                 }
             }
@@ -139,7 +151,7 @@ function DashLayoutListRowInterface () {
 
                     if (value) {
                         if (this.is_header || this.is_footer) {
-                            // TODO
+                            // TODO?
                         }
 
                         else {

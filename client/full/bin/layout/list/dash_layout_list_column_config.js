@@ -29,7 +29,9 @@ function DashLayoutListColumnConfig () {
         });
     };
 
-    this.AddDivider = function (css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}) {
+    this.AddDivider = function (
+        css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}
+    ) {
         this.columns.push({
             "type": "divider",
             "css": css,
@@ -120,7 +122,10 @@ function DashLayoutListColumnConfig () {
         );
     };
 
-    this.AddCopyButton = function (binder, getter_cb, hover_text="Copy", width_mult=0.25, css={}, header_css={}, size_mult=0.8, icon_name="copy", footer_css={}) {
+    this.AddCopyButton = function (
+        binder, getter_cb, hover_text="Copy", width_mult=0.25, css={},
+        header_css={}, size_mult=0.8, icon_name="copy", footer_css={}
+    ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
@@ -175,8 +180,38 @@ function DashLayoutListColumnConfig () {
         );
     };
 
+    this.AddTextArea = function (
+        label_text="", binder=null, callback=null, data_key="", width_mult=1, css={},
+        header_css={}, placeholder_label="", default_value="", disable_autosave=false,
+        can_edit=true, use_placeholder_label_for_header=true, footer_css={}
+    ) {
+        this.AddColumn(
+            label_text,
+            data_key,
+            can_edit,
+            !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
+            {
+                "type": "text_area",
+                "options": {
+                    "placeholder_label": placeholder_label || label_text,
+                    "use_placeholder_label_for_header": use_placeholder_label_for_header,
+                    "callback" : callback,
+                    "binder": binder,
+                    "color": binder ? (binder.color || Dash.Color.Light) : Dash.Color.Light,
+                    "default_value": default_value,
+                    "disable_autosave": disable_autosave
+                },
+                "css": css,
+                "header_css": header_css,
+                "footer_css": footer_css
+            }
+        );
+    };
+
     // Abstraction to simplify AddColumn when just using a flex text value
-    this.AddFlexText = function (data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}) {
+    this.AddFlexText = function (
+        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}
+    ) {
         var min_width = Dash.Size.ColumnWidth * min_width_mult;
 
         css["flex-grow"] = 2;

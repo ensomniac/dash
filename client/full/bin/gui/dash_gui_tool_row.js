@@ -11,7 +11,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     this.get_formatted_data_cb = null;
 
     this.setup_styles = function () {
-        this.toolbar = new Dash.Layout.Toolbar(this, this.color);
+        this.toolbar = new Dash.Layout.Toolbar(this.binder, this.color);
 
         this.toolbar.height = this.height;
 
@@ -61,7 +61,10 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return divider;
     };
 
-    this.AddComboRow = function (label_text, combo_options, default_value, callback, additional_data={}, extra_options={}, add_highlight=true) {
+    this.AddComboRow = function (
+        label_text, combo_options, default_value, callback,
+        additional_data={}, extra_options={}, add_highlight=true
+    ) {
         if (!label_text.endsWith(":")) {
             label_text += ":";
         }
@@ -97,7 +100,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             container.append(highlight);
         }
 
-        var label = this.AddLabel(label_text, Dash.Size.Padding * 0.5, "", null, false);
+        var label = this.AddLabel(
+            label_text, Dash.Size.Padding * 0.5, "", null, false
+        );
 
         label.html.css({
             "padding-left": 0
@@ -125,7 +130,10 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return container;
     };
 
-    this.AddInputRow = function (data_key, label_text="", default_value=null, width=null, on_submit_cb=null, placeholder_text="", can_edit=true) {
+    this.AddInputRow = function (
+        data_key, label_text="", default_value=null, width=null,
+        on_submit_cb=null, placeholder_text="", can_edit=true
+    ) {
         if (!this.get_data_cb) {
             console.error("Error: AddInputRow requires ToolRow to have been provided a 'get_data_cb'");
 
@@ -196,8 +204,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return input_row;
     };
 
-    this.AddIconButton = function (icon_name, callback, hover_hint="", additional_data=null, icon_size=null, size_mult=1.0, for_uploader=false) {
-        var button = this.toolbar.AddIconButton(icon_name, callback.bind(this.binder), icon_size, additional_data, this.height, size_mult, for_uploader);
+    this.AddIconButton = function (
+        icon_name, callback, hover_hint="", additional_data=null,
+        icon_size=null, size_mult=1.0, for_uploader=false
+    ) {
+        var button = this.toolbar.AddIconButton(
+            icon_name, callback, icon_size, additional_data, this.height, size_mult, for_uploader
+        );
 
         button.html.css({
             "margin-top": 0
@@ -213,12 +226,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
     };
 
     this.AddCheckbox = function (
-        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+        label_text, default_state, callback, identifier, hover_hint="Toggle",
+        checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = this.toolbar.AddCheckbox(
             label_text,
             default_state,
-            callback ? callback.bind(this.binder) : callback,
+            callback,
             identifier,
             hover_hint,
             checkbox_redraw_styling,
@@ -293,7 +307,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             "",
             combo_options,
             default_value,
-            callback.bind(this.binder),
+            callback,
             true,
             additional_data,
             extra_options
@@ -311,7 +325,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
     // TODO: These params are a mess, fix it (globally)
     this.AddLabel = function (text, right_margin=null, icon_name="", left_label_margin=null, border=true) {
-        var label = this.toolbar.AddLabel(text, false, this.color);
+        var label = this.toolbar.AddLabel(text, false);
 
         if (right_margin !== null) {
             label.html.css({
@@ -398,7 +412,13 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         }
 
         if (include_label) {
-            var label = this.AddLabel(label_text || placeholder_text, Dash.Size.Padding * 0.5, null, null, false);
+            var label = this.AddLabel(
+                label_text || placeholder_text,
+                Dash.Size.Padding * 0.5,
+                null,
+                null,
+                false
+            );
 
             label.html.css({
                 "margin-top": Dash.Size.Padding * 0.1
@@ -407,10 +427,10 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
 
         var input = this.toolbar.AddTransparentInput(
             placeholder_text,
-            on_change_cb ? on_change_cb.bind(this.binder) : this.on_input_keystroke,
+            on_change_cb || this.on_input_keystroke.bind(this),
             {
                 "width": width || Dash.Size.ColumnWidth * 0.6,
-                "on_enter": on_submit_cb ? on_submit_cb.bind(this.binder) : this.on_input_submit
+                "on_enter": on_submit_cb || this.on_input_submit.bind(this)
             },
             {
                 "data_key": data_key

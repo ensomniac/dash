@@ -40,7 +40,7 @@ function DashMobileTextBox (
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
             "line-height": (Dash.Size.RowHeight * 0.5) + "px",
-            "min-height": Dash.Size.RowHeight * 1.1,
+            "min-height": Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1),
             "border-radius": this.border_radius,
             "border": this.border_size + "px solid " + this.color.Stroke
         });
