@@ -434,6 +434,8 @@ function DashLayoutListRowElements () {
             icon_button.SetIconColor(options["icon_color"]);
         }
 
+        icon_button.AddHighlight();
+
         return icon_button;
     };
 
@@ -476,6 +478,8 @@ function DashLayoutListRowElements () {
         if (options["hover_text"]) {
             copy_button.button.SetHoverHint(options["hover_text"]);
         }
+
+        copy_button.button.AddHighlight();
 
         return copy_button;
     };
