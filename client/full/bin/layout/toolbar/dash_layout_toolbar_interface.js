@@ -492,15 +492,15 @@ function DashLayoutToolbarInterface () {
         checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // LS key (mess)
-            default_state,                                          // Default state
-            this.color,                                             // Color
-            hover_hint,                                             // Hover hint text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
-            label_text,                                             // Label text
-            true,                                                   // Label first
-            label_border                                            // Include border
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // This is a mess
+            default_state,
+            this.color,
+            hover_hint,
+            this,
+            callback ? callback.bind(this.binder) : callback,
+            label_text,
+            true,
+            label_border
         );
 
         checkbox.html.css({

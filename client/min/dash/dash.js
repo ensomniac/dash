@@ -19046,6 +19046,20 @@ function DashUtils () {
     this.GetClassName = function (class_instance) {
         return class_instance.constructor.toString().split("(")[0].replace("function", "").trim();
     };
+    // Based on font properties of a single element
+    this.GetAverageCharWidth = function (element) {
+        var string = "abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var span = $("<span>").text(string).css({
+            "position": "absolute",
+            "left": -9999,  // Position off-screen
+            "top": 0,
+            "white-space": "nowrap",  // Ensure the string isn't wrapping
+            "font": element.css("font")  // Copy the font properties
+        }).appendTo("body");
+        var avg_char_width = span.width() / string.length;
+        span.remove();
+        return avg_char_width;
+    };
     this.SetTimer = function (binder, callback, ms, source=null) {
         var timer = {
             "callback": callback.bind(binder),
@@ -42142,7 +42156,10 @@ function DashLayoutListRowElements () {
                 ...column_config_data["footer_css"]
             };
         }
-        if ((this.is_header && !column_config_data["show_for_header"]) || (this.is_footer && !column_config_data["show_for_footer"])) {
+        if (
+               (this.is_header && !column_config_data["show_for_header"])
+            || (this.is_footer && !column_config_data["show_for_footer"])
+        ) {
             css["opacity"] = 0;
         }
         divider_line.css(css);
@@ -42150,6 +42167,7 @@ function DashLayoutListRowElements () {
     };
     this.get_combo = function (column_config_data) {
         var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
         var read_only = this.is_header || this.is_footer || this.is_sublist;
         var label = options["label_text"] || options["display_name"] || "";
         var combo = new Dash.Gui.Combo (
@@ -42158,7 +42176,7 @@ function DashLayoutListRowElements () {
             options["binder"] || null,
             (this.is_header) && label ? [{"id": label, "label_text": label}] : options["combo_options"] || null,
             this.get_data_for_key(column_config_data, "", true),
-            this.color,
+            color,
             {
                 "style": "row",
                 "read_only": read_only || column_config_data["can_edit"] === false,
@@ -42177,7 +42195,12 @@ function DashLayoutListRowElements () {
             "width": column_config_data["width"]
         };
         if (column_config_data["css"]) {
-            if (column_config_data["css"]["border"] && column_config_data["css"]["border"] !== "none" && !this.is_header && !this.is_footer) {
+            if (
+                   column_config_data["css"]["border"]
+                && column_config_data["css"]["border"] !== "none"
+                && !this.is_header
+                && !this.is_footer
+            ) {
                 css["box-sizing"] = "border-box";
                 css["padding-left"] = Dash.Size.Padding * 0.2;
             }
@@ -42219,14 +42242,14 @@ function DashLayoutListRowElements () {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": column_config_data["header_css"]["font-family"] || "sans_serif_bold",
-                    "color": column_config_data["header_css"]["color"] || this.color.Stroke
+                    "color": column_config_data["header_css"]["color"] || color.Stroke
                 });
             }
             else if (this.is_footer && label) {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": column_config_data["footer_css"]["font-family"] || "sans_serif_bold",
-                    "color": column_config_data["footer_css"]["color"] || this.color.Stroke
+                    "color": column_config_data["footer_css"]["color"] || color.Stroke
                 });
             }
             else {
@@ -42247,57 +42270,7 @@ function DashLayoutListRowElements () {
         var color = options["color"] || this.color;
         var placeholder_label = options["placeholder_label"] || "";
         var input = new Dash.Gui.Input(placeholder_label === "none" ? "" : placeholder_label, color);
-        var css = {
-            "background": "none",
-            "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
-            "box-shadow": "none"
-        };
-        if (column_config_data["width"]) {
-            css["width"] = column_config_data["width"];
-        }
-        if (this.is_header || this.is_footer) {
-            if (placeholder_label || this.is_footer) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-            css["border"] = "none";
-            css["line-height"] = this.height + "px";
-        }
-        else {
-            if (this.is_sublist && placeholder_label) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-            css["border"] = "1px solid " + this.color.Pinstripe;
-            css["margin-top"] = Dash.Size.Padding * 0.1;
-            if (column_config_data["css"]) {
-                css = {
-                    ...css,
-                    ...column_config_data["css"]
-                };
-            }
-        }
-        if (this.is_header && column_config_data["header_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["header_css"]
-            };
-        }
-        else if (this.is_footer && column_config_data["footer_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["footer_css"]
-            };
-        }
-        input.html.css(css);
-        if (this.is_header || this.is_footer || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't add the actual element
-            input.input.remove();
-            input.html.text(
-                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
-                placeholder_label : (this.is_footer ? this.get_data_for_key(column_config_data) : "") || column_config_data["display_name"]
-            );
-            this.prevent_events_for_placeholder(input.html);
+        if (!this.init_input(input, column_config_data, placeholder_label)) {
             return input;
         }
         input.input.css({
@@ -42357,79 +42330,39 @@ function DashLayoutListRowElements () {
                 true
             );
         })(this);
-        // TODO: if this css stuff stays the same as input, abstract it
-        var css = {
-            "background": "none",
-            "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
-            "box-shadow": "none"
-        };
-        if (column_config_data["width"]) {
-            css["width"] = column_config_data["width"];
-        }
-        if (this.is_header || this.is_footer) {
-            if (placeholder_label || this.is_footer) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-            css["border"] = "none";
-            css["line-height"] = this.height + "px";
-        }
-        else {
-            if (this.is_sublist && placeholder_label) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-            css["border"] = "1px solid " + this.color.Pinstripe;
-            css["margin-top"] = Dash.Size.Padding * 0.1;
-            if (column_config_data["css"]) {
-                css = {
-                    ...css,
-                    ...column_config_data["css"]
-                };
-            }
-        }
-        if (this.is_header && column_config_data["header_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["header_css"]
-            };
-        }
-        else if (this.is_footer && column_config_data["footer_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["footer_css"]
-            };
-        }
-        text_area.html.css(css);
-        if (this.is_header || this.is_footer || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't add the actual element
-            text_area.textarea.remove();
-            text_area.html.text(
-                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
-                    placeholder_label : (
-                        this.is_footer ? this.get_data_for_key(column_config_data) : ""
-                ) || column_config_data["display_name"]
-            );
-            this.prevent_events_for_placeholder(text_area.html);
+        if (!this.init_input(text_area, column_config_data, placeholder_label, true)) {
             return text_area;
         }
-        // TODO: try disabling all this input css to see what's causing the broken gui
-        text_area.textarea.css({
-            "height": this.height * 0.9,
-            "min-height": this.height * 0.9,
-            "line-height": (this.height * 0.9) + "px",
-            "padding-left": Dash.Size.Padding * 0.35
-        });
         if (options["disable_autosave"]) {
             text_area.DisableAutoSubmit();
         }
-        var starting_value = options["default_value"] || this.get_data_for_key(column_config_data);
-        if (starting_value) {
-            text_area.SetText(starting_value.toString());
+        text_area.EnableAutoHeight(
+            (options["default_value"] || this.get_data_for_key(column_config_data) || "").toString(),
+            this.height * 0.9,
+            this.height * 0.9
+        );
+        if (!options["allow_new_lines"]) {
+            // Makes the enter key submit instead of breaking to the next line, which
+            // will typically be preferable in this context, since the row will auto-size
+            text_area.DisableNewLines();
         }
         if (column_config_data["can_edit"] === false) {
             text_area.Lock(false);
         }
+        text_area.textarea.css({
+            "border": text_area.border_size + "px solid " + color.Pinstripe
+        });
+        // Make the row accommodate the fluid size of the textarea
+        this.html.css({
+            "height": "fit-content"
+        });
+        this.highlight.css({
+            "height": "100%"
+        });
+        this.column_box.css({
+            "height": "fit-content",
+            "position": ""
+        });
         return text_area;
     };
     this.get_icon_button = function (column_config_data) {
@@ -42505,6 +42438,75 @@ function DashLayoutListRowElements () {
             });
         }
         html.off("click");
+    };
+    this.init_input = function (element, column_config_data, placeholder_label, is_text_area=false) {
+        var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
+        var css = {
+            "background": "none",
+            "height": is_text_area ? (
+                (this.is_header || this.is_footer) ? this.height : "fit-content"
+            ) : (this.height * ((this.is_header || this.is_footer) ? 1 : 0.9)),
+            "box-shadow": "none"
+        };
+        if (column_config_data["width"]) {
+            css["width"] = column_config_data["width"];
+        }
+        if (this.is_header || this.is_footer) {
+            if (placeholder_label || this.is_footer) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+            css["border"] = "none";
+            css["line-height"] = this.height + "px";
+        }
+        else {
+            if (this.is_sublist && placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+            css["border"] = "1px solid " + color.Pinstripe;
+            css["margin-top"] = Dash.Size.Padding * 0.1;
+            if (is_text_area) {
+                css["margin-bottom"] = Dash.Size.Padding * 0.1;
+            }
+            if (column_config_data["css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["css"]
+                };
+            }
+        }
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+        else if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
+        }
+        element.html.css(css);
+        if (this.is_header || this.is_footer || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            if (is_text_area) {
+                element.textarea.remove();
+            }
+            else {
+                element.input.remove();
+            }
+            element.html.text(
+                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ? placeholder_label : (
+                    this.is_footer ? this.get_data_for_key(column_config_data) : ""
+                ) || column_config_data["display_name"]
+            );
+            this.prevent_events_for_placeholder(element.html);
+            return false;
+        }
+        return true;
     };
 }
 
@@ -44700,15 +44702,15 @@ function DashLayoutToolbarInterface () {
         checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // LS key (mess)
-            default_state,                                          // Default state
-            this.color,                                             // Color
-            hover_hint,                                             // Hover hint text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
-            label_text,                                             // Label text
-            true,                                                   // Label first
-            label_border                                            // Include border
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // This is a mess
+            default_state,
+            this.color,
+            hover_hint,
+            this,
+            callback ? callback.bind(this.binder) : callback,
+            label_text,
+            true,
+            label_border
         );
         checkbox.html.css({
             "margin-top": Dash.Size.Padding * 0.5
@@ -44900,6 +44902,8 @@ function DashMobileTextBox (
     this.delay_change_cb = delay_change_cb;
     this.label = null;
     this.border_size = 1;
+    this.avg_char_width = 0;
+    this.auto_height = false;
     this.flash_disabled = false;
     this.last_change_ts = null;
     this.change_timeout = null;
@@ -44907,10 +44911,13 @@ function DashMobileTextBox (
     this.change_delay_ms = 1500;  // Same as DashGuiInput's autosave delay
     this.html = $("<div></div>");
     this.last_change_value = null;
+    this.auto_height_buffer_px = 0;
     this.submit_override_only = false;
     this.line_break_replacement = null;
     this.last_arrow_navigation_ts = null;
+    this.line_height = (Dash.Size.RowHeight * 0.5);
     this.border_radius = Dash.Size.BorderRadius * 0.5;
+    this.min_height = Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1);
     this.textarea = $(
         "<textarea></textarea>",
         {
@@ -44928,8 +44935,8 @@ function DashMobileTextBox (
             "min-width": "100%",
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
-            "line-height": (Dash.Size.RowHeight * 0.5) + "px",
-            "min-height": Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1),
+            "line-height": this.line_height + "px",
+            "min-height": this.min_height,
             "border-radius": this.border_radius,
             "border": this.border_size + "px solid " + this.color.Stroke
         });
@@ -44951,7 +44958,15 @@ function DashMobileTextBox (
         return val;
     };
     this.SetText = function (text) {
-        return this.textarea.val(text);
+        this.textarea.val(text);
+        if (this.auto_height) {
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.auto_adjust_height();
+                });
+            })(this);
+        }
+        return text;
     };
     this.SetLineBreakReplacement = function (value="") {
         this.line_break_replacement = value;
@@ -44986,23 +45001,24 @@ function DashMobileTextBox (
         this.textarea.prop("readOnly", false);
     };
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
+        this.min_height = Dash.Size.RowHeight;
         var css = {
-            "height": Dash.Size.RowHeight,
-            "min-height": Dash.Size.RowHeight,
-            "max-height": Dash.Size.RowHeight,
+            "height": this.min_height,
+            "min-height": this.min_height,
+            "max-height": this.min_height,
             "overflow-y": "hidden",
             "white-space": "nowrap"
         };
         if (bottom_border_only) {
+            this.line_height = this.min_height * 0.75;
             css["border-top"] = "none";
             css["border-left"] = "none";
             css["border-right"] = "none";
-            css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+            css["line-height"] = this.line_height + "px";
         }
         this.textarea.css(css);
         this.DisableNewLines(_backup_line_break_replacement);
     };
-    // This is definitely redundant, because you can just use an input instead, but it's useful in some rare scenarios
     this.DisableNewLines = function (_backup_line_break_replacement=" ") {
         (function (self) {
             self.textarea.on("keydown",function (e) {
@@ -45014,6 +45030,12 @@ function DashMobileTextBox (
         })(this);
         // This shouldn't be necessary since we reroute the enter key event above, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
+        this.HideResizeHandle();
+    };
+    this.HideResizeHandle = function () {
+        this.textarea.css({
+            "resize": "none"
+        });
     };
     this.SetInputMode = function (mode) {
         this.textarea.attr("inputmode", mode);
@@ -45038,15 +45060,17 @@ function DashMobileTextBox (
         if (disable_auto_submit) {
             this.DisableAutoSubmit();
         }
+        this.min_height = Dash.Size.RowHeight * 2.25;
+        this.line_height = Dash.Size.RowHeight * 1.8;
         this.textarea.css({
             "text-align": "center",
             "font-size": "350%",
             "padding-left": Dash.Size.Padding,
             "letter-spacing": (Dash.Size.Padding * 0.5) + "px",
-            "height": Dash.Size.RowHeight * 2.25,
-            "min-height": Dash.Size.RowHeight * 2.25,
-            "max-height": Dash.Size.RowHeight * 2.25,
-            "line-height": (Dash.Size.RowHeight * 1.8) + "px"
+            "height": this.min_height,
+            "min-height": this.min_height,
+            "max-height": this.min_height,
+            "line-height": this.line_height + "px"
         });
     };
     this.SetMaxCharacters = function (num) {
@@ -45055,8 +45079,9 @@ function DashMobileTextBox (
     this.SetHeight = function (height, enforce=false) {
         var css = {"height": height};
         if (enforce) {
-            css["min-height"] = height;
-            css["max-height"] = height;
+            this.min_height = height;
+            css["min-height"] = this.min_height;
+            css["max-height"] = this.min_height;
         }
         this.textarea.css(css);
     };
@@ -45129,6 +45154,69 @@ function DashMobileTextBox (
     this.DisableFlash = function () {
         this.flash_disabled = true;
     };
+    this.EnableAutoHeight = function (starting_value="", min_height=0, line_height=0, buffer_px=2) {
+        this.auto_height = true;
+        // No matter how many rows, it always appears to need a min of
+        // two extra px to avoid scroll bar when auto-scaling like this
+        this.auto_height_buffer_px = buffer_px;
+        this.html.css({
+            "height": "fit-content"
+        });
+        var textarea_css = {
+            "height": "auto",
+            "vertical-align": "top",
+            "padding": 0,  // Top/bottom padding will make auto-scaling less accurate
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
+        };
+        if (min_height) {
+            this.min_height = min_height;
+            textarea_css["min-height"] = this.min_height;
+        }
+        if (line_height) {
+            this.line_height = line_height;
+            textarea_css["line-height"] = this.line_height + "px";
+        }
+        this.textarea.css(textarea_css);
+        this.HideResizeHandle();
+        if (starting_value) {
+            this.textarea.SetText(starting_value);
+        }
+    };
+    this.auto_adjust_height = function () {
+        if (!this.auto_height) {
+            return;
+        }
+        var value = this.GetText();
+        if (value) {
+            var height = this.textarea[0].scrollHeight || this.min_height;
+            // For some reason, textareas' scroll height will never be less
+            // than the height of two rows without manual intervention, so
+            // if it's two (ish) lines, we need to check if it should actually be one
+            if (this.line_height < height <= (this.line_height * 2)) {
+                // This is only a rough estimate based on average char width, but it's the best option available
+                var max_chars_in_one_line = Math.floor(this.textarea.width() / this.get_average_char_width());
+                var lines = Math.ceil(value.length / max_chars_in_one_line);
+                if (lines < 2) {
+                    height = this.min_height;
+                }
+            }
+            // Have to set it to auto first for this to work
+            this.SetHeight("auto");
+            this.SetHeight(height + this.auto_height_buffer_px);
+        }
+        else {
+            // When empty, the above logic doesn't work and doubles the height by default
+            this.SetHeight(this.min_height + this.auto_height_buffer_px);
+        }
+    };
+    this.get_average_char_width = function () {
+        if (this.avg_char_width) {
+            return this.avg_char_width;
+        }
+        this.avg_char_width = Dash.Utils.GetAverageCharWidth(this.textarea);
+        return this.avg_char_width;
+    };
     this.setup_connections = function () {
         // Important note:
         // When testing on a desktop's mobile view, you can't select the text with the
@@ -45155,6 +45243,7 @@ function DashMobileTextBox (
         })(this);
     };
     this.fire_change_cb = function (submit_override=false) {
+        this.auto_adjust_height();
         if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
             return;
         }

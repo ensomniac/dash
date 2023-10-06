@@ -142,7 +142,10 @@ function DashLayoutListRowElements () {
             };
         }
 
-        if ((this.is_header && !column_config_data["show_for_header"]) || (this.is_footer && !column_config_data["show_for_footer"])) {
+        if (
+               (this.is_header && !column_config_data["show_for_header"])
+            || (this.is_footer && !column_config_data["show_for_footer"])
+        ) {
             css["opacity"] = 0;
         }
 
@@ -153,6 +156,7 @@ function DashLayoutListRowElements () {
 
     this.get_combo = function (column_config_data) {
         var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
         var read_only = this.is_header || this.is_footer || this.is_sublist;
         var label = options["label_text"] || options["display_name"] || "";
 
@@ -162,7 +166,7 @@ function DashLayoutListRowElements () {
             options["binder"] || null,
             (this.is_header) && label ? [{"id": label, "label_text": label}] : options["combo_options"] || null,
             this.get_data_for_key(column_config_data, "", true),
-            this.color,
+            color,
             {
                 "style": "row",
                 "read_only": read_only || column_config_data["can_edit"] === false,
@@ -183,7 +187,12 @@ function DashLayoutListRowElements () {
         };
 
         if (column_config_data["css"]) {
-            if (column_config_data["css"]["border"] && column_config_data["css"]["border"] !== "none" && !this.is_header && !this.is_footer) {
+            if (
+                   column_config_data["css"]["border"]
+                && column_config_data["css"]["border"] !== "none"
+                && !this.is_header
+                && !this.is_footer
+            ) {
                 css["box-sizing"] = "border-box";
                 css["padding-left"] = Dash.Size.Padding * 0.2;
             }
@@ -235,7 +244,7 @@ function DashLayoutListRowElements () {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": column_config_data["header_css"]["font-family"] || "sans_serif_bold",
-                    "color": column_config_data["header_css"]["color"] || this.color.Stroke
+                    "color": column_config_data["header_css"]["color"] || color.Stroke
                 });
             }
 
@@ -243,7 +252,7 @@ function DashLayoutListRowElements () {
                 // TODO: need a title thing up here, use default column element?
                 combo.label.css({
                     "font-family": column_config_data["footer_css"]["font-family"] || "sans_serif_bold",
-                    "color": column_config_data["footer_css"]["color"] || this.color.Stroke
+                    "color": column_config_data["footer_css"]["color"] || color.Stroke
                 });
             }
 
@@ -269,70 +278,7 @@ function DashLayoutListRowElements () {
         var placeholder_label = options["placeholder_label"] || "";
         var input = new Dash.Gui.Input(placeholder_label === "none" ? "" : placeholder_label, color);
 
-        var css = {
-            "background": "none",
-            "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
-            "box-shadow": "none"
-        };
-
-        if (column_config_data["width"]) {
-            css["width"] = column_config_data["width"];
-        }
-
-        if (this.is_header || this.is_footer) {
-            if (placeholder_label || this.is_footer) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-
-            css["border"] = "none";
-            css["line-height"] = this.height + "px";
-        }
-
-        else {
-            if (this.is_sublist && placeholder_label) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-
-            css["border"] = "1px solid " + this.color.Pinstripe;
-            css["margin-top"] = Dash.Size.Padding * 0.1;
-
-            if (column_config_data["css"]) {
-                css = {
-                    ...css,
-                    ...column_config_data["css"]
-                };
-            }
-        }
-
-        if (this.is_header && column_config_data["header_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["header_css"]
-            };
-        }
-
-        else if (this.is_footer && column_config_data["footer_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["footer_css"]
-            };
-        }
-
-        input.html.css(css);
-
-        if (this.is_header || this.is_footer || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't add the actual element
-            input.input.remove();
-
-            input.html.text(
-                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
-                placeholder_label : (this.is_footer ? this.get_data_for_key(column_config_data) : "") || column_config_data["display_name"]
-            );
-
-            this.prevent_events_for_placeholder(input.html);
-
+        if (!this.init_input(input, column_config_data, placeholder_label)) {
             return input;
         }
 
@@ -403,97 +349,47 @@ function DashLayoutListRowElements () {
             );
         })(this);
 
-        // TODO: if this css stuff stays the same as input, abstract it
-        var css = {
-            "background": "none",
-            "height": this.height * ((this.is_header || this.is_footer) ? 1 : 0.9),
-            "box-shadow": "none"
-        };
-
-        if (column_config_data["width"]) {
-            css["width"] = column_config_data["width"];
-        }
-
-        if (this.is_header || this.is_footer) {
-            if (placeholder_label || this.is_footer) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-
-            css["border"] = "none";
-            css["line-height"] = this.height + "px";
-        }
-
-        else {
-            if (this.is_sublist && placeholder_label) {
-                css["color"] = color.Stroke;
-                css["font-family"] = "sans_serif_bold";
-            }
-
-            css["border"] = "1px solid " + this.color.Pinstripe;
-            css["margin-top"] = Dash.Size.Padding * 0.1;
-
-            if (column_config_data["css"]) {
-                css = {
-                    ...css,
-                    ...column_config_data["css"]
-                };
-            }
-        }
-
-        if (this.is_header && column_config_data["header_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["header_css"]
-            };
-        }
-
-        else if (this.is_footer && column_config_data["footer_css"]) {
-            css = {
-                ...css,
-                ...column_config_data["footer_css"]
-            };
-        }
-
-        text_area.html.css(css);
-
-        if (this.is_header || this.is_footer || this.is_sublist) {
-            // Keep the container so the row stays properly aligned, but don't add the actual element
-            text_area.textarea.remove();
-
-            text_area.html.text(
-                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ?
-                    placeholder_label : (
-                        this.is_footer ? this.get_data_for_key(column_config_data) : ""
-                ) || column_config_data["display_name"]
-            );
-
-            this.prevent_events_for_placeholder(text_area.html);
-
+        if (!this.init_input(text_area, column_config_data, placeholder_label, true)) {
             return text_area;
         }
-
-        // TODO: try disabling all this input css to see what's causing the broken gui
-        text_area.textarea.css({
-            "height": this.height * 0.9,
-            "min-height": this.height * 0.9,
-            "line-height": (this.height * 0.9) + "px",
-            "padding-left": Dash.Size.Padding * 0.35
-        });
 
         if (options["disable_autosave"]) {
             text_area.DisableAutoSubmit();
         }
 
-        var starting_value = options["default_value"] || this.get_data_for_key(column_config_data);
+        text_area.EnableAutoHeight(
+            (options["default_value"] || this.get_data_for_key(column_config_data) || "").toString(),
+            this.height * 0.9,
+            this.height * 0.9
+        );
 
-        if (starting_value) {
-            text_area.SetText(starting_value.toString());
+        if (!options["allow_new_lines"]) {
+            // Makes the enter key submit instead of breaking to the next line, which
+            // will typically be preferable in this context, since the row will auto-size
+            text_area.DisableNewLines();
         }
 
         if (column_config_data["can_edit"] === false) {
             text_area.Lock(false);
         }
+
+        text_area.textarea.css({
+            "border": text_area.border_size + "px solid " + color.Pinstripe
+        });
+
+        // Make the row accommodate the fluid size of the textarea
+        this.html.css({
+            "height": "fit-content"
+        });
+
+        this.highlight.css({
+            "height": "100%"
+        });
+
+        this.column_box.css({
+            "height": "fit-content",
+            "position": ""
+        });
 
         return text_area;
     };
@@ -592,5 +488,92 @@ function DashLayoutListRowElements () {
         }
 
         html.off("click");
+    };
+
+    this.init_input = function (element, column_config_data, placeholder_label, is_text_area=false) {
+        var options = column_config_data["options"] || {};
+        var color = options["color"] || this.color;
+
+        var css = {
+            "background": "none",
+            "height": is_text_area ? (
+                (this.is_header || this.is_footer) ? this.height : "fit-content"
+            ) : (this.height * ((this.is_header || this.is_footer) ? 1 : 0.9)),
+            "box-shadow": "none"
+        };
+
+        if (column_config_data["width"]) {
+            css["width"] = column_config_data["width"];
+        }
+
+        if (this.is_header || this.is_footer) {
+            if (placeholder_label || this.is_footer) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+
+            css["border"] = "none";
+            css["line-height"] = this.height + "px";
+        }
+
+        else {
+            if (this.is_sublist && placeholder_label) {
+                css["color"] = color.Stroke;
+                css["font-family"] = "sans_serif_bold";
+            }
+
+            css["border"] = "1px solid " + color.Pinstripe;
+            css["margin-top"] = Dash.Size.Padding * 0.1;
+
+            if (is_text_area) {
+                css["margin-bottom"] = Dash.Size.Padding * 0.1;
+            }
+
+            if (column_config_data["css"]) {
+                css = {
+                    ...css,
+                    ...column_config_data["css"]
+                };
+            }
+        }
+
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+
+        else if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
+        }
+
+        element.html.css(css);
+
+        if (this.is_header || this.is_footer || this.is_sublist) {
+            // Keep the container so the row stays properly aligned, but don't add the actual element
+            if (is_text_area) {
+                element.textarea.remove();
+            }
+
+            else {
+                element.input.remove();
+            }
+
+            element.html.text(
+                placeholder_label && this.is_header && options["use_placeholder_label_for_header"] ? placeholder_label : (
+                    this.is_footer ? this.get_data_for_key(column_config_data) : ""
+                ) || column_config_data["display_name"]
+            );
+
+            this.prevent_events_for_placeholder(element.html);
+
+            return false;
+        }
+
+        return true;
     };
 }

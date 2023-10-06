@@ -9,6 +9,8 @@ function DashMobileTextBox (
 
     this.label = null;
     this.border_size = 1;
+    this.avg_char_width = 0;
+    this.auto_height = false;
     this.flash_disabled = false;
     this.last_change_ts = null;
     this.change_timeout = null;
@@ -16,10 +18,13 @@ function DashMobileTextBox (
     this.change_delay_ms = 1500;  // Same as DashGuiInput's autosave delay
     this.html = $("<div></div>");
     this.last_change_value = null;
+    this.auto_height_buffer_px = 0;
     this.submit_override_only = false;
     this.line_break_replacement = null;
     this.last_arrow_navigation_ts = null;
+    this.line_height = (Dash.Size.RowHeight * 0.5);
     this.border_radius = Dash.Size.BorderRadius * 0.5;
+    this.min_height = Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1);
 
     this.textarea = $(
         "<textarea></textarea>",
@@ -39,8 +44,8 @@ function DashMobileTextBox (
             "min-width": "100%",
             "max-width": "100%",
             "height": Dash.Size.RowHeight * 4,
-            "line-height": (Dash.Size.RowHeight * 0.5) + "px",
-            "min-height": Dash.Size.RowHeight * (Dash.IsMobile ? 1.1 : 1),
+            "line-height": this.line_height + "px",
+            "min-height": this.min_height,
             "border-radius": this.border_radius,
             "border": this.border_size + "px solid " + this.color.Stroke
         });
@@ -70,7 +75,17 @@ function DashMobileTextBox (
     };
 
     this.SetText = function (text) {
-        return this.textarea.val(text);
+        this.textarea.val(text);
+
+        if (this.auto_height) {
+            (function (self) {
+                requestAnimationFrame(function () {
+                    self.auto_adjust_height();
+                });
+            })(this);
+        }
+
+        return text;
     };
 
     this.SetLineBreakReplacement = function (value="") {
@@ -118,19 +133,23 @@ function DashMobileTextBox (
     };
 
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
+        this.min_height = Dash.Size.RowHeight;
+
         var css = {
-            "height": Dash.Size.RowHeight,
-            "min-height": Dash.Size.RowHeight,
-            "max-height": Dash.Size.RowHeight,
+            "height": this.min_height,
+            "min-height": this.min_height,
+            "max-height": this.min_height,
             "overflow-y": "hidden",
             "white-space": "nowrap"
         };
 
         if (bottom_border_only) {
+            this.line_height = this.min_height * 0.75;
+
             css["border-top"] = "none";
             css["border-left"] = "none";
             css["border-right"] = "none";
-            css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+            css["line-height"] = this.line_height + "px";
         }
 
         this.textarea.css(css);
@@ -138,7 +157,6 @@ function DashMobileTextBox (
         this.DisableNewLines(_backup_line_break_replacement);
     };
 
-    // This is definitely redundant, because you can just use an input instead, but it's useful in some rare scenarios
     this.DisableNewLines = function (_backup_line_break_replacement=" ") {
         (function (self) {
             self.textarea.on("keydown",function (e) {
@@ -152,6 +170,14 @@ function DashMobileTextBox (
 
         // This shouldn't be necessary since we reroute the enter key event above, but just in case
         this.SetLineBreakReplacement(_backup_line_break_replacement);
+
+        this.HideResizeHandle();
+    };
+
+    this.HideResizeHandle = function () {
+        this.textarea.css({
+            "resize": "none"
+        });
     };
 
     this.SetInputMode = function (mode) {
@@ -182,15 +208,18 @@ function DashMobileTextBox (
             this.DisableAutoSubmit();
         }
 
+        this.min_height = Dash.Size.RowHeight * 2.25;
+        this.line_height = Dash.Size.RowHeight * 1.8;
+
         this.textarea.css({
             "text-align": "center",
             "font-size": "350%",
             "padding-left": Dash.Size.Padding,
             "letter-spacing": (Dash.Size.Padding * 0.5) + "px",
-            "height": Dash.Size.RowHeight * 2.25,
-            "min-height": Dash.Size.RowHeight * 2.25,
-            "max-height": Dash.Size.RowHeight * 2.25,
-            "line-height": (Dash.Size.RowHeight * 1.8) + "px"
+            "height": this.min_height,
+            "min-height": this.min_height,
+            "max-height": this.min_height,
+            "line-height": this.line_height + "px"
         });
     };
 
@@ -202,8 +231,10 @@ function DashMobileTextBox (
         var css = {"height": height};
 
         if (enforce) {
-            css["min-height"] = height;
-            css["max-height"] = height;
+            this.min_height = height;
+
+            css["min-height"] = this.min_height;
+            css["max-height"] = this.min_height;
         }
 
         this.textarea.css(css);
@@ -294,6 +325,90 @@ function DashMobileTextBox (
         this.flash_disabled = true;
     };
 
+    this.EnableAutoHeight = function (starting_value="", min_height=0, line_height=0, buffer_px=2) {
+        this.auto_height = true;
+
+        // No matter how many rows, it always appears to need a min of
+        // two extra px to avoid scroll bar when auto-scaling like this
+        this.auto_height_buffer_px = buffer_px;
+
+        this.html.css({
+            "height": "fit-content"
+        });
+
+        var textarea_css = {
+            "height": "auto",
+            "vertical-align": "top",
+            "padding": 0,  // Top/bottom padding will make auto-scaling less accurate
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
+        };
+
+        if (min_height) {
+            this.min_height = min_height;
+
+            textarea_css["min-height"] = this.min_height;
+        }
+
+        if (line_height) {
+            this.line_height = line_height;
+
+            textarea_css["line-height"] = this.line_height + "px";
+        }
+
+        this.textarea.css(textarea_css);
+
+        this.HideResizeHandle();
+
+        if (starting_value) {
+            this.textarea.SetText(starting_value);
+        }
+    };
+
+    this.auto_adjust_height = function () {
+        if (!this.auto_height) {
+            return;
+        }
+
+        var value = this.GetText();
+
+        if (value) {
+            var height = this.textarea[0].scrollHeight || this.min_height;
+
+            // For some reason, textareas' scroll height will never be less
+            // than the height of two rows without manual intervention, so
+            // if it's two (ish) lines, we need to check if it should actually be one
+            if (this.line_height < height <= (this.line_height * 2)) {
+                // This is only a rough estimate based on average char width, but it's the best option available
+                var max_chars_in_one_line = Math.floor(this.textarea.width() / this.get_average_char_width());
+                var lines = Math.ceil(value.length / max_chars_in_one_line);
+
+                if (lines < 2) {
+                    height = this.min_height;
+                }
+            }
+
+            // Have to set it to auto first for this to work
+            this.SetHeight("auto");
+            this.SetHeight(height + this.auto_height_buffer_px);
+        }
+
+        else {
+            // When empty, the above logic doesn't work and doubles the height by default
+            this.SetHeight(this.min_height + this.auto_height_buffer_px);
+        }
+    };
+
+    this.get_average_char_width = function () {
+        if (this.avg_char_width) {
+            return this.avg_char_width;
+        }
+
+        this.avg_char_width = Dash.Utils.GetAverageCharWidth(this.textarea);
+
+        return this.avg_char_width;
+    };
+
     this.setup_connections = function () {
         // Important note:
         // When testing on a desktop's mobile view, you can't select the text with the
@@ -326,6 +441,8 @@ function DashMobileTextBox (
     };
 
     this.fire_change_cb = function (submit_override=false) {
+        this.auto_adjust_height();
+
         if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
             return;
         }
