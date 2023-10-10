@@ -38449,6 +38449,7 @@ function DashGuiPropertyBoxInterface () {
             this
         );
         row.input.input.css("pointer-events", "none");
+        row.input.input[0].tabIndex = -1;  // Prevent tabbing to the input, which is not used (why not just remove it?)
         if (indent_row) {
             row.html.css("margin-left", indent_px);
         }
