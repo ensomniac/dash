@@ -296,9 +296,8 @@ class DashLocalStorage:
 
         return response
 
-    def Delete(self, obj_id):
+    def Delete(self, obj_id, archive_path=""):
         from time import sleep
-        from shutil import rmtree
 
         if self.nested:
             record_path = self.get_data_root(obj_id)
@@ -320,10 +319,17 @@ class DashLocalStorage:
                 if not os.path.exists(record_path):
                     break
 
-                if self.nested:
-                    rmtree(record_path)
+                if archive_path:
+                    from shutil import move
+
+                    move(record_path, archive_path)
                 else:
-                    os.remove(record_path)
+                    if self.nested:
+                        from shutil import rmtree
+
+                        rmtree(record_path)
+                    else:
+                        os.remove(record_path)
 
             except Exception as e:
                 error = e
@@ -334,6 +340,9 @@ class DashLocalStorage:
             raise Exception(f"Failed to delete: {record_path}, error: {error}, ({attempts} attempts)")
 
         result["exists_now"] = False
+
+        if archive_path:
+            result["archive_path"] = archive_path
 
         return result
 
@@ -784,8 +793,8 @@ def SetData(dash_context, store_path, obj_id, data, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).WriteData(obj_id, data)
 
 
-def Delete(dash_context, store_path, obj_id, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id)
+def Delete(dash_context, store_path, obj_id, nested=False, archive_path=""):
+    return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id, archive_path)
 
 
 def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):

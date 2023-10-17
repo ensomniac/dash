@@ -155,12 +155,13 @@ class Collection:
             return_all_data
         )
 
-    def Delete(self, obj_id, return_all_data=True):
+    def Delete(self, obj_id, return_all_data=True, archive_path=""):
         deleted = LocalStorage.Delete(
             self.DashContext,
             self.store_path,
             obj_id=obj_id,
-            nested=self.nested
+            nested=self.nested,
+            archive_path=archive_path
         )
 
         if return_all_data:
