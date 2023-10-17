@@ -5,6 +5,8 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
     this.buttons = [];
     this.disabled = false;
+    this.end_spacer = null;
+    this.start_spacer = null;
     this.fit_content = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
@@ -24,13 +26,24 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this;
     };
 
-    this.FitContent = function () {
-        this.html.css({
-            "height": "fit-content",
-            "width": "fit-content"
-        });
+    this.FitContent = function (centered=false) {
+        var css = {"height": "fit-content"};
 
         this.fit_content = true;
+
+        if (centered) {
+            this.end_spacer = Dash.Gui.GetFlexSpacer();
+            this.start_spacer = Dash.Gui.GetFlexSpacer();
+
+            this.html.prepend(this.start_spacer);
+            this.html.append(this.end_spacer);
+        }
+
+        else {
+            css["width"] = "fit-content";
+        }
+
+        this.html.css(css);
 
         return this;
     };
@@ -88,6 +101,11 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
         if (this.fit_content) {
             css["flex"] = "none";
+
+            if (this.style === "default") {
+                css["padding-left"] = Dash.Size.Padding;
+                css["padding-right"] = Dash.Size.Padding;
+            }
         }
 
         else {
@@ -99,11 +117,23 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         if (prepend) {
             this.html.prepend(button.html);
 
+            if (this.start_spacer) {
+                this.start_spacer.detach();
+
+                this.html.prepend(this.start_spacer);
+            }
+
             this.buttons.unshift(button);
         }
 
         else {
             this.html.append(button.html);
+
+            if (this.end_spacer) {
+                this.end_spacer.detach();
+
+                this.html.append(this.end_spacer);
+            }
 
             this.buttons.push(button);
         }
