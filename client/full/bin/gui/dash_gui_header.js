@@ -40,6 +40,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
                 "bottom": 0,
                 "width": Dash.Size.Padding * 0.5,
                 "background": this.color.AccentGood,
+                "border-radius": Dash.Size.BorderRadius * 0.5
             });
 
             this.html.append(this.border);

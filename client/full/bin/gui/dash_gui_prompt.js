@@ -1,5 +1,5 @@
 function DashGuiPrompt (
-    bound_cb, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
+    bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
     cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
 ) {
     /**
@@ -166,7 +166,9 @@ function DashGuiPrompt (
         // index makes more sense than returning true/false. Even when using only
         // the two default buttons, you can still treat the response like true and
         // false, since the values are 0 for cancel (false) and 1 for continue (true).
-        this.bound_cb(index);
+        if (this.bound_cb) {
+            this.bound_cb(index);
+        }
 
         this.remove();  // Single-use
     };
