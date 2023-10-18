@@ -19380,6 +19380,9 @@ function DashGuiPrompt (
     this.remove = this.Remove;  // Remap this to not be public
     this.continue_button = null;
     this.shortcuts_active = false;
+    this.allow_esc_shortcut = true;
+    this.remove_on_selection = true;
+    this.allow_enter_shortcut = true;
     this.content_area = $("<div></div>");
     this.message_css = {
         "white-space": "pre-line",
@@ -19468,15 +19471,26 @@ function DashGuiPrompt (
         this.button_bar.Remove(this.cancel_button);
         this.cancel_button = null;
     };
+    this.DisableRemoveOnSelection = function () {
+        this.remove_on_selection = false;
+    };
+    this.DisableEscShortcut = function () {
+        this.allow_esc_shortcut = false;
+    };
+    this.DisableEnterShortcut = function () {
+        this.allow_enter_shortcut = false;
+    };
     this.on_selection = function (index) {
         // Because there can be more than the two default buttons, returning an
         // index makes more sense than returning true/false. Even when using only
         // the two default buttons, you can still treat the response like true and
         // false, since the values are 0 for cancel (false) and 1 for continue (true).
         if (this.bound_cb) {
-            this.bound_cb(index);
+            this.bound_cb(index, this);
         }
-        this.remove();  // Single-use
+        if (this.remove_on_selection) {
+            this.remove();  // Single-use by default
+        }
     };
     this.add_header = function () {
         this.header = new Dash.Gui.Header(this.header_text, this.color);
@@ -19534,11 +19548,11 @@ function DashGuiPrompt (
                         self.shortcuts_active = false;
                         return;
                     }
-                    if (e.key === "Escape") {
+                    if (e.key === "Escape" && self.allow_esc_shortcut) {
                         console.log("(Esc key pressed) Cancel");
                         self.on_selection(0);
                     }
-                    else if (e.key === "Enter") {
+                    else if (e.key === "Enter" && self.allow_enter_shortcut) {
                         console.log("(Enter key pressed) Continue");
                         self.on_selection(1);
                     }
