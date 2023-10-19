@@ -18457,10 +18457,12 @@ function DashUser () {
         if (!user_data) {
             user_data = this.Data;
         }
-        return user_data["display_name"] ? user_data["display_name"] :
-            user_data["first_name"] ? user_data["first_name"] +
-            (user_data["last_name"] ? " " + user_data["last_name"] : "") :
-            user_data["email"];
+        return (
+              user_data["display_name"] ? user_data["display_name"]
+            : user_data["first_name"] ? (
+                user_data["first_name"] + (user_data["last_name"] ? " " + user_data["last_name"] : "")
+            ) : (user_data["email"] || "")
+        );
     };
     this.GetByEmail = function (user_email) {
         return Dash.User.Init["team"] ? Dash.User.Init["team"][user_email] : {};
@@ -20010,7 +20012,9 @@ function DashValidate () {
 }
 
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true) {
+    this.Readable = function (
+        iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true
+    ) {
         var date;
         var dt_obj;
         var timezone;
@@ -20058,7 +20062,9 @@ function DashDateTime () {
         }
         return readable;
     };
-    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true, offset_hours=0) {
+    this.GetDateObjectFromISO = function (
+        iso_string, timezone="EST", check_static=false, account_for_dst=true, offset_hours=0
+    ) {
         iso_string = iso_string.replace("Z", "");
         var included_offset_hours;
         // Check for included offset hours at end of the ISO string (ex: -04:00)
@@ -20086,7 +20092,11 @@ function DashDateTime () {
             // manually determine and adjust for the offset hours, so do nothing here
         }
         else {
-            dt_obj.setHours(dt_obj.getHours() - (offset_hours || this.get_server_offset_hours(dt_obj, timezone, account_for_dst)));
+            dt_obj.setHours(
+                dt_obj.getHours() - (
+                    offset_hours || this.get_server_offset_hours(dt_obj, timezone, account_for_dst)
+                )
+            );
         }
         if (check_static) {
             return [dt_obj, is_static_date];
@@ -20094,8 +20104,8 @@ function DashDateTime () {
         return dt_obj;
     };
     this.GetDifferenceSec = function (start_iso_or_dt, end_iso_or_dt) {
-        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(start_iso_or_dt)).getTime();
-        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(end_iso_or_dt)).getTime();
+        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : this.GetDateObjectFromISO(start_iso_or_dt)).getTime();
+        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : this.GetDateObjectFromISO(end_iso_or_dt)).getTime();
         return Math.floor((end_ms - start_ms) / 1000);
     };
     this.GetReadableDifference = function (start_iso_or_dt, end_iso_or_dt, include_secs=false, sec_mod=0) {
@@ -20146,7 +20156,11 @@ function DashDateTime () {
     };
     this.GetNewRelativeDateObject = function (timezone="EST", account_for_dst=true) {
         var now = new Date();
-        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone, account_for_dst)));
+        now.setHours(
+            now.getHours() + (
+                (now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone, account_for_dst)
+            )
+        );
         return now;
     };
     this.IsIsoFormat = function (value) {
@@ -20192,7 +20206,11 @@ function DashDateTime () {
     // Get a date object of the start of a given week/year (defaults to Sunday, but ISO weeks start on Monday)
     this.GetDateObjectForWeek = function (week_num, year, start_on_monday=false) {
         var dt_obj = new Date(year, 0, 1 + (week_num - 1) * 7);
-        dt_obj.setDate((dt_obj.getDay() <= 4 ? (dt_obj.getDate() - dt_obj.getDay() + 1) : (dt_obj.getDate() + 8 - dt_obj.getDay())) - 1);
+        dt_obj.setDate((
+            dt_obj.getDay() <= 4 ? (
+                dt_obj.getDate() - dt_obj.getDay() + 1
+            ) : (dt_obj.getDate() + 8 - dt_obj.getDay())
+        ) - 1);
         if (start_on_monday) {
             dt_obj.setDate(dt_obj.getDate() + 1);
         }
@@ -36345,6 +36363,7 @@ function DashGuiIcons (icon) {
         "cell":                  new DashGuiIconDefinition(this.icon, "Cell Phone", this.weight["regular"], "mobile-alt"),
         "checked_box":           new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["regular"], "check-square"),
         "checked_box_solid":     new DashGuiIconDefinition(this.icon, "Checked Box", this.weight["solid"], "check-square"),
+        "circle":                new DashGuiIconDefinition(this.icon, "Circle", this.weight["regular"], "circle"),
         "circle_dot":            new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
         "circle_arrow_right":    new DashGuiIconDefinition(this.icon, "Circle Arrow (Right)", this.weight["solid"], "chevron-circle-right"),
         "clipboard":             new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
