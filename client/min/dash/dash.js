@@ -28872,7 +28872,7 @@ function DashGuiContext2D (
         this.editor_panel_property_box_custom_fields_cb = binder ? callback.bind(binder) : callback;
     };
     this.AddCustomElementToEditorPanelContentNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -28882,7 +28882,8 @@ function DashGuiContext2D (
                             built_in_function_name,
                             built_in_function_params,
                             callback_that_returns_html,
-                            binder
+                            binder,
+                            callback_to_receive_element
                         );
                     },
                     1
@@ -28894,7 +28895,8 @@ function DashGuiContext2D (
             built_in_function_name,
             built_in_function_params,
             callback_that_returns_html,
-            binder
+            binder,
+            callback_to_receive_element
         );
     };
     this.AddCustomElementToEditorPanelContentEditTab = function (
@@ -31704,7 +31706,7 @@ function DashGuiContext2DEditorPanel (editor) {
         }
     };
     this.AddCustomElementToContentNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if (!this.content_box) {
             (function (self) {
@@ -31714,7 +31716,8 @@ function DashGuiContext2DEditorPanel (editor) {
                             built_in_function_name,
                             built_in_function_params,
                             callback_that_returns_html,
-                            binder
+                            binder,
+                            callback_to_receive_element
                         );
                     },
                     1
@@ -31726,7 +31729,8 @@ function DashGuiContext2DEditorPanel (editor) {
             built_in_function_name,
             built_in_function_params,
             callback_that_returns_html,
-            binder
+            binder,
+            callback_to_receive_element
         );
     };
     this.AddCustomElementToContentEditTab = function (
@@ -33190,19 +33194,20 @@ function DashGuiContext2DEditorPanelContent (panel) {
         }
     };
     this.AddCustomElementToNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
             console.error(
                 "AddCustomElementToNewTab requires either 'built_in_function_name' " +
                 "or 'callback_that_returns_html' to be provided (and not both)."
             );
-            return;
+            return null;
         }
         this.new_tab_custom_element_configs.push({
             "function_name": built_in_function_name,
             "function_params": built_in_function_params,
-            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html,
+            "return_element_callback": binder && callback_to_receive_element ? callback_to_receive_element.bind(binder) : callback_to_receive_element
         });
     };
     this.AddCustomElementToEditTab = function (
@@ -33396,6 +33401,9 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             }
             else {
                 var element = this[element_config["function_name"]](...element_config["function_params"]);
+                if (element_config["return_element_callback"]) {
+                    element_config["return_element_callback"](element);
+                }
                 this.html.append(element.hasOwnProperty("html") ? element.html : element);
             }
         }

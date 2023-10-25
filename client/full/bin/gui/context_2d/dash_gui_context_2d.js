@@ -277,7 +277,7 @@ function DashGuiContext2D (
     };
 
     this.AddCustomElementToEditorPanelContentNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -287,7 +287,8 @@ function DashGuiContext2D (
                             built_in_function_name,
                             built_in_function_params,
                             callback_that_returns_html,
-                            binder
+                            binder,
+                            callback_to_receive_element
                         );
                     },
                     1
@@ -301,7 +302,8 @@ function DashGuiContext2D (
             built_in_function_name,
             built_in_function_params,
             callback_that_returns_html,
-            binder
+            binder,
+            callback_to_receive_element
         );
     };
 
