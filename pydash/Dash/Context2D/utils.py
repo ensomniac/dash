@@ -125,7 +125,9 @@ class Utils:
         ext = filename.split(".")[-1].strip().lower()
 
         if ext not in allowable_exts:
-            raise ValueError(f"Invalid file extension ({ext}), expected: {allowable_exts}")
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Invalid file extension ({ext}), expected: {allowable_exts}")
 
     def parse_properties_for_override_tag(self, properties, for_overrides=False):
         if for_overrides:

@@ -269,8 +269,10 @@ function DashLayoutRevolvingList (
         this.last_selected_row_id = row_id;
 
         var scroll_top = this.get_row_top(this.included_row_ids.indexOf(this.last_selected_row_id));
+        var current_top = this.container.scrollTop();
+        var current_bottom = current_top + this.html.height();
 
-        if (scroll_top > this.html.height()) {
+        if (scroll_top > current_bottom || scroll_top < current_top) {
             this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
         }
 

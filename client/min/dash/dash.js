@@ -36513,6 +36513,7 @@ function DashGuiIcons (icon) {
         "slash":                 new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
         "sliders_horizontal":    new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":           new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
+        "sort":                  new DashGuiIconDefinition(this.icon, "Sort", this.weight["regular"], "sort"),
         "sort_numeric_down":     new DashGuiIconDefinition(this.icon, "Sort (Numeric - Down)", this.weight["regular"], "sort-numeric-down"),
         "spinner":               new DashGuiIconDefinition(this.icon, "Spinner", this.weight["regular"],"spinner"),
         "stars":                 new DashGuiIconDefinition(this.icon, "Stars", this.weight["regular"], "stars"),
@@ -43164,7 +43165,9 @@ function DashLayoutRevolvingList (
     this.SelectRow = function (row_id) {
         this.last_selected_row_id = row_id;
         var scroll_top = this.get_row_top(this.included_row_ids.indexOf(this.last_selected_row_id));
-        if (scroll_top > this.html.height()) {
+        var current_top = this.container.scrollTop();
+        var current_bottom = current_top + this.html.height();
+        if (scroll_top > current_bottom || scroll_top < current_top) {
             this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
         }
         else {
