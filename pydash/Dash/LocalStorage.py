@@ -113,7 +113,24 @@ class DashLocalStorage:
                 new_data["display_name"] = new_id
 
             elif display_name_tag:
-                new_data["display_name"] = f"{new_data['display_name']} ({display_name_tag})"
+                if new_data["display_name"].endswith(f"({display_name_tag})"):
+                    new_data["display_name"] = new_data["display_name"].replace(
+                        f"({display_name_tag})",
+                        f"({display_name_tag} 1)"
+                    )
+
+                elif f"({display_name_tag}" in new_data["display_name"] and new_data["display_name"].endswith(")"):
+                    split = new_data["display_name"].split(f"({display_name_tag}")
+                    num = split[-1].split(")")[0].strip()
+
+                    try:
+                        new_data["display_name"] = f"{split[0]}({display_name_tag} {int(num) + 1})"
+
+                    except ValueError:
+                        new_data["display_name"] = f"{split[0]}({display_name_tag})"
+
+                else:
+                    new_data["display_name"] = f"{new_data['display_name']} ({display_name_tag})"
 
         self.Write(self.GetRecordPath(new_id), new_data)
 

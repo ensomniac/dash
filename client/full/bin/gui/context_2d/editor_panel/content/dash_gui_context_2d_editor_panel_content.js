@@ -213,7 +213,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     };
 
     this.AddCustomElementToEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
             console.error(
@@ -231,7 +231,8 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.edit_tab_custom_element_configs[context_key].push({
             "function_name": built_in_function_name,
             "function_params": built_in_function_params,
-            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html,
+            "return_element_callback": binder && callback_to_receive_element ? callback_to_receive_element.bind(binder) : callback_to_receive_element
         });
     };
 

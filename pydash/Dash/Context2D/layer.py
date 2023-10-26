@@ -455,7 +455,11 @@ class Layer:
         if key not in properties or "display_name" in properties:
             return properties
 
-        if self.data.get("display_name") == self.default_display_name or self.data[key] == self.data["display_name"]:
+        if (
+            self.data.get("display_name") == self.default_display_name
+            or self.data[key] == self.data["display_name"]
+            or self.data["display_name"].endswith("(Copy)")
+        ):
             # If the layer's name has not already been set manually by the user,
             # then auto-set the name based on the primitive's text change
             properties["display_name"] = properties[key] or self.default_display_name

@@ -20,7 +20,6 @@ class Interface:
     ModifiedOn: str
     LayersRoot: str
     DisplayName: str
-    ToDict: callable
     LayerOrder: list
     DashContext: dict
     AspectRatioH: int

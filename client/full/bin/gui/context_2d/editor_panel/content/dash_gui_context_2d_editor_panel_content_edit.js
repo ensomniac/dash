@@ -305,6 +305,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 else {
                     var element = this[element_config["function_name"]](...element_config["function_params"]);
 
+                    if (element_config["return_element_callback"]) {
+                        element_config["return_element_callback"](element);
+                    }
+
                     this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
                 }
             }
