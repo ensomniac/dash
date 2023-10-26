@@ -99,6 +99,12 @@ def ScaleChildWithParent(parent_x, parent_y, parent_w, parent_h, child_x, child_
 
 
 def GetOrdinalSuffix(num):
+    if type(num) is str:
+        if "." in num:
+            num = float(num)
+        else:
+            num = int(num)
+
     if num % 100 in [11, 12, 13]:
         return "th"
 
