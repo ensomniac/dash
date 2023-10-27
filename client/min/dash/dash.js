@@ -21288,6 +21288,19 @@ class DashColorSet {
         }
         return this._pinstripe;
     };
+    // Pinstripe was supposed to be the lightest, but sometimes
+    // a background is just a bit too dark and this becomes useful
+    get PinstripeLight () {
+        if (this._pinstripe_light == null) {
+            this._pinstripe_light = Dash.Color.ToRGBA([
+                this.TextColorData[0], // Red
+                this.TextColorData[1], // Green
+                this.TextColorData[2], // Blue
+                0.05                   // Opacity
+            ]);
+        }
+        return this._pinstripe_light;
+    };
     ///////////// PROGRAMMATIC END ////////////
     /////////////////////////
     set Background (color) {
