@@ -25219,6 +25219,7 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             return new Dash.Gui.Button(
                 label_text,
                 function (event, button) {
+                    console.debug("TEST dash", event, button);
                     if (as_uploader) {
                         callback(button, event);
                     }
