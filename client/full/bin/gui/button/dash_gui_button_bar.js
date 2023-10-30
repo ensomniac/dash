@@ -82,14 +82,20 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this.buttons.indexOf(button);
     };
 
-    this.AddButton = function (label_text, callback, prepend=false) {
+    this.AddButton = function (label_text, callback, prepend=false, as_uploader=false) {
         callback = callback.bind(this.binder);
 
         var button = (function (self, callback) {
             return new Dash.Gui.Button(
                 label_text,
-                function () {
-                    callback(button);
+                function (event, button) {
+                    if (as_uploader) {
+                        callback(button, event);
+                    }
+
+                    else {
+                        callback(button);
+                    }
                 },
                 self,
                 self.color,
