@@ -139,7 +139,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return;
         }
 
-        var primitive = this.editor.canvas.primitives[self.id];
+        var primitive = this.editor.canvas.primitives[this.id];
 
         if (primitive && primitive.drag_active) {
             return;

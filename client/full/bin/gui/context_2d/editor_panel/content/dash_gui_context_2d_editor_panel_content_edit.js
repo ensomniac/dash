@@ -366,11 +366,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         colors_container.append(label);
         colors_container.append(picker_container);
 
-        for (var num of Dash.Math.Range(total)) {
-            num += 1;
-
+        for (var n of Dash.Math.Range(total)) {
+            var num = n + 1;
             var data_key = key_prefix + "_" + num;
             var color_picker = this.get_color_picker(context_key, data_key, "none");
+
+            // Hacky way to access these from the "all_elements" list when using color layers
+            color_picker.input._c2d_color_num = num;
+            color_picker.input._c2d_parent = color_picker;
 
             var css = {
                 "display": "flex",
