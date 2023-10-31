@@ -34440,6 +34440,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         this.editor.data = response;
         var primitive = this.editor.canvas.last_selected_primitive;
+        console.debug("TEST", response, primitive); 
         if (primitive) {
             primitive.layer.UpdateLabel();
             // Resize based on updated aspect
