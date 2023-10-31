@@ -866,6 +866,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.add_replacement_media_button = function (context_key) {
+        if (this.editor.override_mode) {
+            return;
+        }
+
         var upload_button = this.get_upload_button(
             context_key,
             "Upload Replacement " + context_key.Title(),
