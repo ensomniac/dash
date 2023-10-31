@@ -892,9 +892,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         var primitive = this.editor.canvas.last_selected_primitive;
 
-        console.debug("TEST", response, primitive); 
-
         if (primitive) {
+            primitive.ReloadData();
+
             primitive.layer.UpdateLabel();
 
             // Resize based on updated aspect

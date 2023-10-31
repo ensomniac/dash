@@ -106,15 +106,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
 
+    this.ReloadData = function () {
+        this.data = this.layer.GetData();
+        this.file_data = this.data["file"] || {};
+        this.mask_data = this.data["mask"] || {};
+        this.parent_data = this.layer.GetParentData();
+    };
+
     this.Update = function (key, value) {
         if (key === "display_name") {
             return;
         }
 
-        this.data = this.layer.GetData();
-        this.file_data = this.data["file"] || {};
-        this.mask_data = this.data["mask"] || {};
-        this.parent_data = this.layer.GetParentData();
+        this.ReloadData();
 
         if (key === "mask") {
             this.update_mask();
