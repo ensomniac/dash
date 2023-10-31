@@ -30079,14 +30079,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "z-index": this.get_z_index()
         });
     };
-    this.Update = function (key, value) {
-        if (key === "display_name") {
-            return;
-        }
+    this.ReloadData = function () {
         this.data = this.layer.GetData();
         this.file_data = this.data["file"] || {};
         this.mask_data = this.data["mask"] || {};
         this.parent_data = this.layer.GetParentData();
+    };
+    this.Update = function (key, value) {
+        if (key === "display_name") {
+            return;
+        }
+        this.ReloadData();
         if (key === "mask") {
             this.update_mask();
             return;
@@ -34440,8 +34443,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         this.editor.data = response;
         var primitive = this.editor.canvas.last_selected_primitive;
-        console.debug("TEST", response, primitive); 
         if (primitive) {
+            primitive.ReloadData();
             primitive.layer.UpdateLabel();
             // Resize based on updated aspect
             primitive.set_init();
