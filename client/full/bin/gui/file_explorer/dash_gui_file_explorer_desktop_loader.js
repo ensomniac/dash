@@ -1,9 +1,10 @@
-function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true) {
+function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true, extra_params={}) {
     /** See docstring in DashGuiFileExplorer for explanation of 'api' and 'parent_object_id' params, and request function naming */
 
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
+    this.extra_params = extra_params;
 
     this.desktop_client_name = "desktop";
     this.pending_file_view_requests = {};

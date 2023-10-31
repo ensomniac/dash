@@ -35146,7 +35146,8 @@ function DashGuiFileExplorer (
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(
         this.api,
         this.parent_obj_id,
-        this.supports_desktop_client
+        this.supports_desktop_client,
+        this.extra_params
     );
     this.upload_button_params = {
         "f": "upload_file",
@@ -36110,11 +36111,12 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
     this.setup_styles();
 }
 
-function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true) {
+function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_client=true, extra_params={}) {
     /** See docstring in DashGuiFileExplorer for explanation of 'api' and 'parent_object_id' params, and request function naming */
     this.api = api;
     this.parent_obj_id = parent_obj_id;
     this.supports_desktop_client = supports_desktop_client;
+    this.extra_params = extra_params;
     this.desktop_client_name = "desktop";
     this.pending_file_view_requests = {};
     this.OpenFile = function (file_data) {

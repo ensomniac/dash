@@ -77,7 +77,8 @@ function DashGuiFileExplorer (
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(
         this.api,
         this.parent_obj_id,
-        this.supports_desktop_client
+        this.supports_desktop_client,
+        this.extra_params
     );
 
     this.upload_button_params = {
