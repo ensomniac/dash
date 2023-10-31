@@ -222,7 +222,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // to indicate in the canvas which layer is hovered over in the layer stack,
         // so when selected, we want to remove that slight highlight
         if (this.hasOwnProperty("update_filter")) {
-            this.update_filter(this.get_value("brightness"));
+            this.update_filter();
         }
 
         else {

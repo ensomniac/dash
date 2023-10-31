@@ -29,7 +29,6 @@ class Interface:
     Context2DRoot: str
     add_layer: callable
     add_layer_from_file: callable
-    validate_uploaded_file_ext: callable
     parse_aspect_keys_for_properties: callable
     parse_properties_for_override_tag: callable
     re_add_override_tag_to_properties: callable
@@ -192,14 +191,10 @@ class Interface:
         return self.add_layer(Layer(self, new_layer_type="color"))
 
     def AddImageLayer(self, file, filename):
-        from Dash.Utils import GetImageExtensions
-
-        return self.add_layer_from_file(file, filename, GetImageExtensions(), "image")
+        return self.add_layer_from_file(file, filename, "image")
 
     def AddVideoLayer(self, file, filename):
-        from Dash.Utils import GetVideoExtensions
-
-        return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")
+        return self.add_layer_from_file(file, filename, "video")
 
     def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id="", file_op_key=""):
         from .layer import Layer
@@ -276,13 +271,16 @@ class Interface:
         return Read(os.path.join(new_layer_dest_root, "data.json"))
 
     def UploadLayerMask(self, layer_id, file, filename):
-        from Dash.Utils import GetImageExtensions
-
-        self.validate_uploaded_file_ext(filename, GetImageExtensions())
-
         from .layer import Layer
 
         Layer(self, layer_id).UploadMask(file, filename)
+
+        return self.ToDict()
+
+    def ReplaceLayerMedia(self, layer_id, file, filename):
+        from .layer import Layer
+
+        Layer(self, layer_id).UploadFile(file, filename)
 
         return self.ToDict()
 

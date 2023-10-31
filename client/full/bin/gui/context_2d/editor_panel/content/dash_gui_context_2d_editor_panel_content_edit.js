@@ -815,12 +815,15 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         // Add any gui below that is not shared across all media types
 
         this.add_mask_toolbar(context_key);  // As of writing, this is restricted to video
+        this.add_replacement_media_button(context_key);
     };
 
     this.initialize_image_context = function (context_key) {
         this.initialize_media_context(context_key);
 
         // Add any gui below that is not shared across all media types
+
+        this.add_replacement_media_button(context_key);
     };
 
     this.initialize_media_context = function (context_key) {
@@ -829,6 +832,16 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             context_key,
             "contrast",
             1.02,
+            "",
+            0.5,
+            2.0
+        );
+
+        var saturation_slider = this.get_slider(
+            1,
+            context_key,
+            "saturation",
+            0.96,
             "",
             0.5,
             2.0
@@ -844,12 +857,48 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             2.0
         );
 
-
         this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(saturation_slider.html);
         this.contexts[context_key]["html"].append(brightness_slider.html);
 
         this.add_tint_row(context_key);
         this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+    };
+
+    this.add_replacement_media_button = function (context_key) {
+        var upload_button = this.get_upload_button(
+            context_key,
+            "Upload Replacement " + context_key.Title(),
+            this.on_replacement_media,
+            {
+                "f": "replace_layer_media",
+                "c2d_id": this.editor.c2d_id,
+                "layer_id": this.panel.layers_box.GetSelectedID()
+            }
+        );
+
+        this.contexts[context_key]["html"].append(upload_button.html);
+    };
+
+    this.on_replacement_media = function (response, button) {
+        button.SetLoading(false);
+        button.Enable();
+
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+
+        this.editor.data = response;
+
+        var primitive = this.editor.canvas.last_selected_primitive;
+
+        if (primitive) {
+            primitive.layer.UpdateLabel();
+
+            // Resize based on updated aspect
+            primitive.set_init();
+            primitive.redraw_media();
+        }
     };
 
     // TODO: break this up
@@ -1075,8 +1124,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             label_text = data_key.Title();
         }
 
-        return (function (self) {
-            var input =  new Dash.Gui.InputRow(
+        var input = (function (self) {
+            return new Dash.Gui.InputRow(
                 label_text,
                 self.get_data()[data_key] || "",
                 label_text,
@@ -1088,13 +1137,55 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.color,
                 data_key
             );
-
-            input.RemoveSaveButton();
-
-            self.contexts[context_key]["all_elements"].push(input);
-
-            return input;
         })(this);
+
+        input.RemoveSaveButton();
+
+        this.contexts[context_key]["all_elements"].push(input);
+
+        return input;
+    };
+
+    this.get_upload_button = function (context_key, label_text, callback, params, css={}, return_button=true) {
+        var button = this.get_button(context_key, label_text, callback);
+
+        button.SetFileUploader(
+            this.editor.api,
+            params,
+            function () {
+                button.SetLoading(true);
+                button.Disable();
+            },
+            css,
+            return_button
+        );
+
+        return button;
+    };
+
+    this.get_button = function (context_key, label_text, callback) {
+        var button = (function (self) {
+            return new Dash.Gui.Button(
+                label_text,
+                callback,
+                self,
+                self.color,
+                {"style": "toolbar"}
+            );
+        })(this);
+
+        button.html.css({
+            "margin-right": 0,
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+
+        if (!this.can_edit) {
+            button.Disable();
+        }
+
+        this.contexts[context_key]["all_elements"].push(button);
+
+        return button;
     };
 
     this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="", parent=null) {

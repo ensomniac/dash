@@ -105,9 +105,7 @@ class Utils:
 
         return layers
 
-    def add_layer_from_file(self, file, filename, allowable_exts, layer_type):
-        self.validate_uploaded_file_ext(filename, allowable_exts)
-
+    def add_layer_from_file(self, file, filename, layer_type):
         from .layer import Layer
 
         layer = Layer(self, new_layer_type=layer_type)
@@ -120,14 +118,6 @@ class Utils:
         layer.Save()
 
         return self.SetProperty("layer_order", [*self.LayerOrder, layer.ID])
-
-    def validate_uploaded_file_ext(self, filename, allowable_exts):
-        ext = filename.split(".")[-1].strip().lower()
-
-        if ext not in allowable_exts:
-            from Dash.Utils import ClientAlert
-
-            raise ClientAlert(f"Invalid file extension ({ext}), expected: {allowable_exts}")
 
     def parse_properties_for_override_tag(self, properties, for_overrides=False):
         if for_overrides:

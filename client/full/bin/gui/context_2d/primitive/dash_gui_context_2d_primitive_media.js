@@ -129,12 +129,12 @@ function DashGuiContext2DPrimitiveMedia () {
         }
     };
 
-    this.update_filter = function (brightness=null, contrast=null) {
+    this.update_filter = function (brightness=null, contrast=null, saturation=null) {
         if (!this.media) {
             (function (self) {
                 setTimeout(
                     function () {
-                        self.update_filter(brightness, contrast);
+                        self.update_filter(brightness, contrast, saturation);
                     },
                     10
                 );
@@ -149,6 +149,8 @@ function DashGuiContext2DPrimitiveMedia () {
                     brightness === null ? this.get_value("brightness") : brightness
                 ) + ") contrast(" + (
                     contrast === null ? this.get_value("contrast") : contrast
+                ) + ") saturate(" + (
+                    saturation === null ? this.get_value("saturation") : saturation
                 ) + ")"
             )
         });
@@ -288,7 +290,7 @@ function DashGuiContext2DPrimitiveMedia () {
             return;
         }
 
-        if (key === "contrast" || key === "brightness") {
+        if (["contrast", "brightness", "saturation"].includes(key)) {
             this.update_filter();
         }
 

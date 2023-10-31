@@ -75,6 +75,7 @@ class Layer:
             "aspect",
             "kerning",
             "contrast",
+            "saturation",
             "brightness",
             "fade_norm_end",
             "aspect_ratio_w",
@@ -228,6 +229,7 @@ class Layer:
             data.update({
                 "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
                 "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
+                "saturation": self.data["saturation"] if "saturation" in self.data else 1.0,
                 "file": self.data.get("file") or {}
             })
 
@@ -689,15 +691,27 @@ class Layer:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
 
     def upload_file(self, file, filename, key):
-        if self.Type == "text" or self.Type == "context":  # Should never happen, but just in case
+        if self.Type in ["text", "context"]:  # Should never happen, but just in case
             raise ValueError("Can't upload files to 'text' or 'context' layers")
 
         if key == "mask":
             if not self.data.get("file"):  # Should never happen, but just in case
                 raise FileNotFoundError("No original file data exists for this layer")
 
-        elif self.Type == "color":  # Should never happen, but just in case
-            raise ValueError("Can't upload standard files to 'color' layers, only masks")
+        elif key == "file":
+            if self.Type not in ["image", "video"]:  # Should never happen, but just in case
+                raise ValueError("Can only upload media to 'image' and 'video' layers")
+
+        if self.Type == "image":
+            from Dash.Utils import GetImageExtensions as GetExtensions
+
+        elif self.Type == "video":
+            from Dash.Utils import GetVideoExtensions as GetExtensions
+
+        else:
+            raise ValueError(f"Invalid/unhandled media type: {self.Type}")
+
+        self.validate_uploaded_file_ext(filename, GetExtensions())
 
         from Dash.Utils import UploadFile
 
@@ -732,6 +746,14 @@ class Layer:
                 properties["aspect"] = aspect
 
         return self.SetProperties(properties, file_op_key=key)
+
+    def validate_uploaded_file_ext(self, filename, allowable_exts):
+        ext = filename.split(".")[-1].strip().lower()
+
+        if ext not in allowable_exts:
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Invalid file extension ({ext}), expected: {allowable_exts}")
 
     # This should never be necessary, but just in case
     def assert_file_key(self, file_key, update=True):
