@@ -1305,7 +1305,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                (value || value === 0) ? value : default_value,
+                (
+                    (value || value === 0) ? (
+                        // See notes in DashGuiContext2DPrimitive.get_value
+                        value * (["saturation"].includes(data_key) ? 2 : 1)
+                    ) : default_value
+                ),
                 Dash.Size.ColumnWidth * width_mult
             );
 

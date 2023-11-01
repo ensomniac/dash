@@ -30450,6 +30450,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (key.endsWith("_norm")) {
             value = parseFloat(value);
         }
+        // (NEW FORMAT) On the backend, these range from 0 to 1, with 0.5 being the default,
+        // which is more ideal on the PIL side. To keep the user interface the same as the
+        // old format properties, such as contrast and brightness, though, the slider on the
+        // frontend still ranges from 0 to 2, with 1 being the default - so the value gets
+        // halved when saved on the backend, and doubled when drawn on the frontend.
+        if (["saturation"].includes(key)) {
+            value *= 2;
+        }
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
@@ -30476,7 +30484,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 }
                 return value * parent_opacity;
             }
-
             if (!override) {
                 return value;
             }
@@ -34781,7 +34788,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                (value || value === 0) ? value : default_value,
+                (
+                    (value || value === 0) ? (
+                        // See notes in DashGuiContext2DPrimitive.get_value
+                        value * (["saturation"].includes(data_key) ? 2 : 1)
+                    ) : default_value
+                ),
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {

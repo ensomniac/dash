@@ -227,10 +227,19 @@ class Layer:
 
         if self.Type in ["image", "video"]:
             data.update({
+                "file": self.data.get("file") or {},
+
+                # (OLD FORMAT) These range from 0 to 2, with 1 being the default, which
+                # is not ideal because it requires some manual translation on the PIL side.
                 "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
                 "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
-                "saturation": self.data["saturation"] if "saturation" in self.data else 1.0,
-                "file": self.data.get("file") or {}
+
+                # (NEW FORMAT) These range from 0 to 1, with 0.5 being the default,
+                # which is more ideal on the PIL side. To keep the user interface
+                # the same, though, the slider on the frontend still ranges from
+                # 0 to 2, with 1 being the default - so the value gets halved when
+                # saved on the backend, and doubled when drawn on the frontend.
+                "saturation": self.data["saturation"] if "saturation" in self.data else 0.5
             })
 
         if file_key_validation and not self._new:
@@ -341,6 +350,10 @@ class Layer:
         for key in self.float_keys:
             if key in properties and type(properties[key]) not in [float, int]:
                 properties[key] = float(properties[key] or 0)
+
+            # See notes in ToDict
+            if key == "saturation" and properties[key]:
+                properties[key] /= 2
 
         properties = self.check_display_name_for_set_property(properties)
 
