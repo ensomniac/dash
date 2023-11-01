@@ -28918,7 +28918,8 @@ function DashGuiContext2D (
         );
     };
     this.AddCustomElementToEditorPanelContentEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -28928,9 +28929,10 @@ function DashGuiContext2D (
                             context_key,
                             built_in_function_name,
                             built_in_function_params,
-                            callback_that_returns_html,
+                            cb_that_returns_html,
                             binder,
-                            callback_to_receive_element
+                            cb_to_receive_element,
+                            cb_to_check_draw
                         );
                     },
                     10
@@ -28942,9 +28944,10 @@ function DashGuiContext2D (
             context_key,
             built_in_function_name,
             built_in_function_params,
-            callback_that_returns_html,
+            cb_that_returns_html,
             binder,
-            callback_to_receive_element
+            cb_to_receive_element,
+            cb_to_check_draw
         );
     };
     this.AddCustomContextToEditorPanelContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
@@ -31766,7 +31769,8 @@ function DashGuiContext2DEditorPanel (editor) {
         );
     };
     this.AddCustomElementToContentEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
         if (!this.content_box) {
             (function (self) {
@@ -31776,9 +31780,10 @@ function DashGuiContext2DEditorPanel (editor) {
                             context_key,
                             built_in_function_name,
                             built_in_function_params,
-                            callback_that_returns_html,
+                            cb_that_returns_html,
                             binder,
-                            callback_to_receive_element
+                            cb_to_receive_element,
+                            cb_to_check_draw
                         );
                     },
                     10
@@ -31790,9 +31795,10 @@ function DashGuiContext2DEditorPanel (editor) {
             context_key,
             built_in_function_name,
             built_in_function_params,
-            callback_that_returns_html,
+            cb_that_returns_html,
             binder,
-            callback_to_receive_element
+            cb_to_receive_element,
+            cb_to_check_draw
         );
     };
     this.AddCustomContextToContentEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
@@ -33245,9 +33251,10 @@ function DashGuiContext2DEditorPanelContent (panel) {
         });
     };
     this.AddCustomElementToEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
-        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+        if ((!built_in_function_name && !cb_that_returns_html) || (built_in_function_name && cb_that_returns_html)) {
             console.error(
                 "AddCustomElementToEditTab requires either 'built_in_function_name' " +
                 "or 'callback_that_returns_html' to be provided (and not both)."
@@ -33260,8 +33267,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.edit_tab_custom_element_configs[context_key].push({
             "function_name": built_in_function_name,
             "function_params": built_in_function_params,
-            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html,
-            "return_element_callback": binder && callback_to_receive_element ? callback_to_receive_element.bind(binder) : callback_to_receive_element
+            "callback": binder && cb_that_returns_html ? cb_that_returns_html.bind(binder) : cb_that_returns_html,
+            "return_element_callback": binder && cb_to_receive_element ? cb_to_receive_element.bind(binder) : cb_to_receive_element,
+            "can_draw_callback": binder && cb_to_check_draw ? cb_to_check_draw.bind(binder) : cb_to_check_draw
         });
     };
     this.AddCustomContextToEditTab = function (context_key, callback_that_returns_html=null, binder=null) {
@@ -33968,21 +33976,31 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
-                if (element_config["callback"]) {
-                    var html = element_config["callback"]();
-                    this.contexts[context_key]["html"].append(html);
-                    this.contexts[context_key]["all_elements"].push(html);
+                if (element_config["can_draw_callback"]) {
+                    if (element_config["can_draw_callback"](this, context_key)) {
+                        this.draw_custom_element(context_key, element_config);
+                    }
                 }
                 else {
-                    var element = this[element_config["function_name"]](...element_config["function_params"]);
-                    if (element_config["return_element_callback"]) {
-                        element_config["return_element_callback"](element);
-                    }
-                    this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+                    this.draw_custom_element(context_key, element_config);
                 }
             }
         }
         this.contexts[context_key]["initialized"] = true;
+    };
+    this.draw_custom_element = function (context_key, element_config) {
+        if (element_config["callback"]) {
+            var html = element_config["callback"]();
+            this.contexts[context_key]["html"].append(html);
+            this.contexts[context_key]["all_elements"].push(html);
+        }
+        else {
+            var element = this[element_config["function_name"]](...element_config["function_params"]);
+            if (element_config["return_element_callback"]) {
+                element_config["return_element_callback"](element);
+            }
+            this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+        }
     };
     this.initialize_color_context = function (context_key) {
         this.add_aspect_tool_row(context_key);

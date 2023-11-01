@@ -308,7 +308,8 @@ function DashGuiContext2D (
     };
 
     this.AddCustomElementToEditorPanelContentEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -318,9 +319,10 @@ function DashGuiContext2D (
                             context_key,
                             built_in_function_name,
                             built_in_function_params,
-                            callback_that_returns_html,
+                            cb_that_returns_html,
                             binder,
-                            callback_to_receive_element
+                            cb_to_receive_element,
+                            cb_to_check_draw
                         );
                     },
                     10
@@ -334,9 +336,10 @@ function DashGuiContext2D (
             context_key,
             built_in_function_name,
             built_in_function_params,
-            callback_that_returns_html,
+            cb_that_returns_html,
             binder,
-            callback_to_receive_element
+            cb_to_receive_element,
+            cb_to_check_draw
         );
     };
 

@@ -294,27 +294,39 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
-                if (element_config["callback"]) {
-                    var html = element_config["callback"]();
-
-                    this.contexts[context_key]["html"].append(html);
-
-                    this.contexts[context_key]["all_elements"].push(html);
+                if (element_config["can_draw_callback"]) {
+                    if (element_config["can_draw_callback"](this, context_key)) {
+                        this.draw_custom_element(context_key, element_config);
+                    }
                 }
 
                 else {
-                    var element = this[element_config["function_name"]](...element_config["function_params"]);
-
-                    if (element_config["return_element_callback"]) {
-                        element_config["return_element_callback"](element);
-                    }
-
-                    this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+                    this.draw_custom_element(context_key, element_config);
                 }
             }
         }
 
         this.contexts[context_key]["initialized"] = true;
+    };
+
+    this.draw_custom_element = function (context_key, element_config) {
+        if (element_config["callback"]) {
+            var html = element_config["callback"]();
+
+            this.contexts[context_key]["html"].append(html);
+
+            this.contexts[context_key]["all_elements"].push(html);
+        }
+
+        else {
+            var element = this[element_config["function_name"]](...element_config["function_params"]);
+
+            if (element_config["return_element_callback"]) {
+                element_config["return_element_callback"](element);
+            }
+
+            this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+        }
     };
 
     this.initialize_color_context = function (context_key) {
