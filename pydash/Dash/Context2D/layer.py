@@ -272,10 +272,7 @@ class Layer:
                 if key not in data:
                     data[key] = self.data[key]
 
-        # Types should all be correct in this context, but there was one instance of type-contamination
-        # on the width_norm property, which should not be possible. I couldn't find anywhere where this
-        # could possibly be happening, so adding this type-assertion step here as a fail-safe.
-        return self.assert_types(data)
+        return data
 
     def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
         return self.SetProperties({key: value}, imported_context_layer_id, file_op_key, file_key_validation)
@@ -343,7 +340,15 @@ class Layer:
         if not properties:
             return properties
 
-        properties = self.check_display_name_for_set_property(self.assert_types(properties))
+        # TODO: TEST FIXING ISSUE
+        if self.context_2d.User and self.context_2d.User.get("email") != "stetandrew@gmail.com":
+            if "contrast" in properties:
+                del properties["contrast"]
+
+            if "brightness" in properties:
+                del properties["brightness"]
+
+        properties = self.check_display_name_for_set_property(self.assert_types(properties, from_set_data=True))
 
         properties = self.context_2d.OnLayerSetProperties(
             layer=self,
@@ -357,7 +362,7 @@ class Layer:
 
         return properties
 
-    def assert_types(self, data):
+    def assert_types(self, data, from_set_data=False):
         from json import loads
 
         # Enforce str when null
@@ -378,7 +383,7 @@ class Layer:
 
                 # TODO (OLD FORMAT): Get rid of the below code once Ryan
                 #  updates his end and all layers' data has been updated
-                if key in ["brightness", "contrast"]:
+                if from_set_data and key in ["brightness", "contrast"]:
                     data[key] *= 2
                 # See notes in ToDict
                 # if key == "saturation":
