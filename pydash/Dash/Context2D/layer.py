@@ -272,7 +272,10 @@ class Layer:
                 if key not in data:
                     data[key] = self.data[key]
 
-        return data
+        # Types should all be correct in this context, but there was one instance of type-contamination
+        # on the width_norm property, which should not be possible. I couldn't find anywhere where this
+        # could possibly be happening, so adding this type-assertion step here as a fail-safe.
+        return self.assert_types(data)
 
     def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
         return self.SetProperties({key: value}, imported_context_layer_id, file_op_key, file_key_validation)
@@ -340,31 +343,7 @@ class Layer:
         if not properties:
             return properties
 
-        # Enforce str when null
-        for key in self.str_keys:
-            if key in properties and not properties.get(key):
-                properties[key] = ""
-
-        # Bools
-        for key in self.bool_keys:
-            if key in properties and type(properties[key]) is not bool:
-                properties[key] = loads(properties[key])
-
-        # Floats
-        for key in self.float_keys:
-            if key in properties:
-                if type(properties[key]) not in [float, int]:
-                    properties[key] = float(properties[key] or 0)
-
-                # TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-                if key in ["brightness", "contrast"]:
-                    properties[key] *= 2
-                # See notes in ToDict
-                # if key == "saturation":
-                #     properties[key] *= 0.5
-                # TODO (OLD FORMAT) ----------------
-
-        properties = self.check_display_name_for_set_property(properties)
+        properties = self.check_display_name_for_set_property(self.assert_types(properties))
 
         properties = self.context_2d.OnLayerSetProperties(
             layer=self,
@@ -377,6 +356,36 @@ class Layer:
             properties = self.context_2d.re_add_override_tag_to_properties(properties)
 
         return properties
+
+    def assert_types(self, data):
+        from json import loads
+
+        # Enforce str when null
+        for key in self.str_keys:
+            if key in data and not data.get(key):
+                data[key] = ""
+
+        # Bools
+        for key in self.bool_keys:
+            if key in data and type(data[key]) is not bool:
+                data[key] = loads(data[key])
+
+        # Floats
+        for key in self.float_keys:
+            if key in data:
+                if type(data[key]) not in [float, int]:
+                    data[key] = float(data[key] or 0)
+
+                # TODO (OLD FORMAT): Get rid of the below code once Ryan
+                #  updates his end and all layers' data has been updated
+                if key in ["brightness", "contrast"]:
+                    data[key] *= 2
+                # See notes in ToDict
+                # if key == "saturation":
+                #     properties[key] *= 0.5
+                # TODO (OLD FORMAT) ----------------
+
+        return data
 
     def UploadFile(self, file, filename):
         return self.upload_file(file, filename, "file")
