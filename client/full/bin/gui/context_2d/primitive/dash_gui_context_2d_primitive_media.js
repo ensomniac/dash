@@ -143,14 +143,28 @@ function DashGuiContext2DPrimitiveMedia () {
             return;
         }
 
+        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
+        // this.media.css({
+        //     "filter": (
+        //         "brightness(" + (
+        //             brightness === null ? this.get_value("brightness") : brightness
+        //         ) + ") contrast(" + (
+        //             contrast === null ? this.get_value("contrast") : contrast
+        //         ) + ") saturate(" + (
+        //             saturation === null ? this.get_value("saturation") : saturation
+        //         ) + ")"
+        //     )
+        // });
+        // TODO (OLD FORMAT) -----------------
+
         this.media.css({
             "filter": (
                 "brightness(" + (
-                    brightness === null ? this.get_value("brightness") : brightness
+                    (brightness === null ? this.get_value("brightness") : brightness) * 2
                 ) + ") contrast(" + (
-                    contrast === null ? this.get_value("contrast") : contrast
+                    (contrast === null ? this.get_value("contrast") : contrast) * 2
                 ) + ") saturate(" + (
-                    saturation === null ? this.get_value("saturation") : saturation
+                    (saturation === null ? this.get_value("saturation") : saturation) * 2
                 ) + ")"
             )
         });

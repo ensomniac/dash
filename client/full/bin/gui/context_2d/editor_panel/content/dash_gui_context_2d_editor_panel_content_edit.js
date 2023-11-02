@@ -839,34 +839,63 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_media_context = function (context_key) {
+        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
+        // var contrast_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "contrast",
+        //     1.02,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var saturation_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "saturation",
+        //     0.96,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        //
+        // var brightness_slider = this.get_slider(
+        //     1,
+        //     context_key,
+        //     "brightness",
+        //     0.95,
+        //     "",
+        //     0.5,
+        //     2.0
+        // );
+        // TODO (OLD FORMAT) -----------------
+
         var contrast_slider = this.get_slider(
-            1,
+            0.5,
             context_key,
             "contrast",
             1.02,
             "",
-            0.5,
-            2.0
+            0.5
         );
 
         var saturation_slider = this.get_slider(
-            1,
+            0.5,
             context_key,
             "saturation",
             0.96,
             "",
-            0.5,
-            2.0
+            0.5
         );
 
         var brightness_slider = this.get_slider(
-            1,
+            0.5,
             context_key,
             "brightness",
             0.95,
             "",
-            0.5,
-            2.0
+            0.5
         );
 
         this.contexts[context_key]["html"].append(contrast_slider.html);
@@ -1319,8 +1348,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 end_range,
                 (
                     (value || value === 0) ? (
+                        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
                         // See notes in DashGuiContext2DPrimitive.get_value
-                        value * (["saturation"].includes(data_key) ? 2 : 1)
+                        // value * (["saturation"].includes(data_key) ? 2 : 1)
+                        value * (["brightness", "contrast"].includes(data_key) ? 0.5 : 1)
+                        // TODO (OLD FORMAT) -----------------
                     ) : default_value
                 ),
                 Dash.Size.ColumnWidth * width_mult

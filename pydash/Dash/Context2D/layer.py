@@ -229,16 +229,20 @@ class Layer:
             data.update({
                 "file": self.data.get("file") or {},
 
+                # TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
                 # (OLD FORMAT) These range from 0 to 2, with 1 being the default, which
                 # is not ideal because it requires some manual translation on the PIL side.
-                "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
-                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
+                # "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
+                # "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
+                # TODO (OLD FORMAT) ----------------
 
                 # (NEW FORMAT) These range from 0 to 1, with 0.5 being the default,
                 # which is more ideal on the PIL side. To keep the user interface
                 # the same, though, the slider on the frontend still ranges from
                 # 0 to 2, with 1 being the default - so the value gets halved when
                 # saved on the backend, and doubled when drawn on the frontend.
+                "brightness": self.data["brightness"] if "brightness" in self.data else 0.5,
+                "contrast": self.data["contrast"] if "contrast" in self.data else 0.5,
                 "saturation": self.data["saturation"] if "saturation" in self.data else 0.5
             })
 
@@ -352,9 +356,13 @@ class Layer:
                 if type(properties[key]) not in [float, int]:
                     properties[key] = float(properties[key] or 0)
 
+                # TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
+                if key in ["brightness", "contrast"]:
+                    properties[key] *= 2
                 # See notes in ToDict
-                if key == "saturation":
-                    properties[key] /= 2
+                # if key == "saturation":
+                #     properties[key] *= 0.5
+                # TODO (OLD FORMAT) ----------------
 
         properties = self.check_display_name_for_set_property(properties)
 
