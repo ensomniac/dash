@@ -340,14 +340,6 @@ class Layer:
         if not properties:
             return properties
 
-        # TODO: TEST FIXING ISSUE
-        if self.context_2d.User and self.context_2d.User.get("email") != "stetandrew@gmail.com":
-            if "contrast" in properties:
-                del properties["contrast"]
-
-            if "brightness" in properties:
-                del properties["brightness"]
-
         properties = self.check_display_name_for_set_property(self.assert_types(properties, from_set_data=True))
 
         properties = self.context_2d.OnLayerSetProperties(
