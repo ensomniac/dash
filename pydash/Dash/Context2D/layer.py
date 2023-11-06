@@ -340,7 +340,14 @@ class Layer:
         if not properties:
             return properties
 
-        properties = self.check_display_name_for_set_property(self.assert_types(properties, from_set_data=True))
+        for key in properties:
+            properties[key] = self.AssertType(
+                key=key,
+                value=properties[key],
+                _from_set_data=True
+            )
+
+        properties = self.check_display_name_for_set_property(properties)
 
         properties = self.context_2d.OnLayerSetProperties(
             layer=self,
@@ -354,35 +361,31 @@ class Layer:
 
         return properties
 
-    def assert_types(self, data, from_set_data=False):
-        from json import loads
+    def AssertType(self, key, value, _from_set_data=False):
+        if key in self.str_keys:
+            if not value:
+                value = ""  # Enforce str when null
 
-        # Enforce str when null
-        for key in self.str_keys:
-            if key in data and not data.get(key):
-                data[key] = ""
+        elif key in self.bool_keys:
+            if type(value) is not bool:
+                from json import loads
 
-        # Bools
-        for key in self.bool_keys:
-            if key in data and type(data[key]) is not bool:
-                data[key] = loads(data[key])
+                value = loads(value)
 
-        # Floats
-        for key in self.float_keys:
-            if key in data:
-                if type(data[key]) not in [float, int]:
-                    data[key] = float(data[key] or 0)
+        elif key in self.float_keys:
+            if type(value) is not float:
+                value = float(value or 0)
 
-                # TODO (OLD FORMAT): Get rid of the below code once Ryan
-                #  updates his end and all layers' data has been updated
-                if from_set_data and key in ["brightness", "contrast"]:
-                    data[key] *= 2
-                # See notes in ToDict
-                # if key == "saturation":
-                #     properties[key] *= 0.5
-                # TODO (OLD FORMAT) ----------------
+            # TODO (OLD FORMAT): Get rid of the below code once Ryan
+            #  updates his end and all layers' data has been updated
+            if _from_set_data and (key == "brightness" or key == "contrast"):
+                value *= 2
+            # See notes in ToDict
+            # if key == "saturation":
+            #     properties[key] *= 0.5
+            # TODO (OLD FORMAT) ----------------
 
-        return data
+        return value
 
     def UploadFile(self, file, filename):
         return self.upload_file(file, filename, "file")
