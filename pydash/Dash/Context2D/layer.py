@@ -327,11 +327,6 @@ class Layer:
         if not properties:
             return properties
 
-        if "contrast" in properties or "brightness" in properties:
-            from Dash.Utils import ClientAlert
-
-            raise ClientAlert("Contrast and brightness changes are temporarily disabled for maintenance and will not be saved. Please check back a little later.")  # TODO: TEST
-
         for key in properties:
             properties[key] = self.AssertType(
                 key=key,
