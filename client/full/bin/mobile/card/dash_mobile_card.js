@@ -3,6 +3,7 @@ function DashMobileCard (stack) {
 
     this.slider = null;
     this.pull_active = false;
+    this.touch_active = false;
     this.left_pull_icon = null;
     this.left_pull_area = null;
     this.right_pull_icon = null;
@@ -249,7 +250,7 @@ function DashMobileCard (stack) {
     // };
 
     this.on_drag_start = function (event) {
-        if (this.pull_active || this.restoring_pull) {
+        if (this.pull_active || this.restoring_pull || !this.touch_active) {
             return;
         }
 
@@ -390,6 +391,10 @@ function DashMobileCard (stack) {
                         return;
                     }
 
+                    if (!self.touch_active) {
+                        return;
+                    }
+
                     if (self.last_touch_move_event) {
                         self.on_drag_start(self.last_touch_move_event);
 
@@ -416,6 +421,8 @@ function DashMobileCard (stack) {
 
         (function (self) {
             self.html.on("touchstart", function (e) {
+                self.touch_active = true;
+
                 self.manage_touch_start(e);
             });
 
@@ -430,6 +437,8 @@ function DashMobileCard (stack) {
             });
 
             self.html.on("touchend", function (e) {
+                self.touch_active = false;
+
                 self.on_drag_end(e);
 
                 if (self.pull_active && e.cancelable) {
@@ -438,6 +447,8 @@ function DashMobileCard (stack) {
             });
 
             self.html.on("touchcancel", function (e) {
+                self.touch_active = false;
+
                 self.on_drag_end(e);
 
                 if (self.pull_active && e.cancelable) {

@@ -85,7 +85,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
 
         var is_image = "aspect" in file_data;
 
-        this.add_header_to_property_box(file_data, is_image);
+        this.add_header_to_property_box(file_data);
 
         if (this.read_only) {
             this.add_read_only_inputs(file_data);
@@ -131,21 +131,11 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         }
     };
 
-    this.add_header_to_property_box = function (file_data, is_image) {
+    this.add_header_to_property_box = function (file_data) {
         var file_ext = this.get_file_ext(this.file_explorer.get_file_url(file_data));
         var header = this.details_property_box.AddHeader("File Details");
 
-        header.ReplaceBorderWithIcon(
-            is_image                                             ? "file_image"   :
-            file_ext === "txt"                                   ? "file_lined"   :
-            file_ext === "pdf"                                   ? "file_pdf"     :
-            file_ext === "csv"                                   ? "file_csv"     :
-            file_ext === "doc" || file_ext === "docx"            ? "file_word"    :
-            Dash.File.Extensions["model"].includes(file_ext)     ? "cube"         :
-            Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
-            Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
-            "file"
-        ).AddShadow();
+        header.ReplaceBorderWithIcon(Dash.File.GetIconNameByExt(file_ext)).AddShadow();
     };
 
     this.add_primary_inputs = function (file_data, is_image) {

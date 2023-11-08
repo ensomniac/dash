@@ -13,8 +13,6 @@ function DashFile () {
             "gltf",
             "glb"
         ],
-
-        // Add to these categories as we become aware of more extensions that are commonly being uploaded
         "video": [
             "mp4",
             "mov"
@@ -27,6 +25,19 @@ function DashFile () {
             "fbx",
             "obj"
         ],
+        "presentation": [
+            "ppt",
+            "pptx"
+        ],
+        "document": [
+            "doc",
+            "docx"
+        ],
+        "spreadsheet": [
+            "csv",
+            "xls",
+            "xlsx"
+        ],
         "drafting": [
             "cad",
             "pdg",
@@ -34,6 +45,13 @@ function DashFile () {
             "dwg",
             "job",
             "3d"
+        ],
+        "code": [
+            "json",
+            "py",
+            "js",
+            "cs",
+            "html"
         ]
     };
 
@@ -64,7 +82,7 @@ function DashFile () {
         );
     };
 
-    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true) {
+    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true, default_to_placeholder=true) {
         var preview = null;
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];
@@ -110,6 +128,10 @@ function DashFile () {
         }
 
         if (!preview) {
+            if (!default_to_placeholder) {
+                return preview;
+            }
+
             preview = this.GetPlaceholderPreview(color, filename);
         }
 
@@ -291,6 +313,24 @@ function DashFile () {
         });
 
         return html;
+    };
+
+    this.GetIconNameByExt = function (file_ext) {
+        return (
+            file_ext === "txt"                                 ? "file_lined"       :
+            file_ext === "pdf"                                 ? "file_pdf"         :
+            this.Extensions["code"].includes(file_ext)         ? "file_code"        :
+            this.Extensions["spreadsheet"].includes(file_ext)  ? "file_spreadsheet" :
+            this.Extensions["document"].includes(file_ext)     ? "file_word"        :
+            this.Extensions["presentation"].includes(file_ext) ? "file_powerpoint"  :
+            this.Extensions["image"].includes(file_ext)        ? "file_image"       :
+            this.Extensions["model"].includes(file_ext)        ? "cube"             :
+            this.Extensions["model_viewer"].includes(file_ext) ? "cube"             :
+            this.Extensions["video"].includes(file_ext)        ? "file_video"       :
+            this.Extensions["audio"].includes(file_ext)        ? "file_audio"       :
+            this.Extensions["drafting"].includes(file_ext)     ? "pencil_ruler"     :
+            "file"
+        );
     };
 
     // Doing this on instantiation of the video tag can sometimes cause a conflict between the

@@ -2,7 +2,7 @@ function DashMobileCardStackBannerHeadline (banner) {
     this.banner = banner;
 
     this.stack = this.banner.stack;
-    this.color = this.stack.color;
+    this.color = Dash.Color.GetOpposite(this.stack.color);
     this.html = Dash.Gui.GetHTMLContext();
     this.label_top = Dash.Gui.GetHTMLContext();
     this.label_bottom = Dash.Gui.GetHTMLContext();
@@ -16,13 +16,13 @@ function DashMobileCardStackBannerHeadline (banner) {
 
         this.label_top.css({
             "background": "none",
-            "color": "white",
+            "color": this.color.Text,
             "font-size": "175%"
         });
 
         this.label_bottom.css({
             "background": "none",
-            "color": "white",
+            "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": "175%"
         });

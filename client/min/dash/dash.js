@@ -18752,7 +18752,6 @@ function DashFile () {
             "gltf",
             "glb"
         ],
-        // Add to these categories as we become aware of more extensions that are commonly being uploaded
         "video": [
             "mp4",
             "mov"
@@ -18765,6 +18764,19 @@ function DashFile () {
             "fbx",
             "obj"
         ],
+        "presentation": [
+            "ppt",
+            "pptx"
+        ],
+        "document": [
+            "doc",
+            "docx"
+        ],
+        "spreadsheet": [
+            "csv",
+            "xls",
+            "xlsx"
+        ],
         "drafting": [
             "cad",
             "pdg",
@@ -18772,6 +18784,13 @@ function DashFile () {
             "dwg",
             "job",
             "3d"
+        ],
+        "code": [
+            "json",
+            "py",
+            "js",
+            "cs",
+            "html"
         ]
     };
     this.abs_center_css = {
@@ -18797,7 +18816,7 @@ function DashFile () {
             }
         );
     };
-    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true) {
+    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true, default_to_placeholder=true) {
         var preview = null;
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];
@@ -18832,6 +18851,9 @@ function DashFile () {
             }
         }
         if (!preview) {
+            if (!default_to_placeholder) {
+                return preview;
+            }
             preview = this.GetPlaceholderPreview(color, filename);
         }
         if (!allow_100_percent_size) {
@@ -18969,6 +18991,23 @@ function DashFile () {
             "color": Dash.Color.GetOpposite(color).Text,
         });
         return html;
+    };
+    this.GetIconNameByExt = function (file_ext) {
+        return (
+            file_ext === "txt"                                 ? "file_lined"       :
+            file_ext === "pdf"                                 ? "file_pdf"         :
+            this.Extensions["code"].includes(file_ext)         ? "file_code"        :
+            this.Extensions["spreadsheet"].includes(file_ext)  ? "file_spreadsheet" :
+            this.Extensions["document"].includes(file_ext)     ? "file_word"        :
+            this.Extensions["presentation"].includes(file_ext) ? "file_powerpoint"  :
+            this.Extensions["image"].includes(file_ext)        ? "file_image"       :
+            this.Extensions["model"].includes(file_ext)        ? "cube"             :
+            this.Extensions["model_viewer"].includes(file_ext) ? "cube"             :
+            this.Extensions["video"].includes(file_ext)        ? "file_video"       :
+            this.Extensions["audio"].includes(file_ext)        ? "file_audio"       :
+            this.Extensions["drafting"].includes(file_ext)     ? "pencil_ruler"     :
+            "file"
+        );
     };
     // Doing this on instantiation of the video tag can sometimes cause a conflict between the
     // drawing of the controls vs the drawing of the video tag in the DOM, which can lead to the
@@ -36195,7 +36234,7 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         this.details_property_box = new Dash.Gui.PropertyBox(this, this.get_data, this.set_data);
         this.details_property_box.SetTopRightLabel(file_data["id"]);
         var is_image = "aspect" in file_data;
-        this.add_header_to_property_box(file_data, is_image);
+        this.add_header_to_property_box(file_data);
         if (this.read_only) {
             this.add_read_only_inputs(file_data);
         }
@@ -36230,20 +36269,10 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             this.details_property_box.AddText("(No details for this file)", this.color);
         }
     };
-    this.add_header_to_property_box = function (file_data, is_image) {
+    this.add_header_to_property_box = function (file_data) {
         var file_ext = this.get_file_ext(this.file_explorer.get_file_url(file_data));
         var header = this.details_property_box.AddHeader("File Details");
-        header.ReplaceBorderWithIcon(
-            is_image                                             ? "file_image"   :
-            file_ext === "txt"                                   ? "file_lined"   :
-            file_ext === "pdf"                                   ? "file_pdf"     :
-            file_ext === "csv"                                   ? "file_csv"     :
-            file_ext === "doc" || file_ext === "docx"            ? "file_word"    :
-            Dash.File.Extensions["model"].includes(file_ext)     ? "cube"         :
-            Dash.File.Extensions["video"].includes(file_ext)     ? "file_video"   :
-            Dash.File.Extensions["drafting"].includes(file_ext)  ? "pencil_ruler" :
-            "file"
-        ).AddShadow();
+        header.ReplaceBorderWithIcon(Dash.File.GetIconNameByExt(file_ext)).AddShadow();
     };
     this.add_primary_inputs = function (file_data, is_image) {
         this.details_property_box.AddInput(is_image ? "orig_filename" : "filename", "Filename", this.file_explorer.get_filename(file_data), null, true);
@@ -36613,12 +36642,15 @@ function DashGuiIcons (icon) {
         "expand_square":         new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand"),
         "expand_square_arrows":  new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-arrows-alt"),
         "file":                  new DashGuiIconDefinition(this.icon, "File", this.weight["regular"], "file"),
+        "file_audio":            new DashGuiIconDefinition(this.icon, "Audio File", this.weight["regular"], "file-audio"),
         "file_bar_chart":        new DashGuiIconDefinition(this.icon, "Bar Chart File", this.weight["regular"], "file-chart-line"),
+        "file_code":             new DashGuiIconDefinition(this.icon, "Code File", this.weight["regular"], "file-code"),
         "file_csv":              new DashGuiIconDefinition(this.icon, "CSV File", this.weight["regular"], "file-csv"),
         "file_edit":             new DashGuiIconDefinition(this.icon, "Edit File", this.weight["regular"], "file-edit"),
         "file_image":            new DashGuiIconDefinition(this.icon, "Image File", this.weight["regular"], "file-image"),
         "file_lined":            new DashGuiIconDefinition(this.icon, "File Lined", this.weight["regular"], "file-alt"),
         "file_pdf":              new DashGuiIconDefinition(this.icon, "PDF File", this.weight["regular"], "file-pdf"),
+        "file_powerpoint":       new DashGuiIconDefinition(this.icon, "Powerpoint File", this.weight["regular"], "file-powerpoint"),
         "file_signed":           new DashGuiIconDefinition(this.icon, "Signed File", this.weight["regular"], "file-contract"),
         "file_spreadsheet":      new DashGuiIconDefinition(this.icon, "Spreadsheet File", this.weight["regular"], "file-spreadsheet"),
         "file_video":            new DashGuiIconDefinition(this.icon, "Video File", this.weight["regular"], "file-video"),
@@ -45577,6 +45609,7 @@ function DashMobileCard (stack) {
     this.stack = stack;
     this.slider = null;
     this.pull_active = false;
+    this.touch_active = false;
     this.left_pull_icon = null;
     this.left_pull_area = null;
     this.right_pull_icon = null;
@@ -45772,7 +45805,7 @@ function DashMobileCard (stack) {
     //     return null;
     // };
     this.on_drag_start = function (event) {
-        if (this.pull_active || this.restoring_pull) {
+        if (this.pull_active || this.restoring_pull || !this.touch_active) {
             return;
         }
         if (!this.slider) {
@@ -45883,6 +45916,9 @@ function DashMobileCard (stack) {
                     if (self.stack.GetScrollActive()) {
                         return;
                     }
+                    if (!self.touch_active) {
+                        return;
+                    }
                     if (self.last_touch_move_event) {
                         self.on_drag_start(self.last_touch_move_event);
                         self.last_touch_move_event.preventDefault();
@@ -45903,6 +45939,7 @@ function DashMobileCard (stack) {
         });
         (function (self) {
             self.html.on("touchstart", function (e) {
+                self.touch_active = true;
                 self.manage_touch_start(e);
             });
             self.html.on("touchmove", function (e) {
@@ -45913,12 +45950,14 @@ function DashMobileCard (stack) {
                 }
             });
             self.html.on("touchend", function (e) {
+                self.touch_active = false;
                 self.on_drag_end(e);
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
                 }
             });
             self.html.on("touchcancel", function (e) {
+                self.touch_active = false;
                 self.on_drag_end(e);
                 if (self.pull_active && e.cancelable) {
                     e.preventDefault();
@@ -47195,7 +47234,7 @@ function DashMobileCardStackUserBanner (stack, include_refresh_button=true) {
 function DashMobileCardStackBannerHeadline (banner) {
     this.banner = banner;
     this.stack = this.banner.stack;
-    this.color = this.stack.color;
+    this.color = Dash.Color.GetOpposite(this.stack.color);
     this.html = Dash.Gui.GetHTMLContext();
     this.label_top = Dash.Gui.GetHTMLContext();
     this.label_bottom = Dash.Gui.GetHTMLContext();
@@ -47207,12 +47246,12 @@ function DashMobileCardStackBannerHeadline (banner) {
         });
         this.label_top.css({
             "background": "none",
-            "color": "white",
+            "color": this.color.Text,
             "font-size": "175%"
         });
         this.label_bottom.css({
             "background": "none",
-            "color": "white",
+            "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": "175%"
         });
