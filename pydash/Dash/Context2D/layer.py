@@ -228,21 +228,8 @@ class Layer:
         if self.Type in ["image", "video"]:
             data.update({
                 "file": self.data.get("file") or {},
-
-                # TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-                # (OLD FORMAT) These range from 0 to 2, with 1 being the default, which
-                # is not ideal because it requires some manual translation on the PIL side.
-                # "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
-                # "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
-                # TODO (OLD FORMAT) ----------------
-
-                # (NEW FORMAT) These range from 0 to 1, with 0.5 being the default,
-                # which is more ideal on the PIL side. To keep the user interface
-                # the same, though, the slider on the frontend still ranges from
-                # 0 to 2, with 1 being the default - so the value gets halved when
-                # saved on the backend, and doubled when drawn on the frontend.
-                "brightness": self.data["brightness"] if "brightness" in self.data else (1.0 if self._new else 0.5),  # TODO (OLD FORMAT): Remove the "_new" case
-                "contrast": self.data["contrast"] if "contrast" in self.data else (1.0 if self._new else 0.5),  # TODO (OLD FORMAT): Remove the "_new" case
+                "brightness": self.data["brightness"] if "brightness" in self.data else 0.5,
+                "contrast": self.data["contrast"] if "contrast" in self.data else 0.5,
                 "saturation": self.data["saturation"] if "saturation" in self.data else 0.5
             })
 
@@ -340,6 +327,11 @@ class Layer:
         if not properties:
             return properties
 
+        if "contrast" in properties or "brightness" in properties:
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert("Contrast and brightness changes are temporarily disabled for maintenance and will not be saved. Please check back a little later.")  # TODO: TEST
+
         for key in properties:
             properties[key] = self.AssertType(
                 key=key,
@@ -375,15 +367,6 @@ class Layer:
         elif key in self.float_keys:
             if type(value) is not float:
                 value = float(value or 0)
-
-            # TODO (OLD FORMAT): Get rid of the below code once Ryan
-            #  updates his end and all layers' data has been updated
-            if _from_set_data and (key == "brightness" or key == "contrast"):
-                value *= 2
-            # See notes in ToDict
-            # if key == "saturation":
-            #     properties[key] *= 0.5
-            # TODO (OLD FORMAT) ----------------
 
         return value
 

@@ -296,9 +296,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                     var brightness = primitive.get_value("brightness");
 
                     if (primitive.hasOwnProperty("update_filter")) {
-                        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-                        // primitive.update_filter(brightness + 0.1);
-                        // TODO (OLD FORMAT) -----------------
                         primitive.update_filter(brightness + 0.05);
                     }
 

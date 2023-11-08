@@ -30492,19 +30492,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (key.endsWith("_norm")) {
             value = parseFloat(value);
         }
-        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-        // (NEW FORMAT) On the backend, these range from 0 to 1, with 0.5 being the default,
-        // which is more ideal on the PIL side. To keep the user interface the same as the
-        // old format properties, such as contrast and brightness, though, the slider on the
-        // frontend still ranges from 0 to 2, with 1 being the default - so the value gets
-        // halved when saved on the backend, and doubled when drawn on the frontend
-        // if (["saturation"].includes(key)) {
-        //     value *= 2;
-        // }
-        if (["brightness", "contrast"].includes(key)) {
-            value *= 0.5;
-        }
-        // TODO (OLD FORMAT) -----------------
         if (!Dash.Validate.Object(parent_data)) {
             return value;
         }
@@ -31437,19 +31424,6 @@ function DashGuiContext2DPrimitiveMedia () {
             })(this);
             return;
         }
-        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-        // this.media.css({
-        //     "filter": (
-        //         "brightness(" + (
-        //             brightness === null ? this.get_value("brightness") : brightness
-        //         ) + ") contrast(" + (
-        //             contrast === null ? this.get_value("contrast") : contrast
-        //         ) + ") saturate(" + (
-        //             saturation === null ? this.get_value("saturation") : saturation
-        //         ) + ")"
-        //     )
-        // });
-        // TODO (OLD FORMAT) -----------------
         this.media.css({
             "filter": (
                 "brightness(" + (
@@ -32363,9 +32337,6 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                     var css = {"border": "1px solid " + primitive.hover_color};
                     var brightness = primitive.get_value("brightness");
                     if (primitive.hasOwnProperty("update_filter")) {
-                        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-                        // primitive.update_filter(brightness + 0.1);
-                        // TODO (OLD FORMAT) -----------------
                         primitive.update_filter(brightness + 0.05);
                     }
                     else {
@@ -34474,37 +34445,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         this.add_replacement_media_button(context_key);
     };
     this.initialize_media_context = function (context_key) {
-        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-        // var contrast_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "contrast",
-        //     1.02,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var saturation_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "saturation",
-        //     0.96,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        //
-        // var brightness_slider = this.get_slider(
-        //     1,
-        //     context_key,
-        //     "brightness",
-        //     0.95,
-        //     "",
-        //     0.5,
-        //     2.0
-        // );
-        // TODO (OLD FORMAT) -----------------
         var contrast_slider = this.get_slider(
             0.5,
             context_key,
@@ -34894,15 +34834,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 start_range,
                 end_range,
-                (
-                    (value || value === 0) ? (
-                        // TODO (OLD FORMAT): Get rid of the below code once Ryan updates his end and all layers' data has been updated
-                        // See notes in DashGuiContext2DPrimitive.get_value
-                        // value * (["saturation"].includes(data_key) ? 2 : 1)
-                        value * (["brightness", "contrast"].includes(data_key) ? 0.5 : 1)
-                        // TODO (OLD FORMAT) -----------------
-                    ) : default_value
-                ),
+                (value || value === 0) ? value : default_value,
                 Dash.Size.ColumnWidth * width_mult
             );
             requestAnimationFrame(function () {
