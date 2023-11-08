@@ -12,19 +12,25 @@ from .properties import Properties
 
 
 class Context2D(Utils, Interface, Properties):
-    def __init__(self, user_data, context_2d_root, obj_id="", dash_context={}):
+    def __init__(self, user_data, context_2d_root, obj_id="", dash_context={}, static_data={}):
         """
         :param dict user_data: Request user's data
         :param str context_2d_root: Root folder where 2D context IDs are (or should be) stored
         :param str obj_id: Can be empty, but only if you're creating a new context (default="")
         :param dict dash_context: Only needed for certain functions (default={})
+        :param dict static_data: Run this without the typical loading of data
+                                 by providing existing data (default={})
         """
 
         Utils.__init__(self)
         Interface.__init__(self)
         Properties.__init__(self, user_data, context_2d_root, obj_id, dash_context)
 
-        self.load_data()
+        if static_data:
+            self.Data = static_data
+            self.ID = static_data.get("id") or ""
+        else:
+            self.load_data()
 
 
 def GetData(user_data, context_2d_root, obj_id):
