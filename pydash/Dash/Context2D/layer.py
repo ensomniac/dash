@@ -241,8 +241,8 @@ class Layer:
                 # the same, though, the slider on the frontend still ranges from
                 # 0 to 2, with 1 being the default - so the value gets halved when
                 # saved on the backend, and doubled when drawn on the frontend.
-                "brightness": self.data["brightness"] if "brightness" in self.data else 0.5,
-                "contrast": self.data["contrast"] if "contrast" in self.data else 0.5,
+                "brightness": self.data["brightness"] if "brightness" in self.data else (1.0 if self._new else 0.5),  # TODO (OLD FORMAT): Remove the "_new" case
+                "contrast": self.data["contrast"] if "contrast" in self.data else (1.0 if self._new else 0.5),  # TODO (OLD FORMAT): Remove the "_new" case
                 "saturation": self.data["saturation"] if "saturation" in self.data else 0.5
             })
 
