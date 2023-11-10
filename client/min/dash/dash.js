@@ -18884,6 +18884,11 @@ function DashFile () {
         return html;
     };
     this.GetPDFPreview = function (url, height) {
+        if (Dash.IsMobile && !Dash.IsMobileiOS) {
+            // iOS can render PDFs in iframes just fine, but Android
+            // can't, so load the URL in Google's PDF viewer instead
+            url = ("https://docs.google.com/gview?url=" + url + "&embedded=true");
+        }
         return this.set_preview_size(
             $("<iframe src='" + url + "'></iframe>"),
             height,
