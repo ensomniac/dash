@@ -18908,6 +18908,9 @@ function DashFile () {
         return this.set_preview_size(html, "77%", "100%");
     };
     this.GetModelPreview = function (glb_url, height) {
+        if (Dash.IsMobile) {
+            return null;  // Model viewer isn't optimal for mobile and doesn't appear to be supported
+        }
         // As we become aware of more model file types that are commonly uploaded, we need to write
         // ways in the back-end to convert them to GLB format - FBX is the only one supported for now
         return this.set_preview_size(
