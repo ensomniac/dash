@@ -256,8 +256,11 @@ class DashLocalStorage:
         if not os.path.exists(record_path):
             if create:
                 return self.New(additional_data, obj_id=obj_id)
-            else:
-                raise Exception(f"Expected record does not exist x9483. Expected: {record_path} (obj_id: {obj_id})\n\nParams:\n{Memory.Global.RequestData or {}}")
+
+            raise FileNotFoundError(
+                f"Expected record does not exist x9483. Expected: {record_path} "
+                f"(obj_id: {obj_id})\n\nParams:\n{Memory.Global.RequestData or {}}"
+            )
 
         data = self.Read(record_path)
 
