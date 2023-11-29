@@ -238,7 +238,22 @@ function Dash () {
                             return this;
                         }
                     }
-                }
+                },
+                "Count": {
+                    "value": function (value) {
+                        try {
+                            return this.filter(function (item) {
+                                return item === value;
+                            }).length;
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Count() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
             }
         );
     };

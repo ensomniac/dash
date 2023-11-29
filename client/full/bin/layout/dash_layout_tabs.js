@@ -237,6 +237,8 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             );
         }
 
+        this.all_content[index]["last_inst_class"] = inst_class;
+
         return inst_class;
     };
 

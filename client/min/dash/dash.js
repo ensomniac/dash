@@ -17683,7 +17683,20 @@ function Dash () {
                             return this;
                         }
                     }
-                }
+                },
+                "Count": {
+                    "value": function (value) {
+                        try {
+                            return this.filter(function (item) {
+                                return item === value;
+                            }).length;
+                        }
+                        catch {
+                            console.warn("Array.prototype.Count() failed:", this);
+                            return this;
+                        }
+                    }
+                },
             }
         );
     };
@@ -20851,30 +20864,39 @@ function DashColor (dark_mode_active=false) {
         }
         return keys[Math.floor(keys.length * Math.random())];
     };
-    this.GetHorizontalGradient = function (color_1, color_2, color_3, color_4) {
-        return this.GetGradient(90, color_1, color_2, color_3, color_4);
+    this.GetHorizontalGradient = function (color_1, color_2, color_3=null, color_4=null, hard_lines=false) {
+        return this.GetGradient(90, color_1, color_2, color_3, color_4, hard_lines);
     };
-    this.GetVerticalGradient = function (color_1, color_2, color_3, color_4) {
-        return this.GetGradient(0, color_1, color_2, color_3, color_4);
+    this.GetVerticalGradient = function (color_1, color_2, color_3=null, color_4=null, hard_lines=false) {
+        return this.GetGradient(0, color_1, color_2, color_3, color_4, hard_lines);
     };
-    this.GetGradient = function (degrees, color_1, color_2, color_3, color_4) {
-        var colors = "";
-        if (color_1 && color_2 && color_3 && color_4) {
-            colors = this.ParseToRGB(color_4) + " 0%, " + this.ParseToRGB(color_3) + " 25%, ";
-            colors += this.ParseToRGB(color_2) + " 75%, " + this.ParseToRGB(color_1) + " 100%";
-        }
-        else if (color_1 && color_2 && color_3) {
-            colors = this.ParseToRGB(color_3) + " 0%, " + this.ParseToRGB(color_2) + " 50%, ";
-            colors += this.ParseToRGB(color_1) + " 100%";
-        }
-        else if (color_1 && color_2) {
-            colors = this.ParseToRGB(color_2) + " 0%, " + this.ParseToRGB(color_1) + " 100%";
-        }
-        else {
+    this.GetGradient = function (degrees, color_1, color_2, color_3=null, color_4=null, hard_lines=false) {
+        var colors = [color_1, color_2, color_3, color_4].filter(function (color) {
+            return Boolean(color);
+        }).reverse();
+        if (colors.length < 2) {
             console.error("Error: At least 2 colors are required for a gradient");
             return "red";
         }
-        return "linear-gradient(" + degrees + "deg, " + colors + ")";
+        var value = "";
+        var last_index = colors.length - 1;
+        var per = 100 / last_index;
+        var hard_line_per = 100 / colors.length;
+        for (var i in colors) {
+            if (value) {
+                value += ", ";
+            }
+            var int = parseInt(i);
+            var rgb = this.ParseToRGB(colors[i]);
+            if (hard_lines && int === last_index) {
+                value += rgb + " " + Math.ceil(hard_line_per * int) + "%, ";
+            }
+            value += rgb + " " + Math.ceil(per * i) + "%";
+            if (hard_lines && int !== last_index) {
+                value += ", " + rgb + " " + Math.ceil(hard_line_per * (int + 1)) + "%";
+            }
+        }
+        return "linear-gradient(" + degrees + "deg, " + value + ")";
     };
     this.ToRGBA = function (color_data) {
         return this.to_rgba(color_data);
@@ -39216,6 +39238,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 index
             );
         }
+        this.all_content[index]["last_inst_class"] = inst_class;
         return inst_class;
     };
     this.AddHTML = function (html, remove_on_tab_change=false) {
