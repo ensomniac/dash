@@ -408,9 +408,11 @@ function DashGuiContext2DCanvas (editor) {
     };
 
     this.get_mask_width_and_height = function () {
-        return [  // -2 for border and an extra pixel
-            ((this.html.outerWidth() - this.GetWidth()) / 2) - 2,
-            ((this.html.outerHeight() - this.GetHeight()) / 2) - 2
+        var pad = this.editor.preview_mode ? 1 : 2;  // 1 for border and 1 for an extra pixel
+
+        return [
+            ((this.html.outerWidth() - this.GetWidth()) / 2) - pad,
+            ((this.html.outerHeight() - this.GetHeight()) / 2) - pad
         ];
     };
 
