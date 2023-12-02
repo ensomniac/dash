@@ -281,7 +281,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
 
-                this.add_icon_button_column(column_config_data);
+                this.add_icon_button_column(column_config_data, i);
             }
 
             else if (column_config_data["type"] === "copy_button") {

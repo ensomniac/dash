@@ -77,7 +77,13 @@ function DashLayoutListRowElements () {
         });
     };
 
-    this.add_icon_button_column = function (column_config_data) {
+    this.add_icon_button_column = function (column_config_data, index) {
+        if (this.is_header && column_config_data["display_name"]) {
+            this.add_default_column(column_config_data, index);
+
+            return;
+        }
+
         var icon_button = this.get_icon_button(column_config_data);
 
         this.column_box.append(icon_button.html);

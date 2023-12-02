@@ -41807,7 +41807,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             }
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
-                this.add_icon_button_column(column_config_data);
+                this.add_icon_button_column(column_config_data, i);
             }
             else if (column_config_data["type"] === "copy_button") {
                 default_columns_only = false;
@@ -41925,13 +41925,13 @@ function DashLayoutListColumnConfig () {
     };
     this.AddIconButton = function (
         icon_name, binder, callback, hover_text="", size_mult=1, width_mult=0.25,
-        css={}, header_css={}, footer_css={}, icon_color=null
+        css={}, header_css={}, footer_css={}, icon_color=null, label_text=""
     ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
         this.AddColumn(
-            "",
+            label_text,
             "",
             true,
             !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
@@ -42366,7 +42366,11 @@ function DashLayoutListRowElements () {
             "column_config_data": column_config_data
         });
     };
-    this.add_icon_button_column = function (column_config_data) {
+    this.add_icon_button_column = function (column_config_data, index) {
+        if (this.is_header && column_config_data["display_name"]) {
+            this.add_default_column(column_config_data, index);
+            return;
+        }
         var icon_button = this.get_icon_button(column_config_data);
         this.column_box.append(icon_button.html);
         this.columns["icon_buttons"].push({

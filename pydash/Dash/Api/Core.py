@@ -254,14 +254,14 @@ class ApiCore:
         :param bool falsy: Whether required_params is a list of falsy params
         """
 
-        if type(required_params) == str:
+        if type(required_params) is str:
             if "," in required_params:
                 required_params = required_params.split(",")
                 required_params = [p.strip() for p in required_params]
             else:
                 required_params = [required_params]
 
-        elif type(required_params) != list:
+        elif type(required_params) is not list:
             raise Exception("ValidateParams requires a list")
 
         for param in required_params:
@@ -375,7 +375,7 @@ class ApiCore:
             self.SetResponse({"error": error})
 
     def SetResponse(self, response=None):
-        if type(response) == str:
+        if type(response) is str:
             self._render_html = True
         else:
             self._render_html = False
@@ -613,7 +613,7 @@ class ApiCore:
                 continue
 
             # This catches GitHub Webhook param issues
-            if type(mini_field_storage) == list:
+            if type(mini_field_storage) is list:
                 mini_field_storage = mini_field_storage[0]
 
             try:
@@ -708,7 +708,7 @@ class ApiCore:
             )
 
     # DEPRECATED (see comment)
-    def Execute(uninstantiated_class_ref):
+    def Execute(uninstantiated_class_ref):  # noqa
         #  Since class functions expect 'self' as the first variable, Execute() belongs outside this class as a standalone function.
         #
         #  --Previous usage--

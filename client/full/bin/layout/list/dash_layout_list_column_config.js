@@ -91,14 +91,14 @@ function DashLayoutListColumnConfig () {
 
     this.AddIconButton = function (
         icon_name, binder, callback, hover_text="", size_mult=1, width_mult=0.25,
-        css={}, header_css={}, footer_css={}, icon_color=null
+        css={}, header_css={}, footer_css={}, icon_color=null, label_text=""
     ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
 
         this.AddColumn(
-            "",
+            label_text,
             "",
             true,
             !width_mult ? null : Dash.Size.ColumnWidth * width_mult,
