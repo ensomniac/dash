@@ -36520,6 +36520,7 @@ function DashGuiIcons (icon) {
         "baseball":              new DashGuiIconDefinition(this.icon, "Baseball", this.weight["regular"], "baseball-ball"),
         "baseball_bat":          new DashGuiIconDefinition(this.icon, "Baseball Bat", this.weight["regular"], "baseball"),
         "basketball":            new DashGuiIconDefinition(this.icon, "Basketball", this.weight["regular"], "basketball-ball"),
+        "bat":                   new DashGuiIconDefinition(this.icon, "Bat", this.weight["regular"], "bat"),
         "battle_axe":            new DashGuiIconDefinition(this.icon, "Battle Axe", this.weight["regular"], "axe-battle"),
         "binoculars":            new DashGuiIconDefinition(this.icon, "Binoculars", this.weight["regular"], "binoculars"),
         "book_open":             new DashGuiIconDefinition(this.icon, "Book (Open)", this.weight["regular"], "book-open"),
@@ -37316,7 +37317,9 @@ function DashGuiInputType (
     this.setup_styles();
 }
 
-function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key="") {
+function DashGuiInputRow (
+    label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key=""
+) {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
@@ -37557,7 +37560,9 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
             return;
         }
         this.hide_save_button();
-        this.highlight.stop().animate({"opacity": 0}, 100);
+        if (this.highlight) {
+            this.highlight.stop().animate({"opacity": 0}, 100);
+        }
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         var response_callback = this.on_click.bind(this.on_click_bind);
         // Leaving this disabled for now - enable this to lock the row as soon as it receives input
@@ -38760,6 +38765,11 @@ function DashGuiPropertyBoxInterface () {
             combo.html.detach();
             row.html.append(combo.html);
             combo.RefreshConnections();
+        }
+        if (options["no_row_highlight"]) {
+            row.html.off("mouseenter");
+            row.html.off("mouseleave");
+            row.highlight.remove();
         }
         return row;
     };

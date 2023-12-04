@@ -1,4 +1,6 @@
-function DashGuiInputRow (label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key="") {
+function DashGuiInputRow (
+    label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key=""
+) {
     this.label_text = label_text;
     this.initial_value = initial_value;
     this.placeholder_text = placeholder_text;
@@ -310,7 +312,9 @@ function DashGuiInputRow (label_text, initial_value, placeholder_text, button_te
 
         this.hide_save_button();
 
-        this.highlight.stop().animate({"opacity": 0}, 100);
+        if (this.highlight) {
+            this.highlight.stop().animate({"opacity": 0}, 100);
+        }
 
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
 

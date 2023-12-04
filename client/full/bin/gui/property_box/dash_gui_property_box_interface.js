@@ -374,6 +374,13 @@ function DashGuiPropertyBoxInterface () {
             combo.RefreshConnections();
         }
 
+        if (options["no_row_highlight"]) {
+            row.html.off("mouseenter");
+            row.html.off("mouseleave");
+
+            row.highlight.remove();
+        }
+
         return row;
     };
 
