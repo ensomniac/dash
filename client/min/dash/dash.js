@@ -42982,7 +42982,7 @@ function DashLayoutListRowInterface () {
         this.SetExpandedSubListParentHeight(target_size);
         return target_size;
     };
-    this.Collapse = function () {
+    this.Collapse = function (callback=null) {
         if (!this.is_expanded || this.is_header || this.is_footer) {
             return;
         }
@@ -43012,6 +43012,9 @@ function DashLayoutListRowInterface () {
                     self.HideHighlight();
                     self.expanded_content.empty();
                     self.is_expanded = false;
+                    if (callback) {
+                        callback();
+                    }
                 }
             );
         })(this);
@@ -43412,6 +43415,21 @@ function DashLayoutRevolvingList (
     // Not needed in most cases - only needed if manually breaking/altering a particular row's connections
     this.RefreshRowConnections = function (row) {
         this.setup_row_connections(row);
+    };
+    this.ReExpandRow = function (row) {
+        if (!row.IsExpanded()) {
+            this.on_row_selected(row);
+            return;
+        }
+        this.on_row_selected(row);
+        (function (self) {
+            setTimeout(
+                function () {
+                    self.on_row_selected(row);
+                },
+                row.anim_delay["expanded_content"] + 100
+            );
+        })(this);
     };
     this.select_row = function (row_id="", default_to_first_row=true) {
         if (row_id && !this.initial_draw) {

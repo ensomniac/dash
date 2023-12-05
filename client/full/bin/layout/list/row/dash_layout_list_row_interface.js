@@ -253,7 +253,7 @@ function DashLayoutListRowInterface () {
         return target_size;
     };
 
-    this.Collapse = function () {
+    this.Collapse = function (callback=null) {
         if (!this.is_expanded || this.is_header || this.is_footer) {
             return;
         }
@@ -291,6 +291,10 @@ function DashLayoutListRowInterface () {
                     self.expanded_content.empty();
 
                     self.is_expanded = false;
+
+                    if (callback) {
+                        callback();
+                    }
                 }
             );
         })(this);

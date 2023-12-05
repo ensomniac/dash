@@ -314,6 +314,25 @@ function DashLayoutRevolvingList (
         this.setup_row_connections(row);
     };
 
+    this.ReExpandRow = function (row) {
+        if (!row.IsExpanded()) {
+            this.on_row_selected(row);
+
+            return;
+        }
+
+        this.on_row_selected(row);
+
+        (function (self) {
+            setTimeout(
+                function () {
+                    self.on_row_selected(row);
+                },
+                row.anim_delay["expanded_content"] + 100
+            );
+        })(this);
+    };
+
     this.select_row = function (row_id="", default_to_first_row=true) {
         if (row_id && !this.initial_draw) {
             (function (self) {
