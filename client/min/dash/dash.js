@@ -36850,7 +36850,6 @@ function DashGuiInput (placeholder_text="", color=null) {
             "height": this.height,
             "background": this.color.Input.Background.Base,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            "padding-right": Dash.Size.Padding,
             "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,
             "margin": 0
@@ -36865,7 +36864,11 @@ function DashGuiInput (placeholder_text="", color=null) {
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis",
-            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%",
+            // These css properties should be the default, but I don't want to break anything
+            // "padding-left": Dash.Size.Padding * 0.5,
+            // "padding-right": Dash.Size.Padding * 0.5,
+            // "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
         this.html.append(this.input);
         this.setup_connections();
@@ -37046,8 +37049,9 @@ function DashGuiInputBase (
     this.SetOnChange = function (callback=null, binder=null) {
         this.on_change_callback = binder && callback ? callback.bind(binder) : callback;
     };
-    // Should this also call this.EnableAutosave by default?
     this.SetOnAutosave = function (callback=null, binder=null) {
+        // This should be the default, but don't want to break anything
+        // this.EnableAutosave();
         this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };
     this.SetOnSubmit = function (callback=null, binder=null) {
