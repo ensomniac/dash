@@ -1,4 +1,7 @@
-function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy", color=null, label_text="Copied!") {
+function DashGuiCopyButton (
+    binder, getter_cb, size_mult=1, container_size=null, style="default",
+    icon_name="copy", color=null, label_text="Copied!"
+) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
     this.size_mult = size_mult;
@@ -38,6 +41,10 @@ function DashGuiCopyButton (binder, getter_cb, size_mult=1, container_size=null,
         this.button.SetIconColor(color);
 
         this.icon_color = color;
+    };
+
+    this.AddHighlight = function () {
+        this.button.AddHighlight(true);
     };
 
     this.add_label = function () {
