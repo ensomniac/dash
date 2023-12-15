@@ -46,15 +46,15 @@ function DashGuiContext2D (
      */
 
     this.c2d_id = c2d_id;
-    this.api = api;
     this.color = color || Dash.Color.Light;
-    this.can_edit = preview_mode ? false : can_edit;
-    this.preview_mode = preview_mode;
+    this.api = api;
+    this.preview_mode = Dash.IsMobile ? true : preview_mode;
+    this.can_edit = this.preview_mode ? false : can_edit;
 
     // As of writing, any changes made in this mode will have to be explicitly
     // handled on the backend by the custom abstraction of Dash.Context2D. In
     // the future, this can be baked into the core code if it makes sense to do so.
-    this.override_mode = override_mode;
+    this.override_mode = this.preview_mode ? false : override_mode;
 
     this.extra_request_params = extra_request_params;
     this.data = data;

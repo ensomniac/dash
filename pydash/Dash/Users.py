@@ -380,15 +380,20 @@ class Users:
 
         return True
 
-    def GetAll(self):
-        return self.get_team()
+    def GetAll(self, include_order=False, order_by_last_name=False):
+        users = self.get_team()
+
+        if not include_order:
+            return users
+
+        return self.add_order_to_team(users, order_by_last_name)
 
     def GetUserDataPath(self, user_email):
         from Dash.LocalStorage import GetRecordPath
 
         email = user_email.lower().strip()
 
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         return GetRecordPath(
@@ -398,10 +403,6 @@ class Users:
         )
 
     def GetUserData(self, user_email, create_if_missing=True):
-        # Andrew - I wanted to expose this function externally and
-        # changed the name I didn't have time to see if it would
-        # break anything to get rid of the snake case variation
-
         return self.get_user_info(user_email, create_if_missing)
 
     def ValidateUser(self):
@@ -409,8 +410,8 @@ class Users:
 
         if response.get("user"):
             return response.get("user")
-        else:
-            return None
+
+        return None
 
     def Validate(self, token=None):
         token_str = token or self.request_params.get("token")
@@ -426,7 +427,7 @@ class Users:
                 "_error": f"token str: {token_str}"
             }
 
-        if type(token_data) == str:
+        if type(token_data) is str:
             token_data = token_data.encode()
 
         email = token_data.split(b"_|_")[-1].strip()
@@ -575,7 +576,7 @@ class Users:
 
         email = email.lower().strip()
 
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         user_data_path = self.GetUserDataPath(email)
@@ -606,10 +607,12 @@ class Users:
                 obj_id=email
             )
 
+        user_data["conformed"] = True  # Keeping this around just in case it's used somewhere, but doesn't seem to be
+
         return self.set_display_name(user_data)
 
     def get_user_init(self, email):
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         team = self.get_team()
@@ -625,7 +628,11 @@ class Users:
         sorted_emails = []
 
         for email in team:
-            primary = team[email].get("display_name") or team[email].get("first_name") or email
+            primary = (
+                team[email].get("display_name")
+                or f"{team[email].get('first_name', '')} {team[email].get('last_name', '')}".strip()
+                or email
+            )
 
             sortable.append([primary, email])
 
@@ -636,39 +643,88 @@ class Users:
 
         return sorted_emails
 
-    # TODO - get rid of this code - it's been moved to Admin.py
     def get_team(self):
         team = {}
         users_root = os.path.join(self.dash_context["srv_path_local"], "users")
 
         for user_email in os.listdir(users_root):
+            # Emails are sanitized on account creation, but leaving this here for
+            # any accounts for older sites from before that sanitation was added
+            user_email = user_email.lower()
+
             try:
                 team[user_email] = self.get_user_info(user_email)
 
             # In cases where a specific user's data is corrupted etc, we don't
             # want that to prevent everyone else from logging in etc
             except Exception as e:
-                # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
-                # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
+                # Ignore new users who haven't logged in yet by checking for the existence
+                # of the sessions folder. Checking for the existence of that instead of
+                # the usr.data file is preferred in case usr.data may be corrupted.
                 if os.path.exists(os.path.join(users_root, user_email, "sessions")):
-                    team[user_email] = {"error": e}
+                    team[user_email] = {"error": str(e)}
 
                     self.send_email(
                         subject="Dash Error - Users.get_team()",
-                        msg=f"Warning: Failed to get user info for {user_email}. If it's not a new user, data may be corrupted.",
+                        msg=(
+                            f"Warning: Failed to get user info for {user_email}. "
+                            f"If it's not a new user, data may be corrupted."
+                        ),
                         error=e
                     )
 
         return team
 
+    def add_order_to_team(self, all_users, order_by_last_name=False):
+        users = {
+            "order": [],
+            "data": {}
+        }
+
+        to_sort = []
+
+        for email in all_users:
+            user = all_users[email]
+            last_name = user.get("last_name") or ""
+            first_name = user.get("first_name") or email.split("@")[0] or ""
+
+            if order_by_last_name:
+                to_sort.append([
+                    last_name,
+                    first_name,
+                    email
+                ])
+            else:
+                display_name = user.get("display_name") or ""
+
+                if not display_name or display_name == email:
+                    display_name = first_name
+
+                    if display_name and last_name:
+                        display_name = f"{display_name} {last_name}"
+
+                to_sort.append([
+                    display_name,
+                    email
+                ])
+
+            users["data"][email] = user
+
+        to_sort.sort()
+
+        for pair in to_sort:
+            users["order"].append(pair[-1])
+
+        return users
+
     # At some point, we may want to actually permanently include this key in the user data,
     # which would also mean updating it anytime "first_name" and/or "last_name" are updated
     def set_display_name(self, user_data):
-        if user_data.get("first_name") and user_data.get("last_name"):
-            user_data["display_name"] = user_data["first_name"] + " " + user_data["last_name"]
-
-        elif user_data.get("first_name"):
+        if user_data.get("first_name"):
             user_data["display_name"] = user_data["first_name"]
+
+            if user_data.get("last_name"):
+                user_data["display_name"] += f" {user_data['last_name']}"
 
         elif user_data.get("email"):
             user_data["display_name"] = user_data["email"]
@@ -678,7 +734,7 @@ class Users:
     def get_token_data(self, token):
         from base64 import urlsafe_b64decode
 
-        for x in range(3):
+        for _ in range(3):
             try:
                 token_data = urlsafe_b64decode(token)
 
@@ -688,9 +744,7 @@ class Users:
 
                 error = format_exc().lower()
 
-                if "incorrect padding" in error:
-                    pass
-                else:
+                if "incorrect padding" not in error:
                     return None, None
 
             token += "="
@@ -718,8 +772,8 @@ def ValidateCredentials(email, password, use_pin=False, return_login_dict=False,
     return Users(request_params, dash_context).ValidateCredentials(email, password, use_pin, return_login_dict)
 
 
-def GetAll(request_params={}, dash_context={}):
-    return Users(request_params, dash_context).GetAll()
+def GetAll(request_params={}, dash_context={}, include_order=False, order_by_last_name=False):
+    return Users(request_params, dash_context).GetAll(include_order, order_by_last_name)
 
 
 def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):

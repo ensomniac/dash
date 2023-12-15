@@ -80,68 +80,25 @@ class ApiUsers:
 
         return self.SetResponse(self.merge_addl_into_init(response))
 
-    # TODO - get rid of this code - it's been moved to Admin.py (why is this not using Users.GetAll?)
     def get_all(self):
-        from Dash.LocalStorage import Read
+        from Dash.Users import GetAll
 
-        self.ParseParam("sort_by_last_name", bool, False)
+        all_users = GetAll(
+            request_params=self.Params,
+            dash_context=self.DashContext,
+            include_order=True,
+            order_by_last_name=self.ParseParam("sort_by_last_name", bool, False)
+        )
 
         sorted_users = []
-        pairs_to_sort = []
-        response = {"users": []}
-        users_root = os.path.join(self.DashContext["srv_path_local"], "users")
 
-        for email in os.listdir(users_root):
-            email = email.lower()  # TODO: This needs to be sanitized upon account creation
-            user_path = os.path.join(users_root, email, "usr.data")
-            user_data = Read(user_path) if os.path.exists(user_path) else None
+        for email in all_users["order"]:
+            sorted_users.append(all_users["data"][email])
 
-            # For now, sending an alert email as to not interrupt the user's session,
-            # but it may end up being better to raise an exception here instead
-            if not user_data:
-                # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
-                # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
-                if os.path.exists(os.path.join(users_root, email, "sessions")):
-                    from Dash.Utils import SendEmail
-
-                    msg = f"\Warning: Failed to read user data for '{email}'. If it's not a new user, it may be corrupted.\n\nPath:\n{user_path}"
-
-                    if self.Params:
-                        msg += f"\n\nParams:\n{self.Params}"
-
-                    SendEmail(
-                        subject="Dash Error - Users.get_all()",
-                        msg=msg,
-                        sender_email=self.DashContext.get("admin_from_email"),
-                        sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext["display_name"])
-                    )
-
-                continue
-
-            user_data = self.conform_user_data(user_data)
-
-            if self.Params["sort_by_last_name"]:
-                pairs_to_sort.append([user_data.get("last_name"), user_data.get("first_name"), user_data.get("email"), user_data.get("id")])
-            else:
-                pairs_to_sort.append([user_data.get("first_name") or user_data.get("email"), user_data.get("id")])
-
-            response["users"].append(user_data)
-
-        pairs_to_sort.sort()
-
-        for pair in pairs_to_sort:
-            for user in response["users"]:
-                if pair[-1] != user.get("id"):
-                    continue
-
-                sorted_users.append(user)
-
-                break
-
-        response["users"] = sorted_users
-        response["record_path"] = self.DashContext["srv_path_local"]
-
-        return self.SetResponse(response)
+        return self.SetResponse({
+            "users": sorted_users,
+            "record_path": self.DashContext["srv_path_local"]  # Why is this included?
+        })
 
     def validate(self):
         from Dash.Users import Validate
@@ -231,14 +188,6 @@ class ApiUsers:
             response["init"][key] = additional[key]
 
         return response
-
-    # TODO: Evaluate whether this is actually serving any purpose
-    def conform_user_data(self, user_data):
-        # Light wrapper to make sure certain things exist in returned user data
-
-        user_data["conformed"] = True
-
-        return user_data
 
     def get_credential_validation_data(self):
         from Dash.Users import ValidateCredentials
