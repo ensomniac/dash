@@ -27795,8 +27795,8 @@ function DashGuiComboSearch () {
     this.search_active = false;
     this.search_result_ids = [];
     this.search_container = null;
-    this.search_max_results = 10;
     this.search_result_rows = [];
+    this.manage_search_button_map = null;
     this.setup_search_selection = function () {
         this.html.css({
             "cursor": "text",
@@ -27842,11 +27842,11 @@ function DashGuiComboSearch () {
             this.search_input = null;
         }
         this.search_results = [];
+        this.combo_option_index = 0;
         this.search_result_ids = [];
         this.search_result_rows = [];
-        this.combo_option_index = 0;
         this.label_container.css({
-            "opacity": 1,
+            "opacity": 1
         });
     };
     this.create_search_input = function () {
@@ -27860,12 +27860,17 @@ function DashGuiComboSearch () {
             "height": this.html.height()
         });
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : (this.selected_option["label_text"] || this.selected_option["display_name"]));
+        this.search_input.SetText(
+            this.multi_select ? this.get_multi_select_label() : (
+                this.selected_option["label_text"] || this.selected_option["display_name"]
+            )
+        );
         this.search_input.SetOnChange(this.on_search_text_changed, this);
+        this.search_input.SetOnChangeDelayMs(250);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
-        this.search_container.append(this.search_input.html);
         this.search_input.Flatten();
+        this.search_container.append(this.search_input.html);
         if (this.style === "row") {
             this.search_input.html.css({
                 "left": -Dash.Size.Padding
@@ -27892,85 +27897,189 @@ function DashGuiComboSearch () {
     };
     this.on_search_text_changed = function () {
         this.search_results = [];
-        var search = this.search_input.Text().toLocaleLowerCase("en-US");
-        if (search.length === 0) {
+        var search_text = this.search_input.Text().toLocaleLowerCase("en-US");
+        if (search_text.length === 0) {
             this.manage_search_list(this.show_rows_on_empty_search);
             return;
         }
-        for (var i in this.option_list) {
-            var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
-            var opt = label.toLocaleLowerCase("en-US");
-            if (search.length < 3) {
-                // For a short search, only match the beginning
-                if (opt.startsWith(search)) {
-                    this.search_results.push(this.option_list[i]["id"]);
-                }
+        var label;
+        var option;
+        var added_ids = [];
+        // As of writing, this doesn't seem necessary for performance, even
+        // with very long lists drawing 1000 results without any noticeable
+        // lag. If performance is an issue at any point, this should be the
+        // first place to start. If moving forward with this in the future,
+        // at the very least, need to display a little tag that says something
+        // like "showing top 50 results" when the limit is hit, so it's
+        // clear that not every potential match is shown. To do it right,
+        // we'd need to also offer a way to load more, or load all, etc.
+        var max_results = 0;  // 100;
+        // OLD LOGIC ---------------------------------------------------------
+        // Can revert to this if the new method turns out to be too heavy on
+        // performance, but preferably, if performance is the issue, start by setting
+        // max_results to 100 and whittle that number down as needed, until resolved.
+        // If reverting to this, comment out this.search_input.SetOnChangeDelayMs in this.create_search_input.
+        //
+        // var respect_search_results_order = false;
+        //
+        // for (option of this.option_list) {
+        //     label = (option["label_text"] || option["display_name"] || "").toString();
+        //
+        //     if (!label.length) {
+        //         continue;
+        //     }
+        //
+        //     var opt = label.toLocaleLowerCase("en-US");
+        //
+        //     if (search_text.length < 3) {
+        //         // For a short search, only match the beginning
+        //         if (opt.startsWith(search_text)) {
+        //             this.search_results.push(option["id"]);
+        //         }
+        //     }
+        //
+        //     else {
+        //         if (opt.includes(search_text)) {
+        //             this.search_results.push(option["id"]);
+        //         }
+        //     }
+        //
+        //     if (max_results && this.search_results.length >= max_results) {
+        //         break;
+        //     }
+        // }
+        // NEW LOGIC ---------------------------------------------------------
+        // This logic is the same as the logic in DashMobileSearchableCombo.filter_datalist,
+        // so if any logic is added here, be sure to mirror that there as well.
+        var respect_search_results_order = true;
+        // First, list options that start with the input text
+        for (option of this.option_list) {
+            label = (option["label_text"] || option["display_name"] || "").toString();
+            if (!label.length || !label.toLocaleLowerCase("en-US").startsWith(search_text)) {
+                continue;
             }
-            else {
-                if (opt.includes(search)) {
-                    this.search_results.push(this.option_list[i]["id"]);
-                }
-            }
-            if (this.search_results.length >= this.search_max_results) {
+            this.search_results.push(option["id"]);
+            added_ids.push(option["id"]);
+            if (max_results && this.search_results.length >= max_results) {
                 break;
             }
         }
-        this.manage_search_list();
+        // Below those options, list options that don't start with the input text, but contain it
+        for (option of this.option_list) {
+            if (added_ids.includes(option["id"])) {
+                continue;
+            }
+            label = (option["label_text"] || option["display_name"] || "").toString();
+            if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                continue;
+            }
+            this.search_results.push(option["id"]);
+            added_ids.push(option["id"]);
+            if (max_results && this.search_results.length >= max_results) {
+                break;
+            }
+        }
+        this.manage_search_list(false, respect_search_results_order);
     };
     this.on_search_text_submitted = function () {
         if (this.multi_select) {
             return;
         }
-        var search = this.search_input.Text();
-        if (search.length < 1) {
+        var search_text = this.search_input.Text();
+        if (search_text.length < 1) {
             this.on_click();
             return;
         }
         var selected_id = this.search_result_ids[this.combo_option_index];
-        var selected_option = null;
-        for (var i in this.option_list) {
-            var content = this.option_list[i];
-            if (content["id"] === selected_id) {
-                selected_option = content;
-                break;
+        for (var option of this.option_list) {
+            if (option["id"] === selected_id) {
+                this.on_selection(option, false, search_text);
+                return;
             }
         }
-        if (selected_option) {
-            this.on_selection(selected_option, false, search);
-        }
     };
-    this.manage_search_list = function (show_all=false) {
-        this.rows.stop().css({"height": "auto"});
-        this.search_result_rows = [];
-        this.search_result_ids = [];
+    this.manage_search_list = function (show_all=false, respect_search_results_order=false) {
+        var i;
+        var id;
+        var option;
+        var button;
         this.combo_option_index = 0;
-        for (var i in this.option_list) {
-            var content = this.option_list[i];
-            var button = this.row_buttons[i];
-            var include_default = this.default_search_submit_combo && this.default_search_submit_combo["id"] === content["id"];
-            button.SetSearchResultActive(false);
-            if (show_all || this.search_results.includes(content["id"]) || include_default) {
-                if (show_all && !this.search_results.includes(content["id"])) {
-                    this.search_results.push(content["id"]);
+        this.search_result_ids = [];
+        this.search_result_rows = [];
+        if (show_all) {
+            respect_search_results_order = false;
+            for (id in this.manage_search_button_map) {
+                this.manage_search_button_map[id].html.detach();
+            }
+            for (button of this.row_buttons) {
+                this.rows.append(button.html);
+            }
+        }
+        this.rows.stop().css({
+            "height": "auto"
+        });
+        var option_list = respect_search_results_order ? [] : this.option_list;
+        this.manage_search_button_map = respect_search_results_order ? {} : null;
+        if (respect_search_results_order) {
+            var map = {};
+            for (i in this.option_list) {
+                option = this.option_list[i];
+                button = this.row_buttons[i];
+                button.html.detach();
+                if (this.search_results.includes(option["id"])) {
+                    map[option["id"]] = option;
+                    this.manage_search_button_map[option["id"]] = button;
                 }
-                if (!this.search_result_ids.includes(content["id"])) {
-                    this.search_result_ids.push(content["id"]);
+                else {
+                    if (  // Include default combo
+                           this.default_search_submit_combo
+                        && this.default_search_submit_combo["id"] === option["id"]
+                    ) {
+                        option_list.push(option);
+                        this.rows.append(button.html);
+                    }
+                }
+            }
+            for (id of this.search_results) {
+                option_list.push(map[id]);
+                this.rows.append(this.manage_search_button_map[id].html);
+            }
+        }
+        for (i in option_list) {
+            option = option_list[i];
+            button = respect_search_results_order ? this.manage_search_button_map[option["id"]] : this.row_buttons[i];
+            button.SetSearchResultActive(false);
+            if (
+                   show_all
+                || respect_search_results_order
+                || (  // Include default combo
+                       this.default_search_submit_combo
+                    && this.default_search_submit_combo["id"] === option["id"]
+                )
+                || this.search_results.includes(option["id"])
+            ) {
+                if (show_all && !this.search_results.includes(option["id"])) {
+                    this.search_results.push(option["id"]);
+                }
+                if (!this.search_result_ids.includes(option["id"])) {
+                    this.search_result_ids.push(option["id"]);
                 }
                 if (!this.search_result_rows.includes(button)) {
                     this.search_result_rows.push(button);
                 }
                 button.html.css({
-                    "display": "block",
+                    "display": "block"
                 });
             }
             else {
                 button.html.css({
-                    "display": "none",
+                    "display": "none"
                 });
             }
         }
-        if (this.search_result_rows.length === 0 && this.default_search_submit_combo) {
-        }
+        // if (this.search_result_rows.length === 0 && this.default_search_submit_combo) {
+        //     // Is something supposed to happen here? Why is this empty?
+        // }
         if (this.search_result_rows.length > 0) {
             this.search_result_rows[0].SetSearchResultActive(true);
         }
@@ -36951,10 +37060,12 @@ function DashGuiInputBase (
     this.blur_enabled = null;
     this.last_submit_ts = null;
     this.skip_next_blur = false;
+    this.on_change_delay_ms = 0;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
     this.autosave_delay_ms = 1500;
     this.last_submitted_text = "";
+    this.on_change_timeout = null;
     this.on_change_callback = null;
     this.on_submit_callback = null;
     this.skip_next_autosave = false;
@@ -36971,6 +37082,9 @@ function DashGuiInputBase (
     };
     this.SetAutosaveDelayMs = function (ms) {
         this.autosave_delay_ms = parseInt(ms);
+    };
+    this.SetOnChangeDelayMs = function (ms) {
+        this.on_change_delay_ms = parseInt(ms);
     };
     this.EnableAutosave = function () {
         this.autosave = true;
@@ -37097,11 +37211,29 @@ function DashGuiInputBase (
             this.attempt_autosave();
         }
         else {
-            if (!this.on_change_callback) {
-                return;
-            }
-            this.on_change_callback();
+            this.attempt_on_change_callback();
         }
+    };
+    this.attempt_on_change_callback = function () {
+        if (!this.on_change_callback) {
+            return;
+        }
+        if (!this.on_change_delay_ms) {
+            this.on_change_callback();
+            return;
+        }
+        if (this.on_change_timeout) {
+            clearTimeout(this.on_change_timeout);
+            this.on_change_timeout = null;
+        }
+        (function (self) {
+            self.on_change_timeout = setTimeout(
+                function () {
+                    self.on_change_callback();
+                },
+                self.on_change_delay_ms
+            );
+        })(this);
     };
     // Fired on 'enter' or 'paste'
     this.on_submit = function (from_autosave=false) {
@@ -37138,6 +37270,10 @@ function DashGuiInputBase (
         this.last_submitted_text = this.Text();
     };
     this.attempt_autosave = function () {
+        if (!this.autosave_delay_ms) {
+            this._attempt_autosave();
+            return;
+        }
         if (this.autosave_timeout) {
             clearTimeout(this.autosave_timeout);
             this.autosave_timeout = null;
@@ -46137,7 +46273,9 @@ function DashMobileSearchableCombo (
     this.disabled = false;
     // this.option_rows = [];
     this.clear_button = null;
+    // this.on_change_delay_ms = 0;
     this.html = $("<div></div>");
+    // this.on_change_timeout = null;
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.datalist = $("<datalist></datalist", {"id": this.id});
     this.input = $(
@@ -46197,6 +46335,9 @@ function DashMobileSearchableCombo (
         }
         this.SetLabel(this.options[id]);
     };
+    this.SetOnChangeDelayMs = function (ms) {
+        this.on_change_delay_ms = parseInt(ms);
+    };
     this.GetOptions = function () {
         return this.options;
     };
@@ -46205,11 +46346,13 @@ function DashMobileSearchableCombo (
         this.options = options;
         this.add_options();
     };
-    this.AddOption = function (id, label, _check=true) {
-        if (_check && this.options[id]) {
-            return;
+    this.AddOption = function (id, label, _check=true, _from_filter=false) {
+        if (!_from_filter) {
+            if (_check && this.options[id]) {
+                return;
+            }
+            this.options[id] = label;
         }
-        this.options[id] = label;
         // Unlike the select element, the datalist does not allow option elements
         // to contain both a value and a label, so for us to get the ID after a
         // selection is made, we loop through the options and match the current value (label)
@@ -46217,7 +46360,9 @@ function DashMobileSearchableCombo (
         row.css({
             "height": Dash.Size.RowHeight
         });
-        // this.option_rows.push(row);
+        // if (!_from_filter) {
+        //     this.option_rows.push(row);
+        // }
         this.datalist.append(row);
     };
     this.EnableResetInvalidOnBlur = function () {
@@ -46313,11 +46458,106 @@ function DashMobileSearchableCombo (
             this.input.css(css);
         }
     };
-    this.add_options = function () {
+    this.add_options = function (_from_filter=false) {
         for (var id in this.options) {
-            this.AddOption(id, this.options[id], false);
+            this.AddOption(id, this.options[id], false, _from_filter);
         }
     };
+    // Datalists have their own built-in native filtering, but it returns matches
+    // for anything that includes the characters typed in the input, so this
+    // overwrites it. For example, typing the letter "m" should (typically) return
+    // results that start with "m", but datalists return any result that includes
+    // the letter "m", which doesn't feel logical to the user, in most cases.
+    this.filter_datalist = function () {
+        var id;
+        var label;
+        var added_ids = [];
+        var search_text = this.GetLabel().toLocaleLowerCase("en-US");
+        // As of writing, this doesn't seem necessary for performance, even
+        // with very long lists drawing 1000 results without any noticeable
+        // lag. If performance is an issue at any point, this should be the
+        // first place to start. If moving forward with this in the future,
+        // at the very least, need to display a little tag that says something
+        // like "showing top 50 results" when the limit is hit, so it's
+        // clear that not every potential match is shown. To do it right,
+        // we'd need to also offer a way to load more, or load all, etc.
+        var max_results = 0;  // 100;
+        // Currently, we're emptying the datalist, then creating and appending new options for
+        // the included options. If performance becomes an issue, we can try detaching all the
+        // options instead and manage which one's get re-appended each time, similar to what
+        // we do in the non-mobile combo on search.
+        this.datalist.empty();
+        // Show everything, to retain the functionality of being able to use the dropdown instead of search
+        if (!search_text) {
+            // This does not work. No matter what I've tried, blur, refocus, click, reclick, timeout,
+            // anim frame, remove, re-append - nothing successfully redraws the list to the original
+            // version with all the options in the original order. After digging, it seems a user
+            // action is required for some reason, which I confirmed after manually blurring/refocusing.
+            // Super frustrating and annoying, but it appears there's nothing to be done here.
+            this.add_options(true);
+            this.trigger_reclick();
+            return;
+        }
+        // This logic is the same as the logic in DashGuiComboSearch.on_search_text_changed,
+        // so if any logic is added here, be sure to mirror that there as well.
+        // First, list options that start with the input text
+        for (id in this.options) {
+            label = (this.options[id] || "").toString();
+            if (!label.length || !label.toLocaleLowerCase("en-US").startsWith(search_text)) {
+                continue;
+            }
+            this.AddOption(id, label, false, true);
+            added_ids.push(id);
+            if (max_results && added_ids.length >= max_results) {
+                return;
+            }
+        }
+        // Below those options, list options that don't start with the input text, but contain it
+        for (id in this.options) {
+            if (added_ids.includes(id)) {
+                continue;
+            }
+            label = (this.options[id] || "").toString();
+            if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                continue;
+            }
+            this.AddOption(id, label, false, true);
+            added_ids.push(id);
+            if (max_results && added_ids.length >= max_results) {
+                return;
+            }
+        }
+    };
+    // this.on_change = function () {
+    //     if (!this.on_change_delay_ms) {
+    //         this.filter_datalist();
+    //
+    //         if (this.on_change_cb) {
+    //             this.on_change_cb();
+    //         }
+    //
+    //         return;
+    //     }
+    //
+    //     if (this.on_change_timeout) {
+    //         clearTimeout(this.on_change_timeout);
+    //
+    //         this.on_change_timeout = null;
+    //     }
+    //
+    //     (function (self) {
+    //         self.on_change_timeout = setTimeout(
+    //             function () {
+    //                 self.filter_datalist();
+    //
+    //                 if (self.on_change_cb) {
+    //                     self.on_change_cb();
+    //                 }
+    //             },
+    //             self.on_change_delay_ms
+    //         );
+    //     })(this);
+    // };
     this.setup_connections = function () {
         (function (self) {
             self.input.on("change", function () {
@@ -46332,8 +46572,15 @@ function DashMobileSearchableCombo (
                 }
             });
             self.input.on("input", function () {
+                // Since we're overriding the datalist's default filtering and
+                // that default filtering doesn't get delayed, delaying the
+                // custom filtering causes both default and custom filtering to
+                // occur, which is visibly noticeable. This doesn't appear to
+                // be necessary anyway for performance, so not a big deal.
+                // self.on_change();
+                self.filter_datalist();
                 if (self.on_change_cb) {
-                    self.on_change_cb(self.GetLabel());
+                    self.on_change_cb();
                 }
             });
             self.input.on("click", function (event, reclick=false) {
@@ -46346,15 +46593,20 @@ function DashMobileSearchableCombo (
                     // });
                     return;
                 }
-                setTimeout(
-                    function () {
-                        // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
-                        self.input.trigger("focus");
-                        self.input.trigger("click", [true]);
-                    },
-                    300
-                );
+                self.trigger_reclick();
             });
+        })(this);
+    };
+    this.trigger_reclick = function () {
+        (function (self) {
+            setTimeout(
+                function () {
+                    // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
+                    self.input.trigger("focus");
+                    self.input.trigger("click", [true]);
+                },
+                300
+            );
         })(this);
     };
     this.setup_styles();

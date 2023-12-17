@@ -13,10 +13,12 @@ function DashGuiInputBase (
     this.blur_enabled = null;
     this.last_submit_ts = null;
     this.skip_next_blur = false;
+    this.on_change_delay_ms = 0;
     this.html = $("<div></div>");
     this.autosave_timeout = null;
     this.autosave_delay_ms = 1500;
     this.last_submitted_text = "";
+    this.on_change_timeout = null;
     this.on_change_callback = null;
     this.on_submit_callback = null;
     this.skip_next_autosave = false;
@@ -36,6 +38,10 @@ function DashGuiInputBase (
 
     this.SetAutosaveDelayMs = function (ms) {
         this.autosave_delay_ms = parseInt(ms);
+    };
+
+    this.SetOnChangeDelayMs = function (ms) {
+        this.on_change_delay_ms = parseInt(ms);
     };
 
     this.EnableAutosave = function () {
@@ -203,12 +209,35 @@ function DashGuiInputBase (
         }
 
         else {
-            if (!this.on_change_callback) {
-                return;
-            }
-
-            this.on_change_callback();
+            this.attempt_on_change_callback();
         }
+    };
+
+    this.attempt_on_change_callback = function () {
+        if (!this.on_change_callback) {
+            return;
+        }
+
+        if (!this.on_change_delay_ms) {
+            this.on_change_callback();
+
+            return;
+        }
+
+        if (this.on_change_timeout) {
+            clearTimeout(this.on_change_timeout);
+
+            this.on_change_timeout = null;
+        }
+
+        (function (self) {
+            self.on_change_timeout = setTimeout(
+                function () {
+                    self.on_change_callback();
+                },
+                self.on_change_delay_ms
+            );
+        })(this);
     };
 
     // Fired on 'enter' or 'paste'
@@ -256,6 +285,12 @@ function DashGuiInputBase (
     };
 
     this.attempt_autosave = function () {
+        if (!this.autosave_delay_ms) {
+            this._attempt_autosave();
+
+            return;
+        }
+
         if (this.autosave_timeout) {
             clearTimeout(this.autosave_timeout);
 
