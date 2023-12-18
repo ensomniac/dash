@@ -217,6 +217,10 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             "font-size": "85%"
         };
 
+        if (Dash.IsMobile) {  // Desktop too?
+            iso_ts_css["text-wrap"] = "nowrap";
+        }
+
         var timestamp = this.iso_ts;
 
         if (Dash.DateTime.IsIsoFormat(timestamp)) {

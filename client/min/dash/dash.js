@@ -26299,7 +26299,9 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
         this.header.ReplaceBorderWithIcon(icon_name);
     };
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
+    this.AddMessage = function (
+        text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false
+    ) {
         text = text.trim();
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
@@ -27051,6 +27053,9 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
             // "height": this.iso_label_height,
             "font-size": "85%"
         };
+        if (Dash.IsMobile) {  // Desktop too?
+            iso_ts_css["text-wrap"] = "nowrap";
+        }
         var timestamp = this.iso_ts;
         if (Dash.DateTime.IsIsoFormat(timestamp)) {
             timestamp = Dash.DateTime.Readable(timestamp, false);
