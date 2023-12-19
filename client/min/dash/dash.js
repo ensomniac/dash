@@ -22285,6 +22285,15 @@ function DashDocsView (package_id, ext, color_options={}) {
         if (data === null) {
             data = this.data;
         }
+        if (!Dash.Validate.Object(this.data)) {
+            alert("Failed to get documentation data");
+            return;
+        }
+        if (this.data["error"]) {
+            alert("Failed to get documentation data, see console for error");
+            console.error("Error:", this.data["error"]);
+            return;
+        }
         for (var name in data) {
             if (name.endsWith("." + this.ext)) {
                 if (list === this.list) {
@@ -22378,6 +22387,15 @@ function DashDocsView (package_id, ext, color_options={}) {
         }
         else if (this.is_js) {
             this.data = response["front_end"];
+        }
+        if (!Dash.Validate.Object(this.data)) {
+            alert("Failed to get documentation data");
+            return;
+        }
+        if (this.data["error"]) {
+            alert("Failed to get documentation data, see console for error");
+            console.error("Error:", this.data["error"]);
+            return;
         }
         if (this.list) {
             this.add_list_rows();
