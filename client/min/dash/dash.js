@@ -17867,6 +17867,7 @@ $(document).on("ready", function () {
 });
 
 function DashGui () {
+    this.Alert                     = DashGuiAlert;
     this.Button                    = DashGuiButton;
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
@@ -19403,7 +19404,8 @@ function DashGuiPrompt (
      *
      * This a replacement for `window.confirm`.
      *
-     * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc), simply call `Show` as a last step.
+     * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc),
+     * simply call `Show` as a last step (it appears this may not be not necessary after all...).
      *
      * @param {function} bound_cb - Once a selection is made, this will receive the selected button index
      *                              (pre-bound because we have no use for a `binder` param)
@@ -19426,7 +19428,7 @@ function DashGuiPrompt (
     this.continue_text = continue_text;
     this.cancel_text = cancel_text;
     this.use_esc_and_enter_shortcuts = use_esc_and_enter_shortcuts;
-    Dash.Gui.Modal.call(
+    DashGuiModal.call(
         this,
         color || Dash.Color.Dark,
         $("body"),  // Window
@@ -19451,7 +19453,7 @@ function DashGuiPrompt (
         "color": this.color.StrokeDark,
         "font-family": "sans_serif_normal"
     };
-    // Delete inapplicable public functions from Dash.Gui.Modal to keep things clear
+    // Delete inapplicable public functions from DashGuiModal to keep things clear
     delete this.Hide;
     delete this.Remove;
     delete this.UpdateSize;
@@ -19624,6 +19626,41 @@ function DashGuiPrompt (
         this.shortcuts_active = true;
     };
     this.setup_styles();
+}
+
+function DashGuiAlert (
+    message, color=null, header_text="Alert", button_text="Dismiss", bound_cb=null,
+    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+) {
+    /**
+     * DashGuiAlert
+     * -------------
+     *
+     * This a replacement for `window.alert`, as an abstraction of DashGuiAlert.
+     *
+     * (Reference docstring of DashGuiPrompt for further info)
+     */
+    DashGuiPrompt.call(
+        this,
+        bound_cb ? function () {
+            bound_cb();  // Bypass params
+        } : null,
+        width || (Dash.Size.ColumnWidth * 2),
+        height || (Dash.Size.ColumnWidth * 1.5),
+        message,
+        header_text,
+        button_text,
+        "",
+        color,
+        include_bg,
+        bg_opacity,
+        use_esc_and_enter_shortcuts
+    );
+    this.RemoveCancelButton();
+    // Delete inapplicable public functions from DashGuiPrompt to keep things clear
+    delete this.AddButton;
+    delete this.RemoveCancelButton;
+    delete this.RemoveContinueButton;
 }
 
 function DashRequest () {
