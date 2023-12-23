@@ -174,7 +174,7 @@ class DashLocalStorage:
         missing = []
 
         for obj_id in os.listdir(store_root):
-            if str(obj_id).startswith("."):
+            if str(obj_id).startswith(".") or str(obj_id).startswith("_"):
                 continue
 
             record_path = self.GetRecordPath(obj_id)

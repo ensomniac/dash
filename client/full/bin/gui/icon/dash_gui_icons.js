@@ -202,6 +202,7 @@ function DashGuiIcons (icon) {
         "list_bulleted":         new DashGuiIconDefinition(this.icon, "Bulleted List", this.weight["regular"], "list"),
         "list_offset":           new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
+        "log_in":                new DashGuiIconDefinition(this.icon, "Log In", this.weight["regular"], "sign-in"),
         "log_out":               new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
         "magic_wand":            new DashGuiIconDefinition(this.icon, "Magic Wand", this.weight["solid"], "magic"),
         "map_marker":            new DashGuiIconDefinition(this.icon, "Map Marker", this.weight["regular"], "map-marker-alt"),

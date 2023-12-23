@@ -327,49 +327,102 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
 
-    this.SetTabAreaSize = function (size=null) {
-        if (size) {
+    this.SetTabAreaSize = function (size=null, anim_ms=0) {
+        if (size !== null) {
             this.tab_area_size = size;
         }
 
         if (this.side_tabs) {
-            this.content_area.css({
-                "left": this.tab_area_size
-            });
+            if (anim_ms) {
+                this.content_area.stop().animate(
+                    {"left": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_area.css({
-                "width": this.tab_area_size
-            });
+                this.tab_area.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_top.css({
-                "width": this.tab_area_size
-            });
+                this.tab_top.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_middle.css({
-                "width": this.tab_area_size
-            });
+                this.tab_middle.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_bottom.css({
-                "width": this.tab_area_size
-            });
+                this.tab_bottom.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
+            }
+
+            else {
+                this.content_area.css({
+                    "left": this.tab_area_size
+                });
+
+                this.tab_area.css({
+                    "width": this.tab_area_size
+                });
+
+                this.tab_top.css({
+                    "width": this.tab_area_size
+                });
+
+                this.tab_middle.css({
+                    "width": this.tab_area_size
+                });
+
+                this.tab_bottom.css({
+                    "width": this.tab_area_size
+                });
+            }
         }
 
         else {
-            this.list_backing.css({
-                "height": this.tab_area_size
-            });
+            if (anim_ms) {
+                this.list_backing.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_top.css({
-                "height": this.tab_area_size
-            });
+                this.tab_top.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.tab_bottom.css({
-                "height": this.tab_area_size
-            });
+                this.tab_bottom.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
 
-            this.content_area.css({
-                "top": this.tab_area_size
-            });
+                this.content_area.stop().animate(
+                    {"top": this.tab_area_size},
+                    anim_ms
+                );
+            }
+
+            else {
+                this.list_backing.css({
+                    "height": this.tab_area_size
+                });
+
+                this.tab_top.css({
+                    "height": this.tab_area_size
+                });
+
+                this.tab_bottom.css({
+                    "height": this.tab_area_size
+                });
+
+                this.content_area.css({
+                    "top": this.tab_area_size
+                });
+            }
         }
     };
 

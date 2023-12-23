@@ -19458,7 +19458,6 @@ function DashGuiPrompt (
     delete this.Remove;
     delete this.UpdateSize;
     delete this.SetParentHTML;
-    delete this.IncreaseZIndex;
     delete this.SetOnCloseCallback;
     this.setup_styles = function () {
         this.modal.css({
@@ -19537,12 +19536,24 @@ function DashGuiPrompt (
     };
     this.DisableRemoveOnSelection = function () {
         this.remove_on_selection = false;
+        // Make the remove call public again, since it now needs to be called manually
+        this.Remove = (function (self) {
+            return function () {
+                self.remove();
+            };
+        })(this);
     };
     this.DisableEscShortcut = function () {
         this.allow_esc_shortcut = false;
     };
     this.DisableEnterShortcut = function () {
         this.allow_enter_shortcut = false;
+    };
+    this.EnableEscShortcut = function () {
+        this.allow_esc_shortcut = true;
+    };
+    this.EnableEnterShortcut = function () {
+        this.allow_enter_shortcut = true;
     };
     this.on_selection = function (index) {
         // Because there can be more than the two default buttons, returning an
@@ -22747,10 +22758,10 @@ function DashGuiModal (
         }
     };
     // If you have multiple modals, or a modal alongside other elements that use
-    // modals or modal backgrounds, such as loading labels and loading overlays,
+    // modals or  modal backgrounds, such as loading labels and loading overlays,
     // you'll need to use this function to prioritize each one from top to bottom
     this.IncreaseZIndex = function (num) {
-        var z_index = this.background.css("z-index") + num;
+        var z_index = this.get_bg_z_index() + num;
         if (this.include_bg) {
             this.background.css({
                 "z-index": z_index
@@ -22802,7 +22813,7 @@ function DashGuiModal (
         }
         this.modal = Dash.Gui.GetHTMLBoxContext(
             {
-                "z-index": this.background.css("z-index") + 1,
+                "z-index": this.get_bg_z_index() + 1,
                 "position": "fixed",
                 "padding-bottom": 0,
                 "margin-left": this.parent_html ? this.get_left_margin(this.width, parent_width) : 0,
@@ -22867,7 +22878,7 @@ function DashGuiModal (
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
             "right": Dash.Size.Padding * 0.25,
-            "z-index": this.background.css("z-index") + 2
+            "z-index": this.get_bg_z_index() + 2
         });
         this.close_button.SetHoverHint("Close window (esc)");
         this.modal.append(this.close_button.html);
@@ -22892,7 +22903,7 @@ function DashGuiModal (
             "",
             this.color,
             {
-                "z-index": this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000,
+                "z-index": this.get_bg_z_index(),
                 "background": this.color.BackgroundRaised,
                 "opacity": this.bg_opacity,
                 "height": height
@@ -22905,6 +22916,11 @@ function DashGuiModal (
         if (this.parent_html) {
             this.parent_html.append(this.background);
         }
+    };
+    this.get_bg_z_index = function () {
+        return this.background ? this.background.css("z-index") : (
+            this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000
+        );
     };
     this.add_esc_shortcut = function () {
         if (!this.include_close_button || this.esc_shortcut_active) {
@@ -36841,6 +36857,7 @@ function DashGuiIcons (icon) {
         "list_bulleted":         new DashGuiIconDefinition(this.icon, "Bulleted List", this.weight["regular"], "list"),
         "list_offset":           new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                  new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
+        "log_in":                new DashGuiIconDefinition(this.icon, "Log In", this.weight["regular"], "sign-in"),
         "log_out":               new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
         "magic_wand":            new DashGuiIconDefinition(this.icon, "Magic Wand", this.weight["solid"], "magic"),
         "map_marker":            new DashGuiIconDefinition(this.icon, "Map Marker", this.weight["regular"], "map-marker-alt"),
@@ -38145,7 +38162,9 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
     this.setup_styles();
 }
 
-function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
+function DashGuiLoadingOverlay (
+    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
+) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;
     this.label_prefix = label_prefix;
@@ -39522,40 +39541,84 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.Prepend = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
         return this._add(label_text, content_div_html_class, this.tab_bottom, optional_args, additional_content_data);
     };
-    this.SetTabAreaSize = function (size=null) {
-        if (size) {
+    this.SetTabAreaSize = function (size=null, anim_ms=0) {
+        if (size !== null) {
             this.tab_area_size = size;
         }
         if (this.side_tabs) {
-            this.content_area.css({
-                "left": this.tab_area_size
-            });
-            this.tab_area.css({
-                "width": this.tab_area_size
-            });
-            this.tab_top.css({
-                "width": this.tab_area_size
-            });
-            this.tab_middle.css({
-                "width": this.tab_area_size
-            });
-            this.tab_bottom.css({
-                "width": this.tab_area_size
-            });
+            if (anim_ms) {
+                this.content_area.stop().animate(
+                    {"left": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_area.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_top.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_middle.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_bottom.stop().animate(
+                    {"width": this.tab_area_size},
+                    anim_ms
+                );
+            }
+            else {
+                this.content_area.css({
+                    "left": this.tab_area_size
+                });
+                this.tab_area.css({
+                    "width": this.tab_area_size
+                });
+                this.tab_top.css({
+                    "width": this.tab_area_size
+                });
+                this.tab_middle.css({
+                    "width": this.tab_area_size
+                });
+                this.tab_bottom.css({
+                    "width": this.tab_area_size
+                });
+            }
         }
         else {
-            this.list_backing.css({
-                "height": this.tab_area_size
-            });
-            this.tab_top.css({
-                "height": this.tab_area_size
-            });
-            this.tab_bottom.css({
-                "height": this.tab_area_size
-            });
-            this.content_area.css({
-                "top": this.tab_area_size
-            });
+            if (anim_ms) {
+                this.list_backing.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_top.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
+                this.tab_bottom.stop().animate(
+                    {"height": this.tab_area_size},
+                    anim_ms
+                );
+                this.content_area.stop().animate(
+                    {"top": this.tab_area_size},
+                    anim_ms
+                );
+            }
+            else {
+                this.list_backing.css({
+                    "height": this.tab_area_size
+                });
+                this.tab_top.css({
+                    "height": this.tab_area_size
+                });
+                this.tab_bottom.css({
+                    "height": this.tab_area_size
+                });
+                this.content_area.css({
+                    "top": this.tab_area_size
+                });
+            }
         }
     };
     this.init = function () {

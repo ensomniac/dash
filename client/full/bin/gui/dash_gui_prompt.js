@@ -67,7 +67,6 @@ function DashGuiPrompt (
     delete this.Remove;
     delete this.UpdateSize;
     delete this.SetParentHTML;
-    delete this.IncreaseZIndex;
     delete this.SetOnCloseCallback;
 
     this.setup_styles = function () {
@@ -167,6 +166,13 @@ function DashGuiPrompt (
 
     this.DisableRemoveOnSelection = function () {
         this.remove_on_selection = false;
+
+        // Make the remove call public again, since it now needs to be called manually
+        this.Remove = (function (self) {
+            return function () {
+                self.remove();
+            };
+        })(this);
     };
 
     this.DisableEscShortcut = function () {
@@ -175,6 +181,14 @@ function DashGuiPrompt (
 
     this.DisableEnterShortcut = function () {
         this.allow_enter_shortcut = false;
+    };
+
+    this.EnableEscShortcut = function () {
+        this.allow_esc_shortcut = true;
+    };
+
+    this.EnableEnterShortcut = function () {
+        this.allow_enter_shortcut = true;
     };
 
     this.on_selection = function (index) {

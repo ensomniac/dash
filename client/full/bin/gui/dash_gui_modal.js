@@ -92,10 +92,10 @@ function DashGuiModal (
     };
 
     // If you have multiple modals, or a modal alongside other elements that use
-    // modals or modal backgrounds, such as loading labels and loading overlays,
+    // modals or  modal backgrounds, such as loading labels and loading overlays,
     // you'll need to use this function to prioritize each one from top to bottom
     this.IncreaseZIndex = function (num) {
-        var z_index = this.background.css("z-index") + num;
+        var z_index = this.get_bg_z_index() + num;
 
         if (this.include_bg) {
             this.background.css({
@@ -164,7 +164,7 @@ function DashGuiModal (
 
         this.modal = Dash.Gui.GetHTMLBoxContext(
             {
-                "z-index": this.background.css("z-index") + 1,
+                "z-index": this.get_bg_z_index() + 1,
                 "position": "fixed",
                 "padding-bottom": 0,
                 "margin-left": this.parent_html ? this.get_left_margin(this.width, parent_width) : 0,
@@ -241,7 +241,7 @@ function DashGuiModal (
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
             "right": Dash.Size.Padding * 0.25,
-            "z-index": this.background.css("z-index") + 2
+            "z-index": this.get_bg_z_index() + 2
         });
 
         this.close_button.SetHoverHint("Close window (esc)");
@@ -274,7 +274,7 @@ function DashGuiModal (
             "",
             this.color,
             {
-                "z-index": this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000,
+                "z-index": this.get_bg_z_index(),
                 "background": this.color.BackgroundRaised,
                 "opacity": this.bg_opacity,
                 "height": height
@@ -289,6 +289,12 @@ function DashGuiModal (
         if (this.parent_html) {
             this.parent_html.append(this.background);
         }
+    };
+
+    this.get_bg_z_index = function () {
+        return this.background ? this.background.css("z-index") : (
+            this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000
+        );
     };
 
     this.add_esc_shortcut = function () {
