@@ -239,7 +239,7 @@ function DashGuiCheckbox (
         this.redraw();
     };
 
-    this.Disable = function (force=false) {
+    this.Disable = function (force=false, opacity=0.5) {
         if (!force && this.disabled) {
             return;
         }
@@ -248,7 +248,7 @@ function DashGuiCheckbox (
 
         if (this.label) {
             this.label.label.css({
-                "opacity": 0.5,
+                "opacity": opacity,
                 "pointer-events": "none",
                 "user-select": "none"
             });

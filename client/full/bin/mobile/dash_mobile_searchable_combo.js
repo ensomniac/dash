@@ -206,7 +206,7 @@ function DashMobileSearchableCombo (
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -214,7 +214,7 @@ function DashMobileSearchableCombo (
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });

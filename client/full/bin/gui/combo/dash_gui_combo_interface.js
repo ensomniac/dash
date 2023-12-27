@@ -323,7 +323,7 @@ function DashGuiComboInterface () {
         this.list_offset_vertical = offset;
     };
 
-    this.Disable = function (fade=true, hide_icon=false) {
+    this.Disable = function (fade=true, hide_icon=false, opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -335,7 +335,7 @@ function DashGuiComboInterface () {
         };
 
         if (fade) {
-            css["opacity"] = 0.5;
+            css["opacity"] = opacity;
         }
 
         this.html.css(css);

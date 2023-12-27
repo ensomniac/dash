@@ -17,7 +17,7 @@ function DashGuiInputRowInterface () {
         this.input.SetAutosaveDelayMs(ms);
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -25,7 +25,7 @@ function DashGuiInputRowInterface () {
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });

@@ -70,7 +70,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
         return this.signature.isEmpty();
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (!this.save_button) {
             (function (self) {
                 setTimeout(
@@ -86,9 +86,9 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
         this.signature.off();
 
-        this.save_button.Disable();
+        this.save_button.Disable(opacity);
 
-        this.clear_button.Disable();
+        this.clear_button.Disable(opacity);
     };
 
     this.Enable = function () {

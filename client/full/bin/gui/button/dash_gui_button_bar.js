@@ -54,9 +54,9 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         for (var button of this.buttons) {
-            this.buttons.Disable();
+            this.buttons.Disable(opacity);
         }
 
         this.disabled = true;

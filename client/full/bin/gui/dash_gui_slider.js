@@ -338,7 +338,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.fire_callback_on_up_instead_of_move = enabled;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         this.slider.css({
             "user-select": "none",
             "pointer-events": "none"
@@ -349,7 +349,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         }
 
         if (this.reset_button) {
-            this.reset_button.Disable();
+            this.reset_button.Disable(opacity);
         }
     };
 

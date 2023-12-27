@@ -164,7 +164,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.highlighted = highlighted;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -177,7 +177,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         });
 
         this.icon.html.css({
-            "opacity": 0.5
+            "opacity": opacity
         });
     };
 

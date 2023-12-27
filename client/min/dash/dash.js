@@ -23234,7 +23234,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.FireCallbackOnUpInsteadOfMove = function (enabled=true) {
         this.fire_callback_on_up_instead_of_move = enabled;
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         this.slider.css({
             "user-select": "none",
             "pointer-events": "none"
@@ -23243,7 +23243,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             this.value_label.SetLocked(true);
         }
         if (this.reset_button) {
-            this.reset_button.Disable();
+            this.reset_button.Disable(opacity);
         }
     };
     this.Enable = function () {
@@ -23827,14 +23827,14 @@ function DashGuiCheckbox (
         this.false_color = false_color;
         this.redraw();
     };
-    this.Disable = function (force=false) {
+    this.Disable = function (force=false, opacity=0.5) {
         if (!force && this.disabled) {
             return;
         }
         this.icon_button.Disable();
         if (this.label) {
             this.label.label.css({
-                "opacity": 0.5,
+                "opacity": opacity,
                 "pointer-events": "none",
                 "user-select": "none"
             });
@@ -24653,7 +24653,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
     this.IsEmpty = function () {
         return this.signature.isEmpty();
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (!this.save_button) {
             (function (self) {
                 setTimeout(
@@ -24666,8 +24666,8 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
             return;
         }
         this.signature.off();
-        this.save_button.Disable();
-        this.clear_button.Disable();
+        this.save_button.Disable(opacity);
+        this.clear_button.Disable(opacity);
     };
     this.Enable = function () {
         this.signature.on();
@@ -25339,9 +25339,9 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.auto_spacing_enabled = false;
         return this;
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         for (var button of this.buttons) {
-            this.buttons.Disable();
+            this.buttons.Disable(opacity);
         }
         this.disabled = true;
     };
@@ -25658,13 +25658,13 @@ function DashGuiButtonInterface () {
             });
         }
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -28588,7 +28588,7 @@ function DashGuiComboInterface () {
         }
         this.list_offset_vertical = offset;
     };
-    this.Disable = function (fade=true, hide_icon=false) {
+    this.Disable = function (fade=true, hide_icon=false, opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -28597,7 +28597,7 @@ function DashGuiComboInterface () {
             "pointer-events": "none"
         };
         if (fade) {
-            css["opacity"] = 0.5;
+            css["opacity"] = opacity;
         }
         this.html.css(css);
         if (hide_icon && this.dropdown_icon) {
@@ -37202,13 +37202,13 @@ function DashGuiInputBase (
         }
     };
     // Similar to SetLocked(true)
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.locked) {
             return;
         }
         this.SetLocked(true);
         this.html.css({
-            "opacity": 0.5
+            "opacity": opacity
         });
     };
     // Similar to SetLocked(false)
@@ -37835,13 +37835,13 @@ function DashGuiInputRowInterface () {
     this.SetAutosaveDelayMs = function (ms) {
         this.input.SetAutosaveDelayMs(ms);
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -38718,13 +38718,13 @@ function DashGuiPropertyBoxInterface () {
         this.update_combos();
         this.update_tool_rows();
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -42389,13 +42389,13 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             });
         }
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -43316,7 +43316,7 @@ function DashLayoutListRowInterface () {
         this.is_highlighted = false;
     };
     // For disabling all columns
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (!this.columns) {
             return;
         }
@@ -43333,14 +43333,14 @@ function DashLayoutListRowInterface () {
                     });
                 }
                 else if (type === "copy_buttons") {
-                    obj.button.Disable();
+                    obj.button.Disable(opacity);
                 }
                 else if (type.includes("button")) {
-                    obj.Disable();
+                    obj.Disable(opacity);
                 }
                 else if (type === "combos") {
                     obj.SetReadOnly(true);
-                    obj.Disable(false, true);
+                    obj.Disable(false, true, opacity);
                 }
                 else if (type === "inputs") {
                     obj.SetLocked(true);
@@ -46548,13 +46548,13 @@ function DashMobileSearchableCombo (
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
         this.disabled = true;
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -48011,7 +48011,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         }
         this.highlighted = highlighted;
     };
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -48021,7 +48021,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "user-select": "none"
         });
         this.icon.html.css({
-            "opacity": 0.5
+            "opacity": opacity
         });
     };
     this.Enable = function () {

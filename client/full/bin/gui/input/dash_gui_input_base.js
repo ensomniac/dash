@@ -94,7 +94,7 @@ function DashGuiInputBase (
     };
 
     // Similar to SetLocked(true)
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.locked) {
             return;
         }
@@ -102,7 +102,7 @@ function DashGuiInputBase (
         this.SetLocked(true);
 
         this.html.css({
-            "opacity": 0.5
+            "opacity": opacity
         });
     };
 

@@ -334,7 +334,7 @@ function DashLayoutListRowInterface () {
     };
 
     // For disabling all columns
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (!this.columns) {
             return;
         }
@@ -355,16 +355,16 @@ function DashLayoutListRowInterface () {
                 }
 
                 else if (type === "copy_buttons") {
-                    obj.button.Disable();
+                    obj.button.Disable(opacity);
                 }
 
                 else if (type.includes("button")) {
-                    obj.Disable();
+                    obj.Disable(opacity);
                 }
 
                 else if (type === "combos") {
                     obj.SetReadOnly(true);
-                    obj.Disable(false, true);
+                    obj.Disable(false, true, opacity);
                 }
 
                 else if (type === "inputs") {

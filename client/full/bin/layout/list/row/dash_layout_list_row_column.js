@@ -32,7 +32,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         }
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -40,7 +40,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
