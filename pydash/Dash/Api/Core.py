@@ -328,6 +328,9 @@ class ApiCore:
                 if stripped == "true" or stripped == "false":
                     value = stripped  # Otherwise, json.loads can't parse it properly
 
+                if (target_type is int or target_type is float) and stripped.startswith("0"):
+                    value = value.lstrip("0")
+
             value = json.loads(value)
 
             if set_param:
