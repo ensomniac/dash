@@ -322,14 +322,19 @@ class ApiCore:
 
             value = self._params[key]
 
-            if param_type is str:  # Extended bool handling
+            if param_type is str:
                 stripped = self._params[key].strip('"').strip("'").lower()
 
+                # Extended bool handling
                 if stripped == "true" or stripped == "false":
                     value = stripped  # Otherwise, json.loads can't parse it properly
 
-                if (target_type is int or target_type is float) and stripped.startswith("0"):
-                    value = value.lstrip("0")
+                # Extended number handling
+                if (target_type is int or target_type is float) and value.startswith("0") and len(value) > 1:
+                    if value.count("0") == len(value):
+                        value = "0"
+                    else:
+                        value = value.lstrip("0")
 
             value = json.loads(value)
 
