@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Candy 2023, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
-#             Andrew Stet astet@candy.com, stetandrew@gmail.com
+# Ensomniac 2024, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
+#                 Andrew Stet astet@candy.com, stetandrew@gmail.com
 
 import os
 import sys

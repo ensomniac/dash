@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# 2023 Ensomniac Ryan Martin, ryan@ensomniac.com
+# 2024 Ensomniac Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
