@@ -50,7 +50,9 @@ function DashGuiButtonInterface () {
         });
     };
 
-    this.StyleAsBorderButton = function (border_size=1, border_type="solid", border_color="", background="", highlight_color="") {
+    this.StyleAsBorderButton = function (
+        border_size=1, border_type="solid", border_color="", background="", highlight_color=""
+    ) {
         this.html.css({
             "border": border_size + "px " + border_type + " " + (
                    border_color
@@ -250,7 +252,8 @@ function DashGuiButtonInterface () {
         }
 
         if (!color) {
-            // (Only if 'color' is not already provided, since that's likely the opposite Dash color instance to combat this issue)
+            // (Only if 'color' is not already provided, since that's likely
+            // the opposite Dash color instance to combat this issue)
             // It seemed like virtually every time I added loading dots to a button with this function,
             // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
             // since the text color will obviously be something that's visible against the button
@@ -400,5 +403,43 @@ function DashGuiButtonInterface () {
         }
 
         this.label_shown = true;
+    };
+
+    this.AddIcon = function (icon_name, icon_size_mult=0.75, icon_color=null, right=true) {
+        var side = right ? "right" : "left";
+
+        this.html.css({
+            "display": "flex"
+        });
+
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            icon_name,
+            this.html.height(),
+            icon_size_mult,
+            icon_color || this.color_set.Text.Base
+        );
+
+        var html_css = {};
+        var icon_css = {};
+        var min_pad = Dash.Size.Padding * 0.5;
+        var side_padding = parseInt(this.html.css("padding-" + side));
+
+        icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+
+        icon.html.css(icon_css);
+
+        html_css["padding-" + side] = side_padding > min_pad ? min_pad : 0;
+
+        this.html.css(html_css);
+        this.html.append(icon.html);
+
+        if (!right){
+            this.label.detach();
+
+            this.html.append(this.label);
+        }
+
+        return icon;
     };
 }
