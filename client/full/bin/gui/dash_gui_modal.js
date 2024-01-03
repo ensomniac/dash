@@ -84,10 +84,28 @@ function DashGuiModal (
     };
 
     this.Remove = function () {
-        this.modal.remove();
+        (function (self) {
+            self.modal.stop().animate(
+                {"opacity": 0},
+                {
+                    "complete": function () {
+                        self.modal.remove();
+                    }
+                }
+            );
+        })(this);
 
         if (this.background) {
-            this.background.remove();
+            (function (self) {
+                self.background.stop().animate(
+                    {"opacity": 0},
+                    {
+                        "complete": function () {
+                            self.background.remove();
+                        }
+                    }
+                );
+            })(this);
         }
     };
 

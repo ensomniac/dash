@@ -292,7 +292,7 @@ function DashFile () {
     };
 
     // Basic version
-    this.GetImagePreview = function (url, height, width=null) {
+    this.GetImagePreview = function (url, height=null, width=null) {
         var html = $("<div></div>");
 
         var css = {

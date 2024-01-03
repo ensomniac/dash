@@ -290,6 +290,14 @@ function DashGuiPrompt (
                     }
                 }
             );
+
+            self.background.on("click", function () {
+                if (self.allow_esc_shortcut) {
+                    console.log("(Background clicked) Cancel");
+
+                    self.on_selection(0);
+                }
+            });
         })(this);
 
         this.shortcuts_active = true;

@@ -18990,7 +18990,7 @@ function DashFile () {
         return this.set_preview_size(html, height, "100%");
     };
     // Basic version
-    this.GetImagePreview = function (url, height, width=null) {
+    this.GetImagePreview = function (url, height=null, width=null) {
         var html = $("<div></div>");
         var css = {
             "background-image": url ? "url(" + url + ")" : "",
@@ -19633,6 +19633,12 @@ function DashGuiPrompt (
                     }
                 }
             );
+            self.background.on("click", function () {
+                if (self.allow_esc_shortcut) {
+                    console.log("(Background clicked) Cancel");
+                    self.on_selection(0);
+                }
+            });
         })(this);
         this.shortcuts_active = true;
     };
@@ -22752,9 +22758,27 @@ function DashGuiModal (
         this.add_esc_shortcut();
     };
     this.Remove = function () {
-        this.modal.remove();
+        (function (self) {
+            self.modal.stop().animate(
+                {"opacity": 0},
+                {
+                    "complete": function () {
+                        self.modal.remove();
+                    }
+                }
+            );
+        })(this);
         if (this.background) {
-            this.background.remove();
+            (function (self) {
+                self.background.stop().animate(
+                    {"opacity": 0},
+                    {
+                        "complete": function () {
+                            self.background.remove();
+                        }
+                    }
+                );
+            })(this);
         }
     };
     // If you have multiple modals, or a modal alongside other elements that use
