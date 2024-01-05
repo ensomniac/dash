@@ -32,6 +32,7 @@ function DashGuiCheckbox (
     this.true_icon_name = "checked_box";
     this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
+    this.icon_container_size = Dash.Size.RowHeight;
 
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
@@ -39,7 +40,7 @@ function DashGuiCheckbox (
 
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.RowHeight
+            "height": this.icon_container_size
         });
 
         this.draw_label();
@@ -70,10 +71,18 @@ function DashGuiCheckbox (
         return this;
     };
 
-    this.SetIconSize = function (percentage_number) {
-        this.icon_size = percentage_number;
+    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+        this.icon_size = icon_size_percent_num;
 
-        this.icon_button.SetIconSize(percentage_number);
+        if (container_size) {
+            this.icon_container_size = container_size;
+
+            this.html.css({
+                "height": this.icon_container_size
+            });
+        }
+
+        this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
 
         return this;
     };
@@ -221,10 +230,10 @@ function DashGuiCheckbox (
     };
 
     // Should this just be the default?
-    this.AddHighlight = function (bottom=null) {
+    this.AddHighlight = function (bottom=null, force_in_container=false) {
         this.include_highlight = true;
 
-        this.icon_button.AddHighlight();
+        this.icon_button.AddHighlight(force_in_container);
 
         this.icon_button.highlight.css({
             "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
@@ -299,7 +308,7 @@ function DashGuiCheckbox (
                 },
                 self,
                 self.color,
-                {"container_size": Dash.Size.RowHeight}
+                {"container_size": self.icon_container_size}
             );
         })(this);
 

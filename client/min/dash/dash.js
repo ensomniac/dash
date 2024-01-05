@@ -23701,12 +23701,13 @@ function DashGuiCheckbox (
     this.true_icon_name = "checked_box";
     this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
+    this.icon_container_size = Dash.Size.RowHeight;
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
         this.html = $("<div></div>");
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.RowHeight
+            "height": this.icon_container_size
         });
         this.draw_label();
         this.redraw();
@@ -23727,9 +23728,15 @@ function DashGuiCheckbox (
         this.icon_button.AddIconShadow(shadow);
         return this;
     };
-    this.SetIconSize = function (percentage_number) {
-        this.icon_size = percentage_number;
-        this.icon_button.SetIconSize(percentage_number);
+    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+        this.icon_size = icon_size_percent_num;
+        if (container_size) {
+            this.icon_container_size = container_size;
+            this.html.css({
+                "height": this.icon_container_size
+            });
+        }
+        this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
         return this;
     };
     this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
@@ -23838,9 +23845,9 @@ function DashGuiCheckbox (
         this.restyle_icon_button();
     };
     // Should this just be the default?
-    this.AddHighlight = function (bottom=null) {
+    this.AddHighlight = function (bottom=null, force_in_container=false) {
         this.include_highlight = true;
-        this.icon_button.AddHighlight();
+        this.icon_button.AddHighlight(force_in_container);
         this.icon_button.highlight.css({
             "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
         });
@@ -23900,7 +23907,7 @@ function DashGuiCheckbox (
                 },
                 self,
                 self.color,
-                {"container_size": Dash.Size.RowHeight}
+                {"container_size": self.icon_container_size}
             );
         })(this);
         this.icon_button.SetHoverHint(this.hover_hint);
@@ -25465,8 +25472,14 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.SetColor(color);
         return this;
     };
-    this.SetIconSize = function (percentage_number) {
-        this.icon.SetSize(percentage_number);
+    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+        if (container_size) {
+            this.icon_height = container_size;
+            this.html.css({
+                "height": this.icon_height
+            });
+        }
+        this.icon.SetSize(icon_size_percent_num, container_size);
         this.update_container_size();
         return this;
     };
@@ -36636,7 +36649,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "margin": 0,
             "padding": 0,
             "cursor": "pointer",  // TODO: why is this the default?
-            "-webkit-user-select": "none"
+            "user-select": "none"
         });
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
@@ -36657,14 +36670,34 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html = icon_html;
         return this;
     };
-    this.SetSize = function (percentage_number) {
-        percentage_number = parseInt(percentage_number);
-        if (isNaN(percentage_number)) {
-            console.error("Error: DashGuiIcon SetSize requires a number (that represents a percentage)");
+    this.SetSize = function (icon_size_percent_num, container_size=null) {
+        if (container_size) {
+            container_size = parseInt(container_size);
+            if (isNaN(container_size)) {
+                console.warn(
+                    "Warning: DashGuiIcon SetSize requires a number for " +
+                    "container_size_percent_num (that represents a percentage)"
+                );
+            }
+            else {
+                this.size = container_size;
+                this.html.css({
+                    "width": this.size,
+                    "height": this.size
+                });
+                this.icon_html.css(this.icon_definition.get_css());
+            }
+        }
+        icon_size_percent_num = parseInt(icon_size_percent_num);
+        if (isNaN(icon_size_percent_num)) {
+            console.error(
+                "Error: DashGuiIcon SetSize requires a number for " +
+                "icon_size_percent_num (that represents a percentage)"
+            );
             return;
         }
         this.icon_html.css({
-            "font-size": percentage_number.toString() + "%"
+            "font-size": icon_size_percent_num.toString() + "%"
         });
         return this;
     };
