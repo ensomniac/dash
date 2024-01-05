@@ -150,9 +150,11 @@ function DashGuiInputBase (
         this.on_change_callback = binder && callback ? callback.bind(binder) : callback;
     };
 
-    this.SetOnAutosave = function (callback=null, binder=null) {
-        // This should be the default, but don't want to break anything
-        // this.EnableAutosave();
+    this.SetOnAutosave = function (callback=null, binder=null, enable=false) {
+        if (enable) {
+            // This should be the default, but don't want to break anything that existed before this
+            this.EnableAutosave();
+        }
 
         this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };

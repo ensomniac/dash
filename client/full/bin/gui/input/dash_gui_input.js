@@ -68,17 +68,17 @@ function DashGuiInput (placeholder_text="", color=null) {
         return this;
     };
 
-    // DEPRECATED
+    // DEPRECATED - Use SetOnChange instead
     this.OnChange = function (callback, bind_to) {
         this.SetOnChange(callback, bind_to);
     };
 
-    // DEPRECATED
+    // DEPRECATED - Use SetOnAutosave instead
     this.OnAutosave = function (callback, bind_to) {
         this.SetOnAutosave(callback, bind_to);
     };
 
-    // DEPRECATED
+    // DEPRECATED - Use SetOnSubmit instead
     this.OnSubmit = function (callback, bind_to) {
         this.SetOnSubmit(callback, bind_to);
     };

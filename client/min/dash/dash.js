@@ -37140,15 +37140,15 @@ function DashGuiInput (placeholder_text="", color=null) {
         }
         return this;
     };
-    // DEPRECATED
+    // DEPRECATED - Use SetOnChange instead
     this.OnChange = function (callback, bind_to) {
         this.SetOnChange(callback, bind_to);
     };
-    // DEPRECATED
+    // DEPRECATED - Use SetOnAutosave instead
     this.OnAutosave = function (callback, bind_to) {
         this.SetOnAutosave(callback, bind_to);
     };
-    // DEPRECATED
+    // DEPRECATED - Use SetOnSubmit instead
     this.OnSubmit = function (callback, bind_to) {
         this.SetOnSubmit(callback, bind_to);
     };
@@ -37301,9 +37301,11 @@ function DashGuiInputBase (
     this.SetOnChange = function (callback=null, binder=null) {
         this.on_change_callback = binder && callback ? callback.bind(binder) : callback;
     };
-    this.SetOnAutosave = function (callback=null, binder=null) {
-        // This should be the default, but don't want to break anything
-        // this.EnableAutosave();
+    this.SetOnAutosave = function (callback=null, binder=null, enable=false) {
+        if (enable) {
+            // This should be the default, but don't want to break anything that existed before this
+            this.EnableAutosave();
+        }
         this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };
     this.SetOnSubmit = function (callback=null, binder=null) {
