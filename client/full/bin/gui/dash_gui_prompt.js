@@ -1,6 +1,6 @@
 function DashGuiPrompt (
     bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
 ) {
     /**
      * DashGuiPrompt
@@ -25,6 +25,7 @@ function DashGuiPrompt (
      * @param {boolean} use_esc_and_enter_shortcuts - Add an `Esc` key shortcut that maps to the default `Cancel` button
      *                                                and an `Enter` key shortcut that maps to the default `Continue` button
      *                                                (applicable only when using the default two buttons)
+     * @param {string} bg_color - Color for background overlay
      */
 
     this.bound_cb = bound_cb;
@@ -42,7 +43,8 @@ function DashGuiPrompt (
         height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
         include_bg,
         bg_opacity,
-        false
+        false,
+        bg_color
     );
 
     this.header = null;

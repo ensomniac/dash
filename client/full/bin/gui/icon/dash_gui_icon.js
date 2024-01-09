@@ -57,15 +57,12 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         return this;
     };
 
-    this.SetSize = function (icon_size_percent_num, container_size=null) {
+    this.SetSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
         if (container_size) {
-            container_size = parseInt(container_size);
+            container_size = enforce_container_size_num ? parseInt(container_size) : container_size;
 
-            if (isNaN(container_size)) {
-                console.warn(
-                    "Warning: DashGuiIcon SetSize requires a number for " +
-                    "container_size_percent_num (that represents a percentage)"
-                );
+            if (enforce_container_size_num && isNaN(container_size)) {
+                console.warn("Warning: DashGuiIcon SetSize requires a number for container_size");
             }
 
             else {

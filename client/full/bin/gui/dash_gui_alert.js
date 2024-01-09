@@ -1,6 +1,6 @@
 function DashGuiAlert (
     message, color=null, header_text="Alert", button_text="Dismiss", bound_cb=null,
-    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
 ) {
     /**
      * DashGuiAlert
@@ -25,7 +25,8 @@ function DashGuiAlert (
         color,
         include_bg,
         bg_opacity,
-        use_esc_and_enter_shortcuts
+        use_esc_and_enter_shortcuts,
+        bg_color
     );
 
     this.RemoveCancelButton();

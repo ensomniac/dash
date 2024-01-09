@@ -19396,7 +19396,7 @@ function DashRegEx () {
 
 function DashGuiPrompt (
     bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
 ) {
     /**
      * DashGuiPrompt
@@ -19421,6 +19421,7 @@ function DashGuiPrompt (
      * @param {boolean} use_esc_and_enter_shortcuts - Add an `Esc` key shortcut that maps to the default `Cancel` button
      *                                                and an `Enter` key shortcut that maps to the default `Continue` button
      *                                                (applicable only when using the default two buttons)
+     * @param {string} bg_color - Color for background overlay
      */
     this.bound_cb = bound_cb;
     this.message = message;
@@ -19436,7 +19437,8 @@ function DashGuiPrompt (
         height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
         include_bg,
         bg_opacity,
-        false
+        false,
+        bg_color
     );
     this.header = null;
     this.button_bar = null;
@@ -19647,7 +19649,7 @@ function DashGuiPrompt (
 
 function DashGuiAlert (
     message, color=null, header_text="Alert", button_text="Dismiss", bound_cb=null,
-    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
 ) {
     /**
      * DashGuiAlert
@@ -19671,7 +19673,8 @@ function DashGuiAlert (
         color,
         include_bg,
         bg_opacity,
-        use_esc_and_enter_shortcuts
+        use_esc_and_enter_shortcuts,
+        bg_color
     );
     this.RemoveCancelButton();
     // Delete inapplicable public functions from DashGuiPrompt to keep things clear
@@ -22694,7 +22697,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 /**@member DashGuiPrompt*/
 function DashGuiModal (
     color=null, parent_html=null, width=null, height=null,
-    include_bg=true, bg_opacity=0.6, include_close_button=true
+    include_bg=true, bg_opacity=0.6, include_close_button=true, bg_color=null
 ) {
     this.parent_html = parent_html;
     this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
@@ -22703,6 +22706,7 @@ function DashGuiModal (
     this.bg_opacity = bg_opacity;
     this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
+    this.bg_color = bg_color || this.color.BackgroundRaised;
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
     // 'this.parent_html' essentially being the equivalent of the usual 'this.html'.
@@ -22928,7 +22932,7 @@ function DashGuiModal (
             this.color,
             {
                 "z-index": this.get_bg_z_index(),
-                "background": this.color.BackgroundRaised,
+                "background": this.bg_color,
                 "opacity": this.bg_opacity,
                 "height": height
             }
@@ -36670,14 +36674,11 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html = icon_html;
         return this;
     };
-    this.SetSize = function (icon_size_percent_num, container_size=null) {
+    this.SetSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
         if (container_size) {
-            container_size = parseInt(container_size);
-            if (isNaN(container_size)) {
-                console.warn(
-                    "Warning: DashGuiIcon SetSize requires a number for " +
-                    "container_size_percent_num (that represents a percentage)"
-                );
+            container_size = enforce_container_size_num ? parseInt(container_size) : container_size;
+            if (enforce_container_size_num && isNaN(container_size)) {
+                console.warn("Warning: DashGuiIcon SetSize requires a number for container_size");
             }
             else {
                 this.size = container_size;
@@ -36844,6 +36845,7 @@ function DashGuiIcons (icon) {
         "circle":                  new DashGuiIconDefinition(this.icon, "Circle", this.weight["regular"], "circle"),
         "circle_dot":              new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
         "circle_arrow_right":      new DashGuiIconDefinition(this.icon, "Circle Arrow (Right)", this.weight["solid"], "chevron-circle-right"),
+        "click":                   new DashGuiIconDefinition(this.icon, "Click", this.weight["regular"], "bullseye-pointer"),
         "clipboard":               new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
         "cloud_logs":              new DashGuiIconDefinition(this.icon, "Cloud Logs", this.weight["regular"], "fog"),
         "clone":                   new DashGuiIconDefinition(this.icon, "Clone", this.weight["regular"], "clone"),

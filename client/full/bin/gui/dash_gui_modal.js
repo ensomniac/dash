@@ -2,7 +2,7 @@
 
 function DashGuiModal (
     color=null, parent_html=null, width=null, height=null,
-    include_bg=true, bg_opacity=0.6, include_close_button=true
+    include_bg=true, bg_opacity=0.6, include_close_button=true, bg_color=null
 ) {
     this.parent_html = parent_html;
     this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
@@ -11,6 +11,7 @@ function DashGuiModal (
     this.bg_opacity = bg_opacity;
     this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
+    this.bg_color = bg_color || this.color.BackgroundRaised;
 
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
@@ -293,7 +294,7 @@ function DashGuiModal (
             this.color,
             {
                 "z-index": this.get_bg_z_index(),
-                "background": this.color.BackgroundRaised,
+                "background": this.bg_color,
                 "opacity": this.bg_opacity,
                 "height": height
             }
