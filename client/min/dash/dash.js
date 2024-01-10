@@ -36779,6 +36779,8 @@ function DashGuiIcons (icon) {
         "arrow_left_heavy":        new DashGuiIconDefinition(this.icon, "Arrow Left (Heavy)", this.weight["solid"], "angle-left"),
         "arrow_left_alt":          new DashGuiIconDefinition(this.icon, "Arrow Left Alt", this.weight["regular"], "arrow-left"),
         "arrow_left_alt_heavy":    new DashGuiIconDefinition(this.icon, "Arrow Left Alt (Heavy)", this.weight["solid"], "arrow-left"),
+        "arrow_left_alt2":         new DashGuiIconDefinition(this.icon, "Arrow Left Alt 2", this.weight["regular"], "chevron-left"),
+        "arrow_left_alt2_heavy":   new DashGuiIconDefinition(this.icon, "Arrow Left Alt 2 (Heavy)", this.weight["solid"], "chevron-left"),
         "arrow_left_long":         new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
         "arrow_left_circled":      new DashGuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
         "arrow_left_from_right":   new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
