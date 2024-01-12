@@ -410,11 +410,7 @@ function DashLayoutToolbarInterface () {
             // This really shouldn't be default behavior, but leaving
             // the default as true to ensure nothing breaks
             if (double_click_clear) {
-                input.input.on("dblclick", function () {
-                    input.SetText("");
-
-                    self.on_input_changed(obj_index);
-                });
+                input.EnableDoubleClickClear();
             }
         })(this, input, obj_index, obj);
 

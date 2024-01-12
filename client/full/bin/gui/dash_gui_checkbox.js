@@ -179,6 +179,11 @@ function DashGuiCheckbox (
         this.icon_button.RefreshConnections();
     };
 
+    // Wrapper
+    this.RefreshConnections = function () {
+        this.EnableClick();
+    };
+
     this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
         if (this.toggle_confirmation_msg) {
             if (!window.confirm(this.toggle_confirmation_msg)) {

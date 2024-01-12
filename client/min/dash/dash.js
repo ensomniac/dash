@@ -23811,6 +23811,10 @@ function DashGuiCheckbox (
         this.can_click = true;
         this.icon_button.RefreshConnections();
     };
+    // Wrapper
+    this.RefreshConnections = function () {
+        this.EnableClick();
+    };
     this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
         if (this.toggle_confirmation_msg) {
             if (!window.confirm(this.toggle_confirmation_msg)) {
@@ -37244,6 +37248,7 @@ function DashGuiInputBase (
     this.on_autosave_callback = null;
     this.previous_submitted_text = "";
     this.last_arrow_navigation_ts = null;
+    this.allow_double_click_clear = false;
     this.submit_called_from_autosave = false;
     this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
     this.Flatten = function () {
@@ -37358,7 +37363,11 @@ function DashGuiInputBase (
         this.input.off("click");
         this.input.off("blur");
         this.input.off("keyup click");
+        this.input.off("dblclick");
         this.setup_connections();
+    };
+    this.EnableDoubleClickClear = function () {
+        this.allow_double_click_clear = true;
     };
     // Intended to be overwritten
     this.parse_value = function (text) {
@@ -37523,6 +37532,13 @@ function DashGuiInputBase (
                     self.on_change();
                 });
             }
+            self.input.on("dblclick", function () {
+                if (!self.allow_double_click_clear) {
+                    return;
+                }
+                self.SetText("");
+                self.on_change();
+            });
         })(this);
         this.EnableBlurSubmit();
     };
@@ -45301,10 +45317,7 @@ function DashLayoutToolbarInterface () {
             // This really shouldn't be default behavior, but leaving
             // the default as true to ensure nothing breaks
             if (double_click_clear) {
-                input.input.on("dblclick", function () {
-                    input.SetText("");
-                    self.on_input_changed(obj_index);
-                });
+                input.EnableDoubleClickClear();
             }
         })(this, input, obj_index, obj);
         this.html.append(input.html);

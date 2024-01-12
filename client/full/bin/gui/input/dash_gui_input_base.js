@@ -25,6 +25,7 @@ function DashGuiInputBase (
     this.on_autosave_callback = null;
     this.previous_submitted_text = "";
     this.last_arrow_navigation_ts = null;
+    this.allow_double_click_clear = false;
     this.submit_called_from_autosave = false;
     this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
 
@@ -174,8 +175,13 @@ function DashGuiInputBase (
         this.input.off("click");
         this.input.off("blur");
         this.input.off("keyup click");
+        this.input.off("dblclick");
 
         this.setup_connections();
+    };
+
+    this.EnableDoubleClickClear = function () {
+        this.allow_double_click_clear = true;
     };
 
     // Intended to be overwritten
@@ -386,6 +392,16 @@ function DashGuiInputBase (
                     self.on_change();
                 });
             }
+
+            self.input.on("dblclick", function () {
+                if (!self.allow_double_click_clear) {
+                    return;
+                }
+
+                self.SetText("");
+
+                self.on_change();
+            });
         })(this);
 
         this.EnableBlurSubmit();
