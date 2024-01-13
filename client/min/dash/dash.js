@@ -27269,7 +27269,9 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.setup_styles();
 }
 
-function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
+function DashGuiCombo (
+    label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false
+) {
     this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
     this.callback = callback.bind(binder);
     this.binder = binder;
@@ -28638,10 +28640,10 @@ function DashGuiComboInterface () {
         this.label.text(this.static_label_text);
     };
     this.SetOnRowsDrawnCallback = function (callback) {
-        this.on_rows_drawn_cb = callback.bind(this.binder);
+        this.on_rows_drawn_cb = this.binder ? callback.bind(this.binder) : callback;
     };
     this.SetOnClickCallback = function (callback) {
-        this.on_click_cb = callback.bind(this.binder);
+        this.on_click_cb = this.binder ? callback.bind(this.binder) : callback;
     };
     this.SetGravityHeightOverride = function (value) {
         this.gravity_height_override = value;

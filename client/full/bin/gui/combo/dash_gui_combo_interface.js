@@ -288,11 +288,11 @@ function DashGuiComboInterface () {
     };
 
     this.SetOnRowsDrawnCallback = function (callback) {
-        this.on_rows_drawn_cb = callback.bind(this.binder);
+        this.on_rows_drawn_cb = this.binder ? callback.bind(this.binder) : callback;
     };
 
     this.SetOnClickCallback = function (callback) {
-        this.on_click_cb = callback.bind(this.binder);
+        this.on_click_cb = this.binder ? callback.bind(this.binder) : callback;
     };
 
     this.SetGravityHeightOverride = function (value) {

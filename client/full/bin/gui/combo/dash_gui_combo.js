@@ -1,4 +1,6 @@
-function DashGuiCombo (label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false) {
+function DashGuiCombo (
+    label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false
+) {
     this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
     this.callback = callback.bind(binder);
     this.binder = binder;
