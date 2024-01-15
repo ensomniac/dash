@@ -15,7 +15,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         return this;
     };
 
-    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+    this.SetIconSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
         if (container_size) {
             this.icon_height = container_size;
 
@@ -24,7 +24,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             });
         }
 
-        this.icon.SetSize(icon_size_percent_num, container_size);
+        this.icon.SetSize(icon_size_percent_num, container_size, enforce_container_size_num);
 
         this.update_container_size();
 

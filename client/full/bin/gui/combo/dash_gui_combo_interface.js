@@ -307,6 +307,10 @@ function DashGuiComboInterface () {
         this.gravity_value_override = value;
     };
 
+    this.SetGravityParentOverride = function (html) {
+        this.gravity_parent_override = html;
+    };
+
     this.DisableAutoGravity = function () {
         this.auto_gravity = false;
     };

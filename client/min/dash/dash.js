@@ -25480,14 +25480,14 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.icon.SetColor(color);
         return this;
     };
-    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+    this.SetIconSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
         if (container_size) {
             this.icon_height = container_size;
             this.html.css({
                 "height": this.icon_height
             });
         }
-        this.icon.SetSize(icon_size_percent_num, container_size);
+        this.icon.SetSize(icon_size_percent_num, container_size, enforce_container_size_num);
         this.update_container_size();
         return this;
     };
@@ -27273,7 +27273,7 @@ function DashGuiCombo (
     label, callback, binder, option_list, selected_option_id, color=null, options={}, bool=false
 ) {
     this.name = label;  // Unused (except in multi-select mode, for which it's now been repurposed)
-    this.callback = callback.bind(binder);
+    this.callback = binder ? callback.bind(binder) : callback;
     this.binder = binder;
     this.option_list = option_list;
     this.selected_option_id = selected_option_id;
@@ -27295,8 +27295,10 @@ function DashGuiCombo (
     this.flash_enabled = true;
     this.gravity_vertical = 0;
     this.skirt_overrides = {};  // See draw_click_skirt on usage
+    this.last_rows_height = 0;
     this.is_searchable = false;
     this.search_set_up = false;
+    this.last_total_height = 0;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
@@ -27314,6 +27316,7 @@ function DashGuiCombo (
     this.gravity_value_override = null;
     this.color_set = this.color.Button;
     this.arrow_buttons_inverted = false;
+    this.gravity_parent_override = null;
     this.gravity_height_override = null;
     this.previous_selected_option = null;
     this.height = Dash.Size.ButtonHeight;
@@ -27456,15 +27459,23 @@ function DashGuiCombo (
     };
     // Trim the skirts if they extend beyond the window size (for divs that don't manage their overflow)
     this.trim_skirt_panel = function (panel) {
-        if ((panel.offset().left + panel.width()) > window.innerWidth) {
+        var width = this.gravity_parent_override ? this.gravity_parent_override.innerWidth() : window.innerWidth;
+        var height = this.gravity_parent_override ? this.gravity_parent_override.innerHeight() : window.innerHeight;
+        var top_offset = panel.offset().top - (
+            this.gravity_parent_override ? this.gravity_parent_override.offset().top : 0
+        );
+        var left_offset = panel.offset().left - (
+            this.gravity_parent_override ? this.gravity_parent_override.offset().left : 0
+        );
+        if ((left_offset + panel.width()) > width) {
             panel.css({
                 // Remaining space - the rough width of a scrollbar in case there is one
-                "width": Math.floor(window.innerWidth - panel.offset().left) - (Dash.Size.Padding * 2)
+                "width": Math.floor(width - left_offset) - (Dash.Size.Padding * 2)
             });
         }
-        if ((panel.offset().top + panel.height()) > window.innerHeight) {
+        if ((top_offset + panel.height()) > height) {
             panel.css({
-                "height": Math.floor(window.innerHeight - panel.offset().top)
+                "height": Math.floor(height - top_offset)
             });
         }
     };
@@ -27653,19 +27664,33 @@ function DashGuiCombo (
     this.determine_gravity = function (end_height) {
         var gravity = null;
         var offset_added = false;
-        var total_height = this.html.offset().top + this.html.height() + end_height;
+        var top_offset = this.html.offset().top - (
+            this.gravity_parent_override ? this.gravity_parent_override.offset().top : 0
+        );
+        var left_offset = this.html.offset().left - (
+            this.gravity_parent_override ? this.gravity_parent_override.offset().left : 0
+        );
+        this.last_total_height = top_offset + this.html.height() + end_height;
+        var height_override = (
+               this.gravity_height_override
+            || (this.gravity_parent_override ? this.gravity_parent_override.innerHeight() : window.innerHeight)
+        );
         this.gravity_vertical = 0;
         this.gravity_horizontal = 0;
         // Expand the combo upwards if not enough room below
-        if (this.auto_gravity && total_height > (this.gravity_height_override || window.innerHeight)) {
+        if (this.auto_gravity && this.last_total_height > height_override) {
             // As long as there's enough room above
-            if (end_height < this.html.offset().top) {
+            if (end_height < top_offset) {
                 gravity = this.html.height() - end_height;
             }
             // Otherwise, if there's enough room on screen, raise it up enough to not cause overflow
             else {
-                if (end_height < (this.gravity_height_override || window.innerHeight)) {
-                    gravity = -(Math.floor(total_height - this.html.height() - (this.gravity_height_override || window.innerHeight)));
+                if (end_height < height_override) {
+                    gravity = -(Math.floor(
+                          this.last_total_height
+                        - this.html.height()
+                        - height_override
+                    ));
                 }
             }
             if (gravity !== null) {
@@ -27676,12 +27701,21 @@ function DashGuiCombo (
                 offset_added = true;
             }
         }
-        // If the row list width is wider than this.html (assuming this.html is deliberately placed/contained on the page)
+        // If the row list width is wider than this.html (assuming
+        // this.html is deliberately placed/contained on the page)
         if (this.auto_gravity && this.rows.width() > this.html.width()) {
-            // Expand the combo to the left if not enough room on the right
-            if ((this.html.offset().left + this.html.width() + this.rows.width()) > (this.gravity_width_override || window.innerWidth)) {
+            if (  // Expand the combo to the left if not enough room on the right
+                (
+                      left_offset
+                    + this.html.width()
+                    + this.rows.width()
+                ) > (
+                       this.gravity_width_override
+                    || (this.gravity_parent_override ? this.gravity_parent_override.innerWidth() : window.innerWidth)
+                )
+            ) {
                 // As long as there's enough room to the left
-                if (this.rows.width() < this.html.offset().left) {
+                if (this.rows.width() < left_offset) {
                     gravity = this.html.width() - this.rows.width();
                     this.gravity_horizontal = Math.abs(gravity);
                     this.rows.css({
@@ -27718,14 +27752,14 @@ function DashGuiCombo (
         this.rows.css({
             "height": "auto",
         });
-        var end_height = this.rows.height();
-        this.determine_gravity(end_height);
-        this.draw_click_skirt(end_height, this.rows.width());
+        this.last_rows_height = this.rows.height();
+        this.determine_gravity(this.last_rows_height);
+        this.draw_click_skirt(this.last_rows_height, this.rows.width());
         this.rows.css({
             "height": start_height,
             "z-index": 2000
         });
-        this.rows.animate({"height": end_height}, 150);
+        this.rows.animate({"height": this.last_rows_height}, 150);
         if (this.is_searchable) {
             this.rows.css({
                 "top": this.html.height() + this.list_offset_vertical
@@ -27771,6 +27805,13 @@ function DashGuiCombo (
             this.callback(selections, this.additional_data);
             Dash.Temp.SetLastComboChanged(this);
         }
+        this.hide_highlight();
+    };
+    this.show_highlight = function () {
+        this.highlight.stop().css({"opacity": 1});
+    };
+    this.hide_highlight = function () {
+        this.highlight.stop().animate({"opacity": 0}, 200);
     };
     this.setup_connections = function (refresh=false) {
         if (this.read_only) {
@@ -27797,10 +27838,10 @@ function DashGuiCombo (
                 });
             }
             self.html.on("mouseenter", function () {
-                self.highlight.stop().css({"opacity": 1});
+                self.show_highlight();
             });
             self.html.on("mouseleave", function () {
-                self.highlight.stop().animate({"opacity": 0}, 200);
+                self.hide_highlight();
             });
             self.html.on("click", function (e) {
                 if ($(e.target).hasClass("ComboLabel")) {
@@ -28675,6 +28716,9 @@ function DashGuiComboInterface () {
     };
     this.SetGravityValueOverride = function (value) {
         this.gravity_value_override = value;
+    };
+    this.SetGravityParentOverride = function (html) {
+        this.gravity_parent_override = html;
     };
     this.DisableAutoGravity = function () {
         this.auto_gravity = false;
