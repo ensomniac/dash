@@ -20,6 +20,7 @@ function DashGuiCombo (
     this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
+    this.row_font_size = null;
     this.dropdown_icon = null;
     this.flash_enabled = true;
     this.gravity_vertical = 0;
