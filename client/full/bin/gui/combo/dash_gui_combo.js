@@ -10,11 +10,13 @@ function DashGuiCombo (
     this.options = options;
     this.bool = bool;
 
+    this.border_size = 0;
     this.disabled = false;
-    this.color_set = null;
     this.row_buttons = [];
+    this.inner_html = null;
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.highlight_css = {};
     this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
@@ -28,6 +30,7 @@ function DashGuiCombo (
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.static_label_text = "";
+    this.dropdown_icon_css = {};
     this.as_button_combo = false;
     this.on_rows_drawn_cb = null;
     this.list_offset_vertical = 0;
@@ -35,11 +38,14 @@ function DashGuiCombo (
     this.right_arrow_button = null;
     this.highlighted_button = null;
     this.init_labels_drawn = false;
+    this.text_alignment = "center";
     this.gravity_width_override = null;
     this.gravity_value_override = null;
+    this.color_set = this.color.Button;
     this.arrow_buttons_inverted = false;
     this.gravity_height_override = null;
     this.previous_selected_option = null;
+    this.height = Dash.Size.ButtonHeight;
     this.arrow_buttons_allow_first = true;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
@@ -50,8 +56,10 @@ function DashGuiCombo (
     this.style = this.options["style"] || "default";
     this.read_only = this.options["read_only"] || false;
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.label_background = this.color_set.Background.Base;
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
+    this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
     this.label_container = $("<div class='ComboLabel Combo'></div>");
 
     // Originally wrote this to check programmatically for every combo, but
@@ -81,14 +89,10 @@ function DashGuiCombo (
         }
 
         if (this.style === "row") {
-            this.color_set  = this.color.Button;
-
             DashGuiComboStyleRow.call(this);
         }
 
         else {
-            this.color_set  = this.color.Button;
-
             DashGuiComboStyleDefault.call(this);
         }
 
@@ -293,10 +297,10 @@ function DashGuiCombo (
 
     this.setup_label_list = function () {
         this.rows.css({
-            "background": this.color_set.Background.Base,
+            "background": this.label_background,
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
-            "left": 0,
+            "left": this.border_size,
             "top": 0,
             "width": "auto"  // This is important so it can auto-size
         });
@@ -458,7 +462,11 @@ function DashGuiCombo (
             this.row_buttons[i].SetWidthToFit(label_width);
         }
 
-        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+        var html_width = this.inner_html ? (
+            this.style === "default_bubbled" ? (this.inner_html.innerWidth() || this.inner_html.width()) : this.inner_html.width()
+        ) : (
+            this.style === "default_bubbled" ? (this.html.innerWidth() || this.html.width()) : this.html.width()
+        );
 
         if (html_width > this.rows.width()) {
             this.rows.css({
@@ -602,8 +610,18 @@ function DashGuiCombo (
 
         this.hide_skirt();
 
-        this.rows.stop();
-        this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
+        this.rows.stop().animate(
+            {
+                "height": 0,
+                "opacity": 0
+            },
+            250,
+            function () {
+                $(this).css({
+                    "z-index": 10
+                });
+            }
+        );
 
         if (this.is_searchable && this.search_active) {
             this.hide_searchable();

@@ -27280,11 +27280,13 @@ function DashGuiCombo (
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;
     this.bool = bool;
+    this.border_size = 0;
     this.disabled = false;
-    this.color_set = null;
     this.row_buttons = [];
+    this.inner_html = null;
     this.click_skirt = null;
     this.on_click_cb = null;
+    this.highlight_css = {};
     this.auto_gravity = true;
     this.searchable_min = 20;
     this.initialized = false;
@@ -27298,6 +27300,7 @@ function DashGuiCombo (
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
     this.static_label_text = "";
+    this.dropdown_icon_css = {};
     this.as_button_combo = false;
     this.on_rows_drawn_cb = null;
     this.list_offset_vertical = 0;
@@ -27305,11 +27308,14 @@ function DashGuiCombo (
     this.right_arrow_button = null;
     this.highlighted_button = null;
     this.init_labels_drawn = false;
+    this.text_alignment = "center";
     this.gravity_width_override = null;
     this.gravity_value_override = null;
+    this.color_set = this.color.Button;
     this.arrow_buttons_inverted = false;
     this.gravity_height_override = null;
     this.previous_selected_option = null;
+    this.height = Dash.Size.ButtonHeight;
     this.arrow_buttons_allow_first = true;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
@@ -27320,8 +27326,10 @@ function DashGuiCombo (
     this.style = this.options["style"] || "default";
     this.read_only = this.options["read_only"] || false;
     this.label = $("<div class='ComboLabel Combo'></div>");
+    this.label_background = this.color_set.Background.Base;
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
+    this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
     this.label_container = $("<div class='ComboLabel Combo'></div>");
     // Originally wrote this to check programmatically for every combo, but
     // got concerned that it was inefficient to check any and every combo
@@ -27343,11 +27351,9 @@ function DashGuiCombo (
             this.style = "default";
         }
         if (this.style === "row") {
-            this.color_set  = this.color.Button;
             DashGuiComboStyleRow.call(this);
         }
         else {
-            this.color_set  = this.color.Button;
             DashGuiComboStyleDefault.call(this);
         }
         this.setup_styles();
@@ -27509,10 +27515,10 @@ function DashGuiCombo (
     };
     this.setup_label_list = function () {
         this.rows.css({
-            "background": this.color_set.Background.Base,
+            "background": this.label_background,
             "box-shadow": "0px 0px 100px 1px rgba(0, 0, 0, 0.4)",
             "opacity": 1,
-            "left": 0,
+            "left": this.border_size,
             "top": 0,
             "width": "auto"  // This is important so it can auto-size
         });
@@ -27629,7 +27635,11 @@ function DashGuiCombo (
         for (i in this.row_buttons) {
             this.row_buttons[i].SetWidthToFit(label_width);
         }
-        var html_width = this.inner_html ? this.inner_html.width() : this.html.width();
+        var html_width = this.inner_html ? (
+            this.style === "default_bubbled" ? (this.inner_html.innerWidth() || this.inner_html.width()) : this.inner_html.width()
+        ) : (
+            this.style === "default_bubbled" ? (this.html.innerWidth() || this.html.width()) : this.html.width()
+        );
         if (html_width > this.rows.width()) {
             this.rows.css({
                 "width": html_width
@@ -27736,8 +27746,18 @@ function DashGuiCombo (
         this.expanded = false;
         this.highlighted_button = null;
         this.hide_skirt();
-        this.rows.stop();
-        this.rows.animate({"height": 0, "opacity": 0}, 250, function () {$(this).css({"z-index": 10});});
+        this.rows.stop().animate(
+            {
+                "height": 0,
+                "opacity": 0
+            },
+            250,
+            function () {
+                $(this).css({
+                    "z-index": 10
+                });
+            }
+        );
         if (this.is_searchable && this.search_active) {
             this.hide_searchable();
         }
@@ -28271,7 +28291,8 @@ function DashGuiComboRow (combo, option) {
             "height": this.height,
             "line-height": this.height + "px",
             "white-space": "nowrap",
-            "color": this.color_set.Text.Base
+            "color": this.color_set.Text.Base,
+            "font-size": (parseInt(this.combo.font_size) - 25) + "%"
         });
         this.html.append(this.highlight);
         this.html.append(this.label);
@@ -28846,16 +28867,14 @@ function DashGuiComboInterface () {
 
 /**@member DashGuiCombo*/
 function DashGuiComboStyleRow () {
-    this.dropdown_icon_css ={
-        "position": "relative",
-        "display": "block",
-        "margin-left": -(Dash.Size.Padding * 0.25),
-        "pointer-events": "none"
-    };
     this.setup_styles = function () {
-        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
+        this.dropdown_icon_css = {
+            "position": "relative",
+            "display": "block",
+            "margin-left": -(Dash.Size.Padding * 0.25),
+            "pointer-events": "none"
+        };
         this.text_alignment = "left";
-        this.label_background = this.color_set.Background.Base;
         this.html.append(this.highlight);
         this.html.append(this.click);
         this.html.append(this.label_container);
@@ -28864,10 +28883,10 @@ function DashGuiComboStyleRow () {
         this.add_dropdown_icon(0.5);
         this.html.css({
             "margin-right": Dash.Size.Padding * 0.5,
-            "height": Dash.Size.ButtonHeight,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "cursor": "pointer",
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius
         });
         this.highlight.css({
             "position": "absolute",
@@ -28876,7 +28895,7 @@ function DashGuiComboStyleRow () {
             "width": "auto",
             "bottom": 0,
             "opacity": 0,
-            "cursor": "pointer",
+            "cursor": "pointer"
         });
         this.click.css({
             "position": "absolute",
@@ -28885,10 +28904,10 @@ function DashGuiComboStyleRow () {
             "right": 0,
             "bottom": Dash.Size.Padding,
             "height": Dash.Size.Stroke,
-            "opacity": 0,
+            "opacity": 0
         });
         this.label_container.css({
-            "display": "flex",
+            "display": "flex"
         });
         this.label.css({
             "line-height": Dash.Size.RowHeight + "px",
@@ -28905,26 +28924,27 @@ function DashGuiComboStyleRow () {
             "overflow": "hidden",
             "height": 0,
             "border-radius": Dash.Size.BorderRadius,
-            "background": "orange",
+            "background": "orange"
         });
     };
 }
 
 /**@member DashGuiCombo*/
 function DashGuiComboStyleDefault () {
-    this.dropdown_icon_css = {
-        "position": "relative",
-        "display": "block",
-        "right": Dash.Size.Padding * 0.5,
-        "top": Dash.Size.Padding * 0.5,
-        "margin-left": -(Dash.Size.Padding * 0.25),
-        "pointer-events": "none"
-    };
     this.setup_styles = function () {
+        this.dropdown_icon_css = {
+            "position": "relative",
+            "display": "block",
+            "right": Dash.Size.Padding * 0.5,
+            "top": Dash.Size.Padding * 0.5,
+            "margin-left": -(Dash.Size.Padding * 0.25),
+            "pointer-events": "none"
+        };
         if (this.style === "default_bubbled") {
             this.list_offset_vertical = 4;
         }
-        var height = Dash.Size.ButtonHeight - (this.style === "default_bubbled" ? this.list_offset_vertical : 0);
+        this.inner_html = $("<div></div>");
+        var height = this.height - (this.style === "default_bubbled" ? this.list_offset_vertical : 0);
         var border_radius = this.style === "default_bubbled" ? Dash.Size.Padding * 2 : Dash.Size.BorderRadius;
         this.highlight_css = {
             "position": "absolute",
@@ -28933,10 +28953,6 @@ function DashGuiComboStyleDefault () {
             "border-radius": border_radius,
             "opacity": 0
         };
-        this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
-        this.text_alignment = "center";
-        this.label_background = this.color_set.Background.Base;
-        this.inner_html = $("<div></div>");
         this.html.append(this.inner_html);
         this.inner_html.append(this.highlight);
         this.inner_html.append(this.click);
@@ -28954,14 +28970,15 @@ function DashGuiComboStyleDefault () {
         });
         this.inner_html.css({
             "background": this.label_background,
-            "height": Dash.Size.ButtonHeight,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "cursor": "pointer",
             "border-radius": border_radius
         });
         if (this.style === "default_bubbled") {
+            this.border_size = 2;
             this.inner_html.css({
-                "border": "2px solid " + this.color.StrokeLight,
+                "border": this.border_size + "px solid " + this.color.StrokeLight,
                 "box-sizing": "border-box"
             });
         }
