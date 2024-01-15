@@ -43820,6 +43820,16 @@ function DashLayoutRevolvingList (
     this.RefreshRowConnections = function (row) {
         this.setup_row_connections(row);
     };
+    this.ReExpandRows = function () {
+        for (var row_id in this.expanded_ids) {
+            for (var row of this.row_objects) {
+                if (row.ID().toString() !== row_id.toString()) {
+                    continue;
+                }
+                this.ReExpandRow(row);
+            }
+        }
+    };
     this.ReExpandRow = function (row) {
         if (!row.IsExpanded()) {
             this.on_row_selected(row);
