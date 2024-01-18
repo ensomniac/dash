@@ -160,6 +160,14 @@ function DashDateTime () {
             }
         }
 
+        // This will only happen if mins was 59 before the above +1 lines,
+        // so don't need to account for anything over 60, only exactly 60
+        if (mins === 60) {
+            mins = 0;
+
+            hours += 1;
+        }
+
         var readable = hours + "h " + mins + "m";
 
         if (include_secs) {

@@ -81,7 +81,8 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
 
     this.AddMessage = function (
-        text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false
+        text, user_email=null, iso_ts=null, align_right=false,
+        fire_callback=false, delete_button=false, id=null, track_mentions=false
     ) {
         text = text.trim();
 

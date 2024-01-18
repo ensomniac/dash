@@ -20254,6 +20254,12 @@ function DashDateTime () {
                 mins += 1;
             }
         }
+        // This will only happen if mins was 59 before the above +1 lines,
+        // so don't need to account for anything over 60, only exactly 60
+        if (mins === 60) {
+            mins = 0;
+            hours += 1;
+        }
         var readable = hours + "h " + mins + "m";
         if (include_secs) {
             readable += " " + secs + "s";
@@ -26446,7 +26452,8 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.header.ReplaceBorderWithIcon(icon_name);
     };
     this.AddMessage = function (
-        text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false
+        text, user_email=null, iso_ts=null, align_right=false,
+        fire_callback=false, delete_button=false, id=null, track_mentions=false
     ) {
         text = text.trim();
         if (!text || text.length < 1) {
