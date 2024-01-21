@@ -108,6 +108,10 @@ function DashGuiComboInterface () {
         return this.expanded;
     };
 
+    this.SetOnCollapseCB = function (callback=null, binder=null) {
+        this.on_collapse_cb = callback && binder ? callback.bind(binder) : callback;
+    };
+
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {

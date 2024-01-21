@@ -29,6 +29,7 @@ function DashGuiCombo (
     this.is_searchable = false;
     this.search_set_up = false;
     this.last_total_height = 0;
+    this.on_collapse_cb = null;
     this.selected_option = null;
     this.combo_option_index = 0;
     this.gravity_horizontal = 0;
@@ -651,12 +652,14 @@ function DashGuiCombo (
 
         this.hide_skirt();
 
+        var delay_ms = 250;
+
         this.rows.stop().animate(
             {
                 "height": 0,
                 "opacity": 0
             },
-            250,
+            delay_ms,
             function () {
                 $(this).css({
                     "z-index": 10
@@ -683,6 +686,17 @@ function DashGuiCombo (
         }
 
         this.hide_highlight();
+
+        if (this.on_collapse_cb) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.on_collapse_cb();
+                    },
+                    delay_ms
+                );
+            })(this);
+        }
     };
 
     this.show_highlight = function () {
