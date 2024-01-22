@@ -25266,12 +25266,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
     };
     this.on_click = function (event) {
-        if (this.callback && this.bind) {
-            if (this.file_uploader && event.timeStamp) {
-                return;
-            }
-            this.callback.bind(this.bind)(event, this);
+        if (!this.callback || (this.file_uploader && event.timeStamp)) {
+            return;
         }
+        (this.bind ? this.callback.bind(this.bind) : this.callback)(event, this);
     };
     this.setup_connections = function () {
         (function (self) {
