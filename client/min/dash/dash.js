@@ -39495,7 +39495,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.binder = binder;
     this.side_tabs = side_tabs;
     this.color = color;
-<<<<<<< HEAD
     this.temp_html             = [];
     this.all_content           = [];
     this.selected_index        = -1;
@@ -39505,18 +39504,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.on_tab_changed_cb     = null;
     this.tab_top               = $("<div></div>");
     this.tab_bottom            = $("<div></div>");
-=======
-    this.temp_html = [];
-    this.all_content = [];
-    this.init_attempts = 0;
-    this.selected_index = -1;
-    this.current_index = null;
-    this.initial_load = false;
-    this.html = $("<div></div>");
-    this.on_tab_changed_cb = null;
-    this.tab_top = $("<div></div>");
-    this.tab_bottom = $("<div></div>");
->>>>>>> 628ac436e68a758074befdb02e0979ceb63466a7
     this.before_tab_changed_cb = null;
     this.content_area          = $("<div></div>");
     this.always_start_on_first_tab = false;
@@ -39550,7 +39537,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         (function (self) {
             requestAnimationFrame(function () {
-<<<<<<< HEAD
                 if (!Dash.User.Data || Dash.User.Data["first_name"]) {
                     self.load_last_selection();
                     return;
@@ -39571,9 +39557,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                         self.load_last_selection();
                     }
                 }
-=======
                 self.init();
->>>>>>> 628ac436e68a758074befdb02e0979ceb63466a7
             });
         })(this);
     };
@@ -40371,6 +40355,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_profile = null;
     this.top_right_button = null;
     this.first_name_field = null;
+    this.suggestion_visible = false;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -40410,8 +40395,57 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         }
     };
     this.ShowNameSuggestion = function () {
-        console.log("Suggest nbame!");
-        console.log(this.first_name_field)
+        // This is a very specific function that is only intended to be called for new
+        // users that have not filled in their name yet. When this function is called,
+        // the username isn't set, but the user settings tab is loaded. Find the First Name
+        // field and highlight it so it's clear what the user is supposed to do
+        if (this.first_name_field.Text() || this.suggestion_visible) {
+            return;
+        }
+        this.suggestion_visible = $("<div></div>");
+        this.suggestion_visible.css({
+            "position": "absolute",
+            "background": "rgba(255, 0, 0, 0.2)",
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "pointer-events": "none",
+            "opacity": 0,
+        });
+        this.first_name_field.FlashSave();
+        this.first_name_field.html.prepend(this.suggestion_visible);
+        (function(self){
+            self.pulse_name_label = function () {
+                if (!self.suggestion_visible) {
+                    return;
+                }
+                var opacity = parseFloat(self.suggestion_visible.css("opacity"));
+                if (opacity > 0.5) {
+                    opacity = 0.1;
+                }
+                else {
+                    opacity = 1.0;
+                }
+                self.suggestion_visible.animate({"opacity": opacity}, 1000, function(){
+                    self.pulse_name_label();
+                });
+            };
+            self.pulse_name_label();
+        })(this);
+    };
+    this.HideNameSuggestion = function () {
+        if (!this.suggestion_visible || !this.first_name_field.Text()) {
+            return;
+        }
+        (function(self){
+            self.suggestion_visible.stop().animate({
+                "opacity": 0,
+            }, function(){
+                self.suggestion_visible.remove();
+                self.suggestion_visible = null;
+            });
+        })(this);
     };
     this.HasPrivileges = function () {
         return this.has_privileges;
@@ -40643,6 +40677,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     // Basic/standard setting of data is taken care of in DashGuiPropertyBox
     this.set_data = function (updated_data_or_key, value) {
         var key = typeof updated_data_or_key === "string" ? updated_data_or_key : updated_data_or_key["key"];
+        if (key == "first_name" && this.suggestion_visible) {
+            this.HideNameSuggestion();
+        };
         // This is an extra, optional follow-up to that
         if (key in this.callbacks) {
             this.callbacks[key](updated_data_or_key);
@@ -40651,64 +40688,6 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.log_out = function () {
         Dash.Logout();
     };
-    // this.set_group = function (button, group_name, group_option) {
-    //     console.log("this.set_group");
-    //
-    //     var api = "https://altona.io/Users";
-    //     var server_data = {};
-    //     server_data["f"] = "update_group_information";
-    //     server_data["as_user"] = this.user_data["email"];
-    //     server_data["group_name"] = group_name;
-    //     server_data["group_option"] = group_option;
-    //
-    //     button.Request(api, server_data, this.on_info_saved, this);
-    // };
-    //
-    // this.update_password = function () {
-    //     if (!this.new_password_row.Text()) {
-    //         return;
-    //     }
-    //
-    //     (function (self) {
-    //         Dash.Request(
-    //             self,
-    //             function (response) {
-    //                 self.on_info_saved(response, self.new_password_row);
-    //             },
-    //             "Users",
-    //             {
-    //                 "f": "update_password",
-    //                 "p": self.new_password_row.Text()
-    //             }
-    //         );
-    //     })(this);
-    // };
-    //
-    // this.update_first_name = function () {
-    //     this.update_personal_information(this.first_name);
-    // };
-    //
-    // this.update_last_name = function () {
-    //     this.update_personal_information(this.last_name);
-    // };
-    //
-    // this.update_personal_information = function (button) {
-    //     console.log("this.update_personal_information");
-    // };
-    //
-    // this.on_info_saved = function (response, input_row) {
-    //     if (response["error"]) {
-    //         console.log(response);
-    //
-    //         alert(response["error"]);
-    //
-    //         return;
-    //     }
-    //
-    //     console.log("** Info saved successfully **");
-    //
-    //     input_row.FlashSave();
-    // };
     this.setup_styles();
 }
 
