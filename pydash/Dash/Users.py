@@ -135,7 +135,7 @@ class Users:
         if not os.path.exists(reset_path):
             return {
                 "error": "Invalid request token x8923",
-                "_error": f"reset path: {reset_path}"
+                "_error": f"Reset path doesn't exist: {reset_path}"
             }
 
         from random import choice
@@ -203,7 +203,18 @@ class Users:
         html.append("""</body>""")
         html.append("""</html>""")
 
-        os.remove(reset_path)
+        try:
+            os.remove(reset_path)
+
+        # It might be safe to ignore this, but raising for now
+        except FileNotFoundError:
+            return {
+                "error": "Invalid request token x8924",
+                "_error": (
+                    f"Reset path didn't exist when it should have: {reset_path}.\n\nThis rare case is "
+                    f"likely due to a user submitting a reset request twice in rapid succession."
+                )
+            }
 
         return "\n".join(html)
 
