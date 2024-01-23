@@ -193,6 +193,19 @@ function Dash () {
                         }
                     }
                 },
+                "Insert": {
+                    "value": function (index, item) {
+                        try {
+                            return this.splice(index, 0, item);
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Insert() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
                 "Remove": {
                     "value": function (item, return_item=true) {
                         try {
