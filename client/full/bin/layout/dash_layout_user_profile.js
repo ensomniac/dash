@@ -9,6 +9,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.property_box = null;
     this.modal_profile = null;
     this.top_right_button = null;
+    this.first_name_field = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -55,6 +56,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "max-width": this.img_box_size
             });
         }
+    };
+
+    this.ShowNameSuggestion = function () {
+        console.log("Suggest nbame!");
+        console.log(this.first_name_field)
     };
 
     this.HasPrivileges = function () {
@@ -203,7 +209,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             //  the right things are in place on the back-end, like renaming the user's folder etc
             this.property_box.AddInput("email", "E-mail Address", "", null, false);
 
-            this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
 
             if (this.has_privileges) {

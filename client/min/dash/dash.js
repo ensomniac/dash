@@ -37055,16 +37055,17 @@ function DashLayout () {
 function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
     this.binder = binder;
     this.side_tabs = side_tabs;
-    this.temp_html = [];
-    this.all_content = [];
-    this.selected_index = -1;
-    this.current_index = null;
-    this.html = $("<div></div>");
-    this.on_tab_changed_cb = null;
-    this.tab_top = $("<div></div>");
-    this.tab_bottom = $("<div></div>");
+    this.temp_html             = [];
+    this.all_content           = [];
+    this.selected_index        = -1;
+    this.current_index         = null;
+    this.active_content        = null;
+    this.html                  = $("<div></div>");
+    this.on_tab_changed_cb     = null;
+    this.tab_top               = $("<div></div>");
+    this.tab_bottom            = $("<div></div>");
     this.before_tab_changed_cb = null;
-    this.content_area = $("<div></div>");
+    this.content_area          = $("<div></div>");
     this.always_start_on_first_tab = false;
     this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
     // This is necessary if there will be two different lists within the same script.
@@ -37104,6 +37105,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                     }
                     try {
                         self.LoadIndex(i);
+                        requestAnimationFrame(function () {
+                            self.on_autoload_user_settings();
+                        });
                     }
                     catch {
                         self.load_last_selection();
@@ -37112,6 +37116,19 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             });
         })(this);
     };
+    this.on_autoload_user_settings = function () {
+        // This is a very specific function that is only intended to be called for new
+        // users that have not filled in their name yet. When this function is called,
+        // the username isn't set, but the user settings tab is loaded. Find the First Name
+        // field and highlight it so it's clear what the user is supposed to do
+        if (this.all_content[this.current_index]["content_div_html_class"] != DashUserView) {
+            return;
+        }
+        if (!this.active_content.user_profile) {
+            return;
+        }
+        this.active_content.user_profile.ShowNameSuggestion()
+    }
     this.AlwaysStartOnFirstTab = function () {
         this.always_start_on_first_tab = true;
     };
@@ -37176,6 +37193,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
             }
         }
         this.content_area.empty();
+        this.active_content = null;
         var inst_class;
         var content_html;
         if (typeof this.all_content[index]["content_div_html_class"] === "object") {
@@ -37203,6 +37221,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                     }
                 }
                 content_html = inst_class.html;
+                this.active_content = inst_class;
             }
             else {  // Calling a function with 'new' will result in an incorrect binding
                 if (unpack) {
@@ -37217,10 +37236,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="") {
                     }
                 }
                 content_html = inst_class.html;
+                this.active_content = inst_class;
             }
         }
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+            this.active_content = content_html;
         }
         if (!content_html) {
             if (parseInt(index) === 0) {
@@ -37805,6 +37826,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.property_box = null;
     this.modal_profile = null;
     this.top_right_button = null;
+    this.first_name_field = null;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
@@ -37842,6 +37864,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 "max-width": this.img_box_size
             });
         }
+    };
+    this.ShowNameSuggestion = function () {
+        console.log("Suggest nbame!");
+        console.log(this.first_name_field)
     };
     this.HasPrivileges = function () {
         return this.has_privileges;
@@ -37959,7 +37985,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
             //  the right things are in place on the back-end, like renaming the user's folder etc
             this.property_box.AddInput("email", "E-mail Address", "", null, false);
-            this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
             if (this.has_privileges) {
                 this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
