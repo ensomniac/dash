@@ -1,13 +1,17 @@
 /**@member DashGuiPrompt*/
 
-function DashGuiModal (color=null, parent_html=null, width=null, height=null, include_bg=true, bg_opacity=0.6, include_close_button=true) {
+function DashGuiModal (
+    color=null, parent_html=null, width=null, height=null,
+    include_bg=true, bg_opacity=0.6, include_close_button=true, bg_color=null
+) {
     this.parent_html = parent_html;
-    this.width = width;
-    this.height = height;
+    this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
+    this.height = height !== null ? (Math.min(height, (window.innerHeight - (Dash.Size.Padding * 2)))) : null;
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
     this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
+    this.bg_color = bg_color || this.color.BackgroundRaised;
 
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
@@ -81,18 +85,36 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
     };
 
     this.Remove = function () {
-        this.modal.remove();
+        (function (self) {
+            self.modal.stop().animate(
+                {"opacity": 0},
+                {
+                    "complete": function () {
+                        self.modal.remove();
+                    }
+                }
+            );
+        })(this);
 
         if (this.background) {
-            this.background.remove();
+            (function (self) {
+                self.background.stop().animate(
+                    {"opacity": 0},
+                    {
+                        "complete": function () {
+                            self.background.remove();
+                        }
+                    }
+                );
+            })(this);
         }
     };
 
     // If you have multiple modals, or a modal alongside other elements that use
-    // modals or modal backgrounds, such as loading labels and loading overlays,
+    // modals or  modal backgrounds, such as loading labels and loading overlays,
     // you'll need to use this function to prioritize each one from top to bottom
     this.IncreaseZIndex = function (num) {
-        var z_index = this.background.css("z-index") + num;
+        var z_index = this.get_bg_z_index() + num;
 
         if (this.include_bg) {
             this.background.css({
@@ -161,7 +183,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
 
         this.modal = Dash.Gui.GetHTMLBoxContext(
             {
-                "z-index": this.background.css("z-index") + 1,
+                "z-index": this.get_bg_z_index() + 1,
                 "position": "fixed",
                 "padding-bottom": 0,
                 "margin-left": this.parent_html ? this.get_left_margin(this.width, parent_width) : 0,
@@ -238,7 +260,7 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
             "right": Dash.Size.Padding * 0.25,
-            "z-index": this.background.css("z-index") + 2
+            "z-index": this.get_bg_z_index() + 2
         });
 
         this.close_button.SetHoverHint("Close window (esc)");
@@ -271,8 +293,8 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
             "",
             this.color,
             {
-                "z-index": this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000,
-                "background": this.color.BackgroundRaised,
+                "z-index": this.get_bg_z_index(),
+                "background": this.bg_color,
                 "opacity": this.bg_opacity,
                 "height": height
             }
@@ -286,6 +308,12 @@ function DashGuiModal (color=null, parent_html=null, width=null, height=null, in
         if (this.parent_html) {
             this.parent_html.append(this.background);
         }
+    };
+
+    this.get_bg_z_index = function () {
+        return this.background ? this.background.css("z-index") : (
+            this.parent_html && this.parent_html["selector"] === "body" ? 1000000 : 100000
+        );
     };
 
     this.add_esc_shortcut = function () {

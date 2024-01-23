@@ -1,6 +1,6 @@
 function DashGuiPrompt (
-    bound_cb, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true
+    bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
+    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
 ) {
     /**
      * DashGuiPrompt
@@ -8,7 +8,8 @@ function DashGuiPrompt (
      *
      * This a replacement for `window.confirm`.
      *
-     * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc), simply call `Show` as a last step.
+     * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc),
+     * simply call `Show` as a last step (it appears this may not be not necessary after all...).
      *
      * @param {function} bound_cb - Once a selection is made, this will receive the selected button index
      *                              (pre-bound because we have no use for a `binder` param)
@@ -24,6 +25,7 @@ function DashGuiPrompt (
      * @param {boolean} use_esc_and_enter_shortcuts - Add an `Esc` key shortcut that maps to the default `Cancel` button
      *                                                and an `Enter` key shortcut that maps to the default `Continue` button
      *                                                (applicable only when using the default two buttons)
+     * @param {string} bg_color - Color for background overlay
      */
 
     this.bound_cb = bound_cb;
@@ -33,15 +35,16 @@ function DashGuiPrompt (
     this.cancel_text = cancel_text;
     this.use_esc_and_enter_shortcuts = use_esc_and_enter_shortcuts;
 
-    Dash.Gui.Modal.call(
+    DashGuiModal.call(
         this,
         color || Dash.Color.Dark,
         $("body"),  // Window
-        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
-        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.25),
+        width || height || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
+        height || width || (Math.min(window.innerWidth, window.innerHeight) * 0.5),
         include_bg,
         bg_opacity,
-        false
+        false,
+        bg_color
     );
 
     this.header = null;
@@ -50,6 +53,9 @@ function DashGuiPrompt (
     this.remove = this.Remove;  // Remap this to not be public
     this.continue_button = null;
     this.shortcuts_active = false;
+    this.allow_esc_shortcut = true;
+    this.remove_on_selection = true;
+    this.allow_enter_shortcut = true;
     this.content_area = $("<div></div>");
 
     this.message_css = {
@@ -58,12 +64,11 @@ function DashGuiPrompt (
         "font-family": "sans_serif_normal"
     };
 
-    // Delete inapplicable public functions from Dash.Gui.Modal to keep things clear
+    // Delete inapplicable public functions from DashGuiModal to keep things clear
     delete this.Hide;
     delete this.Remove;
     delete this.UpdateSize;
     delete this.SetParentHTML;
-    delete this.IncreaseZIndex;
     delete this.SetOnCloseCallback;
 
     this.setup_styles = function () {
@@ -161,14 +166,45 @@ function DashGuiPrompt (
         this.cancel_button = null;
     };
 
+    this.DisableRemoveOnSelection = function () {
+        this.remove_on_selection = false;
+
+        // Make the remove call public again, since it now needs to be called manually
+        this.Remove = (function (self) {
+            return function () {
+                self.remove();
+            };
+        })(this);
+    };
+
+    this.DisableEscShortcut = function () {
+        this.allow_esc_shortcut = false;
+    };
+
+    this.DisableEnterShortcut = function () {
+        this.allow_enter_shortcut = false;
+    };
+
+    this.EnableEscShortcut = function () {
+        this.allow_esc_shortcut = true;
+    };
+
+    this.EnableEnterShortcut = function () {
+        this.allow_enter_shortcut = true;
+    };
+
     this.on_selection = function (index) {
         // Because there can be more than the two default buttons, returning an
         // index makes more sense than returning true/false. Even when using only
         // the two default buttons, you can still treat the response like true and
         // false, since the values are 0 for cancel (false) and 1 for continue (true).
-        this.bound_cb(index);
+        if (this.bound_cb) {
+            this.bound_cb(index, this);
+        }
 
-        this.remove();  // Single-use
+        if (this.remove_on_selection) {
+            this.remove();  // Single-use by default
+        }
     };
 
     this.add_header = function () {
@@ -243,19 +279,27 @@ function DashGuiPrompt (
                         return;
                     }
 
-                    if (e.key === "Escape") {
+                    if (e.key === "Escape" && self.allow_esc_shortcut) {
                         console.log("(Esc key pressed) Cancel");
 
                         self.on_selection(0);
                     }
 
-                    else if (e.key === "Enter") {
+                    else if (e.key === "Enter" && self.allow_enter_shortcut) {
                         console.log("(Enter key pressed) Continue");
 
                         self.on_selection(1);
                     }
                 }
             );
+
+            self.background.on("click", function () {
+                if (self.allow_esc_shortcut) {
+                    console.log("(Background clicked) Cancel");
+
+                    self.on_selection(0);
+                }
+            });
         })(this);
 
         this.shortcuts_active = true;

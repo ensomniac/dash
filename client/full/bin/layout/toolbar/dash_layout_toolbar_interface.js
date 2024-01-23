@@ -58,7 +58,14 @@ function DashLayoutToolbarInterface () {
     };
 
     // TODO: These params are a mess
-    this.AddIconButton = function (icon_name, callback, size_percent_num=null, data=null, container_size=null, size_mult=1.0, for_uploader=false) {
+    this.AddIconButton = function (
+        icon_name, callback, size_percent_num=null, data=null,
+        container_size=null, size_mult=1.0, for_uploader=false
+    ) {
+        // When 'for_uploader' is true, 'callback' should be the
+        // respective 'on_upload' function, and 'SetFileUploader'
+        // should be called on this button after instantiated
+
         var obj_index = this.objects.length;
 
         callback = callback.bind(this.binder);
@@ -236,6 +243,8 @@ function DashLayoutToolbarInterface () {
 
         this.html.append(end_border);
 
+        header._end_border = end_border;
+
         this.objects.push({
             "html_elem": end_border,
             "callback": null,
@@ -247,14 +256,14 @@ function DashLayoutToolbarInterface () {
         return header;
     };
 
-    this.AddText = function (text, color=null) {
+    this.AddText = function (text, color=null, centered=false) {  // should default to true
         var label = this.AddLabel(text, false, color);
 
         label.border.remove();
 
         label.html.css({
             "padding-left": 0,
-            "margin-top": 0  // Why is this the default?
+            "margin-top": 0
         });
 
         label.label.css({
@@ -265,7 +274,16 @@ function DashLayoutToolbarInterface () {
             "padding-left": 0
         });
 
-        this.html.append(label.html);
+        if (centered) {
+            label.html.css({
+                "margin-bottom": 0
+            });
+
+            label.label.css({
+                "height": this.height,
+                "line-height": this.height + "px"
+            });
+        }
 
         var obj_index = this.objects.length;
 
@@ -281,18 +299,15 @@ function DashLayoutToolbarInterface () {
         return label;
     };
 
-    this.AddTransparentInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddTransparentInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var input = this.AddInput(placeholder_label, callback, options, additional_data, double_click_clear);
 
         input.EnableAutosave();
 
         var height = options["height"] || Dash.Size.ButtonHeight - Dash.Size.Padding;
         var width = options["width"] || Dash.Size.ColumnWidth;
-        var text_align = "left";
-
-        if (options["center"]) {
-            text_align = "center";
-        }
 
         input.Flatten();
 
@@ -314,7 +329,7 @@ function DashLayoutToolbarInterface () {
             "line-height": height + "px",
             "top": -Dash.Size.Padding * 0.5,
             "width": width,
-            "text-align": text_align
+            "text-align": options["center"] ? "center" : "left"
         });
 
         this.objects.push({
@@ -329,7 +344,9 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddInput = function (placeholder_label, callback, options={}, additional_data={}, double_click_clear=true) {
+    this.AddInput = function (
+        placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
+    ) {
         var obj_index = this.objects.length;
         var input = new Dash.Gui.Input(placeholder_label, this.color);
 
@@ -353,11 +370,11 @@ function DashLayoutToolbarInterface () {
         };
 
         if (options["on_enter"]) {
-            obj["on_enter_callback"] = options["on_enter"].bind(this.binder);
+            obj["on_enter"] = options["on_enter"].bind(this.binder);
         }
 
         if (options["on_autosave"]) {
-            obj["on_autosave_callback"] = options["on_autosave"].bind(this.binder);
+            obj["on_autosave"] = options["on_autosave"].bind(this.binder);
         }
 
         this.objects.push(obj);
@@ -370,7 +387,7 @@ function DashLayoutToolbarInterface () {
                 self
             );
 
-            if (obj["on_enter_callback"]) {
+            if (obj["on_enter"]) {
                 input.SetOnSubmit(
                     function () {
                         self.on_input_submitted(obj_index);
@@ -379,7 +396,7 @@ function DashLayoutToolbarInterface () {
                 );
             }
 
-            if (obj["on_autosave_callback"]) {
+            if (obj["on_autosave"]) {
                 input.EnableAutosave();
 
                 input.SetOnAutosave(
@@ -390,13 +407,10 @@ function DashLayoutToolbarInterface () {
                 );
             }
 
-            // This really shouldn't be default behavior, but leaving the default as true to ensure nothing breaks.
+            // This really shouldn't be default behavior, but leaving
+            // the default as true to ensure nothing breaks
             if (double_click_clear) {
-                input.input.on("dblclick", function () {
-                    input.SetText("");
-
-                    self.on_input_changed(obj_index);
-                });
+                input.EnableDoubleClickClear();
             }
         })(this, input, obj_index, obj);
 
@@ -407,7 +421,10 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
-    this.AddCombo = function (label_text, combo_options, selected_id, callback, return_full_option=false, additional_data={}, extra_options={}) {
+    this.AddCombo = function (
+        label_text, combo_options, selected_id, callback,
+        return_full_option=false, additional_data={}, extra_options={}
+    ) {
         var obj_index = this.objects.length;
 
         callback = callback ? callback.bind(this.binder) : function (selected) {
@@ -467,18 +484,19 @@ function DashLayoutToolbarInterface () {
     };
 
     this.AddCheckbox = function (
-        label_text, default_state, callback, identifier, hover_hint="Toggle", checkbox_redraw_styling=null, label_border=true, strict_identifier=false
+        label_text="", default_state=false, callback=null, identifier="", hover_hint="Toggle",
+        checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,   // Local storage key
-            default_state,                                          // Default state
-            this.color,                                             // Color
-            hover_hint,                                             // Hover hint text
-            this,                                                   // Binder
-            callback ? callback.bind(this.binder) : callback,       // Callback
-            label_text,                                             // Label text
-            true,                                                   // Label first
-            label_border                                            // Include border
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // This is a mess
+            default_state,
+            this.color,
+            hover_hint,
+            this,
+            callback ? callback.bind(this.binder) : callback,
+            label_text,
+            true,
+            label_border
         );
 
         checkbox.html.css({
@@ -492,5 +510,43 @@ function DashLayoutToolbarInterface () {
         this.AddHTML(checkbox.html);
 
         return checkbox;
+    };
+
+    this.AddDatePicker = function (
+        label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        var picker = new Dash.Gui.DatePicker(
+            label_text,
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+
+        if (!can_edit) {
+            picker.SetLocked(true);
+        }
+
+        picker.height = this.height - (Dash.Size.Padding * 0.1);
+
+        picker.html.css({
+            "height": picker.height,
+            "line-height": picker.height + "px",
+            "margin-left": this.objects.length ? Dash.Size.Padding : 0
+        });
+
+        this.objects.push({
+            "html": picker,
+            "html_elem": picker.html,
+            "index": this.objects.length
+        });
+
+        this.AddHTML(picker.html);
+
+        return picker;
     };
 }

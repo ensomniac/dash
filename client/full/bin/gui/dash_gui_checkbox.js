@@ -32,6 +32,7 @@ function DashGuiCheckbox (
     this.true_icon_name = "checked_box";
     this.false_icon_name = "unchecked_box";
     this.icon_button_redraw_styling = null;
+    this.icon_container_size = Dash.Size.RowHeight;
 
     this.setup_styles = function () {
         this.checked = this.get_checked_state();
@@ -39,7 +40,7 @@ function DashGuiCheckbox (
 
         this.html.css({
             "display": "flex",
-            "height": Dash.Size.RowHeight
+            "height": this.icon_container_size
         });
 
         this.draw_label();
@@ -70,10 +71,18 @@ function DashGuiCheckbox (
         return this;
     };
 
-    this.SetIconSize = function (percentage_number) {
-        this.icon_size = percentage_number;
+    this.SetIconSize = function (icon_size_percent_num, container_size=null) {
+        this.icon_size = icon_size_percent_num;
 
-        this.icon_button.SetIconSize(percentage_number);
+        if (container_size) {
+            this.icon_container_size = container_size;
+
+            this.html.css({
+                "height": this.icon_container_size
+            });
+        }
+
+        this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
 
         return this;
     };
@@ -118,7 +127,7 @@ function DashGuiCheckbox (
         }
     };
 
-    this.SetReadOnly = function (is_read_only=true) {
+    this.SetReadOnly = function (is_read_only=true, restyle=false) {
         var pointer_events;
 
         if (is_read_only) {
@@ -132,7 +141,7 @@ function DashGuiCheckbox (
             this.hover_hint = this._hover_hint;
             this._hover_hint = "";
 
-            pointer_events = "pointer";
+            pointer_events = "auto";
         }
 
         this.icon_button.SetHoverHint(this.hover_hint);
@@ -146,18 +155,33 @@ function DashGuiCheckbox (
         }
 
         else {
-            // TODO: the inverse of DisableClick
+            this.EnableClick();
         }
 
         this.is_read_only = is_read_only;
+
+        if (restyle) {
+            this.html.css({
+                "opacity": is_read_only ? 0.65 : 1
+            });
+        }
     };
 
     this.DisableClick = function () {
         this.can_click = false;
 
-        this.html.off("click");
+        this.icon_button.BreakConnections();
+    };
 
-        this.icon_button.html.off("click");
+    this.EnableClick = function () {
+        this.can_click = true;
+
+        this.icon_button.RefreshConnections();
+    };
+
+    // Wrapper
+    this.RefreshConnections = function () {
+        this.EnableClick();
     };
 
     this.Toggle = function (skip_callback=false, ignore_able_to_toggle_check=false) {
@@ -211,10 +235,10 @@ function DashGuiCheckbox (
     };
 
     // Should this just be the default?
-    this.AddHighlight = function (bottom=null) {
+    this.AddHighlight = function (bottom=null, force_in_container=false) {
         this.include_highlight = true;
 
-        this.icon_button.AddHighlight();
+        this.icon_button.AddHighlight(force_in_container);
 
         this.icon_button.highlight.css({
             "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
@@ -229,8 +253,8 @@ function DashGuiCheckbox (
         this.redraw();
     };
 
-    this.Disable = function () {
-        if (this.disabled) {
+    this.Disable = function (force=false, opacity=0.5) {
+        if (!force && this.disabled) {
             return;
         }
 
@@ -238,7 +262,7 @@ function DashGuiCheckbox (
 
         if (this.label) {
             this.label.label.css({
-                "opacity": 0.5,
+                "opacity": opacity,
                 "pointer-events": "none",
                 "user-select": "none"
             });
@@ -280,14 +304,16 @@ function DashGuiCheckbox (
 
         (function (self) {
             self.icon_button = new Dash.Gui.IconButton(
-                self.static_icon_name ? self.static_icon_name : self.checked ? self.true_icon_name : self.false_icon_name,
+                self.static_icon_name ? self.static_icon_name : (
+                    self.checked ? self.true_icon_name : self.false_icon_name
+                ),
                 function () {
                     // We don't want the args from IconButton's callback
                     self.Toggle();
                 },
                 self,
                 self.color,
-                {"container_size": Dash.Size.RowHeight}
+                {"container_size": self.icon_container_size}
             );
         })(this);
 
@@ -335,6 +361,10 @@ function DashGuiCheckbox (
             this.SetReadOnly();
         }
 
+        else if (this.disabled) {
+            this.Disable(true);
+        }
+
         else if (!this.can_click) {
             this.DisableClick();
         }
@@ -379,12 +409,25 @@ function DashGuiCheckbox (
             this.label.label.css({
                 "margin-right": padding_to_icon
             });
+
+            if (this.include_border) {
+                this.label.border.css({
+                    "left": -Dash.Size.Padding * 0.75
+                });
+            }
         }
 
         else {
             this.label.label.css({
                 "margin-left": padding_to_icon
             });
+
+            if (this.include_border) {
+                this.label.border.css({
+                    "left": "",
+                    "right": -Dash.Size.Padding * 0.75
+                });
+            }
         }
     };
 

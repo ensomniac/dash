@@ -120,16 +120,15 @@ function DashAdminColor () {
 
         this.html.append(this.property_box.html);
 
-        var header_title = "Property Box";
-
-        this.property_box.AddHeader(header_title, this.color);
-        this.property_box.AddInput("email",       "E-mail Address", "", null, false);
-        this.property_box.AddInput("first_name",  "First Name",     "", null, true);
+        this.property_box.AddHeader("Property Box", this.color);
+        this.property_box.AddInput("email", "Email Address", "", null, false);
+        this.property_box.AddInput("first_name", "First Name", "", null, true);
 
         this.new_password_row = new Dash.Gui.InputRow("Password", "", "Password", "Update", this.dummy_cb, this, this.color);
-        this.new_password_row.html.css("margin-left", Dash.Size.Padding * 2);
-        this.property_box.AddHTML(this.new_password_row.html);
 
+        this.new_password_row.html.css("margin-left", Dash.Size.Padding * 2);
+
+        this.property_box.AddHTML(this.new_password_row.html);
         this.property_box.AddButton("Property Box Button", this.dummy_cb);
     };
 

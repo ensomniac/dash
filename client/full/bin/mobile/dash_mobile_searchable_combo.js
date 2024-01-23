@@ -1,4 +1,6 @@
-function DashMobileSearchableCombo (color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null) {
+function DashMobileSearchableCombo (
+    color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null
+) {
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.options = options;  // Format: {id: label}
     this.placeholder_text = placeholder_text;
@@ -10,7 +12,9 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     this.disabled = false;
     // this.option_rows = [];
     this.clear_button = null;
+    // this.on_change_delay_ms = 0;
     this.html = $("<div></div>");
+    // this.on_change_timeout = null;
     this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
     this.datalist = $("<datalist></datalist", {"id": this.id});
 
@@ -87,6 +91,10 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.SetLabel(this.options[id]);
     };
 
+    this.SetOnChangeDelayMs = function (ms) {
+        this.on_change_delay_ms = parseInt(ms);
+    };
+
     this.GetOptions = function () {
         return this.options;
     };
@@ -99,12 +107,14 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.add_options();
     };
 
-    this.AddOption = function (id, label, _check=true) {
-        if (_check && this.options[id]) {
-            return;
-        }
+    this.AddOption = function (id, label, _check=true, _from_filter=false) {
+        if (!_from_filter) {
+            if (_check && this.options[id]) {
+                return;
+            }
 
-        this.options[id] = label;
+            this.options[id] = label;
+        }
 
         // Unlike the select element, the datalist does not allow option elements
         // to contain both a value and a label, so for us to get the ID after a
@@ -115,7 +125,9 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             "height": Dash.Size.RowHeight
         });
 
-        // this.option_rows.push(row);
+        // if (!_from_filter) {
+        //     this.option_rows.push(row);
+        // }
 
         this.datalist.append(row);
     };
@@ -194,7 +206,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -202,7 +214,7 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -236,11 +248,124 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
         }
     };
 
-    this.add_options = function () {
+    this.add_options = function (_from_filter=false) {
         for (var id in this.options) {
-            this.AddOption(id, this.options[id], false);
+            this.AddOption(id, this.options[id], false, _from_filter);
         }
     };
+
+    // Datalists have their own built-in native filtering, but it returns matches
+    // for anything that includes the characters typed in the input, so this
+    // overwrites it. For example, typing the letter "m" should (typically) return
+    // results that start with "m", but datalists return any result that includes
+    // the letter "m", which doesn't feel logical to the user, in most cases.
+    this.filter_datalist = function () {
+        var id;
+        var label;
+        var added_ids = [];
+        var search_text = this.GetLabel().toLocaleLowerCase("en-US");
+
+        // As of writing, this doesn't seem necessary for performance, even
+        // with very long lists drawing 1000 results without any noticeable
+        // lag. If performance is an issue at any point, this should be the
+        // first place to start. If moving forward with this in the future,
+        // at the very least, need to display a little tag that says something
+        // like "showing top 50 results" when the limit is hit, so it's
+        // clear that not every potential match is shown. To do it right,
+        // we'd need to also offer a way to load more, or load all, etc.
+        var max_results = 0;  // 100;
+
+        // Currently, we're emptying the datalist, then creating and appending new options for
+        // the included options. If performance becomes an issue, we can try detaching all the
+        // options instead and manage which one's get re-appended each time, similar to what
+        // we do in the non-mobile combo on search.
+        this.datalist.empty();
+
+        // Show everything, to retain the functionality of being able to use the dropdown instead of search
+        if (!search_text) {
+            // This does not work. No matter what I've tried, blur, refocus, click, reclick, timeout,
+            // anim frame, remove, re-append - nothing successfully redraws the list to the original
+            // version with all the options in the original order. After digging, it seems a user
+            // action is required for some reason, which I confirmed after manually blurring/refocusing.
+            // Super frustrating and annoying, but it appears there's nothing to be done here.
+            this.add_options(true);
+            this.trigger_reclick();
+
+            return;
+        }
+
+        // This logic is the same as the logic in DashGuiComboSearch.on_search_text_changed,
+        // so if any logic is added here, be sure to mirror that there as well.
+
+        // First, list options that start with the input text
+        for (id in this.options) {
+            label = (this.options[id] || "").toString();
+
+            if (!label.length || !label.toLocaleLowerCase("en-US").startsWith(search_text)) {
+                continue;
+            }
+
+            this.AddOption(id, label, false, true);
+
+            added_ids.push(id);
+
+            if (max_results && added_ids.length >= max_results) {
+                return;
+            }
+        }
+
+        // Below those options, list options that don't start with the input text, but contain it
+        for (id in this.options) {
+            if (added_ids.includes(id)) {
+                continue;
+            }
+
+            label = (this.options[id] || "").toString();
+
+            if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                continue;
+            }
+
+            this.AddOption(id, label, false, true);
+
+            added_ids.push(id);
+
+            if (max_results && added_ids.length >= max_results) {
+                return;
+            }
+        }
+    };
+
+    // this.on_change = function () {
+    //     if (!this.on_change_delay_ms) {
+    //         this.filter_datalist();
+    //
+    //         if (this.on_change_cb) {
+    //             this.on_change_cb();
+    //         }
+    //
+    //         return;
+    //     }
+    //
+    //     if (this.on_change_timeout) {
+    //         clearTimeout(this.on_change_timeout);
+    //
+    //         this.on_change_timeout = null;
+    //     }
+    //
+    //     (function (self) {
+    //         self.on_change_timeout = setTimeout(
+    //             function () {
+    //                 self.filter_datalist();
+    //
+    //                 if (self.on_change_cb) {
+    //                     self.on_change_cb();
+    //                 }
+    //             },
+    //             self.on_change_delay_ms
+    //         );
+    //     })(this);
+    // };
 
     this.setup_connections = function () {
         (function (self) {
@@ -258,8 +383,17 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
             });
 
             self.input.on("input", function () {
+                // Since we're overriding the datalist's default filtering and
+                // that default filtering doesn't get delayed, delaying the
+                // custom filtering causes both default and custom filtering to
+                // occur, which is visibly noticeable. This doesn't appear to
+                // be necessary anyway for performance, so not a big deal.
+                // self.on_change();
+
+                self.filter_datalist();
+
                 if (self.on_change_cb) {
-                    self.on_change_cb(self.GetLabel());
+                    self.on_change_cb();
                 }
             });
 
@@ -275,15 +409,21 @@ function DashMobileSearchableCombo (color=null, options={}, placeholder_text="",
                     return;
                 }
 
-                setTimeout(
-                    function () {
-                        // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
-                        self.input.trigger("focus");
-                        self.input.trigger("click", [true]);
-                    },
-                    300
-                );
+                self.trigger_reclick();
             });
+        })(this);
+    };
+
+    this.trigger_reclick = function () {
+        (function (self) {
+            setTimeout(
+                function () {
+                    // If the list is long, the list will cover the virtual keyboard unless re-clicked after initial draw
+                    self.input.trigger("focus");
+                    self.input.trigger("click", [true]);
+                },
+                300
+            );
         })(this);
     };
 

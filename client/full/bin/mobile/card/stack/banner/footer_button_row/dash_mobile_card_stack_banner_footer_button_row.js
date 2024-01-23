@@ -79,13 +79,19 @@ function DashMobileCardStackBannerFooterButtonRow (banner) {
             callback
         );
 
-        if (this.buttons.length > 0) {
-            this.buttons.Last().html.css({
-                "margin-right": Dash.Size.Padding * 2
-            });
+        var len = this.buttons.length;
+
+        if (len > 0) {
+            for (var _button of this.buttons) {
+                _button.html.css({
+                    "margin-right": Dash.Size.Padding * (len < 3 ? 2 : len < 5 ? 1 : 0.5)
+                });
+            }
+
         }
 
         this.center_content.append(button.html);
+
         this.buttons.push(button);
 
         return button;

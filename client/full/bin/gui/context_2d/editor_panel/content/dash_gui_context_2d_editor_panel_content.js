@@ -18,7 +18,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
 
     // Increase this when any other elements are added that would increase the overall height
     // (thought at a certain point, probably now, need to stop increasing this and just let it scroll)
-    this.min_height = (Dash.Size.ButtonHeight * 10.3) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
+    this.min_height = (Dash.Size.ButtonHeight * 12.2) + (this.panel.editor.min_height_extensions["editor_panel_content_box"] || 0);
 
     this.PrimitiveTypes = [
         "text",
@@ -29,9 +29,21 @@ function DashGuiContext2DEditorPanelContent (panel) {
     ];
 
     this.setup_styles = function () {
-        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content");
+        this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_context_2d_editor_panel_content", this.color);
 
         this.layout.OnTabChanged(this.on_tab_changed);
+
+        this.layout.list_backing.css({
+            "background": "red"
+        });
+
+        this.layout.tab_top.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
+
+        this.layout.tab_bottom.css({
+            "background": this.color.Tab.Background.BaseHover
+        });
 
         this.html = this.layout.html;
 
@@ -52,6 +64,11 @@ function DashGuiContext2DEditorPanelContent (panel) {
         }
 
         this.add_edit_box();
+
+        if (!this.editor.override_mode) {
+            this.add_precomps_box();
+        }
+
         this.set_header_right_margin();
     };
 
@@ -145,24 +162,27 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 continue;
             }
 
-            // Not the best, but necessary right now
-            if (this.editor.override_mode) {
-                combo.DisableAutoGravity();
-            }
+            var parent = floating_combo["parent"];
+            var row = parent ? parent : floating_combo["tool_row"].html;
 
-            combo.html.detach();
+            combo.DisableAutoGravity();
 
             combo.html.css({
                 "position": "absolute",
                 "top": (
                       this.panel.property_box.html.outerHeight()  // Editor panel top box height
                     + Dash.Size.ButtonHeight  // Tabs height
-                    + floating_combo["tool_row"].html[0].offsetTop  // Tool row offset from top of context div
-                    + floating_combo["tool_row"].html.parent()[0].offsetTop  // Context div offset from top of content box
+                    + row[0].offsetTop  // Tool row offset from top of context div
+                    + row.parent()[0].offsetTop  // Context div offset from top of content box
                     + 1  // Bottom border of tabs
+                    + (parent ? parseInt(floating_combo["tool_row"].html.css("margin-top")) : 0)
                 ),
-                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (Dash.Size.Padding * 1.5)  // Combo label
+                "left": floating_combo["tool_row"].elements[0].html.outerWidth() + (  // Combo label
+                    parent ? floating_combo["tool_row"].html[0].offsetLeft : 0
+                ) + (Dash.Size.Padding * 1.5)
             });
+
+            combo.html.detach();
 
             this.panel.html.append(combo.html);
 
@@ -173,7 +193,7 @@ function DashGuiContext2DEditorPanelContent (panel) {
     };
 
     this.AddCustomElementToNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
             console.error(
@@ -181,20 +201,22 @@ function DashGuiContext2DEditorPanelContent (panel) {
                 "or 'callback_that_returns_html' to be provided (and not both)."
             );
 
-            return;
+            return null;
         }
 
         this.new_tab_custom_element_configs.push({
             "function_name": built_in_function_name,
             "function_params": built_in_function_params,
-            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html,
+            "return_element_callback": binder && callback_to_receive_element ? callback_to_receive_element.bind(binder) : callback_to_receive_element
         });
     };
 
     this.AddCustomElementToEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
-        if ((!built_in_function_name && !callback_that_returns_html) || (built_in_function_name && callback_that_returns_html)) {
+        if ((!built_in_function_name && !cb_that_returns_html) || (built_in_function_name && cb_that_returns_html)) {
             console.error(
                 "AddCustomElementToEditTab requires either 'built_in_function_name' " +
                 "or 'callback_that_returns_html' to be provided (and not both)."
@@ -210,7 +232,9 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.edit_tab_custom_element_configs[context_key].push({
             "function_name": built_in_function_name,
             "function_params": built_in_function_params,
-            "callback": binder && callback_that_returns_html ? callback_that_returns_html.bind(binder) : callback_that_returns_html
+            "callback": binder && cb_that_returns_html ? cb_that_returns_html.bind(binder) : cb_that_returns_html,
+            "return_element_callback": binder && cb_to_receive_element ? cb_to_receive_element.bind(binder) : cb_to_receive_element,
+            "can_draw_callback": binder && cb_to_check_draw ? cb_to_check_draw.bind(binder) : cb_to_check_draw
         });
     };
 
@@ -242,6 +266,12 @@ function DashGuiContext2DEditorPanelContent (panel) {
         this.set_inactive_tabs_bg_color(selected_content_data);
 
         this.last_instantiated_class = instantiated_class;
+    };
+
+    this.add_precomps_box = function () {
+        this.layout.Prepend("Pre-Comps", function () {
+            return new DashGuiContext2DEditorPanelContentPreComps(this);
+        });
     };
 
     this.add_edit_box = function () {

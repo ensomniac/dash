@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -34,13 +34,13 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
         suffix = ["st", "nd", "rd"][day % 10 - 1]
 
     day_string = f"{day}{suffix}"
-    date_markup = dt_obj.strftime(f"%A, %B {day_string} %Y")
+    date_markup = dt_obj.strftime(f"%A, %B {day_string}, %Y")
 
-    # Display just the date
+    # Format: Monday, October 9th, 2023
     if time_format == 0:
         return date_markup
 
-    # Display just the date in a human-readable format
+    # Format: 10/09/23 at 02:51 PM
     if time_format == 1:
         return dt_obj.strftime("%m/%d/%y at %I:%M %p")
 
@@ -129,7 +129,7 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
     if time_format == 16:
         return dt_obj.strftime(f"%B {day}, %Y")
 
-    # Format date and time in a human-readable format
+    # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
 
 

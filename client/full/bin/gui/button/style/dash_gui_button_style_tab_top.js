@@ -62,7 +62,7 @@ function DashGuiButtonStyleTabTop () {
             "font-family": "sans_serif_bold",
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "font-size": "80%",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%"
         });
     };
 

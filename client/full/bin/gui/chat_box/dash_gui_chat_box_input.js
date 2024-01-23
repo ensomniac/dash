@@ -24,7 +24,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             css["padding-top"] = Dash.Size.Padding * 0.5;
             css["margin-left"] = -Dash.Size.Padding * 0.5;
             css["margin-right"] = -Dash.Size.Padding * 0.5;
-            css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
+            css["border-top"] = "1px solid " + this.color.PinstripeDark;
+            // css["box-shadow"] = "0px 0px 20px 1px rgba(0, 0, 0, 0.2)";
         }
 
         this.html = Dash.Gui.GetHTMLContext("", css, this.color);
@@ -87,12 +88,25 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.input.DisableBlurSubmit();
 
         if (!Dash.IsMobile) {
-            this.input.SetOnSubmit(this.msg_submit_callback, this.chat_box);
+            this.input.SetOnSubmit(this.on_submit, this);
             this.input.SetOnChange(this.on_input, this);
         }
 
 
         this.html.append(this.input.html);
+    };
+
+    // Wrapper
+    this.on_submit = function () {
+        this.input.Disable();
+
+        this.submit_button.Disable();
+
+        this.msg_submit_callback();
+
+        this.input.Enable();
+
+        this.submit_button.Enable();
     };
 
     // Expand the combo if user typed "@", but hide it if they keep typing or backspace
@@ -225,7 +239,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.add_submit_button = function () {
         this.submit_button = new Dash.Gui.IconButton(
             "share",
-            this.msg_submit_callback,
+            this.on_submit,
             this,
             this.color,
             {"size_mult": Dash.IsMobile ? 0.7 : 1}

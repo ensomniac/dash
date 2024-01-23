@@ -33,11 +33,11 @@ function DashGuiContext2DPrimitiveMedia () {
         else {
             this.media = (
                 this.type === "image" ? Dash.File.GetImagePreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     "100%"
                 ) : this.type === "video" ? Dash.File.GetVideoPreview(
-                    this.get_url(),
+                    this.get_url(this.file_data),
                     "100%",
                     true,
                     false,
@@ -60,16 +60,6 @@ function DashGuiContext2DPrimitiveMedia () {
                 e.preventDefault();
             });
         }
-    };
-
-    this.get_url = function () {
-        return (
-               this.file_data["url"]
-            || this.file_data["orig_url"]
-            || this.file_data["thumb_png_url"]
-            || this.file_data["thumb_jpg_url"]
-            || ""
-        );
     };
 
     this.update_tint_color = function () {
@@ -97,11 +87,10 @@ function DashGuiContext2DPrimitiveMedia () {
             }
 
             this.media.css({
-                "mask-image": "url(" + this.get_url() + ")",
-                "mask-mode": "alpha",
+                "mask-image": "url(" + this.get_url(this.file_data) + ")",
                 "mask-size": "contain",
                 "mask-repeat": "no-repeat",
-                "mask-position": "center center",
+                "mask-position": "center",
                 "background-color": tint_color,
                 "background-blend-mode": "overlay"
             });
@@ -140,12 +129,12 @@ function DashGuiContext2DPrimitiveMedia () {
         }
     };
 
-    this.update_filter = function (brightness=null, contrast=null) {
+    this.update_filter = function (brightness=null, contrast=null, saturation=null) {
         if (!this.media) {
             (function (self) {
                 setTimeout(
                     function () {
-                        self.update_filter(brightness, contrast);
+                        self.update_filter(brightness, contrast, saturation);
                     },
                     10
                 );
@@ -157,9 +146,11 @@ function DashGuiContext2DPrimitiveMedia () {
         this.media.css({
             "filter": (
                 "brightness(" + (
-                    brightness === null ? this.get_value("brightness") : brightness
+                    (brightness === null ? this.get_value("brightness") : brightness) * 2
                 ) + ") contrast(" + (
-                    contrast === null ? this.get_value("contrast") : contrast
+                    (contrast === null ? this.get_value("contrast") : contrast) * 2
+                ) + ") saturate(" + (
+                    (saturation === null ? this.get_value("saturation") : saturation) * 2
                 ) + ")"
             )
         });
@@ -299,7 +290,7 @@ function DashGuiContext2DPrimitiveMedia () {
             return;
         }
 
-        if (key === "contrast" || key === "brightness") {
+        if (["contrast", "brightness", "saturation"].includes(key)) {
             this.update_filter();
         }
 

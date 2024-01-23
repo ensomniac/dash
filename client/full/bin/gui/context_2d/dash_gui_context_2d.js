@@ -1,5 +1,6 @@
 function DashGuiContext2D (
-    c2d_id, can_edit=true, color=null, api="Context2D", preview_mode=false, override_mode=false, extra_request_params={}
+    c2d_id, can_edit=true, color=null, api="Context2D", preview_mode=false,
+    override_mode=false, extra_request_params={}, data=null, combo_options=null
 ) {
     /**
      * Context2D editor element.
@@ -11,13 +12,17 @@ function DashGuiContext2D (
      *     to the respective API file (which should be utilizing the Dash.Context2D module) as follows:
      *
      *         - "get_data":               Get data dict for provided object ID
+     *         - "get_precomp":            Set rendered precomp data (must include "url" key) for provided object ID
      *         - "set_property":           Set property with a key/value for provided object ID
+     *         - "render_all_precomps":    Render all precomps for provided object ID
+     *         - "set_precomp_property":   Set precomp property with a key/value/num for provided object ID
      *         - "set_layer_property":     Set layer property with a key/value for provided object ID
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID
      *         - "add_text_layer":         Add new text layer to provided object ID
      *         - "add_color_layer":        Add new color layer to provided object ID
      *         - "add_media_layer":        Add new media layer to provided object ID via media upload
      *         - "import_another_context": Import another context (layers) into provided object ID
+     *         - "upload_layer_mask":      Upload a mask image to a layer for provided object ID
      *         - "duplicate":              Duplicate the provided object ID as a new context (not tethered to the original) - backend function
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
@@ -36,28 +41,31 @@ function DashGuiContext2D (
      * @param {boolean} preview_mode - When enabled, only shows a read-only "preview" of the context, hiding all the gui/tools (default=false)
      * @param {boolean} override_mode - When enabled, hides some gui/tools (default=false)
      * @param {Object} extra_request_params - Extra params to send on requests (default={})
+     * @param {Object} data - C2D data to start with, like when using a bulk request with a bunch of previews (default=null)
+     * @param {Array} combo_options - Combo options to start with, like when using a bulk request with a bunch of previews (default=null)
      */
 
     this.c2d_id = c2d_id;
-    this.api = api;
     this.color = color || Dash.Color.Light;
-    this.can_edit = preview_mode ? false : can_edit;
-    this.preview_mode = preview_mode;
+    this.api = api;
+    this.preview_mode = Dash.IsMobile ? true : preview_mode;
+    this.can_edit = this.preview_mode ? false : can_edit;
 
     // As of writing, any changes made in this mode will have to be explicitly
     // handled on the backend by the custom abstraction of Dash.Context2D. In
     // the future, this can be baked into the core code if it makes sense to do so.
-    this.override_mode = override_mode;
+    this.override_mode = this.preview_mode ? false : override_mode;
 
     this.extra_request_params = extra_request_params;
+    this.data = data;
+    this.ComboOptions = combo_options;
 
-    this.data = null;
     this.canvas = null;
     this.log_bar = null;
     this.toolbar = null;
     this.initialized = false;
     this.editor_panel = null;
-    this.ComboOptions = null;
+    this.full_res_mode = false;
     this.linked_preview = null;
     this.on_duplicate_cb = null;
     this.loading_overlay = null;
@@ -70,7 +78,7 @@ function DashGuiContext2D (
     this.highlight_color = "#16f0ec";  // Arbitrary obvious color that is readable on light and dark backgrounds
     this.left_html = $("<div></div>");
     this.middle_html = $("<div></div>");
-    this.refresh_ms = this.preview_mode ? 30000 : 5000;
+    this.refresh_ms = this.preview_mode ? 60000 : 10000;
     this.editor_panel_property_box_custom_fields_cb = null;
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.refresh_data_request_failure_id = "dash_gui_context_2d_on_data";
@@ -90,13 +98,28 @@ function DashGuiContext2D (
 
         this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
 
-        Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
+        if (this.data) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        Dash.SetInterval(self, self.refresh_data, self.refresh_ms);
+                    },
+                    self.refresh_ms
+                );
+            })(this);
+
+            this._on_data();
+        }
+
+        else {
+            Dash.SetInterval(this, this.refresh_data, this.refresh_ms);
+        }
 
         this.get_combo_options();
     };
 
-    this.SetEditorPanelLayerProperty = function (key, value, id) {
-        this.editor_panel.SetLayerProperty(key, value, id);
+    this.SetEditorPanelLayerProperty = function (key, value, id, callback=null) {
+        this.editor_panel.SetLayerProperty(key, value, id, callback);
     };
 
     this.EditorPanelInputInFocus = function () {
@@ -113,9 +136,9 @@ function DashGuiContext2D (
         }
     };
 
-    this.SetCanvasActivePrimitive = function (id) {
+    this.SetCanvasActivePrimitive = function (id, focus=true) {
         if (this.canvas) {
-            this.canvas.SetActivePrimitive(id);
+            this.canvas.SetActivePrimitive(id, focus);
         }
     };
 
@@ -167,9 +190,9 @@ function DashGuiContext2D (
         }
     };
 
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.editor_panel) {
-            this.editor_panel.SelectLayer(id, from_canvas);
+            this.editor_panel.SelectLayer(id, from_canvas, focus);
         }
     };
 
@@ -254,7 +277,7 @@ function DashGuiContext2D (
     };
 
     this.AddCustomElementToEditorPanelContentNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -264,7 +287,8 @@ function DashGuiContext2D (
                             built_in_function_name,
                             built_in_function_params,
                             callback_that_returns_html,
-                            binder
+                            binder,
+                            callback_to_receive_element
                         );
                     },
                     1
@@ -278,12 +302,14 @@ function DashGuiContext2D (
             built_in_function_name,
             built_in_function_params,
             callback_that_returns_html,
-            binder
+            binder,
+            callback_to_receive_element
         );
     };
 
     this.AddCustomElementToEditorPanelContentEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
         if (!this.editor_panel) {
             (function (self) {
@@ -293,8 +319,10 @@ function DashGuiContext2D (
                             context_key,
                             built_in_function_name,
                             built_in_function_params,
-                            callback_that_returns_html,
-                            binder
+                            cb_that_returns_html,
+                            binder,
+                            cb_to_receive_element,
+                            cb_to_check_draw
                         );
                     },
                     10
@@ -308,8 +336,10 @@ function DashGuiContext2D (
             context_key,
             built_in_function_name,
             built_in_function_params,
-            callback_that_returns_html,
-            binder
+            cb_that_returns_html,
+            binder,
+            cb_to_receive_element,
+            cb_to_check_draw
         );
     };
 
@@ -348,6 +378,25 @@ function DashGuiContext2D (
         this.canvas.OnPrimitiveUpdated = binder ? callback.bind(binder) : callback;
     };
 
+    this.ToggleFullResMode = function () {
+        if (!this.initialized) {
+            (function (self) {
+                setTimeout(
+                    function () {
+                        self.ToggleFullResMode();
+                    },
+                    100
+                );
+            })(this);
+
+            return;
+        }
+
+        this.full_res_mode = !this.full_res_mode;
+
+        this.RedrawLayers(false, true);
+    };
+
     this.initialize = function () {
         if (this.initialized) {
             return;
@@ -362,7 +411,7 @@ function DashGuiContext2D (
 
         this.html.css({
             "box-sizing": "border-box",
-            "background": this.color.Pinstripe,
+            "background": this.color.Tab.Background.BaseHover,
             "border": this.preview_mode ? "" : ("2px solid " + this.color.StrokeLight),
             ...abs_css
         });
@@ -468,20 +517,16 @@ function DashGuiContext2D (
 
         this.data = response;
 
-        if (this.ComboOptions && !this.initialized) {
-            this.initialize();
-        }
-
-        if (!this.preview_mode) {
-            console.log("Context2D data:", this.data);
-        }
-
-        if (this.initialized && this.editor_panel && !this.preview_mode) {
-            this.editor_panel.UpdatePropertyBox();
-        }
+        this._on_data();
     };
 
     this.get_combo_options = function (extra_params={}, callback=null) {
+        if (this.ComboOptions) {
+            this.on_combo_options(callback);
+
+            return;
+        }
+
         (function (self) {
             Dash.Request(
                 self,
@@ -496,19 +541,9 @@ function DashGuiContext2D (
 
                     self.ComboOptions = response;
 
-                    if (self.data && !self.initialized) {
-                        self.initialize();
-                    }
-
                     console.log("Context2D combo options:", self.ComboOptions);
 
-                    if (self.initialized && self.editor_panel && !self.preview_mode) {
-                        self.editor_panel.UpdateContentBoxComboOptions();
-                    }
-
-                    if (callback) {
-                        callback();
-                    }
+                    self.on_combo_options(callback);
                 },
                 self.api,
                 {
@@ -518,6 +553,20 @@ function DashGuiContext2D (
                 }
             );
         })(this);
+    };
+
+    this.on_combo_options = function (callback=null) {
+        if (this.data && !this.initialized) {
+            this.initialize();
+        }
+
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdateContentBoxComboOptions();
+        }
+
+        if (callback) {
+            callback();
+        }
     };
 
     this.get_data = function () {
@@ -579,6 +628,20 @@ function DashGuiContext2D (
 
         if (callback) {
             callback();
+        }
+    };
+
+    this._on_data = function () {
+        if (this.ComboOptions && !this.initialized) {
+            this.initialize();
+        }
+
+        if (!this.preview_mode) {
+            console.log("Context2D data:", this.data);
+        }
+
+        if (this.initialized && this.editor_panel && !this.preview_mode) {
+            this.editor_panel.UpdatePropertyBox();
         }
     };
 

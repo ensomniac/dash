@@ -2,13 +2,14 @@
 
 function DashGuiPropertyBoxInterface () {
     this.Update = function () {
-        this.update_inputs();
-        this.update_combos();
         this.update_headers();
+        this.update_inputs();
+        this.update_text_areas();
+        this.update_combos();
         this.update_tool_rows();
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -16,7 +17,7 @@ function DashGuiPropertyBoxInterface () {
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -104,7 +105,9 @@ function DashGuiPropertyBoxInterface () {
     // This is intended to nicely format a prop box that only uses locked rows for displaying data, therefore,
     // it's only been implemented in input-related areas for now (there may be other areas it should be added)
     this.SetGetFormattedDataCallback = function (callback, binder=null) {
-        this.get_formatted_data_cb = binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback;
+        this.get_formatted_data_cb = (
+            binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback
+        );
     };
 
     this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
@@ -185,11 +188,12 @@ function DashGuiPropertyBoxInterface () {
         return header_obj;
     };
 
-    this.AddButtonBar = function (style="default") {
+    this.AddButtonBar = function (style="default", indent=false) {
         var bar = new Dash.Gui.ButtonBar(this.binder, this.color, style);
 
         bar.html.css({
             "margin-top": Dash.Size.Padding,
+            "margin-left": indent ? this.indent_px : 0
         });
 
         this.AddHTML(bar.html);
@@ -231,10 +235,12 @@ function DashGuiPropertyBoxInterface () {
             return new Dash.Gui.Button(
                 label_text,
 
-                // Andrew 1/17/23 - For some reason, the original code here wraps the provided callback in an empty function, which
-                // suppresses the button's actual callback return values. I can't understand why it was written this way, but I've
-                // added an extra param, 'wrap_cb', to circumvent this behavior and actually pass the provided callback directly to
-                // the button, as it should be. I've done it this way to make sure nothing else will break, but this is a strange one.
+                // Andrew 1/17/23 - For some reason, the original code here wraps the provided
+                // callback in an empty function, which suppresses the button's actual callback
+                // return values. I can't understand why it was written this way, but I've added
+                // an extra param, 'wrap_cb', to circumvent this behavior and actually pass the
+                // provided callback directly to the button, as it should be. I've done it this
+                // way to make sure nothing else will break, but this is a strange one.
                 wrap_cb ? function () {
                     if (callback) {
                         callback.bind(self.binder)(button);
@@ -268,15 +274,17 @@ function DashGuiPropertyBoxInterface () {
         button.StyleAsDeleteButton(Dash.Size.ColumnWidth, faint);
 
         button.html.css({
-            "margin-left": Dash.Size.Padding * 2,
+            "margin-left": this.indent_px,
             "margin-right": "auto"
         });
 
         return button;
     };
 
-    this.AddCombo = function (label_text, combo_options, property_key, default_value=null, bool=false, options={}) {
-        var indent_px = options["indent_px"] || (Dash.Size.Padding * 2);
+    this.AddCombo = function (
+        label_text, combo_options, property_key="", default_value=null, bool=false, options={}
+    ) {
+        var indent_px = options["indent_px"] || this.indent_px;
         var indent_row = false;
 
         if (this.num_headers > 0) {
@@ -295,6 +303,8 @@ function DashGuiPropertyBoxInterface () {
         );
 
         row.input.input.css("pointer-events", "none");
+
+        row.input.input[0].tabIndex = -1;  // Prevent tabbing to the input, which is not used (why not just remove it?)
 
         if (indent_row) {
             row.html.css("margin-left", indent_px);
@@ -344,19 +354,52 @@ function DashGuiPropertyBoxInterface () {
 
         this.track_row(row);
 
+        if (options["two_lines"]) {
+            row.input.html.remove();
+
+            row.html.css({
+                "display": "",
+                "height": "auto"
+            });
+
+            combo.html.css({
+                "position": "",
+                "left": 0
+            });
+
+            combo.html.detach();
+
+            row.html.append(combo.html);
+
+            combo.RefreshConnections();
+        }
+
+        if (options["no_row_highlight"]) {
+            row.html.off("mouseenter");
+            row.html.off("mouseleave");
+
+            row.highlight.remove();
+        }
+
         return row;
     };
 
-    this.AddInput = function (data_key, label_text, default_value, combo_options, can_edit, options={}) {
+    this.AddInput = function (
+        data_key, label_text="", default_value="", combo_options=null, can_edit=false, options={}
+    ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
 
+        if (!label_text) {
+            label_text = data_key ? data_key.Title() : "[MISSING LABEL]";
+        }
+
         var row_details = {
             "key": data_key,
             "label_text": label_text,
-            "default_value": default_value || null,
-            "combo_options": combo_options || null,
+            "default_value": default_value,
+            "combo_options": combo_options,
             "value": value !== null && value !== undefined ? value : default_value,  // Keep 'false' intact
             "can_edit": can_edit
         };
@@ -403,14 +446,119 @@ function DashGuiPropertyBoxInterface () {
 
         this.track_row(row);
 
+        if (data_key === "id") {
+            row.html.css({
+                "opacity": 0.5
+            });
+        }
+
         return row;
+    };
+
+    this.AddTextArea = function (
+        data_key, label_text="", can_edit=true, placeholder_text="",
+        callback=null, delay_cb=true, starting_height_mult=6
+    ) {
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+
+        if (!(label_text.endsWith(":"))) {
+            label_text += ":";
+        }
+
+        var container = $("<div></div>");
+
+        container.css({
+            "border-bottom": "1px dotted " + this.color.PinstripeDark
+        });
+
+        var label = $("<div>" + label_text + "</div>");
+
+        label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": (Dash.Size.RowHeight) + "px",
+            "text-align": "left",
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
+            "flex": "none"
+        });
+
+        container.append(label);
+
+        var text_area = (function (self) {
+            return new Dash.Gui.TextArea(
+                self.color,
+                placeholder_text,
+                self,
+                callback ? function (value) {
+                    callback.bind(self.binder)(data_key, value);
+                } : function (value, text_area) {
+                    if (!can_edit) {
+                        return;
+                    }
+
+                    if (self.get_data_cb) {
+                        var old_value = self.get_data_cb()[data_key];
+
+                        if (old_value === value) {
+                            return;
+                        }
+                    }
+
+                    if (!self.dash_obj_id) {
+                        if (self.set_data_cb) {
+                            self.set_data_cb(data_key, value);
+                        }
+
+                        else {
+                            console.error("Error: Property Box has no callback and no endpoint information!");
+                        }
+
+                        return;
+                    }
+
+                    self.set_property(data_key, value, text_area, false);
+                },
+                delay_cb
+            );
+        })(this);
+
+        text_area.textarea.css({
+            "border": text_area.border_size + "px solid " + this.color.StrokeLight
+        });
+
+        text_area.SetHeight(Dash.Size.RowHeight * starting_height_mult);
+
+        if (!can_edit) {
+            text_area.Lock(false);
+        }
+
+        if (value) {
+            text_area.SetText(value);
+        }
+
+        container.append(text_area.html);
+
+        container._label = label;
+        container._text_area = text_area;
+
+        this.text_areas[data_key] = text_area;
+
+        this.indent_row(container);
+        this.track_row(container);
+
+        this.html.append(container);
+
+        return container;
     };
 
     this.AddLabel = function (text, color=null) {
         var header = new Dash.Gui.Header(text, color || this.color);
 
         header.html.css({
-            "margin-left": Dash.Size.Padding * 2
+            "margin-left": this.indent_px
         });
 
         this.html.append(header.html);
@@ -436,10 +584,12 @@ function DashGuiPropertyBoxInterface () {
         return label;
     };
 
-    // TODO: this should've originally been setup to be directly connected to this property box's set_data function
+    // TODO: this should've originally been setup to be directly
+    //  connected to this property box's set_data function
     this.AddCheckbox = function (
-        local_storage_key="", default_state=true, color=null, hover_hint="Toggle", binder=null, callback=null,
-        label_text="", label_first=true, include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
+        local_storage_key="", default_state=true, color=null, hover_hint="Toggle",
+        binder=null, callback=null, label_text="", label_first=true,
+        include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
     ) {
         label_text = label_text.trim();
 
@@ -468,7 +618,7 @@ function DashGuiPropertyBoxInterface () {
         this.indent_row(checkbox);
 
         checkbox.html.css({
-            "border-bottom": "1px dotted rgba(0, 0, 0, 0.2)"
+            "border-bottom": this.bottom_border
         });
 
         checkbox.label.label.css({
@@ -500,6 +650,53 @@ function DashGuiPropertyBoxInterface () {
         this.track_row(checkbox);
 
         return checkbox;
+    };
+
+    this.AddDatePicker = function (
+        key="", label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max=""
+    ) {
+        this.inputs[key] = new Dash.Gui.DatePicker(
+            label_text || key.Title() || "[Date]",
+            this.binder,
+            on_submit_cb,
+            on_autosave_cb,
+            on_change_cb,
+            this.color,
+            min,
+            max
+        );
+
+        this.inputs[key].html.css({
+            "border-bottom": this.bottom_border
+        });
+
+        return this.on_input_added(key, can_edit);
+    };
+
+    this.AddTimePicker = function (
+        key="", label_text="", can_edit=false, on_submit_cb=null,
+        on_autosave_cb=null, on_change_cb=null, min="", max="", include_seconds=false
+    ) {
+        this.inputs[key] = (function (self) {
+            return new Dash.Gui.TimePicker(
+                label_text || key.Title() || "[Time]",
+                self.binder,
+                on_submit_cb,
+                on_autosave_cb,
+                on_change_cb,
+                self.color,
+                min,
+                max,
+                include_seconds
+            );
+        })(this);
+
+        this.inputs[key].html.css({
+            "border-bottom": this.bottom_border
+        });
+
+        return this.on_input_added(key, can_edit);
     };
 
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc

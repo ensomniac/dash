@@ -8,10 +8,8 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.height_px = 0;
     this.selected = false;
     this.width_px_max = 0;
-    this.width_px_min = 5;
     this.height_px_max = 0;
     this.drag_state = null;
-    this.height_px_min = 5;
     this.drag_active = false;
     this.drag_context = null;
     this.z_index_mult = 1000;
@@ -23,6 +21,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.editor = this.canvas.editor;
     this.draw_properties_pending = false;
     this.file_data = this.data["file"] || {};
+    this.mask_data = this.data["mask"] || {};
     this.parent_id = this.layer.GetParentID();
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
@@ -32,6 +31,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
+
+    // This is no longer needed, but at 1, it really doesn't hurt anything
+    this.width_px_min = 1;
+    this.height_px_min = 1;
 
     this.setup_styles = function () {
         this.set_max();
@@ -77,7 +80,12 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.on_contained_change(contained);
         }
 
-        if (fade_direction) {
+        if (Dash.Validate.Object(this.mask_data)) {
+            this.update_mask();
+        }
+
+        // Only check fade if not masked by image
+        else if (fade_direction) {
             this.update_fade();
         }
 
@@ -98,14 +106,25 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
 
+    this.ReloadData = function () {
+        this.data = this.layer.GetData();
+        this.file_data = this.data["file"] || {};
+        this.mask_data = this.data["mask"] || {};
+        this.parent_data = this.layer.GetParentData();
+    };
+
     this.Update = function (key, value) {
         if (key === "display_name") {
             return;
         }
 
-        this.data = this.layer.GetData();
-        this.file_data = this.data["file"] || {};
-        this.parent_data = this.layer.GetParentData();
+        this.ReloadData();
+
+        if (key === "mask") {
+            this.update_mask();
+
+            return;
+        }
 
         if (key === "opacity") {
             this.on_opacity_change(this.get_value(key));
@@ -142,6 +161,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "context") {
             this.canvas.UpdateAllChildrenPrimitives(this.id, key, value);
         }
+
+        if (key === "invert") {
+            this.draw_properties(true);
+        }
     };
 
     this.IsSelected = function () {
@@ -172,7 +195,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         this.selected = false;
     };
 
-    this.Select = function (from_click=false, border=true) {
+    this.Select = function (from_click=false, border=true, focus=true) {
         if (this.selected) {
             return;
         }
@@ -203,7 +226,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         // to indicate in the canvas which layer is hovered over in the layer stack,
         // so when selected, we want to remove that slight highlight
         if (this.hasOwnProperty("update_filter")) {
-            this.update_filter(this.get_value("brightness"));
+            this.update_filter();
         }
 
         else {
@@ -216,7 +239,10 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (!locked && this.type === "text") {
             this.unlock_text_area();
-            this.focus_text_area();
+
+            if (focus) {
+                this.focus_text_area();
+            }
         }
 
         this.selected = true;
@@ -329,6 +355,17 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     this.update_fade = function () {
         var direction = this.get_value("fade_direction");
+
+        if (Dash.Validate.Object(this.mask_data)) {
+            if (direction) {
+                console.warn(
+                    "Warning: Layer fade was not applied because an image mask was used instead"
+                );
+            }
+
+            return;
+        }
+
         var norm_start = this.get_value("fade_norm_start");
         var norm_end = this.get_value("fade_norm_end");
 
@@ -383,6 +420,27 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         });
     };
 
+    this.update_mask = function () {
+        var url = this.get_url(this.mask_data);
+
+        if (url) {
+            this.html.css({
+                "mask-image": "url(" + url + ")",
+                "mask-size": "contain",
+                "mask-repeat": "no-repeat",
+                "mask-position": "center"
+            });
+        }
+
+        else {
+            this.html.css({
+                "mask": ""
+            });
+
+            this.update_fade();
+        }
+    };
+
     this.on_rotate = function (rot_deg, force_save=false) {
         this.data["rot_deg"] = parseFloat(rot_deg);
 
@@ -407,12 +465,14 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
     };
 
+    // This is no longer needed, but rather than remove
+    // it, I've just raised it to a ludicrous level
     this.set_max = function () {
         var max = Math.max(this.canvas.GetWidth(), this.canvas.GetHeight());
 
         // Text gets special handling since it has an extra-wide container
-        this.width_px_max = max * (this.type === "text" ? 8 : 2);
-        this.height_px_max = max * (this.type === "text" ? 1 : 2);
+        this.width_px_max = max * (this.type === "text" ? 80 : 20);
+        this.height_px_max = max * (this.type === "text" ? 10 : 20);
     };
 
     this.set_drag_state = function () {
@@ -564,7 +624,6 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 return value * parent_opacity;
             }
 
-
             if (!override) {
                 return value;
             }
@@ -708,18 +767,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.width_px < this.width_px_min) {
-            this.width_px = this.width_px_min;
+            this.size_warn("Minimum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " < " + this.width_px_min);
 
-            // console.warn("Warning: Minimum width reached");
+            this.width_px = this.width_px_min;
 
             capped = true;
         }
 
         // Or unreasonably large
         if (this.width_px > this.width_px_max) {
-            this.width_px = this.width_px_max;
+            this.size_warn("Maximum width surpassed, " + this.data["display_name"] + ": " + this.width_px + " > " + this.width_px_max);
 
-            // console.warn("Warning: Maximum width reached");
+            this.width_px = this.width_px_max;
 
             capped = true;
         }
@@ -736,17 +795,33 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         // Ensure it doesn't get so small that it can't be edited
         if (this.height_px < this.height_px_min) {
-            this.height_px = this.height_px_min;
+            this.size_warn("Minimum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " < " + this.height_px_min);
 
-            // console.warn("Warning: Minimum height reached");
+            this.height_px = this.height_px_min;
         }
 
         // Or unreasonably large
         if (this.height_px > this.height_px_max) {
-            this.height_px = this.height_px_max;
+            this.size_warn("Maximum height surpassed, " + this.data["display_name"] + ": " + this.height_px + " > " + this.height_px_max);
 
-            // console.warn("Warning: Maximum height reached");
+            this.height_px = this.height_px_max;
         }
+    };
+
+    // Without the delay, these warnings will trigger when leaving the page
+    this.size_warn = function (msg) {
+        (function (self) {
+            setTimeout(
+                function () {
+                    if (!self.html.is(":visible")) {
+                        return;
+                    }
+
+                    console.warn("Warning:", msg);
+                },
+                1000
+            );
+        })(this);
     };
 
     this.set_scale = function (width=null, height=null, draw=true) {
@@ -888,7 +963,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return false;
         }
 
-        var url = this.get_url();
+        var url = this.get_url(this.file_data);
 
         if (!url || !url.toLowerCase().endsWith(".png")) {
             return false;
@@ -981,22 +1056,58 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         return [next_primitive, primitive_index];
     };
 
+    this.get_url = function (file_data) {
+        if (this.editor.full_res_mode) {
+            return (
+                   file_data["tmask_url"]
+                || file_data["url"]
+                || file_data["orig_url"]
+                || file_data["thumb_png_url"]
+                || file_data["thumb_url"]
+                || file_data["thumb_jpg_url"]
+                || ""
+            );
+        }
+
+        return (
+               file_data["tmask_url"]
+            || file_data["thumb_png_url"]
+            || file_data["thumb_url"]
+            || file_data["thumb_jpg_url"]
+            || file_data["url"]
+            || file_data["orig_url"]
+            || ""
+        );
+    };
+
     // Late draw so that multiple functions can call this.draw_properties while only actually drawing once
     this._draw_properties = function () {
         this.draw_properties_pending = false;
+
+        var transform = (
+            "rotate(" + this.get_value("rot_deg") + "deg)"
+
+            // This was added as a smoother alternative to setting "top" and "left",
+            // but it causes a complete breakage when media is rotated
+            // + " translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
+        );
+
+        var invert = this.get_value("invert");
+
+        if (invert === "vertical") {
+            transform += " scale(1, -1)";
+        }
+
+        else if (invert === "horizontal") {
+            transform += " scale(-1, 1)";
+        }
 
         this.html.css({
             "width": this.width_px,
             "height": this.height_px,
             "top": this.top_px,
             "left": this.left_px,
-            "transform": (
-                "rotate(" + this.get_value("rot_deg") + "deg) "
-
-                // This was added as an alternative to setting "top" and "left",
-                // but it causes a complete breakage when media is rotated
-                // + "translate3d(" + this.left_px + "px, " + this.top_px + "px, 0px)"
-            )
+            "transform": transform
         });
 
         this.on_opacity_change(this.get_value("opacity"));

@@ -8,6 +8,7 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.tmp_css_cache = [];
     this.sublist_queue = [];
     this.is_expanded = false;
+    this.hover_active = false;
     this.cached_preview = null;  // Intended for sublists only
     this.is_highlighted = false;
     this.fully_disabled = false;
@@ -18,9 +19,22 @@ function DashLayoutListRow (list, row_id, height=null) {
     this.column_box = $("<div></div>");
     this.expanded_content = $("<div></div>");
     this.clear_sublist_preview_on_update = true;
-    this.is_header = this.list.hasOwnProperty("header_row_tag") ? this.id.toString().startsWith(this.list.header_row_tag) : false;
-    this.is_footer = this.list.hasOwnProperty("footer_row_tag") ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
-    this.is_sublist = this.list.hasOwnProperty("sublist_row_tag") ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
+
+    this.is_header = this.list.hasOwnProperty(
+        "header_row_tag"
+    ) ? this.id.toString().startsWith(this.list.header_row_tag) : false;
+
+    this.is_footer = this.list.hasOwnProperty(
+        "footer_row_tag"
+    ) ? this.id.toString().startsWith(this.list.footer_row_tag) : false;
+
+    this.is_sublist = this.list.hasOwnProperty(
+        "sublist_row_tag"
+    ) ? this.id.toString().startsWith(this.list.sublist_row_tag) : false;
+
+    this.is_divider = this.list.hasOwnProperty(
+        "divider_row_tag"
+    ) ? this.id.toString().startsWith(this.list.divider_row_tag) : false;
 
     this.anim_delay = {
         "highlight_show": 100,
@@ -33,6 +47,10 @@ function DashLayoutListRow (list, row_id, height=null) {
     DashLayoutListRowInterface.call(this);
 
     this.setup_styles = function () {
+        if (this.is_divider) {
+            this.height *= 0.5;
+        }
+
         if (this.is_header || this.is_footer) {
             this.column_box.css({
                 "background": this.color.AccentGood,
@@ -60,7 +78,10 @@ function DashLayoutListRow (list, row_id, height=null) {
                 "top": 0,
                 "right": 0,
                 "height": this.height,
-                "background": Dash.Color.GetTransparent(Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood, 0.5),
+                "background": Dash.Color.GetTransparent(
+                    Dash.IsMobile ? Dash.Color.Mobile.AccentSecondary : this.color.AccentGood,
+                    0.5
+                ),
                 "pointer-events": "none",
                 "opacity": 0
             });
@@ -128,7 +149,8 @@ function DashLayoutListRow (list, row_id, height=null) {
             "opacity": 0,
             "top": -1,
             "bottom": -1,
-            "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            // "box-shadow": this.is_sublist ? "none" : "0px 0px 10px 1px rgba(0, 0, 0, 0.15)",
+            "border": this.is_sublist ? "none" : this.color.Pinstripe
         });
 
         if (this.is_sublist) {
@@ -152,38 +174,50 @@ function DashLayoutListRow (list, row_id, height=null) {
         return this.list.get_data_for_key(this.id, column_config_data["data_key"]) || default_value;
     };
 
+    this.on_hover_in = function () {
+        if (this.is_header || this.is_footer || this.is_divider) {
+            return;
+        }
+
+        this.hover_active = true;
+
+        this.highlight.stop().animate({"opacity": 1}, this.anim_delay["highlight_show"]);
+
+        if (this.list.allow_row_divider_color_change_on_hover === false) {
+            return;
+        }
+
+        for (var divider of this.columns["dividers"]) {
+            divider["obj"].css({"background": this.color.Button.Background.Base});
+        }
+    };
+
+    this.on_hover_out = function () {
+        if (this.is_expanded || this.is_header || this.is_footer || this.is_divider) {
+            return;
+        }
+
+        this.hover_active = false;
+
+        this.highlight.stop().animate({"opacity": 0}, this.anim_delay["highlight_hide"]);
+
+        if (this.list.allow_row_divider_color_change_on_hover === false) {
+            return;
+        }
+
+        for (var divider of this.columns["dividers"]) {
+            divider["obj"].css({"background": this.color.AccentGood});
+        }
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {
-                if (self.is_header || self.is_footer) {
-                    return;
-                }
-
-                self.highlight.stop().animate({"opacity": 1}, self.anim_delay["highlight_show"]);
-
-                if (self.list.allow_row_divider_color_change_on_hover === false) {
-                    return;
-                }
-
-                for (var divider of self.columns["dividers"]) {
-                    divider["obj"].css({"background": self.color.Button.Background.Base});
-                }
+                self.on_hover_in();
             });
 
             self.html.on("mouseleave", function () {
-                if (self.is_expanded || self.is_header || self.is_footer) {
-                    return;
-                }
-
-                self.highlight.stop().animate({"opacity": 0}, self.anim_delay["highlight_hide"]);
-
-                if (self.list.allow_row_divider_color_change_on_hover === false) {
-                    return;
-                }
-
-                for (var divider of self.columns["dividers"]) {
-                    divider["obj"].css({"background": self.color.AccentGood});
-                }
+                self.on_hover_out();
             });
 
             self.column_box.on("click", function (e) {
@@ -192,7 +226,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                     return;
                 }
 
-                if (self.is_header || self.is_footer) {
+                if (self.is_header || self.is_footer || self.is_divider) {
                     return;
                 }
 
@@ -208,6 +242,7 @@ function DashLayoutListRow (list, row_id, height=null) {
             "combos": [],
             "spacers": [],
             "dividers": [],
+            "text_areas": [],
             "copy_buttons": [],
             "icon_buttons": []
         };
@@ -237,10 +272,16 @@ function DashLayoutListRow (list, row_id, height=null) {
                 this.add_input_column(column_config_data);
             }
 
+            else if (column_config_data["type"] === "text_area") {
+                default_columns_only = false;
+
+                this.add_text_area_column(column_config_data);
+            }
+
             else if (column_config_data["type"] === "icon_button") {
                 default_columns_only = false;
 
-                this.add_icon_button_column(column_config_data);
+                this.add_icon_button_column(column_config_data, i);
             }
 
             else if (column_config_data["type"] === "copy_button") {
@@ -263,7 +304,7 @@ function DashLayoutListRow (list, row_id, height=null) {
                 // This helps differentiate elements on more complex lists, rather than having a pointer for everything.
                 // The change only pertains to the row itself, and then each element controls their own cursor behavior.
                 "cursor": (
-                    (this.is_header || this.is_footer) ? "auto" :
+                    (this.is_header || this.is_footer || this.is_divider) ? "auto" :
                     this.is_sublist ? "context-menu" :
                     default_columns_only ? "pointer" :
                     this.list.hasOwnProperty("selected_callback") && !this.list.selected_callback ? "default" :

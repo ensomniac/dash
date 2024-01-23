@@ -1,16 +1,25 @@
 // This is an alternate to DashLayoutList that is ideal for lists with high row counts
-function DashLayoutRevolvingList (binder, column_config, color=null, include_header_row=false, row_options={}, get_data_for_key=null, include_footer_row=false) {
+function DashLayoutRevolvingList (
+    binder, column_config, color=null, include_header_row=false,
+    row_options={}, get_data_for_key=null, include_footer_row=false
+) {
     this.binder = binder;
     this.column_config = column_config;
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
     this.include_header_row = include_header_row;
     this.include_footer_row = include_footer_row;
 
-    // This is useful if there is more than one list in the same script, which each need their own GetDataForKey function
-    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null;
+    // This is useful if there is more than one list in the same
+    // script, which each need their own GetDataForKey function
+    this.get_data_for_key = get_data_for_key ? get_data_for_key.bind(binder) : (
+        binder.GetDataForKey ? binder.GetDataForKey.bind(binder) : null
+    );
 
     if (!(column_config instanceof DashLayoutListColumnConfig)) {
-        console.error("Error: Required second parameter 'column_config' is not of the correct class, DashLayoutListColumnConfig");
+        console.error(
+            "Error: Required second parameter 'column_config' is " +
+            "not of the correct class, DashLayoutListColumnConfig"
+        );
 
         return;
     }
@@ -41,6 +50,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.row_clicks_disabled = false;
     this.container = $("<div></div>");
     this.non_expanding_click_cb = null;
+    this.divider_row_tag = "__divider__";
     this.get_hover_preview_content = null;
     this.header_row_tag = "_top_header_row";
     this.footer_row_tag = "_bottom_footer_row";
@@ -258,9 +268,11 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.SelectRow = function (row_id) {
         this.last_selected_row_id = row_id;
 
-        var scroll_top = this.included_row_ids.indexOf(this.last_selected_row_id) * this.full_row_height;
+        var scroll_top = this.get_row_top(this.included_row_ids.indexOf(this.last_selected_row_id));
+        var current_top = this.container.scrollTop();
+        var current_bottom = current_top + this.html.height();
 
-        if (scroll_top > this.html.height()) {
+        if (scroll_top > current_bottom || scroll_top < current_top) {
             this.container.scrollTop(scroll_top);  // Scrolling will trigger this.select_row as well
         }
 
@@ -272,7 +284,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     this.CollapseExpandedRows = function () {
         for (var row_id in this.expanded_ids) {
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
 
@@ -300,6 +312,37 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     // Not needed in most cases - only needed if manually breaking/altering a particular row's connections
     this.RefreshRowConnections = function (row) {
         this.setup_row_connections(row);
+    };
+
+    this.ReExpandRows = function () {
+        for (var row_id in this.expanded_ids) {
+            for (var row of this.row_objects) {
+                if (row.ID().toString() !== row_id.toString()) {
+                    continue;
+                }
+
+                this.ReExpandRow(row);
+            }
+        }
+    };
+
+    this.ReExpandRow = function (row) {
+        if (!row.IsExpanded()) {
+            this.on_row_selected(row);
+
+            return;
+        }
+
+        this.on_row_selected(row);
+
+        (function (self) {
+            setTimeout(
+                function () {
+                    self.on_row_selected(row);
+                },
+                row.anim_delay["expanded_content"] + 100
+            );
+        })(this);
     };
 
     this.select_row = function (row_id="", default_to_first_row=true) {
@@ -337,7 +380,7 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         for (var row of this.row_objects) {
-            if (row.ID() === row_id) {
+            if (row.ID().toString() === row_id.toString()) {
                 return row;
             }
         }
@@ -404,22 +447,23 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
     };
 
     this.create_filler_space = function () {
-        var filler_content = "";
+        var height = 0;
+        var filler_html = $("<div></div>");
 
-        for (var row_id of this.included_row_ids) {
-            filler_content += row_id + "<br>";
+        for (var i in this.included_row_ids) {
+            height += (this.row_height * (
+                this.included_row_ids[i].toString().startsWith(this.divider_row_tag) ? 0.5 : 1
+            )) + 1;
         }
-
-        var filler_html = $("<div" + filler_content + "</div>");
 
         filler_html.css({
             "text-align": "left",
             "overflow": "hidden",
             "text-overflow": "clip",
             "white-space": "nowrap",
-            "max-height": this.full_row_height,
-            "height": this.full_row_height,
-            "line-height": this.full_row_height + "px",
+            "max-height": height,
+            "height": height,
+            "width": Dash.Size.ColumnWidth,  // Arbitrary
             "opacity": 0
         });
 
@@ -564,9 +608,12 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
 
         row.index = row_index;
         row.id = this.included_row_ids[row_index];
+        row.is_divider = row.id.toString().startsWith(this.divider_row_tag);
+
+        row.SetHeight(this.row_height * (row.is_divider ? 0.5 : 1));
 
         row.html.css({
-            "top": row_index * this.full_row_height,
+            "top": this.get_row_top(row_index),
             "display": "initial",
             "pointer-events": "auto"
         });
@@ -576,8 +623,39 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         this.setup_row_connections(row);
     };
 
+    this.get_row_top = function (row_index, for_scroll=true) {
+        var i;
+        var top = 0;
+
+        if (for_scroll) {
+            for (i in this.included_row_ids) {
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+
+                var id = this.included_row_ids[i];
+
+                top += (this.row_height * (id.toString().startsWith(this.divider_row_tag) ? 0.5 : 1)) + 1;
+            }
+        }
+
+        else {
+            for (i in this.row_objects) {
+                var row = this.row_objects[i];
+
+                if (parseInt(i) === parseInt(row_index)) {
+                    break;
+                }
+
+                top += row.height + 1;
+            }
+        }
+
+        return top;
+    };
+
     this.on_row_selected = function (row, force_expand=false) {
-        if (!row) {
+        if (!row || row.is_divider) {
             return;
         }
 
@@ -648,12 +726,12 @@ function DashLayoutRevolvingList (binder, column_config, color=null, include_hea
         }
 
         for (var other_row of this.row_objects) {
-            if (other_row.index <= row.index || other_row.ID() === row.ID()) {
+            if (other_row.index <= row.index || other_row.ID().toString() === row.ID().toString()) {
                 continue;
             }
 
             var top_pos = parseInt(other_row.html.css("top"));
-            var default_top_pos = other_row.index * this.full_row_height;
+            var default_top_pos = this.get_row_top(other_row.index);
 
             if (expanded || top_pos > default_top_pos) {
                 var new_top = expanded ? top_pos + height_adj : top_pos - height_adj;

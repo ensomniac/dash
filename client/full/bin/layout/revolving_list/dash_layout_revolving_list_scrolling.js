@@ -20,13 +20,15 @@ function DashLayoutRevolvingListScrolling () {
         }
 
         var end_pos = start_pos + window.innerHeight + this.full_row_height;
-        var start_index = Math.floor(parseInt((start_pos / this.full_row_height).toString()));
+        var start_index = parseInt(this.get_index_from_pos(start_pos));
 
         return [start_pos, end_pos, start_index];
     };
 
     this.get_scroll_indexes = function () {
-        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(this.container.scrollTop() - this.full_row_height);
+        var [start_pos, end_pos, start_index] = this.get_scroll_index_components(
+            this.container.scrollTop() - this.full_row_height
+        );
 
         for (var row_id in this.expanded_ids) {
             var expanded_data = this.expanded_ids[row_id];
@@ -57,7 +59,7 @@ function DashLayoutRevolvingListScrolling () {
             break;
         }
 
-        var end_index = parseInt((end_pos / this.full_row_height).toString());
+        var end_index = parseInt(this.get_index_from_pos(end_pos));
 
         if (start_index < 0) {
             start_index = 0;
@@ -68,6 +70,26 @@ function DashLayoutRevolvingListScrolling () {
         }
 
         return [start_index, end_index];
+    };
+
+    this.get_index_from_pos = function (pos=0) {
+        if (!pos) {
+            return 0;
+        }
+
+        var top = 0;
+
+        for (var i in this.included_row_ids) {
+            if (top >= pos) {
+                return i;
+            }
+
+            top += (this.row_height * (
+                this.included_row_ids[i].toString().startsWith(this.divider_row_tag) ? 0.5 : 1
+            )) + 1;
+        }
+
+        return i || 0;
     };
 
     this.get_scroll_needed_count = function (start_index, end_index) {
@@ -105,6 +127,8 @@ function DashLayoutRevolvingListScrolling () {
                 can_move.push(this.row_objects[i]);
             }
         }
+
+        already_moved.sort();
 
         return [can_move, already_moved];
     };
@@ -149,7 +173,7 @@ function DashLayoutRevolvingListScrolling () {
 
         for (row of this.row_objects) {
             row.html.css({
-                "top": row.index * this.full_row_height
+                "top": this.get_row_top(row.index)
             });
         }
     };
@@ -163,7 +187,7 @@ function DashLayoutRevolvingListScrolling () {
             }
 
             for (var row of this.row_objects) {
-                if (row.ID() !== row_id) {
+                if (row.ID().toString() !== row_id.toString()) {
                     continue;
                 }
 
@@ -182,7 +206,7 @@ function DashLayoutRevolvingListScrolling () {
         }
 
         for (var row of this.row_objects) {
-            if (row.ID() !== this.last_selected_row_id) {
+            if (row.ID().toString() !== this.last_selected_row_id.toString()) {
                 continue;
             }
 

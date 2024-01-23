@@ -58,6 +58,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
 
         this.html.css({
             "display": "flex",
+            "background": "none",
             "height": Dash.Size.RowHeight
         });
 
@@ -337,7 +338,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         this.fire_callback_on_up_instead_of_move = enabled;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         this.slider.css({
             "user-select": "none",
             "pointer-events": "none"
@@ -348,7 +349,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         }
 
         if (this.reset_button) {
-            this.reset_button.Disable();
+            this.reset_button.Disable(opacity);
         }
     };
 
@@ -470,9 +471,10 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
+            // "border": "1px solid " + this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "background": "rgba(255, 255, 255, 0.9)",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
+            "background": "none",  // "rgba(255, 255, 255, 0.9)",
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)"
         });
 
         this.value_label.css({
@@ -481,9 +483,10 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "line-height": this.height + "px",
             "color": this.color.Text,
             "text-align": "center",
+            "border": "1px solid " + this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "background": "rgba(255, 255, 255, 0.9)",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "background": "none",  // "rgba(255, 255, 255, 0.9)",
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
             "right": 0,
             "left": "auto"
         });

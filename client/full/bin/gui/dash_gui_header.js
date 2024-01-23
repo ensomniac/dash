@@ -24,7 +24,8 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "font-family": "sans_serif_bold",
             "white-space": "nowrap",
             "overflow": "hidden",
-            "text-overflow": "ellipsis"
+            "text-overflow": "ellipsis",
+            "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
 
         this.html.append(this.label);
@@ -39,6 +40,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
                 "bottom": 0,
                 "width": Dash.Size.Padding * 0.5,
                 "background": this.color.AccentGood,
+                "border-radius": Dash.Size.BorderRadius * 0.5
             });
 
             this.html.append(this.border);
@@ -90,6 +92,16 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.AddLine = function (height=0, color="", additional_css={}) {
         if (this.line) {
             return this.line;
+        }
+
+        if (!this.icon) {
+            this.html.css({
+                "display": "flex"
+            });
+
+            if (!("margin-left" in additional_css)) {
+                additional_css["margin-left"] = Dash.Size.Padding;
+            }
         }
 
         this.line = Dash.Gui.GetFlexSpacer();

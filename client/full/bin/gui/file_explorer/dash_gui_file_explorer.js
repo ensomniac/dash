@@ -1,17 +1,22 @@
-function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true, include_modified_keys_columns=false) {
+function DashGuiFileExplorer (
+    color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true,
+    include_modified_keys_columns=false, extra_params={}
+) {
     /**
      * File Explorer box element.
      * --------------------------
      *
      * IMPORTANT NOTE: <br>
-     *     For consistency across Dash, this takes an API name and parent object ID, and uses predetermined names for function calls.
-     *     For each context this is used in, make sure to add the correct function names to the respective API file as follows:
+     *     For consistency across Dash, this takes an API name and parent object ID, and uses
+     *     predetermined names for function calls. For each context this is used in, make sure
+     *     to add the correct function names to the respective API file as follows:
      *
      *         - "get_files":                      Get all files and return dict with data/order keys
      *         - "upload_file":                    Upload a file
      *         - "delete_file":                    Delete a file
      *         - "set_file_property":              Set a property for a file with provided key/value
-     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id and session_id) by adding a key/value pair to it
+     *         - "send_signal_to_desktop_session": Send a signal to a specific session (by machine_id
+     *                                             and session_id) by adding a key/value pair to it
      *
      *         (Archive Mode)
      *         - "get_archived_files":    Get all archived files and return dict with data/order keys
@@ -19,10 +24,15 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
      *
      * @param {DashColorSet} color - DashColorSet instance
      * @param {string} api - API name for requests
-     * @param {string} parent_obj_id - Parent object ID where the file is stored (this will be included in requests as 'parent_obj_id')
-     * @param {boolean} supports_desktop_client - Whether this context has a related desktop client app it should try to connect to
+     * @param {string} parent_obj_id - Parent object ID where the file is stored (this
+     *                                 will be included in requests as 'parent_obj_id')
+     * @param {boolean} supports_desktop_client - Whether this context has a related desktop
+     *                                            client app it should try to connect to
      * @param {boolean} supports_folders - Whether this context uses folders/subfolders
-     * @param {boolean} include_modified_keys_columns - Whether to include list columns for "modified_on" and "modified_by"
+     * @param {boolean} include_modified_keys_columns - Whether to include list columns for
+     *                                                  "modified_on" and "modified_by"
+     * @param {object} extra_params - Dictionary with extra params for each request type above,
+     *                                where the function name for the request is the key
      */
 
     this.color = color || Dash.Color.Light;
@@ -31,6 +41,7 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
     this.supports_desktop_client = supports_desktop_client;
     this.supports_folders = supports_folders;
     this.include_modified_keys_columns = include_modified_keys_columns;
+    this.extra_params = extra_params;
 
     // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
     if (window.innerWidth < 1065) {
@@ -62,11 +73,18 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
     this.read_only = !this.api || !this.parent_obj_id;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.request_failure_id = "dash_gui_file_explorer_on_files_data";
-    this.loader = new Dash.Gui.FileExplorerDesktopLoader(this.api, this.parent_obj_id, this.supports_desktop_client);
+
+    this.loader = new Dash.Gui.FileExplorerDesktopLoader(
+        this.api,
+        this.parent_obj_id,
+        this.supports_desktop_client,
+        this.extra_params
+    );
 
     this.upload_button_params = {
         "f": "upload_file",
-        "parent_obj_id": this.parent_obj_id
+        "parent_obj_id": this.parent_obj_id,
+        ...(this.extra_params["upload_file"] || {})
     };
 
     // See this.instantiate_button_configs()
@@ -81,7 +99,9 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
 
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log("(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided");
+            console.log(
+                "(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided"
+            );
         }
 
         if (!this.read_only) {
@@ -197,7 +217,9 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
         this.redraw_rows();
     };
 
-    this.CreateCustomButtonConfig = function (display_name, icon_name, callback, binder=null, right_margin=null, hover_text="") {
+    this.CreateCustomButtonConfig = function (
+        display_name, icon_name, callback, binder=null, right_margin=null, hover_text=""
+    ) {
         return {
             "config_name": display_name,
             "icon_name": icon_name,
@@ -315,9 +337,10 @@ function DashGuiFileExplorer (color=null, api="", parent_obj_id="", supports_des
             "icon_name": "link",
             "callback": this.open_file,
             "right_margin": -Dash.Size.Padding * 0.25,
-            "hover_preview": this.supports_desktop_client ?
-                "Open locally on your computer (or in a browser tab, if " + this.desktop_client_name + " app isn't running)" :
-                "View file in new browser tab"
+            "hover_preview": this.supports_desktop_client ? (
+                "Open locally on your computer (or in a browser tab, if "
+                + this.desktop_client_name + " app isn't running)"
+            ) : "View file in new browser tab"
         };
 
         this.UpdateContentButtonConfig = {

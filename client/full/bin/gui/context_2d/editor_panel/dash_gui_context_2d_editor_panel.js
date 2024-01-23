@@ -104,8 +104,8 @@ function DashGuiContext2DEditorPanel (editor) {
         this.layers_box.OnNewLayer(response);
     };
 
-    this.SetLayerProperty = function (key, value, id) {
-        this.layers_box.SetProperty(key, value, id);
+    this.SetLayerProperty = function (key, value, id, callback=null) {
+        this.layers_box.SetProperty(key, value, id, callback);
     };
 
     this.SwitchContentToEditTab = function () {
@@ -180,14 +180,14 @@ function DashGuiContext2DEditorPanel (editor) {
         this.content_box.UpdateComboOptions();
     };
 
-    this.SelectLayer = function (id, from_canvas=true) {
+    this.SelectLayer = function (id, from_canvas=true, focus=true) {
         if (this.layers_box) {
-            this.layers_box.Select(id, from_canvas);
+            this.layers_box.Select(id, from_canvas, focus);
         }
     };
 
     this.AddCustomElementToContentNewTab = function (
-        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null, callback_to_receive_element=null
     ) {
         if (!this.content_box) {
             (function (self) {
@@ -197,7 +197,8 @@ function DashGuiContext2DEditorPanel (editor) {
                             built_in_function_name,
                             built_in_function_params,
                             callback_that_returns_html,
-                            binder
+                            binder,
+                            callback_to_receive_element
                         );
                     },
                     1
@@ -211,12 +212,14 @@ function DashGuiContext2DEditorPanel (editor) {
             built_in_function_name,
             built_in_function_params,
             callback_that_returns_html,
-            binder
+            binder,
+            callback_to_receive_element
         );
     };
 
     this.AddCustomElementToContentEditTab = function (
-        context_key, built_in_function_name="", built_in_function_params=[], callback_that_returns_html=null, binder=null
+        context_key, built_in_function_name="", built_in_function_params=[], cb_that_returns_html=null,
+        binder=null, cb_to_receive_element=null, cb_to_check_draw=null
     ) {
         if (!this.content_box) {
             (function (self) {
@@ -226,8 +229,10 @@ function DashGuiContext2DEditorPanel (editor) {
                             context_key,
                             built_in_function_name,
                             built_in_function_params,
-                            callback_that_returns_html,
-                            binder
+                            cb_that_returns_html,
+                            binder,
+                            cb_to_receive_element,
+                            cb_to_check_draw
                         );
                     },
                     10
@@ -241,8 +246,10 @@ function DashGuiContext2DEditorPanel (editor) {
             context_key,
             built_in_function_name,
             built_in_function_params,
-            callback_that_returns_html,
-            binder
+            cb_that_returns_html,
+            binder,
+            cb_to_receive_element,
+            cb_to_check_draw
         );
     };
 
@@ -486,14 +493,14 @@ function DashGuiContext2DEditorPanel (editor) {
         });
 
         header.html.css({
-            "background": this.color.Pinstripe,
             "margin-top": -Dash.Size.Padding,
             "margin-left": -Dash.Size.Padding,
             "margin-right": -Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.6,
             "padding-top": Dash.Size.Padding,
             "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding
+            "padding-right": Dash.Size.Padding,
+            "background": this.color.Tab.Background.BaseHover
         });
 
         header.label.css({

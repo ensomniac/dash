@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Candy 2023, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
-#             Andrew Stet astet@candy.com, stetandrew@gmail.com
+# Ensomniac 2024, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
+#                 Andrew Stet astet@candy.com, stetandrew@gmail.com
 
 import os
 import sys
@@ -20,15 +20,15 @@ class Interface:
     ModifiedOn: str
     LayersRoot: str
     DisplayName: str
-    ToDict: callable
     LayerOrder: list
     DashContext: dict
     AspectRatioH: int
     AspectRatioW: int
+    PreCompsMin: dict
+    PreCompsFull: dict
     Context2DRoot: str
     add_layer: callable
     add_layer_from_file: callable
-    validate_uploaded_file_ext: callable
     parse_aspect_keys_for_properties: callable
     parse_properties_for_override_tag: callable
     re_add_override_tag_to_properties: callable
@@ -47,27 +47,26 @@ class Interface:
         if not self.Data:
             return self.Data
 
-        data = {
-            "aspect_ratio_h":                    self.AspectRatioH,
-            "aspect_ratio_w":                    self.AspectRatioW,
-            "created_by":                        self.CreatedBy,
-            "created_on":                        self.CreatedOn,
-            "display_name":                      self.DisplayName,
-            "id":                                self.ID,
+        # This is a function that is meant to be overridden to use for custom modifications
+        # to this returned data for abstractions and extensions of this code.
+        return self.OnToDict({
+            "aspect_ratio_h": self.AspectRatioH,
+            "aspect_ratio_w": self.AspectRatioW,
+            "created_by":     self.CreatedBy,
+            "created_on":     self.CreatedOn,
+            "display_name":   self.DisplayName,
+            "id":             self.ID,
 
             # We don't want to save the "layers" key, since we store the layers separately, but we need to
             # save the "layer_order" to be able to populate the "layers" when serving this dict (not saving)
             "layer_order" if save else "layers": self.LayerOrder if save else self.Layers,
 
-            "modified_by":                       self.User["email"] if save else self.ModifiedBy,
-            "modified_on":                       self.Now.isoformat() if save else self.ModifiedOn
-        }
+            "modified_by": self.User["email"] if save else self.ModifiedBy,
+            "modified_on": self.Now.isoformat() if save else self.ModifiedOn,
 
-        # This is a function that is meant to be overridden to use for custom modifications
-        # to this returned data for abstractions and extensions of this code.
-        data = self.OnToDict(data)
-
-        return data
+            # Only save changes, don't need to save the entire default data structure
+            "precomps": self.PreCompsMin if save else self.PreCompsFull
+        })
 
     def Duplicate(self):
         from Dash.LocalStorage import Duplicate
@@ -95,20 +94,34 @@ class Interface:
             ]
         )
 
-    def SetProperty(self, key, value):
-        return self.SetProperties({key: value})
+    def SetProperty(self, key, value, moved_layer_id=""):
+        return self.SetProperties({key: value}, moved_layer_id)
 
-    def SetProperties(self, properties={}):
-        properties = self.ParseProperties(properties)
+    def SetProperties(self, properties={}, moved_layer_id=""):
+        properties = self.ParseProperties(
+            properties,
+            moved_layer_id=moved_layer_id
+        )
 
         if not properties:
             return self.ToDict()
 
-        self.Data.update(self.ParseProperties(properties))
+        self.Data.update(properties)
 
         return self.save().ToDict()
 
-    def ParseProperties(self, properties, for_overrides=False, retain_override_tag=True):
+    def SetPreCompProperty(self, key, value, letter):
+        if "precomps" not in self.Data:
+            self.Data["precomps"] = {}
+
+        if letter not in self.PreCompsMin:
+            self.Data["precomps"][letter] = {}
+
+        self.Data["precomps"][letter][key] = value
+
+        return self.save().ToDict()
+
+    def ParseProperties(self, properties, for_overrides=False, retain_override_tag=True, moved_layer_id=""):
         if properties and type(properties) is str:
             from json import loads
 
@@ -140,6 +153,14 @@ class Interface:
 
                     rmtree(os.path.join(self.LayersRoot, layer_id))
 
+            if moved_layer_id:
+                from .layer import Layer
+
+                layer = Layer(self, moved_layer_id)
+
+                if layer.data.get("precomp_tag"):
+                    layer.SetProperty("precomp_tag", "")
+
         if "aspect_ratio_w" in properties or "aspect_ratio_h" in properties:
             properties = self.parse_aspect_keys_for_properties(properties, for_overrides)
 
@@ -170,19 +191,15 @@ class Interface:
         return self.add_layer(Layer(self, new_layer_type="color"))
 
     def AddImageLayer(self, file, filename):
-        from Dash.Utils import GetImageExtensions
-
-        return self.add_layer_from_file(file, filename, GetImageExtensions(), "image")
+        return self.add_layer_from_file(file, filename, "image")
 
     def AddVideoLayer(self, file, filename):
-        from Dash.Utils import GetVideoExtensions
+        return self.add_layer_from_file(file, filename, "video")
 
-        return self.add_layer_from_file(file, filename, GetVideoExtensions(), "video")
-
-    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id=""):
+    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id="", file_op_key=""):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id)
+        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id, file_op_key)
 
         return self.ToDict()
 
@@ -253,6 +270,20 @@ class Interface:
 
         return Read(os.path.join(new_layer_dest_root, "data.json"))
 
+    def UploadLayerMask(self, layer_id, file, filename):
+        from .layer import Layer
+
+        Layer(self, layer_id).UploadMask(file, filename)
+
+        return self.ToDict()
+
+    def ReplaceLayerMedia(self, layer_id, file, filename):
+        from .layer import Layer
+
+        Layer(self, layer_id).UploadFile(file, filename)
+
+        return self.ToDict()
+
     # --------------------------------- OVERRIDES ---------------------------------
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
@@ -274,3 +305,13 @@ class Interface:
     # This is used to customize the imported context data for abstractions.
     def OnLayerImportedContextData(self, data):
         return data
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to get rendered precomp data (must include a "url" key).
+    def GetPreComp(self, letter):
+        return {"letter": letter}
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to render all precomps.
+    def RenderAllPreComps(self):
+        return {}

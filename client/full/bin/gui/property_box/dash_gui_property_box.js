@@ -1,7 +1,9 @@
-function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_obj_id, options={}) {
+function DashGuiPropertyBox (
+    binder, get_data_cb=null, set_data_cb=null, endpoint="", dash_obj_id="", options={}
+) {
     this.binder = binder;
-    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
-    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : null;
+    this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : function () {return {};};
+    this.set_data_cb = set_data_cb ? set_data_cb.bind(binder) : function () {};
     this.endpoint = endpoint;
     this.dash_obj_id = dash_obj_id;
     this.options = options;
@@ -12,6 +14,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.inputs = {};
     this.headers = [];
     this.tool_rows = [];
+    this.text_areas = {};
     this.num_headers = 0;
     this.disabled = false;
     this.bottom_divider = null;
@@ -24,12 +27,13 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
     this.indent_properties = this.options["indent_properties"] || 0;
     this.additional_request_params = this.options["extra_params"] || {};
     this.color = this.options["color"] || (binder && binder.color ? binder.color : Dash.Color.Light);
+    this.bottom_border = "1px dotted " + this.color.PinstripeDark;
 
     DashGuiPropertyBoxInterface.call(this);
 
     this.setup_styles = function () {
         this.html.css({
-            "background": "rgba(255, 255, 255, 0.25)",
+            "background": "rgba(255, 255, 255, 0.25)"
         });
 
         if (Dash.IsMobile) {
@@ -60,6 +64,20 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
 
             input_row.SetText(this.get_update_value(data_key));
+        }
+    };
+
+    this.update_text_areas = function () {
+        for (var data_key in this.text_areas) {
+            var text_area = this.text_areas[data_key];
+
+            if (text_area.InFocus()) {
+                console.log("(Currently being edited) Skipping update for " + data_key);
+
+                continue;
+            }
+
+            text_area.SetText(this.get_update_value(data_key));
         }
     };
 
@@ -130,9 +148,23 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             return;
         }
 
-        row.html.css({
-            "margin-left": this.indent_px + ((this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0)
+        (typeof row.html === "function" ? row : row.html).css({
+            "margin-left": this.indent_px + (
+                (this.indent_properties || this.indent_properties > 0) ? this.indent_properties : 0
+            )
         });
+    };
+
+    this.on_input_added = function (key, can_edit) {
+        if (!can_edit) {
+            this.inputs[key].SetLocked(true);
+        }
+
+        this.indent_row(this.inputs[key]);
+        this.AddHTML(this.inputs[key].html);
+        this.track_row(this.inputs[key]);
+
+        return this.inputs[key];
     };
 
     this.on_server_property_set = function (property_set_data) {
@@ -291,7 +323,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
             }
         }
 
-        if (this.dash_obj_id == null) {
+        if (!this.dash_obj_id) {
             if (this.set_data_cb) {
                 this.set_data_cb(row_details["key"], new_value);
             }
@@ -416,7 +448,7 @@ function DashGuiPropertyBox (binder, get_data_cb, set_data_cb, endpoint, dash_ob
         }
 
         if (this.every_other_row_hightlight["highlight"]) {
-            row.html.css({
+            (typeof row.html === "function" ? row : row.html).css({
                 "background": this.every_other_row_hightlight["color"]
             });
         }

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Candy 2023, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
-#             Andrew Stet astet@candy.com, stetandrew@gmail.com
+# Ensomniac 2024, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
+#                 Andrew Stet astet@candy.com, stetandrew@gmail.com
 
 import os
 import sys
@@ -17,7 +17,9 @@ class Utils:
     LayersRoot: str
     ToDict: callable
     LayerOrder: list
+    PreCompsMin: dict
     SetProperty: callable
+    precomps_default: dict
 
     def __init__(self):
         pass
@@ -55,6 +57,20 @@ class Utils:
 
         return self
 
+    def get_precomps(self):
+        precomps = {}
+
+        for letter in self.precomps_default:
+            precomps[letter] = {}
+
+            for key in self.precomps_default[letter]:
+                if self.PreCompsMin.get(letter) and self.PreCompsMin[letter].get(key):
+                    precomps[letter][key] = self.PreCompsMin[letter][key]
+                else:
+                    precomps[letter][key] = self.precomps_default[letter][key]
+
+        return precomps
+
     def get_layers(self):
         layers = {
             "data": {},
@@ -65,15 +81,31 @@ class Utils:
             return layers
 
         from .layer import Layer
+        from copy import deepcopy
 
         for layer_id in self.LayerOrder:
             layers["data"][layer_id] = Layer(self, layer_id).ToDict()
 
+        last_precomp_tag = ""
+        reversed_order = deepcopy(self.LayerOrder)
+
+        reversed_order.reverse()
+
+        for layer_id in reversed_order:
+            if not last_precomp_tag:
+                last_precomp_tag = (
+                        layers["data"][layer_id]["precomp_tag"]
+                        or self.precomps_default[list(self.precomps_default.keys())[0]]["asset_path"]
+                )
+
+            if not layers["data"][layer_id]["precomp_tag"]:
+                layers["data"][layer_id]["precomp_tag"] = last_precomp_tag
+
+            last_precomp_tag = layers["data"][layer_id]["precomp_tag"]
+
         return layers
 
-    def add_layer_from_file(self, file, filename, allowable_exts, layer_type):
-        self.validate_uploaded_file_ext(filename, allowable_exts)
-
+    def add_layer_from_file(self, file, filename, layer_type):
         from .layer import Layer
 
         layer = Layer(self, new_layer_type=layer_type)
@@ -86,12 +118,6 @@ class Utils:
         layer.Save()
 
         return self.SetProperty("layer_order", [*self.LayerOrder, layer.ID])
-
-    def validate_uploaded_file_ext(self, filename, allowable_exts):
-        ext = filename.split(".")[-1].strip().lower()
-
-        if ext not in allowable_exts:
-            raise ValueError(f"Invalid file extension ({ext}), expected: {allowable_exts}")
 
     def parse_properties_for_override_tag(self, properties, for_overrides=False):
         if for_overrides:
@@ -141,9 +167,18 @@ class Utils:
     # 'or self.Data[key]' checks for the overridden value first.
     def parse_aspect_keys_for_properties(self, properties, for_overrides=False):
         for key in ["aspect_ratio_w", "aspect_ratio_h"]:
-            properties[key] = float(properties.get(key) or self.Data[key])
+            valid = True
 
-            if not properties[key].is_integer():
+            try:
+                properties[key] = float(properties.get(key) or self.Data[key])
+
+                if not properties[key].is_integer():
+                    valid = False
+
+            except ValueError:
+                valid = False
+
+            if not valid:
                 from Dash.Utils import ClientAlert
 
                 raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")

@@ -39,13 +39,13 @@ function DashLayoutToolbar (binder, color=null) {
     this.on_input_submitted = function (obj_index) {
         var obj = this.objects[obj_index];
 
-        obj["on_enter_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
 
     this.on_input_autosaved = function (obj_index) {
         var obj = this.objects[obj_index];
 
-        obj["on_autosave_callback"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        obj["on_autosave"](obj["html"].Text(), obj["html"], obj["additional_data"]);
     };
 
     this.on_button_clicked = function (obj_index, data=null) {

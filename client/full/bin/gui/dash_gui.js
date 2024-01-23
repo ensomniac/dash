@@ -1,4 +1,5 @@
-function DashGui() {
+function DashGui () {
+    this.Alert                     = DashGuiAlert;
     this.Button                    = DashGuiButton;
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
@@ -6,6 +7,7 @@ function DashGui() {
     this.Combo                     = DashGuiCombo;
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
+    this.DatePicker                = DashGuiDatePicker;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
     this.Header                    = DashGuiHeader;
@@ -23,6 +25,7 @@ function DashGui() {
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
+    this.TimePicker                = DashGuiTimePicker;
     this.ToolRow                   = DashGuiToolRow;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
@@ -72,8 +75,9 @@ function DashGui() {
             "padding": Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
             "color": color.Text,
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
+            "border": "1px solid " + color.Pinstripe,
             "border-radius": Dash.Size.Padding * 0.5,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.18)",
             "background": color.BackgroundRaised,
             ...optional_style_css
         });
@@ -99,8 +103,16 @@ function DashGui() {
     };
 
     this.ScrollToElement = function (container_html, element_html) {
-        if (!this.HasOverflow(container_html)) {
+        if (this.InScrollView(container_html, element_html)) {
             return;
+        }
+
+        element_html[0].scrollIntoView();
+    };
+
+    this.InScrollView = function (container_html, element_html) {
+        if (!this.HasOverflow(container_html)) {
+            return true;  // No overflow means there's no scroll, but it is therefore in view
         }
 
         var container_top = container_html.offset().top;
@@ -108,14 +120,10 @@ function DashGui() {
         var element_top = element_html.offset().top;
         var element_bottom = element_top + element_html.height();
 
-        if (  // Element is partially or fully visible within the container
+        return (  // Element is partially or fully visible within the container
                (element_top >= container_top && element_top <= container_bottom)
             || (element_bottom >= container_top && element_bottom <= container_bottom)
-        ) {
-            return;
-        }
-
-        element_html[0].scrollIntoView();
+        );
     };
 
     this.GetBottomDivider = function (color=null, width_percent="") {
@@ -179,7 +187,8 @@ function DashGui() {
             "background": ContainerColor,  // TODO: What is this meant to be?
             "margin": Dash.Size.Padding,
             "padding": Dash.Size.Padding,
-            "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 15px 1px rgba(0, 0, 0, 0.2)",
+            "border": "1px solid " + Dash.Color.Light.Pinstripe,
             "color": "rgba(0, 0, 0, 0.8)",
             "border-radius": 6,
         });
@@ -197,7 +206,11 @@ function DashGui() {
         return html;
     };
 
-    this.GetColorPicker = function (binder, callback, label_text="Color Picker", dash_color=null, default_picker_hex_color="#00ff00") {
+    // TODO: This needs to be its own class/element
+    this.GetColorPicker = function (
+        binder, callback, label_text="Color Picker", dash_color=null,
+        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null
+    ) {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
@@ -220,7 +233,7 @@ function DashGui() {
                 "font-family": "sans_serif_bold",
                 "font-size": "80%",
                 "color": dash_color.Text || "black",
-                "top": line_break ? 0 : (-Dash.Size.Padding * 0.5)
+                "top": line_break ? 0 : (Dash.Size.Padding * (include_clear_button ? 0.5 : -0.5))
             };
 
             if (line_break) {
@@ -252,6 +265,43 @@ function DashGui() {
         }
 
         color_picker.html.append(color_picker.input);
+
+        if (include_clear_button) {
+            color_picker.html.css({
+                "display": "flex"
+            });
+
+            if (clear_button_cb) {
+                clear_button_cb = clear_button_cb.bind(binder);
+            }
+
+            color_picker["clear_button"] = (function (self) {
+                return new Dash.Gui.IconButton(
+                    "close_square",
+                    function () {
+                        color_picker.input.val(default_picker_hex_color);
+
+                        if (clear_button_cb) {
+                            clear_button_cb();
+                        }
+                    },
+                    self,
+                    self.color,
+                    {
+                        "container_size": Dash.Size.ButtonHeight,
+                        "size_mult": 0.5
+                    }
+                );
+            })(this);
+
+            color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
+
+            color_picker["clear_button"].html.css({
+                "padding-top": Dash.Size.Padding * 0.1
+            });
+
+            color_picker.html.append(color_picker.clear_button.html);
+        }
 
         (function (input, callback) {
             input.on("change", function () {
@@ -430,7 +480,8 @@ function DashGui() {
         html.css({
             "box-shadow": "none",
             "background": "none",
-            "border-radius": ""
+            // "border-radius": ""
+            "border": "none"
         });
     };
 

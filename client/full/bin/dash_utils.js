@@ -70,6 +70,25 @@ function DashUtils () {
         return class_instance.constructor.toString().split("(")[0].replace("function", "").trim();
     };
 
+    // Based on font properties of a single element
+    this.GetAverageCharWidth = function (element) {
+        var string = "abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        var span = $("<span>").text(string).css({
+            "position": "absolute",
+            "left": -9999,  // Position off-screen
+            "top": 0,
+            "white-space": "nowrap",  // Ensure the string isn't wrapping
+            "font": element.css("font")  // Copy the font properties
+        }).appendTo("body");
+
+        var avg_char_width = span.width() / string.length;
+
+        span.remove();
+
+        return avg_char_width;
+    };
+
     this.SetTimer = function (binder, callback, ms, source=null) {
         var timer = {
             "callback": callback.bind(binder),
@@ -187,9 +206,23 @@ function DashUtils () {
     this.manage_timer = function (timer) {
         var still_active = true;
 
-        if (timer.iterations && timer.iterations >= 1) {
-            if (timer.source && timer.source.html && !timer.source.html.is(":visible")) {
-                still_active = false;
+        if (timer.iterations && timer.iterations >= 1 && timer.source) {
+            try {
+                if (timer.source.html && !timer.source.html.is(":visible")) {
+                    still_active = false;
+                }
+            }
+
+            catch {
+                try {
+                    if (!timer.source.is(":visible")) {
+                        still_active = false;
+                    }
+                }
+
+                catch {
+                    // Pass
+                }
             }
         }
 

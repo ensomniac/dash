@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 """
@@ -97,8 +97,11 @@ class DashLocalStorage:
             copytree(self.get_data_root(id_to_duplicate), self.get_data_root(new_id))
 
             new_data = self.GetData(new_id)
+            default_data = self.get_default_data(new_id)
 
-            new_data.update(self.get_default_data(new_id))
+            for key in default_data:
+                if key != "display_name":
+                    new_data[key] = default_data[key]
         else:
             new_data = self.New(self.GetData(id_to_duplicate))
             new_id = new_data["id"]
@@ -110,7 +113,24 @@ class DashLocalStorage:
                 new_data["display_name"] = new_id
 
             elif display_name_tag:
-                new_data["display_name"] = f"{new_data['display_name']} ({display_name_tag})"
+                if new_data["display_name"].endswith(f"({display_name_tag})"):
+                    new_data["display_name"] = new_data["display_name"].replace(
+                        f"({display_name_tag})",
+                        f"({display_name_tag} 1)"
+                    )
+
+                elif f"({display_name_tag}" in new_data["display_name"] and new_data["display_name"].endswith(")"):
+                    split = new_data["display_name"].split(f"({display_name_tag}")
+                    num = split[-1].split(")")[0].strip()
+
+                    try:
+                        new_data["display_name"] = f"{split[0]}({display_name_tag} {int(num) + 1})"
+
+                    except ValueError:
+                        new_data["display_name"] = f"{split[0]}({display_name_tag})"
+
+                else:
+                    new_data["display_name"] = f"{new_data['display_name']} ({display_name_tag})"
 
         self.Write(self.GetRecordPath(new_id), new_data)
 
@@ -154,7 +174,7 @@ class DashLocalStorage:
         missing = []
 
         for obj_id in os.listdir(store_root):
-            if str(obj_id).startswith("."):
+            if str(obj_id).startswith(".") or str(obj_id).startswith("_"):
                 continue
 
             record_path = self.GetRecordPath(obj_id)
@@ -236,8 +256,11 @@ class DashLocalStorage:
         if not os.path.exists(record_path):
             if create:
                 return self.New(additional_data, obj_id=obj_id)
-            else:
-                raise Exception(f"Expected record does not exist x9483. Expected: {record_path} (obj_id: {obj_id})\n\nParams:\n{Memory.Global.RequestData or {}}")
+
+            raise FileNotFoundError(
+                f"Expected record does not exist x9483. Expected: {record_path} "
+                f"(obj_id: {obj_id})\n\nParams:\n{Memory.Global.RequestData or {}}"
+            )
 
         data = self.Read(record_path)
 
@@ -293,9 +316,8 @@ class DashLocalStorage:
 
         return response
 
-    def Delete(self, obj_id):
+    def Delete(self, obj_id, archive_path=""):
         from time import sleep
-        from shutil import rmtree
 
         if self.nested:
             record_path = self.get_data_root(obj_id)
@@ -317,10 +339,17 @@ class DashLocalStorage:
                 if not os.path.exists(record_path):
                     break
 
-                if self.nested:
-                    rmtree(record_path)
+                if archive_path:
+                    from shutil import move
+
+                    move(record_path, archive_path)
                 else:
-                    os.remove(record_path)
+                    if self.nested:
+                        from shutil import rmtree
+
+                        rmtree(record_path)
+                    else:
+                        os.remove(record_path)
 
             except Exception as e:
                 error = e
@@ -332,6 +361,9 @@ class DashLocalStorage:
 
         result["exists_now"] = False
 
+        if archive_path:
+            result["archive_path"] = archive_path
+
         return result
 
     def WriteData(self, obj_id, data):
@@ -340,12 +372,18 @@ class DashLocalStorage:
         return data
 
     def Write(self, full_path, data, conform_permissions=True):
+        if not full_path:
+            raise ValueError(f"No path provided to LocalStorage.Write: {full_path}")
+
         if type(data) is bytes or type(data) is memoryview:
             return self.write_binary(full_path, data, conform_permissions)
 
         return self.write_json_protected(full_path, data, conform_permissions)
 
     def Read(self, full_path, is_json=True):
+        if not full_path:
+            raise ValueError(f"No path provided to LocalStorage.Read: {full_path}")
+
         if not os.path.exists(full_path):
             return None
 
@@ -775,8 +813,8 @@ def SetData(dash_context, store_path, obj_id, data, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).WriteData(obj_id, data)
 
 
-def Delete(dash_context, store_path, obj_id, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id)
+def Delete(dash_context, store_path, obj_id, nested=False, archive_path=""):
+    return DashLocalStorage(dash_context, store_path, nested).Delete(obj_id, archive_path)
 
 
 def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):

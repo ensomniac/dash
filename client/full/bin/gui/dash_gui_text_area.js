@@ -1,4 +1,6 @@
-function DashGuiTextArea (color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false) {
+function DashGuiTextArea (
+    color=null, placeholder_text="", binder=null, on_change_cb=null, delay_change_cb=false
+) {
     // For now, this file is no more than a wrapper when desiring a textarea element outside of mobile.
     // We can add to or modify this is as needed, or eventually just write this out as its own class.
 

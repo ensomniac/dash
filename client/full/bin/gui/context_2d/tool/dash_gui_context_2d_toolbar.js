@@ -7,11 +7,13 @@ function DashGuiContext2DToolbar (editor) {
     this.pil_preview = null;
     this.initialized = false;
     this.pil_interval = null;
+    this.full_res_button = null;
     this.html = $("<div></div>");
     this.pil_button_active = false;
     this.color = this.editor.color;
     this.can_edit = this.editor.can_edit;
     this.padding = Dash.Size.Padding * 0.5;
+    this.bottom_button_area = $("<div></div>");
     this.min_width = Dash.Size.ColumnWidth * 0.3;
     this.opposite_color = this.editor.opposite_color;
 
@@ -22,13 +24,20 @@ function DashGuiContext2DToolbar (editor) {
             "display": "flex",
             "flex-direction": "column",
             "box-sizing": "border-box",
+            "background": this.color.Tab.Background.BaseHover,
             "border-right": "1px solid " + this.color.StrokeLight,
-            "padding": this.padding
+            "padding": this.padding,
+            "overflow": "hidden"
         });
 
         this.add_header();
         this.add_tools();
-        this.add_pil_button();
+
+        this.html.append(Dash.Gui.GetFlexSpacer());
+        this.html.append(this.get_line());
+        this.html.append(this.bottom_button_area);
+
+        this.add_bottom_buttons();
         this.setup_connections();
 
         this.initialized = true;
@@ -40,40 +49,89 @@ function DashGuiContext2DToolbar (editor) {
         }
     };
 
-    this.add_pil_button = function () {
-        this.html.append(Dash.Gui.GetFlexSpacer());
-
-        this.pil_button = new Dash.Gui.Button(
-            "PIL",
-            this.on_pil_button_toggled,
-            this,
-            this.color,
-            {"style": "toolbar"}
+    this.add_bottom_buttons = function () {
+        this.full_res_button = this.add_bottom_button(
+            "Full\nRes",
+            this.on_full_res_button_toggled,
+            "Toggle full-resolution media for layers\n(may take a moment to swap out)"
         );
 
-        this.pil_button.html.css({
-            "box-sizing": "border-box",
-            "margin": 0
+        this.bottom_button_area.append(this.get_line());
+
+        this.pil_button = this.add_bottom_button(
+            "PIL",
+            this.on_pil_button_toggled,
+            "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
+        );
+    };
+
+    this.get_line = function () {
+        var line = $("<div></div>");
+
+        line.css({
+            "height": Dash.Size.Padding * 0.1,
+            "background": this.color.StrokeLight,
+            "margin-top": Dash.Size.Padding * 0.5,
+            "margin-bottom": Dash.Size.Padding * 0.5
         });
 
-        this.pil_button.label.css({
-            "padding-left": Dash.Size.Padding * 0.5,
+        return line;
+    };
+
+    this.add_bottom_button = function (label_text, callback, hover_hint="") {
+        var two_lines = label_text.includes("\n");
+
+        var button = new Dash.Gui.Button(
+            label_text,
+            callback,
+            this,
+            this.color,
+            {"style": two_lines ? "default" : "toolbar"}
+        );
+
+        var label_css = {
+            "padding-left": Dash.Size.Padding * (two_lines ? 0.5 : 0.3),
             "padding-right": Dash.Size.Padding * 0.5,
             "font-family": "sans_serif_bold",
             "letter-spacing": Dash.Size.Padding * 0.1,
             "overflow": "visible",
             "user-select": "none"
+        };
+
+        if (two_lines) {
+            label_css["white-space"] = "pre-wrap";
+            label_css["line-height"] = (Dash.Size.ButtonHeight * 0.45) + "px";
+            label_css["padding-top"] = Dash.Size.Padding * 0.3;
+        }
+
+        button.html.css({
+            "box-sizing": "border-box",
+            "margin": 0
         });
 
-        this.pil_button.html.attr(
-            "title",
-            "Toggle preview of rendered PIL image\n(takes a few seconds to generate)"
-        );
+        button.label.css(label_css);
 
-        this.pil_button.DisableHoverTextColorChange();
-        this.pil_button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
+        if (hover_hint) {
+            button.html.attr("title", hover_hint);
+        }
 
-        this.html.append(this.pil_button.html);
+        button.DisableHoverTextColorChange();
+        button.SetColor("none", this.color.Pinstripe, null, null, this.color.Button.Background.Base);
+
+        this.bottom_button_area.append(button.html);
+
+        return button;
+    };
+
+    this.on_full_res_button_toggled = function () {
+        this.full_res_button.SetLoading(true);
+        this.full_res_button.Disable();
+
+        this.editor.ToggleFullResMode();
+
+        this.full_res_button.SetColor(this.editor.full_res_mode ? this.color.PinstripeDark : "none");
+        this.full_res_button.SetLoading(false);
+        this.full_res_button.Enable();
     };
 
     this.on_pil_button_toggled = function () {
@@ -148,6 +206,8 @@ function DashGuiContext2DToolbar (editor) {
     };
 
     this.update_pil_preview = function (url) {
+        console.log("PIL URL:", url);
+
         var css = {"background-image": "url(" + url + ")"};
 
         if (!this.pil_preview) {

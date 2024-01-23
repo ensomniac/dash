@@ -134,7 +134,13 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (this.file_upload_api) {
-            this.SetFileUploader(this.file_upload_api, this.file_upload_params);
+            this.SetFileUploader(
+                this.file_upload_api,
+                this.file_upload_params,
+                this.on_file_upload_start_callback,
+                this.file_upload_optional_css,
+                this.file_upload_return_button
+            );
         }
 
         if (this.callback && this.bind) {
@@ -149,13 +155,11 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     };
 
     this.on_click = function (event) {
-        if (this.callback && this.bind) {
-            if (this.file_uploader && event.timeStamp) {
-                return;
-            }
-
-            this.callback.bind(this.bind)(event, this);
+        if (!this.callback || (this.file_uploader && event.timeStamp)) {
+            return;
         }
+
+        (this.bind ? this.callback.bind(this.bind) : this.callback)(event, this);
     };
 
     this.setup_connections = function () {

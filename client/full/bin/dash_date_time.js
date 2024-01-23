@@ -1,5 +1,7 @@
 function DashDateTime () {
-    this.Readable = function (iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true) {
+    this.Readable = function (
+        iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true
+    ) {
         var date;
         var dt_obj;
         var timezone;
@@ -62,7 +64,9 @@ function DashDateTime () {
         return readable;
     };
 
-    this.GetDateObjectFromISO = function (iso_string, timezone="EST", check_static=false, account_for_dst=true, offset_hours=0) {
+    this.GetDateObjectFromISO = function (
+        iso_string, timezone="EST", check_static=false, account_for_dst=true, offset_hours=0
+    ) {
         iso_string = iso_string.replace("Z", "");
 
         var included_offset_hours;
@@ -96,7 +100,11 @@ function DashDateTime () {
         }
 
         else {
-            dt_obj.setHours(dt_obj.getHours() - (offset_hours || this.get_server_offset_hours(dt_obj, timezone, account_for_dst)));
+            dt_obj.setHours(
+                dt_obj.getHours() - (
+                    offset_hours || this.get_server_offset_hours(dt_obj, timezone, account_for_dst)
+                )
+            );
         }
 
         if (check_static) {
@@ -107,8 +115,8 @@ function DashDateTime () {
     };
 
     this.GetDifferenceSec = function (start_iso_or_dt, end_iso_or_dt) {
-        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(start_iso_or_dt)).getTime();
-        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : Dash.DateTime.GetDateObjectFromISO(end_iso_or_dt)).getTime();
+        var start_ms = (start_iso_or_dt instanceof Date ? start_iso_or_dt : this.GetDateObjectFromISO(start_iso_or_dt)).getTime();
+        var end_ms = (end_iso_or_dt instanceof Date ? end_iso_or_dt : this.GetDateObjectFromISO(end_iso_or_dt)).getTime();
 
         return Math.floor((end_ms - start_ms) / 1000);
     };
@@ -152,6 +160,14 @@ function DashDateTime () {
             }
         }
 
+        // This will only happen if mins was 59 before the above +1 lines,
+        // so don't need to account for anything over 60, only exactly 60
+        if (mins === 60) {
+            mins = 0;
+
+            hours += 1;
+        }
+
         var readable = hours + "h " + mins + "m";
 
         if (include_secs) {
@@ -179,7 +195,11 @@ function DashDateTime () {
     this.GetNewRelativeDateObject = function (timezone="EST", account_for_dst=true) {
         var now = new Date();
 
-        now.setHours(now.getHours() + ((now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone, account_for_dst)));
+        now.setHours(
+            now.getHours() + (
+                (now.getTimezoneOffset() / 60) - this.get_server_offset_hours(null, timezone, account_for_dst)
+            )
+        );
 
         return now;
     };
@@ -240,7 +260,11 @@ function DashDateTime () {
     this.GetDateObjectForWeek = function (week_num, year, start_on_monday=false) {
         var dt_obj = new Date(year, 0, 1 + (week_num - 1) * 7);
 
-        dt_obj.setDate((dt_obj.getDay() <= 4 ? (dt_obj.getDate() - dt_obj.getDay() + 1) : (dt_obj.getDate() + 8 - dt_obj.getDay())) - 1);
+        dt_obj.setDate((
+            dt_obj.getDay() <= 4 ? (
+                dt_obj.getDate() - dt_obj.getDay() + 1
+            ) : (dt_obj.getDate() + 8 - dt_obj.getDay())
+        ) - 1);
 
         if (start_on_monday) {
             dt_obj.setDate(dt_obj.getDate() + 1);

@@ -3,6 +3,7 @@ function DashMobileCard (stack) {
 
     this.slider = null;
     this.pull_active = false;
+    this.touch_active = false;
     this.left_pull_icon = null;
     this.left_pull_area = null;
     this.right_pull_icon = null;
@@ -29,7 +30,8 @@ function DashMobileCard (stack) {
             "background": "white",
             "padding": Dash.Size.Padding,
             "border-radius": Dash.Size.BorderRadius,
-            "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
+            "border": "1px solid " + this.color.PinstripeDark,
+            // "box-shadow": "0px 6px 10px 1px rgba(0, 0, 0, 0.1), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.5)",
             "color": this.color.Text,
             "margin-right": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
@@ -248,7 +250,7 @@ function DashMobileCard (stack) {
     // };
 
     this.on_drag_start = function (event) {
-        if (this.pull_active || this.restoring_pull) {
+        if (this.pull_active || this.restoring_pull || !this.touch_active) {
             return;
         }
 
@@ -389,6 +391,10 @@ function DashMobileCard (stack) {
                         return;
                     }
 
+                    if (!self.touch_active) {
+                        return;
+                    }
+
                     if (self.last_touch_move_event) {
                         self.on_drag_start(self.last_touch_move_event);
 
@@ -415,6 +421,8 @@ function DashMobileCard (stack) {
 
         (function (self) {
             self.html.on("touchstart", function (e) {
+                self.touch_active = true;
+
                 self.manage_touch_start(e);
             });
 
@@ -429,6 +437,8 @@ function DashMobileCard (stack) {
             });
 
             self.html.on("touchend", function (e) {
+                self.touch_active = false;
+
                 self.on_drag_end(e);
 
                 if (self.pull_active && e.cancelable) {
@@ -437,6 +447,8 @@ function DashMobileCard (stack) {
             });
 
             self.html.on("touchcancel", function (e) {
+                self.touch_active = false;
+
                 self.on_drag_end(e);
 
                 if (self.pull_active && e.cancelable) {

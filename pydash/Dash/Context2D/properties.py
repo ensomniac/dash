@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Candy 2023, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
-#             Andrew Stet astet@candy.com, stetandrew@gmail.com
+# Ensomniac 2024, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
+#                 Andrew Stet astet@candy.com, stetandrew@gmail.com
 
 import os
 import sys
@@ -11,6 +11,8 @@ class Properties:
     _layers: list
     _now: callable
     get_layers: callable
+    get_precomps: callable
+    _precomps_default: dict
 
     def __init__(self, user_data, context2d_root, obj_id="", dash_context={}):
         self.User = user_data
@@ -65,6 +67,14 @@ class Properties:
     def ModifiedOn(self):
         return self.Data.get("modified_on") or ""
 
+    @property
+    def PreCompsMin(self):
+        return self.Data.get("precomps") or {}
+
+    @property
+    def PreCompsFull(self):
+        return self.get_precomps()
+
     # -------------------------------PATHS--------------------------------------
 
     @property
@@ -89,3 +99,24 @@ class Properties:
             self._now = datetime.now()
 
         return self._now
+
+    @property
+    def precomps_default(self):
+        if not hasattr(self, "_precomps_default"):
+            from string import ascii_lowercase
+            from Dash.Utils import GetHexColorList
+
+            self._precomps_default = {}
+
+            limit = 7
+            colors = GetHexColorList(limit)
+
+            for index, letter in enumerate(list(ascii_lowercase)[0:limit]):
+                self._precomps_default[letter] = {
+                    "display_name": f"Pre-Comp {letter.title()}",
+                    "color": colors[index],
+                    "asset_path": f"precomp_{letter}",
+                    "parallax": 0.5
+                }
+
+        return self._precomps_default

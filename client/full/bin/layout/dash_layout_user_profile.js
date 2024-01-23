@@ -131,7 +131,8 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.modal_profile.html.css({
             "padding": 0,
             "background": "",
-            "box-shadow": ""
+            "box-shadow": "",
+            "border": ""
         });
 
         this.modal_profile.img_box.css({
@@ -207,7 +208,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
             // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
             //  the right things are in place on the back-end, like renaming the user's folder etc
-            this.property_box.AddInput("email", "E-mail Address", "", null, false);
+            this.property_box.AddInput("email", "Email Address", "", null, false);
 
             this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
@@ -253,10 +254,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "width": this.img_box_size,
             "height": this.img_box_size,
             "background": "#222",
-            "border-radius": 4,
             "background-image": "url(" + img_url + ")",
             "background-size": "cover",
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.2)",
+            "outline": "1px solid " + this.color.Pinstripe,
+            "border-radius": 4
         });
 
         this.add_user_image_upload_button();

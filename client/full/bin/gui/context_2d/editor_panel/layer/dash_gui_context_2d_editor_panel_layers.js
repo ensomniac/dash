@@ -5,6 +5,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
     this.header = null;
     this.toolbar = null;
     this.redrawing = false;
+    this.legacy_precomps = {};
     this.html = $("<div></div>");
     this.color = this.panel.color;
     this.editor = this.panel.editor;
@@ -29,6 +30,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 "padding": Dash.Size.Padding,
                 "padding-top": Dash.Size.Padding * 0.5,
                 "box-sizing": "border-box",
+                "background": this.color.Background,
                 "border-top": "1px solid " + this.color.StrokeLight
             });
 
@@ -309,16 +311,22 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.panel.UpdatePropertyBoxToolSlider();
     };
 
+    this.UpdatePreCompColors = function () {
+        for (var id in this.layers) {
+            this.layers[id].UpdatePreCompColor();
+        }
+    };
+
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
 
-    this.Select = function (id, from_canvas=true) {
-        this.layers[id].Select(from_canvas);
+    this.Select = function (id, from_canvas=true, focus=true) {
+        this.layers[id].Select(from_canvas, focus);
     };
 
-    this.SetProperty = function (key, value, id) {
-        this.set_layer_property(key, value, id);
+    this.SetProperty = function (key, value, id, callback=null) {
+        this.set_layer_property(key, value, id, "", callback);
     };
 
     this.OnNewLayer = function (response) {
@@ -340,11 +348,28 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var parent_id = layer.GetParentID();
         var parent_layer_order = layer.GetParentLayerOrder();
         var order = [...(parent_id ? parent_layer_order : this.get_data()["order"])];
-
         var index = parent_id ? parent_layer_order.indexOf(id) : layer.GetIndex();
 
         if (index < 0 || order.length < 2 || (up && index === (order.length - 1)) || (!up && index === 0)) {
             return;
+        }
+
+        var additional_params = {};
+        var next_index = up ? index + 1 : index - 1;
+        var next_layer = this.layers[order[next_index]];
+
+        if (
+               (layer.get_value("precomp_tag_explicitly_set") || next_layer.get_value("precomp_tag_explicitly_set"))
+            && (layer.get_value("precomp_tag") !== next_layer.get_value("precomp_tag"))
+        ) {
+            if (!window.confirm("This move will change the current Pre-Comp flow.\n\nProceed?")) {
+                // In the future, we may want to give more choices, such as removing
+                // pre-comp tag, changing it, etc. For now, the backend handles it.
+                // If we want to change it later, use Dash.Gui.Prompt instead of this.
+                return;
+            }
+
+            additional_params["moved_layer_id"] = id;
         }
 
         delete this.layers[id];
@@ -379,7 +404,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                         if (self.editor.linked_preview) {
                             self.editor.linked_preview.editor_panel.layers_box._on_move(id);
                         }
-                    }
+                    },
+                    additional_params
                 );
             }
         })(this);
@@ -413,11 +439,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
 
-    this.set_layer_order = function (order, callback=null) {
-        this.editor.set_data("layer_order", order, callback);
+    this.set_layer_order = function (order, callback=null, additional_params={}) {
+        this.editor.set_data("layer_order", order, callback, additional_params);
     };
 
-    this.set_layer_property = function (key, value, id="", parent_id="", callback=null) {
+    this.set_layer_property = function (key, value, id="", parent_id="", callback=null, additional_params={}) {
         // Should never happen, but just in case
         if (this.editor.preview_mode) {
             return;
@@ -442,7 +468,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         var params = {
             "c2d_id": this.editor.c2d_id,
             "layer_id": parent_id || id,
-            ...this.editor.extra_request_params
+            ...this.editor.extra_request_params,
+            ...additional_params
         };
 
         if (key === "font_id") {
@@ -539,6 +566,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.layers[id].UpdateTintColor();
         }
 
+        else if (key === "precomp_tag") {
+            for (var layer_id in this.layers) {
+                this.layers[layer_id].UpdatePreCompColor();
+            }
+        }
+
         var display_name;
 
         if (parent_id) {
@@ -579,9 +612,19 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.layers_box.empty();
 
+        var precomps_log = [];
+
         for (var id of this.get_data()["order"]) {
             this.AddLayer(id, select);
+
+            precomps_log.push(
+                  this.layers[id].get_value("display_name")
+                + ": "
+                + this.layers[id].get_value("precomp_tag")
+            );
         }
+
+        // console.log("Pre-Comps:", precomps_log.reverse());
 
         this.redrawing = false;
     };
@@ -592,11 +635,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         this.header.ReplaceBorderWithIcon("layers");
 
         this.header.html.css({
-            "margin-left": -Dash.Size.Padding * 0.5,
-            "margin-right": -Dash.Size.Padding * 0.5,
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "margin-left": -Dash.Size.Padding,
+            "margin-top": -Dash.Size.Padding * 0.5,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "margin-right": -Dash.Size.Padding,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
             "padding-bottom": Dash.Size.Padding * 0.5,
+            "background": this.color.Tab.Background.BaseHover,
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
 

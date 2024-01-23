@@ -7,8 +7,8 @@ function DashGuiComboSearch () {
     this.search_active = false;
     this.search_result_ids = [];
     this.search_container = null;
-    this.search_max_results = 10;
     this.search_result_rows = [];
+    this.manage_search_button_map = null;
 
     this.setup_search_selection = function () {
         this.html.css({
@@ -69,12 +69,12 @@ function DashGuiComboSearch () {
         }
 
         this.search_results = [];
+        this.combo_option_index = 0;
         this.search_result_ids = [];
         this.search_result_rows = [];
-        this.combo_option_index = 0;
 
         this.label_container.css({
-            "opacity": 1,
+            "opacity": 1
         });
     };
 
@@ -91,15 +91,19 @@ function DashGuiComboSearch () {
         });
 
         this.search_input = new Dash.Gui.Input("Type to search...", this.color);
-        this.search_input.SetText(this.multi_select ? this.get_multi_select_label() : (this.selected_option["label_text"] || this.selected_option["display_name"]));
 
+        this.search_input.SetText(
+            this.multi_select ? this.get_multi_select_label() : (
+                this.selected_option["label_text"] || this.selected_option["display_name"]
+            )
+        );
         this.search_input.SetOnChange(this.on_search_text_changed, this);
+        this.search_input.SetOnChangeDelayMs(250);
         this.search_input.SetOnSubmit(this.on_search_text_submitted, this);
         this.search_input.DisableBlurSubmit();
+        this.search_input.Flatten();
 
         this.search_container.append(this.search_input.html);
-
-        this.search_input.Flatten();
 
         if (this.style === "row") {
             this.search_input.html.css({
@@ -134,37 +138,108 @@ function DashGuiComboSearch () {
     this.on_search_text_changed = function () {
         this.search_results = [];
 
-        var search = this.search_input.Text().toLocaleLowerCase("en-US");
+        var search_text = this.search_input.Text().toLocaleLowerCase("en-US");
 
-        if (search.length === 0) {
+        if (search_text.length === 0) {
             this.manage_search_list(this.show_rows_on_empty_search);
 
             return;
         }
 
-        for (var i in this.option_list) {
-            var label = this.option_list[i]["label_text"] || this.option_list[i]["display_name"];
-            var opt = label.toLocaleLowerCase("en-US");
+        var label;
+        var option;
+        var added_ids = [];
 
-            if (search.length < 3) {
-                // For a short search, only match the beginning
-                if (opt.startsWith(search)) {
-                    this.search_results.push(this.option_list[i]["id"]);
-                }
+        // As of writing, this doesn't seem necessary for performance, even
+        // with very long lists drawing 1000 results without any noticeable
+        // lag. If performance is an issue at any point, this should be the
+        // first place to start. If moving forward with this in the future,
+        // at the very least, need to display a little tag that says something
+        // like "showing top 50 results" when the limit is hit, so it's
+        // clear that not every potential match is shown. To do it right,
+        // we'd need to also offer a way to load more, or load all, etc.
+        var max_results = 0;  // 100;
+
+        // OLD LOGIC ---------------------------------------------------------
+        // Can revert to this if the new method turns out to be too heavy on
+        // performance, but preferably, if performance is the issue, start by setting
+        // max_results to 100 and whittle that number down as needed, until resolved.
+        // If reverting to this, comment out this.search_input.SetOnChangeDelayMs in this.create_search_input.
+        //
+        // var respect_search_results_order = false;
+        //
+        // for (option of this.option_list) {
+        //     label = (option["label_text"] || option["display_name"] || "").toString();
+        //
+        //     if (!label.length) {
+        //         continue;
+        //     }
+        //
+        //     var opt = label.toLocaleLowerCase("en-US");
+        //
+        //     if (search_text.length < 3) {
+        //         // For a short search, only match the beginning
+        //         if (opt.startsWith(search_text)) {
+        //             this.search_results.push(option["id"]);
+        //         }
+        //     }
+        //
+        //     else {
+        //         if (opt.includes(search_text)) {
+        //             this.search_results.push(option["id"]);
+        //         }
+        //     }
+        //
+        //     if (max_results && this.search_results.length >= max_results) {
+        //         break;
+        //     }
+        // }
+
+        // NEW LOGIC ---------------------------------------------------------
+        // This logic is the same as the logic in DashMobileSearchableCombo.filter_datalist,
+        // so if any logic is added here, be sure to mirror that there as well.
+
+        var respect_search_results_order = true;
+
+        // First, list options that start with the input text
+        for (option of this.option_list) {
+            label = (option["label_text"] || option["display_name"] || "").toString();
+
+            if (!label.length || !label.toLocaleLowerCase("en-US").startsWith(search_text)) {
+                continue;
             }
 
-            else {
-                if (opt.includes(search)) {
-                    this.search_results.push(this.option_list[i]["id"]);
-                }
-            }
+            this.search_results.push(option["id"]);
 
-            if (this.search_results.length >= this.search_max_results) {
+            added_ids.push(option["id"]);
+
+            if (max_results && this.search_results.length >= max_results) {
                 break;
             }
         }
 
-        this.manage_search_list();
+        // Below those options, list options that don't start with the input text, but contain it
+        for (option of this.option_list) {
+            if (added_ids.includes(option["id"])) {
+                continue;
+            }
+
+            label = (option["label_text"] || option["display_name"] || "").toString();
+
+            if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                continue;
+            }
+
+            this.search_results.push(option["id"]);
+
+            added_ids.push(option["id"]);
+
+            if (max_results && this.search_results.length >= max_results) {
+                break;
+            }
+        }
+
+        this.manage_search_list(false, respect_search_results_order);
     };
 
     this.on_search_text_submitted = function () {
@@ -172,53 +247,110 @@ function DashGuiComboSearch () {
             return;
         }
 
-        var search = this.search_input.Text();
+        var search_text = this.search_input.Text();
 
-        if (search.length < 1) {
+        if (search_text.length < 1) {
             this.on_click();
 
             return;
         }
 
         var selected_id = this.search_result_ids[this.combo_option_index];
-        var selected_option = null;
 
-        for (var i in this.option_list) {
-            var content = this.option_list[i];
+        for (var option of this.option_list) {
+            if (option["id"] === selected_id) {
+                this.on_selection(option, false, search_text);
 
-            if (content["id"] === selected_id) {
-                selected_option = content;
-
-                break;
+                return;
             }
-        }
-
-        if (selected_option) {
-            this.on_selection(selected_option, false, search);
         }
     };
 
-    this.manage_search_list = function (show_all=false) {
-        this.rows.stop().css({"height": "auto"});
+    this.manage_search_list = function (show_all=false, respect_search_results_order=false) {
+        var i;
+        var id;
+        var option;
+        var button;
 
-        this.search_result_rows = [];
-        this.search_result_ids = [];
         this.combo_option_index = 0;
+        this.search_result_ids = [];
+        this.search_result_rows = [];
 
-        for (var i in this.option_list) {
-            var content = this.option_list[i];
-            var button = this.row_buttons[i];
-            var include_default = this.default_search_submit_combo && this.default_search_submit_combo["id"] === content["id"];
+        if (show_all) {
+            respect_search_results_order = false;
+
+            for (id in this.manage_search_button_map) {
+                this.manage_search_button_map[id].html.detach();
+            }
+
+            for (button of this.row_buttons) {
+                this.rows.append(button.html);
+            }
+        }
+
+        this.rows.stop().css({
+            "height": "auto"
+        });
+
+        var option_list = respect_search_results_order ? [] : this.option_list;
+
+        this.manage_search_button_map = respect_search_results_order ? {} : null;
+
+        if (respect_search_results_order) {
+            var map = {};
+
+            for (i in this.option_list) {
+                option = this.option_list[i];
+                button = this.row_buttons[i];
+
+                button.html.detach();
+
+                if (this.search_results.includes(option["id"])) {
+                    map[option["id"]] = option;
+
+                    this.manage_search_button_map[option["id"]] = button;
+                }
+
+                else {
+                    if (  // Include default combo
+                           this.default_search_submit_combo
+                        && this.default_search_submit_combo["id"] === option["id"]
+                    ) {
+                        option_list.push(option);
+
+                        this.rows.append(button.html);
+                    }
+                }
+            }
+
+            for (id of this.search_results) {
+                option_list.push(map[id]);
+
+                this.rows.append(this.manage_search_button_map[id].html);
+            }
+        }
+
+        for (i in option_list) {
+            option = option_list[i];
+            button = respect_search_results_order ? this.manage_search_button_map[option["id"]] : this.row_buttons[i];
 
             button.SetSearchResultActive(false);
 
-            if (show_all || this.search_results.includes(content["id"]) || include_default) {
-                if (show_all && !this.search_results.includes(content["id"])) {
-                    this.search_results.push(content["id"]);
+            if (
+                   show_all
+                || respect_search_results_order
+                || (  // Include default combo
+                       this.default_search_submit_combo
+                    && this.default_search_submit_combo["id"] === option["id"]
+                )
+                || this.search_results.includes(option["id"])
+            ) {
+                if (show_all && !this.search_results.includes(option["id"])) {
+                    this.search_results.push(option["id"]);
                 }
 
-                if (!this.search_result_ids.includes(content["id"])) {
-                    this.search_result_ids.push(content["id"]);
+                if (!this.search_result_ids.includes(option["id"])) {
+                    this.search_result_ids.push(option["id"]);
                 }
 
                 if (!this.search_result_rows.includes(button)) {
@@ -226,20 +358,20 @@ function DashGuiComboSearch () {
                 }
 
                 button.html.css({
-                    "display": "block",
+                    "display": "block"
                 });
             }
 
             else {
                 button.html.css({
-                    "display": "none",
+                    "display": "none"
                 });
             }
         }
 
-        if (this.search_result_rows.length === 0 && this.default_search_submit_combo) {
-
-        }
+        // if (this.search_result_rows.length === 0 && this.default_search_submit_combo) {
+        //     // Is something supposed to happen here? Why is this empty?
+        // }
 
         if (this.search_result_rows.length > 0) {
             this.search_result_rows[0].SetSearchResultActive(true);

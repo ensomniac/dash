@@ -17,8 +17,8 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.row_height = this.banner.FooterHeight;
     this.width = this.banner.FooterButtonWidth;
     this.icon_circle = Dash.Gui.GetHTMLAbsContext();
-    this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
-    this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
+    // this.icon_circle_box_shadow = "0px 6px 10px 1px rgba(0, 0, 0, 0.1)";
+    // this.icon_circle_box_shadow_inset = "inset 0px 2px 2px 0px rgba(255, 255, 255, 1)";
     this.label_height = (this.row_height - this.width) < this.label_height ? this.row_height - this.width : Dash.Size.RowHeight;
 
     this.icon = new Dash.Gui.Icon(
@@ -32,9 +32,7 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
     this.setup_styles = function () {
         this.label.text(this.label_text);
 
-        this.icon.icon_html.css({
-            "text-shadow": "0px 2px 3px rgba(0, 0, 0, 0.2)",
-        });
+        this.icon.AddShadow("0px 1px 2px rgba(0, 0, 0, 0.15)");
 
         this.html.css({
             "height": this.row_height,
@@ -53,20 +51,30 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
             "height": this.width,
             "width": this.width,
             "border-radius": this.width * 0.5,
-            "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+            "border": "1px solid " + this.color.PinstripeDark
+            // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
         });
 
-        this.label.css({
+        var two_lines = this.label_text.includes("\n");
+
+        var label_css = {
             "position": "absolute",
             "left": -Dash.Size.Padding,
             "bottom": 0,
             "top": "auto",
             "height": this.label_height,
-            "line-height": this.label_height + "px",
+            "line-height": (this.label_height * (two_lines ? 0.35 : 1)) + "px",
             "width": this.width + (Dash.Size.Padding * 2),
             "font-size": "80%",
             "background": "none"
-        });
+        };
+
+        if (two_lines) {
+            label_css["white-space"] = "pre-wrap";
+            label_css["margin-bottom"] = -Dash.Size.Padding * 0.5;
+        }
+
+        this.label.css(label_css);
 
         this.icon_circle.append(this.icon.html);
 
@@ -141,20 +149,22 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
 
         if (highlighted) {
             this.icon_circle.css({
-                "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
+                "border": "2px solid " + Dash.Color.Mobile.AccentPrimary
+                // "box-shadow": "0px 0px 2px 3px " + Dash.Color.Mobile.AccentPrimary + ", " + this.icon_circle_box_shadow_inset
             });
         }
 
         else {
             this.icon_circle.css({
-                "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
+                "border": "1px solid " + this.color.PinstripeDark
+                // "box-shadow": this.icon_circle_box_shadow + ", " + this.icon_circle_box_shadow_inset
             });
         }
 
         this.highlighted = highlighted;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -162,9 +172,12 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
             "pointer-events": "none",
             "user-select": "none"
+        });
+
+        this.icon.html.css({
+            "opacity": opacity
         });
     };
 
@@ -176,9 +189,12 @@ function DashMobileCardStackBannerFooterButtonRowButton (footer, icon_name="gear
         this.disabled = false;
 
         this.html.css({
-            "opacity": 1,
             "pointer-events": "auto",
             "user-select": "auto"
+        });
+
+        this.icon.html.css({
+            "opacity": 1
         });
     };
 

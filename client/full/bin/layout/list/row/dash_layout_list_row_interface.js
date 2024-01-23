@@ -112,6 +112,8 @@ function DashLayoutListRowInterface () {
             this.SetCachedPreview(null);  // Reset this to force a redraw next time it's expanded
         }
 
+        var new_value;
+
         for (var type in this.columns) {
             if (!Dash.Validate.Object(this.columns[type])) {
                 continue;
@@ -125,10 +127,20 @@ function DashLayoutListRowInterface () {
 
             else if (type === "inputs") {
                 for (var input of this.columns[type]) {
-                    var new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
+                    new_value = this.get_data_for_key(input["column_config_data"], "", input["obj"]);
 
                     if (new_value || new_value !== input["obj"].Text()) {
                         input["obj"].SetText(new_value);
+                    }
+                }
+            }
+
+            else if (type === "text_areas") {
+                for (var text_area of this.columns[type]) {
+                    new_value = this.get_data_for_key(text_area["column_config_data"], "", text_area["obj"]);
+
+                    if (new_value || new_value !== text_area["obj"].GetText()) {
+                        text_area["obj"].SetText(new_value);
                     }
                 }
             }
@@ -139,7 +151,7 @@ function DashLayoutListRowInterface () {
 
                     if (value) {
                         if (this.is_header || this.is_footer) {
-                            // TODO
+                            // TODO?
                         }
 
                         else {
@@ -174,7 +186,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
-        if (this.is_header || this.is_footer) {
+        if (this.is_header || this.is_footer || this.is_divider) {
             return;
         }
 
@@ -241,7 +253,7 @@ function DashLayoutListRowInterface () {
         return target_size;
     };
 
-    this.Collapse = function () {
+    this.Collapse = function (callback=null) {
         if (!this.is_expanded || this.is_header || this.is_footer) {
             return;
         }
@@ -279,6 +291,10 @@ function DashLayoutListRowInterface () {
                     self.expanded_content.empty();
 
                     self.is_expanded = false;
+
+                    if (callback) {
+                        callback();
+                    }
                 }
             );
         })(this);
@@ -289,7 +305,7 @@ function DashLayoutListRowInterface () {
     };
 
     this.ShowHighlight = function (highlight_color=null) {
-        if (this.is_highlighted) {
+        if (this.is_highlighted || this.is_divider) {
             return;
         }
 
@@ -318,7 +334,7 @@ function DashLayoutListRowInterface () {
     };
 
     // For disabling all columns
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (!this.columns) {
             return;
         }
@@ -339,16 +355,16 @@ function DashLayoutListRowInterface () {
                 }
 
                 else if (type === "copy_buttons") {
-                    obj.button.Disable();
+                    obj.button.Disable(opacity);
                 }
 
                 else if (type.includes("button")) {
-                    obj.Disable();
+                    obj.Disable(opacity);
                 }
 
                 else if (type === "combos") {
                     obj.SetReadOnly(true);
-                    obj.Disable(false, true);
+                    obj.Disable(false, true, opacity);
                 }
 
                 else if (type === "inputs") {
@@ -457,6 +473,28 @@ function DashLayoutListRowInterface () {
     this.SetHighlightColor = function (color) {
         this.highlight.css({
             "background": color
+        });
+    };
+
+    this.SetHeight = function (height) {
+        if (this.height === height) {
+            return;
+        }
+
+        this.height = height;
+
+        if (!this.is_header && !this.is_footer) {
+            this.highlight.css({
+                "height": this.height
+            });
+        }
+
+        this.column_box.css({
+            "height": this.height
+        });
+
+        this.html.css({
+            "min-height": this.height
         });
     };
 }

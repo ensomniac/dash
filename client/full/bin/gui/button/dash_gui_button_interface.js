@@ -9,6 +9,14 @@ function DashGuiButtonInterface () {
         }
     };
 
+    this.FitContent = function () {
+        this.html.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "width": "fit-content"
+        });
+    };
+
     this.DisableHoverTextColorChange = function () {
         this.change_text_color_on_hover = false;
     };
@@ -42,7 +50,9 @@ function DashGuiButtonInterface () {
         });
     };
 
-    this.StyleAsBorderButton = function (border_size=1, border_type="solid", border_color="", background="", highlight_color="") {
+    this.StyleAsBorderButton = function (
+        border_size=1, border_type="solid", border_color="", background="", highlight_color=""
+    ) {
         this.html.css({
             "border": border_size + "px " + border_type + " " + (
                    border_color
@@ -115,7 +125,7 @@ function DashGuiButtonInterface () {
         }
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -123,7 +133,7 @@ function DashGuiButtonInterface () {
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -242,7 +252,8 @@ function DashGuiButtonInterface () {
         }
 
         if (!color) {
-            // (Only if 'color' is not already provided, since that's likely the opposite Dash color instance to combat this issue)
+            // (Only if 'color' is not already provided, since that's likely
+            // the opposite Dash color instance to combat this issue)
             // It seemed like virtually every time I added loading dots to a button with this function,
             // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
             // since the text color will obviously be something that's visible against the button
@@ -263,7 +274,9 @@ function DashGuiButtonInterface () {
         this.load_dots.Start();
     };
 
-    this.SetFileUploader = function (api, params, optional_on_start_callback=null, optional_css={}, return_button=false) {
+    this.SetFileUploader = function (
+        api, params, optional_on_start_callback=null, optional_css={}, return_button=false
+    ) {
         if (!params["token"]) {
             var token = Dash.Local.Get("token");
 
@@ -275,6 +288,8 @@ function DashGuiButtonInterface () {
         this.file_upload_type = "file";
         this.file_upload_api = api;
         this.file_upload_params = params;
+        this.file_upload_optional_css = optional_css;
+        this.file_upload_return_button = return_button;
 
         if (this.file_uploader) {
             this.file_uploader.html.remove();
@@ -304,8 +319,8 @@ function DashGuiButtonInterface () {
             );
         })(this);
 
-        if (Dash.Validate.Object(optional_css)) {
-            this.file_uploader.html.css(optional_css);
+        if (Dash.Validate.Object(this.file_upload_optional_css)) {
+            this.file_uploader.html.css(this.file_upload_optional_css);
         }
 
         else {
@@ -349,11 +364,14 @@ function DashGuiButtonInterface () {
     // This may be necessary in certain cases when the parent html is
     // emptied and then this button is then re-appended to that parent.
     this.RefreshConnections = function () {
+        this.BreakConnections();
+        this.setup_connections();
+    };
+
+    this.BreakConnections = function () {
         this.html.off("mouseenter");
         this.html.off("mouseleave");
         this.html.off("click");
-
-        this.setup_connections();
     };
 
     this.SetRightLabelText = function (label_text) {
@@ -385,5 +403,43 @@ function DashGuiButtonInterface () {
         }
 
         this.label_shown = true;
+    };
+
+    this.AddIcon = function (icon_name, icon_size_mult=0.75, icon_color=null, right=true) {
+        var side = right ? "right" : "left";
+
+        this.html.css({
+            "display": "flex"
+        });
+
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            icon_name,
+            this.html.height(),
+            icon_size_mult,
+            icon_color || this.color_set.Text.Base
+        );
+
+        var html_css = {};
+        var icon_css = {};
+        var min_pad = Dash.Size.Padding * 0.5;
+        var side_padding = parseInt(this.html.css("padding-" + side));
+
+        icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+
+        icon.html.css(icon_css);
+
+        html_css["padding-" + side] = side_padding > min_pad ? min_pad : 0;
+
+        this.html.css(html_css);
+        this.html.append(icon.html);
+
+        if (!right){
+            this.label.detach();
+
+            this.html.append(this.label);
+        }
+
+        return icon;
     };
 }

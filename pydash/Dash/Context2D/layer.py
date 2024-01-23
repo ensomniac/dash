@@ -1,10 +1,12 @@
 #!/usr/bin/python
 #
-# Candy 2023, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
-#             Andrew Stet astet@candy.com, stetandrew@gmail.com
+# Ensomniac 2024, Ryan Martin rmartin@candy.com, ryan@ensomniac.com
+#                 Andrew Stet astet@candy.com, stetandrew@gmail.com
 
 import os
 import sys
+
+# TODO: break up into module
 
 
 class Layer:
@@ -20,6 +22,11 @@ class Layer:
         self.data = {}
         self._new = False
 
+        self.file_keys = [
+            "file",
+            "mask"
+        ]
+
         self.bool_keys = [
             "hidden",
             "locked",
@@ -28,6 +35,7 @@ class Layer:
             "text_caps",
             "fade_global",
             "placeholder",
+            "precomp_tag_explicitly_set",
             *self.context_2d.LayerExtraBoolKeys
         ]
 
@@ -35,10 +43,13 @@ class Layer:
             "tone_1",
             "tone_2",
             "tone_3",
+            "invert",
             "font_id",
+            "tint_mode",
             "text_value",
             "font_color",
             "tint_color",
+            "precomp_tag",
             "display_name",
             "stroke_color",
             "text_alignment",
@@ -64,6 +75,7 @@ class Layer:
             "aspect",
             "kerning",
             "contrast",
+            "saturation",
             "brightness",
             "fade_norm_end",
             "aspect_ratio_w",
@@ -127,9 +139,10 @@ class Layer:
 
         return self._default_display_name
 
-    def ToDict(self, save=False):
+    def ToDict(self, save=False, file_key_validation=True):
         """
         :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
+        :param bool file_key_validation: When True, asserts relevant file keys and validates the URLs inside the file data (default=True)
 
         :return: Sanitized layer data
         :rtype: dict
@@ -154,18 +167,24 @@ class Layer:
             "fade_norm_start": self.data["fade_norm_start"] if "fade_norm_start" in self.data else 0.5,
             "hidden":          self.data["hidden"] if "hidden" in self.data else False,
             "id":              self.ID,
+            "invert":          self.data.get("invert") or "",
             "locked":          self.data["locked"] if "locked" in self.data else False,
             "modified_by":     self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
             "modified_on":     self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
             "opacity":         self.data["opacity"] if "opacity" in self.data else 1.0,
+            "precomp_tag":     self.data.get("precomp_tag") or "",
             "rot_deg":         self.data.get("rot_deg") or 0,  # -180 to 180
             "tint_color":      self.data.get("tint_color") or "",
+            "tint_mode":       self.data.get("tint_mode") or "",
             "type":            self.Type,
             "width_norm":      self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
                 # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution
                 (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9) if self.Type == "text" else 0.5
             )
         }
+
+        if not save:
+            data["precomp_tag_explicitly_set"] = bool(data["precomp_tag"])
 
         if self.Type == "text":
             text_caps = self.data["text_caps"] if "text_caps" in self.data else False
@@ -197,69 +216,89 @@ class Layer:
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
 
-        if self.Type == "image":
+        elif self.Type == "image":
             for num in [1, 2, 3]:
                 data[f"multi_tone_color_{num}"] = self.data.get(f"multi_tone_color_{num}") or ""
 
+        elif self.Type == "video":
+            # As of writing, masks are supported for more types on the backend,
+            # but the frontend is restricting it to video only for CPE/PIL consideration
+            data["mask"] = self.data.get("mask") or {}
+
         if self.Type in ["image", "video"]:
             data.update({
-                "brightness": self.data["brightness"] if "brightness" in self.data else 1.0,
-                "contrast": self.data["contrast"] if "contrast" in self.data else 1.0,
-                "file": self.data.get("file") or {}
+                "file": self.data.get("file") or {},
+                "brightness": self.data["brightness"] if "brightness" in self.data else 0.5,
+                "contrast": self.data["contrast"] if "contrast" in self.data else 0.5,
+                "saturation": self.data["saturation"] if "saturation" in self.data else 0.5
             })
+
+        if file_key_validation and not self._new:
+            for file_key in self.file_keys:
+                if file_key not in data:
+                    continue
+
+                if data[file_key]:
+                    data[file_key] = self.validate_file_urls(
+                        file_key,
+                        file_data=data[file_key],
+                        update=(not save)  # Only call SetProperty if not already saving
+                    )
+                else:
+                    data[file_key] = self.assert_file_key(
+                        file_key,
+                        update=(not save)  # Only call SetProperty if not already saving
+                    )
 
         # This is a function that is meant to be overridden to use for custom modifications
         # to this returned data for abstractions and extensions of this code.
         data = self.context_2d.OnLayerToDict(self, data, save)
 
+        if save:  # Just in case
+            for key in self.data:
+                if key not in data:
+                    data[key] = self.data[key]
+
         return data
 
-    def SetProperty(self, key, value, imported_context_layer_id=""):
-        return self.SetProperties({key: value}, imported_context_layer_id)
+    def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
+        return self.SetProperties({key: value}, imported_context_layer_id, file_op_key, file_key_validation)
 
-    def SetProperties(self, properties={}, imported_context_layer_id=""):
-        properties = self.ParseProperties(properties, imported_context_layer_id)
+    def SetProperties(self, properties={}, imported_context_layer_id="", file_op_key="", file_key_validation=True):
+        properties = self.ParseProperties(
+            properties=properties,
+            imported_context_layer_id=imported_context_layer_id,
+            file_op_key=file_op_key
+        )
 
         if not properties:
-            return self.ToDict()
+            return self.ToDict(file_key_validation=file_key_validation)
 
         if self.Type == "context":
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
-        else:
-            if "layer_order" in properties:
-                del properties["layer_order"]  # Should never happen, but just in case
 
-            if self.Type == "color" and ("aspect_ratio_w" in properties or "aspect_ratio_h" in properties):
-                for key in ["aspect_ratio_w", "aspect_ratio_h"]:
-                    properties[key] = float(properties.get(key) or self.data[key])
+            return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
-                    if not properties[key].is_integer():
-                        from Dash.Utils import ClientAlert
+        if "layer_order" in properties:
+            del properties["layer_order"]  # Should never happen, but just in case
 
-                        raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+        if self.Type == "color" and ("aspect_ratio_w" in properties or "aspect_ratio_h" in properties):
+            properties = self.update_color_properties_on_aspect_change(properties)
 
-                    properties[key] = int(properties[key])
+        self.data.update(properties)
 
-                if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
-                    properties["aspect_ratio_w"] = 1
-                    properties["aspect_ratio_h"] = 1
+        if file_op_key and file_op_key in properties and not properties[file_op_key]:
+            file_root = os.path.join(self.root, file_op_key)
 
-                else:
-                    from math import gcd
+            if os.path.exists(file_root):
+                from shutil import rmtree
 
-                    divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+                rmtree(file_root)
 
-                    properties["aspect_ratio_w"] /= divisor
-                    properties["aspect_ratio_h"] /= divisor
+        return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
 
-                    properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
-
-            self.data.update(properties)
-
-        return self.Save().ToDict()
-
-    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True):
+    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_op_key=""):
         from json import loads
 
         if properties and type(properties) is str:
@@ -269,29 +308,31 @@ class Layer:
             return properties
 
         properties = self.context_2d.parse_properties_for_override_tag(properties, for_overrides)
+        protected_keys = ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]
+
+        for key in self.file_keys:
+            if key == file_op_key:
+                if key in properties and type(properties[key]) is str:
+                    properties[key] = loads(properties[key])
+
+                continue  # On file operations, don't protect the key
+
+            protected_keys.append(key)
 
         # Should never happen, but just in case
-        for key in ["created_by", "created_on", "id", "modified_by", "modified_on", "type"]:
+        for key in protected_keys:
             if key in properties:
                 del properties[key]
 
         if not properties:
             return properties
 
-        # Enforce str when null
-        for key in self.str_keys:
-            if key in properties and not properties.get(key):
-                properties[key] = ""
-
-        # Bools
-        for key in self.bool_keys:
-            if key in properties and type(properties[key]) is not bool:
-                properties[key] = loads(properties[key])
-
-        # Floats
-        for key in self.float_keys:
-            if key in properties and type(properties[key]) not in [float, int]:
-                properties[key] = float(properties[key])
+        for key in properties:
+            properties[key] = self.AssertType(
+                key=key,
+                value=properties[key],
+                _from_set_data=True
+            )
 
         properties = self.check_display_name_for_set_property(properties)
 
@@ -307,58 +348,54 @@ class Layer:
 
         return properties
 
+    def AssertType(self, key, value, _from_set_data=False):
+        if key in self.str_keys:
+            if not value:
+                value = ""  # Enforce str when null
+
+        elif key in self.bool_keys:
+            if type(value) is not bool:
+                from json import loads
+
+                value = loads(value)
+
+        elif key in self.float_keys:
+            if type(value) is not float:
+                value = float(value or 0)
+
+        return value
+
     def UploadFile(self, file, filename):
-        if self.Type == "text" or self.Type == "context":
-            raise ValueError("Can't upload files to 'text' or 'context' layers")  # Should never happen, but just in case
+        return self.upload_file(file, filename, "file")
 
-        from Dash.Utils import UploadFile
+    def UploadMask(self, file, filename):
+        return self.upload_file(file, filename, "mask")
 
-        # A single layer will only ever have a single file (each upload is its own layer)
-        file_root = os.path.join(self.root, "file")
-
-        if os.path.exists(file_root):
-            from shutil import rmtree
-
-            # This should never be the case, since each upload is its own layer (you're never
-            # updating the file on a layer, you would just get a new layer when you upload a new file)
-            rmtree(file_root)
-
-        file_data = UploadFile(
-            dash_context=self.context_2d.DashContext,
-            user=self.context_2d.User,
-            file_root=file_root,
-            file_bytes_or_existing_path=file,
-            filename=filename,
-            enforce_unique_filename_key=False,
-            include_jpg_thumb=False,
-            min_size=1024
-        )
-
-        properties = {
-            "file": file_data,
-            "display_name": filename.split(".")[0]
-        }
-
-        aspect = file_data.get("aspect") or file_data.get("orig_aspect")
-
-        if aspect:
-            properties["aspect"] = aspect
-
-        return self.SetProperties(properties)
-
-    def Save(self):
+    def Save(self, file_key_validation=True):
         from Dash.LocalStorage import Write
 
         os.makedirs(self.root, exist_ok=True)
 
-        Write(self.data_path, self.ToDict(save=True))
+        Write(
+            self.data_path,
+            self.ToDict(
+                save=True,
+                file_key_validation=file_key_validation
+            )
+        )
 
         return self
 
     def load_data(self):
         if self.ID:  # Existing
             if not os.path.exists(self.data_path):
-                raise FileNotFoundError(f"Data path doesn't exist for layer ({self.ID}), this shouldn't happen")
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert(
+                    f"This layer ({self.ID}) appears to have been deleted (expected: {self.data_path})."
+                    f"If not by you, possibly by another user working on the same context.\n\n"
+                    f"Please refresh and try again.\nIf this error persists, please report it."
+                )
 
             from Dash.LocalStorage import Read
 
@@ -390,11 +427,50 @@ class Layer:
             "display_name": self.default_display_name
         }
 
+    def update_color_properties_on_aspect_change(self, properties):
+        for key in ["aspect_ratio_w", "aspect_ratio_h"]:
+            valid = True
+
+            try:
+                properties[key] = float(properties.get(key) or self.data[key])
+
+                if not properties[key].is_integer():
+                    valid = False
+
+            except ValueError:
+                valid = False
+
+            if not valid:
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert("Aspect Ratio values must be whole numbers (integers)")
+
+            properties[key] = int(properties[key])
+
+        if properties["aspect_ratio_w"] == properties["aspect_ratio_h"]:
+            properties["aspect_ratio_w"] = 1
+            properties["aspect_ratio_h"] = 1
+        else:
+            from math import gcd
+
+            divisor = gcd(properties["aspect_ratio_w"], properties["aspect_ratio_h"])
+
+            properties["aspect_ratio_w"] /= divisor
+            properties["aspect_ratio_h"] /= divisor
+
+            properties["aspect"] = properties["aspect_ratio_w"] / properties["aspect_ratio_h"]
+
+        return properties
+
     def check_display_name_for_set_property(self, properties, key="text_value"):
         if key not in properties or "display_name" in properties:
             return properties
 
-        if self.data.get("display_name") == self.default_display_name or self.data[key] == self.data["display_name"]:
+        if (
+            self.data.get("display_name") == self.default_display_name
+            or self.data[key] == self.data["display_name"]
+            or self.data["display_name"].endswith("(Copy)")
+        ):
             # If the layer's name has not already been set manually by the user,
             # then auto-set the name based on the primitive's text change
             properties["display_name"] = properties[key] or self.default_display_name
@@ -622,3 +698,186 @@ class Layer:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = -new_dif
             else:
                 self.data["imported_context"]["layer_overrides"][layer_id][k] = new_dif
+
+    def upload_file(self, file, filename, key):
+        if self.Type in ["text", "context"]:  # Should never happen, but just in case
+            raise ValueError("Can't upload files to 'text' or 'context' layers")
+
+        if key == "mask":
+            if not self.data.get("file"):  # Should never happen, but just in case
+                raise FileNotFoundError("No original file data exists for this layer")
+
+        elif key == "file":
+            if self.Type not in ["image", "video"]:  # Should never happen, but just in case
+                raise ValueError("Can only upload media to 'image' and 'video' layers")
+
+        if self.Type == "image":
+            from Dash.Utils import GetImageExtensions as GetExtensions
+
+        elif self.Type == "video":
+            from Dash.Utils import GetVideoExtensions as GetExtensions
+
+        else:
+            raise ValueError(f"Invalid/unhandled media type: {self.Type}")
+
+        self.validate_uploaded_file_ext(filename, GetExtensions())
+
+        from Dash.Utils import UploadFile
+
+        file_root = os.path.join(self.root, key)
+
+        if os.path.exists(file_root):
+            from shutil import rmtree
+
+            rmtree(file_root)
+
+        file_data = UploadFile(
+            dash_context=self.context_2d.DashContext,
+            user=self.context_2d.User,
+            file_root=file_root,
+            file_bytes_or_existing_path=file,
+            filename=filename,
+            enforce_unique_filename_key=False,
+            target_aspect_ratio=(self.data["aspect"] if key == "mask" else 0),
+            include_jpg_thumb=False,
+            min_size=(512 if key == "mask" else 1024),
+            is_mask=(key == "mask")
+        )
+
+        properties = {key: file_data}
+
+        if key == "file":
+            properties["display_name"] = filename.split(".")[0]
+
+            aspect = file_data.get("aspect") or file_data.get("orig_aspect")
+
+            if aspect:
+                properties["aspect"] = aspect
+
+        return self.SetProperties(properties, file_op_key=key)
+
+    def validate_uploaded_file_ext(self, filename, allowable_exts):
+        ext = filename.split(".")[-1].strip().lower()
+
+        if ext not in allowable_exts:
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Invalid file extension ({ext}), expected: {allowable_exts}")
+
+    # This should never be necessary, but just in case
+    def assert_file_key(self, file_key, update=True):
+        file_root = os.path.join(self.root, file_key)
+
+        if not os.path.exists(file_root):
+            return {}
+
+        filenames = []
+
+        for filename in os.listdir(file_root):
+            if not filename.endswith(".json"):
+                continue
+
+            filenames.append(filename)
+
+        if not filenames:
+            return {}
+
+        from Dash.LocalStorage import Read
+
+        filenames.sort()
+
+        file_data = Read(os.path.join(file_root, filenames[-1]))
+
+        if not file_data or type(file_data) is not dict:
+            return {}
+
+        if update:
+            self.SetProperty(
+                file_key,
+                file_data,
+                file_op_key=file_key,
+                file_key_validation=False
+            )
+
+        return file_data
+
+    # There's a sneaky bug somewhere that I can't track down where somehow
+    # a layer's file data gets altered and the file URLs get changed
+    # to not have the right layer ID in the URL anymore. Doesn't make
+    # sense, everything tested is working as expected, so there's a
+    # fringe case somewhere that I'm not finding/catching. This
+    # will ensure all URLs are correct in the meantime, and fix them.
+    def validate_file_urls(self, file_key, file_data={}, update=True):
+        if not file_data:
+            return file_data
+
+        modified = False
+
+        for key in file_data:
+            if key != "url" and not key.endswith("_url"):
+                continue
+
+            url = file_data[key]
+
+            if not url:
+                continue
+
+            split = url.split("/layers/")
+            c2d_id_in_url = split[0].split("/")[-1]
+            layer_id_in_url = split[-1].split("/")[0]
+
+            if layer_id_in_url == self.ID and c2d_id_in_url == self.context_2d.ID:
+                continue
+
+            fixed_url = ""
+
+            if layer_id_in_url != self.ID:
+                fixed_url = (fixed_url or file_data[key]).replace(f"/layers/{layer_id_in_url}/", f"/layers/{self.ID}/")
+
+            if c2d_id_in_url != self.context_2d.ID:
+                fixed_url = (fixed_url or file_data[key]).replace(f"/{c2d_id_in_url}/layers/", f"/{self.context_2d.ID}/layers/")
+
+            if not fixed_url:
+                continue
+
+            from Dash.Utils import GetFilePathFromURL
+
+            path = GetFilePathFromURL(
+                dash_context=self.context_2d.DashContext,
+                server_file_url=fixed_url
+            )
+
+            if os.path.exists(path):
+                file_data[key] = fixed_url
+
+                modified = True
+            else:
+                path = GetFilePathFromURL(
+                    dash_context=self.context_2d.DashContext,
+                    server_file_url=url
+                )
+
+                # Both the correct path and original path don't exist,
+                # so something is wrong. By resetting the file data, the
+                # layer data will correct itself next time the data is
+                # queried, if the file actually exists where it should.
+                if not os.path.exists(path):
+                    if update:
+                        self.SetProperty(
+                            file_key,
+                            {},
+                            file_op_key=file_key,
+                            file_key_validation=False
+                        )
+
+                    return {}
+
+        if modified and update:
+            self.SetProperty(
+                file_key,
+                file_data,
+                file_op_key=file_key,
+                file_key_validation=False
+            )
+
+        return file_data

@@ -238,7 +238,22 @@ function Dash () {
                             return this;
                         }
                     }
-                }
+                },
+                "Count": {
+                    "value": function (value) {
+                        try {
+                            return this.filter(function (item) {
+                                return item === value;
+                            }).length;
+                        }
+
+                        catch {
+                            console.warn("Array.prototype.Count() failed:", this);
+
+                            return this;
+                        }
+                    }
+                },
             }
         );
     };
@@ -348,6 +363,26 @@ function Dash () {
 
                 return this;
             }
+        };
+
+        String.prototype.ZFill = function (len) {
+            if (!len || this.length === len) {
+                return this;
+            }
+
+            var string = "";
+
+            string += this;
+
+            for (var _ of Dash.Math.Range(len)) {
+                if (string.length >= len) {
+                    break;
+                }
+
+                string = "0" + string;
+            }
+
+            return string;
         };
     };
 

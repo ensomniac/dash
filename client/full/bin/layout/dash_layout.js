@@ -11,13 +11,13 @@ function DashLayout () {
 
     this.Tabs = {
         Side: class DashLayoutTabsSide extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="") {
-                super(binder, true, recall_id_suffix);
+            constructor(binder, recall_id_suffix="", color=null) {
+                super(binder, true, recall_id_suffix, color);
             };
         },
         Top:  class DashLayoutTabsTop extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="") {
-                super(binder, false, recall_id_suffix);
+            constructor(binder, recall_id_suffix="", color=null) {
+                super(binder, false, recall_id_suffix, color);
             };
         }
     };

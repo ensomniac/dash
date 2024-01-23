@@ -10,10 +10,12 @@ function DashUser () {
             user_data = this.Data;
         }
 
-        return user_data["display_name"] ? user_data["display_name"] :
-            user_data["first_name"] ? user_data["first_name"] +
-            (user_data["last_name"] ? " " + user_data["last_name"] : "") :
-            user_data["email"];
+        return (
+              user_data["display_name"] ? user_data["display_name"]
+            : user_data["first_name"] ? (
+                user_data["first_name"] + (user_data["last_name"] ? " " + user_data["last_name"] : "")
+            ) : (user_data["email"] || "")
+        );
     };
 
     this.GetByEmail = function (user_email) {

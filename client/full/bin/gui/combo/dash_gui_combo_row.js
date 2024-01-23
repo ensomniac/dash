@@ -35,7 +35,8 @@ function DashGuiComboRow (combo, option) {
             "height": this.height,
             "line-height": this.height + "px",
             "white-space": "nowrap",
-            "color": this.color_set.Text.Base
+            "color": this.color_set.Text.Base,
+            "font-size": this.combo.row_font_size || this.combo.font_size
         });
 
         this.html.append(this.highlight);

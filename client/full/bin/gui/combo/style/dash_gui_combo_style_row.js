@@ -1,17 +1,15 @@
 /**@member DashGuiCombo*/
 
 function DashGuiComboStyleRow () {
-    this.dropdown_icon_css ={
-        "position": "relative",
-        "display": "block",
-        "margin-left": -(Dash.Size.Padding * 0.25),
-        "pointer-events": "none"
-    };
-
     this.setup_styles = function () {
-        this.font_size = "100%";
+        this.dropdown_icon_css = {
+            "position": "relative",
+            "display": "block",
+            "margin-left": -(Dash.Size.Padding * 0.25),
+            "pointer-events": "none"
+        };
+
         this.text_alignment = "left";
-        this.label_background = this.color_set.Background.Base;
 
         this.html.append(this.highlight);
         this.html.append(this.click);
@@ -24,10 +22,10 @@ function DashGuiComboStyleRow () {
 
         this.html.css({
             "margin-right": Dash.Size.Padding * 0.5,
-            "height": Dash.Size.ButtonHeight,
-            "line-height": Dash.Size.ButtonHeight + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "cursor": "pointer",
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius
         });
 
         this.highlight.css({
@@ -37,7 +35,7 @@ function DashGuiComboStyleRow () {
             "width": "auto",
             "bottom": 0,
             "opacity": 0,
-            "cursor": "pointer",
+            "cursor": "pointer"
         });
 
         this.click.css({
@@ -47,11 +45,11 @@ function DashGuiComboStyleRow () {
             "right": 0,
             "bottom": Dash.Size.Padding,
             "height": Dash.Size.Stroke,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.label_container.css({
-            "display": "flex",
+            "display": "flex"
         });
 
         this.label.css({
@@ -60,6 +58,7 @@ function DashGuiComboStyleRow () {
             "color": this.color.Text,
             "white-space": "nowrap",
             "text-overflow": "ellipsis",
+            "font-size": this.font_size
         });
 
         this.rows.css({
@@ -69,7 +68,7 @@ function DashGuiComboStyleRow () {
             "overflow": "hidden",
             "height": 0,
             "border-radius": Dash.Size.BorderRadius,
-            "background": "orange",
+            "background": "orange"
         });
     };
 }

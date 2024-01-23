@@ -435,7 +435,9 @@ function DashMobileCardStack (binder, color=null) {
                 "display": "flex",
                 "top": "auto",
                 "color": "white",
-                "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+                "border": "1px solid " + this.color.PinstripeDark,
+                "background": this.color.BackgroundRaised,
+                // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
                 "padding-left": Dash.Size.Padding * 0.5,
 
                 // This prevents cut-off from the rounded corners of the modern iPhone screen, which are only problematic on the bottom

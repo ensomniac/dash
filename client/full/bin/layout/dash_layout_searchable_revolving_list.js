@@ -1,11 +1,13 @@
 // This must be an abstraction to combine the two, since implementing the revolving list into the searchable list is not going to work favorably
-function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={}, row_highlight_color="", row_height=null, color=null) {
+function DashLayoutSearchableRevolvingList (
+    binder=null, on_row_click_cb=null, label_css={}, row_highlight_color="", row_height=null, color=null
+) {
     this.binder = binder;
-    this.on_row_click_cb = on_row_click_cb.bind(this.binder);
+    this.on_row_click_cb = binder ? on_row_click_cb.bind(binder) : on_row_click_cb;
     this.label_css = label_css;
     this.row_highlight_color = row_highlight_color;
     this.row_height = row_height || Dash.Size.ButtonHeight;
-    this.color = color || binder.color || Dash.Color.Light;
+    this.color = color || binder?.color || Dash.Color.Light;
 
     this.data = null;
     this.list = null;
@@ -65,6 +67,22 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
 
         this.html.append(this.input.html);
         this.html.append(this.list.html);
+
+        // It seems these modifications are required to make this element display properly in some contexts
+        // this.list.html.css({
+        //     "position": "",
+        //     "inset": ""
+        // });
+        //
+        // this.list.container.css({
+        //     "position": "",
+        //     "inset": ""
+        // });
+        //
+        // this.input.html.css({
+        //     "position": "",
+        //     "inset": ""
+        // });
     };
 
     this.Update = function (data={"data": {}, "order": []}, on_search=true) {
@@ -80,7 +98,7 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     };
 
     this.SetTextFormatter = function (formatter_cb) {
-        this.text_formatter = formatter_cb.bind(this.binder);
+        this.text_formatter = this.binder ? formatter_cb.bind(this.binder) : formatter_cb;
     };
 
     this.LastSelectedRowID = function () {
@@ -92,7 +110,7 @@ function DashLayoutSearchableRevolvingList (binder, on_row_click_cb, label_css={
     };
 
     this.OverrideGetDataForKey = function (func) {
-        this.get_data_for_key = func.bind(this.binder);
+        this.get_data_for_key = this.binder ? func.bind(this.binder) : func;
     };
 
     this.on_search = function (force=false) {

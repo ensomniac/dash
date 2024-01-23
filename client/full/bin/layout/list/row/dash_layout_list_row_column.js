@@ -22,9 +22,17 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         if (this.list_row.is_footer && this.column_config_data["footer_css"]) {
             this.html.css(this.column_config_data["footer_css"]);
         }
+
+        if (!this.list.is_header && !this.list_row.is_footer && this.column_config_data["options"]["hover_text"]) {
+            this.html.attr("title", this.column_config_data["options"]["hover_text"]);
+
+            this.html.css({
+                "cursor": "help"
+            });
+        }
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
         }
@@ -32,7 +40,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         this.disabled = true;
 
         this.html.css({
-            "opacity": 0.5,
+            "opacity": opacity,
             "pointer-events": "none",
             "user-select": "none"
         });
@@ -52,11 +60,101 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         });
     };
 
+    this.Update = function () {
+        // In the case that the row's height attribute has been programmatically
+        // changed, like in the RevolvingList code when using divider rows
+        if (this.list_row.height !== this.height) {
+            this.height = this.list_row.height;
+
+            this.html.css({
+                "height": this.height,
+                "line-height": this.height.toString() + "px"
+            });
+        }
+
+        var css = {};
+        var column_value;
+
+        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
+            column_value = (
+                   this.column_config_data["display_name"]
+                || this.column_config_data["data_key"].Title()
+                || ""
+            ).trim();
+
+            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":") && this.column_config_data["enforce_colon"]) {
+                column_value += ":";
+            }
+        }
+
+        else if (this.list_row.is_sublist) {
+            if (this.index === 0) {
+                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
+            }
+
+            else {
+                column_value = "";
+            }
+        }
+
+        else {
+            column_value = this.list.get_data_for_key(
+                this.list_row.id,
+                this.column_config_data["data_key"],
+                this
+            );
+        }
+
+        if (
+               this.list_row.is_header
+            || this.list_row.is_footer
+            || this.list_row.is_divider
+            || this.column_config_data["type"] === "label"
+        ) {
+            css["font-family"] = "sans_serif_bold";
+        }
+
+        else if (this.list_row.is_sublist) {
+            css["font-family"] = "sans_serif_italic";
+        }
+
+        else if (column_value && column_value.length > 0) {
+            css["font-family"] = "sans_serif_normal";
+        }
+
+        if (!column_value) {
+            var options = this.column_config_data["options"];
+
+            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
+                column_value = this.column_config_data["display_name"];
+            }
+
+            css["font-family"] = "sans_serif_italic";
+        }
+
+        css = this.get_font_size_css(css);
+        css = this.get_text_color_css(css);
+
+        for (var key in css) {
+            css = this.get_preserved_css(css, key);
+        }
+
+        this.html.css(css);
+
+        if (column_value && column_value.toString().includes("</")) {
+            // jQuery's .text() escapes HTML tags, so this approach is required
+            this.html[0].innerHTML = column_value;
+        }
+
+        else {
+            this.html.text(column_value);
+        }
+    };
+
     this.get_css = function () {
         var css = {
             "height": this.height,
             "line-height": this.height.toString() + "px",
-            "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",
             "text-overflow": "ellipsis"
@@ -70,10 +168,7 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             css["width"] = this.width;
         }
 
-        if (this.column_config_data["type"] === "label") {
-            css["font-size"] = "80%";
-        }
-
+        css = this.get_font_size_css(css);
         css = this.get_css_margins(css);
         css = this.get_column_config_css(css);
         css = this.get_text_color_css(css);
@@ -81,12 +176,26 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         return css;
     };
 
-    this.get_text_color_css = function (css) {
-        if (!this.list_row.is_header && !this.list_row.is_footer) {
-            return css;
+    this.get_font_size_css = function (css) {
+        if (this.column_config_data["type"] === "label" || this.list_row.is_divider) {
+            css["font-size"] = "80%";
         }
 
-        css["color"] = this.color.Stroke;
+        else {
+            css["font-size"] = "100%";
+        }
+
+        return css;
+    };
+
+    this.get_text_color_css = function (css) {
+        if (this.list_row.is_header || this.list_row.is_footer || this.list_row.is_divider) {
+            css["color"] = this.color.Stroke;
+        }
+
+        else {
+            css["color"] = this.color.Text;
+        }
 
         return css;
     };
@@ -159,81 +268,24 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
         })(this);
     };
 
-    this.Update = function () {
-        var css = {};
-        var column_value;
-
-        if (this.list_row.is_header || this.column_config_data["type"] === "label") {
-            column_value = (this.column_config_data["display_name"] || this.column_config_data["data_key"].Title() || "").trim();
-
-            if (this.column_config_data["type"] === "label" && !column_value.endsWith(":")) {
-                column_value += ":";
+    this.get_preserved_css = function (css, key) {
+        if (this.list_row.is_header) {
+            if (this.column_config_data["header_css"] && this.column_config_data["header_css"][key]) {
+                css[key] = this.column_config_data["header_css"][key];
             }
         }
 
-        else if (this.list_row.is_sublist) {
-            if (this.index === 0) {
-                column_value = this.list_row.id.toString().replace(this.list_row.list.sublist_row_tag, "");
-            }
-
-            else {
-                column_value = "";
+        else if (this.list_row.is_footer) {
+            if (this.column_config_data["footer_css"] && this.column_config_data["footer_css"][key]) {
+                css[key] = this.column_config_data["footer_css"][key];
             }
         }
 
-        else {
-            column_value = this.list.get_data_for_key(
-                this.list_row.id,
-                this.column_config_data["data_key"],
-                this
-            );
+        else if (this.column_config_data["css"] && this.column_config_data["css"][key]) {
+            css[key] = this.column_config_data["css"][key];
         }
 
-        if (this.list_row.is_header || this.list_row.is_footer || this.column_config_data["type"] === "label") {
-            css["font-family"] = "sans_serif_bold";
-        }
-
-        else if (this.list_row.is_sublist) {
-            css["font-family"] = "sans_serif_italic";
-        }
-
-        else if (column_value && column_value.length > 0) {
-            css["font-family"] = "sans_serif_normal";
-        }
-
-        if (!column_value) {
-            var options = this.column_config_data["options"];
-
-            if (options && "default_to_display_name" in options && options["default_to_display_name"]) {
-                column_value = this.column_config_data["display_name"];
-            }
-
-            css["font-family"] = "sans_serif_italic";
-        }
-
-        // Make sure these are preserved if provided
-        if (this.column_config_data["css"] && this.column_config_data["css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["css"]["font-family"];
-        }
-
-        else if (this.list_row.is_header && this.column_config_data["header_css"] && this.column_config_data["header_css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["header_css"]["font-family"];
-        }
-
-        else if (this.list_row.is_footer && this.column_config_data["footer_css"] && this.column_config_data["footer_css"]["font-family"]) {
-            css["font-family"] = this.column_config_data["footer_css"]["font-family"];
-        }
-
-        this.html.css(css);
-
-        if (column_value && column_value.toString().includes("</")) {
-            // jQuery's .text() escapes HTML tags, so this approach is required
-            this.html[0].innerHTML = column_value;
-        }
-
-        else {
-            this.html.text(column_value);
-        }
+        return css;
     };
 
     this.setup_styles();

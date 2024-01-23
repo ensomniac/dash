@@ -239,14 +239,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return value + override;
     };
 
-    this.set_data = function (key, value, callback=null) {
+    this.set_data = function (key, value, callback=null, additional_params={}) {
         var selected_layer = this.panel.GetSelectedLayer();
 
         if (!selected_layer) {
             return;
         }
 
-        selected_layer.SetData(key, value, callback);
+        selected_layer.SetData(key, value, callback, additional_params);
     };
 
     this.add_context = function (key) {
@@ -294,23 +294,39 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
 
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
-                if (element_config["callback"]) {
-                    var html = element_config["callback"]();
-
-                    this.contexts[context_key]["html"].append(html);
-
-                    this.contexts[context_key]["all_elements"].push(html);
+                if (element_config["can_draw_callback"]) {
+                    if (element_config["can_draw_callback"](this, context_key)) {
+                        this.draw_custom_element(context_key, element_config);
+                    }
                 }
 
                 else {
-                    var element = this[element_config["function_name"]](...element_config["function_params"]);
-
-                    this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+                    this.draw_custom_element(context_key, element_config);
                 }
             }
         }
 
         this.contexts[context_key]["initialized"] = true;
+    };
+
+    this.draw_custom_element = function (context_key, element_config) {
+        if (element_config["callback"]) {
+            var html = element_config["callback"]();
+
+            this.contexts[context_key]["html"].append(html);
+
+            this.contexts[context_key]["all_elements"].push(html);
+        }
+
+        else {
+            var element = this[element_config["function_name"]](...element_config["function_params"]);
+
+            if (element_config["return_element_callback"]) {
+                element_config["return_element_callback"](element);
+            }
+
+            this.contexts[context_key]["html"].append(element.hasOwnProperty("html") ? element.html : element);
+        }
     };
 
     this.initialize_color_context = function (context_key) {
@@ -362,11 +378,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         colors_container.append(label);
         colors_container.append(picker_container);
 
-        for (var num of Dash.Math.Range(total)) {
-            num += 1;
-
+        for (var n of Dash.Math.Range(total)) {
+            var num = n + 1;
             var data_key = key_prefix + "_" + num;
             var color_picker = this.get_color_picker(context_key, data_key, "none");
+
+            // Hacky way to access these from the "all_elements" list when using color layers
+            color_picker.input._c2d_color_num = num;
+            color_picker.input._c2d_parent = color_picker;
 
             var css = {
                 "display": "flex",
@@ -379,20 +398,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
 
             color_picker.html.css(css);
-
-            var icon_button = (function (self, color_picker, data_key) {
-                return self.get_clear_button(
-                    context_key,
-                    data_key,
-                    function () {
-                        color_picker.input.val("#000000");
-                    }
-                );
-            })(this, color_picker, data_key);
-
-            color_picker.clear_button = icon_button;
-
-            color_picker.html.append(icon_button.html);
 
             if (include_opacity) {
                 var opacity_slider = this.get_slider(
@@ -612,9 +617,24 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return this.contexts[context_key][inputs_key][data_key];
     };
 
-    this.initialize_general_context = function (context_key) {
-        var input = this.get_input(context_key, "precomp_tag", "Pre-Comp Tag");
+    // Fresh every time
+    this.get_precomp_combo_options = function () {
+        var options = [{"id": "", "label_text": "Unspecified (Inherit)"}];
+        var precomps = this.editor.get_data()["precomps"];
 
+        for (var num in precomps) {
+            var precomp = precomps[num];
+
+            options.push({
+                "id": precomp["asset_path"],
+                "label_text": precomp["display_name"]
+            });
+        }
+
+        return options;
+    };
+
+    this.initialize_general_context = function (context_key) {
         var blend_mode_combo_tool_row = this.get_combo(
             context_key,
             [
@@ -628,6 +648,17 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             null,
             null,
             "Blend Mode cannot be visualized in this editor"
+        );
+
+        var gradient_direction_combo_tool_row = this.get_combo(
+            context_key,
+            [
+                {"id": "", "label_text": "Not Selected"},
+                {"id": "vertical", "label_text": "Vertically"},
+                {"id": "horizontal", "label_text": "Horizontally"}
+            ],
+            "invert",
+            "Invert/Mirror"
         );
 
         var fade_direction_combo_tool_row = (function (self) {
@@ -670,8 +701,19 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "margin-top": Dash.Size.Padding
         });
 
-        this.contexts[context_key]["html"].append(input.html);
+        if (!this.editor.override_mode) {
+            var precomp_combo_tool_row = this.get_combo(
+                context_key,
+                this.get_precomp_combo_options(),
+                "precomp_tag",
+                "Pre-Comp Tag"
+            );
+
+            this.contexts[context_key]["html"].append(precomp_combo_tool_row.html);
+        }
+
         this.contexts[context_key]["html"].append(blend_mode_combo_tool_row.html);
+        this.contexts[context_key]["html"].append(gradient_direction_combo_tool_row.html);
         this.contexts[context_key]["html"].append(fade_direction_combo_tool_row.html);
 
         this.add_fade_tool_row(context_key);
@@ -780,128 +822,316 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.initialize_video_context = function (context_key) {
-        var contrast_slider = this.get_slider(
-            1,
-            context_key,
-            "contrast",
-            1.02,
-            "",
-            0.5,
-            2.0
-        );
+        this.initialize_media_context(context_key);
 
-        var brightness_slider = this.get_slider(
-            1,
-            context_key,
-            "brightness",
-            0.95,
-            "",
-            0.5,
-            2.0
-        );
+        // Add any gui below that is not shared across all media types
 
-        var color_container = $("<div></div>");
-
-        color_container.css({
-            "display": "flex"
-        });
-
-        var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
-
-        color_container.append(color_picker.html);
-
-        var icon_button = this.get_clear_button(
-            context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
-        );
-
-        color_picker.clear_button = icon_button;
-
-        color_container.append(icon_button.html);
-
-        this.contexts[context_key]["html"].append(contrast_slider.html);
-        this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
+        this.add_mask_toolbar(context_key);  // As of writing, this is restricted to video
+        this.add_replacement_media_button(context_key);
     };
 
     this.initialize_image_context = function (context_key) {
+        this.initialize_media_context(context_key);
+
+        // Add any gui below that is not shared across all media types
+
+        this.add_replacement_media_button(context_key);
+    };
+
+    this.initialize_media_context = function (context_key) {
         var contrast_slider = this.get_slider(
-            1,
+            0.5,
             context_key,
             "contrast",
             1.02,
             "",
+            0.5
+        );
+
+        var saturation_slider = this.get_slider(
             0.5,
-            2.0
+            context_key,
+            "saturation",
+            0.96,
+            "",
+            0.5
         );
 
         var brightness_slider = this.get_slider(
-            1,
+            0.5,
             context_key,
             "brightness",
             0.95,
             "",
-            0.5,
-            2.0
+            0.5
         );
 
-        var color_container = $("<div></div>");
+        this.contexts[context_key]["html"].append(contrast_slider.html);
+        this.contexts[context_key]["html"].append(saturation_slider.html);
+        this.contexts[context_key]["html"].append(brightness_slider.html);
 
-        color_container.css({
-            "display": "flex"
+        this.add_tint_row(context_key);
+        this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
+    };
+
+    this.add_replacement_media_button = function (context_key) {
+        if (this.editor.override_mode) {
+            return;
+        }
+
+        var upload_button = this.get_upload_button(
+            context_key,
+            "Upload Replacement " + context_key.Title(),
+            this.on_replacement_media,
+            {
+                "f": "replace_layer_media",
+                "c2d_id": this.editor.c2d_id,
+                "layer_id": this.panel.layers_box.GetSelectedID()
+            }
+        );
+
+        this.contexts[context_key]["html"].append(upload_button.html);
+    };
+
+    this.on_replacement_media = function (response, button) {
+        button.SetLoading(false);
+        button.Enable();
+
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+
+        this.editor.data = response;
+
+        var primitive = this.editor.canvas.last_selected_primitive;
+
+        if (primitive) {
+            primitive.ReloadData();
+
+            primitive.layer.UpdateLabel();
+
+            // Resize based on updated aspect
+            primitive.set_init();
+            primitive.redraw_media();
+        }
+    };
+
+    // TODO: break this up
+    this.add_mask_toolbar = function (context_key) {
+        var toolbar = new Dash.Layout.Toolbar(this);
+
+        toolbar.html.css({
+            "background": "none",
+            "padding": 0
+        });
+
+        toolbar.RemoveStrokeSep();
+        toolbar.DisablePaddingRefactoring();
+
+        var label = toolbar.AddLabel("Mask:", false, null, false);
+
+        label.label.css({
+            "font-size": "80%"
+        });
+
+        var mask = this.get_data()["mask"] || {};
+        var width = toolbar.height - 1;
+        var height = width;
+
+        if (Dash.Validate.Object(mask)) {
+            if (mask["aspect"] > 1) {
+                if (mask["aspect"] > 3) {
+                    height = width / mask["aspect"];
+                }
+
+                else {
+                    width *= mask["aspect"];
+                }
+            }
+
+            else if (mask["aspect"] < 1) {
+                width *= mask["aspect"];
+            }
+        }
+
+        var checker_url = (
+            "https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
+            + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png"
+        );
+
+        var preview = Dash.File.GetImagePreview(
+            mask["thumb_url"] || mask["thumb_png_url"] || mask["orig_url"] || mask["url"] || checker_url
+            , height
+            , width
+        );
+
+        preview.css({
+            "border-radius": Dash.Size.BorderRadius,
+            "user-select": "none",
+            "pointer-events": "none",
+            "margin-right": Dash.Size.Padding
+        });
+
+        toolbar.AddHTML(preview);
+
+        var [upload_button, download_button, delete_button] = (function (self) {
+            return [
+                toolbar.AddIconButton(
+                    "upload",
+                    function (response, button) {
+                        button.SetLoading(false);
+                        button.Enable();
+
+                        if (!Dash.Validate.Response(response)) {
+                            return;
+                        }
+
+                        self.editor.data = response;
+
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["thumb_url"] || mask["thumb_png_url"] || mask["orig_url"] || mask["url"];
+
+                        if (!url) {
+                            alert("Upload failed for an unexpected reason, please try again.");
+
+                            return;
+                        }
+
+                        preview.css({
+                            "background-image": "url(" + url + ")"
+                        });
+
+                        if (self.editor.canvas.last_selected_primitive) {
+                            self.editor.canvas.last_selected_primitive.Update("mask");
+                        }
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6,
+                    true
+                ),
+                toolbar.AddIconButton(
+                    "download",
+                    function (button) {
+                        var mask = self.get_data()["mask"] || {};
+                        var url = mask["url"] || mask["orig_url"];
+
+                        if (!url) {
+                            alert("No file found");
+
+                            return;
+                        }
+
+                        button.SetLoading(true);
+                        button.Disable();
+
+                        Dash.Gui.OpenFileURLDownloadDialog(
+                            url,
+                            "",
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+                            }
+                        );
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                ),
+                toolbar.AddIconButton(
+                    "trash",
+                    function (button) {
+                        if (!Dash.Validate.Object(self.get_data()["mask"])) {
+                            alert("No file found");
+
+                            return;
+                        }
+
+                        button.SetLoading(true);
+                        button.Disable();
+
+                        self.set_data(
+                            "mask",
+                            {},
+                            function () {
+                                button.SetLoading(false);
+                                button.Enable();
+
+                                preview.css({
+                                    "background-image": "url(" + checker_url + ")"
+                                });
+                            },
+                            {"file_op_key": "mask"}
+                        );
+                    },
+                    null,
+                    null,
+                    toolbar.height,
+                    0.6
+                )
+            ];
+        })(this);
+
+        upload_button.SetFileUploader(
+            this.editor.api,
+            {
+                "f": "upload_layer_mask",
+                "c2d_id": this.editor.obj_id,
+                "layer_id": this.panel.layers_box.GetSelectedID()
+            },
+            function () {
+                upload_button.SetLoading(true);
+                upload_button.Disable();
+            },
+            {},
+            true
+        );
+
+        this.contexts[context_key]["all_elements"].push(label);
+        this.contexts[context_key]["all_elements"].push(preview);
+        this.contexts[context_key]["all_elements"].push(upload_button);
+        this.contexts[context_key]["all_elements"].push(download_button);
+        this.contexts[context_key]["all_elements"].push(delete_button);
+
+        this.contexts[context_key]["html"].append(toolbar.html);
+    };
+
+    this.add_tint_row = function (context_key) {
+        var container = $("<div></div>");
+
+        container.css({
+            "display": "flex",
+            "margin-top": Dash.Size.Padding * 0.5
         });
 
         var color_picker = this.get_color_picker(context_key, "tint_color", "Tint Color");
 
-        color_container.append(color_picker.html);
-
-        var icon_button = this.get_clear_button(
+        var mode_combo_tool_row = this.get_combo(
             context_key,
-            "tint_color",
-            function () {
-                color_picker.input.val("#000000");
-            }
+            [
+                {"id": "", "label_text": "Default"},
+                {"id": "replace", "label_text": "Replace"}
+            ],
+            "tint_mode",
+            "Mode",
+            null,
+            null,
+            "When using 'Replace' mode, you can best visualize it in this editor by using an asset that is white",
+            container
         );
 
-        color_picker.clear_button = icon_button;
-
-        color_container.append(icon_button.html);
-
-        this.contexts[context_key]["html"].append(contrast_slider.html);
-        this.contexts[context_key]["html"].append(brightness_slider.html);
-        this.contexts[context_key]["html"].append(color_container);
-
-        this.add_colors(context_key, "multi_tone_color", false, "Multi-Tone");
-    };
-
-    this.get_clear_button = function (context_key, data_key, callback=null, icon_name="close_square", icon_color="") {
-        var icon_button = (function (self) {
-            return new Dash.Gui.IconButton(
-                icon_name,
-                function () {
-                    self.set_data(data_key, "", callback);
-                },
-                self,
-                self.color,
-                {
-                    "container_size": Dash.Size.ButtonHeight,
-                    "size_mult": 0.5
-                }
-            );
-        })(this);
-
-        icon_button.SetIconColor(icon_color || this.color.AccentBad);
-
-        icon_button.html.css({
-            "padding-top": Dash.Size.Padding * 0.1
+        mode_combo_tool_row.html.css({
+            "margin-left": Dash.Size.Padding * 0.7,
+            "margin-top": Dash.Size.Padding * 0.6,
+            "border": "none"
         });
 
-        this.contexts[context_key]["all_elements"].push(icon_button);
+        container.append(color_picker.html);
+        container.append(mode_combo_tool_row.html);
 
-        return icon_button;
+        this.contexts[context_key]["html"].append(container);
     };
 
     this.get_input = function (context_key, data_key, label_text="") {
@@ -909,8 +1139,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             label_text = data_key.Title();
         }
 
-        return (function (self) {
-            var input =  new Dash.Gui.InputRow(
+        var input = (function (self) {
+            return new Dash.Gui.InputRow(
                 label_text,
                 self.get_data()[data_key] || "",
                 label_text,
@@ -922,16 +1152,58 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.color,
                 data_key
             );
-
-            input.RemoveSaveButton();
-
-            self.contexts[context_key]["all_elements"].push(input);
-
-            return input;
         })(this);
+
+        input.RemoveSaveButton();
+
+        this.contexts[context_key]["all_elements"].push(input);
+
+        return input;
     };
 
-    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="") {
+    this.get_upload_button = function (context_key, label_text, callback, params, css={}, return_button=true) {
+        var button = this.get_button(context_key, label_text, callback);
+
+        button.SetFileUploader(
+            this.editor.api,
+            params,
+            function () {
+                button.SetLoading(true);
+                button.Disable();
+            },
+            css,
+            return_button
+        );
+
+        return button;
+    };
+
+    this.get_button = function (context_key, label_text, callback) {
+        var button = (function (self) {
+            return new Dash.Gui.Button(
+                label_text,
+                callback,
+                self,
+                self.color,
+                {"style": "toolbar"}
+            );
+        })(this);
+
+        button.html.css({
+            "margin-right": 0,
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+
+        if (!this.can_edit) {
+            button.Disable();
+        }
+
+        this.contexts[context_key]["all_elements"].push(button);
+
+        return button;
+    };
+
+    this.get_combo = function (context_key, options, data_key, label_text="", extra_cb=null, on_draw=null, hover_text="", parent=null) {
         var starting_value = this.get_data()[data_key] || "";
 
         var tool_row = (function (self) {
@@ -952,7 +1224,8 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         })(this);
 
         this.floating_combos.push({
-            "tool_row": tool_row
+            "tool_row": tool_row,
+            "parent": parent
         });
 
         if (data_key === "font_id") {
@@ -979,7 +1252,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return tool_row;
     };
 
-    this.get_color_picker = function (context_key, data_key, label_text="") {
+    this.get_color_picker = function (context_key, data_key, label_text="", include_clear_button=true) {
         var color_picker = (function (self) {
             return Dash.Gui.GetColorPicker(
                 self,
@@ -992,33 +1265,44 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 },
                 (label_text || data_key.Title()) + ":",
                 self.color,
-                self.get_data()[data_key] || "#000000"
+                self.get_data()[data_key] || "#000000",
+                include_clear_button,
+                function () {
+                    self.set_data(data_key, "");
+                }
             );
         })(this);
 
         if (color_picker.label) {
             if (!(label_text.includes("\n"))) {
                 color_picker.label.css({
-                    "top": -Dash.Size.Padding * 0.6
+                    "top": Dash.Size.Padding * 0.9
                 });
             }
-        }
 
-        var css = {"margin-bottom": Dash.Size.Padding};
+            this.contexts[context_key]["all_elements"].push(color_picker.label);
+        }
 
         if (!this.can_edit) {
-            css["user-select"] = "none";
-            css["pointer-events"] = "none";
+            color_picker.html.css({
+                "user-select": "none",
+                "pointer-events": "none"
+            });
         }
 
-        color_picker.html.css(css);
+        this.contexts[context_key]["all_elements"].push(color_picker.input);
 
-        this.contexts[context_key]["all_elements"].push(color_picker);
+        if (include_clear_button) {
+            this.contexts[context_key]["all_elements"].push(color_picker.clear_button);
+        }
 
         return color_picker;
     };
 
-    this.get_slider = function (default_value, context_key, data_key, width_mult, label_text="", reset_value=null, end_range=1.0, start_range=0.0, hover_text="") {
+    this.get_slider = function (
+        default_value, context_key, data_key, width_mult, label_text="",
+        reset_value=null, end_range=1.0, start_range=0, hover_text=""
+    ) {
         var value = this.get_value(data_key);
 
         return (function (self) {
@@ -1035,7 +1319,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             );
 
             requestAnimationFrame(function () {
-                self.style_slider(slider, reset_value || default_value, context_key);
+                self.style_slider(
+                    slider,
+                    reset_value !== null ? reset_value : default_value,
+                    context_key
+                );
             });
 
             if (hover_text) {
@@ -1053,6 +1341,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         slider.SetMaxValueLabelLength(5);
         slider.StyleForPropertyBox(0);
         slider.AddResetToDefaultButton(default_value, "Reset");
+
+        if (!this.can_edit) {
+            slider.Disable();
+        }
 
         // Ideally, we use this instead of the below slop, but it's not fully worked out yet
         // slider.FlexInsteadOfAbsolute();
@@ -1078,13 +1370,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "left": parseInt(slider.reset_button.html.css("left")) - (Dash.Size.Padding * 2.5)
         });
 
-        if (!this.can_edit) {
-            slider.Disable();
-        }
-
         slider.html.css({
             "margin-left": 0,
-            "margin-bottom": Dash.Size.Padding
+            "background": ""
         });
 
         this.contexts[context_key]["inputs"].push(slider.value_label);

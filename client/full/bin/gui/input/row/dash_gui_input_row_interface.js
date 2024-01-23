@@ -17,6 +17,34 @@ function DashGuiInputRowInterface () {
         this.input.SetAutosaveDelayMs(ms);
     };
 
+    this.Disable = function (opacity=0.5) {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "opacity": opacity,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    };
+
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+    };
+
     this.SetInputValidity = function (input_is_valid) {
         console.log("input_is_valid: " + input_is_valid, "\n", this.color);
 

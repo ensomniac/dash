@@ -80,7 +80,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.header.ReplaceBorderWithIcon(icon_name);
     };
 
-    this.AddMessage = function (text, user_email=null, iso_ts=null, align_right=false, fire_callback=false, delete_button=false, id=null, track_mentions=false) {
+    this.AddMessage = function (
+        text, user_email=null, iso_ts=null, align_right=false,
+        fire_callback=false, delete_button=false, id=null, track_mentions=false
+    ) {
         text = text.trim();
 
         if (!text || text.length < 1) {
@@ -413,6 +416,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             "padding": 0,
             "padding-right": Dash.Size.Padding * (Dash.IsMobile ? 0.6 : 0.5),  // Room for scroll bar
             "box-shadow": "none",
+            "border": "none",
             "background": "none",
             "flex-grow": 2,
             "flex-shrink": 2,
@@ -490,6 +494,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         );
 
         this.message_input.SetText("");
+
         this.callback_mentions = [];
     };
 

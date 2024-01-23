@@ -24,7 +24,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "margin": 0,
             "padding": 0,
             "cursor": "pointer",  // TODO: why is this the default?
-            "-webkit-user-select": "none"
+            "user-select": "none"
         });
 
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
@@ -57,17 +57,39 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         return this;
     };
 
-    this.SetSize = function (percentage_number) {
-        percentage_number = parseInt(percentage_number);
+    this.SetSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
+        if (container_size) {
+            container_size = enforce_container_size_num ? parseInt(container_size) : container_size;
 
-        if (isNaN(percentage_number)) {
-            console.error("Error: DashGuiIcon SetSize requires a number (that represents a percentage)");
+            if (enforce_container_size_num && isNaN(container_size)) {
+                console.warn("Warning: DashGuiIcon SetSize requires a number for container_size");
+            }
+
+            else {
+                this.size = container_size;
+
+                this.html.css({
+                    "width": this.size,
+                    "height": this.size
+                });
+
+                this.icon_html.css(this.icon_definition.get_css());
+            }
+        }
+
+        icon_size_percent_num = parseInt(icon_size_percent_num);
+
+        if (isNaN(icon_size_percent_num)) {
+            console.error(
+                "Error: DashGuiIcon SetSize requires a number for " +
+                "icon_size_percent_num (that represents a percentage)"
+            );
 
             return;
         }
 
         this.icon_html.css({
-            "font-size": percentage_number.toString() + "%"
+            "font-size": icon_size_percent_num.toString() + "%"
         });
 
         return this;

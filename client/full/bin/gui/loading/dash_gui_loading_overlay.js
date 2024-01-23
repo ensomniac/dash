@@ -1,4 +1,6 @@
-function DashGuiLoadingOverlay (color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false) {
+function DashGuiLoadingOverlay (
+    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
+) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;
     this.label_prefix = label_prefix;

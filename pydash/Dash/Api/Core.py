@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -124,7 +124,12 @@ class ApiCore:
     @property
     def User(self):
         if not hasattr(self, "_user"):
-            if self._execute_as_module and self.dash_global.RequestUser:
+            if (
+                self._execute_as_module
+                and self.dash_global
+                and hasattr(self.dash_global, "RequestUser")
+                and self.dash_global.RequestUser
+            ):
                 self._user = self.dash_global.RequestUser
             else:
                 from Dash.Users import Users as DashUsers
@@ -145,14 +150,6 @@ class ApiCore:
                     self._user = DashUsers(self._params, self.DashContext).ValidateUser()
 
         return self._user
-
-    def SetUserByToken(self, user_token):
-        if hasattr(self, "_user"):
-            delattr(self, "_user")
-
-        self._params["token"] = user_token
-
-        return self.User
 
     @property
     def Params(self):
@@ -187,24 +184,6 @@ class ApiCore:
 
         return self._dash_global
 
-    def process_raw_body_content(self):
-        # This was an attempt at resolving this issue, but it still
-        # isn't solved and I have to move on. Leaving this breakout for
-        # future dev. GOOD NEWS: I know how to parse the content in
-        # this case (see sys.stdin.read()) but that only works if cgi.FieldStorage
-        # has not yet been read. So the solution comes down to determining
-        # what type of request it is first, and then picking the correct method
-
-        self._raw_body = str(sys.stdin.read())
-
-        # Ref: https://bugs.python.org/issue32029
-        # There's a long-running bug in cgi (see ref) that means we can't properly
-        # handle certain requests that come through. This is a work-around that
-        # allows the request to continue without failing, though with no params.
-        # As of writing, this is useful to allow certain webhooks to hit the server.
-        self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
-        self._proceeding_with_empty_fs = True
-
     def AddNotifyEmail(self, email):
         if email in self._additional_notify_emails:
             return
@@ -218,6 +197,21 @@ class ApiCore:
         self._user = user_data
 
         self.set_dash_globals()
+
+    def SetUserByToken(self, user_token):
+        if hasattr(self, "_user"):
+            delattr(self, "_user")
+
+        self._params["token"] = user_token
+
+        self.set_dash_globals()
+
+        return self.User
+
+    def SetUserByEmail(self, user_email):
+        from Dash.Users import Get as GetUser
+
+        self.SetUser(GetUser(user_email))
 
     def SetDashContext(self, dash_context):
         if not dash_context or type(dash_context) is not dict or not dash_context.get("srv_path_local"):
@@ -260,14 +254,14 @@ class ApiCore:
         :param bool falsy: Whether required_params is a list of falsy params
         """
 
-        if type(required_params) == str:
+        if type(required_params) is str:
             if "," in required_params:
                 required_params = required_params.split(",")
                 required_params = [p.strip() for p in required_params]
             else:
                 required_params = [required_params]
 
-        elif type(required_params) != list:
+        elif type(required_params) is not list:
             raise Exception("ValidateParams requires a list")
 
         for param in required_params:
@@ -319,27 +313,49 @@ class ApiCore:
             ignore_falsy=True
         )
 
-    def ParseParam(self, key, target_type, default_value=None):
+    def ParseParam(self, key, target_type, default_value=None, set_param=True):
         if key in self._params:
             param_type = type(self._params[key])
 
             if param_type is target_type:
                 return self._params[key]
 
-            if param_type is str:  # Extended bool handling
+            value = self._params[key]
+
+            if param_type is str:
                 stripped = self._params[key].strip('"').strip("'").lower()
 
+                # Extended bool handling
                 if stripped == "true" or stripped == "false":
-                    self._params[key] = stripped  # Otherwise, json.loads can't parse it properly
+                    value = stripped  # Otherwise, json.loads can't parse it properly
 
-            self._params[key] = json.loads(self._params[key])
+                # Extended number handling
+                if (target_type is int or target_type is float) and value.startswith("0") and len(value) > 1:
+                    if value.count("0") == len(value):
+                        value = "0"
+                    else:
+                        value = value.lstrip("0")
+
+            value = json.loads(value)
+
+            if set_param:
+                self._params[key] = value
+            else:
+                return value
         else:
             if default_value is None:
                 return self._params[key]
 
-            self._params[key] = default_value
+            if set_param:
+                self._params[key] = default_value
+            else:
+                return default_value
 
         return self._params[key]
+
+    def DeleteParam(self, key):
+        if key in self._params:
+            del self._params[key]
 
     def StopExecutionOnError(self, error):
         self._response["error"] = error
@@ -367,7 +383,7 @@ class ApiCore:
             self.SetResponse({"error": error})
 
     def SetResponse(self, response=None):
-        if type(response) == str:
+        if type(response) is str:
             self._render_html = True
         else:
             self._render_html = False
@@ -377,11 +393,22 @@ class ApiCore:
 
         self._response = response
 
-        if self._send_email_on_error and not self._execute_as_module and type(self._response) is dict and self._response.get("error"):
-            if os.environ and os.environ.get("HTTP_USER_AGENT") and "slackbot" in os.environ["HTTP_USER_AGENT"].lower() and "unknown function" in self._response["error"].lower():
-                pass  # Don't bother sending the email if and old/deprecated endpoint/function was hit by a Slack URL preview
-            else:
-                self.SendEmail(from_set_response=True)
+        if (
+            # Basic qualifications to send error email
+            self._send_email_on_error
+            and not self._execute_as_module
+            and type(self._response) is dict
+            and self._response.get("error")
+
+            # Don't send if and old/deprecated endpoint/function was hit by a Slack URL preview
+            and not (
+                os.environ
+                and os.environ.get("HTTP_USER_AGENT")
+                and "slackbot" in os.environ["HTTP_USER_AGENT"].lower()
+                and "unknown function" in self._response["error"].lower()
+            )
+        ):
+            self.SendEmail(from_set_response=True)
 
         # Private errors should be deleted after sending the error email, so they're not exposed to the client
         if "_error" in self._response:
@@ -402,7 +429,10 @@ class ApiCore:
 
         self.set_dash_globals()
 
-    def SendEmail(self, subject="", msg="", error="", notify_email_list=[], strict_notify=False, from_set_response=False):
+    def SendEmail(
+        self, subject="", msg="", error="", notify_email_list=[],
+        strict_notify=False, from_set_response=False, strict_msg=False
+    ):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
             return
 
@@ -414,10 +444,30 @@ class ApiCore:
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
-        msg = self.get_msg_for_email(msg)
+        if not strict_msg:
+            msg = self.get_msg_for_email(msg)
+
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
         self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
+
+    def process_raw_body_content(self):
+        # This was an attempt at resolving this issue, but it still
+        # isn't solved and I have to move on. Leaving this breakout for
+        # future dev. GOOD NEWS: I know how to parse the content in
+        # this case (see sys.stdin.read()) but that only works if cgi.FieldStorage
+        # has not yet been read. So the solution comes down to determining
+        # what type of request it is first, and then picking the correct method
+
+        self._raw_body = str(sys.stdin.read())
+
+        # Ref: https://bugs.python.org/issue32029
+        # There's a long-running bug in cgi (see ref) that means we can't properly
+        # handle certain requests that come through. This is a work-around that
+        # allows the request to continue without failing, though with no params.
+        # As of writing, this is useful to allow certain webhooks to hit the server.
+        self._fs = cgi.FieldStorage(headers={"Content-Disposition": "inline"})
+        self._proceeding_with_empty_fs = True
 
     def get_misc_for_email(self, strict_notify, notify_email_list):
         from Dash import PersonalContexts
@@ -536,6 +586,9 @@ class ApiCore:
         if "Missing param 'file'" in error:
             return True
 
+        if "Unauthorized" in error:
+            return True
+
         return False
 
     def set_dash_globals(self):
@@ -568,7 +621,7 @@ class ApiCore:
                 continue
 
             # This catches GitHub Webhook param issues
-            if type(mini_field_storage) == list:
+            if type(mini_field_storage) is list:
                 mini_field_storage = mini_field_storage[0]
 
             try:
@@ -663,7 +716,7 @@ class ApiCore:
             )
 
     # DEPRECATED (see comment)
-    def Execute(uninstantiated_class_ref):
+    def Execute(uninstantiated_class_ref):  # noqa
         #  Since class functions expect 'self' as the first variable, Execute() belongs outside this class as a standalone function.
         #
         #  --Previous usage--

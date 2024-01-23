@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -45,16 +45,19 @@ class Users:
 
         self.validate_reset(email, user_email_domain_bypass_emails)
 
-        from json import dumps
-        from random import randint
-        from datetime import datetime
-        from base64 import urlsafe_b64encode
-
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
-        user_reset_root = os.path.join(user_root, "reset_requests")
 
         if not os.path.exists(user_root):
             self.validate_dash_guide_account_creation(email)
+
+            from validate_email_address import validate_email
+
+            # Make sure it's a real, existing email address that actually exists before
+            # we create a user for an email address that was simply misspelled, etc
+            if not validate_email(email, verify=True):
+                from Dash.Utils import ClientAlert
+
+                raise ClientAlert("Invalid email address.\nPlease double-check and try again.")
 
             os.makedirs(user_root)
 
@@ -62,28 +65,24 @@ class Users:
         else:
             account_exists = True
 
+        from json import dumps
+        from random import randint
+        from datetime import datetime
+        from base64 import urlsafe_b64encode
+
+        user_reset_root = os.path.join(user_root, "reset_requests")
+
         os.makedirs(user_reset_root, exist_ok=True)
 
-        request_token = randint(10000000, 99999999)
-        now = datetime.now()
-
-        uri_data = {
+        uri_data_64 = urlsafe_b64encode(dumps({
             "email": email,
-            "time": now.isoformat(),
-            "request_token": request_token,
-        }
+            "time": datetime.now().isoformat(),
+            "request_token": randint(10000000, 99999999)
+        }).encode()).decode().strip()
 
-        uri_str = dumps(uri_data)
-        uri_data_64 = urlsafe_b64encode(uri_str.encode()).decode().strip()
-        reset_path = os.path.join(user_reset_root, uri_data_64)
+        open(os.path.join(user_reset_root, uri_data_64), "w").write("")  # Why not Dash.LocalStorage.Write?
 
-        open(reset_path, "w").write("")
-
-        return_data = {
-            "email": email,
-            "t": uri_data_64
-        }
-
+        user_data = self.get_user_info(email)  # Calling this will ensure we create default data for new user right off the bat
         link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
         body_text = f"Use <a href='{link}'>this link</a> to "
 
@@ -104,9 +103,12 @@ class Users:
             notify_email_list=[email]
         )
 
-        return_data["success"] = True
-
-        return return_data
+        return {
+            "email": email,
+            "t": uri_data_64,
+            "user": user_data,
+            "success": True
+        }
 
     def ResetResponse(self):
         uri_data_64 = self.request_params.get("t")
@@ -133,7 +135,7 @@ class Users:
         if not os.path.exists(reset_path):
             return {
                 "error": "Invalid request token x8923",
-                "_error": f"reset path: {reset_path}"
+                "_error": f"Reset path doesn't exist: {reset_path}"
             }
 
         from random import choice
@@ -201,7 +203,18 @@ class Users:
         html.append("""</body>""")
         html.append("""</html>""")
 
-        os.remove(reset_path)
+        try:
+            os.remove(reset_path)
+
+        # It might be safe to ignore this, but raising for now
+        except FileNotFoundError:
+            return {
+                "error": "Invalid request token x8924",
+                "_error": (
+                    f"Reset path didn't exist when it should have: {reset_path}.\n\nThis rare case is "
+                    f"likely due to a user submitting a reset request twice in rapid succession."
+                )
+            }
 
         return "\n".join(html)
 
@@ -356,7 +369,7 @@ class Users:
 
         from passlib.apps import custom_app_context as pwd_context
 
-        hashed_password = open(pass_path, "r").read()
+        hashed_password = open(pass_path).read()
         password_correct = pwd_context.verify(password, hashed_password)
 
         if not password_correct:
@@ -378,15 +391,20 @@ class Users:
 
         return True
 
-    def GetAll(self):
-        return self.get_team()
+    def GetAll(self, include_order=False, order_by_last_name=False):
+        users = self.get_team()
+
+        if not include_order:
+            return users
+
+        return self.add_order_to_team(users, order_by_last_name)
 
     def GetUserDataPath(self, user_email):
         from Dash.LocalStorage import GetRecordPath
 
         email = user_email.lower().strip()
 
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         return GetRecordPath(
@@ -396,10 +414,6 @@ class Users:
         )
 
     def GetUserData(self, user_email, create_if_missing=True):
-        # Andrew - I wanted to expose this function externally and
-        # changed the name I didn't have time to see if it would
-        # break anything to get rid of the snake case variation
-
         return self.get_user_info(user_email, create_if_missing)
 
     def ValidateUser(self):
@@ -407,8 +421,8 @@ class Users:
 
         if response.get("user"):
             return response.get("user")
-        else:
-            return None
+
+        return None
 
     def Validate(self, token=None):
         token_str = token or self.request_params.get("token")
@@ -424,7 +438,7 @@ class Users:
                 "_error": f"token str: {token_str}"
             }
 
-        if type(token_data) == str:
+        if type(token_data) is str:
             token_data = token_data.encode()
 
         email = token_data.split(b"_|_")[-1].strip()
@@ -573,7 +587,7 @@ class Users:
 
         email = email.lower().strip()
 
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         user_data_path = self.GetUserDataPath(email)
@@ -587,7 +601,7 @@ class Users:
             user_data = GetData(
                 dash_context=self.dash_context,
                 store_path="users",
-                obj_id=email,
+                obj_id=email
             )
 
             user_data["has_pin"] = os.path.exists(user_data_path.replace("usr.data", "pin_hash"))
@@ -601,13 +615,15 @@ class Users:
                 dash_context=self.dash_context,
                 store_path="users",
                 additional_data={"email": email},
-                obj_id=email,
+                obj_id=email
             )
+
+        user_data["conformed"] = True  # Keeping this around just in case it's used somewhere, but doesn't seem to be
 
         return self.set_display_name(user_data)
 
     def get_user_init(self, email):
-        if type(email) == bytes:
+        if type(email) is bytes:
             email = email.decode()
 
         team = self.get_team()
@@ -623,7 +639,11 @@ class Users:
         sorted_emails = []
 
         for email in team:
-            primary = team[email].get("display_name") or team[email].get("first_name") or email
+            primary = (
+                team[email].get("display_name")
+                or f"{team[email].get('first_name', '')} {team[email].get('last_name', '')}".strip()
+                or email
+            )
 
             sortable.append([primary, email])
 
@@ -634,39 +654,88 @@ class Users:
 
         return sorted_emails
 
-    # TODO - get rid of this code - it's been moved to Admin.py
     def get_team(self):
         team = {}
         users_root = os.path.join(self.dash_context["srv_path_local"], "users")
 
         for user_email in os.listdir(users_root):
+            # Emails are sanitized on account creation, but leaving this here for
+            # any accounts for older sites from before that sanitation was added
+            user_email = user_email.lower()
+
             try:
                 team[user_email] = self.get_user_info(user_email)
 
             # In cases where a specific user's data is corrupted etc, we don't
             # want that to prevent everyone else from logging in etc
             except Exception as e:
-                # Ignore new users who haven't logged in yet by checking for the existence of the sessions folder.
-                # Checking for the existence of that instead of the usr.data file is preferred in case usr.data may be corrupted.
+                # Ignore new users who haven't logged in yet by checking for the existence
+                # of the sessions folder. Checking for the existence of that instead of
+                # the usr.data file is preferred in case usr.data may be corrupted.
                 if os.path.exists(os.path.join(users_root, user_email, "sessions")):
-                    team[user_email] = {"error": e}
+                    team[user_email] = {"error": str(e)}
 
                     self.send_email(
                         subject="Dash Error - Users.get_team()",
-                        msg=f"Warning: Failed to get user info for {user_email}. If it's not a new user, data may be corrupted.",
+                        msg=(
+                            f"Warning: Failed to get user info for {user_email}. "
+                            f"If it's not a new user, data may be corrupted."
+                        ),
                         error=e
                     )
 
         return team
 
+    def add_order_to_team(self, all_users, order_by_last_name=False):
+        users = {
+            "order": [],
+            "data": {}
+        }
+
+        to_sort = []
+
+        for email in all_users:
+            user = all_users[email]
+            last_name = user.get("last_name") or ""
+            first_name = user.get("first_name") or email.split("@")[0] or ""
+
+            if order_by_last_name:
+                to_sort.append([
+                    last_name,
+                    first_name,
+                    email
+                ])
+            else:
+                display_name = user.get("display_name") or ""
+
+                if not display_name or display_name == email:
+                    display_name = first_name
+
+                    if display_name and last_name:
+                        display_name = f"{display_name} {last_name}"
+
+                to_sort.append([
+                    display_name,
+                    email
+                ])
+
+            users["data"][email] = user
+
+        to_sort.sort()
+
+        for pair in to_sort:
+            users["order"].append(pair[-1])
+
+        return users
+
     # At some point, we may want to actually permanently include this key in the user data,
     # which would also mean updating it anytime "first_name" and/or "last_name" are updated
     def set_display_name(self, user_data):
-        if user_data.get("first_name") and user_data.get("last_name"):
-            user_data["display_name"] = user_data["first_name"] + " " + user_data["last_name"]
-
-        elif user_data.get("first_name"):
+        if user_data.get("first_name"):
             user_data["display_name"] = user_data["first_name"]
+
+            if user_data.get("last_name"):
+                user_data["display_name"] += f" {user_data['last_name']}"
 
         elif user_data.get("email"):
             user_data["display_name"] = user_data["email"]
@@ -676,7 +745,7 @@ class Users:
     def get_token_data(self, token):
         from base64 import urlsafe_b64decode
 
-        for x in range(3):
+        for _ in range(3):
             try:
                 token_data = urlsafe_b64decode(token)
 
@@ -686,9 +755,7 @@ class Users:
 
                 error = format_exc().lower()
 
-                if "incorrect padding" in error:
-                    pass
-                else:
+                if "incorrect padding" not in error:
                     return None, None
 
             token += "="
@@ -716,8 +783,8 @@ def ValidateCredentials(email, password, use_pin=False, return_login_dict=False,
     return Users(request_params, dash_context).ValidateCredentials(email, password, use_pin, return_login_dict)
 
 
-def GetAll(request_params={}, dash_context={}):
-    return Users(request_params, dash_context).GetAll()
+def GetAll(request_params={}, dash_context={}, include_order=False, order_by_last_name=False):
+    return Users(request_params, dash_context).GetAll(include_order, order_by_last_name)
 
 
 def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):

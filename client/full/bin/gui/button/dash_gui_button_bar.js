@@ -5,6 +5,9 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
     this.buttons = [];
     this.disabled = false;
+    this.end_spacer = null;
+    this.start_spacer = null;
+    this.fit_content = false;
     this.html = $("<div></div>");
     this.auto_spacing_enabled = true;
 
@@ -19,22 +22,41 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         this.html.css({
             "height": height
         });
+
+        return this;
     };
 
-    this.FitContent = function () {
-        this.html.css({
-            "height": "fit-content",
-            "width": "fit-content"
-        });
+    this.FitContent = function (centered=false) {
+        var css = {"height": "fit-content"};
+
+        this.fit_content = true;
+
+        if (centered) {
+            this.end_spacer = Dash.Gui.GetFlexSpacer();
+            this.start_spacer = Dash.Gui.GetFlexSpacer();
+
+            this.html.prepend(this.start_spacer);
+            this.html.append(this.end_spacer);
+        }
+
+        else {
+            css["width"] = "fit-content";
+        }
+
+        this.html.css(css);
+
+        return this;
     };
 
     this.DisableAutoSpacing = function () {
         this.auto_spacing_enabled = false;
+
+        return this;
     };
 
-    this.Disable = function () {
+    this.Disable = function (opacity=0.5) {
         for (var button of this.buttons) {
-            this.buttons.Disable();
+            this.buttons.Disable(opacity);
         }
 
         this.disabled = true;
@@ -60,14 +82,20 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this.buttons.indexOf(button);
     };
 
-    this.AddButton = function (label_text, callback, prepend=false) {
+    this.AddButton = function (label_text, callback, prepend=false, as_uploader=false) {
         callback = callback.bind(this.binder);
 
         var button = (function (self, callback) {
             return new Dash.Gui.Button(
                 label_text,
-                function () {
-                    callback(button);
+                function (event, button) {
+                    if (as_uploader) {
+                        callback(button, event);
+                    }
+
+                    else {
+                        callback(button);
+                    }
                 },
                 self,
                 self.color,
@@ -75,19 +103,43 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             );
         })(this, callback);
 
-        button.html.css({
-            "margin": 0,
-            "flex-grow": 1
-        });
+        var css = {"margin": 0};
+
+        if (this.fit_content) {
+            css["flex"] = "none";
+
+            if (this.style === "default") {
+                css["padding-left"] = Dash.Size.Padding;
+                css["padding-right"] = Dash.Size.Padding;
+            }
+        }
+
+        else {
+            css["flex-grow"] = 1;
+        }
+
+        button.html.css(css);
 
         if (prepend) {
             this.html.prepend(button.html);
+
+            if (this.start_spacer) {
+                this.start_spacer.detach();
+
+                this.html.prepend(this.start_spacer);
+            }
 
             this.buttons.unshift(button);
         }
 
         else {
             this.html.append(button.html);
+
+            if (this.end_spacer) {
+                this.end_spacer.detach();
+
+                this.html.append(this.end_spacer);
+            }
 
             this.buttons.push(button);
         }
@@ -109,16 +161,11 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
 
         for (var i in this.buttons) {
             var button = this.buttons[i];
-            var right_padding = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1);
-
-            if (parseInt(i) === this.buttons.length - 1) {
-                right_padding = 0;
-            }
 
             button.html.css({
-                "margin": 0,
-                "flex-grow": 1,
-                "margin-right": right_padding,
+                "margin-right": (parseInt(i) === this.buttons.length - 1) ? 0 : (
+                    Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1)
+                )
             });
         }
     };

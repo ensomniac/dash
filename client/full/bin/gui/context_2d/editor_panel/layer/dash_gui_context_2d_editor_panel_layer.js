@@ -27,7 +27,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
 
         this.html.css({
-            "padding": Dash.Size.Padding - this.color_border_size,
+            "padding": Dash.Size.Padding - (this.color_border_size * 2),
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
@@ -36,6 +36,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         this.UpdateTintColor();
+        this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
 
@@ -125,8 +126,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         return (!this.get_value("linked") ? default_order : (data["imported_context"]["context_overrides"]["layer_order"] || default_order));
     };
 
-    this.SetData = function (key, value, callback=null) {
-        return this.set_data(key, value, callback);
+    this.SetData = function (key, value, callback=null, additional_params={}) {
+        return this.set_data(key, value, callback, additional_params);
     };
 
     this.InputInFocus = function () {
@@ -138,7 +139,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             return;
         }
 
-        var primitive = this.editor.canvas.primitives[self.id];
+        var primitive = this.editor.canvas.primitives[this.id];
 
         if (primitive && primitive.drag_active) {
             return;
@@ -152,7 +153,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
     };
 
-    this.Select = function (from_canvas=false) {
+    this.Select = function (from_canvas=false, focus=true) {
         if (this.selected || this.preview_mode) {
             return;
         }
@@ -167,7 +168,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         if (!from_canvas) {
-            this.editor.SetCanvasActivePrimitive(this.id);
+            this.editor.SetCanvasActivePrimitive(this.id, focus);
         }
 
         if (!this.layers.redrawing) {
@@ -281,6 +282,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 self.html.on("click", function (e) {
                     self.Select();
 
+                    console.log("Layer data:", self.get_data());
+
                     e.stopPropagation();
                 });
             }
@@ -293,7 +296,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                     var brightness = primitive.get_value("brightness");
 
                     if (primitive.hasOwnProperty("update_filter")) {
-                        primitive.update_filter(brightness + 0.1);
+                        primitive.update_filter(brightness + 0.05);
                     }
 
                     else {
@@ -357,6 +360,72 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
     };
 
+    this.UpdatePreCompColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
+        var precomp_color = "";
+        var precomp_tag = this.get_value("precomp_tag");
+
+        if (precomp_tag) {
+            if (this.layers.legacy_precomps[precomp_tag]) {
+                precomp_color = this.layers.legacy_precomps[precomp_tag];
+            }
+
+            else {
+                precomp_color = this.get_precomp_color(precomp_tag);
+            }
+        }
+
+        this.html.css({
+            "border-right": this.color_border_size + "px solid " + (precomp_color || "rgba(0, 0, 0, 0)")
+        });
+    };
+
+    this.get_precomp_color = function (precomp_tag) {
+        var precomp_colors = [];
+        var precomps = this.editor.get_data()["precomps"];
+
+        for (var num in precomps) {
+            var precomp = precomps[num];
+
+            precomp_colors.push(precomp["color"]);
+
+            if (precomp["asset_path"] === precomp_tag) {
+                return precomp["color"];
+            }
+        }
+
+        var legacy_colors = [];
+        var dark = Dash.Color.IsDark(this.color);
+
+        for (var tag in this.layers.legacy_precomps) {
+            legacy_colors.push(this.layers.legacy_precomps[tag]);
+        }
+
+        for (var _ of Dash.Math.Range(100)) {
+            var color = Dash.Color.Random();
+
+            if (precomp_colors.includes(color) || legacy_colors.includes(color)) {
+                continue;
+            }
+
+            if (
+                   (dark && color.includes("black"))
+                || (!dark && color.includes("white"))
+            ) {
+                continue;
+            }
+
+            this.layers.legacy_precomps[precomp_tag] = color;
+
+            return color;
+        }
+
+        return "";
+    };
+
     this.add_type_icon = function () {
         var type_icon = (function (self) {
             return new Dash.Gui.CopyButton(
@@ -368,7 +437,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 Dash.Size.RowHeight,
                 "default",
                 self.get_type_icon_name(),
-                self.color
+                self.color,
+                "Copied Layer ID!"
             );
         })(this);
 
@@ -386,7 +456,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
 
-            type_icon.icon_html.css({
+            type_icon.button.icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
             });
         }
@@ -514,8 +584,8 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.set_data("display_name", this.input.Text().trim());
     };
 
-    this.set_data = function (key, value, callback=null) {
-        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback);
+    this.set_data = function (key, value, callback=null, additional_params={}) {
+        this.layers.set_layer_property(key, value, this.id, this.parent_id, callback, additional_params);
     };
 
     this.get_data = function () {

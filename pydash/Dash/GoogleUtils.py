@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2023 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
 import os
@@ -14,18 +14,65 @@ def ParseHTTPError(http_error):
     Attempt to decode Google's "unprintable" error (googleapiclient.errors.HttpError).
     """
 
+    # Should never happen
+    if not isinstance(http_error, HttpError):
+        raise Exception(http_error)
+
+    from json import loads
+
+    errors = []
+
     try:
-        raise Exception(
+        message = str(loads(http_error.content).get("error", {}).get("message", ""))
+
+    except Exception as e:
+        message = ""
+
+        errors.append(str(e))
+
+    if message:
+        raise Exception(message)
+
+    error = str(http_error).strip().strip("\n").strip()
+
+    try:
+        message = (
             f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
-            f'returned "{http_error._get_reason().strip()}". Details: "{http_error.error_details}">'  # noqa
+            f'returned "{http_error._get_reason()}". Details: "{http_error.error_details}">'  # noqa
         )
-    except:
+
+    except Exception as e:
+        errors.append(str(e))
+
         try:
-            raise Exception(
-                f'<HttpError {http_error.resp.status} when requesting {http_error.uri}. Details: "{http_error.error_details}">'
+            message = (
+                f'<HttpError {http_error.resp.status} when requesting '
+                f'{http_error.uri}. Details: "{http_error.error_details}">'
             )
-        except:
-            raise Exception(str(http_error))
+
+        except Exception as e:
+            errors.append(str(e))
+
+            if len(error) and error != "Exception:":
+                message = error
+
+            else:
+                message = (
+                    "The Google API returned an error that was either empty, had no information, "
+                    "or was unable to be parsed. Unfortunately, Google does this on purpose for "
+                    "security reasons.\n\nThis means the operation failed on Google's end, but we "
+                    "don't know why.\nPlease try again.\n\nIf this persists, even after waiting 10 "
+                    "minutes or so, reach out to an admin for assistance."
+                )
+
+    message += f"\n\n\n\n***Google Error***:\n{error}"
+
+    if len(errors):
+        errors = "\n>>".join(errors)
+
+        message += f"\n\n***Parser Errors***:\n{errors}"
+
+    raise Exception(message)
 
 
 class GUtils:
@@ -35,11 +82,13 @@ class GUtils:
         if not self._user_email:
             from Dash import AdminEmails
 
-            self._user_email = AdminEmails[0]  # Ryan's email (default)
+            self._user_email = AdminEmails[0]
 
         self._auth_utils = _AuthUtils(self)
+        self._docs_utils = _DocsUtils(self)
         self._drive_utils = _DriveUtils(self)
         self._sheets_utils = _SheetsUtils(self)
+        self._slides_utils = _SlidesUtils(self)
 
     @property
     def UserEmail(self):
@@ -49,7 +98,79 @@ class GUtils:
     def OAuth2Creds(self):
         return self._auth_utils.OAuth2Creds
 
+    @property
+    def PDFMimeType(self):
+        return "application/pdf"
+
+    def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
+        return self.download_as(
+            file_id=file_id,
+            download_path=pdf_path,
+            mime_type=self.PDFMimeType,
+            parent_id=parent_id
+        )
+
+    def download_as(self, file_id, download_path, mime_type, fields="", parent_id=""):
+        from io import BytesIO
+        from Dash.LocalStorage import Write
+        from googleapiclient.http import MediaIoBaseDownload
+
+        done = False
+        error = None
+        file = BytesIO()
+
+        try:
+            downloader = MediaIoBaseDownload(
+                file,
+                self.DriveClient.files().export(
+                    fileId=file_id,
+                    fields=fields,
+                    mimeType=mime_type
+                )
+            )
+
+            while done is False:
+                status, done = downloader.next_chunk()
+
+            Write(download_path, file.getbuffer())
+
+        except HttpError as http_error:
+            try:
+                error = ParseHTTPError(http_error)
+
+            except Exception as e:
+                error = e
+
+        except Exception as e:
+            error = e
+
+        if error:
+            if "file is too large" in str(error):
+                from Dash.Utils import ClientAlert
+
+                msg = "The file is too big to be exported from Google's API as the desired format."
+
+                if parent_id:
+                    msg += f"\n\nYou can find the file in this folder:\nhttps://drive.google.com/drive/u/2/folders/{parent_id}\n\n"
+                else:
+                    msg += "\n\nIf you know which drive the source file was uploaded to, you can open it directly there.\n"
+
+                msg += "After opening the file, you can download it as the desired format using:\n[File]>[Download]"
+
+                if not parent_id:
+                    msg += (
+                        "\n\nIf you don't know how to find the source file or the drive it "
+                        "was uploaded to, please reach out to the dev team for assistance."
+                    )
+
+                raise ClientAlert(msg)
+
+            raise Exception(error)
+
+        return download_path
+
     # ========================= SHEETS =========================
+
     @property
     def SheetsClient(self):
         return self._sheets_utils.Client
@@ -66,10 +187,6 @@ class GUtils:
     def ExcelMimeType(self):
         return self._sheets_utils.ExcelMimeType
 
-    @property
-    def PDFMimeType(self):
-        return self._sheets_utils.PDFMimeType
-
     def GetSheetData(self, sheet_id, row_data_only=True):
         return self._sheets_utils.GetData(sheet_id, row_data_only)
 
@@ -79,13 +196,11 @@ class GUtils:
     def GetNewSheet(self, sheet_name):
         return self._sheets_utils.GetNew(sheet_name)
 
-    def DownloadSheetAsXLSX(self, sheet_id, xlsx_path):
-        return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path)
-
-    def DownloadSheetAsPDF(self, sheet_id, pdf_path):
-        return self._sheets_utils.DownloadAsPDF(sheet_id, pdf_path)
+    def DownloadSheetAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
+        return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path, parent_id)
 
     # ========================= DRIVE =========================
+
     @property
     def DriveClient(self):
         return self._drive_utils.Client
@@ -128,6 +243,26 @@ class GUtils:
     def RemovePermissionFromDriveFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         return self._drive_utils.RemovePermissionFromFile(user_email, file_id, in_shared_drive, permission_id)
 
+    # ========================= SLIDES =========================
+
+    @property
+    def SlidesClient(self):
+        return self._slides_utils.Client
+
+    @property
+    def SlidesMimeType(self):
+        return self._slides_utils.SlidesMimeType
+
+    # ========================= DOCS =========================
+
+    @property
+    def DocsClient(self):
+        return self._docs_utils.Client
+
+    @property
+    def DocsMimeType(self):
+        return self._docs_utils.DocsMimeType
+
 
 class _DriveUtils:
     _client: callable
@@ -137,7 +272,7 @@ class _DriveUtils:
 
     @property
     def Client(self):
-        if not hasattr(self, "_drive_client"):
+        if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
             self._client = build("drive", "v3", http=self.gutils.OAuth2Creds)
@@ -188,6 +323,14 @@ class _DriveUtils:
         :return: New file/folder data
         :rtype: dict
         """
+
+        if not params.get("mimeType"):
+            from Dash.Utils import GetDraftingExtensions
+
+            ext = file_path.split(".")[-1].strip().lower()
+
+            if ext in GetDraftingExtensions():
+                params["mimeType"] = "application/x-autocad"
 
         file = None
 
@@ -302,6 +445,10 @@ class _DriveUtils:
                 fields=(fields_override or self.Fields),
                 supportsAllDrives=in_shared_drive
             ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
+
         except:
             return None  # Why is this not being handled?
 
@@ -371,23 +518,29 @@ class _DriveUtils:
             if extra_query:
                 query += f" and {extra_query}"
 
-        files = self.Client.files().list(
-            driveId=drive_id,
-            corpora="drive",
-            q=query,
-            fields=f"files({(fields_override or self.Fields)})",
-            supportsAllDrives=is_shared_drive,
-            includeItemsFromAllDrives=is_shared_drive
-        ).execute()["files"]
+        try:
+            return self.Client.files().list(
+                driveId=drive_id,
+                corpora="drive",
+                q=query,
+                fields=f"files({(fields_override or self.Fields)})",
+                supportsAllDrives=is_shared_drive,
+                includeItemsFromAllDrives=is_shared_drive
+            ).execute()["files"]
 
-        return files
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def GetFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
-        return self.Client.permissions().list(
-            supportsAllDrives=in_shared_drive,
-            fields=f"permissions({fields})",
-            fileId=file_id,
-        ).execute()["permissions"]
+        try:
+            return self.Client.permissions().list(
+                supportsAllDrives=in_shared_drive,
+                fields=f"permissions({fields})",
+                fileId=file_id,
+            ).execute()["permissions"]
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def AddPermissionToFile(self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False):
         """
@@ -406,18 +559,22 @@ class _DriveUtils:
             transfer_ownership = True
             notify_user = True
 
-        return self.Client.permissions().create(
-            supportsAllDrives=in_shared_drive,
-            transferOwnership=transfer_ownership,
-            fields="emailAddress, role, displayName, id",
-            fileId=file_id,
-            sendNotificationEmail=notify_user,
-            body={
-                "type": "user",
-                "emailAddress": user_email,
-                "role": permission_level
-            }
-        ).execute()
+        try:
+            return self.Client.permissions().create(
+                supportsAllDrives=in_shared_drive,
+                transferOwnership=transfer_ownership,
+                fields="emailAddress, role, displayName, id",
+                fileId=file_id,
+                sendNotificationEmail=notify_user,
+                body={
+                    "type": "user",
+                    "emailAddress": user_email,
+                    "role": permission_level
+                }
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
     def RemovePermissionFromFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         if not permission_id:
@@ -432,11 +589,15 @@ class _DriveUtils:
         if not permission_id:
             return None
 
-        return self.Client.permissions().delete(
-            supportsAllDrives=in_shared_drive,
-            fileId=file_id,
-            permissionId=permission_id
-        ).execute()
+        try:
+            return self.Client.permissions().delete(
+                supportsAllDrives=in_shared_drive,
+                fileId=file_id,
+                permissionId=permission_id
+            ).execute()
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
 
 class _SheetsUtils:
@@ -448,7 +609,7 @@ class _SheetsUtils:
 
     @property
     def Client(self):
-        if not hasattr(self, "_sheets_client"):
+        if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
             self._client = build("sheets", "v4", http=self.gutils.OAuth2Creds)
@@ -472,19 +633,21 @@ class _SheetsUtils:
     def ExcelMimeType(self):
         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-    @property
-    def PDFMimeType(self):
-        return "application/pdf"
-
     def GetData(self, sheet_id, row_data_only=True):
         """
         Note: This doesn't currently account for extra, empty rows at the bottom.
         """
 
-        data = self.Client.spreadsheets().get(
-            spreadsheetId=sheet_id,
-            includeGridData=True
-        ).execute()["sheets"][0]
+        data = {}
+
+        try:
+            data = self.Client.spreadsheets().get(
+                spreadsheetId=sheet_id,
+                includeGridData=True
+            ).execute()["sheets"][0]
+
+        except HttpError as http_error:
+            ParseHTTPError(http_error)
 
         if row_data_only and data.get("data"):
             return data["data"][0]["rowData"]
@@ -522,43 +685,53 @@ class _SheetsUtils:
     def GetNew(self, sheet_name):
         return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
 
-    def DownloadAsXLSX(self, sheet_id, xlsx_path):
-        return self.download_as(
-            sheet_id=sheet_id,
+    def DownloadAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
+        return self.gutils.download_as(
+            file_id=sheet_id,
             download_path=xlsx_path,
-            mime_type=self.ExcelMimeType
+            mime_type=self.ExcelMimeType,
+            parent_id=parent_id
         )
 
-    def DownloadAsPDF(self, sheet_id, pdf_path):
-        return self.download_as(
-            sheet_id=sheet_id,
-            download_path=pdf_path,
-            mime_type=self.PDFMimeType
-        )
 
-    def download_as(self, sheet_id, download_path, mime_type, fields=""):
-        from io import BytesIO
-        from Dash.LocalStorage import Write
-        from googleapiclient.http import MediaIoBaseDownload
+class _SlidesUtils:
+    _client: callable
 
-        done = False
-        file = BytesIO()
+    def __init__(self, gutils):
+        self.gutils = gutils
 
-        downloader = MediaIoBaseDownload(
-            file,
-            self.gutils.DriveClient.files().export(
-                fileId=sheet_id,
-                fields=fields,
-                mimeType=mime_type
-            )
-        )
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
 
-        while done is False:
-            status, done = downloader.next_chunk()
+            self._client = build("slides", "v1", http=self.gutils.OAuth2Creds)
 
-        Write(download_path, file.getbuffer())
+        return self._client
 
-        return download_path
+    @property
+    def SlidesMimeType(self):
+        return "application/vnd.google-apps.presentation"
+
+
+class _DocsUtils:
+    _client: callable
+
+    def __init__(self, gutils):
+        self.gutils = gutils
+
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
+
+            self._client = build("docs", "v1", http=self.gutils.OAuth2Creds)
+
+        return self._client
+
+    @property
+    def DocsMimeType(self):
+        return "application/vnd.google-apps.document"
 
 
 class _AuthUtils:
