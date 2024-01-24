@@ -175,8 +175,8 @@ function DashRequest () {
             return;
         }
 
-        var callback = request.callback.bind(request.binder);
         var requests = [];
+        var callback = request.binder ? request.callback.bind(request.binder) : request.callback;
 
         for (var i in this.requests) {
             if (this.requests[i] == request) {

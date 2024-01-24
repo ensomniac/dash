@@ -19834,8 +19834,8 @@ function DashRequest () {
             this.decompress_response(request, response);
             return;
         }
-        var callback = request.callback.bind(request.binder);
         var requests = [];
+        var callback = request.binder ? request.callback.bind(request.binder) : request.callback;
         for (var i in this.requests) {
             if (this.requests[i] == request) {
                 continue;
@@ -35706,7 +35706,7 @@ function DashGuiFileExplorer (
                 this.DownloadButtonConfig,
                 this.DeleteButtonConfig
             ];
-            Dash.SetInterval(this, this.get_files_data, 4000);
+            Dash.SetInterval(this, this.get_files_data, 10000);
         }
         this.add_header();
         if (!this.read_only) {
