@@ -36860,6 +36860,7 @@ function DashGuiIcons (icon) {
         "add_person":              new DashGuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus"),
         "add_phone":               new DashGuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus"),
         "add_square":              new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["regular"], "plus-square"),
+        "add_to_cart":             new DashGuiIconDefinition(this.icon, "Add To Cart", this.weight["regular"], "cart-plus"),
         "admin_tools":             new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                   new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
         "alert_square":            new DashGuiIconDefinition(this.icon, "Alert Square", this.weight["regular"], "exclamation-square"),
