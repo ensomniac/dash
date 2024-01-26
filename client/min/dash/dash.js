@@ -17889,6 +17889,7 @@ function DashGui () {
     this.DatePicker                = DashGuiDatePicker;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
+    this.Flow                      = DashGuiFlow;
     this.Header                    = DashGuiHeader;
     this.Icon                      = DashGuiIcon;
     this.IconButton                = DashGuiIconButton;
@@ -36728,6 +36729,3547 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         }
         window.open(url, "_blank");
     };
+}
+
+class DashGuiFlowList extends DashLayoutSearchableRevolvingList {
+    constructor (view, on_row_click_bound_cb=null) {
+        super(
+            null,
+            on_row_click_bound_cb,
+            {"font-size": "115%"},
+            "",
+            Dash.Size.ButtonHeight * 1.25,
+            view.color
+        );
+        this.view = view;
+        this.loading_overlay = null;
+        this.extend_styles();
+    }
+    extend_styles () {
+        var border = "1px solid " + this.color.Pinstripe;
+        this.html.css({
+            "flex": 2,
+            "display": "flex",
+            "flex-direction": "column",
+            "min-height": this.list.full_row_height * 5,
+            "max-height": this.list.full_row_height * 10,
+            "border-radius": Dash.Size.BorderRadius
+        });
+        this.list.html.css({
+            "position": "",
+            "inset": "",
+            "display": "flex",
+            "flex-direction": "column",
+            "flex": 2
+        });
+        this.list.container.css({
+            "background": this.color.PinstripeLight,
+            "position": "",
+            "inset": "",
+            "flex": 2,
+            "border-left": border,
+            "border-right": border,
+            "border-bottom": border,
+            "border-bottom-left-radius": Dash.Size.BorderRadius,
+            "border-bottom-right-radius": Dash.Size.BorderRadius
+        });
+        this.input.html.css({
+            "position": "",
+            "inset": "",
+            "font-size": this.label_css["font-size"],
+            "flex": "none"
+        });
+    }
+    ShowLoadingOverlay () {
+        if (!this.loading_overlay) {
+            this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.html);
+            this.loading_overlay.modal.modal.css({
+                "padding": 0,
+                "padding-left": Dash.Size.Padding * 0.5,
+                "padding-right": Dash.Size.Padding * 0.5,
+                "margin": Dash.Size.Padding * 0.5
+            });
+            this.loading_overlay.modal.background.css({
+                "border-radius": Dash.Size.BorderRadius
+            });
+        }
+        this.loading_overlay.Show();
+    }
+    HideLoadingOverlay () {
+        if (!this.loading_overlay) {
+            return;
+        }
+        this.loading_overlay.Hide();
+    }
+}
+
+class DashGuiFlowListDual {
+    constructor (view, on_add_bound_cb=null, on_remove_bound_cb=null) {
+        this.view = view;
+        this.on_add_bound_cb = on_add_bound_cb;
+        this.on_remove_bound_cb = on_remove_bound_cb;
+        this.left_list = null;
+        this.full_data = null;
+        this.right_list = null;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.label_height = Dash.Size.ButtonHeight;
+        this.left_label = this.view.GetLabel("All (click to add)");
+        this.right_label = this.view.GetLabel("Selected (click to remove)");
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.add_labels();
+        this.add_lists();
+        this.html.css({
+            "flex": 2,
+            "gap": Dash.Size.Padding * 2,
+            "display": "flex",
+            "justify-content": "center",
+            "padding-top": this.label_height,
+            "border-radius": Dash.Size.BorderRadius,
+            "min-height": this.left_list.list.full_row_height * 5,
+            "max-height": this.left_list.list.full_row_height * 10
+        });
+    }
+    SetData (data={"data": {}, "order": []}) {
+        this.ShowLoadingOverlay();
+        this.full_data = data;
+        this.left_list.Update(data);
+        this.HideLoadingOverlay();
+    }
+    GetSelected () {
+        return this.right_list.data ? Dash.GetDeepCopy(this.right_list.data["order"]) : [];
+    }
+    ShowLoadingOverlay () {
+        this.left_list.ShowLoadingOverlay();
+        this.right_list.ShowLoadingOverlay();
+    }
+    HideLoadingOverlay () {
+        this.left_list.HideLoadingOverlay();
+        this.right_list.HideLoadingOverlay();
+    }
+    add_labels () {
+        var label_border = "1px solid " + this.color.PinstripeLight;
+        var label_css = {
+            "font-family": "sans_serif_bold",
+            "color": this.color.StrokeDark,
+            "font-size": "110%",
+            "margin": 0,
+            "position": "absolute",
+            "top": 0,
+            "background": this.color.Pinstripe,
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
+            "height": this.label_height,
+            "line-height": this.label_height + "px",
+            "border-top": label_border,
+            "border-left": label_border,
+            "border-right": label_border,
+            "border-top-left-radius": Dash.Size.BorderRadius,
+            "border-top-right-radius": Dash.Size.BorderRadius
+        };
+        this.left_label.css({
+            ...label_css,
+            "left": 0
+        });
+        this.html.append(this.left_label);
+        this.right_label.css({
+            ...label_css,
+            "right": 0
+        });
+        this.html.append(this.right_label);
+    }
+    add_lists () {
+        this.left_list = new DashGuiFlowList(
+            this.view,
+            (row) => {
+                var id = row.ID();
+                this.add_item(id);
+                if (this.on_add_bound_cb) {
+                    this.on_add_bound_cb(id);
+                }
+            }
+        );
+        this.left_list.input.input.html.css({
+            "border-top-left-radius": 0
+        });
+        this.html.append(this.left_list.html);
+        this.right_list = new DashGuiFlowList(
+            this.view,
+            (row) => {
+                var id = row.ID();
+                this.remove_item(id);
+                if (this.on_remove_bound_cb) {
+                    this.on_remove_bound_cb(id);
+                }
+            }
+        );
+        this.right_list.input.input.html.css({
+            "border-top-right-radius": 0
+        });
+        this.html.append(this.right_list.html);
+    }
+    add_item (id) {
+        this.ShowLoadingOverlay();
+        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
+        left_order.Remove(id);
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+        var right_order = this.GetSelected();
+        right_order.push(id);
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+        this.HideLoadingOverlay();
+    }
+    remove_item (id) {
+        this.ShowLoadingOverlay();
+        var right_order = this.GetSelected();
+        right_order.Remove(id);
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
+        var new_index = null;
+        var orig_index = this.full_data["order"].indexOf(id);
+        // Try to re-insert it in respect to the original order
+        for (var i in left_order) {
+            if (this.full_data["order"].indexOf(left_order[i]) > orig_index) {
+                new_index = i;
+                break;
+            }
+        }
+        if (new_index) {
+            left_order.Insert(new_index, id);
+        }
+        else {
+            left_order.push(id);
+        }
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+        this.HideLoadingOverlay();
+    }
+}
+
+class DashGuiFlowOption {
+    constructor (options, id) {
+        this.options = options;
+        this.id = id;
+        this.icon = null;
+        this.image = null;
+        this.label = null;
+        this.active = false;
+        this.font_size=null;
+        this.text_tip = null;
+        this.sub_label = null;
+        this.multi_icon = null;
+        this.multi_icon_num = null;
+        this.view = this.options.view;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.view = this.options.view;
+        this.bg_color = this.color.Pinstripe;
+        this.border_color = this.color.PinstripeLight;
+        this.active_bg_color = this.color.StrokeLight;
+        this.hover_bg_color = this.color.PinstripeDark;
+        this.active_border_color = this.color.AccentGood;
+        this.border_size = this.options.option_border_size;
+        this.sub_label_text_color = this.color.StrokeLight;
+        this.multi_icon_color =this.color.BackgroundRaised;
+        this.sub_label_active_text_color = this.color.Stroke;
+        this.label_text_shadow = "1px 1px 1px rgba(0, 0, 0, 0.25)";
+        this.hover_border_color = Dash.Color.GetTransparent(this.active_border_color, 0.5);
+        this.label_css = {
+            "overflow": "hidden",
+            "overflow-wrap": "break-word",
+            "text-overflow": "ellipsis",
+            "user-select": "none",
+            "text-align": "center",
+            "white-space": "pre-wrap",
+            "width": "calc(100% - " + (Dash.Size.Padding * 2) + "px)"
+        };
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "background": this.bg_color,
+            "border-radius": Dash.Size.BorderRadius,
+            "border": this.border_size + "px solid " + this.border_color,
+            "height": "calc(100% - " + (this.border_size * 2) + "px)",
+            "aspect-ratio": "1",
+            "display": "flex",
+            "flex-direction": "column",
+            "align-items": "center",
+            "justify-content": "center",
+            "overflow": "hidden",
+            "cursor": "pointer"
+        });
+        this.setup_connections();
+    }
+    ID () {
+        return this.id;
+    }
+    IsActive () {
+        return this.active;
+    }
+    SetActive (active) {
+        if (active === this.active) {
+            return;
+        }
+        this.active = active;
+        if (this.active) {
+            this.highlight();
+            this.show_multi_icon();
+        }
+        else {
+            this.unhighlight();
+            this.hide_multi_icon();
+        }
+    }
+    OverrideFontSize (font_size) {
+        this.font_size = font_size;
+        this.label.css({
+            "font-size": this.get_font_size()
+        });
+    }
+    SetLabelText (text) {
+        if (this.label) {
+            this.label.text(text);
+            this.label.css({
+                "font-size": this.get_font_size()
+            });
+        }
+        else {
+            this.add_label(text);
+            if (this.text_tip) {
+                this.text_tip.html.css({
+                    "top": "",
+                    "bottom": 0
+                });
+            }
+        }
+        if (this.image) {
+            this.image.css({
+                "width": this.get_image_width()
+            });
+        }
+        if (this.sub_label) {
+            this.sub_label.css({
+                "font-size": this.get_font_size(true)
+            });
+        }
+    }
+    SetSubLabelText (text, locked=false) {
+        if (!this.label && locked) {
+            console.warn("Warning: If locking the SubLabel, you need to set up the Label first");
+            return;
+        }
+        if (this.label && (this.image || this.text_tip)) {
+            console.warn("Warning: SubLabel is not intended to be used with an image or tip text");
+            return;
+        }
+        if (this.sub_label) {
+            this.sub_label.text(text);
+            this.sub_label.css({
+                "font-size": this.get_font_size(true)
+            });
+        }
+        else {
+            this.add_sub_label(text, locked);
+        }
+        if (this.label) {
+            this.label.css({
+                "font-size": this.get_font_size()
+            });
+        }
+    }
+    SetImageURL (url) {
+        if (this.label && this.sub_label) {
+            console.warn("Warning: SubLabel is not intended to be used with an image");
+            return;
+        }
+        if (this.image) {
+            this.image.css({
+                "background-image": "url(" + url + ")",
+                "width": this.get_image_width()
+            });
+        }
+        else {
+            this.add_image(url);
+        }
+        if (this.label) {
+            this.label.css({
+                "font-size": this.get_font_size()
+            });
+        }
+        if (this.icon) {
+            this.style_icon();
+        }
+    }
+    SetIconName (icon_name) {
+        if (this.icon) {
+            this.icon.SetIcon(icon_name);
+            this.style_icon();
+        }
+        else {
+            this.add_icon(icon_name);
+        }
+    }
+    SetTipText (text) {
+        if (this.label && this.sub_label) {
+            console.warn("Warning: SubLabel is not intended to be used with tip text");
+            return;
+        }
+        if (this.text_tip) {
+            this.text_tip.SetText(text);
+            if (this.label) {
+                this.text_tip.html.css({
+                    "top": "",
+                    "bottom": 0
+                });
+            }
+        }
+        else {
+            this.add_text_tip(text);
+        }
+    }
+    
+    Resize () {
+        if (this.label) {
+            this.label.css({
+                "font-size": this.get_font_size()
+            });
+        }
+        if (this.sub_label) {
+            this.sub_label.css({
+                "font-size": this.get_font_size(true)
+            });
+        }
+        if (this.icon) {
+            this.style_icon();
+        }
+    }
+    add_icon (icon_name) {
+        this.icon = new Dash.Gui.Icon(this.color, icon_name, null, 1, this.color.Stroke);
+        this.style_icon();
+        this.html.prepend(this.icon.html);
+    }
+    style_icon () {
+        if (!this.icon) {
+            return;
+        }
+        this.icon.html.css({
+            "width": this.image ? "20%" : "40%",
+            "height": this.image ? "20%" : "40%"
+        });
+        this.icon.icon_html.css({
+            "line-height": "",
+            "font-size": ((this.image ? 200 : 250) * this.options.cell_size_dif_mult) + "%",
+            "width": "100%",
+            "height": "",
+            "inset": "",
+            "top": "50%",
+            "left": "50%",
+            "transform": "translate(-50%, -50%)"
+        });
+        this.icon.AddShadow("1px 1px 1px " + this.multi_icon_color);
+    }
+    add_text_tip (text) {
+        if (this.text_tip) {
+            return;
+        }
+        this.text_tip = new DashGuiFlowTipText(this.view, text);
+        this.text_tip.Emphasize();
+        var css = {
+            "position": "absolute",
+            "left": 0,
+            "opacity": 0.9
+        };
+        css[this.label ? "bottom" : "top"] = 0;
+        this.text_tip.html.css(css);
+        this.text_tip.html.hide();
+        this.html.append(this.text_tip.html);
+    }
+    add_label (text) {
+        if (this.label) {
+            return;
+        }
+        this.label = $("<div>" + text + "</div>");
+        var css = {
+            ...this.label_css,
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": this.get_font_size()
+        };
+        if (this.active) {
+            css["text-shadow"] = this.label_text_shadow;
+        }
+        this.label.css(css);
+        this.html.append(this.label);
+    }
+    add_sub_label (text, locked=false) {
+        if (this.sub_label) {
+            return;
+        }
+        this.sub_label = $("<div>" + text + "</div>");
+        var css = {
+            ...this.label_css,
+            "color": this.active ? this.sub_label_active_text_color : this.sub_label_text_color,
+            "font-family": "sans_serif_normal",
+            "font-size": this.get_font_size(true)
+        };
+        if (locked && this.label) {
+            var spacer = new Dash.Gui.GetFlexSpacer(3);
+            spacer.css({
+                "background": "pink",
+                "flex-basis": 0
+            });
+            this.html.prepend(spacer);
+            css["flex-grow"] = 3;
+            css["flex-shrink"] = 3;
+            css["flex-basis"] = 0;
+        }
+        this.sub_label.css(css);
+        this.html.append(this.sub_label);
+    }
+    add_image (url) {
+        if (this.image) {
+            return;
+        }
+        this.image = Dash.File.GetImagePreview(url,"auto", this.get_image_width());
+        this.image.css({
+            "margin": Dash.Size.Padding,
+            "aspect-ratio": "1"
+        });
+        this.html.append(this.image);
+    }
+    get_font_size (sub=false) {
+        return Math.max(
+            (
+                (
+                    sub ? (
+                        this.label ? 105 : 150
+                    ) : (
+                        this.font_size || (this.image ? 100 : this.sub_label ? 125 : 150)  // this.view.core_gui_font_size)
+                    )
+                ) * this.options.cell_size_dif_mult
+            ),
+            sub ? 70 : 75
+        ) + "%";
+    }
+    get_image_width () {
+        return (this.label ? 50 : 70) + "%";
+    }
+    show_multi_icon () {
+        if (!this.options.MultiEnabled()) {
+            return;
+        }
+        if (this.multi_icon) {
+            this.multi_icon.html.show();
+            this.update_multi_icon_num();
+        }
+        else {
+            this.add_multi_icon();
+        }
+    }
+    hide_multi_icon () {
+        if (!this.options.MultiEnabled() || !this.multi_icon) {
+            return;
+        }
+        this.multi_icon.html.hide();
+    }
+    add_multi_icon () {
+        this.multi_icon = new Dash.Gui.Icon(
+            this.color,
+            this.options.ordered_multi_select ? "circle" : "circle_dot",
+            null,
+            1,
+            this.multi_icon_color
+        );
+        this.multi_icon.html.css({
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.5,
+            "right": Dash.Size.Padding * 0.5
+        });
+        this.update_multi_icon_num();
+        this.html.append(this.multi_icon.html);
+    }
+    update_multi_icon_num (num=null) {
+        if (!this.options.ordered_multi_select) {
+            if (this.multi_icon_num) {
+                this.multi_icon_num.hide();
+            }
+            return;
+        }
+        if (!this.multi_icon) {
+            this.add_multi_icon();
+            return;
+        }
+        if (num === null) {
+            num = parseInt(this.options.multi_select_order.indexOf(this)) + 1;
+        }
+        if (!this.multi_icon_num) {
+            this.multi_icon_num = $("<div>" + num + "</div>");
+            this.multi_icon_num.css({
+                "color": this.color.AccentGood,
+                "font-family": "sans_serif_bold",
+                "position": "absolute",
+                "top": "50%",
+                "left": "50%",
+                "transform": "translate(-50%, -50%)",
+                "text-shadow": (
+                    "-1px 1px 0 " + this.multi_icon_color + ", " +
+                    "1px 1px 0 " + this.multi_icon_color + ", " +
+                    "1px -1px 0 " + this.multi_icon_color + ", " +
+                    "-1px -1px 0 " + this.multi_icon_color
+                )
+            });
+            this.multi_icon.html.append(this.multi_icon_num);
+        }
+        else {
+            this.multi_icon_num.text(num.toString());
+        }
+    }
+    highlight () {
+        this.html.css({
+            "border": this.border_size + "px solid " + (this.active ? this.active_border_color : this.hover_border_color),
+            "background": this.active ? this.active_bg_color : this.hover_bg_color
+        });
+        if (this.active) {
+            if (this.label) {
+                this.label.css({
+                    "text-shadow": this.label_text_shadow
+                });
+            }
+            if (this.sub_label) {
+                this.sub_label.css({
+                    "color": this.sub_label_active_text_color
+                });
+            }
+        }
+    }
+    unhighlight () {
+        if (this.active) {
+            return;
+        }
+        this.html.css({
+            "border": this.border_size + "px solid " + this.border_color,
+            "background": this.bg_color
+        });
+        if (this.label) {
+            this.label.css({
+                "text-shadow": ""
+            });
+        }
+        if (this.sub_label) {
+            this.sub_label.css({
+                "color": this.sub_label_text_color
+            });
+        }
+    }
+    show_tip () {
+        if (!this.text_tip) {
+            return;
+        }
+        this.text_tip.html.show();
+    }
+    hide_tip () {
+        if (!this.text_tip) {
+            return;
+        }
+        this.text_tip.html.hide();
+    }
+    setup_connections () {
+        this.html.on("mouseenter", () => {
+            this.highlight();
+            this.show_tip();
+        });
+        this.html.on("mouseleave", () => {
+            this.unhighlight();
+            this.hide_tip();
+        });
+        this.html.on("click", () => {
+            this.SetActive(this.options.MultiEnabled() ? !this.active : true);
+            this.options.on_option_selected(this);
+        });
+    }
+}
+
+class DashGuiFlowOptions {
+    constructor (view, bound_cb=null) {
+        this.view = view;
+        this.bound_cb = bound_cb;
+        this.options = [];
+        this.resize_timer = null;
+        this.multi_select = false;
+        this.last_cell_size = null;
+        this.cell_size_dif_mult = 1;
+        this.color = this.view.color;
+        this.multi_select_order = [];
+        this.html = $("<div></div>");
+        this.cell_gap = Dash.Size.Padding;
+        this.ordered_multi_select = false;
+        this.option_size = Dash.Size.ColumnWidth;
+        this.option_border_size = Dash.Size.Padding * 0.2;
+        this.default_cell_size = this.option_size + (this.option_border_size * 2);
+        this.setup_styles();
+    }
+    setup_styles () {
+        var minmax = "minmax(" + (this.default_cell_size * 0.5) + "px, " + this.default_cell_size + "px)";
+        this.html.css({
+            "display": "grid",
+            "gap": this.cell_gap,
+            "align-self": "stretch",
+            "min-height": this.default_cell_size,
+            "grid-template-columns": "repeat(auto-fit, " + minmax + ")",
+            "grid-auto-rows": minmax,
+            "place-items": "center",
+            "place-content": "center"
+        });
+    }
+    OnResize () {
+        var width = this.options[0].html.outerWidth();
+        if (width >= this.default_cell_size) {
+            return;
+        }
+        this.last_cell_size = this.last_cell_size ? null : width;
+        var cell_size = (this.last_cell_size || this.default_cell_size);
+        var minmax = "minmax(" + (cell_size * 0.5) + "px, " + cell_size + "px)";
+        this.cell_size_dif_mult = cell_size / this.default_cell_size;
+        this.html.css({
+            "grid-template-columns": "repeat(auto-fit, " + minmax + ")",
+            "grid-auto-rows": minmax
+        });
+        for (var option of this.options) {
+            option.Resize();
+        }
+        if (!this.last_cell_size) {
+            this.resize();
+        }
+    }
+    AddOption (
+        id, label_text="", image_url="", tip_text="", sub_label_text="", sub_text_locked=false, icon_name=""
+    ) {
+        var option = new DashGuiFlowOption(this, id);
+        if (image_url) {
+            option.SetImageURL(image_url);
+        }
+        if (icon_name) {
+            option.SetIconName(icon_name);
+        }
+        if (label_text) {
+            option.SetLabelText(label_text);
+        }
+        if (sub_label_text) {
+            option.SetSubLabelText(sub_label_text, sub_text_locked);
+        }
+        if (tip_text) {
+            option.SetTipText(tip_text);
+        }
+        this.html.append(option.html);
+        this.options.push(option);
+        this.resize();
+        return option;
+    }
+    EnableMultiSelect () {
+        this.multi_select = true;
+    }
+    EnableOrderedMultiSelect () {
+        this.ordered_multi_select = true;
+    }
+    MultiEnabled () {
+        return this.multi_select || this.ordered_multi_select;
+    }
+    GetSelected (return_option=false) {
+        for (var option of this.options) {
+            if (option.IsActive()) {
+                return return_option ? option : option.ID();
+            }
+        }
+        return null;
+    }
+    GetMultiSelections (return_option=false) {
+        var option;
+        var options = [];
+        for (option of this.options) {
+            if (option.IsActive()) {
+                options.push(return_option ? option : option.ID());
+            }
+        }
+        if (this.ordered_multi_select) {
+            var ordered = [];
+            for (option of this.multi_select_order) {
+                if (return_option && options.includes(option)) {
+                    ordered.push(options.Remove(option));
+                }
+                else if (!return_option && options.includes(option.ID())) {
+                    ordered.push(options.Remove(option.ID()));
+                }
+            }
+            for (option of options) {
+                ordered.push(option);
+            }
+            return ordered;
+        }
+        return options;
+    }
+    on_option_selected (selected_option) {
+        var option;
+        if (!this.MultiEnabled()) {
+            for (option of this.options) {
+                if (option.ID() === selected_option.ID()) {
+                    continue;
+                }
+                option.SetActive(false);
+            }
+        }
+        else if (this.ordered_multi_select) {
+            if (selected_option.IsActive()) {
+                this.multi_select_order.push(selected_option);
+            }
+            else {
+                this.multi_select_order.Remove(selected_option);
+            }
+            for (var i in this.multi_select_order) {
+                this.multi_select_order[i].update_multi_icon_num(parseInt(i) + 1);
+            }
+        }
+        if (this.bound_cb) {
+            this.bound_cb(selected_option.ID());
+        }
+    }
+    resize () {
+        if (this.resize_timer) {
+            clearTimeout(this.resize_timer);
+        }
+        this.resize_timer = setTimeout(
+            () => {
+                this.OnResize();
+            },
+            250
+        );
+    }
+}
+
+class DashGuiFlowRow {
+    constructor (view) {
+        this.view = view;
+        this.elements = [];
+        this.icon_font_size = 200;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.font_size = this.view.core_gui_font_size - 100;  // Based off two elements in the row (combo and input)
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "display": "flex",
+            "width": "85%"
+        });
+    }
+    GetData () {
+        var data = [];
+        for (var element of this.elements) {
+            if (element instanceof DashGuiFlowCombo) {
+                data.push(element.ActiveID());
+            }
+            else if (element instanceof DashGuiFlowInput) {
+                data.push(element.Text());
+            }
+            else if (element instanceof DashGuiFlowToggle) {
+                var active = element.IsActive();
+                // Only track if not default value (for non-auto-rows, this might need to be adjusted)
+                if (active !== element.starting_state) {
+                    data.push(active);
+                }
+            }
+            else if (element instanceof DashGuiIconButton) {
+                // pass
+            }
+            else {
+                console.warn("Warning: Unhandled element instance type:", element);
+            }
+        }
+        return data;
+    }
+    IsEmpty () {
+        for (var data of this.GetData()) {
+            if (data) {
+                return false;
+            }
+        }
+        return true;
+    }
+    AddText (text) {
+        var label = this.view.GetLabel(text);
+        label.css({
+            "font-size": this.font_size + "%"
+        });
+        this.html.append(label);
+        return this.track_element(label);
+    }
+    AddInput (bound_cb=null, placeholder_text="") {
+        var input = new DashGuiFlowInput(this.view, bound_cb, placeholder_text);
+        input._dash_gui_flow_row = this;
+        input.html.css({
+            "width": "",
+            "flex": 2
+        });
+        input.input.css({
+            "font-size": this.font_size + "%"
+        });
+        return this.track_element(input);
+    }
+    AddCombo (combo_options, bound_cb=null, starting_option_id="") {
+        var combo = new DashGuiFlowCombo(this.view, combo_options, bound_cb, starting_option_id);
+        combo._dash_gui_flow_row = this;
+        combo.SetFontSize(this.font_size, 150, this.font_size - 25);
+        return this.track_element(combo);
+    }
+    AddIconButton (icon_name, bound_cb=null, hover_hint="", icon_font_size_percent=0, highlight=true) {
+        if (!icon_font_size_percent) {
+            icon_font_size_percent = this.icon_font_size;
+        }
+        var size = ((icon_font_size_percent / this.icon_font_size) * 100) + "%";
+        var icon_button = new Dash.Gui.IconButton(
+            icon_name,
+            bound_cb,
+            null,
+            this.color,
+            {"container_size": "25%"}
+        );
+        icon_button.html.css({
+            "align-self": "center"
+        });
+        icon_button.icon.html.css({
+            "width": size,
+            "height": size,
+            "top": "50%",
+            "left": "50%",
+            "transform": "translate(-50%, -50%)"
+        });
+        icon_button.icon.icon_html.css({
+            "font-size": icon_font_size_percent + "%",
+            "width": "100%",
+            "height": "100%"
+        });
+        if (highlight) {
+            icon_button.AddHighlight();
+        }
+        if (hover_hint) {
+            icon_button.SetHoverHint(hover_hint);
+        }
+        return this.track_element(icon_button);
+    }
+    AddToggle (
+        starting_state=true, bound_cb=null, true_label_text="",
+        false_label_text="", true_icon_name="toggle_on", false_icon_name="toggle_off"
+    ) {
+        var toggle = new DashGuiFlowToggle(
+            this.view,
+            starting_state,
+            bound_cb,
+            true_label_text,
+            false_label_text,
+            true_icon_name,
+            false_icon_name,
+            0,
+            -125
+        );
+        toggle._dash_gui_flow_row = this;
+        return this.track_element(toggle);
+    }
+    track_element (element) {
+        var html = element.hasOwnProperty("html") ? element.html : element;
+        html.css({
+            "margin-left": this.elements.length ? Dash.Size.Padding : 0
+        });
+        this.elements.push(element);
+        this.html.append(html);
+        return element;
+    }
+}
+
+class DashGuiFlowRowArea {
+    constructor (view, row_config=[], auto_rows=true, auto_rows_min_required=1, in_step=false) {
+        this.view = view;
+        this.row_config = row_config;
+        this.auto_rows = auto_rows;
+        this.auto_rows_min_required = auto_rows_min_required;
+        this.in_step = in_step;
+        this.rows = [];
+        this.auto_row_timer = null;
+        this.tip_text_timer = null;
+        this.tip_text_anim_ms = 200;
+        this.color = this.view.color;
+        this.pre_expanded_height = 0;
+        this.html = $("<div></div>");
+        this.combo_click_anim_ms = 150;
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "width": "85%",
+            "height": "fit-content",
+            ...this.view.row_area_css
+        });
+        if (this.auto_rows) {
+            if (this.auto_rows_min_required) {
+                for (var _ of Dash.Math.Range(this.auto_rows_min_required)) {
+                    this.add_row();
+                }
+            }
+            else {
+                this.add_row(true);
+            }
+        }
+    }
+    GetData (include_empty_rows=false) {
+        var data = [];
+        for (var row of this.rows) {
+            var _data = {};
+            var empty = true;
+            var row_data = row.GetData();
+            for (var i in this.row_config) {
+                var config = this.row_config[i];
+                _data[config["key"] || i] = row_data[i];
+                if (row_data[i]) {
+                    empty = false;
+                }
+            }
+            if (!include_empty_rows && empty) {
+                continue;
+            }
+            data.push(_data);
+        }
+        return data;
+    }
+    // TODO: need to auto-populate any existing data using config["key"]
+    add_row (auto_added=false) {
+        var row = new DashGuiFlowRow(this.view);
+        row.html.css({
+            "margin": 0,
+            "margin-top": this.rows.length ? Dash.Size.Padding * 2 : 0,
+            "width": "100%"
+        });
+        for (var i in this.row_config) {
+            var element = null;
+            var config = this.row_config[i];
+            if (config["type"] === "input") {
+                element = this.add_input(row, config);
+            }
+            else if (config["type"] === "combo") {
+                element = this.add_combo(row, config);
+            }
+            else if (config["type"] === "toggle") {
+                element = this.add_toggle(row, config);
+            }
+            else if (config["type"] === "text") {
+                element = row.AddText(...config["params"]);
+            }
+            else if (config["type"] === "icon_button") {
+                element = row.AddIconButton(...config["params"]);
+            }
+            else {
+                console.warn("Warning: Unhandled config type:", config["type"]);
+            }
+            if (!element) {
+                continue;
+            }
+            if (config["css"]) {
+                (element.hasOwnProperty("html") ? element.html : element).css(config["css"]);
+            }
+            if (config["tip_text"]) {
+                this.add_tip_text_hover(element, i);
+            }
+        }
+        this.setup_auto_row(row, auto_added);
+        this.html.append(row.html);
+        this.rows.push(row);
+    }
+    // This has not been perfected yet, there are a lot of limitations, especially if the text is longer than
+    // one line, since it can't overflow out of the row area container without breaking other elements' flows.
+    // A proper solution would be one similar to DashGuiCombo's gravity system, when the need arises.
+    add_tip_text_hover (element, index) {
+        var html = (element.hasOwnProperty("html") ? element.html : element);
+        html.css({
+            "cursor": "help",
+            "overflow": "visible"  // This might produce unexpected results, but displaying this is tricky
+        });
+        html.on("mouseenter", () => {
+            if (!this.row_config[index]["_tip_text_element"]) {
+                this.row_config[index]["_tip_text_element"] = new DashGuiFlowTipText(
+                    this.view,
+                    this.row_config[index]["tip_text"]
+                );
+                this.row_config[index]["_tip_text_element"].Emphasize();
+                this.row_config[index]["_tip_text_element"].html.css({
+                    "position": "absolute",
+                    "z-index": 100,
+                    "top": html.height(),
+                    "left": 0,
+                    "font-size": "60%",
+                    "padding": Dash.Size.Padding * 0.5,
+                    "padding-top": Dash.Size.Padding * 0.25,
+                    "padding-bottom": Dash.Size.Padding * 0.25,
+                    "opacity": 0
+                });
+                html.append(this.row_config[index]["_tip_text_element"].html);
+            }
+            if (this.auto_row_timer) {
+                clearTimeout(this.auto_row_timer);
+                this.auto_row_timer = null;
+            }
+            this.auto_row_timer = setTimeout(
+                () => {
+                    this.row_config[index]["_tip_text_element"].html.css({
+                        "visibility": "visible"
+                    });
+                    this.row_config[index]["_tip_text_element"].html.stop().animate(
+                        {"opacity": 1},
+                        this.tip_text_anim_ms
+                    );
+                },
+                400
+            );
+        });
+        html.on("mouseleave", () => {
+            if (this.auto_row_timer) {
+                clearTimeout(this.auto_row_timer);
+                this.auto_row_timer = null;
+            }
+            if (!this.row_config[index]["_tip_text_element"]) {
+                return;
+            }
+            this.row_config[index]["_tip_text_element"].html.stop().animate(
+                {"opacity": 0},
+                this.tip_text_anim_ms,
+                () => {
+                    this.row_config[index]["_tip_text_element"].html.css({
+                        "visibility": "hidden"
+                    });
+                }
+            );
+        });
+    }
+    remove_row (row) {
+        row.html.remove();
+        this.rows.Remove(row);
+        this.auto_row_check_on_row_change(null, true);
+    }
+    setup_auto_row (row, auto_added) {
+        if (!this.auto_rows) {
+            return;
+        }
+        var min = this.rows.length <= (this.auto_rows_min_required - 1);
+        var icon_button = row.AddIconButton(
+            min ? "asterisk" : "close",
+            min ? null : () => {
+                this.remove_row(row);
+            },
+            min ? "Required" : "Remove row",
+            row.icon_font_size * (min ? 0.5 : 1),
+            !min
+        );
+        if (min) {
+            icon_button.Disable();
+            icon_button.SetIconColor(this.color.StrokeLight);
+            icon_button.html.css({
+                "cursor": "help",
+                "pointer-events": "auto"
+            });
+            icon_button.icon.html.css({
+                "cursor": "help"
+            });
+            icon_button.html.off("click");
+        }
+        if (auto_added) {
+            icon_button.html.css({
+                "visibility": "hidden"
+            });
+            row.html.css({
+                "opacity": 0.5
+            });
+        }
+        if (["icon_button", "toggle"].includes(this.row_config.Last()["type"])) {
+            icon_button.html.css({
+                "border-radius": 0,
+                "border-left": "1px solid " + this.color.PinstripeDark,
+                "padding-left": Dash.Size.Padding
+            });
+        }
+        row.remove_row_button = icon_button;
+    }
+    add_toggle (row, config) {
+        var toggle = row.AddToggle(...config["params"]);
+        var cb = toggle.bound_cb;
+        toggle.bound_cb = (active) => {
+            if (cb) {
+                cb(active, toggle);
+            }
+            this.auto_row_check_on_row_change(row);
+        };
+        return toggle;
+    }
+    add_input (row, config) {
+        var input = row.AddInput(...config["params"]);
+        if (!this.auto_rows) {
+            return;
+        }
+        var cb = input.bound_cb;
+        input.SetBoundCallback(() => {
+            if (cb) {
+                cb(input);
+            }
+            this.auto_row_check_on_row_change(row);
+        });
+        return input;
+    }
+    on_combo_collapsed (combo, row) {
+        if (!combo._dash_gui_flow_row_area_click_expanded) {
+            return;
+        }
+        combo._dash_gui_flow_row_area_click_expanded = false;
+        this.html.stop().animate(
+            {"height": this.pre_expanded_height || ""},
+            this.combo_click_anim_ms,
+            () => {
+                this.html.css({
+                    "height": "fit-content"
+                });
+            }
+        );
+
+        if (
+            (
+                   !this.auto_rows
+                || (this.rows.indexOf(row) + 1) > this.auto_rows_min_required
+            )
+            && row.IsEmpty()
+        ) {
+            row.html.stop().animate(
+                {"opacity": 0.5},
+                100
+            );
+        }
+    }
+    add_combo (row, config) {
+        var combo = row.AddCombo(...config["params"]);
+        combo.additional_data = combo;
+        if (this.in_step) {
+            combo.SetGravityParentOverride(this.html);
+        }
+        combo.SetOnCollapseCB(() => {
+            this.on_combo_collapsed(combo, row);
+        });
+        combo.html.on("click", () => {
+            this.on_combo_clicked(combo, row);
+        });
+        if (!this.auto_rows) {
+            return;
+        }
+        var cb = combo.callback;
+        // Track changes
+        combo.callback = (selected_option, previous_option, combo) => {
+            if (cb) {
+                cb(selected_option, previous_option, combo);
+            }
+            this.auto_row_check_on_row_change(row);
+        };
+        return combo;
+    }
+    on_combo_clicked (combo, row) {
+        if (combo.IsExpanded()) {
+            combo._dash_gui_flow_row_area_click_expanded = true;
+            row.html.stop().animate(
+                {"opacity": 1},
+                100
+            );
+            this.pre_expanded_height = this.html.height() ;
+            if (combo.last_rows_height > this.html.height()) {
+                this.html.stop().animate(
+                    {
+                        "height": (
+                              combo.last_rows_height
+                            + ((combo.html.height() + (Dash.Size.Padding * 2)) * (this.rows.length - 1))
+                        )
+                    },
+                    this.combo_click_anim_ms
+                );
+            }
+            else {
+                this.html.stop().animate(
+                    {
+                        "height": this.pre_expanded_height + (Dash.Size.Padding * 2)
+                    },
+                    this.combo_click_anim_ms
+                );
+            }
+        }
+        else {
+            this.on_combo_collapsed(combo, row);
+        }
+        Dash.Gui.ScrollToElement(this.html, combo.html);
+        for (var other_row of this.rows) {
+            if (other_row === row) {
+                continue;
+            }
+            for (var element of other_row.elements) {
+                if (element instanceof DashGuiFlowCombo) {
+                    var collapse_cb = element.on_collapse_cb;
+                    element.SetOnCollapseCB(null);
+                    element.HideTray();
+                    element.SetOnCollapseCB(collapse_cb);
+                }
+            }
+        }
+    }
+    auto_row_check_on_row_change (row=null, _from_removal=false) {
+        if (!this.auto_rows) {
+            return;
+        }
+        if (row && row !== this.rows.Last()) {
+            return;
+        }
+        if (this.auto_row_timer) {
+            clearTimeout(this.auto_row_timer);
+            this.auto_row_timer = null;
+        }
+        this.auto_row_timer = setTimeout(
+            () => {
+                this._auto_row_check_on_row_change(_from_removal);
+            },
+            300
+        );
+    }
+    _auto_row_check_on_row_change (_from_removal=false) {
+        var last_row = this.rows.Last();
+        var empty = last_row.IsEmpty();
+        if (empty) {
+            if (_from_removal) {
+                return;
+            }
+        }
+        else {
+            this.add_row(true);
+        }
+        last_row.remove_row_button.html.css({
+            "visibility": empty ? "hidden" : "visible"
+        });
+        last_row.html.css({
+            "opacity": 1
+        });
+    }
+}
+
+class DashGuiFlowStep {
+    constructor (steps, id) {
+        this.steps = steps;
+        this.id = id;
+        this.options = [];
+        this.view = this.steps.view;
+        this.continue_button = null;
+        this.can_continue_cb = null;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.continue_button_visible = false;
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "width": "100%",
+            "height": "100%",
+            "display": "flex",
+            "overflow-y": "auto",
+            "flex-direction": "column",
+            "align-items": "center",
+            "justify-content": "center"
+        });
+    }
+    ID () {
+        return this.id;
+    }
+    AddOptions (bound_cb=null) {
+        var options = new DashGuiFlowOptions(this.view, bound_cb);
+        options.html.css({
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.html.append(options.html);
+        this.options.push(options);
+        return options;
+    }
+    AddDatePicker (bound_cb=null, min="", max="", label_text="") {
+        var date_picker = new DashGuiFlowDatePicker(this.view, bound_cb, min, max, label_text);
+        date_picker.html.css({
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.html.append(date_picker.html);
+        return date_picker;
+    }
+    AddInput (bound_cb=null, placeholder_text="") {
+        var input = new DashGuiFlowInput(this.view, bound_cb, placeholder_text);
+        input.html.css({
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.html.append(input.html);
+        return input;
+    }
+    AddInputWithLabel (label_text, bound_cb=null, placeholder_text="") {
+        var container = $("<div></div>");
+        container.css({
+            "margin-top": Dash.Size.Padding * 2,
+            "margin-bottom": Dash.Size.Padding * 3,
+            "display": "flex",
+            "width": "75%"
+        });
+        var label = this.AddText(label_text);
+        label.css({
+            "font-size": this.view.core_gui_font_size + "%",
+            "font-family": "sans_serif_bold",
+            "margin": 0,
+            "flex": "none",
+            "color": this.color.Stroke,
+            "margin-right": Dash.Size.Padding
+        });
+        label.detach();
+        container.append(label);
+        var input;  // Declare this early so it can be referenced in the callback
+        input = this.AddInput(
+            () => {
+                var text = input.Text();
+                if (bound_cb) {
+                    bound_cb(text);
+                }
+            },
+            placeholder_text
+        );
+        input.html.css({
+            "margin": 0,
+            "width": "",
+            "flex": 3
+        });
+        input.html.detach();
+        container.append(input.html);
+        this.AddHTML(container);
+        return {
+            "html": container,
+            "label": label,
+            "input": input
+        };
+    }
+    AddToggle (
+        starting_state=true, bound_cb=null, true_label_text="",
+        false_label_text="", true_icon_name="toggle_on", false_icon_name="toggle_off"
+    ) {
+        var toggle = new DashGuiFlowToggle(
+            this.view,
+            starting_state,
+            bound_cb,
+            true_label_text,
+            false_label_text,
+            true_icon_name,
+            false_icon_name,
+            50
+        );
+        toggle.html.css({
+            "width": "100%",
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.html.append(toggle.html);
+        return toggle;
+    }
+    AddTipText (text, emphasized=false, more_text="") {
+        var tip = new DashGuiFlowTipText(this.view, text, more_text);
+        if (emphasized) {
+            tip.Emphasize();
+        }
+        else {
+            tip.EmphasizeOnHover();
+        }
+        tip.html.css({
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding,
+            "flex": "none"
+        });
+        this.html.append(tip.html);
+        return tip;
+    }
+    AddTipImage (url) {
+        var tip = new DashGuiFlowTipImage(this.view, url);
+        tip.html.css({
+            "margin-bottom": Dash.Size.Padding
+        });
+        this.html.append(tip.html);
+        return tip;
+    }
+    AddHeader (text) {
+        var label = this.view.GetLabel(text, true);
+        this.html.append(label);
+        return label;
+    }
+    AddText (text) {
+        var label = this.view.GetLabel(text);
+        this.html.append(label);
+        return label;
+    }
+    AddMissingOptionButton (bound_cb=null, text="Don't see what you're looking for?") {
+        var label = this.view.GetLabel(text, false, true);
+        label.on("mouseenter", () => {
+            label.css({
+                "color": this.color.Button.Background.Base
+            });
+        });
+        label.on("mouseleave", () => {
+            label.css({
+                "color": this.view.missing_option_text_color
+            });
+        });
+        label.on("click", bound_cb || (() => {
+            this.view.RequestNewOption(this.id);
+        }));
+        this.html.append(label);
+        return label;
+    }
+    AddRow () {
+        var row = new DashGuiFlowRow(this.view);
+        row.html.css({
+            "margin-bottom": Dash.Size.Padding,
+            ...this.view.row_area_css
+        });
+        this.html.append(row.html);
+        return row;
+    }
+    AddRowArea (row_config=[], auto_rows=true, auto_rows_min_required=1) {
+        var row = new DashGuiFlowRowArea(this.view, row_config, auto_rows, auto_rows_min_required, true);
+        row.html.css({
+            "margin-bottom": Dash.Size.Padding,
+            "flex-shrink": 3,
+            "overflow-y": "auto",
+            "max-height": this.view.content_area_size * 0.5
+        });
+        this.html.append(row.html);
+        return row;
+    }
+    AddList (on_row_click_bound_cb=null) {
+        var list = new DashGuiFlowList(this.view, on_row_click_bound_cb);
+        list.html.css({
+            "margin-bottom": Dash.Size.Padding,
+            "width": "50%"
+        });
+        this.html.append(list.html);
+        return list;
+    }
+    AddDualList (on_add_bound_cb=null, on_remove_bound_cb=null) {
+        var dual_list = new DashGuiFlowListDual(this.view, on_add_bound_cb, on_remove_bound_cb);
+        dual_list.html.css({
+            "margin-bottom": Dash.Size.Padding,
+            "width": "75%"
+        });
+        this.html.append(dual_list.html);
+        return dual_list;
+    }
+    AddHTML (html) {
+        this.html.append(html);
+    }
+    AddContinueButton (can_continue_cb=null, step_id_override="", visible=false) {
+        this.continue_button_visible = visible;
+        if (can_continue_cb) {
+            this.can_continue_cb = can_continue_cb;
+        }
+        this.continue_button = new DashGuiFlowButton(
+            this.is_last_step() ? "Finish" : "Continue",
+            this,
+            () => {
+                this.Continue(step_id_override, false);
+            }
+        );
+        this.continue_button.Highlight(Dash.Size.ButtonHeight * 1.75);
+        this.continue_button.AddIcon("arrow_right_alt_2_heavy", 0.55);
+        this.continue_button.label.css({
+            "font-size": (this.view.core_gui_font_size - 50) + "%",
+            "margin-left": Dash.Size.Padding * 0.7
+        });
+        var css = {
+            "margin-top": Dash.Size.Padding * 3,
+            "opacity": visible ? 1 : 0
+        };
+        if (!visible) {
+            css["visibility"] = "hidden";
+        }
+        this.continue_button.html.css(css);
+        this.html.append(this.continue_button.html);
+    }
+    ShowContinueButton (can_continue_cb=null, step_id_override="") {
+        if (this.continue_button_visible) {
+            return;
+        }
+        this.continue_button_visible = true;
+        if (can_continue_cb) {
+            this.can_continue_cb = can_continue_cb;
+        }
+        if (this.continue_button) {
+            this.show_continue_button();
+        }
+        else {
+            this.AddContinueButton(null, step_id_override);
+            requestAnimationFrame(() => {
+                this.show_continue_button();
+            });
+        }
+    }
+    HideContinueButton () {
+        if (!this.continue_button || !this.continue_button_visible) {
+            return;
+        }
+        this.continue_button_visible = false;
+        this.continue_button.html.animate(
+            {"opacity": 0},
+            {
+                "duration": 400,
+                "complete": () => {
+                    this.continue_button.html.css({
+                        "visibility": "hidden"
+                    });
+                }
+            }
+        );
+    }
+    Continue (step_id_override="", force=false) {
+        if (!force && this.can_continue_cb && !this.can_continue_cb()) {
+            return;
+        }
+        this.view.Save(
+            true,
+            () => {
+                if (this.is_last_step()) {
+                    // TODO: check to make sure they can finish, maybe also ask if they're sure they're done?
+                }
+                else {
+                    if (typeof step_id_override === "function"){
+                        step_id_override = step_id_override();
+                    }
+                    this.view.LoadStep(
+                        step_id_override || this.view.timeline.GetNextNode().ID(),
+                        true
+                    );
+                }
+            }
+        );
+    }
+    show_continue_button () {
+        this.continue_button.html.css({
+            "visibility": "visible"
+        });
+        this.continue_button.html.animate(
+            {"opacity": 1},
+            400
+        );
+    }
+    is_last_step () {
+        return this.id === this.view.steps.Last();
+    }
+}
+
+class DashGuiFlowStepArea {
+    constructor (view) {
+        this.view = view;
+        this.step = null;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "display": "flex",
+            "flex-direction": "column",
+            "align-items": "center",
+            "justify-content": "center"
+        });
+    }
+    SetActiveStep (id) {
+        this.html.empty();
+        this.step = new DashGuiFlowStep(this, id);
+        this.html.append(this.step.html);
+        this.view.init_step(id);
+    }
+    InitBoolStep (
+        key, header_text, false_id, false_text, true_id, true_text, tip_text="", tip_more_text="",
+        font_size_override=null, false_sub_text="", true_sub_text="", default_state=null, tip_at_top=false
+    ) {
+        this.step.AddHeader(header_text);
+        if (tip_at_top && tip_text) {
+            this.step.AddTipText(tip_text, true, tip_more_text);
+        }
+        var has_default = typeof default_state === "boolean";
+        if (has_default) {
+            this.step.AddToggle(
+                default_state,
+                (active) => {
+                    this.view.UpdateLocal(key, active ? true_id : false_id);
+                },
+                true_text,
+                false_text
+            ).html.css({
+                "margin-top": Dash.Size.Padding * 3,
+                "margin-bottom": Dash.Size.Padding * 3
+            });
+        }
+        else {
+            var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
+            var options = this.step.AddOptions((selected_id) => {
+                this.OnOptionSelected(step_id, selected_id, key);
+            });
+            options.html.css({
+                "margin-top": Dash.Size.Padding * 3,
+                "margin-bottom": Dash.Size.Padding * 3
+            });
+            var false_option = options.AddOption(
+                false_id,
+                false_text,
+                "",
+                "",
+                false_sub_text,
+                true
+            );
+            var true_option = options.AddOption(
+                true_id,
+                true_text,
+                "",
+                "",
+                true_sub_text,
+                true
+            );
+            if (font_size_override) {
+                false_option.OverrideFontSize(font_size_override);
+                true_option.OverrideFontSize(font_size_override);
+            }
+        }
+        if (!tip_at_top && tip_text) {
+            this.step.AddTipText(tip_text, false, tip_more_text);
+        }
+        this.step.AddContinueButton(null, "", has_default);
+    }
+    // Standard/basic implementation
+    InitOptionsStep (
+        header_text, key, add_options_bound_cb, load_obj_data=false, can_continue_bound_cb=null,
+        cont_step_id_override="", missing_button=true, missing_bound_cb=null,
+        missing_text="Don't see what you're looking for?"
+    ) {
+        this.step.AddHeader(header_text);
+        var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
+        var options = this.step.AddOptions((selected_id) => {
+            this.OnOptionSelected(step_id, selected_id, key, load_obj_data);
+        });
+        add_options_bound_cb(options);
+        if (missing_button) {
+            this.step.AddMissingOptionButton(missing_bound_cb, missing_text);
+        }
+        this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override);
+        return options;
+    }
+    OnOptionSelected (step_id, value, key, load_obj_data=false) {
+        if (this.step.ID() !== step_id) {
+            return;  // Just in case
+        }
+        this.view.UpdateLocal(key, value);
+        if (load_obj_data) {
+            this.view.LoadObjData();
+        }
+        this.step.ShowContinueButton();
+    }
+}
+
+class DashGuiFlowTimeline {
+    constructor (view) {
+        this.view = view;
+        this.nodes = [];
+        // this.back_button = null;
+        this.left_flex_area = null;
+        this.right_flex_area = null;
+        this.highest_node_index = 0;
+        this.color = this.view.color;
+        this.steps = this.view.steps;
+        this.html = $("<div></div>");
+        // this.back_button_visible = false;
+        this.height = Dash.Size.ButtonHeight;
+        this.stroke_color = this.color.StrokeDark;
+        this.stroke_size = Dash.Size.Padding * 0.2;
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "display": "flex",
+            "justify-content": "center",
+            "height": this.height
+        });
+        this.left_flex_area = Dash.Gui.GetFlexSpacer(3);
+        this.left_flex_area.css({
+            "display": "flex",
+            "margin-right": Dash.Size.Padding,
+            "justify-content": "left"
+        });
+        this.html.append(this.left_flex_area);
+        this.draw_nodes();
+        this.right_flex_area = Dash.Gui.GetFlexSpacer(3);
+        this.right_flex_area.css({
+            "display": "flex",
+            "margin-left": Dash.Size.Padding,
+            "justify-content": "right"
+        });
+        this.html.append(this.right_flex_area);
+    }
+    SetActiveNode (node_id, from_reset=false) {
+        if (from_reset) {
+            this.highest_node_index = 0;
+        }
+        var active_set = false;
+        var show_back_button = true;
+        for (var i in this.nodes) {
+            var index = parseInt(i);
+            var node = this.nodes[i];
+            if (active_set) {
+                if (index > this.highest_node_index) {
+                    node.SetDisabled(true);
+                }
+                else {
+                    node.SetActive(false);
+                }
+                continue;
+            }
+            if (node.ID() === node_id) {
+                active_set = true;
+                if (index > this.highest_node_index) {
+                    this.highest_node_index = index;
+                }
+                if (index === 0) {
+                    this.view.HideBackButton();
+                    show_back_button = false;
+                }
+            }
+            node.SetActive(active_set);
+        }
+        if (show_back_button) {
+            this.view.ShowBackButton();
+        }
+    }
+    GetActiveNode () {
+        for (var node of this.nodes) {
+            if (node.IsActive()) {
+                return node;
+            }
+        }
+        return null;
+    }
+    GetNextNode () {
+        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) + 1];
+    }
+    GoBack () {
+        this.view.LoadStep(this.get_previous_node().ID(), true, false, true);
+    }
+    get_previous_node () {
+        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) - 1];
+    }
+    draw_nodes () {
+        var draw_line = false;
+        for (var id of this.steps) {
+            if (draw_line) {
+                this.html.append(this.get_line());
+            }
+            var node = new DashGuiFlowTimelineNode(this, id);
+            this.html.append(node.html);
+            this.nodes.push(node);
+            draw_line = true;
+        }
+    }
+    get_line () {
+        var line = $("<div></div>");
+        var height = this.stroke_size * 0.5;
+        line.css({
+            "height": height,
+            "width": this.height - (this.stroke_size * 4),
+            "background": this.stroke_color,
+            "margin-top": (this.height * 0.5) - (height * 0.5)
+        });
+        return line;
+    }
+    // show_back_button () {
+    //     if (this.back_button_visible) {
+    //         return;
+    //     }
+    //
+    //     this.back_button_visible = true;
+    //
+    //     if (this.back_button) {
+    //         this.back_button.html.show({
+    //             "complete": () => {
+    //                 this.left_flex_area.css({
+    //                     "min-width": this.back_button.html.outerWidth()
+    //                 });
+    //             }
+    //         });
+    //     }
+    //
+    //     else {
+    //         this.add_back_button();
+    //     }
+    // }
+    //
+    // add_back_button () {
+    //     this.back_button = new DashGuiFlowButton(
+    //         "Back",
+    //         this,
+    //         () => {
+    //             this.GoBack();
+    //         }
+    //     );
+    //
+    //     this.back_button.AddIcon("arrow_left_circled", 0.5, null, false);
+    //
+    //     // This is the only way for the button to not affect the sizing of its flex
+    //     // spacer parent, which is important so the timeline nodes stay centered
+    //     this.back_button.html.css({
+    //         "position": "absolute",
+    //         "top": 0,
+    //         "left": 0
+    //     });
+    //
+    //     this.back_button.label.css({
+    //         "margin-right": Dash.Size.Padding * 0.5
+    //     });
+    //
+    //     this.left_flex_area.append(this.back_button.html);
+    //
+    //     requestAnimationFrame(() => {
+    //         this.left_flex_area.css({
+    //             "min-width": this.back_button.html.outerWidth()
+    //         });
+    //     });
+    // };
+    //
+    // hide_back_button () {
+    //     if (!this.back_button || !this.back_button_visible) {
+    //         return;
+    //     }
+    //
+    //     this.back_button_visible = false;
+    //
+    //     this.back_button.html.hide({
+    //         "complete": () => {
+    //             this.left_flex_area.css({
+    //                 "min-width": ""
+    //             });
+    //         }
+    //     });
+    // }
+}
+
+class DashGuiFlowTimelineNode {
+    constructor (timeline, id) {
+        this.timeline = timeline;
+        this.id = id;
+        this.tip = null;
+        this.active = false;
+        this.locked = false;
+        this.disabled = false;
+        this.html = $("<div></div>");
+        this.view = this.timeline.view;
+        this.color = this.timeline.color;
+        this.stroke_size = this.timeline.stroke_size;
+        this.stroke_color = this.timeline.stroke_color;
+        this.size = this.timeline.height - (this.stroke_size * 2);
+        this.stroke_color_highlighted = this.color.Button.Background.Base;
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "border-radius": this.size,
+            "height": this.size,
+            "width": this.size,
+            "border": this.stroke_size + "px solid " + this.stroke_color,
+            "cursor": this.get_cursor_css(),
+            "background": this.get_bg_css(),
+            "opacity": this.get_opacity_css()
+        });
+        this.setup_connections();
+    }
+    ID () {
+        return this.id;
+    }
+    IsActive () {
+        return this.active;
+    }
+    IsLocked () {
+        return this.locked;
+    }
+    SetLocked () {  // Locked/skipped
+        // TODO: when skipped or not able to nav to this step - also, differentiate the style
+    }
+    SetActive (active) {
+        this.active = active;
+        if (this.active && this.disabled) {
+            this.SetDisabled(false);
+        }
+        this.html.css({
+            "cursor": this.get_cursor_css(),
+            "background": this.get_bg_css(),
+            "border": this.stroke_size + "px solid " + this.stroke_color
+        });
+    }
+    SetDisabled (disabled) {
+        this.disabled = disabled;
+        if (this.disabled && this.active) {
+            this.SetActive(false);
+        }
+        this.html.css({
+            "cursor": this.get_cursor_css(),
+            "opacity": this.get_opacity_css()
+        });
+    }
+    get_bg_css () {
+        return this.active ? this.stroke_color_highlighted : this.color.BackgroundRaised;
+    }
+    get_cursor_css () {
+        return (this.disabled ? "not-allowed" : this.active ? "help" : "pointer");
+    }
+    get_opacity_css () {
+        return this.disabled ? 0.4 : 1;
+    }
+    show_tip () {
+        if (this.tip) {
+            this.tip.html.show();
+            return;
+        }
+        this.tip = new DashGuiFlowTipText(this.view, this.id);
+        this.tip.Emphasize();
+        this.tip.html.css({
+            "position": "absolute",
+            "top": -Dash.Size.Padding,
+            "left": -(this.stroke_size * 0.5),
+            "transform": "rotate(-90deg)",
+            "transform-origin": "top left",
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+        this.html.append(this.tip.html);
+    }
+    hide_tip () {
+        if (!this.tip) {
+            return;
+        }
+        this.tip.html.hide();
+    }
+    setup_connections () {
+        this.html.on("mouseenter", () => {
+            if (!this.active && !this.disabled) {
+                this.html.css({
+                    "border": this.stroke_size + "px solid " + this.stroke_color_highlighted
+                });
+            }
+            this.show_tip();
+        });
+        this.html.on("mouseleave", () => {
+            if (!this.active && !this.disabled) {
+                this.html.css({
+                    "border": this.stroke_size + "px solid " + this.stroke_color
+                });
+            }
+            this.hide_tip();
+        });
+        this.html.on("click", () => {
+            if (this.active || this.disabled) {
+                return;
+            }
+            this.view.LoadStep(this.id, true);  // Don't need confirmation from the user if they've already clicked the button
+        });
+    }
+}
+
+class DashGuiFlowTipText {
+    constructor (view, text, more_text="") {
+        this.view = view;
+        this.text = text;
+        this.more_text = more_text;
+        this.label = null;
+        this.more_label = null;
+        this.emphasized = false;
+        this.show_more_toggle = null;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.style = {
+            "default": {
+                "default": {
+                    "bg_color": this.color.PinstripeLight,
+                    "font_color": this.color.StrokeLight,
+                    "border_color": this.color.PinstripeDark,
+                    "font_size": "100%"
+                },
+                "emphasized": {
+                    "bg_color": this.color.Pinstripe,
+                    "font_color": this.color.Stroke,
+                    "border_color": this.color.StrokeLight,
+                    "font_size": "100%"
+                }
+            },
+            "toggle": {
+                "default": {
+                    "bg_color": this.color.PinstripeLight,
+                    "icon_color": this.color.Pinstripe,
+                    "font_color": this.color.PinstripeDark,
+                    "border_color": this.color.PinstripeDark,
+                    "font_size": "90%"
+                },
+                "emphasized": {
+                    "bg_color": this.color.Pinstripe,
+                    "icon_color": this.color.PinstripeDark,
+                    "font_color": this.color.StrokeLight,
+                    "border_color": this.color.StrokeLight,
+                    "font_size": "90%"
+                }
+            },
+            "code": {
+                "default": {
+                    "bg_color": Dash.Color.Lighten(this.color.Background, 7),
+                    "font_color": Dash.Color.GetTransparent(
+                        ColorAccentSecondary,
+                        0.75
+                    ),
+                    "border_color": this.color.Pinstripe,
+                    "font_size": "90%"
+                },
+                "emphasized": {
+                    "bg_color": Dash.Color.Lighten(this.color.Background, 10),
+                    "font_color": Dash.Color.GetTransparent(
+                        ColorAccentSecondary,
+                        0.85
+                    ),
+                    "border_color": this.color.Pinstripe,
+                    "font_size": "90%"
+                }
+            }
+        };
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "filter": "sepia(100%) hue-rotate(-15deg)",
+            "cursor": "help",
+            "user-select": "none",
+            "padding": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "border": "1px solid " + this.get_style_value("border_color"),
+            "background": this.get_style_value("bg_color"),
+            "border-radius": Dash.Size.BorderRadius,
+            "max-width": this.view.content_area_size * 0.5,
+            "display": "flex",
+            "flex-direction": "column",
+            "align-items": "center",
+            "justify-content": "center"
+        });
+        this.label = this.get_label(this.text);
+        this.html.append(this.label);
+        if (this.more_text) {
+            this.add_more_label();
+        }
+    }
+    SetText (text) {
+        this.text = text;
+        this.set_text(this.label, this.text);
+    }
+    SetMoreText (text) {
+        this.more_text = text;
+        if (!this.more_label) {
+            if (text) {
+                this.add_more_label();
+            }
+            return;
+        }
+        if (text) {
+            this.show_more_toggle.html.show();
+        }
+        else {
+            this.show_more_toggle.html.hide();
+        }
+        this.set_text(this.more_label, this.more_text);
+    }
+    Emphasize () {
+        this.emphasized = true;
+        this.toggle_emphasis();
+    }
+    EmphasizeOnHover () {
+        this.html.on("mouseenter", () => {
+            this.Emphasize();
+        });
+        this.html.on("mouseleave", () => {
+            this.reset_emphasis();
+        });
+    }
+    set_text (label, text) {
+        var parsed = this.parse_text(text);
+        if (parsed.includes("</") || parsed.includes("<br>")) {
+            // jQuery's .text() escapes HTML tags, so this approach is required
+            label[0].innerHTML = parsed;
+        }
+        else {
+            label.text(parsed);
+        }
+    }
+    get_label (text) {
+        var label = $("<div>" + this.parse_text(text) + "</div>");
+        label.css(this.get_label_css());
+        return label;
+    }
+    get_label_css (type="default") {
+        return {
+            "color": this.get_style_value("font_color", type),
+            "font-family": "sans_serif_normal",
+            "font-size": this.get_style_value("font_size", type),
+            "white-space": "pre-wrap",
+            "text-align": "center",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis"
+        };
+    }
+    add_more_label () {
+        if (this.more_label) {
+            return;
+        }
+        this.more_label = this.get_label(this.more_text);
+        this.more_label.css({
+            "opacity": 0,
+            "height": 0,
+            "overflow": "hidden"
+        });
+        this.html.append(this.more_label);
+        this.show_more_toggle = new Dash.Gui.Checkbox(
+            "",
+            false,
+            this.color,
+            "none",
+            this,
+            (toggle) => {
+                if (!this.more_label) {
+                    return;
+                }
+                var delay_ms = 300;
+                if (toggle.IsChecked()) {
+                    this.more_label.css({
+                        "height": "auto"
+                    });
+                    var height = this.more_label[0].scrollHeight;
+                    this.more_label.css({
+                        "height": 0
+                    });
+                    this.more_label.animate(
+                        {
+                            "opacity": 1,
+                            "height": height
+                        },
+                        delay_ms
+                    );
+                    this.show_more_toggle.label.SetText("Show less");
+                }
+                else {
+                    this.more_label.animate(
+                        {
+                            "opacity": 0,
+                            "height": 0
+                        },
+                        delay_ms
+                    );
+                    this.show_more_toggle.label.SetText("Show more");
+                }
+                this.refresh_toggle_click();
+            },
+            "Show more"
+        );
+        this.show_more_toggle.SetIconColor(this.get_style_value("icon_color", "toggle"));
+        this.show_more_toggle.SetFalseIconName("caret_down");
+        this.show_more_toggle.SetTrueIconName("caret_up");
+        this.show_more_toggle.label.html.css({
+            "cursor": "pointer"
+        });
+        this.show_more_toggle.label.label.css(this.get_label_css("toggle"));
+        this.refresh_toggle_click();
+        this.html.append(this.show_more_toggle.html);
+    }
+    refresh_toggle_click () {
+        this.show_more_toggle.label.html.on("click", () => {
+            this.show_more_toggle.Toggle();
+        });
+    }
+    reset_emphasis () {
+        this.emphasized = false;
+        this.toggle_emphasis();
+    }
+    toggle_emphasis () {
+        this.html.css({
+            "border": "1px solid " + this.get_style_value("border_color"),
+            "background": this.get_style_value("bg_color")
+        });
+        var font_color = this.get_style_value("font_color");
+        this.label.css({
+            "color": font_color
+        });
+        this.set_text(this.label, this.text);
+        if (this.more_label) {
+            this.more_label.css({
+                "color": font_color
+            });
+            this.set_text(this.more_label, this.more_text);
+            this.show_more_toggle.label.label.css({
+                "color": this.get_style_value("font_color", "toggle")
+            });
+            this.show_more_toggle.SetIconColor(this.get_style_value("icon_color", "toggle"));
+        }
+        this.SetText(this.text);
+    }
+    // Similar to markdown:
+    //  - `code`
+    //  - ~italic~
+    //  - *bold*
+    parse_text (text="") {
+        if (!text && text !== 0) {
+            return "";
+        }
+        // Line breaks don't work at the beginning for some reason, so replace with one "<br>" for every two "\n"
+        if (text === this.more_text && text.startsWith("\n")) {
+            var og_len = text.length;
+            text = text.LTrim("\n");
+            var breaks = "";
+            for (var _ of Dash.Math.Range(Math.ceil((og_len - text.length) / 2))) {
+                breaks += "<br>";
+            }
+            text = breaks + text;
+        }
+        text = text.toString().trim();
+        var parsed = "";
+        var code_active = false;
+        var bold_active = false;
+        var italic_active = false;
+        for (var char of text) {
+            if (  // Code
+                   char === "`"
+                && !bold_active
+                && !italic_active
+            ) {
+                if (code_active) {
+                    parsed += "</i>";
+                    code_active = false;
+                }
+                else {
+                    parsed += this.get_style_string({
+                        "font-family": "Andale Mono, Monaco, monospace",
+                        "font-size": this.get_style_value("font_size", "code"),
+                        "color": this.get_style_value("font_color", "code"),
+                        "background": this.get_style_value("bg_color", "code"),
+                        "border": "1px solid " + this.get_style_value("border_color", "code"),
+                        "border-radius": Dash.Size.BorderRadius,
+                        "padding-left": Dash.Size.Padding * 0.2,
+                        "padding-right": Dash.Size.Padding * 0.2,
+                        "padding-top": Dash.Size.Padding * 0.1,
+                        "padding-bottom": Dash.Size.Padding * 0.1
+                    });
+                    code_active = true;
+                }
+            }
+            else if (  // Italic
+                   char === "~"
+                && !code_active
+                && !bold_active
+            ) {
+                if (italic_active) {
+                    parsed += "</i>";
+                    italic_active = false;
+                }
+                else {
+                    parsed += this.get_style_string({
+                        "font-family": "sans_serif_italic",
+                        "font-size": this.get_style_value("font_size"),
+                        "color": this.get_style_value("font_color")
+                    });
+                    italic_active = true;
+                }
+            }
+            else if (  // Bold
+                   char === "*"
+                && !code_active
+                && !italic_active
+            ) {
+                if (bold_active) {
+                    parsed += "</i>";
+                    bold_active = false;
+                }
+                else {
+                    parsed += this.get_style_string({
+                        "font-family": "sans_serif_bold",
+                        "font-size": this.get_style_value("font_size"),
+                        "color": this.get_style_value("font_color")
+                    });
+                    bold_active = true;
+                }
+            }
+            else {
+                parsed += char;
+            }
+        }
+        return parsed;
+    }
+    get_style_value (key, type="default") {
+        var style = this.style[type][this.emphasized ? "emphasized" : "default"];
+        if (!(key in style)) {
+            style = this.style["default"][this.emphasized ? "emphasized" : "default"];
+        }
+        if (!(key in style)) {
+            console.warn("Warning: Unhandled style key:", key);
+        }
+        return style[key];
+    }
+    get_style_string (css) {
+        var style = "<i style='";
+        for (var key in css) {
+            style += key + ": " + css[key];
+            if (typeof css[key] === "number") {
+                style += "px";
+            }
+            style += ";";
+        }
+        style += "'>";
+        return style;
+    }
+}
+
+class DashGuiFlowTipImage {
+    constructor (view, url, width=null, height=null) {
+        this.view = view;
+        this.color = this.view.color;
+        this.html = Dash.File.GetImagePreview(url, width, height);
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "padding": Dash.Size.Padding,
+            "border": "1px solid " + this.color.PinstripeDark,
+            "border-radius": Dash.Size.BorderRadius,
+            "max-width": this.view.content_area_size * 0.5
+        });
+    }
+    SetURL (url, width=null, height=null) {
+        this.html.css({
+            "background-image": "url(" + url + ")"
+        });
+        // Copied from Dash.File.GetImagePreview
+        Dash.File.set_preview_size(this.html, width ? width : height, width ? height : "100%");
+    }
+}
+
+class DashGuiFlow {
+    constructor (api, steps, step_init_bound_cb, flow_id="", color=null) {
+        /**
+         * Flow element.
+         * --------------------------
+         *
+         * IMPORTANT NOTE: <br>
+         *     For consistency across Dash, this takes an API name with an optional flow ID, and uses
+         *     predetermined names for function calls. For each context this is used in, make sure
+         *     to add the correct function names to the respective API file as follows:
+         *
+         *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
+         *         - "get_data":           Get flow data (using flow ID, if provided)
+         *         - "reset":              Reset flow data and start over
+         *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
+         *
+         * @param {string} api - API name for requests
+         * @param {Array} steps - List of all step IDs
+         * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
+         *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
+         * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
+         *                           (Some flows may default to something like a user's email instead of an ID, for example)
+         * @param {DashColorSet} color - DashColorSet instance
+         */
+        this.api = api;
+        this.steps = steps;
+        this.step_init_cb = step_init_bound_cb;
+        this.flow_id = flow_id;
+        this.color = color || Dash.Color.Dark;
+        this.data = null;
+        this.obj_data = {};
+        this.timeline = null;
+        this.step_area = null;
+        this.now = new Date();
+        this.back_button = null;
+        this.resize_timer = null;
+        this.initialized = false;
+        // this.window_size_mult = 1;
+        this.loading_overlay = null;
+        this.modal_bg_opacity = 0.95;
+        this.content_area_size = 1024;
+        this.core_gui_font_size = 250;
+        this.back_button_visible = false;
+        this.rarity_combo_options = null;
+        this.exit_button_size_mult = 0.75;
+        this.exit_button_top = Dash.Size.Padding * 0.7;
+        this.missing_option_text_color = this.color.Stroke;
+        this.sidebar_width = Core.view.layout.tab_area_size;
+        this.icon_button_container_size = Dash.Size.Padding * 3;
+        this.modal_bg_color = Dash.Color.Darken(this.color.Background, 30);
+        this.timeline_pad = this.icon_button_container_size - Dash.Size.Padding;
+        this.tomorrow = new Date(this.now.getTime());
+        this.tomorrow.setDate(this.tomorrow.getDate() + 1);
+        this.one_year_out = new Date(this.now.getTime());
+        this.one_year_out.setDate(this.tomorrow.getDate() + 365);
+        this.html = Dash.Gui.GetHTMLAbsContext(
+            "",
+            this.color,
+            {
+                "background": Dash.Color.Darken(this.color.Background, 7),
+                "display": "flex",
+                "padding": Dash.Size.Padding,
+                "flex-direction": "column"
+            }
+        );
+        this.content_area = Dash.Gui.GetHTMLContext(
+            "",
+            {
+                "aspect-ratio": "1",
+                "min-width": this.content_area_size * 0.5,
+                "min-height": this.content_area_size * 0.5,
+                "max-width": this.content_area_size,
+                "width": "100%",
+                "height": "auto",
+                "margin": "auto",
+                "border": "1px solid " + this.color.PinstripeLight,
+                "border-radius": Dash.Size.BorderRadius * 4
+            },
+            this.color
+        );
+        this.row_area_css = {
+            "border-radius": Dash.Size.BorderRadius,
+            "padding": Dash.Size.Padding * 2,
+            "background": this.color.PinstripeLight
+        };
+        this.setup_styles();
+    }
+    setup_styles () {
+        // var min_window_size = Math.min(window.innerHeight, window.innerWidth);
+        //
+        // if (min_window_size < this.content_area_size) {
+        //     this.window_size_mult = min_window_size / this.content_area_size;
+        //
+        //     this.core_gui_font_size *= this.window_size_mult;
+        // }
+        this.html.append(this.content_area);
+        Core.view.layout.SetTabAreaSize(0, 500);
+        this.get_data();
+        this.LoadObjData();
+        // TODO: add some kind of toolbar thing at the top to contain the agency logo, launch year,
+        //  maybe some other key info that gets updated with every change as the process goes along
+    }
+    RequestNewOption (step_id) {
+        var text_area = new Dash.Gui.TextArea(
+            this.color,
+            "Please describe the new option you'd like to have added with any additional relevant context.",
+            this
+        );
+        text_area.SetHeight(Dash.Size.RowHeight * 8, true);
+        var prompt;  // Define this variable before it's initialized so that it can be referenced in the callback
+        var size = Dash.Size.ColumnWidth * 2;  // Correlated to the text area's height
+        prompt = new Dash.Gui.Prompt(
+            (selected_index) => {
+                if (selected_index === 1) {  // Send
+                    var request_text = text_area.GetText().trim().Trim("\n").trim();
+                    if (!request_text) {
+                        this.on_empty_request_text(prompt);
+                        return;
+                    }
+                    this.send_option_request(step_id, request_text);
+                }
+                prompt.Remove();
+            },
+            size,
+            size,
+            "",
+            "Request a new option",
+            "Send",
+            "Cancel",
+            this.color,
+            true,
+            this.modal_bg_opacity,
+            true,
+            this.modal_bg_color
+        );
+        prompt.AddHTML(text_area.html);
+        prompt.DisableRemoveOnSelection();
+    }
+    // TODO: need some kind of safeguard for when a user goes back a step, clears a field, then returns
+    //  to the next step to continue - loading would need to confirm that the required data exists,
+    //  otherwise, revert to the previous step and inactivate that newer step (for example, user is
+    //  on the collection_display_name step, goes back to the launch_date step and clears the date
+    //  (though, the user shouldn't be able to proceed like this anyway, so maybe need to hide the
+    //  continue button and possibly disable the superseding active nodes?), then goes forward to
+    //  return to the collection_display_name step, which should alert and return the user back
+    //  to the launch_date step, since the required data no longer exists)
+    LoadStep (id, force=false, from_reset=false, save_first=false) {
+        if (!force) {
+            new Dash.Gui.Prompt(
+                (selected_index) => {
+                    if (selected_index === 1) {  // Yes
+                        this.LoadStep(id, true, from_reset, save_first);
+                    }
+                },
+                Dash.Size.ColumnWidth * 1.5,
+                Dash.Size.ColumnWidth * 1.25,
+                "Go to " + id.Title() + "?",
+                "Change Step",
+                "Yes",
+                "Cancel",
+                this.color,
+                true,
+                this.modal_bg_opacity,
+                true,
+                this.modal_bg_color
+            );
+            return;
+        }
+        if (save_first) {
+            this.Save(
+                true,
+                () => {
+                    this.load_step(id, from_reset);
+                }
+            );
+        }
+        else {
+            this.load_step(id, from_reset);
+        }
+    }
+    Save (show_loading_overlay=false, callback=null) {
+        if (show_loading_overlay) {
+            this.show_loading_overlay();
+        }
+        Dash.Request(
+            this,
+            (response) => {
+                this.hide_loading_overlay();
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
+                // TODO: update local client data? or will it already be up to date?
+                if (callback) {
+                    callback();
+                }
+            },
+            this.api,
+            {
+                "f": "save",
+                "flow_id": this.flow_id,
+                "data": JSON.stringify(this.data),
+                "step_id": this.timeline.GetActiveNode().ID()
+            }
+        );
+    }
+    UpdateLocal (key, value) {
+        // TODO: update local data
+    }
+    GetLabel (text, header=false, button=false) {
+        var label = $("<div>" + text + "</div>");
+        var css = {
+            "user-select": "none",
+            "color": header ? this.color.Text : button ? this.missing_option_text_color : this.color.StrokeDark,
+            "font-family": "sans_serif_" + (header ? "bold" : button ? "bold" : "normal"),
+            "text-align": "center",
+            "font-size": header ? "225%" : button ? "100%" : "125%",
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding,
+            "cursor": button ? "pointer" : "auto",
+            "white-space": "pre-wrap",
+            "width": "fit-content"
+        };
+        if (button) {
+            css["font-style"] = "italic";  // Allows for both bold and italic
+        }
+        label.css(css);
+        return label;
+    }
+    ShowBackButton () {
+        if (this.back_button_visible) {
+            return;
+        }
+        this.back_button_visible = true;
+        if (this.back_button) {
+            this.back_button.html.show();
+        }
+        else {
+            this.add_back_button();
+        }
+    }
+    HideBackButton () {
+        if (!this.back_button || !this.back_button_visible) {
+            return;
+        }
+        this.back_button_visible = false;
+        this.back_button.html.hide();
+    }
+    LoadObjData () {
+        // TODO: get from data
+        var agency_id = "2022010316502766395";
+        var vdb_type = "items";
+        if (!agency_id || !vdb_type) {
+            return;
+        }
+        var key = this.GetObjDataKey();
+        if (this.obj_data[key] || this.obj_data[key + "_loading"]) {
+            return;
+        }
+        this.obj_data[key + "_loading"] = true;
+        Dash.Request(
+            this,
+            (response) => {
+                this.obj_data[key + "_loading"] = false;
+                if (!Dash.Validate.Response(response)) {
+                    this.obj_data[key] = {};
+                    return;
+                }
+                this.obj_data[key] = response;
+            },
+            "VDBCore",
+            {
+                "f": "get_all",
+                "vdb_type": vdb_type,
+                "agency_id": agency_id
+            }
+        );
+    }
+    GetObjDataKey () {
+        // TODO: get from data
+        var agency_id = "2022010316502766395";
+        var vdb_type = "items";
+        if (!agency_id || !vdb_type) {
+            return "";
+        }
+        return agency_id + "_" + vdb_type;
+    }
+    init_step (id) {
+        this.step_init_cb(this, id);
+    }
+    load_step (id, from_reset) {
+        this.timeline.SetActiveNode(id, from_reset);
+        this.step_area.SetActiveStep(id);
+    }
+    get_data () {
+        this.show_loading_overlay();
+        Dash.Request(
+            this,
+            (response) => {
+                this.hide_loading_overlay();
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
+                this.data = response;
+                this.init_gui();
+            },
+            this.api,
+            {
+                "f": "get_data",
+                "flow_id": this.flow_id
+            }
+        );
+    }
+    init_gui () {
+        if (this.initialized) {
+            return;
+        }
+        // TODO: get from data using "active_step" key (asset_path format - default to first step)
+        var active_step_id = "" || this.steps[0];
+        this.step_area = new DashGuiFlowStepArea(this);
+        this.timeline = new DashGuiFlowTimeline(this);
+        this.timeline.html.css({
+            "position": "absolute",
+            "left": this.timeline_pad,
+            "right": this.timeline_pad,
+            "bottom": this.timeline_pad
+        });
+        this.step_area.html.css({
+            "position": "absolute",
+            "top": this.icon_button_container_size,
+            "left": this.icon_button_container_size,
+            "right": this.icon_button_container_size,
+            "bottom": this.timeline.height + (this.timeline_pad * 2)
+        });
+        this.content_area.append(this.step_area.html);
+        this.content_area.append(this.timeline.html);
+        this.add_exit_button();
+        this.add_reset_button();
+        this.LoadStep(active_step_id, true);
+        this.add_resize_listener();
+        this.initialized = true;
+    }
+    add_resize_listener () {
+        $(window).on("resize", () => {
+            if (this.resize_timer) {
+                clearTimeout(this.resize_timer);
+            }
+            this.resize_timer = setTimeout(
+                () => {
+                    for (var options of this.step_area.step.options) {
+                        options.OnResize();
+                    }
+                },
+                250
+            );
+        });
+    }
+    add_exit_button () {
+        var button = new Dash.Gui.IconButton(
+            "close_circle",
+            () => {
+                this.exit(true);  // Don't need to confirm with the user if they already clicked the button
+            },
+            this,
+            this.color,
+            {
+                // Normally the multiplier would be passed to the "size_mult" key,
+                // but that would leave empty space in the button's container, meaning the click
+                // event can be triggered in that empty space, which is not desired in this case
+                "container_size": this.icon_button_container_size * this.exit_button_size_mult
+            }
+        );
+        button.html.css({
+            "position": "absolute",
+            "top": this.exit_button_top,
+            "left": Dash.Size.Padding * 0.7
+        });
+        this.style_icon_button(button, "Exit", true);
+        this.content_area.append(button.html);
+    }
+    add_back_button () {
+        var left_margin = Dash.Size.Padding * 0.2;
+        this.back_button = new Dash.Gui.IconButton(
+            "arrow_left_alt2_heavy",
+            () => {
+                this.timeline.GoBack();
+            },
+            this,
+            this.color,
+            {
+                "container_size": this.icon_button_container_size,
+                "size_mult": 1.1
+            }
+        );
+        this.back_button.html.css({
+            "position": "absolute",
+            "height": "auto",
+            "top": "25%",
+            "bottom": "25%",
+            "left": 0,
+            "overflow": "hidden",
+            "padding-right": left_margin * 2
+        });
+        this.back_button.icon.html.css({
+            "height": "100%"
+        });
+        this.back_button.icon.icon_html.css({
+            "margin-left": left_margin,
+            "top": "calc(50% - " + (this.icon_button_container_size * 0.5) + "px)"
+        });
+        this.style_icon_button(this.back_button, "Back", false, this.color.PinstripeLight);
+        this.content_area.append(this.back_button.html);
+    }
+    add_reset_button () {
+        var button = new Dash.Gui.IconButton(
+            "refresh",
+            () => {
+                this.reset();
+            },
+            this,
+            this.color,
+            {
+                // Normally the multiplier (0.65) would be passed to the "size_mult" key,
+                // but that would leave empty space in the button's container, meaning the click
+                // event can be triggered in that empty space, which is not desired in this case
+                "container_size": this.icon_button_container_size * 0.65
+            }
+        );
+        button.html.css({
+            "position": "absolute",
+            "top": Dash.Size.Padding * 0.9,
+            "right": Dash.Size.Padding * 0.8
+        });
+        this.style_icon_button(button, "Start over", true);
+        this.content_area.append(button.html);
+    }
+    style_icon_button (button, hover_text, mirror=false, bg_hover_color=null) {
+        var default_color = this.color.Stroke;
+        if (mirror) {
+            button.MirrorIcon();
+        }
+        button.SetHoverHint(hover_text);
+        button.SetIconColor(default_color);
+        button.html.on("mouseenter", () => {
+            button.SetIconColor(this.color.Button.Background.Base);
+            if (bg_hover_color) {
+                button.html.css({
+                    "background": bg_hover_color
+                });
+            }
+        });
+        button.html.on("mouseleave", () => {
+            button.SetIconColor(default_color);
+            if (bg_hover_color) {
+                button.html.css({
+                    "background": ""
+                });
+            }
+        });
+    }
+    on_empty_request_text (prompt) {
+        prompt.DisableEscShortcut();
+        prompt.DisableEnterShortcut();
+        var alert = new Dash.Gui.Alert(
+            (
+                "It looks like you forgot to explain your request.\n\n" +
+                "Please write something in the box and try again."
+            ),
+            this.color,
+            "Hang on",
+            "Got it",
+            () => {
+                prompt.EnableEscShortcut();
+                prompt.EnableEnterShortcut();
+            },
+            prompt.width,
+            prompt.height,
+            false  // Don't need another bg, the prompt is still up
+        );
+        alert.IncreaseZIndex(Math.abs(prompt.modal.css("z-index") - alert.modal.css("z-index")) + 1);
+    }
+    send_option_request (step_id, request_text) {
+        this.show_loading_overlay();
+        Dash.Request(
+            this,
+            (response) => {
+                this.hide_loading_overlay();
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
+                new Dash.Gui.Alert(
+                    (
+                        "Your request was sent directly to the RTC team. If they have any questions, " +
+                        "they'll reach out directly, otherwise, you can expect a fairly quick turnaround." +
+                        "\n\nOnce your new option has been added, you'll be notified and can return to " +
+                        "this tool to continue creating your new drop.\n\nIf you have any questions, " +
+                        "please don't hesitate to reach out to the RTC team."
+                    ),
+                    this.color,
+                    "Request Sent",
+                    "Exit for now",
+                    () => {
+                        this.exit(true);
+                    },
+                    Dash.Size.ColumnWidth * 2.5,
+                    Dash.Size.ColumnWidth * 2.1,
+                    true,
+                    this.modal_bg_opacity,
+                    true,
+                    this.modal_bg_color
+                );
+            },
+            this.api,
+            {
+                "f": "new_option_request",
+                "flow_id": this.flow_id,
+                "step_id": step_id,
+                "request_text": request_text
+            }
+        );
+    }
+    get_rarity_combo_options () {
+        if (this.rarity_combo_options) {
+            return this.rarity_combo_options;
+        }
+        this.rarity_combo_options = [{"id": "", "label_text": "Select rarity"}];
+        for (var rarity of Core.Rarities) {
+            if (rarity === "titan") {
+                continue;
+            }
+            this.rarity_combo_options.push({
+                "id": rarity,
+                "label_text": rarity.Title()
+            });
+        }
+        this.rarity_combo_options.push({"id": "other", "label_text": "Other"});
+        return this.rarity_combo_options;
+    }
+    show_loading_overlay () {
+        if (!this.loading_overlay) {
+            this.loading_overlay = new Dash.Gui.LoadingOverlay(this.color, "none", "Loading", this.content_area);
+        }
+        this.loading_overlay.Show();
+    }
+    hide_loading_overlay () {
+        if (!this.loading_overlay) {
+            return;
+        }
+        this.loading_overlay.Hide();
+    }
+    reset (_force=false) {
+        if (!_force) {
+            new Dash.Gui.Prompt(
+                (selected_index) => {
+                    if (selected_index === 1) {  // Start over
+                        this.reset(true);
+                    }
+                },
+                Dash.Size.ColumnWidth * 1.5,
+                Dash.Size.ColumnWidth * 1.35,
+                "All progress will be lost.\n\nAre you sure you want to start over?",
+                "Start over?",
+                "Start over",
+                "Keep working",
+                this.color,
+                true,
+                this.modal_bg_opacity,
+                true,
+                this.modal_bg_color
+            );
+            return;
+        }
+        this.show_loading_overlay();
+        Dash.Request(
+            this,
+            (response) => {
+                this.hide_loading_overlay();
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
+                this.data = {};
+                this.LoadStep(this.steps[0], true, true);
+            },
+            this.api,
+            {
+                "f": "reset",
+                "flow_id": this.flow_id
+            }
+        );
+    }
+    // TODO: when exiting mid-flow, draw some kind of visual indicator on the `Create New Drop` tab in
+    //  the left sidebar to show that there's an active one - this needs to persist on reload, of course
+    exit (force=false) {
+        if (!force) {
+            new Dash.Gui.Prompt(
+                (selected_index) => {
+                    if (selected_index === 1) {  // Exit
+                        this.exit(true);
+                    }
+                },
+                Dash.Size.ColumnWidth * 1.5,
+                Dash.Size.ColumnWidth * 1.15,
+                "All progress will be saved and you can return any time.",
+                "Exit?",
+                "Exit",
+                "Keep working",
+                this.color,
+                true,
+                this.modal_bg_opacity,
+                true,
+                this.modal_bg_color
+            );
+            return;
+        }
+        this.Save(
+            true,
+            () => {
+                Core.view.layout.SetTabAreaSize(this.sidebar_width, 500);
+                this.html.stop().animate(
+                    {"opacity": 0},
+                    750,
+                    () => {
+                        Core.view.layout.LoadIndex(Core.view.layout.GetIndexByTabName(Core.view.profile_tab_name));
+                    }
+                );
+            }
+        );
+    }
+}
+
+class DashGuiFlowButton extends DashGuiButton {
+    constructor (text, binder, callback) {
+        super(
+            text,
+            callback,
+            binder,
+            binder.color
+        );
+        this.bouncing = false;
+        this.highlighted = false;
+        this.bounce_timer = null;
+        this.view = this.bind.view;
+        // this.outline_color = this.color.PinstripeDark;
+        this.extend_styles();
+    }
+    extend_styles () {
+        this.FitContent();
+        this.StyleAsBorderButton(
+            1,
+            "solid",
+            this.color.Stroke
+        );
+        this.label.css({
+            "font-family": "sans_serif_bold"
+        });
+        this.extend_connections();
+    }
+    // If changing size and also adding an icon using AddIcon, add the icon after changing size
+    Highlight (size=0) {
+        this.highlighted = true;
+        this.html.css({
+            // "outline": "1px solid " + this.outline_color,
+            "background": this.color.Button.Background.Base,
+            "border": "none"
+        });
+        this.highlight.css({
+            "background": this.color.Button.Background.BaseHover
+        });
+        if (size) {
+            this.html.css({
+                "height": size
+            });
+            this.label.css({
+                "line-height": size + "px"
+            });
+        }
+    }
+    Bounce (delay_ms=250) {
+        if (this.bouncing) {
+            return;
+        }
+        if (delay_ms) {
+            if (this.bounce_timer) {
+                clearTimeout(this.bounce_timer);
+            }
+            this.bounce_timer = setTimeout(
+                () => {
+                    this.Bounce(0);
+                },
+                delay_ms
+            );
+            return;
+        }
+        this.bouncing = true;
+        this.bounce();
+    }
+    bounce (height=0, times=2, duration=150, _dur_frac=null, _height_frac=null) {
+        if (times <= 0) {
+            this.bouncing = false;
+            return;
+        }
+        if (!height) {
+            height = this.html.height() * 0.5;
+        }
+        if (_dur_frac === null) {
+            _dur_frac = duration / times;
+            _height_frac = height / times;
+        }
+        var dur = _dur_frac * times;
+        this.html.stop().animate(
+            {"top": -(_height_frac * times)},
+            {
+                "duration": dur,
+                "complete": () => {
+                    this.html.stop().animate(
+                        {"top": 0},
+                        {
+                            "duration": dur * 0.9,
+                            "complete": () => {
+                                this.bounce(
+                                    height,
+                                    times - 1,
+                                    duration,
+                                    _dur_frac * 0.9,
+                                    _height_frac
+                                );
+                            }
+                        }
+                    );
+                }
+            }
+        );
+    }
+    extend_connections () {
+        this.html.on("mouseenter", () => {
+            if (this.bounce_timer) {
+                clearTimeout(this.bounce_timer);
+            }
+            if (this.highlighted) {
+                this.html.stop().css({
+                    "top": 0,
+                    "opacity": 1,
+                    "outline": "2px solid " + this.color.Stroke
+                    // "outline": "1px solid " + this.color.Stroke
+                });
+            }
+        });
+        this.html.on("mouseleave", () => {
+            if (this.highlighted) {
+                this.html.css({
+                    // "outline": "1px solid " + this.outline_color
+                    "outline": ""
+                });
+            }
+        });
+    }
+}
+
+class DashGuiFlowCombo extends DashGuiCombo {
+    constructor (view, combo_options, bound_cb=null, starting_option_id="") {
+        super(
+            "",
+            bound_cb,
+            null,
+            combo_options,
+            starting_option_id,
+            view.color,
+            {"style": "default_bubbled"}
+        );
+        this.view = view;
+        this.extend_styles();
+    }
+    extend_styles () {
+        this.font_size = this.view.core_gui_font_size + "%";
+        this.row_font_size = (this.view.core_gui_font_size - 50) + "%";
+        this.dropdown_icon_css["top"] = "";
+        this.html.css({
+            "height": ""
+        });
+        this.inner_html.css({
+            "background": "",
+            "height": "",
+            "line-height": "",
+            "padding": Dash.Size.Padding * 0.5
+        });
+        this.click.css({
+            "line-height": ""
+        });
+        this.label_container.css({
+            "height": "100%",
+            "align-items": "center"
+        });
+        this.dropdown_icon.html.css({
+            "top": this.dropdown_icon_css["top"]
+        });
+        this.dropdown_icon.icon_html.css({
+            "font-size": "200%"
+        });
+        this.label.css({
+            "line-height": ""
+        });
+        requestAnimationFrame(() => {
+            // To make sure the rows draw at the same size (might want to make sure this updates on resizing of window)
+            this.height = this.inner_html.innerHeight() || this.inner_html.height();
+        });
+    }
+    SetFontSize (size_num, icon_size_num=0, row_font_size=0) {
+        this.font_size = size_num + "%";
+        this.label.css({
+            "font-size": this.font_size
+        });
+        if (icon_size_num) {
+            this.dropdown_icon.icon_html.css({
+                "font-size": icon_size_num + "%"
+            });
+        }
+        if (row_font_size) {
+            this.row_font_size = row_font_size + "%";
+        }
+    }
+}
+
+class DashGuiFlowDatePicker extends DashGuiDatePicker {
+    constructor (view, bound_cb=null, min="", max="", label_text="") {
+        super(
+            label_text,
+            null,
+            bound_cb,
+            bound_cb,
+            bound_cb,
+            view.color,
+            min && max ? min : view.tomorrow.toLocaleDateString(
+                "en-CA",  // Canadian English locale, which uses the "yyyy-mm-dd" format by default
+                {
+                    "year": "numeric",
+                    "month": "2-digit",
+                    "day": "2-digit"
+                }
+            ),
+            min && max ? max : view.one_year_out.toLocaleDateString(
+                "en-CA",  // Canadian English locale, which uses the "yyyy-mm-dd" format by default
+                {
+                    "year": "numeric",
+                    "month": "2-digit",
+                    "day": "2-digit"
+                }
+            )
+        );
+        this.view = view;
+        this.right_pad = Dash.Size.Padding;
+        this.top_pad = Dash.Size.Padding * 0.5;
+        // The native calendar icon button component of the date
+        // input can't be styled, so getting creative instead
+        this.cal_icon_backing = $("<div></div>");
+        this.cal_icon_backing_icon = new Dash.Gui.Icon(this.color, "click", null, 1, this.color.Background);
+        this.extend_styles();
+    }
+    extend_styles () {
+        this.html.css({
+            "height": "",
+            "line-height": "",
+            "padding-left": this.right_pad,
+            "padding-right": this.right_pad,
+            "padding-top": this.top_pad,
+            "padding-bottom": this.top_pad,
+            "background": this.color.PinstripeDark,
+            "border": "1px solid " + this.color.Pinstripe,
+            "border-radius": Dash.Size.BorderRadius
+        });
+        this.input.css({
+            "flex": "",
+            "font-size": "300%",
+            "width": "fit-content",
+            "z-index": 10
+        });
+        this.cal_icon_backing.css({
+            "z-index": 5,
+            "background": this.color.StrokeLight,
+            "border-radius": Dash.Size.BorderRadius,
+            "position": "absolute",
+            "right": "calc(3% + " + this.right_pad + "px)",
+            "top": "25%",
+            "height": "calc(65% - " + (this.top_pad * 2) + "px)",
+            "aspect-ratio": "1",
+            "display": "flex",
+            "align-items": "center",
+            "justify-content": "center"
+        });
+        this.cal_icon_backing.append(this.cal_icon_backing_icon.html);
+        this.cal_icon_backing_icon.html.css({
+            "margin-top": "23%",
+            "margin-left": "20%"
+        });
+        this.cal_icon_backing_icon.SetSize(120, "70%", false);
+        this.SetAutosaveDelayMs(100);
+        this.html.append(this.cal_icon_backing);
+    }
+}
+
+class DashGuiFlowInput extends DashGuiInput {
+    constructor (view, bound_cb=null, placeholder_text="") {
+        super(
+            placeholder_text,
+            view.color
+        );
+        this.view = view;
+        this.bound_cb = bound_cb;
+        this.extend_styles();
+    }
+    extend_styles () {
+        this.html.css({
+            "background": "",
+            "box-shadow": "",
+            "height": "",
+            "border-radius": "",
+            "width": "75%",
+            "padding-left": Dash.Size.Padding,
+            "padding-right": Dash.Size.Padding,
+            "border-bottom": "1px solid " + this.color.PinstripeDark
+        });
+        this.input.css({
+            "font-size": this.view.core_gui_font_size + "%",
+            "padding": 0,
+            "line-height": "",
+            "width": "100%"
+        });
+        this.SetBoundCallback(this.bound_cb);
+    }
+    SetBoundCallback (bound_cb) {
+        this.bound_cb = bound_cb;
+        if (this.bound_cb) {
+            this.SetOnChange(this.bound_cb);
+            this.SetOnSubmit(this.bound_cb);
+            this.SetOnAutosave(this.bound_cb, null, true);
+            this.SetAutosaveDelayMs(100);
+        }
+        else {
+            // Not needed for now, but can handle later
+        }
+    }
+}
+
+class DashGuiFlowToggle {
+    constructor (
+        view, starting_state=true, bound_cb=null, true_label_text="", false_label_text="",
+        true_icon_name="toggle_on", false_icon_name="toggle_off", icon_size_mod=0, text_size_mod=0
+    ) {
+        this.view = view;
+        this.starting_state = starting_state;
+        this.bound_cb = bound_cb;
+        this.true_label_text = true_label_text;
+        this.false_label_text = false_label_text;
+        this.true_icon_name = true_icon_name;
+        this.false_icon_name = false_icon_name;
+        this.icon_size_mod = icon_size_mod;
+        this.text_size_mod = text_size_mod;
+        this.toggle = null;
+        this.true_label = null;
+        this.false_label = null;
+        this.color = this.view.color;
+        this.html = $("<div></div>");
+        this.label_bg_color = this.color.PinstripeDark;
+        this.icon_font_size = this.view.core_gui_font_size + this.icon_size_mod;
+        this.text_font_size = this.view.core_gui_font_size + this.text_size_mod;
+        this.active_toggle_bg_color = Dash.Color.GetTransparent(this.color.AccentGood, 0.75);
+        this.label_css = {
+            "font-size": this.icon_font_size + "%",  // Starting value only, for initial icon scaling
+            "margin": 0,
+            "padding": Dash.Size.Padding,
+            "background": this.label_bg_color,
+            "border-radius": Dash.Size.BorderRadius,
+            "cursor": "pointer"
+        };
+        this.label_container_css = {
+            "display": "flex",
+            "flex-basis": 0,
+            "flex-grow": 3,
+            "flex-shrink": 3
+        };
+        this.setup_styles();
+    }
+    // TODO: change label border color on hover
+    setup_styles () {
+        this.html.css({
+            "display": "flex",
+            "align-items": "center",
+            "justify-content": "center"
+        });
+        this.setup_false_label();
+        this.setup_toggle();
+        this.setup_true_label();
+        if (!this.false_label && !this.true_label) {
+            this.toggle.SetIconSize(this.icon_font_size);
+        }
+        this.style_on_toggle(this.starting_state);
+        requestAnimationFrame(() => {
+            this.toggle.SetIconSize(this.icon_font_size, this.html.outerHeight());
+            if (this.true_label) {
+                this.true_label.css({
+                    "font-size": this.text_font_size + "%"
+                });
+            }
+            if (this.false_label) {
+                this.false_label.css({
+                    "font-size": this.text_font_size + "%"
+                });
+            }
+        });
+    }
+    IsActive () {
+        return this.toggle.IsChecked();
+    }
+    setup_false_label () {
+        if (this.false_label || !this.false_label_text) {
+            return;
+        }
+        this.false_label = this.view.GetLabel(this.false_label_text);
+        this.false_label.css(this.label_css);
+        this.false_label.on("click", () => {
+            if (!this.toggle.IsChecked()) {
+                return;
+            }
+            this.toggle.Toggle();
+        });
+        var container = $("<div></div>");
+        container.css({
+            ...this.label_container_css,
+            "justify-content": "right"
+        });
+        container.append(this.false_label);
+        this.html.append(container);
+    }
+    setup_true_label () {
+        if (this.true_label || !this.true_label_text) {
+            return;
+        }
+        this.true_label = this.view.GetLabel(this.true_label_text);
+        this.true_label.css(this.label_css);
+        this.true_label.on("click", () => {
+            if (this.toggle.IsChecked()) {
+                return;
+            }
+            this.toggle.Toggle();
+        });
+        var container = $("<div></div>");
+        container.css(this.label_container_css);
+        container.append(this.true_label);
+        this.html.append(container);
+        this.toggle.html.css({
+            "margin-right": Dash.Size.Padding
+        });
+    }
+    setup_toggle () {
+        if (this.toggle) {
+            return;
+        }
+        this.toggle = new Dash.Gui.Checkbox(
+            "",
+            this.starting_state,
+            this.color,
+            "none",
+            null,
+            (toggle) => {
+                var active = toggle.IsChecked();
+                this.style_on_toggle(active);
+                if (this.bound_cb) {
+                    this.bound_cb(active);
+                }
+            }
+        );
+        this.toggle.html.css({
+            "flex": "none",
+            "margin-left": this.false_label ? Dash.Size.Padding : 0
+        });
+        this.toggle.SetTrueIconName(this.true_icon_name);
+        this.toggle.SetFalseIconName(this.false_icon_name);
+        this.html.append(this.toggle.html);
+    }
+    style_on_toggle (active) {
+        if (!this.true_label && !this.false_label) {
+            return;
+        }
+        var active_label = active ? this.true_label : this.false_label;
+        var inactive_label = active ? this.false_label : this.true_label;
+        active_label.css({
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "font-family": "sans_serif_bold",
+            "font-size": (this.text_font_size - 10) + "%",
+            "background": this.active_toggle_bg_color
+        });
+        inactive_label.css({
+            "font-size": this.text_font_size + "%",
+            "border": "1px solid " + this.label_bg_color,
+            "font-family": "sans_serif_normal",
+            "background": ""
+        });
+    }
 }
 
 function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {

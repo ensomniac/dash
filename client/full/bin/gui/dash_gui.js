@@ -10,6 +10,7 @@ function DashGui () {
     this.DatePicker                = DashGuiDatePicker;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
+    this.Flow                      = DashGuiFlow;
     this.Header                    = DashGuiHeader;
     this.Icon                      = DashGuiIcon;
     this.IconButton                = DashGuiIconButton;
