@@ -2,9 +2,10 @@ function Dash () {
     this.width = 0;
     this.height = 0;
     this.html = $("<div></div>");
+    this.TabIsVisible = true;
 
-    this.Context  = DASH_CONTEXT;
-    this.Daypart  = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
+    this.Context = DASH_CONTEXT;
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
 
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
@@ -18,7 +19,7 @@ function Dash () {
 
     // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
-        window.navigator.standalone === true  // iOS
+           window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
 
@@ -116,7 +117,7 @@ function Dash () {
             "position": "absolute",
             "left": 0,
             "top": 0,
-            "background": this.Color.GetVerticalGradient("#444", "#111", "#111"),
+            "background": this.Color.GetVerticalGradient("#444", "#111", "#111")
         });
 
         (function (self) {
@@ -427,6 +428,18 @@ function Dash () {
     this.Initialize = function () {
         this.extend_js();
         this.setup_styles();
+
+        // As of writing (1/30/24), this assists with reducing wasteful
+        // timer/interval callbacks, many of which are making requests.
+        (function (self) {
+            $(document).on("visibilitychange", function () {
+                self.TabIsVisible = document.visibilityState !== "hidden";
+            });
+        })(this);
+
+        // TODO: Once the Idle Detector API is fully available and no longer experimental,
+        //  it should be added and used in conjunction with the above visibility detector.
+        //  https://developer.mozilla.org/en-US/docs/Web/API/Idle_Detection_API
     };
 }
 

@@ -127,17 +127,16 @@ function DashRequest () {
         this.request_failures[req_id] = 0;
     };
 
+    // Called when a request finishes, and there are no more requests queued
     this.on_no_further_requests_pending = function () {
-        // Called when a request finishes, and there are no more requests queued
         // console.log(">> on_no_further_requests_pending <<");
     };
 
+    // This is called immediately before returning a response that has been compressed with gzip
     this.decompress_response = function (request, response) {
-        // This is called immediately before returning a response that has been compressed with gzip
-
         var gzip_bytes = Buffer.from(response["gzip"], "base64");
 
-        (function (self, gzip_bytes, request, response) {
+        (function (self) {
             zlib.unzip(gzip_bytes, function (_, decompressed_data) {
                 delete response["gzip"];
 
@@ -166,12 +165,13 @@ function DashRequest () {
 
                 self.on_response(request, response);
             });
-        })(this, gzip_bytes, request, response);
+        })(this);
     };
 
     this.on_response = function (request, response) {
         if (response && response["gzip"]) {
             this.decompress_response(request, response);
+
             return;
         }
 

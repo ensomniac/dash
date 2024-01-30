@@ -232,6 +232,12 @@ function DashUtils () {
             return;
         }
 
+        if (!Dash.TabIsVisible) {
+            console.warn("Warning: Tab is not visible, skipping timer/interval callback – ID:", timer["timer_id"]);
+
+            return;
+        }
+
         timer["callback"]();
     };
 
