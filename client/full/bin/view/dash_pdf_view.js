@@ -19,9 +19,9 @@ function DashPDFView (options) {
     this.data = null;
 
     this.setup_styles = function () {
-
         if (!this.content_key) {
-            console.log("Content key is missing for DashPDFView()");
+            console.error("Content key is missing for DashPDFView");
+
             return;
         }
 
@@ -57,20 +57,18 @@ function DashPDFView (options) {
     };
 
     this.upload_pdf = function (response) {
-
         if (response.originalEvent) {
             // TODO: Prevent this from being called inside of dash_gui_button_uploader.js
             return;
         }
 
-        console.log("Uploading pdf...");
+        Dash.Log.Log("Uploading pdf...");
 
         if (this.on_uploaded_callback) {
             this.on_uploaded_callback(response);
         }
 
         this.on_data(response);
-
     };
 
     this.update_sizes = function () {
@@ -125,7 +123,8 @@ function DashPDFView (options) {
     };
 
     this.on_pdf_page_clicked = function (page_data) {
-        console.log(page_data);
+        Dash.Log.Log(page_data);
+
         window.open(page_data["url"], '_blank');
     };
 

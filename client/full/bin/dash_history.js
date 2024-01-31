@@ -115,7 +115,7 @@ function DashHistory () {
                         return;  // Duplicate event
                     }
 
-                    console.log("Loading URL hash from history:", hash);
+                    Dash.Log.Log("Loading URL hash from history:", hash);
 
                     self.on_hash_change(event);
                 },

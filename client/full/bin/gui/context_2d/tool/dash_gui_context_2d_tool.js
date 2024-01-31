@@ -155,7 +155,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
                 continue;
             }
 
-            console.warn("Duplicate hotkey:", this.hotkey);
+            Dash.Log.Warn("Duplicate hotkey:", this.hotkey);
 
             this.hotkey = "";
 

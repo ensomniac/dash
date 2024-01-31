@@ -80,7 +80,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             return;
         }
 
-        console.log("User image uploaded:", response);
+        Dash.Log.Log("User image uploaded:", response);
 
         if (!response["img"]) {
             return;
@@ -165,7 +165,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
                 function (response) {
                     Dash.Validate.Response(response);
 
-                    console.log("User settings updated:", response);
+                    Dash.Log.Log("User settings updated:", response);
 
                     if (params["f"] === "update_password") {
                         text_box.SetText("");

@@ -338,7 +338,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             return;
         }
 
-        console.log("on_user_img_uploaded:", response);
+        Dash.Log.Log("on_user_img_uploaded:", response);
 
         if (this.img_box && response["img"]) {
             this.user_data["img"] = response["img"];

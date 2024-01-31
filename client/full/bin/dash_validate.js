@@ -19,7 +19,7 @@ function DashValidate () {
             }
 
             else {
-                console.warn("(Dash.Validate.Response) No response received:", response);
+                Dash.Log.Warn("(Dash.Validate.Response) No response received:", response);
             }
         }
 
@@ -31,7 +31,7 @@ function DashValidate () {
             }
 
             else {
-                console.warn("There was a server problem with this request:", response);
+                Dash.Log.Warn("There was a server problem with this request:", response);
             }
         }
 

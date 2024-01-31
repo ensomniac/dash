@@ -176,7 +176,7 @@ function DashGuiModal (
 
         // This shouldn't happen
         if (!this.width && !this.height) {
-            console.warn("Failed to get modal width and height");
+            Dash.Log.Warn("Failed to get modal width and height");
 
             return;
         }
@@ -334,7 +334,7 @@ function DashGuiModal (
                     }
 
                     if (e.key === "Escape") {
-                        console.log("(Esc key pressed) Close modal");
+                        Dash.Log.Log("(Esc key pressed) Close modal");
 
                         self.Hide();
                     }

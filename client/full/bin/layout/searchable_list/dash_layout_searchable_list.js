@@ -120,7 +120,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
             }
 
             else {
-                console.warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
+                Dash.Log.Warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
             }
 
             this.search_terms.push(search_text);

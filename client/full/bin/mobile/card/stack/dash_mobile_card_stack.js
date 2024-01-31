@@ -126,7 +126,7 @@ function DashMobileCardStack (binder, color=null) {
         }
 
         else {  // TODO?
-            console.warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+            Dash.Log.Warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         }
     };
 
@@ -209,11 +209,11 @@ function DashMobileCardStack (binder, color=null) {
 
     this.AddLeftContent = function (html) {
         // if (this.banner_fixed) {
-        //     console.log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
         // };
 
         if (this.active_panel_index === 0) {
-            console.warn("The left panel is already loaded");
+            Dash.Log.Warn("The left panel is already loaded");
         }
 
         html.css({
@@ -228,7 +228,7 @@ function DashMobileCardStack (binder, color=null) {
 
     this.ShowCenterContent = function () {
         // if (this.banner_fixed) {
-        //     console.log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
         // };
 
         this.slide_to_index(1);
@@ -240,13 +240,13 @@ function DashMobileCardStack (binder, color=null) {
 
     this.AddRightContent = function (html) {
         // if (this.banner_fixed) {
-        //     console.log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
         //
         //     this.unfix_banner_on_top();
         // };
 
         if (this.active_panel_index === 2) {
-            console.warn("The right panel is already loaded");
+            Dash.Log.Warn("The right panel is already loaded");
         }
 
         html.css({

@@ -128,13 +128,13 @@ class DashGuiFlowOption {
 
     SetSubLabelText (text, locked=false) {
         if (!this.label && locked) {
-            console.warn("Warning: If locking the SubLabel, you need to set up the Label first");
+            Dash.Log.Warn("Warning: If locking the SubLabel, you need to set up the Label first");
 
             return;
         }
 
         if (this.label && (this.image || this.text_tip)) {
-            console.warn("Warning: SubLabel is not intended to be used with an image or tip text");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with an image or tip text");
 
             return;
         }
@@ -160,7 +160,7 @@ class DashGuiFlowOption {
 
     SetImageURL (url) {
         if (this.label && this.sub_label) {
-            console.warn("Warning: SubLabel is not intended to be used with an image");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with an image");
 
             return;
         }
@@ -201,7 +201,7 @@ class DashGuiFlowOption {
 
     SetTipText (text) {
         if (this.label && this.sub_label) {
-            console.warn("Warning: SubLabel is not intended to be used with tip text");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with tip text");
 
             return;
         }

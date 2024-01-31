@@ -62,7 +62,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (!this.color instanceof DashColorSet) {
-            console.warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+            Dash.Log.Warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         }
 
         this.setup_styles();

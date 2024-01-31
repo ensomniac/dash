@@ -417,7 +417,7 @@ class DashGuiFlowTipText {
         }
 
         if (!(key in style)) {
-            console.warn("Warning: Unhandled style key:", key);
+            Dash.Log.Warn("Warning: Unhandled style key:", key);
         }
 
         return style[key];

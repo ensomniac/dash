@@ -78,7 +78,7 @@ function DashGuiLoadingOverlay (
     // See note at the top
     this.AppendTo = function (html) {
         if (!html) {
-            console.warn("DashGuiLoadingOverlay AppendTo() requires an HTML element:", html);
+            Dash.Log.Warn("DashGuiLoadingOverlay AppendTo() requires an HTML element:", html);
 
             return;
         }
@@ -107,7 +107,7 @@ function DashGuiLoadingOverlay (
         }
 
         if (!this.html_to_append_to) {
-            console.warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
+            Dash.Log.Warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
 
             return;
         }

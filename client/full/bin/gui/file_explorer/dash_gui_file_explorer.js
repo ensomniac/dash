@@ -99,7 +99,7 @@ function DashGuiFileExplorer (
 
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log(
+            Dash.Log.Warn(
                 "(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided"
             );
         }
@@ -236,7 +236,7 @@ function DashGuiFileExplorer (
 
     this.AddRow = function (file_data, file_id="") {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) AddRow function is only for use when this element " +
                 "is read-only, otherwise, rows are added and managed automatically."
             );
@@ -269,7 +269,7 @@ function DashGuiFileExplorer (
 
     this.SetIncludeUploadedKeysColumns = function (include=false) {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) SetIncludeUploadedKeysColumns function is intended for use when " +
                 "this element is read-only. It has not been written to support the standard mode."
             );
@@ -282,7 +282,7 @@ function DashGuiFileExplorer (
 
     this.SetIncludeListHeaderRow = function (include=false) {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) SetIncludeListHeaderRow function is intended for use when " +
                 "this element is read-only. It has not been written to support the standard mode."
             );

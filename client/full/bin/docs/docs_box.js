@@ -26,7 +26,7 @@ function DashDocsBox (docs_view, name, data) {
     };
 
     this.setup_styles = function () {
-        console.log("Data:", this.data);
+        Dash.Log.Log("Data:", this.data);
 
         this.html.css({
             "position": "absolute",

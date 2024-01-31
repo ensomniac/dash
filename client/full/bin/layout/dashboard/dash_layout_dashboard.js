@@ -60,7 +60,7 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
 
     this.AddDivider = function () {
         if (!this.modules.length) {
-            console.warn("No modules in dashboard, can't add divider");
+            Dash.Log.Warn("No modules in dashboard, can't add divider");
 
             return;
         }

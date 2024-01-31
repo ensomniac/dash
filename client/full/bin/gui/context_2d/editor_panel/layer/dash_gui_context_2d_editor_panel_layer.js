@@ -282,7 +282,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 self.html.on("click", function (e) {
                     self.Select();
 
-                    console.log("Layer data:", self.get_data());
+                    Dash.Log.Log("Layer data:", self.get_data());
 
                     e.stopPropagation();
                 });
@@ -574,7 +574,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var icon_name = this.layers.icon_map[type] || "unknown";
 
         if (icon_name === "unknown") {
-            console.warn("Unhandled layer type, couldn't get layer icon:", type);
+            Dash.Log.Warn("Unhandled layer type, couldn't get layer icon:", type);
         }
 
         return icon_name;

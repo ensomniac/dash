@@ -46,7 +46,7 @@ function DashGuiInputRowInterface () {
     };
 
     this.SetInputValidity = function (input_is_valid) {
-        console.log("input_is_valid: " + input_is_valid, "\n", this.color);
+        // Dash.Log.Log("input_is_valid: " + input_is_valid, "\n", this.color);
 
         if (input_is_valid) {
             this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
@@ -163,7 +163,7 @@ function DashGuiInputRowInterface () {
 
             this.input.autosave_timeout = null;
 
-            console.log("Cleared input autosave timeout");
+            Dash.Log.Log("Cleared input autosave timeout");
         }
 
         this.request_callback = callback;

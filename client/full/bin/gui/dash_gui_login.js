@@ -270,7 +270,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
             return;
         }
 
-        console.log("******* LOG IN *******", response);
+        Dash.Log.Log("******* LOG IN *******", response);
 
         Dash.User.SetUserAuthentication(this.get_email(), response);
 

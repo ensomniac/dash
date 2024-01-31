@@ -83,7 +83,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             }
 
             else {
-                console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+                Dash.Log.Warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
             }
         }
 

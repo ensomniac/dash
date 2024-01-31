@@ -66,7 +66,7 @@ function DashLayoutDashboardModuleRect () {
 
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                Dash.Log.Warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
 
                 break;
             }

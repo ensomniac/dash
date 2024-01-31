@@ -21,7 +21,7 @@ function DashAdminSettings (admin_view) {
         // this.add_site_settings_box();
         // this.add_user_groups_box();
         this.add_users_box();
-        // console.log(response);
+        // Dash.Log.Log(response);
     };
 
     this.add_users_box = function () {
@@ -48,7 +48,7 @@ function DashAdminSettings (admin_view) {
     };
 
     // this.create_group = function () {
-    //     console.log("Create Group");
+    //     Dash.Log.Log("Create Group");
     // };
 
     // this.add_site_settings_box = function () {

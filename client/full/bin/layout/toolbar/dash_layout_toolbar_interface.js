@@ -428,7 +428,7 @@ function DashLayoutToolbarInterface () {
         var obj_index = this.objects.length;
 
         callback = callback ? callback.bind(this.binder) : function (selected) {
-            console.warn("No callback provided, selected:", selected);
+            Dash.Log.Warn("No callback provided, selected:", selected);
         };
 
         var options = {

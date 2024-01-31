@@ -220,7 +220,7 @@ function DashDocsView (package_id, ext, color_options={}) {
     };
 
     this.on_documentation = function (response) {
-        console.log("Documentation:", response);
+        Dash.Log.Log("Documentation:", response);
 
         if (!Dash.Validate.Response(response)) {
             return;

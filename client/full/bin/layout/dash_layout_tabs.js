@@ -141,7 +141,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
         }
 
-        console.warn("Warning: Failed to find index by tab name for:", name, this.all_content);
+        Dash.Log.Warn("Warning: Failed to find index by tab name for:", name, this.all_content);
 
         return (default_zero ? 0 : null);
     };
@@ -315,7 +315,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
 
     this.MidpendHTML = function (html) {
         if (!this.side_tabs) {
-            console.log("MidpendHTML only works for side tabs right now");
+            console.error("MidpendHTML only works for side tabs right now");
 
             return;
         }

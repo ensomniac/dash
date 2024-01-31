@@ -117,7 +117,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
                 this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
             }
 
-            console.warn("Warning: Unhandled button / icon style: " + this.style);
+            Dash.Log.Warn("Warning: Unhandled button / icon style: " + this.style);
 
             this.setup_default_icon();
         }

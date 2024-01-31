@@ -33,7 +33,8 @@ class DashColorStateSet {
         }
 
         if (!this._selected) {
-            console.warn("Warning: Set a color for the 'Selected' property");
+            Dash.Log.Warn("Warning: Set a color for the 'Selected' property");
+
             this._selected = "red";
         }
 

@@ -289,7 +289,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         }
 
         else {
-            console.warn("Warning: Unhandled 'Edit' tab context type:", context_key);
+            Dash.Log.Warn("Warning: Unhandled 'Edit' tab context type:", context_key);
         }
 
         if (context_key in this.content.edit_tab_custom_element_configs) {

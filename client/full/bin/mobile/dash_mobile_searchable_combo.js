@@ -83,7 +83,7 @@ function DashMobileSearchableCombo (
 
     this.SetLabelByID = function (id) {
         if (!(id in this.options)) {
-            console.warn("ID not in options:", id);
+            Dash.Log.Warn("ID not in options:", id);
 
             return;
         }

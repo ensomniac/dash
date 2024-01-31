@@ -44,7 +44,7 @@ class DashGuiFlowRow {
             }
 
             else {
-                console.warn("Warning: Unhandled element instance type:", element);
+                Dash.Log.Warn("Warning: Unhandled element instance type:", element);
             }
         }
 

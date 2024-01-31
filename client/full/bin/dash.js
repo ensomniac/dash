@@ -3,9 +3,9 @@ function Dash () {
     this.height = 0;
     this.html = $("<div></div>");
     this.TabIsVisible = true;
-
     this.Context = DASH_CONTEXT;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
+    this.LocalDev = window.location.protocol === "file:";
 
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
@@ -28,7 +28,7 @@ function Dash () {
     this.Color = new DashColor(this.DarkModeActive);
 
     if (this.DarkModeActive) {
-        console.warn(
+        Dash.Log.Warn(
             "*** Dark mode active ***\n\n" +
             "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
             "after custom colors are set in color spec file."
@@ -41,6 +41,7 @@ function Dash () {
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
+    this.Log       = new DashLog();
     this.Math      = new DashMath();
     this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
@@ -158,7 +159,7 @@ function Dash () {
         // var test_array = ["a", "b"];
         //
         // for (var i in test_array) {
-        //     console.log(test_array[i])
+        //     Dash.Log.Log(test_array[i])
         //
         // You would see three printouts instead of two:
         //     - "a"
@@ -458,7 +459,7 @@ $(document).on("ready", function () {
     });
 
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
-        console.warn("Warning: URL Loaded with www -> Redirecting");
+        Dash.Log.Warn("Warning: URL Loaded with www -> Redirecting");
 
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
@@ -489,14 +490,14 @@ $(document).on("ready", function () {
     $("body").empty().append(window.Dash.html);
 
     if (!window.RunDash) {
-        console.log("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
+        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
     }
 
     else {
         var html = window.RunDash();
 
         if (!html) {
-            console.log("Dash Warning: The window.RunDash() must return an html element to anchor this app.");
+            console.error("The window.RunDash() must return an html element to anchor this app.");
         }
 
         else {

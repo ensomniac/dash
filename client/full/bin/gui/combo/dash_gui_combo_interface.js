@@ -60,7 +60,7 @@ function DashGuiComboInterface () {
         // but hits enter/submits the entry anyway, this combo will be the result
 
         if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !(combo_option["label_text"] || combo_option["display_name"])) {
-            console.log("Invalid combo option, cannot set default search submit combo:", combo_option);
+            Dash.Log.Warn("Invalid combo option, cannot set default search submit combo:", combo_option);
 
             return;
         }
@@ -192,7 +192,7 @@ function DashGuiComboInterface () {
         inverted=false, allow_first=true, left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy"
     ) {
         if (this.multi_select) {
-            console.warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
+            Dash.Log.Warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
 
             return;
         }
@@ -460,7 +460,7 @@ function DashGuiComboInterface () {
         }
 
         if (this.load_dots.IsActive()) {
-            console.log("Request already active...");
+            Dash.Log.Log("Request already active...");
 
             return;
         }
@@ -530,7 +530,7 @@ function DashGuiComboInterface () {
                        !(!this.option_list || this.option_list.length === 0)
                     && !(this.option_list.length === 1 && ["", "none"].includes(this.option_list[0]["id"])))
                 {
-                    console.warn(
+                    Dash.Log.Warn(
                         "Warning: Failed to find 'selected' object in options list." +
                         "\n\ncombo_list:", combo_list, "\nselected:", selected,
                         "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list

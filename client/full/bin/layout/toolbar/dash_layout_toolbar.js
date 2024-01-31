@@ -60,7 +60,7 @@ function DashLayoutToolbar (binder, color=null) {
         }
 
         else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+            Dash.Log.Warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
         }
     };
 

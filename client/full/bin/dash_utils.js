@@ -58,7 +58,7 @@ function DashUtils () {
 
     this.GetDeepCopy = function (obj) {
         if (!Dash.Validate.Object(obj)) {
-            console.warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
+            Dash.Log.Warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
 
             return obj;
         }
@@ -233,7 +233,7 @@ function DashUtils () {
         }
 
         if (!Dash.TabIsVisible) {
-            console.warn("Warning: Tab is not visible, skipping timer/interval callback – ID:", timer["timer_id"]);
+            Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
 
             return;
         }
@@ -304,8 +304,8 @@ function DashUtils () {
         // approximately every 30 frames. This is so we're not doing anything
         // too heavy on each frame. Check each worker to see if we should
         // still be processing frame updates
-        // console.log("Manage them all....");
-        // console.log(this.animation_frame_workers.length);
+        // Dash.Log.Log("Manage them all....");
+        // Dash.Log.Log(this.animation_frame_workers.length);
 
         // TODO: Round out this function to clean up stale html objects
     };

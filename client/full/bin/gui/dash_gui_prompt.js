@@ -280,13 +280,13 @@ function DashGuiPrompt (
                     }
 
                     if (e.key === "Escape" && self.allow_esc_shortcut) {
-                        console.log("(Esc key pressed) Cancel");
+                        Dash.Log.Log("(Esc key pressed) Cancel");
 
                         self.on_selection(0);
                     }
 
                     else if (e.key === "Enter" && self.allow_enter_shortcut) {
-                        console.log("(Enter key pressed) Continue");
+                        Dash.Log.Log("(Enter key pressed) Continue");
 
                         self.on_selection(1);
                     }
@@ -295,7 +295,7 @@ function DashGuiPrompt (
 
             self.background.on("click", function () {
                 if (self.allow_esc_shortcut) {
-                    console.log("(Background clicked) Cancel");
+                    Dash.Log.Log("(Background clicked) Cancel");
 
                     self.on_selection(0);
                 }

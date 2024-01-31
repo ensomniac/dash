@@ -310,7 +310,7 @@ function DashGuiContext2DEditorPanel (editor) {
 
         if (!active || !data_key) {
             if (!data_key) {
-                console.warn("Warning: Unhandled tool:", active_tool);
+                Dash.Log.Warn("Warning: Unhandled tool:", active_tool);
             }
 
             return;

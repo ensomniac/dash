@@ -127,7 +127,7 @@ function DashUser () {
         }
 
         else {
-            console.log("** The user is no longer authenticated **\n", response);
+            Dash.Log.Warn("** The user is no longer authenticated **\n", response);
 
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();

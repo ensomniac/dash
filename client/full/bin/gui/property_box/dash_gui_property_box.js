@@ -58,7 +58,7 @@ function DashGuiPropertyBox (
             var input_row = this.inputs[data_key];
 
             if (!input_row.CanAutoUpdate() || input_row.InFocus()) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;
             }
@@ -72,7 +72,7 @@ function DashGuiPropertyBox (
             var text_area = this.text_areas[data_key];
 
             if (text_area.InFocus()) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;
             }
@@ -90,7 +90,7 @@ function DashGuiPropertyBox (
             var combo = this.combos[data_key];
 
             if (combo.InFocus(false)) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
 
                 continue;
             }
@@ -120,7 +120,7 @@ function DashGuiPropertyBox (
             for (var element of tool_row.elements) {
                 if (element instanceof DashGuiInput || element instanceof DashGuiInputRow) {
                     if (element.InFocus()) {
-                        console.log("(Currently being edited) Skipping update for " + element.data_key);
+                        Dash.Log.Log("(Currently being edited) Skipping update for " + element.data_key);
 
                         continue;
                     }
@@ -354,7 +354,7 @@ function DashGuiPropertyBox (
             "obj_id": this.dash_obj_id
         };
 
-        console.log("Set property '" + key + "':", value);
+        Dash.Log.Log("Set property '" + key + "':", value);
 
         for (var k in this.additional_request_params) {
             params[k] = this.additional_request_params[k];
@@ -407,7 +407,7 @@ function DashGuiPropertyBox (
             return;
         }
 
-        console.log("SERVER RESPONSE:", response);
+        Dash.Log.Log("SERVER RESPONSE:", response);
 
         if (row_input && row_input.hasOwnProperty("FlashSave")) {
             row_input.FlashSave();

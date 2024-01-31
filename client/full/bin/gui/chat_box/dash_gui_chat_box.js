@@ -95,7 +95,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
 
         if (align_right && !this.dual_sided) {
-            console.log(
+            Dash.Log.Warn(
                 "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate " +
                 "an AddMessage() call with the 'align_right' param set to 'true'"
             );
@@ -168,7 +168,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
 
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
-            console.warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
+            Dash.Log.Warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
 
             return;
         }

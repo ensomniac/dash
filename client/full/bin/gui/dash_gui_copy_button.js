@@ -99,7 +99,7 @@ function DashGuiCopyButton (
 
         (function (self) {
             navigator.clipboard.writeText(text).then(function () {
-                console.log("Copied '" + text + "' to clipboard");
+                Dash.Log.Log("Copied '" + text + "' to clipboard");
 
                 self.label.stop().fadeIn(
                     "fast",

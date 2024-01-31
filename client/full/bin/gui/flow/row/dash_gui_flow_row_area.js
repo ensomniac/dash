@@ -101,7 +101,7 @@ class DashGuiFlowRowArea {
             }
 
             else {
-                console.warn("Warning: Unhandled config type:", config["type"]);
+                Dash.Log.Warn("Warning: Unhandled config type:", config["type"]);
             }
 
             if (!element) {

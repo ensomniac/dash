@@ -52,18 +52,18 @@ function DashAdminColor () {
         // Dash.Color.Dark.Button.Background.Selected
         // Dash.Color.Dark.Button.Background.SelectedHover
 
-        // console.log(color_set);
-        // console.log(color_set.Background);
-        // console.log(color_set.Text);
-        // console.log(color_set.Button);
+        // Dash.Log.Log(color_set);
+        // Dash.Log.Log(color_set.Background);
+        // Dash.Log.Log(color_set.Text);
+        // Dash.Log.Log(color_set.Button);
 
-        // console.log(color_set.Tab); // DashColorButtonSet
-        // console.log(color_set.Tab.Background); // DashColorStateSet
-        // console.log(color_set.Tab.Text); // DashColorStateSet
+        // Dash.Log.Log(color_set.Tab); // DashColorButtonSet
+        // Dash.Log.Log(color_set.Tab.Background); // DashColorStateSet
+        // Dash.Log.Log(color_set.Tab.Text); // DashColorStateSet
 
         // for (var color_set_name in color_root) {
-        //     console.log(color_set_name + ":");
-        //     console.log(color_root[color_set_name]);
+        //     Dash.Log.Log(color_set_name + ":");
+        //     Dash.Log.Log(color_root[color_set_name]);
         // };
 
     };
@@ -96,7 +96,7 @@ function DashAdminColor () {
 
                 Dash.Local.Set("dash_admin_color_style", self.display_theme);
 
-                console.log("switch to " + self.display_theme);
+                Dash.Log.Log("switch to " + self.display_theme);
 
                 self.draw_all();
             });
@@ -107,7 +107,7 @@ function DashAdminColor () {
     };
 
     this.draw_property_box = function (color_set) {
-        console.log("Adding property box");
+        Dash.Log.Log("Adding property box");
 
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding

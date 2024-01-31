@@ -358,7 +358,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         if (Dash.Validate.Object(this.mask_data)) {
             if (direction) {
-                console.warn(
+                Dash.Log.Warn(
                     "Warning: Layer fade was not applied because an image mask was used instead"
                 );
             }
@@ -403,7 +403,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             }
 
             else {
-                console.warn("Warning: Unhandled global fade direction:", direction);
+                Dash.Log.Warn("Warning: Unhandled global fade direction:", direction);
             }
         }
 
@@ -657,7 +657,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        // console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+        // Dash.Log.Warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
 
         if (hidden) {
             this.html.hide();
@@ -671,21 +671,21 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Meant to be overridden by member classes
     this.on_update = function () {
         if (this.type !== "context") {
-            console.warn("'on_update' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
         if (!(["context", "color"]).includes(this.type)) {
-            console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
         if (this.type !== "context") {
-            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
 
         this.html.css({
@@ -817,7 +817,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                         return;
                     }
 
-                    console.warn("Warning:", msg);
+                    Dash.Log.Warn("Warning:", msg);
                 },
                 1000
             );

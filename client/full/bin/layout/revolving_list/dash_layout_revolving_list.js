@@ -309,6 +309,10 @@ function DashLayoutRevolvingList (
         }
     };
 
+    this.RefreshConnections = function () {
+        this.setup_scroll_connections();
+    };
+
     // Not needed in most cases - only needed if manually breaking/altering a particular row's connections
     this.RefreshRowConnections = function (row) {
         this.setup_row_connections(row);

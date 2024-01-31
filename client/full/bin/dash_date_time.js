@@ -322,7 +322,7 @@ function DashDateTime () {
             return est_to_utc_offset_hours + 3;
         }
 
-        console.warn("Unhandled timezone, server offset hours not calculated:", timezone);
+        Dash.Log.Warn("Unhandled timezone, server offset hours not calculated:", timezone);
 
         return 0;
     };

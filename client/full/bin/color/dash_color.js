@@ -533,7 +533,7 @@ function DashColor (dark_mode_active=false) {
         }
 
         else {
-            console.warn("Warning: Dash.Color.Parse failed to parse color!", cstr);
+            Dash.Log.Warn("Warning: Dash.Color.Parse failed to parse color!", cstr);
         }
 
         this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];

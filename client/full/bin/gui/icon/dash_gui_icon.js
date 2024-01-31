@@ -62,7 +62,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             container_size = enforce_container_size_num ? parseInt(container_size) : container_size;
 
             if (enforce_container_size_num && isNaN(container_size)) {
-                console.warn("Warning: DashGuiIcon SetSize requires a number for container_size");
+                Dash.Log.Warn("Warning: DashGuiIcon SetSize requires a number for container_size");
             }
 
             else {

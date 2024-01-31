@@ -17484,6 +17484,7 @@ function Dash () {
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
+    this.LocalDev = window.location.protocol === "file:";
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -17501,7 +17502,7 @@ function Dash () {
     this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
     this.Color = new DashColor(this.DarkModeActive);
     if (this.DarkModeActive) {
-        console.warn(
+        Dash.Log.Warn(
             "*** Dark mode active ***\n\n" +
             "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
             "after custom colors are set in color spec file."
@@ -17513,6 +17514,7 @@ function Dash () {
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
+    this.Log       = new DashLog();
     this.Math      = new DashMath();
     this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
@@ -17618,7 +17620,7 @@ function Dash () {
         // var test_array = ["a", "b"];
         //
         // for (var i in test_array) {
-        //     console.log(test_array[i])
+        //     Dash.Log.Log(test_array[i])
         //
         // You would see three printouts instead of two:
         //     - "a"
@@ -17853,7 +17855,7 @@ $(document).on("ready", function () {
         }
     });
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
-        console.warn("Warning: URL Loaded with www -> Redirecting");
+        Dash.Log.Warn("Warning: URL Loaded with www -> Redirecting");
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
     // TODO: Do we really need this as a window variable rather than just calling it from Dash.Math?
@@ -17875,12 +17877,12 @@ $(document).on("ready", function () {
     window.Dash.Initialize();
     $("body").empty().append(window.Dash.html);
     if (!window.RunDash) {
-        console.log("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
+        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
     }
     else {
         var html = window.RunDash();
         if (!html) {
-            console.log("Dash Warning: The window.RunDash() must return an html element to anchor this app.");
+            console.error("The window.RunDash() must return an html element to anchor this app.");
         }
         else {
             window.Dash.html.append(html);
@@ -18586,7 +18588,7 @@ function DashUser () {
             this.__auth_authenticated_cb();
         }
         else {
-            console.log("** The user is no longer authenticated **\n", response);
+            Dash.Log.Warn("** The user is no longer authenticated **\n", response);
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
         }
@@ -18642,6 +18644,64 @@ function DashView () {
     this.SiteSettingsTabs = new DashAdminTabs();
     this.Style            = DashStyleView;
     this.User             = DashUserView;
+}
+
+// This class is a wrapper to the built-in console.log etc
+// methods. Use this for logs that should only be printed during
+// local dev or during remote debugging. Any logs that can
+// print on all clients should just use the built-in methods.
+class DashLog {
+    constructor () {
+        this.remote_debug_ls_key = "_dash_remote_debug_mode_enabled";
+        this.remote_debug_mode_enabled = !Dash.LocalDev ? false : null;
+    }
+    Log (...msg) {
+        this.log("log", ...msg);
+    }
+    Debug (...msg) {
+        this.log("debug", ...msg);
+    }
+    Info (...msg) {
+        this.log("info", ...msg);
+    }
+    // May be uncommon to use, since this will likely need to be printed in most cases
+    Warn (...msg) {
+        this.log("warn", ...msg);
+    }
+    // It's uncommon this would be used, since this will almost always need to be printed
+    Error (...msg) {
+        this.log("error", ...msg);
+    }
+    // Calling 'Dash.Log.ToggleRemoteDebugMode()' in the console
+    // will force all logs coming through this class to be printed.
+    // This is useful when remotely debugging someone else's client.
+    ToggleRemoteDebugMode () {
+        if (Dash.LocalDev) {
+            console.warn("Warning: Remote debug mode cannot (and doesn't need to) be toggled during local dev.");
+            return;
+        }
+        this.remote_debug_mode_enabled = !this.remote_debug_mode_enabled;
+        Dash.Local.Set(this.remote_debug_ls_key, this.remote_debug_mode_enabled);
+        location.reload();
+    }
+    log (type, ...msg) {
+        if (this.remote_debug_mode_enabled === null) {  // This pull only happens once
+            this.remote_debug_mode_enabled = Dash.Local.Get(this.remote_debug_ls_key, false);
+            if (this.remote_debug_mode_enabled) {
+                console.warn(
+                    "**********************************************************\n" +
+                    "WARNING: REMOTE DEBUG MODE ENABLED\n\n" +
+                    "Don't forget to disable this when done debugging by " +
+                    "calling\n'Dash.Log.ToggleRemoteDebugMode()' in the console." +
+                    "\n**********************************************************"
+                );
+            }
+        }
+        if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
+            return;
+        }
+        console[type](...msg);
+    }
 }
 
 function DashMath () {
@@ -18848,7 +18908,7 @@ function DashFile () {
                 if (error_callback) {
                     error_callback();
                 }
-                console.warn("Inline file download using Dash.File.URLToBlob() failed. The URL will be opened in a new tab instead:\n" + url);
+                Dash.Log.Warn("Inline file download using Dash.File.URLToBlob() failed. The URL will be opened in a new tab instead:\n" + url);
                 window.open(url, "_blank");
             }
         );
@@ -19124,7 +19184,7 @@ function DashUtils () {
     };
     this.GetDeepCopy = function (obj) {
         if (!Dash.Validate.Object(obj)) {
-            console.warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
+            Dash.Log.Warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
             return obj;
         }
         return JSON.parse(JSON.stringify(obj));
@@ -19261,7 +19321,7 @@ function DashUtils () {
             return;
         }
         if (!Dash.TabIsVisible) {
-            console.warn("Warning: Tab is not visible, skipping timer/interval callback – ID:", timer["timer_id"]);
+            Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
             return;
         }
         timer["callback"]();
@@ -19317,8 +19377,8 @@ function DashUtils () {
         // approximately every 30 frames. This is so we're not doing anything
         // too heavy on each frame. Check each worker to see if we should
         // still be processing frame updates
-        // console.log("Manage them all....");
-        // console.log(this.animation_frame_workers.length);
+        // Dash.Log.Log("Manage them all....");
+        // Dash.Log.Log(this.animation_frame_workers.length);
         // TODO: Round out this function to clean up stale html objects
     };
     // This is called on the next frame because window.Dash.<> is
@@ -19653,18 +19713,18 @@ function DashGuiPrompt (
                         return;
                     }
                     if (e.key === "Escape" && self.allow_esc_shortcut) {
-                        console.log("(Esc key pressed) Cancel");
+                        Dash.Log.Log("(Esc key pressed) Cancel");
                         self.on_selection(0);
                     }
                     else if (e.key === "Enter" && self.allow_enter_shortcut) {
-                        console.log("(Enter key pressed) Continue");
+                        Dash.Log.Log("(Enter key pressed) Continue");
                         self.on_selection(1);
                     }
                 }
             );
             self.background.on("click", function () {
                 if (self.allow_esc_shortcut) {
-                    console.log("(Background clicked) Cancel");
+                    Dash.Log.Log("(Background clicked) Cancel");
                     self.on_selection(0);
                 }
             });
@@ -19742,7 +19802,7 @@ function DashRequest () {
                         self.dash_requests.on_response(self, response);
                         return;
                     }
-                    console.warn(
+                    Dash.Log.Warn(
                         "Dash Request Warning: A request failed (status ", status, "), but callback " +
                         "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
                     );
@@ -19798,13 +19858,13 @@ function DashRequest () {
         this.request_failures[req_id] += 1;
         if (this.request_failures[req_id] >= max_allowed) {
             alert("The page must reload, sorry for the inconvenience.");
-            console.log(
-                "(Dash Interval Request Failure Manager) Max failures reached for '" + req_id +
-                "', reloading:", this.request_failures[req_id] + "/" + max_allowed
-            );
+            // Dash.Log.Warn(
+            //     "(Dash Interval Request Failure Manager) Max failures reached for '" + req_id +
+            //     "', reloading:", this.request_failures[req_id] + "/" + max_allowed
+            // );
             window.location.reload();
         }
-        console.log(
+        Dash.Log.Log(
             "(Dash Interval Request Failure Manager) Request failure for '" + req_id +
             "' has been tracked:", this.request_failures[req_id] + "/" + max_allowed
         );
@@ -19816,7 +19876,7 @@ function DashRequest () {
     };
     // Called when a request finishes, and there are no more requests queued
     this.on_no_further_requests_pending = function () {
-        // console.log(">> on_no_further_requests_pending <<");
+        // Dash.Log.Log(">> on_no_further_requests_pending <<");
     };
     // This is called immediately before returning a response that has been compressed with gzip
     this.decompress_response = function (request, response) {
@@ -19833,7 +19893,7 @@ function DashRequest () {
                     }
                 }
                 else {
-                    console.log("Dash failed to decompress gzip content", response);
+                    Dash.Log.Warn("Dash failed to decompress gzip content", response);
                     if (!response["error"]) {
                         response["error"] = "Failed to decompress gzip data from server!";
                     }
@@ -19981,7 +20041,7 @@ function DashHistory () {
                     if (previous_old_url === self.last_old_url || previous_new_url === self.last_new_url) {
                         return;  // Duplicate event
                     }
-                    console.log("Loading URL hash from history:", hash);
+                    Dash.Log.Log("Loading URL hash from history:", hash);
                     self.on_hash_change(event);
                 },
                 false
@@ -20110,7 +20170,7 @@ function DashValidate () {
                 alert("There was a server problem with this request:\nNo response received");
             }
             else {
-                console.warn("(Dash.Validate.Response) No response received:", response);
+                Dash.Log.Warn("(Dash.Validate.Response) No response received:", response);
             }
         }
         else if (response["error"]) {
@@ -20119,7 +20179,7 @@ function DashValidate () {
                 alert(response["error"]);
             }
             else {
-                console.warn("There was a server problem with this request:", response);
+                Dash.Log.Warn("There was a server problem with this request:", response);
             }
         }
         return null;
@@ -20403,7 +20463,7 @@ function DashDateTime () {
         if (timezone === "pst" || timezone === "pdt") {
             return est_to_utc_offset_hours + 3;
         }
-        console.warn("Unhandled timezone, server offset hours not calculated:", timezone);
+        Dash.Log.Warn("Unhandled timezone, server offset hours not calculated:", timezone);
         return 0;
     };
 }
@@ -20436,7 +20496,7 @@ function DashAdminView (users_class_override=null) {
         }
     };
     this.AddTab = function () {
-        console.log("Adding tab");
+        Dash.Log.Log("Adding tab");
     };
     this.setup_styles();
 }
@@ -20481,16 +20541,16 @@ function DashAdminColor () {
         // Dash.Color.Dark.Button.Background.Hover
         // Dash.Color.Dark.Button.Background.Selected
         // Dash.Color.Dark.Button.Background.SelectedHover
-        // console.log(color_set);
-        // console.log(color_set.Background);
-        // console.log(color_set.Text);
-        // console.log(color_set.Button);
-        // console.log(color_set.Tab); // DashColorButtonSet
-        // console.log(color_set.Tab.Background); // DashColorStateSet
-        // console.log(color_set.Tab.Text); // DashColorStateSet
+        // Dash.Log.Log(color_set);
+        // Dash.Log.Log(color_set.Background);
+        // Dash.Log.Log(color_set.Text);
+        // Dash.Log.Log(color_set.Button);
+        // Dash.Log.Log(color_set.Tab); // DashColorButtonSet
+        // Dash.Log.Log(color_set.Tab.Background); // DashColorStateSet
+        // Dash.Log.Log(color_set.Tab.Text); // DashColorStateSet
         // for (var color_set_name in color_root) {
-        //     console.log(color_set_name + ":");
-        //     console.log(color_root[color_set_name]);
+        //     Dash.Log.Log(color_set_name + ":");
+        //     Dash.Log.Log(color_root[color_set_name]);
         // };
     };
     this.draw_header = function (color_set) {
@@ -20512,7 +20572,7 @@ function DashAdminColor () {
                     self.display_theme = "light";
                 }
                 Dash.Local.Set("dash_admin_color_style", self.display_theme);
-                console.log("switch to " + self.display_theme);
+                Dash.Log.Log("switch to " + self.display_theme);
                 self.draw_all();
             });
         })(this);
@@ -20520,7 +20580,7 @@ function DashAdminColor () {
         this.html.append(doc.html);
     };
     this.draw_property_box = function (color_set) {
-        console.log("Adding property box");
+        Dash.Log.Log("Adding property box");
         this.property_box = new Dash.Gui.PropertyBox(
             this,           // For binding
             this.get_data,  // Function to return live data
@@ -20567,7 +20627,7 @@ function DashAdminSettings (admin_view) {
         // this.add_site_settings_box();
         // this.add_user_groups_box();
         this.add_users_box();
-        // console.log(response);
+        // Dash.Log.Log(response);
     };
     this.add_users_box = function () {
         // this.users_box = Dash.Gui.GetHTMLBoxContext({});
@@ -20589,7 +20649,7 @@ function DashAdminSettings (admin_view) {
         Dash.Request(this, this.SetData, "Admin", {"f": "get"});
     };
     // this.create_group = function () {
-    //     console.log("Create Group");
+    //     Dash.Log.Log("Create Group");
     // };
     // this.add_site_settings_box = function () {
     //     this.property_box = new Dash.Gui.PropertyBox(
@@ -21167,7 +21227,7 @@ function DashColor (dark_mode_active=false) {
             }
         }
         else {
-            console.warn("Warning: Dash.Color.Parse failed to parse color!", cstr);
+            Dash.Log.Warn("Warning: Dash.Color.Parse failed to parse color!", cstr);
         }
         this.parsed_color_data[cstr] = [parts[0], parts[1], parts[2], alpha, space];
         return JSON.parse(JSON.stringify(this.parsed_color_data[cstr]));
@@ -21588,7 +21648,7 @@ class DashColorStateSet {
             return;
         }
         if (!this._selected) {
-            console.warn("Warning: Set a color for the 'Selected' property");
+            Dash.Log.Warn("Warning: Set a color for the 'Selected' property");
             this._selected = "red";
         }
         this._base_hover = this._base_hover || Dash.Color.Lighten(this._base, 50);
@@ -21617,7 +21677,7 @@ function DashDocsBox (docs_view, name, data) {
         "font-family": "sans_serif_italic"
     };
     this.setup_styles = function () {
-        console.log("Data:", this.data);
+        Dash.Log.Log("Data:", this.data);
         this.html.css({
             "position": "absolute",
             "inset": 0,
@@ -22468,7 +22528,7 @@ function DashDocsView (package_id, ext, color_options={}) {
         Dash.Request(this, this.on_documentation, "Documentation", params, "dash.guide");
     };
     this.on_documentation = function (response) {
-        console.log("Documentation:", response);
+        Dash.Log.Log("Documentation:", response);
         if (!Dash.Validate.Response(response)) {
             return;
         }
@@ -22715,7 +22775,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
         if (!Dash.Validate.Response(response)) {
             return;
         }
-        console.log("******* LOG IN *******", response);
+        Dash.Log.Log("******* LOG IN *******", response);
         Dash.User.SetUserAuthentication(this.get_email(), response);
         (function (self) {
             self.html.animate({"opacity": 0}, 150, function () {
@@ -22869,7 +22929,7 @@ function DashGuiModal (
         }
         // This shouldn't happen
         if (!this.width && !this.height) {
-            console.warn("Failed to get modal width and height");
+            Dash.Log.Warn("Failed to get modal width and height");
             return;
         }
         this.modal = Dash.Gui.GetHTMLBoxContext(
@@ -22997,7 +23057,7 @@ function DashGuiModal (
                         return;
                     }
                     if (e.key === "Escape") {
-                        console.log("(Esc key pressed) Close modal");
+                        Dash.Log.Log("(Esc key pressed) Close modal");
                         self.Hide();
                     }
                 }
@@ -24990,7 +25050,7 @@ function DashGuiCopyButton (
         this.button.SetIconColor(this.color.Button.Background.Selected);
         (function (self) {
             navigator.clipboard.writeText(text).then(function () {
-                console.log("Copied '" + text + "' to clipboard");
+                Dash.Log.Log("Copied '" + text + "' to clipboard");
                 self.label.stop().fadeIn(
                     "fast",
                     function () {
@@ -25220,7 +25280,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             DashGuiButtonStyleDefault.call(this);
         }
         if (!this.color instanceof DashColorSet) {
-            console.warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
+            Dash.Log.Warn("Warning: DashGuiButton() now accepts a DashColorSet, but you are using DashColorButtonSet");
         }
         this.setup_styles();
     };
@@ -25585,7 +25645,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
             if (!this.icon_height) {
                 this.icon_height = this.html.height() - (Dash.Size.Padding * 1.2);
             }
-            console.warn("Warning: Unhandled button / icon style: " + this.style);
+            Dash.Log.Warn("Warning: Unhandled button / icon style: " + this.style);
             this.setup_default_icon();
         }
         this.update_container_size();
@@ -26488,7 +26548,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             return;
         }
         if (align_right && !this.dual_sided) {
-            console.log(
+            Dash.Log.Warn(
                 "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate " +
                 "an AddMessage() call with the 'align_right' param set to 'true'"
             );
@@ -26545,7 +26605,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     };
     this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
         if (this.toggle_hide_button) {
-            console.warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
+            Dash.Log.Warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
             return;
         }
         this.toggle_local_storage_key = local_storage_key;
@@ -28571,7 +28631,7 @@ function DashGuiComboInterface () {
         // If the user has entered text in the search bar and has no results,
         // but hits enter/submits the entry anyway, this combo will be the result
         if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !(combo_option["label_text"] || combo_option["display_name"])) {
-            console.log("Invalid combo option, cannot set default search submit combo:", combo_option);
+            Dash.Log.Warn("Invalid combo option, cannot set default search submit combo:", combo_option);
             return;
         }
         this.default_search_submit_combo = combo_option;
@@ -28671,7 +28731,7 @@ function DashGuiComboInterface () {
         inverted=false, allow_first=true, left_icon_name="arrow_left_heavy", right_icon_name="arrow_right_heavy"
     ) {
         if (this.multi_select) {
-            console.warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
+            Dash.Log.Warn("Warning: Arrow buttons are not supported when multi-select is enabled.");
             return;
         }
         if (this.left_arrow_button) {
@@ -28875,7 +28935,7 @@ function DashGuiComboInterface () {
             this.setup_load_dots();
         }
         if (this.load_dots.IsActive()) {
-            console.log("Request already active...");
+            Dash.Log.Log("Request already active...");
             return;
         }
         this.load_dots.Start();
@@ -28930,7 +28990,7 @@ function DashGuiComboInterface () {
                        !(!this.option_list || this.option_list.length === 0)
                     && !(this.option_list.length === 1 && ["", "none"].includes(this.option_list[0]["id"])))
                 {
-                    console.warn(
+                    Dash.Log.Warn(
                         "Warning: Failed to find 'selected' object in options list." +
                         "\n\ncombo_list:", combo_list, "\nselected:", selected,
                         "\nignore_callback:", ignore_callback, "\nthis.option_list:", this.option_list
@@ -29292,7 +29352,7 @@ function DashGuiContext2D (
     };
     this.SetLinkedPreview = function (preview) {
         if (!this.override_mode) {
-            console.warn("Warning: SetLinkedPreview only works in Override Mode");
+            Dash.Log.Warn("Warning: SetLinkedPreview only works in Override Mode");
             return;
         }
         this.linked_preview = preview;
@@ -29551,7 +29611,7 @@ function DashGuiContext2D (
                         delete response["error"];
                     }
                     self.ComboOptions = response;
-                    console.log("Context2D combo options:", self.ComboOptions);
+                    Dash.Log.Log("Context2D combo options:", self.ComboOptions);
                     self.on_combo_options(callback);
                 },
                 self.api,
@@ -29630,7 +29690,7 @@ function DashGuiContext2D (
             this.initialize();
         }
         if (!this.preview_mode) {
-            console.log("Context2D data:", this.data);
+            Dash.Log.Log("Context2D data:", this.data);
         }
         if (this.initialized && this.editor_panel && !this.preview_mode) {
             this.editor_panel.UpdatePropertyBox();
@@ -30179,7 +30239,7 @@ function DashGuiContext2DTool (toolbar, icon_name, hover_hint="", hotkey="", cur
             if (tool.hotkey !== this.hotkey) {
                 continue;
             }
-            console.warn("Duplicate hotkey:", this.hotkey);
+            Dash.Log.Warn("Duplicate hotkey:", this.hotkey);
             this.hotkey = "";
             return;
         }
@@ -30353,7 +30413,7 @@ function DashGuiContext2DToolbar (editor) {
         })(this);
     };
     this.update_pil_preview = function (url) {
-        console.log("PIL URL:", url);
+        Dash.Log.Log("PIL URL:", url);
         var css = {"background-image": "url(" + url + ")"};
         if (!this.pil_preview) {
             this.pil_preview = $("<div></div>");
@@ -30717,7 +30777,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         var direction = this.get_value("fade_direction");
         if (Dash.Validate.Object(this.mask_data)) {
             if (direction) {
-                console.warn(
+                Dash.Log.Warn(
                     "Warning: Layer fade was not applied because an image mask was used instead"
                 );
             }
@@ -30753,7 +30813,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                 }
             }
             else {
-                console.warn("Warning: Unhandled global fade direction:", direction);
+                Dash.Log.Warn("Warning: Unhandled global fade direction:", direction);
             }
         }
         this.html.css({
@@ -30951,7 +31011,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "context") {
             return;
         }
-        // console.warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
+        // Dash.Log.Warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
         if (hidden) {
             this.html.hide();
         }
@@ -30962,19 +31022,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     // Meant to be overridden by member classes
     this.on_update = function () {
         if (this.type !== "context") {
-            console.warn("'on_update' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
         if (!(["context", "color"]).includes(this.type)) {
-            console.warn("'on_locked_change' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
         if (this.type !== "context") {
-            console.warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
+            Dash.Log.Warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
         this.html.css({
             "opacity": value
@@ -31077,7 +31137,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
                     if (!self.html.is(":visible")) {
                         return;
                     }
-                    console.warn("Warning:", msg);
+                    Dash.Log.Warn("Warning:", msg);
                 },
                 1000
             );
@@ -32285,7 +32345,7 @@ function DashGuiContext2DEditorPanel (editor) {
         );
         if (!active || !data_key) {
             if (!data_key) {
-                console.warn("Warning: Unhandled tool:", active_tool);
+                Dash.Log.Warn("Warning: Unhandled tool:", active_tool);
             }
             return;
         }
@@ -32735,7 +32795,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             if (self.can_edit) {
                 self.html.on("click", function (e) {
                     self.Select();
-                    console.log("Layer data:", self.get_data());
+                    Dash.Log.Log("Layer data:", self.get_data());
                     e.stopPropagation();
                 });
             }
@@ -32956,7 +33016,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         var type = this.get_data()["type"];
         var icon_name = this.layers.icon_map[type] || "unknown";
         if (icon_name === "unknown") {
-            console.warn("Unhandled layer type, couldn't get layer icon:", type);
+            Dash.Log.Warn("Unhandled layer type, couldn't get layer icon:", type);
         }
         return icon_name;
     };
@@ -33482,7 +33542,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 + this.layers[id].get_value("precomp_tag")
             );
         }
-        // console.log("Pre-Comps:", precomps_log.reverse());
+        // Dash.Log.Log("Pre-Comps:", precomps_log.reverse());
         this.redrawing = false;
     };
     this.add_header = function () {
@@ -33874,7 +33934,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 this.html.append(this.get_upload_button(primitive_type, "New " + primitive_type.Title() + " Layer").html);
             }
             else {
-                console.warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+                Dash.Log.Warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
             }
         }
         for (var element_config of this.content.new_tab_custom_element_configs) {
@@ -34411,7 +34471,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.contexts[context_key]["html"].append(this.content.edit_tab_custom_context_cbs[context_key]());
         }
         else {
-            console.warn("Warning: Unhandled 'Edit' tab context type:", context_key);
+            Dash.Log.Warn("Warning: Unhandled 'Edit' tab context type:", context_key);
         }
         if (context_key in this.content.edit_tab_custom_element_configs) {
             for (var element_config of this.content.edit_tab_custom_element_configs[context_key]) {
@@ -35573,7 +35633,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                         return;
                     }
                     alert("Renders complete!");
-                    console.log("Pre-Comps rendered:", response);
+                    Dash.Log.Log("Pre-Comps rendered:", response);
                 },
                 self.editor.api,
                 {
@@ -35710,7 +35770,7 @@ function DashGuiFileExplorer (
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
         if (this.read_only) {
-            console.log(
+            Dash.Log.Warn(
                 "(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided"
             );
         }
@@ -35816,7 +35876,7 @@ function DashGuiFileExplorer (
     };
     this.AddRow = function (file_data, file_id="") {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) AddRow function is only for use when this element " +
                 "is read-only, otherwise, rows are added and managed automatically."
             );
@@ -35840,7 +35900,7 @@ function DashGuiFileExplorer (
     };
     this.SetIncludeUploadedKeysColumns = function (include=false) {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) SetIncludeUploadedKeysColumns function is intended for use when " +
                 "this element is read-only. It has not been written to support the standard mode."
             );
@@ -35850,7 +35910,7 @@ function DashGuiFileExplorer (
     };
     this.SetIncludeListHeaderRow = function (include=false) {
         if (!this.read_only) {
-            console.warn(
+            Dash.Log.Warn(
                 "(File Explorer) SetIncludeListHeaderRow function is intended for use when " +
                 "this element is read-only. It has not been written to support the standard mode."
             );
@@ -36385,7 +36445,7 @@ function DashGuiFileExplorerData () {
                 return;
             }
         }
-        console.log("(File Explorer) Files data:", response);
+        Dash.Log.Log("(File Explorer) Files data:", response);
         this.update_cached_data(response);
         if (callback) {
             callback.bind(this)();
@@ -36701,7 +36761,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             return;
         }
         this.pending_file_view_requests[file_data["id"]] += 1;
-        console.log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
+        Dash.Log.Log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
         var f = "send_signal_to_desktop_session";
         (function (self) {
             Dash.Request(
@@ -36725,7 +36785,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         if (!Dash.Validate.Response(response)) {
             return;
         }
-        console.log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
+        Dash.Log.Log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
         if (!response["msg"]) {
             return;
         }
@@ -36739,7 +36799,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
     this.open_file_in_browser_tab = function (file_data) {
         var url = file_data["url"] || file_data["orig_url"] || "";
         if (!url) {
-            console.warn("Couldn't open file in browser tab, no URL found in file data:", url);
+            Dash.Log.Warn("Couldn't open file in browser tab, no URL found in file data:", url);
             return;
         }
         window.open(url, "_blank");
@@ -37083,11 +37143,11 @@ class DashGuiFlowOption {
     }
     SetSubLabelText (text, locked=false) {
         if (!this.label && locked) {
-            console.warn("Warning: If locking the SubLabel, you need to set up the Label first");
+            Dash.Log.Warn("Warning: If locking the SubLabel, you need to set up the Label first");
             return;
         }
         if (this.label && (this.image || this.text_tip)) {
-            console.warn("Warning: SubLabel is not intended to be used with an image or tip text");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with an image or tip text");
             return;
         }
         if (this.sub_label) {
@@ -37107,7 +37167,7 @@ class DashGuiFlowOption {
     }
     SetImageURL (url) {
         if (this.label && this.sub_label) {
-            console.warn("Warning: SubLabel is not intended to be used with an image");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with an image");
             return;
         }
         if (this.image) {
@@ -37139,7 +37199,7 @@ class DashGuiFlowOption {
     }
     SetTipText (text) {
         if (this.label && this.sub_label) {
-            console.warn("Warning: SubLabel is not intended to be used with tip text");
+            Dash.Log.Warn("Warning: SubLabel is not intended to be used with tip text");
             return;
         }
         if (this.text_tip) {
@@ -37609,7 +37669,7 @@ class DashGuiFlowRow {
                 // pass
             }
             else {
-                console.warn("Warning: Unhandled element instance type:", element);
+                Dash.Log.Warn("Warning: Unhandled element instance type:", element);
             }
         }
         return data;
@@ -37793,7 +37853,7 @@ class DashGuiFlowRowArea {
                 element = row.AddIconButton(...config["params"]);
             }
             else {
-                console.warn("Warning: Unhandled config type:", config["type"]);
+                Dash.Log.Warn("Warning: Unhandled config type:", config["type"]);
             }
             if (!element) {
                 continue;
@@ -39147,7 +39207,7 @@ class DashGuiFlowTipText {
             style = this.style["default"][this.emphasized ? "emphasized" : "default"];
         }
         if (!(key in style)) {
-            console.warn("Warning: Unhandled style key:", key);
+            Dash.Log.Warn("Warning: Unhandled style key:", key);
         }
         return style[key];
     }
@@ -40334,7 +40394,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         if (container_size) {
             container_size = enforce_container_size_num ? parseInt(container_size) : container_size;
             if (enforce_container_size_num && isNaN(container_size)) {
-                console.warn("Warning: DashGuiIcon SetSize requires a number for container_size");
+                Dash.Log.Warn("Warning: DashGuiIcon SetSize requires a number for container_size");
             }
             else {
                 this.size = container_size;
@@ -40727,7 +40787,7 @@ function DashGuiIcons (icon) {
     }
     
     else if (!this.icon_map[this.icon.name]) {
-        console.warn("Warning: Unable to locate icon by name '" + this.icon.name + "'");
+        Dash.Log.Warn("Warning: Unable to locate icon by name '" + this.icon.name + "'");
         
         console.trace();
         
@@ -41624,7 +41684,7 @@ function DashGuiInputRowInterface () {
         });
     };
     this.SetInputValidity = function (input_is_valid) {
-        console.log("input_is_valid: " + input_is_valid, "\n", this.color);
+        // Dash.Log.Log("input_is_valid: " + input_is_valid, "\n", this.color);
         if (input_is_valid) {
             this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
         }
@@ -41713,7 +41773,7 @@ function DashGuiInputRowInterface () {
         if (this.input.autosave_timeout) {
             clearTimeout(this.input.autosave_timeout);
             this.input.autosave_timeout = null;
-            console.log("Cleared input autosave timeout");
+            Dash.Log.Log("Cleared input autosave timeout");
         }
         this.request_callback = callback;
         this.request_callback_binder = binder;
@@ -41995,7 +42055,7 @@ function DashGuiLoadingOverlay (
     // See note at the top
     this.AppendTo = function (html) {
         if (!html) {
-            console.warn("DashGuiLoadingOverlay AppendTo() requires an HTML element:", html);
+            Dash.Log.Warn("DashGuiLoadingOverlay AppendTo() requires an HTML element:", html);
             return;
         }
         this.modal.SetParentHTML(html);
@@ -42015,7 +42075,7 @@ function DashGuiLoadingOverlay (
             return;
         }
         if (!this.html_to_append_to) {
-            console.warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
+            Dash.Log.Warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
             return;
         }
         if (this.removed) {
@@ -42157,7 +42217,7 @@ function DashGuiPropertyBox (
         for (var data_key in this.inputs) {
             var input_row = this.inputs[data_key];
             if (!input_row.CanAutoUpdate() || input_row.InFocus()) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
             input_row.SetText(this.get_update_value(data_key));
@@ -42167,7 +42227,7 @@ function DashGuiPropertyBox (
         for (var data_key in this.text_areas) {
             var text_area = this.text_areas[data_key];
             if (text_area.InFocus()) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
             text_area.SetText(this.get_update_value(data_key));
@@ -42180,7 +42240,7 @@ function DashGuiPropertyBox (
             }
             var combo = this.combos[data_key];
             if (combo.InFocus(false)) {
-                console.log("(Currently being edited) Skipping update for " + data_key);
+                Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
             var value = this.get_update_value(data_key);
@@ -42204,7 +42264,7 @@ function DashGuiPropertyBox (
             for (var element of tool_row.elements) {
                 if (element instanceof DashGuiInput || element instanceof DashGuiInputRow) {
                     if (element.InFocus()) {
-                        console.log("(Currently being edited) Skipping update for " + element.data_key);
+                        Dash.Log.Log("(Currently being edited) Skipping update for " + element.data_key);
                         continue;
                     }
                     if (element.data_key) {
@@ -42387,7 +42447,7 @@ function DashGuiPropertyBox (
             "value": value,
             "obj_id": this.dash_obj_id
         };
-        console.log("Set property '" + key + "':", value);
+        Dash.Log.Log("Set property '" + key + "':", value);
         for (var k in this.additional_request_params) {
             params[k] = this.additional_request_params[k];
         }
@@ -42431,7 +42491,7 @@ function DashGuiPropertyBox (
             }
             return;
         }
-        console.log("SERVER RESPONSE:", response);
+        Dash.Log.Log("SERVER RESPONSE:", response);
         if (row_input && row_input.hasOwnProperty("FlashSave")) {
             row_input.FlashSave();
         }
@@ -43170,7 +43230,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 return i;
             }
         }
-        console.warn("Warning: Failed to find index by tab name for:", name, this.all_content);
+        Dash.Log.Warn("Warning: Failed to find index by tab name for:", name, this.all_content);
         return (default_zero ? 0 : null);
     };
     // TODO: Break this function up
@@ -43298,7 +43358,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     };
     this.MidpendHTML = function (html) {
         if (!this.side_tabs) {
-            console.log("MidpendHTML only works for side tabs right now");
+            console.error("MidpendHTML only works for side tabs right now");
             return;
         }
         html.css({
@@ -44181,7 +44241,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (response.timeStamp) {
             return;
         }
-        console.log("on_user_img_uploaded:", response);
+        Dash.Log.Log("on_user_img_uploaded:", response);
         if (this.img_box && response["img"]) {
             this.user_data["img"] = response["img"];
             this.img_box.css({
@@ -44307,7 +44367,7 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     };
     this.AddDivider = function () {
         if (!this.modules.length) {
-            console.warn("No modules in dashboard, can't add divider");
+            Dash.Log.Warn("No modules in dashboard, can't add divider");
             return;
         }
         var divider = $("<div></div>");
@@ -44815,7 +44875,7 @@ function DashLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                Dash.Log.Warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
@@ -44958,7 +45018,7 @@ function DashLayoutDashboardModuleRect () {
         }
         for (var i in this.list_data) {
             if (this.list_rows.length >= 3) {
-                console.warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
+                Dash.Log.Warn("Warning: Rect List Module will only display 3 key/value pairs from list data");
                 break;
             }
             var data = this.list_data[i];
@@ -47486,6 +47546,9 @@ function DashLayoutRevolvingList (
             row.column_box.off("click");
         }
     };
+    this.RefreshConnections = function () {
+        this.setup_scroll_connections();
+    };
     // Not needed in most cases - only needed if manually breaking/altering a particular row's connections
     this.RefreshRowConnections = function (row) {
         this.setup_row_connections(row);
@@ -48289,7 +48352,7 @@ function DashLayoutSearchableList (binder, on_selection_callback, get_data_callb
                 search_text = Dash.Utils.NormalizeSearchText(search_text);
             }
             else {
-                console.warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
+                Dash.Log.Warn("Warning: Dash.Layout.SearchableList > row update callback must return a search term. Ignoring row", row_id);
             }
             this.search_terms.push(search_text);
             this.list_container.append(this.rows[row_id].html);
@@ -48675,7 +48738,7 @@ function DashLayoutToolbar (binder, color=null) {
             callback(selected_id, previous_selected_option, this, additional_data);
         }
         else {
-            console.warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
+            Dash.Log.Warn("Warning: No on_combo_updated() callback >> selected_option: " + selected_id);
         }
     };
     this.refactor_item_padding = function () {
@@ -49046,7 +49109,7 @@ function DashLayoutToolbarInterface () {
     ) {
         var obj_index = this.objects.length;
         callback = callback ? callback.bind(this.binder) : function (selected) {
-            console.warn("No callback provided, selected:", selected);
+            Dash.Log.Warn("No callback provided, selected:", selected);
         };
         var options = {
             "style": "row",
@@ -49210,7 +49273,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     };
     this.SetSelection = function (option_id, trigger_cb=false) {
         if (!this.options[option_id]) {
-            console.warn("Option ID (" + option_id + ") not in options:", this.options);
+            Dash.Log.Warn("Option ID (" + option_id + ") not in options:", this.options);
             return;
         }
         this.select.val(option_id);
@@ -49923,7 +49986,7 @@ function DashMobileCard (stack) {
             return;
         }
         if (!event || !event.originalEvent || !event.originalEvent["changedTouches"] || !event.originalEvent["changedTouches"][0]) {
-            console.warn("Warning: No touches found??");
+            Dash.Log.Warn("Warning: No touches found??");
             return;
         }
         this.pull_active["touch_now_x"] = event.originalEvent["changedTouches"][0].clientX;
@@ -50127,7 +50190,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         if (response.timeStamp) {
             return;
         }
-        console.log("User image uploaded:", response);
+        Dash.Log.Log("User image uploaded:", response);
         if (!response["img"]) {
             return;
         }
@@ -50193,7 +50256,7 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
                 self,
                 function (response) {
                     Dash.Validate.Response(response);
-                    console.log("User settings updated:", response);
+                    Dash.Log.Log("User settings updated:", response);
                     if (params["f"] === "update_password") {
                         text_box.SetText("");
                     }
@@ -50279,7 +50342,7 @@ function DashMobileSearchableCombo (
     };
     this.SetLabelByID = function (id) {
         if (!(id in this.options)) {
-            console.warn("ID not in options:", id);
+            Dash.Log.Warn("ID not in options:", id);
             return;
         }
         this.SetLabel(this.options[id]);
@@ -50735,7 +50798,7 @@ function DashMobileCardStack (binder, color=null) {
             this.fix_banner_on_top();
         }
         else {  // TODO?
-            console.warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
+            Dash.Log.Warn("Warning: Stack.SetFixedBanner(false) >> This is not implemented yet!");
         }
     };
     this.AddCard = function (prepend=false) {
@@ -50797,10 +50860,10 @@ function DashMobileCardStack (binder, color=null) {
     };
     this.AddLeftContent = function (html) {
         // if (this.banner_fixed) {
-        //     console.log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("AddLeftContent >> This banner is fixed, it needs to be re-attached before transition!");
         // };
         if (this.active_panel_index === 0) {
-            console.warn("The left panel is already loaded");
+            Dash.Log.Warn("The left panel is already loaded");
         }
         html.css({
             ...Dash.HardwareAccelerationCSS
@@ -50811,7 +50874,7 @@ function DashMobileCardStack (binder, color=null) {
     };
     this.ShowCenterContent = function () {
         // if (this.banner_fixed) {
-        //     console.log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("ShowCenterContent >> This banner is fixed, it needs to be re-attached before transition!");
         // };
         this.slide_to_index(1);
     };
@@ -50820,12 +50883,12 @@ function DashMobileCardStack (binder, color=null) {
     };
     this.AddRightContent = function (html) {
         // if (this.banner_fixed) {
-        //     console.log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
+        //     Dash.Log.Log("AddRightContent >> This banner is fixed, it needs to be re-attached before transition!");
         //
         //     this.unfix_banner_on_top();
         // };
         if (this.active_panel_index === 2) {
-            console.warn("The right panel is already loaded");
+            Dash.Log.Warn("The right panel is already loaded");
         }
         html.css({
             ...Dash.HardwareAccelerationCSS
@@ -51927,7 +51990,7 @@ function DashPDFView (options) {
     this.data = null;
     this.setup_styles = function () {
         if (!this.content_key) {
-            console.log("Content key is missing for DashPDFView()");
+            console.error("Content key is missing for DashPDFView");
             return;
         }
         this.upload_button = new Dash.Gui.Button("Upload PDF", this.upload_pdf, this);
@@ -51958,7 +52021,7 @@ function DashPDFView (options) {
             // TODO: Prevent this from being called inside of dash_gui_button_uploader.js
             return;
         }
-        console.log("Uploading pdf...");
+        Dash.Log.Log("Uploading pdf...");
         if (this.on_uploaded_callback) {
             this.on_uploaded_callback(response);
         }
@@ -51998,7 +52061,7 @@ function DashPDFView (options) {
         this.images_initialized = true;
     };
     this.on_pdf_page_clicked = function (page_data) {
-        console.log(page_data);
+        Dash.Log.Log(page_data);
         window.open(page_data["url"], '_blank');
     };
     this.on_data = function (response) {
@@ -52061,5 +52124,4 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
 function DashStyleView () {
     this.html = Dash.Gui.GetHTMLContext("", {"margin": Dash.Size.Padding});
     this.html.append(new Dash.Layout.UserProfile().html);
-    console.log("in");
 }

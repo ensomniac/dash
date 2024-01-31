@@ -326,7 +326,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
                     alert("Renders complete!");
 
-                    console.log("Pre-Comps rendered:", response);
+                    Dash.Log.Log("Pre-Comps rendered:", response);
                 },
                 self.editor.api,
                 {

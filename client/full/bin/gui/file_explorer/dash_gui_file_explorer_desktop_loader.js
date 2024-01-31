@@ -72,7 +72,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
 
         this.pending_file_view_requests[file_data["id"]] += 1;
 
-        console.log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
+        Dash.Log.Log("Sending signal to desktop session to access", (folder ? "folder" : "file"), file_data["id"]);
 
         var f = "send_signal_to_desktop_session";
 
@@ -101,7 +101,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
             return;
         }
 
-        console.log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
+        Dash.Log.Log("Signal sent:", response["sent"], response["msg"] ? ("(" + response["msg"] + ")") : "");
 
         if (!response["msg"]) {
             return;
@@ -122,7 +122,7 @@ function DashGuiFileExplorerDesktopLoader (api, parent_obj_id, supports_desktop_
         var url = file_data["url"] || file_data["orig_url"] || "";
 
         if (!url) {
-            console.warn("Couldn't open file in browser tab, no URL found in file data:", url);
+            Dash.Log.Warn("Couldn't open file in browser tab, no URL found in file data:", url);
 
             return;
         }

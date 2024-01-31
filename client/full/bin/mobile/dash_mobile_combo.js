@@ -77,7 +77,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
 
     this.SetSelection = function (option_id, trigger_cb=false) {
         if (!this.options[option_id]) {
-            console.warn("Option ID (" + option_id + ") not in options:", this.options);
+            Dash.Log.Warn("Option ID (" + option_id + ") not in options:", this.options);
 
             return;
         }

@@ -280,7 +280,7 @@ function DashMobileCard (stack) {
         }
 
         if (!event || !event.originalEvent || !event.originalEvent["changedTouches"] || !event.originalEvent["changedTouches"][0]) {
-            console.warn("Warning: No touches found??");
+            Dash.Log.Warn("Warning: No touches found??");
 
             return;
         }

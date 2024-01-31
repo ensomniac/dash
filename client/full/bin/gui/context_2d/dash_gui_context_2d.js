@@ -218,7 +218,7 @@ function DashGuiContext2D (
 
     this.SetLinkedPreview = function (preview) {
         if (!this.override_mode) {
-            console.warn("Warning: SetLinkedPreview only works in Override Mode");
+            Dash.Log.Warn("Warning: SetLinkedPreview only works in Override Mode");
 
             return;
         }
@@ -541,7 +541,7 @@ function DashGuiContext2D (
 
                     self.ComboOptions = response;
 
-                    console.log("Context2D combo options:", self.ComboOptions);
+                    Dash.Log.Log("Context2D combo options:", self.ComboOptions);
 
                     self.on_combo_options(callback);
                 },
@@ -637,7 +637,7 @@ function DashGuiContext2D (
         }
 
         if (!this.preview_mode) {
-            console.log("Context2D data:", this.data);
+            Dash.Log.Log("Context2D data:", this.data);
         }
 
         if (this.initialized && this.editor_panel && !this.preview_mode) {

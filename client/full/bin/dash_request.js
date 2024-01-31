@@ -38,7 +38,7 @@ function DashRequest () {
                         return;
                     }
 
-                    console.warn(
+                    Dash.Log.Warn(
                         "Dash Request Warning: A request failed (status ", status, "), but callback " +
                         "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
                     );
@@ -106,15 +106,15 @@ function DashRequest () {
         if (this.request_failures[req_id] >= max_allowed) {
             alert("The page must reload, sorry for the inconvenience.");
 
-            console.log(
-                "(Dash Interval Request Failure Manager) Max failures reached for '" + req_id +
-                "', reloading:", this.request_failures[req_id] + "/" + max_allowed
-            );
+            // Dash.Log.Warn(
+            //     "(Dash Interval Request Failure Manager) Max failures reached for '" + req_id +
+            //     "', reloading:", this.request_failures[req_id] + "/" + max_allowed
+            // );
 
             window.location.reload();
         }
 
-        console.log(
+        Dash.Log.Log(
             "(Dash Interval Request Failure Manager) Request failure for '" + req_id +
             "' has been tracked:", this.request_failures[req_id] + "/" + max_allowed
         );
@@ -129,7 +129,7 @@ function DashRequest () {
 
     // Called when a request finishes, and there are no more requests queued
     this.on_no_further_requests_pending = function () {
-        // console.log(">> on_no_further_requests_pending <<");
+        // Dash.Log.Log(">> on_no_further_requests_pending <<");
     };
 
     // This is called immediately before returning a response that has been compressed with gzip
@@ -152,7 +152,7 @@ function DashRequest () {
                 }
 
                 else {
-                    console.log("Dash failed to decompress gzip content", response);
+                    Dash.Log.Warn("Dash failed to decompress gzip content", response);
 
                     if (!response["error"]) {
                         response["error"] = "Failed to decompress gzip data from server!";

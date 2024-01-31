@@ -199,7 +199,7 @@ function DashGuiFileExplorerData () {
             }
         }
 
-        console.log("(File Explorer) Files data:", response);
+        Dash.Log.Log("(File Explorer) Files data:", response);
 
         this.update_cached_data(response);
 

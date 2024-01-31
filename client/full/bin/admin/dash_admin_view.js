@@ -20,7 +20,7 @@ function DashAdminView (users_class_override=null) {
     };
 
     this.AddTab = function () {
-        console.log("Adding tab");
+        Dash.Log.Log("Adding tab");
     };
 
     this.setup_styles();
