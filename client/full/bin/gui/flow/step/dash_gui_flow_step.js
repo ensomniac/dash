@@ -103,12 +103,12 @@ class DashGuiFlowStep {
         var input;  // Declare this early so it can be referenced in the callback
 
         input = this.AddInput(
-            () => {
-                var text = input.Text();
-
-                if (bound_cb) {
-                    bound_cb(text);
+            (from_autosave=false, from_blur=false, from_enter=false) => {
+                if (!bound_cb) {
+                    return;
                 }
+
+                bound_cb(input.Text(), from_autosave, from_blur, from_enter);
             },
             placeholder_text
         );
@@ -309,7 +309,7 @@ class DashGuiFlowStep {
             this.is_last_step() ? "Finish" : "Continue",
             this,
             () => {
-                this.Continue(step_id_override, false);
+                this.Continue(step_id_override);
             }
         );
 
@@ -388,6 +388,10 @@ class DashGuiFlowStep {
 
         if (!is_last_step && typeof step_id_override === "function"){
             step_id_override = step_id_override();
+        }
+
+        if (!is_last_step && !step_id_override) {
+            this.view.timeline.RefreshLockedNodes();
         }
 
         var node = is_last_step ? this.view.timeline.GetActiveNode() : (

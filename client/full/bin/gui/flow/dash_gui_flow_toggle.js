@@ -42,7 +42,6 @@ class DashGuiFlowToggle {
         this.setup_styles();
     }
 
-    // TODO: change label border color on hover
     setup_styles () {
         this.html.css({
             "display": "flex",
@@ -86,28 +85,13 @@ class DashGuiFlowToggle {
             return;
         }
 
-        this.false_label = this.view.GetLabel(this.false_label_text);
+        var container;
 
-        this.false_label.css(this.label_css);
-
-        this.false_label.on("click", () => {
-            if (!this.toggle.IsChecked()) {
-                return;
-            }
-
-            this.toggle.Toggle();
-        });
-
-        var container = $("<div></div>");
+        [this.false_label, container] = this.setup_label(this.false_label_text);
 
         container.css({
-            ...this.label_container_css,
             "justify-content": "right"
         });
-
-        container.append(this.false_label);
-
-        this.html.append(container);
     }
 
     setup_true_label () {
@@ -115,30 +99,60 @@ class DashGuiFlowToggle {
             return;
         }
 
-        this.true_label = this.view.GetLabel(this.true_label_text);
+        var container;
 
-        this.true_label.css(this.label_css);
+        [this.true_label, container] = this.setup_label(this.true_label_text);
 
-        this.true_label.on("click", () => {
-            if (this.toggle.IsChecked()) {
+        this.toggle.html.css({
+            "margin-right": Dash.Size.Padding
+        });
+    }
+
+    setup_label = function (label_text) {
+        var label = this.view.GetLabel(label_text);
+
+        label.css(this.label_css);
+
+        label.on("click", () => {
+            var active = this.toggle.IsChecked();
+
+            if ((active && label === this.true_label) || (!active && label === this.false_label)) {
                 return;
             }
 
             this.toggle.Toggle();
         });
 
+        label.on("mouseenter", () => {
+            if ((this.toggle.IsChecked() ? this.false_label : this.true_label) !== label) {
+                return;
+            }
+
+            label.css({
+                "border": "1px solid " + this.active_toggle_bg_color
+            });
+        });
+
+        label.on("mouseleave", () => {
+            if ((this.toggle.IsChecked() ? this.false_label : this.true_label) !== label) {
+                return;
+            }
+
+            label.css({
+                "border": "1px solid " + this.label_bg_color
+            });
+        });
+
         var container = $("<div></div>");
 
         container.css(this.label_container_css);
 
-        container.append(this.true_label);
+        container.append(label);
 
         this.html.append(container);
 
-        this.toggle.html.css({
-            "margin-right": Dash.Size.Padding
-        });
-    }
+        return [label, container];
+    };
 
     setup_toggle () {
         if (this.toggle) {

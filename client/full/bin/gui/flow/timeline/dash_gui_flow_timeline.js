@@ -19,6 +19,12 @@ class DashGuiFlowTimeline {
     }
 
     setup_styles () {
+        if (this.view.data["furthest_step_id"]) {
+            this.highest_node_index = this.view.steps.indexOf(
+                this.view.get_step_from_id(this.view.data["furthest_step_id"])
+            );
+        }
+
         this.html.css({
             "display": "flex",
             "justify-content": "center",
@@ -48,7 +54,21 @@ class DashGuiFlowTimeline {
         this.html.append(this.right_flex_area);
     }
 
+    RefreshLockedNodes () {
+        if (!this.view.get_locked_step_ids_cb) {
+            return;
+        }
+
+        var locked_step_ids = this.view.GetLockedStepIDs();
+
+        for (var node of this.nodes) {
+            node.SetLocked(locked_step_ids.includes(node.ID()));
+        }
+    }
+
     SetActiveNode (step, from_reset=false) {
+        var locked_step_ids = this.view.GetLockedStepIDs();
+
         if (from_reset) {
             this.highest_node_index = 0;
         }
@@ -59,6 +79,14 @@ class DashGuiFlowTimeline {
         for (var i in this.nodes) {
             var index = parseInt(i);
             var node = this.nodes[i];
+
+            if (locked_step_ids.includes(node.ID())) {
+                node.SetLocked(true);
+
+                continue;
+            }
+
+            node.SetLocked(false);
 
             if (active_set) {
                 if (index > this.highest_node_index) {
@@ -77,6 +105,8 @@ class DashGuiFlowTimeline {
 
                 if (index > this.highest_node_index) {
                     this.highest_node_index = index;
+
+                    this.view.UpdateLocal("furthest_step_id", step["id"]);
                 }
 
                 if (index === 0) {
@@ -104,16 +134,54 @@ class DashGuiFlowTimeline {
         return null;
     }
 
-    GetNextNode () {
-        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) + 1];
+    GetNodeByID (step_id) {
+        for (var node of this.nodes) {
+            if (node.ID() === step_id) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    GetNextNode (ignore_locked=true) {
+        var active_node_index = this.nodes.indexOf(this.GetActiveNode());
+
+        if (!ignore_locked) {
+            return this.nodes[active_node_index + 1];
+        }
+
+        for (var num of Dash.Math.Range(this.view.steps.length - active_node_index - 1)) {
+            var node = this.nodes[active_node_index + (num + 1)];
+
+            if (!node.IsLocked()) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    GetPreviousNode (ignore_locked=true) {
+        var active_node_index = this.nodes.indexOf(this.GetActiveNode());
+
+        if (!ignore_locked) {
+            return this.nodes[active_node_index - 1];
+        }
+
+        for (var num of Dash.Math.Range(active_node_index)) {
+            var node = this.nodes[active_node_index - (num + 1)];
+
+            if (!node.IsLocked()) {
+                return node;
+            }
+        }
+
+        return null;
     }
 
     GoBack () {
-        this.view.LoadStep(this.get_previous_node().Step(), true, false, true);
-    }
-
-    get_previous_node () {
-        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) - 1];
+        this.view.LoadStep(this.GetPreviousNode().Step(), true, false, true);
     }
 
     draw_nodes () {

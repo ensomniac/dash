@@ -258,6 +258,7 @@ function DashGuiIcons (icon) {
         "signature":               new DashGuiIconDefinition(this.icon, "Signature", this.weight["regular"],"signature"),
         "sitemap":                 new DashGuiIconDefinition(this.icon, "Sitemap", this.weight["regular"],"sitemap"),
         "slash":                   new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
+        "slash_heavy":             new DashGuiIconDefinition(this.icon, "Slash Heavy", this.weight["solid"],"slash"),
         "sliders_horizontal":      new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":             new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "sort":                    new DashGuiIconDefinition(this.icon, "Sort", this.weight["regular"], "sort"),

@@ -38,7 +38,7 @@ class DashGuiFlowInput extends DashGuiInput {
 
         if (this.bound_cb) {
             this.SetOnChange(this.bound_cb);
-            this.SetOnSubmit(this.bound_cb);
+            this.SetOnSubmit(this.bound_cb, null, true);
             this.SetOnAutosave(this.bound_cb, null, true);
             this.SetAutosaveDelayMs(100);
         }

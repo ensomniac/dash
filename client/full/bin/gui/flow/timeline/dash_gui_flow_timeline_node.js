@@ -4,6 +4,7 @@ class DashGuiFlowTimelineNode {
         this.step = step;
 
         this.tip = null;
+        this.slash = null;
         this.active = false;
         this.locked = false;
         this.disabled = false;
@@ -44,19 +45,50 @@ class DashGuiFlowTimelineNode {
         return this.active;
     }
 
+    IsDisabled () {
+        return this.disabled;
+    }
+
     IsLocked () {
         return this.locked;
     }
 
-    SetLocked () {  // Locked/skipped
-        // TODO: when skipped or not able to nav to this step - also, differentiate the style
+    SetLocked (locked) {  // Locked/skipped
+        this.locked = locked;
+
+        if (this.locked) {
+            if (this.disabled) {
+                this.SetDisabled(false);
+            }
+
+            if (this.active) {
+                this.SetActive(false);
+            }
+
+            this.show_slash();
+        }
+
+        else {
+            this.hide_slash();
+        }
+
+        this.html.css({
+            "cursor": this.get_cursor_css(),
+            "opacity": this.get_opacity_css()
+        });
     }
 
     SetActive (active) {
         this.active = active;
 
-        if (this.active && this.disabled) {
-            this.SetDisabled(false);
+        if (this.active) {
+            if (this.locked) {
+                this.SetLocked(false);
+            }
+
+            if (this.disabled) {
+                this.SetDisabled(false);
+            }
         }
 
         this.html.css({
@@ -69,8 +101,14 @@ class DashGuiFlowTimelineNode {
     SetDisabled (disabled) {
         this.disabled = disabled;
 
-        if (this.disabled && this.active) {
-            this.SetActive(false);
+        if (this.disabled) {
+            if (this.locked) {
+                this.SetLocked(false);
+            }
+
+            if (this.active) {
+                this.SetActive(false);
+            }
         }
 
         this.html.css({
@@ -79,16 +117,43 @@ class DashGuiFlowTimelineNode {
         });
     }
 
+    show_slash () {
+        if (this.slash) {
+            this.slash.html.show();
+
+            return;
+        }
+
+        this.slash = new Dash.Gui.Icon(this.color, "slash_heavy", this.size, 0.7, this.stroke_color);
+
+        this.slash.html.css({
+            "position": " absolute",
+            "inset": 0,
+            "border-radius": this.size,
+            "cursor": "not-allowed"
+        });
+
+        this.html.append(this.slash.html);
+    }
+
+    hide_slash () {
+        if (!this.slash) {
+            return;
+        }
+
+        this.slash.html.hide();
+    }
+
     get_bg_css () {
         return this.active ? this.stroke_color_highlighted : this.color.BackgroundRaised;
     }
 
     get_cursor_css () {
-        return (this.disabled ? "not-allowed" : this.active ? "help" : "pointer");
+        return ((this.disabled || this.locked) ? "not-allowed" : this.active ? "help" : "pointer");
     }
 
     get_opacity_css () {
-        return this.disabled ? 0.4 : 1;
+        return this.disabled ? 0.4 : this.locked ? 0.2 : 1;
     }
 
     show_tip () {
@@ -109,7 +174,9 @@ class DashGuiFlowTimelineNode {
             "transform": "rotate(-90deg)",
             "transform-origin": "top left",
             "pointer-events": "none",
-            "user-select": "none"
+            "user-select": "none",
+            "background": this.color.BackgroundRaised,
+            "filter": "sepia(20%) hue-rotate(5deg)"
         });
 
         this.html.append(this.tip.html);
@@ -125,27 +192,31 @@ class DashGuiFlowTimelineNode {
 
     setup_connections () {
         this.html.on("mouseenter", () => {
-            if (!this.active && !this.disabled) {
+            if (!this.active && !this.disabled && !this.locked) {
                 this.html.css({
                     "border": this.stroke_size + "px solid " + this.stroke_color_highlighted
                 });
             }
 
-            this.show_tip();
+            if (!this.locked) {
+                this.show_tip();
+            }
         });
 
         this.html.on("mouseleave", () => {
-            if (!this.active && !this.disabled) {
+            if (!this.active && !this.disabled && !this.locked) {
                 this.html.css({
                     "border": this.stroke_size + "px solid " + this.stroke_color
                 });
             }
 
-            this.hide_tip();
+            if (!this.locked) {
+                this.hide_tip();
+            }
         });
 
         this.html.on("click", () => {
-            if (this.active || this.disabled) {
+            if (this.active || this.disabled || this.locked) {
                 return;
             }
 

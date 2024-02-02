@@ -51,6 +51,7 @@ class DashGuiFlow {
         this.core_gui_font_size = 250;
         this.back_button_visible = false;
         this.exit_button_size_mult = 0.75;
+        this.get_locked_step_ids_cb = null;
         this.exit_button_top = Dash.Size.Padding * 0.7;
         this.missing_option_text_color = this.color.Stroke;
         this.icon_button_container_size = Dash.Size.Padding * 3;
@@ -123,6 +124,10 @@ class DashGuiFlow {
         this.can_finish_cb = bound_cb;
     }
 
+    SetGetLockedStepIDsCB (bound_cb) {
+        this.get_locked_step_ids_cb = bound_cb;
+    }
+
     RequestNewOption (step) {
         var text_area = new Dash.Gui.TextArea(
             this.color,
@@ -168,18 +173,18 @@ class DashGuiFlow {
         prompt.DisableRemoveOnSelection();
     }
 
-    // TODO: need some kind of safeguard for when a user goes back a step, clears a field, then returns
-    //  to the next step to continue - loading would need to confirm that the required data exists,
-    //  otherwise, revert to the previous step and inactivate that newer step (for example, user is
-    //  on the collection_display_name step, goes back to the launch_date step and clears the date
-    //  (though, the user shouldn't be able to proceed like this anyway, so maybe need to hide the
-    //  continue button and possibly disable the superseding active nodes?), then goes forward to
-    //  return to the collection_display_name step, which should alert and return the user back
-    //  to the launch_date step, since the required data no longer exists)
     LoadStep (step, force=false, from_reset=false, save_first=false) {
         if (typeof step === "string") {
             step = this.get_step_from_id(step);
         }
+
+        // var node = this.timeline.GetNodeByID(step["id"]);
+        //
+        // if (node && node.IsLocked()) {  // Should never happen, just in case
+        //     Dash.Log.Warn("Locked step (" + step["id"] + ") was attempted to be loaded");
+        //
+        //     return;
+        // }
 
         if (!force) {
             new Dash.Gui.Prompt(
@@ -355,6 +360,10 @@ class DashGuiFlow {
         );
     }
 
+    GetLockedStepIDs () {
+        return this.get_locked_step_ids_cb ? this.get_locked_step_ids_cb(this) : [];
+    }
+
     init_step (step) {
         this.step_init_cb(this, step);
     }
@@ -397,9 +406,6 @@ class DashGuiFlow {
         if (this.initialized) {
             return;
         }
-
-        // TODO: in addition to "active_step_id", track something like "furthest_step_id" to activate
-        //  steps ahead of the active step that the user has already gone to previously
 
         this.step_area = new DashGuiFlowStepArea(this);
         this.timeline = new DashGuiFlowTimeline(this);
@@ -755,7 +761,7 @@ class DashGuiFlow {
                     750,
                     () => {
                         if (this.on_exit_cb) {
-                            this.on_exit_cb(from_finish);
+                            this.on_exit_cb(this, from_finish);
                         }
                     }
                 );

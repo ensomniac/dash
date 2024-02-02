@@ -30,7 +30,8 @@ class DashGuiFlowStepArea {
 
     InitBoolStep (
         key, header_text, false_id, false_text, true_id, true_text, tip_text="", tip_more_text="",
-        font_size_override=null, false_sub_text="", true_sub_text="", default_state=null, tip_at_top=false
+        font_size_override=null, false_sub_text="", true_sub_text="", default_state=null, tip_at_top=false,
+        continue_on_selection=false, on_selected_extra_bound_cb=null
     ) {
         this.step.AddHeader(header_text);
 
@@ -56,10 +57,8 @@ class DashGuiFlowStepArea {
         }
 
         else {
-            var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
-
             var options = this.step.AddOptions((selected_id) => {
-                this.OnOptionSelected(step_id, selected_id, key);
+                this.OnOptionSelected(selected_id, key, on_selected_extra_bound_cb, continue_on_selection);
             });
 
             options.html.css({
@@ -106,15 +105,19 @@ class DashGuiFlowStepArea {
     // Standard/basic implementation
     InitOptionsStep (
         header_text, key, add_options_bound_cb, on_selected_extra_bound_cb=null,
-        can_continue_bound_cb=null, cont_step_id_override="", missing_button=true,
-        missing_bound_cb=null, missing_text="Don't see what you're looking for?"
+        can_continue_bound_cb=null, cont_step_id_override="", continue_on_selection=false,
+        missing_button=true, missing_bound_cb=null, missing_text="Don't see what you're looking for?"
     ) {
         this.step.AddHeader(header_text);
 
-        var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
-
         var options = this.step.AddOptions((selected_id) => {
-            this.OnOptionSelected(step_id, selected_id, key, on_selected_extra_bound_cb);
+            this.OnOptionSelected(
+                selected_id,
+                key,
+                on_selected_extra_bound_cb,
+                continue_on_selection,
+                cont_step_id_override
+            );
         });
 
         add_options_bound_cb(options);
@@ -134,17 +137,21 @@ class DashGuiFlowStepArea {
         return options;
     }
 
-    OnOptionSelected (step_id, value, key, on_selected_extra_bound_cb=null) {
-        if (this.step.ID() !== step_id) {
-            return;  // Just in case
-        }
-
+    OnOptionSelected (
+        value, key, on_selected_extra_bound_cb=null, continue_on_selection=false, cont_step_id_override=""
+    ) {
         this.view.UpdateLocal(key, value);
 
         if (on_selected_extra_bound_cb) {
             on_selected_extra_bound_cb();
         }
 
-        this.step.ShowContinueButton();
+        if (continue_on_selection && !this.step.continue_button_visible) {
+            this.step.Continue(cont_step_id_override);
+        }
+
+        else {
+            this.step.ShowContinueButton();
+        }
     }
 }

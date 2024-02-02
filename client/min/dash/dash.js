@@ -38326,11 +38326,11 @@ class DashGuiFlowStep {
         container.append(label);
         var input;  // Declare this early so it can be referenced in the callback
         input = this.AddInput(
-            () => {
-                var text = input.Text();
-                if (bound_cb) {
-                    bound_cb(text);
+            (from_autosave=false, from_blur=false, from_enter=false) => {
+                if (!bound_cb) {
+                    return;
                 }
+                bound_cb(input.Text(), from_autosave, from_blur, from_enter);
             },
             placeholder_text
         );
@@ -38479,7 +38479,7 @@ class DashGuiFlowStep {
             this.is_last_step() ? "Finish" : "Continue",
             this,
             () => {
-                this.Continue(step_id_override, false);
+                this.Continue(step_id_override);
             }
         );
         this.continue_button.Highlight(Dash.Size.ButtonHeight * 1.75);
@@ -38541,6 +38541,9 @@ class DashGuiFlowStep {
         if (!is_last_step && typeof step_id_override === "function"){
             step_id_override = step_id_override();
         }
+        if (!is_last_step && !step_id_override) {
+            this.view.timeline.RefreshLockedNodes();
+        }
         var node = is_last_step ? this.view.timeline.GetActiveNode() : (
             !step_id_override ? this.view.timeline.GetNextNode() : null
         );
@@ -38595,7 +38598,8 @@ class DashGuiFlowStepArea {
     }
     InitBoolStep (
         key, header_text, false_id, false_text, true_id, true_text, tip_text="", tip_more_text="",
-        font_size_override=null, false_sub_text="", true_sub_text="", default_state=null, tip_at_top=false
+        font_size_override=null, false_sub_text="", true_sub_text="", default_state=null, tip_at_top=false,
+        continue_on_selection=false, on_selected_extra_bound_cb=null
     ) {
         this.step.AddHeader(header_text);
         if (tip_at_top && tip_text) {
@@ -38617,9 +38621,8 @@ class DashGuiFlowStepArea {
             });
         }
         else {
-            var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
             var options = this.step.AddOptions((selected_id) => {
-                this.OnOptionSelected(step_id, selected_id, key);
+                this.OnOptionSelected(selected_id, key, on_selected_extra_bound_cb, continue_on_selection);
             });
             options.html.css({
                 "margin-top": Dash.Size.Padding * 3,
@@ -38657,13 +38660,18 @@ class DashGuiFlowStepArea {
     // Standard/basic implementation
     InitOptionsStep (
         header_text, key, add_options_bound_cb, on_selected_extra_bound_cb=null,
-        can_continue_bound_cb=null, cont_step_id_override="", missing_button=true,
-        missing_bound_cb=null, missing_text="Don't see what you're looking for?"
+        can_continue_bound_cb=null, cont_step_id_override="", continue_on_selection=false,
+        missing_button=true, missing_bound_cb=null, missing_text="Don't see what you're looking for?"
     ) {
         this.step.AddHeader(header_text);
-        var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
         var options = this.step.AddOptions((selected_id) => {
-            this.OnOptionSelected(step_id, selected_id, key, on_selected_extra_bound_cb);
+            this.OnOptionSelected(
+                selected_id,
+                key,
+                on_selected_extra_bound_cb,
+                continue_on_selection,
+                cont_step_id_override
+            );
         });
         add_options_bound_cb(options);
         var value = this.view.data[key];
@@ -38676,15 +38684,19 @@ class DashGuiFlowStepArea {
         this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override, Boolean(value));
         return options;
     }
-    OnOptionSelected (step_id, value, key, on_selected_extra_bound_cb=null) {
-        if (this.step.ID() !== step_id) {
-            return;  // Just in case
-        }
+    OnOptionSelected (
+        value, key, on_selected_extra_bound_cb=null, continue_on_selection=false, cont_step_id_override=""
+    ) {
         this.view.UpdateLocal(key, value);
         if (on_selected_extra_bound_cb) {
             on_selected_extra_bound_cb();
         }
-        this.step.ShowContinueButton();
+        if (continue_on_selection && !this.step.continue_button_visible) {
+            this.step.Continue(cont_step_id_override);
+        }
+        else {
+            this.step.ShowContinueButton();
+        }
     }
 }
 
@@ -38706,6 +38718,11 @@ class DashGuiFlowTimeline {
         this.setup_styles();
     }
     setup_styles () {
+        if (this.view.data["furthest_step_id"]) {
+            this.highest_node_index = this.view.steps.indexOf(
+                this.view.get_step_from_id(this.view.data["furthest_step_id"])
+            );
+        }
         this.html.css({
             "display": "flex",
             "justify-content": "center",
@@ -38727,7 +38744,17 @@ class DashGuiFlowTimeline {
         });
         this.html.append(this.right_flex_area);
     }
+    RefreshLockedNodes () {
+        if (!this.view.get_locked_step_ids_cb) {
+            return;
+        }
+        var locked_step_ids = this.view.GetLockedStepIDs();
+        for (var node of this.nodes) {
+            node.SetLocked(locked_step_ids.includes(node.ID()));
+        }
+    }
     SetActiveNode (step, from_reset=false) {
+        var locked_step_ids = this.view.GetLockedStepIDs();
         if (from_reset) {
             this.highest_node_index = 0;
         }
@@ -38736,6 +38763,11 @@ class DashGuiFlowTimeline {
         for (var i in this.nodes) {
             var index = parseInt(i);
             var node = this.nodes[i];
+            if (locked_step_ids.includes(node.ID())) {
+                node.SetLocked(true);
+                continue;
+            }
+            node.SetLocked(false);
             if (active_set) {
                 if (index > this.highest_node_index) {
                     node.SetDisabled(true);
@@ -38749,6 +38781,7 @@ class DashGuiFlowTimeline {
                 active_set = true;
                 if (index > this.highest_node_index) {
                     this.highest_node_index = index;
+                    this.view.UpdateLocal("furthest_step_id", step["id"]);
                 }
                 if (index === 0) {
                     this.view.HideBackButton();
@@ -38769,14 +38802,42 @@ class DashGuiFlowTimeline {
         }
         return null;
     }
-    GetNextNode () {
-        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) + 1];
+    GetNodeByID (step_id) {
+        for (var node of this.nodes) {
+            if (node.ID() === step_id) {
+                return node;
+            }
+        }
+        return null;
+    }
+    GetNextNode (ignore_locked=true) {
+        var active_node_index = this.nodes.indexOf(this.GetActiveNode());
+        if (!ignore_locked) {
+            return this.nodes[active_node_index + 1];
+        }
+        for (var num of Dash.Math.Range(this.view.steps.length - active_node_index - 1)) {
+            var node = this.nodes[active_node_index + (num + 1)];
+            if (!node.IsLocked()) {
+                return node;
+            }
+        }
+        return null;
+    }
+    GetPreviousNode (ignore_locked=true) {
+        var active_node_index = this.nodes.indexOf(this.GetActiveNode());
+        if (!ignore_locked) {
+            return this.nodes[active_node_index - 1];
+        }
+        for (var num of Dash.Math.Range(active_node_index)) {
+            var node = this.nodes[active_node_index - (num + 1)];
+            if (!node.IsLocked()) {
+                return node;
+            }
+        }
+        return null;
     }
     GoBack () {
-        this.view.LoadStep(this.get_previous_node().Step(), true, false, true);
-    }
-    get_previous_node () {
-        return this.nodes[this.nodes.indexOf(this.GetActiveNode()) - 1];
+        this.view.LoadStep(this.GetPreviousNode().Step(), true, false, true);
     }
     draw_nodes () {
         var draw_line = false;
@@ -38877,6 +38938,7 @@ class DashGuiFlowTimelineNode {
         this.timeline = timeline;
         this.step = step;
         this.tip = null;
+        this.slash = null;
         this.active = false;
         this.locked = false;
         this.disabled = false;
@@ -38910,16 +38972,40 @@ class DashGuiFlowTimelineNode {
     IsActive () {
         return this.active;
     }
+    IsDisabled () {
+        return this.disabled;
+    }
     IsLocked () {
         return this.locked;
     }
-    SetLocked () {  // Locked/skipped
-        // TODO: when skipped or not able to nav to this step - also, differentiate the style
+    SetLocked (locked) {  // Locked/skipped
+        this.locked = locked;
+        if (this.locked) {
+            if (this.disabled) {
+                this.SetDisabled(false);
+            }
+            if (this.active) {
+                this.SetActive(false);
+            }
+            this.show_slash();
+        }
+        else {
+            this.hide_slash();
+        }
+        this.html.css({
+            "cursor": this.get_cursor_css(),
+            "opacity": this.get_opacity_css()
+        });
     }
     SetActive (active) {
         this.active = active;
-        if (this.active && this.disabled) {
-            this.SetDisabled(false);
+        if (this.active) {
+            if (this.locked) {
+                this.SetLocked(false);
+            }
+            if (this.disabled) {
+                this.SetDisabled(false);
+            }
         }
         this.html.css({
             "cursor": this.get_cursor_css(),
@@ -38929,22 +39015,47 @@ class DashGuiFlowTimelineNode {
     }
     SetDisabled (disabled) {
         this.disabled = disabled;
-        if (this.disabled && this.active) {
-            this.SetActive(false);
+        if (this.disabled) {
+            if (this.locked) {
+                this.SetLocked(false);
+            }
+            if (this.active) {
+                this.SetActive(false);
+            }
         }
         this.html.css({
             "cursor": this.get_cursor_css(),
             "opacity": this.get_opacity_css()
         });
     }
+    show_slash () {
+        if (this.slash) {
+            this.slash.html.show();
+            return;
+        }
+        this.slash = new Dash.Gui.Icon(this.color, "slash_heavy", this.size, 0.7, this.stroke_color);
+        this.slash.html.css({
+            "position": " absolute",
+            "inset": 0,
+            "border-radius": this.size,
+            "cursor": "not-allowed"
+        });
+        this.html.append(this.slash.html);
+    }
+    hide_slash () {
+        if (!this.slash) {
+            return;
+        }
+        this.slash.html.hide();
+    }
     get_bg_css () {
         return this.active ? this.stroke_color_highlighted : this.color.BackgroundRaised;
     }
     get_cursor_css () {
-        return (this.disabled ? "not-allowed" : this.active ? "help" : "pointer");
+        return ((this.disabled || this.locked) ? "not-allowed" : this.active ? "help" : "pointer");
     }
     get_opacity_css () {
-        return this.disabled ? 0.4 : 1;
+        return this.disabled ? 0.4 : this.locked ? 0.2 : 1;
     }
     show_tip () {
         if (this.tip) {
@@ -38960,7 +39071,9 @@ class DashGuiFlowTimelineNode {
             "transform": "rotate(-90deg)",
             "transform-origin": "top left",
             "pointer-events": "none",
-            "user-select": "none"
+            "user-select": "none",
+            "background": this.color.BackgroundRaised,
+            "filter": "sepia(20%) hue-rotate(5deg)"
         });
         this.html.append(this.tip.html);
     }
@@ -38972,23 +39085,27 @@ class DashGuiFlowTimelineNode {
     }
     setup_connections () {
         this.html.on("mouseenter", () => {
-            if (!this.active && !this.disabled) {
+            if (!this.active && !this.disabled && !this.locked) {
                 this.html.css({
                     "border": this.stroke_size + "px solid " + this.stroke_color_highlighted
                 });
             }
-            this.show_tip();
+            if (!this.locked) {
+                this.show_tip();
+            }
         });
         this.html.on("mouseleave", () => {
-            if (!this.active && !this.disabled) {
+            if (!this.active && !this.disabled && !this.locked) {
                 this.html.css({
                     "border": this.stroke_size + "px solid " + this.stroke_color
                 });
             }
-            this.hide_tip();
+            if (!this.locked) {
+                this.hide_tip();
+            }
         });
         this.html.on("click", () => {
-            if (this.active || this.disabled) {
+            if (this.active || this.disabled || this.locked) {
                 return;
             }
             this.view.LoadStep(this.Step(), true, false, true);
@@ -39426,6 +39543,7 @@ class DashGuiFlow {
         this.core_gui_font_size = 250;
         this.back_button_visible = false;
         this.exit_button_size_mult = 0.75;
+        this.get_locked_step_ids_cb = null;
         this.exit_button_top = Dash.Size.Padding * 0.7;
         this.missing_option_text_color = this.color.Stroke;
         this.icon_button_container_size = Dash.Size.Padding * 3;
@@ -39484,6 +39602,9 @@ class DashGuiFlow {
     SetCanFinishCB (bound_cb) {
         this.can_finish_cb = bound_cb;
     }
+    SetGetLockedStepIDsCB (bound_cb) {
+        this.get_locked_step_ids_cb = bound_cb;
+    }
     RequestNewOption (step) {
         var text_area = new Dash.Gui.TextArea(
             this.color,
@@ -39520,18 +39641,17 @@ class DashGuiFlow {
         prompt.AddHTML(text_area.html);
         prompt.DisableRemoveOnSelection();
     }
-    // TODO: need some kind of safeguard for when a user goes back a step, clears a field, then returns
-    //  to the next step to continue - loading would need to confirm that the required data exists,
-    //  otherwise, revert to the previous step and inactivate that newer step (for example, user is
-    //  on the collection_display_name step, goes back to the launch_date step and clears the date
-    //  (though, the user shouldn't be able to proceed like this anyway, so maybe need to hide the
-    //  continue button and possibly disable the superseding active nodes?), then goes forward to
-    //  return to the collection_display_name step, which should alert and return the user back
-    //  to the launch_date step, since the required data no longer exists)
     LoadStep (step, force=false, from_reset=false, save_first=false) {
         if (typeof step === "string") {
             step = this.get_step_from_id(step);
         }
+        // var node = this.timeline.GetNodeByID(step["id"]);
+        //
+        // if (node && node.IsLocked()) {  // Should never happen, just in case
+        //     Dash.Log.Warn("Locked step (" + step["id"] + ") was attempted to be loaded");
+        //
+        //     return;
+        // }
         if (!force) {
             new Dash.Gui.Prompt(
                 (selected_index) => {
@@ -39678,6 +39798,9 @@ class DashGuiFlow {
             this.modal_bg_color
         );
     }
+    GetLockedStepIDs () {
+        return this.get_locked_step_ids_cb ? this.get_locked_step_ids_cb(this) : [];
+    }
     init_step (step) {
         this.step_init_cb(this, step);
     }
@@ -39711,8 +39834,6 @@ class DashGuiFlow {
         if (this.initialized) {
             return;
         }
-        // TODO: in addition to "active_step_id", track something like "furthest_step_id" to activate
-        //  steps ahead of the active step that the user has already gone to previously
         this.step_area = new DashGuiFlowStepArea(this);
         this.timeline = new DashGuiFlowTimeline(this);
         this.timeline.html.css({
@@ -40012,7 +40133,7 @@ class DashGuiFlow {
                     750,
                     () => {
                         if (this.on_exit_cb) {
-                            this.on_exit_cb(from_finish);
+                            this.on_exit_cb(this, from_finish);
                         }
                     }
                 );
@@ -40323,7 +40444,7 @@ class DashGuiFlowInput extends DashGuiInput {
         this.bound_cb = bound_cb;
         if (this.bound_cb) {
             this.SetOnChange(this.bound_cb);
-            this.SetOnSubmit(this.bound_cb);
+            this.SetOnSubmit(this.bound_cb, null, true);
             this.SetOnAutosave(this.bound_cb, null, true);
             this.SetAutosaveDelayMs(100);
         }
@@ -40372,7 +40493,6 @@ class DashGuiFlowToggle {
         };
         this.setup_styles();
     }
-    // TODO: change label border color on hover
     setup_styles () {
         this.html.css({
             "display": "flex",
@@ -40407,42 +40527,54 @@ class DashGuiFlowToggle {
         if (this.false_label || !this.false_label_text) {
             return;
         }
-        this.false_label = this.view.GetLabel(this.false_label_text);
-        this.false_label.css(this.label_css);
-        this.false_label.on("click", () => {
-            if (!this.toggle.IsChecked()) {
-                return;
-            }
-            this.toggle.Toggle();
-        });
-        var container = $("<div></div>");
+        var container;
+        [this.false_label, container] = this.setup_label(this.false_label_text);
         container.css({
-            ...this.label_container_css,
             "justify-content": "right"
         });
-        container.append(this.false_label);
-        this.html.append(container);
     }
     setup_true_label () {
         if (this.true_label || !this.true_label_text) {
             return;
         }
-        this.true_label = this.view.GetLabel(this.true_label_text);
-        this.true_label.css(this.label_css);
-        this.true_label.on("click", () => {
-            if (this.toggle.IsChecked()) {
-                return;
-            }
-            this.toggle.Toggle();
-        });
-        var container = $("<div></div>");
-        container.css(this.label_container_css);
-        container.append(this.true_label);
-        this.html.append(container);
+        var container;
+        [this.true_label, container] = this.setup_label(this.true_label_text);
         this.toggle.html.css({
             "margin-right": Dash.Size.Padding
         });
     }
+    setup_label = function (label_text) {
+        var label = this.view.GetLabel(label_text);
+        label.css(this.label_css);
+        label.on("click", () => {
+            var active = this.toggle.IsChecked();
+            if ((active && label === this.true_label) || (!active && label === this.false_label)) {
+                return;
+            }
+            this.toggle.Toggle();
+        });
+        label.on("mouseenter", () => {
+            if ((this.toggle.IsChecked() ? this.false_label : this.true_label) !== label) {
+                return;
+            }
+            label.css({
+                "border": "1px solid " + this.active_toggle_bg_color
+            });
+        });
+        label.on("mouseleave", () => {
+            if ((this.toggle.IsChecked() ? this.false_label : this.true_label) !== label) {
+                return;
+            }
+            label.css({
+                "border": "1px solid " + this.label_bg_color
+            });
+        });
+        var container = $("<div></div>");
+        container.css(this.label_container_css);
+        container.append(label);
+        this.html.append(container);
+        return [label, container];
+    };
     setup_toggle () {
         if (this.toggle) {
             return;
@@ -40860,6 +40992,7 @@ function DashGuiIcons (icon) {
         "signature":               new DashGuiIconDefinition(this.icon, "Signature", this.weight["regular"],"signature"),
         "sitemap":                 new DashGuiIconDefinition(this.icon, "Sitemap", this.weight["regular"],"sitemap"),
         "slash":                   new DashGuiIconDefinition(this.icon, "Slash", this.weight["regular"],"slash"),
+        "slash_heavy":             new DashGuiIconDefinition(this.icon, "Slash Heavy", this.weight["solid"],"slash"),
         "sliders_horizontal":      new DashGuiIconDefinition(this.icon, "Sliders (Horizontal)", this.weight["regular"],"sliders-h"),
         "soccer_ball":             new DashGuiIconDefinition(this.icon, "Soccer Ball", this.weight["regular"], "futbol"),
         "sort":                    new DashGuiIconDefinition(this.icon, "Sort", this.weight["regular"], "sort"),
@@ -41106,6 +41239,7 @@ function DashGuiInputBase (
     this.last_arrow_navigation_ts = null;
     this.allow_double_click_clear = false;
     this.submit_called_from_autosave = false;
+    this.include_source_bools_on_submit_cb = false;
     this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
     this.Flatten = function () {
         Dash.Gui.Flatten(this.html);
@@ -41139,7 +41273,7 @@ function DashGuiInputBase (
                 }
                 if (self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.skip_next_autosave = true;  // Autosave was happening at the same time as blur
-                    self.on_submit();
+                    self.on_submit(false, true);
                 }
             });
         })(this);
@@ -41206,8 +41340,9 @@ function DashGuiInputBase (
         }
         this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };
-    this.SetOnSubmit = function (callback=null, binder=null) {
+    this.SetOnSubmit = function (callback=null, binder=null, include_source_bools=false) {
         this.on_submit_callback = binder && callback ? callback.bind(binder) : callback;
+        this.include_source_bools_on_submit_cb = include_source_bools;
     };
     this.Focus = function () {
         this.input.trigger("focus");
@@ -41275,7 +41410,7 @@ function DashGuiInputBase (
         })(this);
     };
     // Fired on 'enter' or 'paste'
-    this.on_submit = function (from_autosave=false) {
+    this.on_submit = function (from_autosave=false, from_blur=false, from_enter=false) {
         if (from_autosave) {
             if (!this.on_autosave_callback) {
                 return;
@@ -41302,7 +41437,13 @@ function DashGuiInputBase (
             this.on_autosave_callback();
         }
         else {
-            this.on_submit_callback();
+            // This was added later, so doing it this way to not break any existing stuff
+            if (this.include_source_bools_on_submit_cb) {
+                this.on_submit_callback(from_autosave, from_blur, from_enter);
+            }
+            else {
+                this.on_submit_callback();
+            }
             // Don't store this on autosave
             this.last_submit_ts = new Date();
         }
@@ -41367,7 +41508,7 @@ function DashGuiInputBase (
                     self.last_arrow_navigation_ts = new Date();
                 }
                 else if (e.key === "Enter") {
-                    self.on_submit();
+                    self.on_submit(false, false, true);
                 }
             });
             self.input.on("change", function () {

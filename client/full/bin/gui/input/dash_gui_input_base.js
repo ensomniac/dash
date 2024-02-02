@@ -27,6 +27,7 @@ function DashGuiInputBase (
     this.last_arrow_navigation_ts = null;
     this.allow_double_click_clear = false;
     this.submit_called_from_autosave = false;
+    this.include_source_bools_on_submit_cb = false;
     this.height = Dash.Size.RowHeight - (Dash.IsMobile ? 2 : 0);
 
     this.Flatten = function () {
@@ -72,7 +73,7 @@ function DashGuiInputBase (
                 if (self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.skip_next_autosave = true;  // Autosave was happening at the same time as blur
 
-                    self.on_submit();
+                    self.on_submit(false, true);
                 }
             });
         })(this);
@@ -160,8 +161,10 @@ function DashGuiInputBase (
         this.on_autosave_callback = binder && callback ? callback.bind(binder) : callback;
     };
 
-    this.SetOnSubmit = function (callback=null, binder=null) {
+    this.SetOnSubmit = function (callback=null, binder=null, include_source_bools=false) {
         this.on_submit_callback = binder && callback ? callback.bind(binder) : callback;
+
+        this.include_source_bools_on_submit_cb = include_source_bools;
     };
 
     this.Focus = function () {
@@ -249,7 +252,7 @@ function DashGuiInputBase (
     };
 
     // Fired on 'enter' or 'paste'
-    this.on_submit = function (from_autosave=false) {
+    this.on_submit = function (from_autosave=false, from_blur=false, from_enter=false) {
         if (from_autosave) {
             if (!this.on_autosave_callback) {
                 return;
@@ -283,7 +286,14 @@ function DashGuiInputBase (
         }
 
         else {
-            this.on_submit_callback();
+            // This was added later, so doing it this way to not break any existing stuff
+            if (this.include_source_bools_on_submit_cb) {
+                this.on_submit_callback(from_autosave, from_blur, from_enter);
+            }
+
+            else {
+                this.on_submit_callback();
+            }
 
             // Don't store this on autosave
             this.last_submit_ts = new Date();
@@ -366,7 +376,7 @@ function DashGuiInputBase (
                 }
 
                 else if (e.key === "Enter") {
-                    self.on_submit();
+                    self.on_submit(false, false, true);
                 }
             });
 
