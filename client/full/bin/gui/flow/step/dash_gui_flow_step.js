@@ -1,7 +1,7 @@
 class DashGuiFlowStep {
-    constructor (steps, id) {
+    constructor (steps, step) {
         this.steps = steps;
-        this.id = id;
+        this.step = step;
 
         this.options = [];
         this.view = this.steps.view;
@@ -26,8 +26,12 @@ class DashGuiFlowStep {
         });
     }
 
+    Step () {
+        return this.step;
+    }
+
     ID () {
-        return this.id;
+        return this.step["id"];
     }
 
     AddOptions (bound_cb=null) {
@@ -221,7 +225,7 @@ class DashGuiFlowStep {
         });
 
         label.on("click", bound_cb || (() => {
-            this.view.RequestNewOption(this.id);
+            this.view.RequestNewOption(this.step);
         }));
 
         this.html.append(label);
@@ -242,8 +246,15 @@ class DashGuiFlowStep {
         return row;
     }
 
-    AddRowArea (row_config=[], auto_rows=true, auto_rows_min_required=1) {
-        var row = new DashGuiFlowRowArea(this.view, row_config, auto_rows, auto_rows_min_required, true);
+    AddRowArea (row_config=[], auto_rows=true, auto_rows_key="", auto_rows_min_required=1) {
+        var row = new DashGuiFlowRowArea(
+            this.view,
+            row_config,
+            auto_rows,
+            auto_rows_key,
+            auto_rows_min_required,
+            true
+        );
 
         row.html.css({
             "margin-bottom": Dash.Size.Padding,
@@ -373,24 +384,28 @@ class DashGuiFlowStep {
             return;
         }
 
+        var is_last_step = this.is_last_step();
+
+        if (!is_last_step && typeof step_id_override === "function"){
+            step_id_override = step_id_override();
+        }
+
+        var node = is_last_step ? this.view.timeline.GetActiveNode() : (
+            !step_id_override ? this.view.timeline.GetNextNode() : null
+        );
+
         this.view.Save(
             true,
             () => {
-                if (this.is_last_step()) {
-                    // TODO: check to make sure they can finish, maybe also ask if they're sure they're done?
+                if (is_last_step) {
+                    this.view.Finish();
                 }
 
                 else {
-                    if (typeof step_id_override === "function"){
-                        step_id_override = step_id_override();
-                    }
-
-                    this.view.LoadStep(
-                        step_id_override || this.view.timeline.GetNextNode().ID(),
-                        true
-                    );
+                    this.view.LoadStep(step_id_override || node.Step(),true);
                 }
-            }
+            },
+            step_id_override || node.ID()
         );
     }
 
@@ -406,6 +421,6 @@ class DashGuiFlowStep {
     }
 
     is_last_step () {
-        return this.id === this.view.steps.Last();
+        return this.ID() === this.view.steps.Last()["id"];
     }
 }

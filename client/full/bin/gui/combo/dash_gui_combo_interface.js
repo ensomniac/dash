@@ -281,6 +281,16 @@ function DashGuiComboInterface () {
         return null;
     };
 
+    this.GetLabelForID = function (id) {
+        for (var option of this.option_list) {
+            if (option["id"] === id) {
+                return option["label_text"];
+            }
+        }
+
+        return id.toString().Title();
+    };
+
     this.DisableFlash = function () {
         this.flash_enabled = false;
     };

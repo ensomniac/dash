@@ -28802,6 +28802,14 @@ function DashGuiComboInterface () {
         }
         return null;
     };
+    this.GetLabelForID = function (id) {
+        for (var option of this.option_list) {
+            if (option["id"] === id) {
+                return option["label_text"];
+            }
+        }
+        return id.toString().Title();
+    };
     this.DisableFlash = function () {
         this.flash_enabled = false;
     };
@@ -36916,6 +36924,9 @@ class DashGuiFlowListDual {
     GetSelected () {
         return this.right_list.data ? Dash.GetDeepCopy(this.right_list.data["order"]) : [];
     }
+    GetNotSelected () {
+        return this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
+    }
     ShowLoadingOverlay () {
         this.left_list.ShowLoadingOverlay();
         this.right_list.ShowLoadingOverlay();
@@ -36923,6 +36934,56 @@ class DashGuiFlowListDual {
     HideLoadingOverlay () {
         this.left_list.HideLoadingOverlay();
         this.right_list.HideLoadingOverlay();
+    }
+    AddItems (ids) {
+        this.ShowLoadingOverlay();
+        var right_order = this.GetSelected();
+        var left_order = this.GetNotSelected();
+        for (var id of ids) {
+            left_order.Remove(id);
+            right_order.push(id);
+        }
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+        this.HideLoadingOverlay();
+    }
+    RemoveItems (ids) {
+        this.ShowLoadingOverlay();
+        var right_order = this.GetSelected();
+        var left_order = this.GetNotSelected();
+        for (var id of ids) {
+            right_order.Remove(id);
+            var new_index = null;
+            var orig_index = this.full_data["order"].indexOf(id);
+            // Try to re-insert it in respect to the original order
+            for (var i in left_order) {
+                if (this.full_data["order"].indexOf(left_order[i]) > orig_index) {
+                    new_index = i;
+                    break;
+                }
+            }
+            if (new_index) {
+                left_order.Insert(new_index, id);
+            }
+            else {
+                left_order.push(id);
+            }
+        }
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+        this.HideLoadingOverlay();
     }
     add_labels () {
         var label_border = "1px solid " + this.color.PinstripeLight;
@@ -36960,7 +37021,7 @@ class DashGuiFlowListDual {
             this.view,
             (row) => {
                 var id = row.ID();
-                this.add_item(id);
+                this.AddItems([id]);
                 if (this.on_add_bound_cb) {
                     this.on_add_bound_cb(id);
                 }
@@ -36974,7 +37035,7 @@ class DashGuiFlowListDual {
             this.view,
             (row) => {
                 var id = row.ID();
-                this.remove_item(id);
+                this.RemoveItems([id]);
                 if (this.on_remove_bound_cb) {
                     this.on_remove_bound_cb(id);
                 }
@@ -36984,52 +37045,6 @@ class DashGuiFlowListDual {
             "border-top-right-radius": 0
         });
         this.html.append(this.right_list.html);
-    }
-    add_item (id) {
-        this.ShowLoadingOverlay();
-        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
-        left_order.Remove(id);
-        this.left_list.Update({
-            "data": this.full_data["data"],
-            "order": left_order
-        });
-        var right_order = this.GetSelected();
-        right_order.push(id);
-        this.right_list.Update({
-            "data": this.full_data["data"],
-            "order": right_order
-        });
-        this.HideLoadingOverlay();
-    }
-    remove_item (id) {
-        this.ShowLoadingOverlay();
-        var right_order = this.GetSelected();
-        right_order.Remove(id);
-        this.right_list.Update({
-            "data": this.full_data["data"],
-            "order": right_order
-        });
-        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
-        var new_index = null;
-        var orig_index = this.full_data["order"].indexOf(id);
-        // Try to re-insert it in respect to the original order
-        for (var i in left_order) {
-            if (this.full_data["order"].indexOf(left_order[i]) > orig_index) {
-                new_index = i;
-                break;
-            }
-        }
-        if (new_index) {
-            left_order.Insert(new_index, id);
-        }
-        else {
-            left_order.push(id);
-        }
-        this.left_list.Update({
-            "data": this.full_data["data"],
-            "order": left_order
-        });
-        this.HideLoadingOverlay();
     }
 }
 
@@ -37509,6 +37524,38 @@ class DashGuiFlowOptions {
             "place-content": "center"
         });
     }
+    SetActiveByID (id="") {
+        if (this.MultiEnabled()) {
+            Dash.Log.Warn("When using multi-select, use SetActiveByIDs instead");
+            return;
+        }
+        for (var option of this.options) {
+            if (option.ID() !== id) {
+                continue;
+            }
+            option.SetActive(true);
+            this.on_option_selected(option, true);
+            break;
+        }
+    };
+    SetActiveByIDs (ids=[]) {
+        if (!this.MultiEnabled()) {
+            Dash.Log.Warn("When not using multi-select, use SetActiveByID instead");
+            return;
+        }
+        var tally = 0;
+        for (var option of this.options) {
+            if (!ids.includes(option.ID())) {
+                continue;
+            }
+            option.SetActive(true);
+            this.on_option_selected(option, true);
+            tally += 1;
+            if (tally === ids.length) {
+                break;
+            }
+        }
+    };
     OnResize () {
         var width = this.options[0].html.outerWidth();
         if (width >= this.default_cell_size) {
@@ -37595,7 +37642,7 @@ class DashGuiFlowOptions {
         }
         return options;
     }
-    on_option_selected (selected_option) {
+    on_option_selected (selected_option, skip_cb=false) {
         var option;
         if (!this.MultiEnabled()) {
             for (option of this.options) {
@@ -37616,7 +37663,7 @@ class DashGuiFlowOptions {
                 this.multi_select_order[i].update_multi_icon_num(parseInt(i) + 1);
             }
         }
-        if (this.bound_cb) {
+        if (!skip_cb && this.bound_cb) {
             this.bound_cb(selected_option.ID());
         }
     }
@@ -37649,27 +37696,49 @@ class DashGuiFlowRow {
             "width": "85%"
         });
     }
-    GetData () {
+    GetData (null_bool_placeholders=false) {
+        var value;
         var data = [];
+        var empty = true;
+        var check_toggle_indexes = [];
         for (var element of this.elements) {
             if (element instanceof DashGuiFlowCombo) {
-                data.push(element.ActiveID());
+                value = element.ActiveID();
+                data.push(value);
+                if (value) {
+                     empty = false;
+                }
             }
             else if (element instanceof DashGuiFlowInput) {
-                data.push(element.Text());
+                value = element.Text();
+                data.push(value);
+                if (value) {
+                    empty = false;
+                }
             }
             else if (element instanceof DashGuiFlowToggle) {
                 var active = element.IsActive();
-                // Only track if not default value (for non-auto-rows, this might need to be adjusted)
-                if (active !== element.starting_state) {
-                    data.push(active);
+                if (active === element.starting_state) {
+                    check_toggle_indexes.push(data.length);
                 }
+                else {
+                    empty = false;
+                }
+                data.push(active);
             }
             else if (element instanceof DashGuiIconButton) {
                 // pass
             }
+            else if (element.__dash_gui_flow_row_type === "text") {
+                // pass
+            }
             else {
                 Dash.Log.Warn("Warning: Unhandled element instance type:", element);
+            }
+        }
+        if (empty && null_bool_placeholders && check_toggle_indexes.length) {
+            for (var index of check_toggle_indexes) {
+                data[index] = null;
             }
         }
         return data;
@@ -37687,6 +37756,7 @@ class DashGuiFlowRow {
         label.css({
             "font-size": this.font_size + "%"
         });
+        label.__dash_gui_flow_row_type = "text";
         this.html.append(label);
         return this.track_element(label);
     }
@@ -37773,10 +37843,11 @@ class DashGuiFlowRow {
 }
 
 class DashGuiFlowRowArea {
-    constructor (view, row_config=[], auto_rows=true, auto_rows_min_required=1, in_step=false) {
+    constructor (view, row_config=[], auto_rows=true, auto_rows_key="", auto_rows_min_required=1, in_step=false) {
         this.view = view;
         this.row_config = row_config;
         this.auto_rows = auto_rows;
+        this.auto_rows_key = auto_rows_key;
         this.auto_rows_min_required = auto_rows_min_required;
         this.in_step = in_step;
         this.rows = [];
@@ -37795,14 +37866,24 @@ class DashGuiFlowRowArea {
             "height": "fit-content",
             ...this.view.row_area_css
         });
+        var existing_rows = (this.view.data[this.auto_rows_key] || []).length || 0;
         if (this.auto_rows) {
-            if (this.auto_rows_min_required) {
-                for (var _ of Dash.Math.Range(this.auto_rows_min_required)) {
+            var num_rows = Math.max(this.auto_rows_min_required, existing_rows);
+            if (num_rows) {
+                for (var _ of Dash.Math.Range(num_rows)) {
                     this.add_row();
                 }
             }
             else {
                 this.add_row(true);
+            }
+            if (existing_rows && existing_rows > this.auto_rows_min_required) {
+                this.add_row(true);
+            }
+        }
+        else if (existing_rows) {
+            for (var _ of Dash.Math.Range(existing_rows)) {
+                this.add_row();
             }
         }
     }
@@ -37810,12 +37891,20 @@ class DashGuiFlowRowArea {
         var data = [];
         for (var row of this.rows) {
             var _data = {};
+            var skipped = 0;
             var empty = true;
-            var row_data = row.GetData();
+            var row_data = row.GetData(!include_empty_rows);
             for (var i in this.row_config) {
                 var config = this.row_config[i];
-                _data[config["key"] || i] = row_data[i];
-                if (row_data[i]) {
+                // Add any other static/non-data element types here
+                if (config["type"] === "text" || config["type"] === "icon_button") {
+                    skipped += 1;
+                    continue;
+                }
+                var value = row_data[parseInt(i) - skipped];
+                _data[config["key"] || i] = value;
+                // Auto-inclusion of bool type is based on bool filtering in DashGuiFlowRow.GetData
+                if (value || typeof value === "boolean") {
                     empty = false;
                 }
             }
@@ -37826,7 +37915,6 @@ class DashGuiFlowRowArea {
         }
         return data;
     }
-    // TODO: need to auto-populate any existing data using config["key"]
     add_row (auto_added=false) {
         var row = new DashGuiFlowRow(this.view);
         row.html.css({
@@ -37834,17 +37922,19 @@ class DashGuiFlowRowArea {
             "margin-top": this.rows.length ? Dash.Size.Padding * 2 : 0,
             "width": "100%"
         });
+        var data = this.view.data[this.auto_rows_key]?.[this.rows.length];
         for (var i in this.row_config) {
             var element = null;
             var config = this.row_config[i];
+            var value = data?.[config["key"]] || "";
             if (config["type"] === "input") {
-                element = this.add_input(row, config);
+                element = this.add_input(row, config, value);
             }
             else if (config["type"] === "combo") {
-                element = this.add_combo(row, config);
+                element = this.add_combo(row, config, value);
             }
             else if (config["type"] === "toggle") {
-                element = this.add_toggle(row, config);
+                element = this.add_toggle(row, config, value);
             }
             else if (config["type"] === "text") {
                 element = row.AddText(...config["params"]);
@@ -37948,6 +38038,9 @@ class DashGuiFlowRowArea {
             min ? "asterisk" : "close",
             min ? null : () => {
                 this.remove_row(row);
+                if (this.auto_rows_key) {
+                    this.view.UpdateLocal(this.auto_rows_key, this.GetData());
+                }
             },
             min ? "Required" : "Remove row",
             row.icon_font_size * (min ? 0.5 : 1),
@@ -37982,8 +38075,12 @@ class DashGuiFlowRowArea {
         }
         row.remove_row_button = icon_button;
     }
-    add_toggle (row, config) {
-        var toggle = row.AddToggle(...config["params"]);
+    add_toggle (row, config, value=null) {
+        var params = [...config["params"]];
+        if (typeof value === "boolean") {
+            params[0] = value;
+        }
+        var toggle = row.AddToggle(...params);
         var cb = toggle.bound_cb;
         toggle.bound_cb = (active) => {
             if (cb) {
@@ -37993,8 +38090,11 @@ class DashGuiFlowRowArea {
         };
         return toggle;
     }
-    add_input (row, config) {
+    add_input (row, config, value="") {
         var input = row.AddInput(...config["params"]);
+        if (value) {
+            input.SetText(value);
+        }
         if (!this.auto_rows) {
             return;
         }
@@ -38035,7 +38135,7 @@ class DashGuiFlowRowArea {
             );
         }
     }
-    add_combo (row, config) {
+    add_combo (row, config, value="") {
         var combo = row.AddCombo(...config["params"]);
         combo.additional_data = combo;
         if (this.in_step) {
@@ -38047,6 +38147,9 @@ class DashGuiFlowRowArea {
         combo.html.on("click", () => {
             this.on_combo_clicked(combo, row);
         });
+        if (value) {
+            combo.Update(null, value, true);
+        }
         if (!this.auto_rows) {
             return;
         }
@@ -38145,9 +38248,9 @@ class DashGuiFlowRowArea {
 }
 
 class DashGuiFlowStep {
-    constructor (steps, id) {
+    constructor (steps, step) {
         this.steps = steps;
-        this.id = id;
+        this.step = step;
         this.options = [];
         this.view = this.steps.view;
         this.continue_button = null;
@@ -38168,8 +38271,11 @@ class DashGuiFlowStep {
             "justify-content": "center"
         });
     }
+    Step () {
+        return this.step;
+    }
     ID () {
-        return this.id;
+        return this.step["id"];
     }
     AddOptions (bound_cb=null) {
         var options = new DashGuiFlowOptions(this.view, bound_cb);
@@ -38311,7 +38417,7 @@ class DashGuiFlowStep {
             });
         });
         label.on("click", bound_cb || (() => {
-            this.view.RequestNewOption(this.id);
+            this.view.RequestNewOption(this.step);
         }));
         this.html.append(label);
         return label;
@@ -38325,8 +38431,15 @@ class DashGuiFlowStep {
         this.html.append(row.html);
         return row;
     }
-    AddRowArea (row_config=[], auto_rows=true, auto_rows_min_required=1) {
-        var row = new DashGuiFlowRowArea(this.view, row_config, auto_rows, auto_rows_min_required, true);
+    AddRowArea (row_config=[], auto_rows=true, auto_rows_key="", auto_rows_min_required=1) {
+        var row = new DashGuiFlowRowArea(
+            this.view,
+            row_config,
+            auto_rows,
+            auto_rows_key,
+            auto_rows_min_required,
+            true
+        );
         row.html.css({
             "margin-bottom": Dash.Size.Padding,
             "flex-shrink": 3,
@@ -38424,22 +38537,24 @@ class DashGuiFlowStep {
         if (!force && this.can_continue_cb && !this.can_continue_cb()) {
             return;
         }
+        var is_last_step = this.is_last_step();
+        if (!is_last_step && typeof step_id_override === "function"){
+            step_id_override = step_id_override();
+        }
+        var node = is_last_step ? this.view.timeline.GetActiveNode() : (
+            !step_id_override ? this.view.timeline.GetNextNode() : null
+        );
         this.view.Save(
             true,
             () => {
-                if (this.is_last_step()) {
-                    // TODO: check to make sure they can finish, maybe also ask if they're sure they're done?
+                if (is_last_step) {
+                    this.view.Finish();
                 }
                 else {
-                    if (typeof step_id_override === "function"){
-                        step_id_override = step_id_override();
-                    }
-                    this.view.LoadStep(
-                        step_id_override || this.view.timeline.GetNextNode().ID(),
-                        true
-                    );
+                    this.view.LoadStep(step_id_override || node.Step(),true);
                 }
-            }
+            },
+            step_id_override || node.ID()
         );
     }
     show_continue_button () {
@@ -38452,7 +38567,7 @@ class DashGuiFlowStep {
         );
     }
     is_last_step () {
-        return this.id === this.view.steps.Last();
+        return this.ID() === this.view.steps.Last()["id"];
     }
 }
 
@@ -38472,11 +38587,11 @@ class DashGuiFlowStepArea {
             "justify-content": "center"
         });
     }
-    SetActiveStep (id) {
+    SetActiveStep (step) {
         this.html.empty();
-        this.step = new DashGuiFlowStep(this, id);
+        this.step = new DashGuiFlowStep(this, step);
         this.html.append(this.step.html);
-        this.view.init_step(id);
+        this.view.init_step(step);
     }
     InitBoolStep (
         key, header_text, false_id, false_text, true_id, true_text, tip_text="", tip_more_text="",
@@ -38487,9 +38602,10 @@ class DashGuiFlowStepArea {
             this.step.AddTipText(tip_text, true, tip_more_text);
         }
         var has_default = typeof default_state === "boolean";
+        var existing_bool = this.view.data[key] === true_id ? true : this.view.data[key] === false_id ? false : null;
         if (has_default) {
             this.step.AddToggle(
-                default_state,
+                existing_bool !== null ? existing_bool : default_state,
                 (active) => {
                     this.view.UpdateLocal(key, active ? true_id : false_id);
                 },
@@ -38529,37 +38645,44 @@ class DashGuiFlowStepArea {
                 false_option.OverrideFontSize(font_size_override);
                 true_option.OverrideFontSize(font_size_override);
             }
+            if (existing_bool !== null) {
+                options.SetActiveByID(this.view.data[key]);
+            }
         }
         if (!tip_at_top && tip_text) {
             this.step.AddTipText(tip_text, false, tip_more_text);
         }
-        this.step.AddContinueButton(null, "", has_default);
+        this.step.AddContinueButton(null, "", has_default || existing_bool !== null);
     }
     // Standard/basic implementation
     InitOptionsStep (
-        header_text, key, add_options_bound_cb, load_obj_data=false, can_continue_bound_cb=null,
-        cont_step_id_override="", missing_button=true, missing_bound_cb=null,
-        missing_text="Don't see what you're looking for?"
+        header_text, key, add_options_bound_cb, on_selected_extra_bound_cb=null,
+        can_continue_bound_cb=null, cont_step_id_override="", missing_button=true,
+        missing_bound_cb=null, missing_text="Don't see what you're looking for?"
     ) {
         this.step.AddHeader(header_text);
         var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
         var options = this.step.AddOptions((selected_id) => {
-            this.OnOptionSelected(step_id, selected_id, key, load_obj_data);
+            this.OnOptionSelected(step_id, selected_id, key, on_selected_extra_bound_cb);
         });
         add_options_bound_cb(options);
+        var value = this.view.data[key];
+        if (value) {
+            options.SetActiveByID(value);
+        }
         if (missing_button) {
             this.step.AddMissingOptionButton(missing_bound_cb, missing_text);
         }
-        this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override);
+        this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override, Boolean(value));
         return options;
     }
-    OnOptionSelected (step_id, value, key, load_obj_data=false) {
+    OnOptionSelected (step_id, value, key, on_selected_extra_bound_cb=null) {
         if (this.step.ID() !== step_id) {
             return;  // Just in case
         }
         this.view.UpdateLocal(key, value);
-        if (load_obj_data) {
-            this.view.LoadObjData();
+        if (on_selected_extra_bound_cb) {
+            on_selected_extra_bound_cb();
         }
         this.step.ShowContinueButton();
     }
@@ -38604,7 +38727,7 @@ class DashGuiFlowTimeline {
         });
         this.html.append(this.right_flex_area);
     }
-    SetActiveNode (node_id, from_reset=false) {
+    SetActiveNode (step, from_reset=false) {
         if (from_reset) {
             this.highest_node_index = 0;
         }
@@ -38622,7 +38745,7 @@ class DashGuiFlowTimeline {
                 }
                 continue;
             }
-            if (node.ID() === node_id) {
+            if (node.ID() === step["id"]) {
                 active_set = true;
                 if (index > this.highest_node_index) {
                     this.highest_node_index = index;
@@ -38650,18 +38773,18 @@ class DashGuiFlowTimeline {
         return this.nodes[this.nodes.indexOf(this.GetActiveNode()) + 1];
     }
     GoBack () {
-        this.view.LoadStep(this.get_previous_node().ID(), true, false, true);
+        this.view.LoadStep(this.get_previous_node().Step(), true, false, true);
     }
     get_previous_node () {
         return this.nodes[this.nodes.indexOf(this.GetActiveNode()) - 1];
     }
     draw_nodes () {
         var draw_line = false;
-        for (var id of this.steps) {
+        for (var step of this.steps) {
             if (draw_line) {
                 this.html.append(this.get_line());
             }
-            var node = new DashGuiFlowTimelineNode(this, id);
+            var node = new DashGuiFlowTimelineNode(this, step);
             this.html.append(node.html);
             this.nodes.push(node);
             draw_line = true;
@@ -38750,9 +38873,9 @@ class DashGuiFlowTimeline {
 }
 
 class DashGuiFlowTimelineNode {
-    constructor (timeline, id) {
+    constructor (timeline, step) {
         this.timeline = timeline;
-        this.id = id;
+        this.step = step;
         this.tip = null;
         this.active = false;
         this.locked = false;
@@ -38778,8 +38901,11 @@ class DashGuiFlowTimelineNode {
         });
         this.setup_connections();
     }
+    Step () {
+        return this.step;
+    }
     ID () {
-        return this.id;
+        return this.step["id"];
     }
     IsActive () {
         return this.active;
@@ -38825,7 +38951,7 @@ class DashGuiFlowTimelineNode {
             this.tip.html.show();
             return;
         }
-        this.tip = new DashGuiFlowTipText(this.view, this.id);
+        this.tip = new DashGuiFlowTipText(this.view, this.view.get_step_display_name(this.step));
         this.tip.Emphasize();
         this.tip.html.css({
             "position": "absolute",
@@ -38865,7 +38991,7 @@ class DashGuiFlowTimelineNode {
             if (this.active || this.disabled) {
                 return;
             }
-            this.view.LoadStep(this.id, true);  // Don't need confirmation from the user if they've already clicked the button
+            this.view.LoadStep(this.Step(), true, false, true);
         });
     }
 }
@@ -39263,14 +39389,19 @@ class DashGuiFlow {
          *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
          *         - "get_data":           Get flow data (using flow ID, if provided)
          *         - "reset":              Reset flow data and start over
+         *         - "finish":             Finish flow (backend should also reset data after, in most cases)
          *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
          *
+         *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
+         *     call needs to not be nested in order for this module to be able to remain generic and flexible.
+         *
          * @param {string} api - API name for requests
-         * @param {Array} steps - List of all step IDs
+         * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
          * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
          *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
          * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
-         *                           (Some flows may default to something like a user's email instead of an ID, for example)
+         *                           (Some flows may not need this because they default on the backend
+         *                            to something like a user's email instead of an ID, for example)
          * @param {DashColorSet} color - DashColorSet instance
          */
         this.api = api;
@@ -39278,25 +39409,25 @@ class DashGuiFlow {
         this.step_init_cb = step_init_bound_cb;
         this.flow_id = flow_id;
         this.color = color || Dash.Color.Dark;
-        this.data = null;
-        this.obj_data = {};
+        this.data = {};
+        this.step_map = null;
         this.timeline = null;
         this.step_area = null;
         this.now = new Date();
+        this.on_exit_cb = null;
         this.back_button = null;
         this.resize_timer = null;
         this.initialized = false;
+        this.can_finish_cb = null;
         // this.window_size_mult = 1;
         this.loading_overlay = null;
         this.modal_bg_opacity = 0.95;
         this.content_area_size = 1024;
         this.core_gui_font_size = 250;
         this.back_button_visible = false;
-        this.rarity_combo_options = null;
         this.exit_button_size_mult = 0.75;
         this.exit_button_top = Dash.Size.Padding * 0.7;
         this.missing_option_text_color = this.color.Stroke;
-        this.sidebar_width = Core.view.layout.tab_area_size;
         this.icon_button_container_size = Dash.Size.Padding * 3;
         this.modal_bg_color = Dash.Color.Darken(this.color.Background, 30);
         this.timeline_pad = this.icon_button_container_size - Dash.Size.Padding;
@@ -39345,13 +39476,15 @@ class DashGuiFlow {
         //     this.core_gui_font_size *= this.window_size_mult;
         // }
         this.html.append(this.content_area);
-        Core.view.layout.SetTabAreaSize(0, 500);
         this.get_data();
-        this.LoadObjData();
-        // TODO: add some kind of toolbar thing at the top to contain the agency logo, launch year,
-        //  maybe some other key info that gets updated with every change as the process goes along
     }
-    RequestNewOption (step_id) {
+    SetOnExitCB (bound_cb) {
+        this.on_exit_cb = bound_cb;
+    }
+    SetCanFinishCB (bound_cb) {
+        this.can_finish_cb = bound_cb;
+    }
+    RequestNewOption (step) {
         var text_area = new Dash.Gui.TextArea(
             this.color,
             "Please describe the new option you'd like to have added with any additional relevant context.",
@@ -39368,7 +39501,7 @@ class DashGuiFlow {
                         this.on_empty_request_text(prompt);
                         return;
                     }
-                    this.send_option_request(step_id, request_text);
+                    this.send_option_request(step, request_text);
                 }
                 prompt.Remove();
             },
@@ -39395,17 +39528,20 @@ class DashGuiFlow {
     //  continue button and possibly disable the superseding active nodes?), then goes forward to
     //  return to the collection_display_name step, which should alert and return the user back
     //  to the launch_date step, since the required data no longer exists)
-    LoadStep (id, force=false, from_reset=false, save_first=false) {
+    LoadStep (step, force=false, from_reset=false, save_first=false) {
+        if (typeof step === "string") {
+            step = this.get_step_from_id(step);
+        }
         if (!force) {
             new Dash.Gui.Prompt(
                 (selected_index) => {
                     if (selected_index === 1) {  // Yes
-                        this.LoadStep(id, true, from_reset, save_first);
+                        this.LoadStep(step, true, from_reset, save_first);
                     }
                 },
                 Dash.Size.ColumnWidth * 1.5,
                 Dash.Size.ColumnWidth * 1.25,
-                "Go to " + id.Title() + "?",
+                "Go to " + this.get_step_display_name(step) + "?",
                 "Change Step",
                 "Yes",
                 "Cancel",
@@ -39417,19 +39553,21 @@ class DashGuiFlow {
             );
             return;
         }
+        this.UpdateLocal("active_step_id", step["id"]);
         if (save_first) {
             this.Save(
                 true,
                 () => {
-                    this.load_step(id, from_reset);
-                }
+                    this.load_step(step, from_reset);
+                },
+                step["id"]
             );
         }
         else {
-            this.load_step(id, from_reset);
+            this.load_step(step, from_reset);
         }
     }
-    Save (show_loading_overlay=false, callback=null) {
+    Save (show_loading_overlay=false, callback=null, active_step_id="") {
         if (show_loading_overlay) {
             this.show_loading_overlay();
         }
@@ -39440,7 +39578,6 @@ class DashGuiFlow {
                 if (!Dash.Validate.Response(response)) {
                     return;
                 }
-                // TODO: update local client data? or will it already be up to date?
                 if (callback) {
                     callback();
                 }
@@ -39450,12 +39587,12 @@ class DashGuiFlow {
                 "f": "save",
                 "flow_id": this.flow_id,
                 "data": JSON.stringify(this.data),
-                "step_id": this.timeline.GetActiveNode().ID()
+                "step_id": active_step_id || this.timeline.GetActiveNode().ID()
             }
         );
     }
     UpdateLocal (key, value) {
-        // TODO: update local data
+        this.data[key] = value;
     }
     GetLabel (text, header=false, button=false) {
         var label = $("<div>" + text + "</div>");
@@ -39496,51 +39633,57 @@ class DashGuiFlow {
         this.back_button_visible = false;
         this.back_button.html.hide();
     }
-    LoadObjData () {
-        // TODO: get from data
-        var agency_id = "2022010316502766395";
-        var vdb_type = "items";
-        if (!agency_id || !vdb_type) {
+    // Follows a 'Save' call from the step's continue button
+    Finish () {
+        if (this.can_finish_cb && !this.can_finish_cb(this)) {
             return;
         }
-        var key = this.GetObjDataKey();
-        if (this.obj_data[key] || this.obj_data[key + "_loading"]) {
-            return;
-        }
-        this.obj_data[key + "_loading"] = true;
         Dash.Request(
             this,
             (response) => {
-                this.obj_data[key + "_loading"] = false;
+                this.hide_loading_overlay();
                 if (!Dash.Validate.Response(response)) {
-                    this.obj_data[key] = {};
                     return;
                 }
-                this.obj_data[key] = response;
+                this.exit(true, true);
             },
-            "VDBCore",
+            this.api,
             {
-                "f": "get_all",
-                "vdb_type": vdb_type,
-                "agency_id": agency_id
+                "f": "finish",
+                "flow_id": this.flow_id
             }
         );
     }
-    GetObjDataKey () {
-        // TODO: get from data
-        var agency_id = "2022010316502766395";
-        var vdb_type = "items";
-        if (!agency_id || !vdb_type) {
-            return "";
-        }
-        return agency_id + "_" + vdb_type;
+    OnMissedStep (missed_step_id, message="") {
+        var step = this.get_step_from_id(missed_step_id);
+        new Dash.Gui.Alert(
+            (
+                message || (
+                    "The data from a prerequisite step ("
+                    + this.get_step_display_name(step)
+                    + ") is missing. Please go back to the missed step before continuing here."
+                )
+            ),
+            this.color,
+            "Missed required step",
+            "Go to missed step",
+            () => {
+                this.LoadStep(step, true, false, true);
+            },
+            Dash.Size.ColumnWidth * 2.6,
+            Dash.Size.ColumnWidth * 1.4,
+            true,
+            this.modal_bg_opacity,
+            false,
+            this.modal_bg_color
+        );
     }
-    init_step (id) {
-        this.step_init_cb(this, id);
+    init_step (step) {
+        this.step_init_cb(this, step);
     }
-    load_step (id, from_reset) {
-        this.timeline.SetActiveNode(id, from_reset);
-        this.step_area.SetActiveStep(id);
+    load_step (step, from_reset) {
+        this.timeline.SetActiveNode(step, from_reset);
+        this.step_area.SetActiveStep(step);
     }
     get_data () {
         this.show_loading_overlay();
@@ -39550,6 +39693,9 @@ class DashGuiFlow {
                 this.hide_loading_overlay();
                 if (!Dash.Validate.Response(response)) {
                     return;
+                }
+                if ("error" in response) {
+                    delete response["error"];
                 }
                 this.data = response;
                 this.init_gui();
@@ -39565,8 +39711,8 @@ class DashGuiFlow {
         if (this.initialized) {
             return;
         }
-        // TODO: get from data using "active_step" key (asset_path format - default to first step)
-        var active_step_id = "" || this.steps[0];
+        // TODO: in addition to "active_step_id", track something like "furthest_step_id" to activate
+        //  steps ahead of the active step that the user has already gone to previously
         this.step_area = new DashGuiFlowStepArea(this);
         this.timeline = new DashGuiFlowTimeline(this);
         this.timeline.html.css({
@@ -39586,7 +39732,7 @@ class DashGuiFlow {
         this.content_area.append(this.timeline.html);
         this.add_exit_button();
         this.add_reset_button();
-        this.LoadStep(active_step_id, true);
+        this.LoadStep(this.data["active_step_id"] || this.steps[0], true);
         this.add_resize_listener();
         this.initialized = true;
     }
@@ -39729,7 +39875,7 @@ class DashGuiFlow {
         );
         alert.IncreaseZIndex(Math.abs(prompt.modal.css("z-index") - alert.modal.css("z-index")) + 1);
     }
-    send_option_request (step_id, request_text) {
+    send_option_request (step, request_text) {
         this.show_loading_overlay();
         Dash.Request(
             this,
@@ -39764,27 +39910,10 @@ class DashGuiFlow {
             {
                 "f": "new_option_request",
                 "flow_id": this.flow_id,
-                "step_id": step_id,
+                "step_id": step["id"],
                 "request_text": request_text
             }
         );
-    }
-    get_rarity_combo_options () {
-        if (this.rarity_combo_options) {
-            return this.rarity_combo_options;
-        }
-        this.rarity_combo_options = [{"id": "", "label_text": "Select rarity"}];
-        for (var rarity of Core.Rarities) {
-            if (rarity === "titan") {
-                continue;
-            }
-            this.rarity_combo_options.push({
-                "id": rarity,
-                "label_text": rarity.Title()
-            });
-        }
-        this.rarity_combo_options.push({"id": "other", "label_text": "Other"});
-        return this.rarity_combo_options;
     }
     show_loading_overlay () {
         if (!this.loading_overlay) {
@@ -39797,6 +39926,21 @@ class DashGuiFlow {
             return;
         }
         this.loading_overlay.Hide();
+    }
+    get_step_display_name (step) {
+        return step["display_name"] || step["id"].toString().Title();
+    }
+    get_step_from_id (step_id) {
+        if (!this.step_map) {
+            this.step_map = {};
+            for (var step of this.steps) {
+                this.step_map[step["id"]] = step;
+            }
+        }
+        if (!this.step_map[step_id]) {
+            this.step_map[step_id] = {"id": step_id};
+        }
+        return this.step_map[step_id];
     }
     reset (_force=false) {
         if (!_force) {
@@ -39838,9 +39982,7 @@ class DashGuiFlow {
             }
         );
     }
-    // TODO: when exiting mid-flow, draw some kind of visual indicator on the `Create New Drop` tab in
-    //  the left sidebar to show that there's an active one - this needs to persist on reload, of course
-    exit (force=false) {
+    exit (force=false, from_finish=false) {
         if (!force) {
             new Dash.Gui.Prompt(
                 (selected_index) => {
@@ -39865,12 +40007,13 @@ class DashGuiFlow {
         this.Save(
             true,
             () => {
-                Core.view.layout.SetTabAreaSize(this.sidebar_width, 500);
                 this.html.stop().animate(
                     {"opacity": 0},
                     750,
                     () => {
-                        Core.view.layout.LoadIndex(Core.view.layout.GetIndexByTabName(Core.view.profile_tab_name));
+                        if (this.on_exit_cb) {
+                            this.on_exit_cb(from_finish);
+                        }
                     }
                 );
             }

@@ -18,14 +18,14 @@ class DashGuiFlowStepArea {
         });
     }
 
-    SetActiveStep (id) {
+    SetActiveStep (step) {
         this.html.empty();
 
-        this.step = new DashGuiFlowStep(this, id);
+        this.step = new DashGuiFlowStep(this, step);
 
         this.html.append(this.step.html);
 
-        this.view.init_step(id);
+        this.view.init_step(step);
     }
 
     InitBoolStep (
@@ -39,10 +39,11 @@ class DashGuiFlowStepArea {
         }
 
         var has_default = typeof default_state === "boolean";
+        var existing_bool = this.view.data[key] === true_id ? true : this.view.data[key] === false_id ? false : null;
 
         if (has_default) {
             this.step.AddToggle(
-                default_state,
+                existing_bool !== null ? existing_bool : default_state,
                 (active) => {
                     this.view.UpdateLocal(key, active ? true_id : false_id);
                 },
@@ -89,49 +90,59 @@ class DashGuiFlowStepArea {
 
                 true_option.OverrideFontSize(font_size_override);
             }
+
+            if (existing_bool !== null) {
+                options.SetActiveByID(this.view.data[key]);
+            }
         }
 
         if (!tip_at_top && tip_text) {
             this.step.AddTipText(tip_text, false, tip_more_text);
         }
 
-        this.step.AddContinueButton(null, "", has_default);
+        this.step.AddContinueButton(null, "", has_default || existing_bool !== null);
     }
 
     // Standard/basic implementation
     InitOptionsStep (
-        header_text, key, add_options_bound_cb, load_obj_data=false, can_continue_bound_cb=null,
-        cont_step_id_override="", missing_button=true, missing_bound_cb=null,
-        missing_text="Don't see what you're looking for?"
+        header_text, key, add_options_bound_cb, on_selected_extra_bound_cb=null,
+        can_continue_bound_cb=null, cont_step_id_override="", missing_button=true,
+        missing_bound_cb=null, missing_text="Don't see what you're looking for?"
     ) {
         this.step.AddHeader(header_text);
 
         var step_id = this.step.ID();  // Lock this ID to a var for the below callback, just in case
 
         var options = this.step.AddOptions((selected_id) => {
-            this.OnOptionSelected(step_id, selected_id, key, load_obj_data);
+            this.OnOptionSelected(step_id, selected_id, key, on_selected_extra_bound_cb);
         });
 
         add_options_bound_cb(options);
+
+        var value = this.view.data[key];
+
+        if (value) {
+            options.SetActiveByID(value);
+        }
 
         if (missing_button) {
             this.step.AddMissingOptionButton(missing_bound_cb, missing_text);
         }
 
-        this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override);
+        this.step.AddContinueButton(can_continue_bound_cb, cont_step_id_override, Boolean(value));
 
         return options;
     }
 
-    OnOptionSelected (step_id, value, key, load_obj_data=false) {
+    OnOptionSelected (step_id, value, key, on_selected_extra_bound_cb=null) {
         if (this.step.ID() !== step_id) {
             return;  // Just in case
         }
 
         this.view.UpdateLocal(key, value);
 
-        if (load_obj_data) {
-            this.view.LoadObjData();
+        if (on_selected_extra_bound_cb) {
+            on_selected_extra_bound_cb();
         }
 
         this.step.ShowContinueButton();

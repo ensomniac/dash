@@ -1,7 +1,7 @@
 class DashGuiFlowTimelineNode {
-    constructor (timeline, id) {
+    constructor (timeline, step) {
         this.timeline = timeline;
-        this.id = id;
+        this.step = step;
 
         this.tip = null;
         this.active = false;
@@ -32,8 +32,12 @@ class DashGuiFlowTimelineNode {
         this.setup_connections();
     }
 
+    Step () {
+        return this.step;
+    }
+
     ID () {
-        return this.id;
+        return this.step["id"];
     }
 
     IsActive () {
@@ -94,7 +98,7 @@ class DashGuiFlowTimelineNode {
             return;
         }
 
-        this.tip = new DashGuiFlowTipText(this.view, this.id);
+        this.tip = new DashGuiFlowTipText(this.view, this.view.get_step_display_name(this.step));
 
         this.tip.Emphasize();
 
@@ -145,7 +149,7 @@ class DashGuiFlowTimelineNode {
                 return;
             }
 
-            this.view.LoadStep(this.id, true);  // Don't need confirmation from the user if they've already clicked the button
+            this.view.LoadStep(this.Step(), true, false, true);
         });
     }
 }

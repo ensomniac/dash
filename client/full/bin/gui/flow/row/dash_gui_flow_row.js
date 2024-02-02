@@ -18,33 +18,63 @@ class DashGuiFlowRow {
         });
     }
 
-    GetData () {
+    GetData (null_bool_placeholders=false) {
+        var value;
         var data = [];
+        var empty = true;
+        var check_toggle_indexes = [];
 
         for (var element of this.elements) {
             if (element instanceof DashGuiFlowCombo) {
-                data.push(element.ActiveID());
+                value = element.ActiveID();
+
+                data.push(value);
+
+                if (value) {
+                     empty = false;
+                }
             }
 
             else if (element instanceof DashGuiFlowInput) {
-                data.push(element.Text());
+                value = element.Text();
+
+                data.push(value);
+
+                if (value) {
+                    empty = false;
+                }
             }
 
             else if (element instanceof DashGuiFlowToggle) {
                 var active = element.IsActive();
 
-                // Only track if not default value (for non-auto-rows, this might need to be adjusted)
-                if (active !== element.starting_state) {
-                    data.push(active);
+                if (active === element.starting_state) {
+                    check_toggle_indexes.push(data.length);
                 }
+
+                else {
+                    empty = false;
+                }
+
+                data.push(active);
             }
 
             else if (element instanceof DashGuiIconButton) {
                 // pass
             }
 
+            else if (element.__dash_gui_flow_row_type === "text") {
+                // pass
+            }
+
             else {
                 Dash.Log.Warn("Warning: Unhandled element instance type:", element);
+            }
+        }
+
+        if (empty && null_bool_placeholders && check_toggle_indexes.length) {
+            for (var index of check_toggle_indexes) {
+                data[index] = null;
             }
         }
 
@@ -67,6 +97,8 @@ class DashGuiFlowRow {
         label.css({
             "font-size": this.font_size + "%"
         });
+
+        label.__dash_gui_flow_row_type = "text";
 
         this.html.append(label);
 

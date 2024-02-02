@@ -12,14 +12,19 @@ class DashGuiFlow {
          *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
          *         - "get_data":           Get flow data (using flow ID, if provided)
          *         - "reset":              Reset flow data and start over
+         *         - "finish":             Finish flow (backend should also reset data after, in most cases)
          *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
          *
+         *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
+         *     call needs to not be nested in order for this module to be able to remain generic and flexible.
+         *
          * @param {string} api - API name for requests
-         * @param {Array} steps - List of all step IDs
+         * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
          * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
          *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
          * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
-         *                           (Some flows may default to something like a user's email instead of an ID, for example)
+         *                           (Some flows may not need this because they default on the backend
+         *                            to something like a user's email instead of an ID, for example)
          * @param {DashColorSet} color - DashColorSet instance
          */
 
@@ -29,25 +34,25 @@ class DashGuiFlow {
         this.flow_id = flow_id;
         this.color = color || Dash.Color.Dark;
 
-        this.data = null;
-        this.obj_data = {};
+        this.data = {};
+        this.step_map = null;
         this.timeline = null;
         this.step_area = null;
         this.now = new Date();
+        this.on_exit_cb = null;
         this.back_button = null;
         this.resize_timer = null;
         this.initialized = false;
+        this.can_finish_cb = null;
         // this.window_size_mult = 1;
         this.loading_overlay = null;
         this.modal_bg_opacity = 0.95;
         this.content_area_size = 1024;
         this.core_gui_font_size = 250;
         this.back_button_visible = false;
-        this.rarity_combo_options = null;
         this.exit_button_size_mult = 0.75;
         this.exit_button_top = Dash.Size.Padding * 0.7;
         this.missing_option_text_color = this.color.Stroke;
-        this.sidebar_width = Core.view.layout.tab_area_size;
         this.icon_button_container_size = Dash.Size.Padding * 3;
         this.modal_bg_color = Dash.Color.Darken(this.color.Background, 30);
         this.timeline_pad = this.icon_button_container_size - Dash.Size.Padding;
@@ -107,16 +112,18 @@ class DashGuiFlow {
 
         this.html.append(this.content_area);
 
-        Core.view.layout.SetTabAreaSize(0, 500);
-
         this.get_data();
-        this.LoadObjData();
-
-        // TODO: add some kind of toolbar thing at the top to contain the agency logo, launch year,
-        //  maybe some other key info that gets updated with every change as the process goes along
     }
 
-    RequestNewOption (step_id) {
+    SetOnExitCB (bound_cb) {
+        this.on_exit_cb = bound_cb;
+    }
+
+    SetCanFinishCB (bound_cb) {
+        this.can_finish_cb = bound_cb;
+    }
+
+    RequestNewOption (step) {
         var text_area = new Dash.Gui.TextArea(
             this.color,
             "Please describe the new option you'd like to have added with any additional relevant context.",
@@ -139,7 +146,7 @@ class DashGuiFlow {
                         return;
                     }
 
-                    this.send_option_request(step_id, request_text);
+                    this.send_option_request(step, request_text);
                 }
 
                 prompt.Remove();
@@ -169,17 +176,21 @@ class DashGuiFlow {
     //  continue button and possibly disable the superseding active nodes?), then goes forward to
     //  return to the collection_display_name step, which should alert and return the user back
     //  to the launch_date step, since the required data no longer exists)
-    LoadStep (id, force=false, from_reset=false, save_first=false) {
+    LoadStep (step, force=false, from_reset=false, save_first=false) {
+        if (typeof step === "string") {
+            step = this.get_step_from_id(step);
+        }
+
         if (!force) {
             new Dash.Gui.Prompt(
                 (selected_index) => {
                     if (selected_index === 1) {  // Yes
-                        this.LoadStep(id, true, from_reset, save_first);
+                        this.LoadStep(step, true, from_reset, save_first);
                     }
                 },
                 Dash.Size.ColumnWidth * 1.5,
                 Dash.Size.ColumnWidth * 1.25,
-                "Go to " + id.Title() + "?",
+                "Go to " + this.get_step_display_name(step) + "?",
                 "Change Step",
                 "Yes",
                 "Cancel",
@@ -193,21 +204,24 @@ class DashGuiFlow {
             return;
         }
 
+        this.UpdateLocal("active_step_id", step["id"]);
+
         if (save_first) {
             this.Save(
                 true,
                 () => {
-                    this.load_step(id, from_reset);
-                }
+                    this.load_step(step, from_reset);
+                },
+                step["id"]
             );
         }
 
         else {
-            this.load_step(id, from_reset);
+            this.load_step(step, from_reset);
         }
     }
 
-    Save (show_loading_overlay=false, callback=null) {
+    Save (show_loading_overlay=false, callback=null, active_step_id="") {
         if (show_loading_overlay) {
             this.show_loading_overlay();
         }
@@ -221,8 +235,6 @@ class DashGuiFlow {
                     return;
                 }
 
-                // TODO: update local client data? or will it already be up to date?
-
                 if (callback) {
                     callback();
                 }
@@ -232,13 +244,13 @@ class DashGuiFlow {
                 "f": "save",
                 "flow_id": this.flow_id,
                 "data": JSON.stringify(this.data),
-                "step_id": this.timeline.GetActiveNode().ID()
+                "step_id": active_step_id || this.timeline.GetActiveNode().ID()
             }
         );
     }
 
     UpdateLocal (key, value) {
-        // TODO: update local data
+        this.data[key] = value;
     }
 
     GetLabel (text, header=false, button=false) {
@@ -292,65 +304,65 @@ class DashGuiFlow {
         this.back_button.html.hide();
     }
 
-    LoadObjData () {
-        // TODO: get from data
-        var agency_id = "2022010316502766395";
-        var vdb_type = "items";
-
-        if (!agency_id || !vdb_type) {
+    // Follows a 'Save' call from the step's continue button
+    Finish () {
+        if (this.can_finish_cb && !this.can_finish_cb(this)) {
             return;
         }
-
-        var key = this.GetObjDataKey();
-
-        if (this.obj_data[key] || this.obj_data[key + "_loading"]) {
-            return;
-        }
-
-        this.obj_data[key + "_loading"] = true;
 
         Dash.Request(
             this,
             (response) => {
-                this.obj_data[key + "_loading"] = false;
+                this.hide_loading_overlay();
 
                 if (!Dash.Validate.Response(response)) {
-                    this.obj_data[key] = {};
-
                     return;
                 }
 
-                this.obj_data[key] = response;
+                this.exit(true, true);
             },
-            "VDBCore",
+            this.api,
             {
-                "f": "get_all",
-                "vdb_type": vdb_type,
-                "agency_id": agency_id
+                "f": "finish",
+                "flow_id": this.flow_id
             }
         );
     }
 
-    GetObjDataKey () {
-        // TODO: get from data
-        var agency_id = "2022010316502766395";
-        var vdb_type = "items";
+    OnMissedStep (missed_step_id, message="") {
+        var step = this.get_step_from_id(missed_step_id);
 
-        if (!agency_id || !vdb_type) {
-            return "";
-        }
-
-        return agency_id + "_" + vdb_type;
+        new Dash.Gui.Alert(
+            (
+                message || (
+                    "The data from a prerequisite step ("
+                    + this.get_step_display_name(step)
+                    + ") is missing. Please go back to the missed step before continuing here."
+                )
+            ),
+            this.color,
+            "Missed required step",
+            "Go to missed step",
+            () => {
+                this.LoadStep(step, true, false, true);
+            },
+            Dash.Size.ColumnWidth * 2.6,
+            Dash.Size.ColumnWidth * 1.4,
+            true,
+            this.modal_bg_opacity,
+            false,
+            this.modal_bg_color
+        );
     }
 
-    init_step (id) {
-        this.step_init_cb(this, id);
+    init_step (step) {
+        this.step_init_cb(this, step);
     }
 
-    load_step (id, from_reset) {
-        this.timeline.SetActiveNode(id, from_reset);
+    load_step (step, from_reset) {
+        this.timeline.SetActiveNode(step, from_reset);
 
-        this.step_area.SetActiveStep(id);
+        this.step_area.SetActiveStep(step);
     }
 
     get_data () {
@@ -363,6 +375,10 @@ class DashGuiFlow {
 
                 if (!Dash.Validate.Response(response)) {
                     return;
+                }
+
+                if ("error" in response) {
+                    delete response["error"];
                 }
 
                 this.data = response;
@@ -382,8 +398,8 @@ class DashGuiFlow {
             return;
         }
 
-        // TODO: get from data using "active_step" key (asset_path format - default to first step)
-        var active_step_id = "" || this.steps[0];
+        // TODO: in addition to "active_step_id", track something like "furthest_step_id" to activate
+        //  steps ahead of the active step that the user has already gone to previously
 
         this.step_area = new DashGuiFlowStepArea(this);
         this.timeline = new DashGuiFlowTimeline(this);
@@ -408,7 +424,7 @@ class DashGuiFlow {
 
         this.add_exit_button();
         this.add_reset_button();
-        this.LoadStep(active_step_id, true);
+        this.LoadStep(this.data["active_step_id"] || this.steps[0], true);
         this.add_resize_listener();
 
         this.initialized = true;
@@ -580,7 +596,7 @@ class DashGuiFlow {
         alert.IncreaseZIndex(Math.abs(prompt.modal.css("z-index") - alert.modal.css("z-index")) + 1);
     }
 
-    send_option_request (step_id, request_text) {
+    send_option_request (step, request_text) {
         this.show_loading_overlay();
 
         Dash.Request(
@@ -618,33 +634,10 @@ class DashGuiFlow {
             {
                 "f": "new_option_request",
                 "flow_id": this.flow_id,
-                "step_id": step_id,
+                "step_id": step["id"],
                 "request_text": request_text
             }
         );
-    }
-
-    get_rarity_combo_options () {
-        if (this.rarity_combo_options) {
-            return this.rarity_combo_options;
-        }
-
-        this.rarity_combo_options = [{"id": "", "label_text": "Select rarity"}];
-
-        for (var rarity of Core.Rarities) {
-            if (rarity === "titan") {
-                continue;
-            }
-
-            this.rarity_combo_options.push({
-                "id": rarity,
-                "label_text": rarity.Title()
-            });
-        }
-
-        this.rarity_combo_options.push({"id": "other", "label_text": "Other"});
-
-        return this.rarity_combo_options;
     }
 
     show_loading_overlay () {
@@ -661,6 +654,26 @@ class DashGuiFlow {
         }
 
         this.loading_overlay.Hide();
+    }
+
+    get_step_display_name (step) {
+        return step["display_name"] || step["id"].toString().Title();
+    }
+
+    get_step_from_id (step_id) {
+        if (!this.step_map) {
+            this.step_map = {};
+
+            for (var step of this.steps) {
+                this.step_map[step["id"]] = step;
+            }
+        }
+
+        if (!this.step_map[step_id]) {
+            this.step_map[step_id] = {"id": step_id};
+        }
+
+        return this.step_map[step_id];
     }
 
     reset (_force=false) {
@@ -710,9 +723,7 @@ class DashGuiFlow {
         );
     }
 
-    // TODO: when exiting mid-flow, draw some kind of visual indicator on the `Create New Drop` tab in
-    //  the left sidebar to show that there's an active one - this needs to persist on reload, of course
-    exit (force=false) {
+    exit (force=false, from_finish=false) {
         if (!force) {
             new Dash.Gui.Prompt(
                 (selected_index) => {
@@ -739,13 +750,13 @@ class DashGuiFlow {
         this.Save(
             true,
             () => {
-                Core.view.layout.SetTabAreaSize(this.sidebar_width, 500);
-
                 this.html.stop().animate(
                     {"opacity": 0},
                     750,
                     () => {
-                        Core.view.layout.LoadIndex(Core.view.layout.GetIndexByTabName(Core.view.profile_tab_name));
+                        if (this.on_exit_cb) {
+                            this.on_exit_cb(from_finish);
+                        }
                     }
                 );
             }

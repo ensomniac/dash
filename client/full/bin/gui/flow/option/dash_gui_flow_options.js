@@ -35,6 +35,52 @@ class DashGuiFlowOptions {
         });
     }
 
+    SetActiveByID (id="") {
+        if (this.MultiEnabled()) {
+            Dash.Log.Warn("When using multi-select, use SetActiveByIDs instead");
+
+            return;
+        }
+
+        for (var option of this.options) {
+            if (option.ID() !== id) {
+                continue;
+            }
+
+            option.SetActive(true);
+
+            this.on_option_selected(option, true);
+
+            break;
+        }
+    };
+
+    SetActiveByIDs (ids=[]) {
+        if (!this.MultiEnabled()) {
+            Dash.Log.Warn("When not using multi-select, use SetActiveByID instead");
+
+            return;
+        }
+
+        var tally = 0;
+
+        for (var option of this.options) {
+            if (!ids.includes(option.ID())) {
+                continue;
+            }
+
+            option.SetActive(true);
+
+            this.on_option_selected(option, true);
+
+            tally += 1;
+
+            if (tally === ids.length) {
+                break;
+            }
+        }
+    };
+
     OnResize () {
         var width = this.options[0].html.outerWidth();
 
@@ -152,7 +198,7 @@ class DashGuiFlowOptions {
         return options;
     }
 
-    on_option_selected (selected_option) {
+    on_option_selected (selected_option, skip_cb=false) {
         var option;
 
         if (!this.MultiEnabled()) {
@@ -179,7 +225,7 @@ class DashGuiFlowOptions {
             }
         }
 
-        if (this.bound_cb) {
+        if (!skip_cb && this.bound_cb) {
             this.bound_cb(selected_option.ID());
         }
     }

@@ -434,12 +434,12 @@ class ApiCore:
         strict_notify=False, from_set_response=False, strict_msg=False
     ):
         if not self.Params.get("f"):  # No need to send an email, safe to ignore
-            return
+            return {}
 
         error = self.get_error_for_email(error, from_set_response)
 
         if error is None:
-            return
+            return {}
 
         if not subject:
             subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
@@ -449,7 +449,7 @@ class ApiCore:
 
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
-        self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
+        return self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
 
     def process_raw_body_content(self):
         # This was an attempt at resolving this issue, but it still
@@ -680,7 +680,7 @@ class ApiCore:
         from Dash.Utils import SendEmail
 
         try:
-            SendEmail(
+            return SendEmail(
                 subject=subject,
                 notify_email_list=notify_email_list,
                 msg=msg,
@@ -706,7 +706,7 @@ class ApiCore:
             )
 
             # Send intended email using default from-email to at least ensure we get it
-            SendEmail(
+            return SendEmail(
                 subject=subject,
                 notify_email_list=notify_email_list,
                 msg=msg,

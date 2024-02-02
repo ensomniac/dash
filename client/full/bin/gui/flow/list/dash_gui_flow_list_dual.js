@@ -46,6 +46,10 @@ class DashGuiFlowListDual {
         return this.right_list.data ? Dash.GetDeepCopy(this.right_list.data["order"]) : [];
     }
 
+    GetNotSelected () {
+        return this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
+    }
+
     ShowLoadingOverlay () {
         this.left_list.ShowLoadingOverlay();
 
@@ -56,6 +60,74 @@ class DashGuiFlowListDual {
         this.left_list.HideLoadingOverlay();
 
         this.right_list.HideLoadingOverlay();
+    }
+
+    AddItems (ids) {
+        this.ShowLoadingOverlay();
+
+        var right_order = this.GetSelected();
+        var left_order = this.GetNotSelected();
+
+        for (var id of ids) {
+            left_order.Remove(id);
+
+            right_order.push(id);
+        }
+
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+
+        this.HideLoadingOverlay();
+    }
+
+    RemoveItems (ids) {
+        this.ShowLoadingOverlay();
+
+        var right_order = this.GetSelected();
+        var left_order = this.GetNotSelected();
+
+        for (var id of ids) {
+            right_order.Remove(id);
+
+            var new_index = null;
+            var orig_index = this.full_data["order"].indexOf(id);
+
+            // Try to re-insert it in respect to the original order
+            for (var i in left_order) {
+                if (this.full_data["order"].indexOf(left_order[i]) > orig_index) {
+                    new_index = i;
+
+                    break;
+                }
+            }
+
+            if (new_index) {
+                left_order.Insert(new_index, id);
+            }
+
+            else {
+                left_order.push(id);
+            }
+        }
+
+        this.right_list.Update({
+            "data": this.full_data["data"],
+            "order": right_order
+        });
+
+        this.left_list.Update({
+            "data": this.full_data["data"],
+            "order": left_order
+        });
+
+        this.HideLoadingOverlay();
     }
 
     add_labels () {
@@ -101,7 +173,7 @@ class DashGuiFlowListDual {
             (row) => {
                 var id = row.ID();
 
-                this.add_item(id);
+                this.AddItems([id]);
 
                 if (this.on_add_bound_cb) {
                     this.on_add_bound_cb(id);
@@ -120,7 +192,7 @@ class DashGuiFlowListDual {
             (row) => {
                 var id = row.ID();
 
-                this.remove_item(id);
+                this.RemoveItems([id]);
 
                 if (this.on_remove_bound_cb) {
                     this.on_remove_bound_cb(id);
@@ -133,71 +205,5 @@ class DashGuiFlowListDual {
         });
 
         this.html.append(this.right_list.html);
-    }
-
-    add_item (id) {
-        this.ShowLoadingOverlay();
-
-        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
-
-        left_order.Remove(id);
-
-        this.left_list.Update({
-            "data": this.full_data["data"],
-            "order": left_order
-        });
-
-        var right_order = this.GetSelected();
-
-        right_order.push(id);
-
-        this.right_list.Update({
-            "data": this.full_data["data"],
-            "order": right_order
-        });
-
-        this.HideLoadingOverlay();
-    }
-
-    remove_item (id) {
-        this.ShowLoadingOverlay();
-
-        var right_order = this.GetSelected();
-
-        right_order.Remove(id);
-
-        this.right_list.Update({
-            "data": this.full_data["data"],
-            "order": right_order
-        });
-
-        var left_order = this.left_list.data ? Dash.GetDeepCopy(this.left_list.data["order"]) : [];
-
-        var new_index = null;
-        var orig_index = this.full_data["order"].indexOf(id);
-
-        // Try to re-insert it in respect to the original order
-        for (var i in left_order) {
-            if (this.full_data["order"].indexOf(left_order[i]) > orig_index) {
-                new_index = i;
-
-                break;
-            }
-        }
-
-        if (new_index) {
-            left_order.Insert(new_index, id);
-        }
-
-        else {
-            left_order.push(id);
-        }
-
-        this.left_list.Update({
-            "data": this.full_data["data"],
-            "order": left_order
-        });
-
-        this.HideLoadingOverlay();
     }
 }

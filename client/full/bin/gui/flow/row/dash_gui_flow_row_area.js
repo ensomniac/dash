@@ -1,8 +1,9 @@
 class DashGuiFlowRowArea {
-    constructor (view, row_config=[], auto_rows=true, auto_rows_min_required=1, in_step=false) {
+    constructor (view, row_config=[], auto_rows=true, auto_rows_key="", auto_rows_min_required=1, in_step=false) {
         this.view = view;
         this.row_config = row_config;
         this.auto_rows = auto_rows;
+        this.auto_rows_key = auto_rows_key;
         this.auto_rows_min_required = auto_rows_min_required;
         this.in_step = in_step;
 
@@ -25,15 +26,29 @@ class DashGuiFlowRowArea {
             ...this.view.row_area_css
         });
 
+        var existing_rows = (this.view.data[this.auto_rows_key] || []).length || 0;
+
         if (this.auto_rows) {
-            if (this.auto_rows_min_required) {
-                for (var _ of Dash.Math.Range(this.auto_rows_min_required)) {
+            var num_rows = Math.max(this.auto_rows_min_required, existing_rows);
+
+            if (num_rows) {
+                for (var _ of Dash.Math.Range(num_rows)) {
                     this.add_row();
                 }
             }
 
             else {
                 this.add_row(true);
+            }
+
+            if (existing_rows && existing_rows > this.auto_rows_min_required) {
+                this.add_row(true);
+            }
+        }
+
+        else if (existing_rows) {
+            for (var _ of Dash.Math.Range(existing_rows)) {
+                this.add_row();
             }
         }
     }
@@ -43,15 +58,26 @@ class DashGuiFlowRowArea {
 
         for (var row of this.rows) {
             var _data = {};
+            var skipped = 0;
             var empty = true;
-            var row_data = row.GetData();
+            var row_data = row.GetData(!include_empty_rows);
 
             for (var i in this.row_config) {
                 var config = this.row_config[i];
 
-                _data[config["key"] || i] = row_data[i];
+                // Add any other static/non-data element types here
+                if (config["type"] === "text" || config["type"] === "icon_button") {
+                    skipped += 1;
 
-                if (row_data[i]) {
+                    continue;
+                }
+
+                var value = row_data[parseInt(i) - skipped];
+
+                _data[config["key"] || i] = value;
+
+                // Auto-inclusion of bool type is based on bool filtering in DashGuiFlowRow.GetData
+                if (value || typeof value === "boolean") {
                     empty = false;
                 }
             }
@@ -66,7 +92,6 @@ class DashGuiFlowRowArea {
         return data;
     }
 
-    // TODO: need to auto-populate any existing data using config["key"]
     add_row (auto_added=false) {
         var row = new DashGuiFlowRow(this.view);
 
@@ -76,20 +101,23 @@ class DashGuiFlowRowArea {
             "width": "100%"
         });
 
+        var data = this.view.data[this.auto_rows_key]?.[this.rows.length];
+
         for (var i in this.row_config) {
             var element = null;
             var config = this.row_config[i];
+            var value = data?.[config["key"]] || "";
 
             if (config["type"] === "input") {
-                element = this.add_input(row, config);
+                element = this.add_input(row, config, value);
             }
 
             else if (config["type"] === "combo") {
-                element = this.add_combo(row, config);
+                element = this.add_combo(row, config, value);
             }
 
             else if (config["type"] === "toggle") {
-                element = this.add_toggle(row, config);
+                element = this.add_toggle(row, config, value);
             }
 
             else if (config["type"] === "text") {
@@ -222,6 +250,10 @@ class DashGuiFlowRowArea {
             min ? "asterisk" : "close",
             min ? null : () => {
                 this.remove_row(row);
+
+                if (this.auto_rows_key) {
+                    this.view.UpdateLocal(this.auto_rows_key, this.GetData());
+                }
             },
             min ? "Required" : "Remove row",
             row.icon_font_size * (min ? 0.5 : 1),
@@ -265,9 +297,14 @@ class DashGuiFlowRowArea {
         row.remove_row_button = icon_button;
     }
 
-    add_toggle (row, config) {
-        var toggle = row.AddToggle(...config["params"]);
+    add_toggle (row, config, value=null) {
+        var params = [...config["params"]];
 
+        if (typeof value === "boolean") {
+            params[0] = value;
+        }
+
+        var toggle = row.AddToggle(...params);
         var cb = toggle.bound_cb;
 
         toggle.bound_cb = (active) => {
@@ -281,8 +318,12 @@ class DashGuiFlowRowArea {
         return toggle;
     }
 
-    add_input (row, config) {
+    add_input (row, config, value="") {
         var input = row.AddInput(...config["params"]);
+
+        if (value) {
+            input.SetText(value);
+        }
 
         if (!this.auto_rows) {
             return;
@@ -333,7 +374,7 @@ class DashGuiFlowRowArea {
         }
     }
 
-    add_combo (row, config) {
+    add_combo (row, config, value="") {
         var combo = row.AddCombo(...config["params"]);
 
         combo.additional_data = combo;
@@ -349,6 +390,10 @@ class DashGuiFlowRowArea {
         combo.html.on("click", () => {
             this.on_combo_clicked(combo, row);
         });
+
+        if (value) {
+            combo.Update(null, value, true);
+        }
 
         if (!this.auto_rows) {
             return;

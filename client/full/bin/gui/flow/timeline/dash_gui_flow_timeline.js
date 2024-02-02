@@ -48,7 +48,7 @@ class DashGuiFlowTimeline {
         this.html.append(this.right_flex_area);
     }
 
-    SetActiveNode (node_id, from_reset=false) {
+    SetActiveNode (step, from_reset=false) {
         if (from_reset) {
             this.highest_node_index = 0;
         }
@@ -72,7 +72,7 @@ class DashGuiFlowTimeline {
                 continue;
             }
 
-            if (node.ID() === node_id) {
+            if (node.ID() === step["id"]) {
                 active_set = true;
 
                 if (index > this.highest_node_index) {
@@ -109,7 +109,7 @@ class DashGuiFlowTimeline {
     }
 
     GoBack () {
-        this.view.LoadStep(this.get_previous_node().ID(), true, false, true);
+        this.view.LoadStep(this.get_previous_node().Step(), true, false, true);
     }
 
     get_previous_node () {
@@ -119,12 +119,12 @@ class DashGuiFlowTimeline {
     draw_nodes () {
         var draw_line = false;
 
-        for (var id of this.steps) {
+        for (var step of this.steps) {
             if (draw_line) {
                 this.html.append(this.get_line());
             }
 
-            var node = new DashGuiFlowTimelineNode(this, id);
+            var node = new DashGuiFlowTimelineNode(this, step);
 
             this.html.append(node.html);
 
