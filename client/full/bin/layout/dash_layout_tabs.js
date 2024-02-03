@@ -3,19 +3,22 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.side_tabs = side_tabs;
     this.color = color;
 
-    this.temp_html             = [];
-    this.all_content           = [];
-    this.selected_index        = -1;
-    this.current_index         = null;
-    this.active_content        = null;
-    this.html                  = $("<div></div>");
-    this.on_tab_changed_cb     = null;
-    this.tab_top               = $("<div></div>");
-    this.tab_bottom            = $("<div></div>");
+    this.temp_html = [];
+    this.all_content = [];
+    this.selected_index = -1;
+    this.current_index = null;
+    this.active_content = null;
+    this.html = $("<div></div>");
+    this.on_tab_changed_cb = null;
+    this.tab_top = $("<div></div>");
     this.before_tab_changed_cb = null;
-    this.content_area          = $("<div></div>");
+    this.tab_bottom = $("<div></div>");
+    this.content_area = $("<div></div>");
     this.always_start_on_first_tab = false;
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+
+    this.recall_id = (this.binder.constructor + "").replace(
+        /[^A-Za-z]/g, ""
+    ).slice(0, 100).trim().toLowerCase();
 
     // This is necessary if there will be two different lists within the same script.
     // Without this, both lists will share the same recall ID and load indexes incorrectly.
@@ -55,6 +58,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             requestAnimationFrame(function () {
                 if (!Dash.User.Data || Dash.User.Data["first_name"]) {
                     self.load_last_selection();
+
                     return;
                 }
 
@@ -66,13 +70,11 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                     }
 
                     try {
-
                         self.LoadIndex(i);
 
                         requestAnimationFrame(function () {
                             self.on_autoload_user_settings();
                         });
-
                     }
 
                     catch {
@@ -81,30 +83,24 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 }
 
                 self.init();
-
             });
-
         })(this);
-
     };
 
+    // This is a very specific function that is only intended to be called for new
+    // users that have not filled in their name yet. When this function is called,
+    // the username isn't set, but the user settings tab is loaded. Find the First Name
+    // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
-        // This is a very specific function that is only intended to be called for new
-        // users that have not filled in their name yet. When this function is called,
-        // the username isn't set, but the user settings tab is loaded. Find the First Name
-        // field and highlight it so it's clear what the user is supposed to do
-
-        if (this.all_content[this.current_index]["content_div_html_class"] != DashUserView) {
+        if (
+               this.all_content[this.current_index]["content_div_html_class"] != DashUserView
+            || !this.active_content.user_profile
+        ) {
             return;
         }
 
-        if (!this.active_content.user_profile) {
-            return;
-        }
-
-        this.active_content.user_profile.ShowNameSuggestion()
-
-    }
+        this.active_content.user_profile.ShowNameSuggestion();
+    };
 
     this.AlwaysStartOnFirstTab = function () {
         this.always_start_on_first_tab = true;

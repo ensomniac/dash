@@ -39130,13 +39130,13 @@ class DashGuiFlowTipText {
                     "bg_color": this.color.PinstripeLight,
                     "font_color": this.color.StrokeLight,
                     "border_color": this.color.PinstripeDark,
-                    "font_size": "100%"
+                    "font_size": "105%"
                 },
                 "emphasized": {
                     "bg_color": this.color.Pinstripe,
                     "font_color": this.color.Stroke,
                     "border_color": this.color.StrokeLight,
-                    "font_size": "100%"
+                    "font_size": "105%"
                 }
             },
             "toggle": {
@@ -39145,14 +39145,14 @@ class DashGuiFlowTipText {
                     "icon_color": this.color.Pinstripe,
                     "font_color": this.color.PinstripeDark,
                     "border_color": this.color.PinstripeDark,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 },
                 "emphasized": {
                     "bg_color": this.color.Pinstripe,
                     "icon_color": this.color.PinstripeDark,
                     "font_color": this.color.StrokeLight,
                     "border_color": this.color.StrokeLight,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 }
             },
             "code": {
@@ -39163,7 +39163,7 @@ class DashGuiFlowTipText {
                         0.75
                     ),
                     "border_color": this.color.Pinstripe,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 },
                 "emphasized": {
                     "bg_color": Dash.Color.Lighten(this.color.Background, 10),
@@ -39172,7 +39172,7 @@ class DashGuiFlowTipText {
                         0.85
                     ),
                     "border_color": this.color.Pinstripe,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 }
             }
         };
@@ -39532,6 +39532,7 @@ class DashGuiFlow {
         this.step_area = null;
         this.now = new Date();
         this.on_exit_cb = null;
+        this.header_bar = null;
         this.back_button = null;
         this.resize_timer = null;
         this.initialized = false;
@@ -39549,6 +39550,7 @@ class DashGuiFlow {
         this.icon_button_container_size = Dash.Size.Padding * 3;
         this.modal_bg_color = Dash.Color.Darken(this.color.Background, 30);
         this.timeline_pad = this.icon_button_container_size - Dash.Size.Padding;
+        this.header_bar_height = this.icon_button_container_size - Dash.Size.Padding;
         this.tomorrow = new Date(this.now.getTime());
         this.tomorrow.setDate(this.tomorrow.getDate() + 1);
         this.one_year_out = new Date(this.now.getTime());
@@ -39800,6 +39802,24 @@ class DashGuiFlow {
     }
     GetLockedStepIDs () {
         return this.get_locked_step_ids_cb ? this.get_locked_step_ids_cb(this) : [];
+    }
+    AddHTMLToHeaderBar (html) {
+        if (!this.header_bar) {
+            this.header_bar = $("<div></div>");
+            this.header_bar.css({
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "position": "absolute",
+                "gap": Dash.Size.Padding,
+                "top": Dash.Size.Padding * 0.5,
+                "left": this.icon_button_container_size + Dash.Size.Padding,
+                "right": this.icon_button_container_size + Dash.Size.Padding,
+                "height": this.header_bar_height
+            });
+            this.content_area.append(this.header_bar);
+        }
+        this.header_bar.append(html);
     }
     init_step (step) {
         this.step_init_cb(this, step);
@@ -43408,19 +43428,21 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.binder = binder;
     this.side_tabs = side_tabs;
     this.color = color;
-    this.temp_html             = [];
-    this.all_content           = [];
-    this.selected_index        = -1;
-    this.current_index         = null;
-    this.active_content        = null;
-    this.html                  = $("<div></div>");
-    this.on_tab_changed_cb     = null;
-    this.tab_top               = $("<div></div>");
-    this.tab_bottom            = $("<div></div>");
+    this.temp_html = [];
+    this.all_content = [];
+    this.selected_index = -1;
+    this.current_index = null;
+    this.active_content = null;
+    this.html = $("<div></div>");
+    this.on_tab_changed_cb = null;
+    this.tab_top = $("<div></div>");
     this.before_tab_changed_cb = null;
-    this.content_area          = $("<div></div>");
+    this.tab_bottom = $("<div></div>");
+    this.content_area = $("<div></div>");
     this.always_start_on_first_tab = false;
-    this.recall_id = (this.binder.constructor + "").replace(/[^A-Za-z]/g, "").slice(0, 100).trim().toLowerCase();
+    this.recall_id = (this.binder.constructor + "").replace(
+        /[^A-Za-z]/g, ""
+    ).slice(0, 100).trim().toLowerCase();
     // This is necessary if there will be two different lists within the same script.
     // Without this, both lists will share the same recall ID and load indexes incorrectly.
     if (recall_id_suffix) {
@@ -43474,19 +43496,19 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             });
         })(this);
     };
+    // This is a very specific function that is only intended to be called for new
+    // users that have not filled in their name yet. When this function is called,
+    // the username isn't set, but the user settings tab is loaded. Find the First Name
+    // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
-        // This is a very specific function that is only intended to be called for new
-        // users that have not filled in their name yet. When this function is called,
-        // the username isn't set, but the user settings tab is loaded. Find the First Name
-        // field and highlight it so it's clear what the user is supposed to do
-        if (this.all_content[this.current_index]["content_div_html_class"] != DashUserView) {
+        if (
+               this.all_content[this.current_index]["content_div_html_class"] != DashUserView
+            || !this.active_content.user_profile
+        ) {
             return;
         }
-        if (!this.active_content.user_profile) {
-            return;
-        }
-        this.active_content.user_profile.ShowNameSuggestion()
-    }
+        this.active_content.user_profile.ShowNameSuggestion();
+    };
     this.AlwaysStartOnFirstTab = function () {
         this.always_start_on_first_tab = true;
     };

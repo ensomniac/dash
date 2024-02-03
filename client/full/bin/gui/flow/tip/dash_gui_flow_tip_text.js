@@ -17,13 +17,13 @@ class DashGuiFlowTipText {
                     "bg_color": this.color.PinstripeLight,
                     "font_color": this.color.StrokeLight,
                     "border_color": this.color.PinstripeDark,
-                    "font_size": "100%"
+                    "font_size": "105%"
                 },
                 "emphasized": {
                     "bg_color": this.color.Pinstripe,
                     "font_color": this.color.Stroke,
                     "border_color": this.color.StrokeLight,
-                    "font_size": "100%"
+                    "font_size": "105%"
                 }
             },
             "toggle": {
@@ -32,14 +32,14 @@ class DashGuiFlowTipText {
                     "icon_color": this.color.Pinstripe,
                     "font_color": this.color.PinstripeDark,
                     "border_color": this.color.PinstripeDark,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 },
                 "emphasized": {
                     "bg_color": this.color.Pinstripe,
                     "icon_color": this.color.PinstripeDark,
                     "font_color": this.color.StrokeLight,
                     "border_color": this.color.StrokeLight,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 }
             },
             "code": {
@@ -50,7 +50,7 @@ class DashGuiFlowTipText {
                         0.75
                     ),
                     "border_color": this.color.Pinstripe,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 },
                 "emphasized": {
                     "bg_color": Dash.Color.Lighten(this.color.Background, 10),
@@ -59,7 +59,7 @@ class DashGuiFlowTipText {
                         0.85
                     ),
                     "border_color": this.color.Pinstripe,
-                    "font_size": "90%"
+                    "font_size": "85%"
                 }
             }
         };

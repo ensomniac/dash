@@ -40,6 +40,7 @@ class DashGuiFlow {
         this.step_area = null;
         this.now = new Date();
         this.on_exit_cb = null;
+        this.header_bar = null;
         this.back_button = null;
         this.resize_timer = null;
         this.initialized = false;
@@ -57,6 +58,7 @@ class DashGuiFlow {
         this.icon_button_container_size = Dash.Size.Padding * 3;
         this.modal_bg_color = Dash.Color.Darken(this.color.Background, 30);
         this.timeline_pad = this.icon_button_container_size - Dash.Size.Padding;
+        this.header_bar_height = this.icon_button_container_size - Dash.Size.Padding;
 
         this.tomorrow = new Date(this.now.getTime());
 
@@ -362,6 +364,28 @@ class DashGuiFlow {
 
     GetLockedStepIDs () {
         return this.get_locked_step_ids_cb ? this.get_locked_step_ids_cb(this) : [];
+    }
+
+    AddHTMLToHeaderBar (html) {
+        if (!this.header_bar) {
+            this.header_bar = $("<div></div>");
+
+            this.header_bar.css({
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "position": "absolute",
+                "gap": Dash.Size.Padding,
+                "top": Dash.Size.Padding * 0.5,
+                "left": this.icon_button_container_size + Dash.Size.Padding,
+                "right": this.icon_button_container_size + Dash.Size.Padding,
+                "height": this.header_bar_height
+            });
+
+            this.content_area.append(this.header_bar);
+        }
+
+        this.header_bar.append(html);
     }
 
     init_step (step) {
