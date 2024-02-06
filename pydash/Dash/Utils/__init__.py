@@ -221,6 +221,12 @@ def ValidateEmailAddress(email):
     return ValidateEmailAddress(email)
 
 
+def Abbreviate(string, length=3, excluded_abbreviations=[]):
+    from .string import Abbreviate
+
+    return Abbreviate(string, length, excluded_abbreviations)
+
+
 # -------------------------------------------------- LIST ----------------------------------------------------
 def OSListDirCleaned(path):
     from .list import OSListDirCleaned

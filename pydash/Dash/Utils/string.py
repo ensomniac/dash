@@ -259,6 +259,69 @@ def ValidateEmailAddress(email):
     return True
 
 
+def Abbreviate(string, length=3, excluded_abbreviations=[], _retry=0):
+    if length < 2:
+        raise ValueError("Length must be at least 2")
+
+    abbreviation = ""
+    cleaned = "".join([c for c in string.strip() if c.isalpha()])
+    remaining = [c for c in cleaned]
+
+    if _retry < 1:
+        remaining = [c for c in cleaned if c.isupper()]  # Prioritize upper-case letters
+
+        # Get lower-case letters only after the last upper-case letter
+        remaining.extend([c for c in cleaned[(cleaned.rfind(remaining[-1]) + 1):] if c.islower()])
+
+        if len(remaining) < length:
+            remaining.extend([c for c in cleaned if c.islower()])
+
+    if _retry < 2:
+        filtered = [c for c in remaining if c not in "aeiou"]  # Consonants only
+
+        if len(filtered) >= length:
+            remaining = filtered
+
+    if _retry < 3:
+        filtered = sorted(set(remaining), key=remaining.index)  # Remaining unique letters, preserving order
+
+        if len(filtered) >= length:
+            remaining = filtered
+
+    if len(remaining) < length:
+        remaining = [c for c in cleaned]
+
+    # Attempt to add distinctive letters, considering phonetic patterns
+    for letter in remaining:
+        if len(abbreviation) >= length:
+            break
+
+        abbreviation += letter
+
+    abbreviation = abbreviation.lower()
+
+    if abbreviation in excluded_abbreviations or len(abbreviation) < length:
+        _retry += 1
+
+        if _retry >= 4:
+            from itertools import combinations
+
+            for comb in combinations(remaining, length):
+                abrv = "".join(comb).lower()
+
+                if abrv not in excluded_abbreviations:
+                    return abrv
+
+            raise ValueError(
+                "Failed to generate abbreviation. Tried 5 different ways, "
+                "including checking every possible order-respective combination."
+            )
+
+        return Abbreviate(string, length, excluded_abbreviations, _retry)
+
+    return abbreviation
+
+
 def change_dt_tz(dt_obj, tz):
     from pytz import timezone as pytz_timezone
 
