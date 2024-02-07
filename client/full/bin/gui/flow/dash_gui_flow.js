@@ -317,12 +317,14 @@ class DashGuiFlow {
             return;
         }
 
+        this.show_loading_overlay();
+
         Dash.Request(
             this,
             (response) => {
-                this.hide_loading_overlay();
-
                 if (!Dash.Validate.Response(response)) {
+                    this.hide_loading_overlay();
+
                     return;
                 }
 
@@ -504,6 +506,7 @@ class DashGuiFlow {
         this.content_area.append(button.html);
     }
 
+    // TODO: double width on hover?
     add_back_button () {
         var left_margin = Dash.Size.Padding * 0.2;
 
@@ -777,18 +780,28 @@ class DashGuiFlow {
             return;
         }
 
-        this.Save(
-            true,
+        if (from_finish) {  // Save is handled right before Finish is called
+            this._exit(from_finish);
+        }
+
+        else {
+            this.Save(
+                true,
+                () => {
+                    this._exit(from_finish);
+                }
+            );
+        }
+    }
+
+    _exit (from_finish) {
+        this.html.stop().animate(
+            {"opacity": 0},
+            750,
             () => {
-                this.html.stop().animate(
-                    {"opacity": 0},
-                    750,
-                    () => {
-                        if (this.on_exit_cb) {
-                            this.on_exit_cb(this, from_finish);
-                        }
-                    }
-                );
+                if (this.on_exit_cb) {
+                    this.on_exit_cb(this, from_finish);
+                }
             }
         );
     }

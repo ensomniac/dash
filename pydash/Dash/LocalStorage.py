@@ -60,7 +60,7 @@ class DashLocalStorage:
 
     def New(self, additional_data, obj_id=None, conform_permissions=True):
         """
-        Creates and saves a standard user record
+        Creates and saves a standard user record.
         """
 
         record_id = obj_id or GetRandomID()
@@ -68,11 +68,7 @@ class DashLocalStorage:
         data = self.get_default_data(record_id)
 
         if additional_data:
-            for key in additional_data:
-                if key in data:
-                    continue
-
-                data[key] = additional_data[key]
+            data.update(additional_data)
 
         root = self.get_data_root(record_id)
 

@@ -313,6 +313,11 @@ class ApiCore:
             ignore_falsy=True
         )
 
+    def ClearParams(self):
+        self._params = {}
+
+        return self
+
     def ParseParam(self, key, target_type, default_value=None, set_param=True):
         if key in self._params:
             param_type = type(self._params[key])

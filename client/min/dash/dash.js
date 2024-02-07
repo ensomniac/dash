@@ -39760,11 +39760,12 @@ class DashGuiFlow {
         if (this.can_finish_cb && !this.can_finish_cb(this)) {
             return;
         }
+        this.show_loading_overlay();
         Dash.Request(
             this,
             (response) => {
-                this.hide_loading_overlay();
                 if (!Dash.Validate.Response(response)) {
+                    this.hide_loading_overlay();
                     return;
                 }
                 this.exit(true, true);
@@ -39915,6 +39916,7 @@ class DashGuiFlow {
         this.style_icon_button(button, "Exit", true);
         this.content_area.append(button.html);
     }
+    // TODO: double width on hover?
     add_back_button () {
         var left_margin = Dash.Size.Padding * 0.2;
         this.back_button = new Dash.Gui.IconButton(
@@ -40145,18 +40147,26 @@ class DashGuiFlow {
             );
             return;
         }
-        this.Save(
-            true,
+        if (from_finish) {  // Save is handled right before Finish is called
+            this._exit(from_finish);
+        }
+        else {
+            this.Save(
+                true,
+                () => {
+                    this._exit(from_finish);
+                }
+            );
+        }
+    }
+    _exit (from_finish) {
+        this.html.stop().animate(
+            {"opacity": 0},
+            750,
             () => {
-                this.html.stop().animate(
-                    {"opacity": 0},
-                    750,
-                    () => {
-                        if (this.on_exit_cb) {
-                            this.on_exit_cb(this, from_finish);
-                        }
-                    }
-                );
+                if (this.on_exit_cb) {
+                    this.on_exit_cb(this, from_finish);
+                }
             }
         );
     }
@@ -43448,6 +43458,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     if (recall_id_suffix) {
         this.recall_id += "_" + recall_id_suffix;
     }
+    this.ls_key = "sidebar_index_" + this.recall_id;
     if (this.side_tabs) {
         if (!this.color) {
             this.color = Dash.Color.Dark;
@@ -43549,7 +43560,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         this.remove_temp_html();
         if (!this.always_start_on_first_tab) {
-            Dash.Local.Set("sidebar_index_" + this.recall_id, index);
+            Dash.Local.Set(this.ls_key, index);
         }
         this.current_index = index;
         var button = null;
@@ -43933,7 +43944,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             this.LoadIndex(0);
             return;
         }
-        var last_index = parseInt(Dash.Local.Get("sidebar_index_" + this.recall_id)) || 0;
+        var last_index = parseInt(Dash.Local.Get(this.ls_key)) || 0;
         if (last_index > this.all_content.length - 1) {
             last_index = 0;
         }
