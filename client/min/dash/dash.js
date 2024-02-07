@@ -29243,6 +29243,7 @@ function DashGuiContext2D (
     this.html = $("<div></div>");
     this.left_pane_slider = null;
     this.right_pane_slider = null;
+    this.on_initial_data_cb = null;
     this.middle_pane_slider = null;
     this.min_width_extensions = {};
     this.min_height_extensions = {};
@@ -29357,6 +29358,9 @@ function DashGuiContext2D (
     };
     this.SetOnDuplicateCallback = function (callback, binder=null) {
         this.on_duplicate_cb = binder ? callback.bind(binder) : callback;
+    };
+    this.SetOnInitialDataCallback = function (callback, binder=null) {
+        this.on_initial_data_cb = binder ? callback.bind(binder) : callback;
     };
     this.SetLinkedPreview = function (preview) {
         if (!this.override_mode) {
@@ -29511,6 +29515,9 @@ function DashGuiContext2D (
     this.initialize = function () {
         if (this.initialized) {
             return;
+        }
+        if (this.on_initial_data_cb) {
+            this.on_initial_data_cb();
         }
         this.initialized = true;
         var abs_css = {
